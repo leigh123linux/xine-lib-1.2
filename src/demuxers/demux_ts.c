@@ -600,18 +600,29 @@ static void demux_ts_update_spu_channel(demux_ts_t *this)
   this->video_fifo->put(this->video_fifo, buf);
 }
 
-static void demux_ts_flush_media(demux_ts_media *m)
+static void demux_ts_send_buffer(demux_ts_media *m, int flags)
 {
   if (m->buf) {
     m->buf->content = m->buf->mem;
     m->buf->type = m->type;
-    m->buf->decoder_flags |= BUF_FLAG_FRAME_END;
+    m->buf->decoder_flags |= flags;
     m->buf->pts = m->pts;
+    m->buf->decoder_info[0] = 1;
     m->buf->extra_info->input_normpos = m->input_normpos;
     m->buf->extra_info->input_time = m->input_time;
+
     m->fifo->put(m->fifo, m->buf);
     m->buf = NULL;
+
+#ifdef TS_LOG
+    printf ("demux_ts: produced buffer, pts=%lld\n", m->pts);
+#endif
   }
+}
+
+static void demux_ts_flush_media(demux_ts_media *m)
+{
+  demux_ts_send_buffer(m, BUF_FLAG_FRAME_END);
 }
 
 static void demux_ts_flush(demux_ts_t *this)
@@ -1098,19 +1109,7 @@ static void demux_ts_buffer_pes(demux_ts_t*this, unsigned char *ts,
 
   if (pus) { /* new PES packet */
     if (m->buf && m->buf->size) {
-
-      m->buf->content = m->buf->mem;
-      m->buf->type = m->type;
-      m->buf->decoder_flags |= BUF_FLAG_FRAME_END;
-      m->buf->pts = m->pts;
-      m->buf->decoder_info[0] = 1;
-      m->buf->extra_info->input_normpos = m->input_normpos;
-      m->buf->extra_info->input_time = m->input_time;
-      m->fifo->put(m->fifo, m->buf);
-      m->buf = NULL; /* forget about buf -- not our responsibility anymore */
-#ifdef TS_LOG
-      printf ("demux_ts: produced buffer, pts=%lld\n", m->pts);
-#endif
+      demux_ts_flush_media(m);
     }
     /* allocate the buffer here, as pes_header needs a valid buf for dvbsubs */
      m->buf = m->fifo->buffer_pool_alloc(m->fifo);
@@ -1147,19 +1146,8 @@ static void demux_ts_buffer_pes(demux_ts_t*this, unsigned char *ts,
   } else if (!m->corrupted_pes) { /* no pus -- PES packet continuation */
 
     if ((m->buf->size + len) > MAX_PES_BUF_SIZE) {
-      m->buf->content = m->buf->mem;
-      m->buf->type = m->type;
-      m->buf->pts = m->pts;
-      m->buf->decoder_info[0] = 1;
-      m->buf->extra_info->input_normpos = m->input_normpos;
-      m->buf->extra_info->input_time = m->input_time;
-      m->fifo->put(m->fifo, m->buf);
+      demux_ts_send_buffer(m, 0);
       m->buf = m->fifo->buffer_pool_alloc(m->fifo);
-
-#ifdef TS_LOG
-      printf ("demux_ts: produced buffer, pts=%lld\n", m->pts);
-#endif
-
     }
     memcpy(m->buf->mem + m->buf->size, ts, len);
     m->buf->size += len;
