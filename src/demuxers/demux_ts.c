@@ -1108,11 +1108,11 @@ static void demux_ts_buffer_pes(demux_ts_t*this, unsigned char *ts,
   m->counter++;
 
   if (pus) { /* new PES packet */
-    if (m->buf && m->buf->size) {
-      demux_ts_flush_media(m);
-    }
+
+    demux_ts_flush_media(m);
+
     /* allocate the buffer here, as pes_header needs a valid buf for dvbsubs */
-     m->buf = m->fifo->buffer_pool_alloc(m->fifo);
+    m->buf = m->fifo->buffer_pool_alloc(m->fifo);
 
     if (!demux_ts_parse_pes_header(this->stream->xine, m, ts, len)) {
       m->buf->free_buffer(m->buf);
