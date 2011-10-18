@@ -203,7 +203,7 @@ static void dvbspeed_put (nbc_t *this, fifo_buffer_t * fifo, buf_element_t *b) {
     name = "audio";
   } else return;
   /* update fifo fill time */
-  if (b->pts && (b->decoder_flags & BUF_FLAG_FRAME_START)) {
+  if (b->pts) {
     if (*last) {
       diff = b->pts - *last;
       if ((diff > -220000) && (diff < 220000)) *fill += diff;
@@ -279,7 +279,7 @@ static void dvbspeed_get (nbc_t *this, fifo_buffer_t * fifo, buf_element_t *b) {
     name = "audio";
   } else return;
   /* update fifo fill time */
-  if (b->pts && (b->decoder_flags & BUF_FLAG_FRAME_START)) {
+  if (b->pts) {
     if (*last) {
       diff = b->pts - *last;
       if ((diff > -220000) && (diff < 220000)) *fill -= diff;
