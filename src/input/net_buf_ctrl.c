@@ -190,12 +190,13 @@ static void dvbspeed_put (nbc_t *this, fifo_buffer_t * fifo, buf_element_t *b) {
   int used, mode;
   const char *name;
   /* select vars */
-  if (fifo == this->video_fifo) {
+  mode = b->type & BUF_MAJOR_MASK;
+  if (mode == BUF_VIDEO_BASE) {
     last = &this->dvbs_video_in;
     fill = &this->dvbs_video_fill;
     mode = 0x71;
     name = "video";
-  } else if (fifo == this->audio_fifo) {
+  } else if (mode == BUF_AUDIO_BASE) {
     last = &this->dvbs_audio_in;
     fill = &this->dvbs_audio_fill;
     mode = 0x0f;
@@ -265,12 +266,13 @@ static void dvbspeed_get (nbc_t *this, fifo_buffer_t * fifo, buf_element_t *b) {
   int used, mode;
   const char *name;
   /* select vars */
-  if (fifo == this->video_fifo) {
+  mode = b->type & BUF_MAJOR_MASK;
+  if (mode == BUF_VIDEO_BASE) {
     last = &this->dvbs_video_out;
     fill = &this->dvbs_video_fill;
     mode = 0x71;
     name = "video";
-  } else if (fifo == this->audio_fifo) {
+  } else if (mode == BUF_AUDIO_BASE) {
     last = &this->dvbs_audio_out;
     fill = &this->dvbs_audio_fill;
     mode = 0x0f;
