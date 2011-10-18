@@ -2578,7 +2578,7 @@ static off_t dvb_plugin_read (input_plugin_t *this_gen,
 
   ts_rewrite_packets (this, buf,total);
 
-  if ((this->record_fd)&&(!this->record_paused))
+  if ((this->record_fd > -1) && (!this->record_paused))
     write (this->record_fd, buf, total);
 
   pthread_mutex_unlock( &this->channel_change_mutex );
