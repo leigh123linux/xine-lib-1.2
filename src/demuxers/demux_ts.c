@@ -2301,10 +2301,17 @@ static int demux_ts_seek (demux_plugin_t *this_gen,
   if (this->input->get_capabilities(this->input) & INPUT_CAP_SEEKABLE) {
 
     if ((!start_pos) && (start_time)) {
-      start_pos = (int64_t)start_time * this->rate / 1000;
-    }
-    this->input->seek (this->input, start_pos, SEEK_SET);
 
+      if (this->input->seek_time) {
+        this->input->seek_time(this->input, start_time, SEEK_SET);
+      } else {
+        start_pos = (int64_t)start_time * this->rate / 1000;
+        this->input->seek (this->input, start_pos, SEEK_SET);
+      }
+
+    } else {
+      this->input->seek (this->input, start_pos, SEEK_SET);
+    }
   }
 
   this->send_newpts = 1;
