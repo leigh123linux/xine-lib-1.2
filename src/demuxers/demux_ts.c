@@ -293,7 +293,6 @@ typedef struct {
   unsigned int     counter;
   uint16_t         descriptor_tag; /* +0x100 for PES stream IDs (no available TS descriptor tag?) */
   int              corrupted_pes;
-  uint32_t         buffered_bytes;
 
   int              input_normpos;
   int              input_time;
@@ -605,14 +604,12 @@ static void demux_ts_flush_media(demux_ts_media *m)
 {
   if (m->buf) {
     m->buf->content = m->buf->mem;
-    m->buf->size = m->buffered_bytes;
     m->buf->type = m->type;
     m->buf->decoder_flags |= BUF_FLAG_FRAME_END;
     m->buf->pts = m->pts;
     m->buf->extra_info->input_normpos = m->input_normpos;
     m->buf->extra_info->input_time = m->input_time;
     m->fifo->put(m->fifo, m->buf);
-    m->buffered_bytes = 0;
     m->buf = NULL;
   }
 }
@@ -1100,10 +1097,9 @@ static void demux_ts_buffer_pes(demux_ts_t*this, unsigned char *ts,
   m->counter++;
 
   if (pus) { /* new PES packet */
-    if (m->buffered_bytes) {
+    if (m->buf && m->buf->size) {
 
       m->buf->content = m->buf->mem;
-      m->buf->size = m->buffered_bytes;
       m->buf->type = m->type;
       m->buf->decoder_flags |= BUF_FLAG_FRAME_END;
       m->buf->pts = m->pts;
@@ -1111,7 +1107,6 @@ static void demux_ts_buffer_pes(demux_ts_t*this, unsigned char *ts,
       m->buf->extra_info->input_normpos = m->input_normpos;
       m->buf->extra_info->input_time = m->input_time;
       m->fifo->put(m->fifo, m->buf);
-      m->buffered_bytes = 0;
       m->buf = NULL; /* forget about buf -- not our responsibility anymore */
 #ifdef TS_LOG
       printf ("demux_ts: produced buffer, pts=%lld\n", m->pts);
@@ -1131,7 +1126,7 @@ static void demux_ts_buffer_pes(demux_ts_t*this, unsigned char *ts,
 
       m->corrupted_pes = 0;
       memcpy(m->buf->mem, ts+len-m->size, m->size);
-      m->buffered_bytes = m->size;
+      m->buf->size = m->size;
 
       /* cache frame position */
       off_t length = this->input->get_length (this->input);
@@ -1151,16 +1146,14 @@ static void demux_ts_buffer_pes(demux_ts_t*this, unsigned char *ts,
 
   } else if (!m->corrupted_pes) { /* no pus -- PES packet continuation */
 
-    if ((m->buffered_bytes + len) > MAX_PES_BUF_SIZE) {
+    if ((m->buf->size + len) > MAX_PES_BUF_SIZE) {
       m->buf->content = m->buf->mem;
-      m->buf->size = m->buffered_bytes;
       m->buf->type = m->type;
       m->buf->pts = m->pts;
       m->buf->decoder_info[0] = 1;
       m->buf->extra_info->input_normpos = m->input_normpos;
       m->buf->extra_info->input_time = m->input_time;
       m->fifo->put(m->fifo, m->buf);
-      m->buffered_bytes = 0;
       m->buf = m->fifo->buffer_pool_alloc(m->fifo);
 
 #ifdef TS_LOG
@@ -1168,8 +1161,8 @@ static void demux_ts_buffer_pes(demux_ts_t*this, unsigned char *ts,
 #endif
 
     }
-    memcpy(m->buf->mem + m->buffered_bytes, ts, len);
-    m->buffered_bytes += len;
+    memcpy(m->buf->mem + m->buf->size, ts, len);
+    m->buf->size += len;
   }
 }
 
@@ -1193,7 +1186,6 @@ static void demux_ts_pes_new(demux_ts_t*this,
   m->counter = INVALID_CC;
   m->descriptor_tag = descriptor;
   m->corrupted_pes = 1;
-  m->buffered_bytes = 0;
 }
 
 
@@ -2324,7 +2316,6 @@ static int demux_ts_seek (demux_plugin_t *this_gen,
     m->buf            = NULL;
     m->counter        = INVALID_CC;
     m->corrupted_pes  = 1;
-    m->buffered_bytes = 0;
   }
 
   if( !playing ) {
