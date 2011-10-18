@@ -2295,7 +2295,6 @@ static int demux_ts_seek (demux_plugin_t *this_gen,
 
   demux_ts_t *this = (demux_ts_t *) this_gen;
   int i;
-  start_time /= 1000;
   start_pos = (off_t) ( (double) start_pos / 65535 *
               this->input->get_length (this->input) );
 
