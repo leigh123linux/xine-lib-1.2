@@ -303,16 +303,16 @@ typedef struct {
 
 typedef struct {
   spu_dvb_descriptor_t desc;
-  int pid;
-  int media_index;
+  unsigned int pid;
+  unsigned int media_index;
 } demux_ts_spu_lang;
 
 /* Audio Channels */
 #define MAX_AUDIO_TRACKS 32
 
 typedef struct {
-    int pid;
-    int media_index;
+    unsigned int pid;
+    unsigned int media_index;
     char lang[4];
 } demux_ts_audio_track;
 
@@ -338,7 +338,7 @@ typedef struct {
   int              pkt_offset; /* TS packet offset */
 
   int              rate;
-  int              media_num;
+  unsigned int     media_num;
   demux_ts_media   media[MAX_PIDS];
 
   /* PAT */
@@ -416,7 +416,7 @@ static void demux_ts_tbre_reset (demux_ts_t *this) {
   }
 }
 
-static void demux_ts_tbre_update (demux_ts_t *this, int mode, int64_t now) {
+static void demux_ts_tbre_update (demux_ts_t *this, unsigned int mode, int64_t now) {
   /* select best available timesource on the fly */
   if ((mode < this->tbre_mode) || (now <= 0))
     return;
