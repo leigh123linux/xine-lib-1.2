@@ -105,7 +105,8 @@ typedef struct {
   int                  status;
 
   off_t                filesize;
-  unsigned char        bih[sizeof(xine_bmiheader) + HUFFMAN_TABLE_SIZE];
+  xine_bmiheader       bih;
+  unsigned char        huffman_table[HUFFMAN_TABLE_SIZE];
   xine_waveformatex    wave;
 
   int                  audio_chunk_size1;
@@ -128,7 +129,7 @@ static int demux_idcin_send_chunk(demux_plugin_t *this_gen) {
   unsigned char disk_palette[PALETTE_SIZE * 3];
   palette_entry_t palette[PALETTE_SIZE];
   int i;
-  int remaining_sample_bytes;
+  unsigned int remaining_sample_bytes;
   int scale_bits;
 
   /* figure out what the next data is */
@@ -273,8 +274,7 @@ static int demux_idcin_send_chunk(demux_plugin_t *this_gen) {
 /* returns 1 if the CIN file was opened successfully, 0 otherwise */
 static int open_idcin_file(demux_idcin_t *this) {
   unsigned char header[IDCIN_HEADER_SIZE];
-  xine_bmiheader *bih = (xine_bmiheader *)this->bih;
-  unsigned char *huffman_table = this->bih + sizeof(xine_bmiheader);
+  xine_bmiheader *bih = &this->bih;
 
   if (_x_demux_read_header(this->input, header, IDCIN_HEADER_SIZE) != IDCIN_HEADER_SIZE)
     return 0;
@@ -328,7 +328,7 @@ static int open_idcin_file(demux_idcin_t *this) {
   this->input->seek(this->input, IDCIN_HEADER_SIZE, SEEK_SET);
 
   /* read the Huffman table */
-  if (this->input->read(this->input, huffman_table, HUFFMAN_TABLE_SIZE) !=
+  if (this->input->read(this->input, this->huffman_table, HUFFMAN_TABLE_SIZE) !=
     HUFFMAN_TABLE_SIZE)
     return 0;
 
@@ -356,9 +356,7 @@ static int open_idcin_file(demux_idcin_t *this) {
 static void demux_idcin_send_headers(demux_plugin_t *this_gen) {
   demux_idcin_t *this = (demux_idcin_t *) this_gen;
   buf_element_t *buf;
-  xine_bmiheader *bih = (xine_bmiheader *)this->bih;
-  uint32_t i;
-  int size;
+  uint32_t i, size;
 
   this->video_fifo  = this->stream->video_fifo;
   this->audio_fifo  = this->stream->audio_fifo;
@@ -369,8 +367,8 @@ static void demux_idcin_send_headers(demux_plugin_t *this_gen) {
   _x_demux_control_start(this->stream);
 
   /* send init info to decoders */
-  bih->biSize = sizeof(xine_bmiheader) + HUFFMAN_TABLE_SIZE;
-  size = bih->biSize;
+  this->bih.biSize = sizeof(xine_bmiheader) + HUFFMAN_TABLE_SIZE;
+  size = this->bih.biSize;
 
   i = 0;
   do {
@@ -385,7 +383,14 @@ static void demux_idcin_send_headers(demux_plugin_t *this_gen) {
       buf->decoder_flags = BUF_FLAG_HEADER|BUF_FLAG_STDHEADER|
                            BUF_FLAG_FRAMERATE|BUF_FLAG_FRAME_END;
     }
-    memcpy(buf->content, this->bih + i, buf->size);
+
+    if (i == 0) {
+      memcpy(buf->content, &this->bih, sizeof(xine_bmiheader));
+      memcpy(buf->content + sizeof(xine_bmiheader), this->huffman_table, buf->size - sizeof(xine_bmiheader));
+    } else {
+      memcpy(buf->content, this->huffman_table + i - sizeof(xine_bmiheader), buf->size);
+    }
+
     buf->type = BUF_VIDEO_IDCIN;
     this->video_fifo->put (this->video_fifo, buf);
 
