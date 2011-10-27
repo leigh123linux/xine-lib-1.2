@@ -144,7 +144,7 @@ static void update_region (dvb_spu_decoder_t * this, int region_id, int region_w
   region_t *reg = &dvbsub->regions[region_id];
 
   /* reject invalid sizes and set some limits ! */
-  if ( region_width<=0 || region_height<=0 || region_width>720 || region_height>576 ) {
+  if ( region_width<=0 || region_height<=0 || region_width>1920 || region_height>1080 ) {
     free( reg->img );
     reg->img = NULL;
 #ifdef LOG
