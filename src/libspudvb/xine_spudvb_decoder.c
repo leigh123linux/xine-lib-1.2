@@ -835,6 +835,9 @@ static void spudec_decode_data (spu_decoder_t * this_gen, buf_element_t * buf)
       case 0x13:
 	process_object_data_segment (this);
 	break;
+      case 0x14:
+	/* skip display descriptor */
+	break;
       case 0x80:
 	draw_subtitles( this ); /* Page is now completely rendered */
 	break;
