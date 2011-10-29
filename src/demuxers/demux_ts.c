@@ -1079,6 +1079,20 @@ static int demux_ts_parse_pes_header (xine_t *xine, demux_ts_media *m,
   return 0 ;
 }
 
+static void update_extra_info(demux_ts_t *this, demux_ts_media *m)
+{
+  off_t length = this->input->get_length (this->input);
+
+  /* cache frame position */
+
+  if (length > 0) {
+    m->input_normpos = (double)this->frame_pos * 65535.0 / length;
+  }
+  if (this->rate) {
+    m->input_time = this->frame_pos * 1000 / this->rate;
+  }
+}
+
 /*
  *  buffer arriving pes data
  */
@@ -1128,14 +1142,7 @@ static void demux_ts_buffer_pes(demux_ts_t*this, unsigned char *ts,
       memcpy(m->buf->mem, ts+len-m->size, m->size);
       m->buf->size = m->size;
 
-      /* cache frame position */
-      off_t length = this->input->get_length (this->input);
-      if (length > 0) {
-        m->input_normpos = (double)this->frame_pos * 65535.0 / length;
-      }
-      if (this->rate) {
-        m->input_time = this->frame_pos * 1000 / this->rate;
-      }
+      update_extra_info(this, m);
 
       /* rate estimation */
       if ((this->tbre_pid == INVALID_PID) && (this->audio_fifo == m->fifo))
