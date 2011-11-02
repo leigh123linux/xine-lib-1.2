@@ -421,6 +421,7 @@ static void ff_audio_decode_data (audio_decoder_t *this_gen, buf_element_t *buf)
 	    if (!this->output_open) {
 	      xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
 		      "ffmpeg_audio_dec: error opening audio output\n");
+	      this->size = 0;
 	      return;
 	    }
 	  }
