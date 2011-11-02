@@ -405,24 +405,26 @@ static void ff_audio_decode_data (audio_decoder_t *this_gen, buf_element_t *buf)
 	    this->audio_bits = this->context->bits_per_sample;
 	    this->audio_sample_rate = this->context->sample_rate;
 	    this->audio_channels = this->context->channels;
-	    if (!this->audio_bits || !this->audio_sample_rate || !this->audio_channels) {
+	  }
+	  if (!this->audio_bits || !this->audio_sample_rate || !this->audio_channels) {
+	    xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
+		    _("ffmpeg_audio_dec: cannot read codec parameters from packet\n"));
+	    /* try to decode next packet. */
+	    /* there shouldn't be any output yet */
+	    decode_buffer_size = 0;
+	    /* pts applies only to first audio packet */
+	    buf->pts = 0;
+	  } else {
+	    this->output_open = (this->stream->audio_out->open) (this->stream->audio_out,
+								 this->stream, this->audio_bits, this->audio_sample_rate,
+								 _x_ao_channels2mode(this->audio_channels));
+	    if (!this->output_open) {
 	      xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
-		      _("ffmpeg_audio_dec: cannot read codec parameters from packet\n"));
-
-	      /* We can't use this packet, so we must discard it
-	       * and wait for another one. */
-	      this->size = 0;
+		      "ffmpeg_audio_dec: error opening audio output\n");
 	      return;
 	    }
 	  }
-	  this->output_open = (this->stream->audio_out->open) (this->stream->audio_out,
-							       this->stream, this->audio_bits, this->audio_sample_rate,
-							       _x_ao_channels2mode(this->audio_channels));
 	}
-
-	/* if the audio still isn't open, bail */
-	if (!this->output_open)
-	  return;
 
         /* dispatch the decoded audio */
         out = 0;
