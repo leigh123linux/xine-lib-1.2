@@ -38,8 +38,6 @@
 #undef HAVE_STDLIB_H
 #endif
 
-#include <libmng.h>
-
 #define LOG_MODULE "demux_mng"
 #define LOG_VERBOSE
 /*
@@ -49,6 +47,8 @@
 #include "xine_internal.h"
 #include "xineutils.h"
 #include "demux.h"
+
+#include <libmng.h>
 
 typedef struct {
   demux_plugin_t     demux_plugin;
