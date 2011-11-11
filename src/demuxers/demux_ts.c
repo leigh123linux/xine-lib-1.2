@@ -292,7 +292,6 @@
 typedef struct {
   unsigned int     pid;
   fifo_buffer_t   *fifo;
-  uint8_t         *content;
   uint32_t         size;
   uint32_t         type;
   int64_t          pts;
@@ -874,7 +873,6 @@ static int demux_ts_parse_pes_header (xine_t *xine, demux_ts_media *m,
   packet_len -= header_len + 9;
 
   if (m->descriptor_tag == STREAM_VIDEO_VC1) {
-    m->content   = p;
     m->size      = packet_len;
     m->type      = BUF_VIDEO_VC1;
     return 1;
@@ -883,7 +881,6 @@ static int demux_ts_parse_pes_header (xine_t *xine, demux_ts_media *m,
   if (m->descriptor_tag == HDMV_SPU_BITMAP) {
     long payload_len = ((buf[4] << 8) | buf[5]) - header_len - 3;
 
-    m->content = p;
     m->size = packet_len;
     m->type |= BUF_SPU_HDMV;
     m->buf->decoder_info[2] = payload_len;
@@ -905,27 +902,23 @@ static int demux_ts_parse_pes_header (xine_t *xine, demux_ts_media *m,
      * For audio streams, m->type already contains the stream no.
      */
     if(m->descriptor_tag == HDMV_AUDIO_84_EAC3) {
-      m->content   = p;
       m->size = packet_len;
       m->type |= BUF_AUDIO_EAC3;
       return 1;
 
     } else if(m->descriptor_tag == STREAM_AUDIO_AC3) {    /* ac3 - raw */
-      m->content = p;
       m->size = packet_len;
       m->type |= BUF_AUDIO_A52;
       return 1;
 
     } else if (m->descriptor_tag == HDMV_AUDIO_83_TRUEHD) {
       /* TODO: separate AC3 and TrueHD streams ... */
-      m->content = p;
       m->size = packet_len;
       m->type |= BUF_AUDIO_A52;
       return 1;
 
     } else if (m->descriptor_tag == HDMV_AUDIO_82_DTS ||
                m->descriptor_tag == HDMV_AUDIO_86_DTS_HD_MA ) {
-      m->content = p;
       m->size = packet_len;
       m->type |= BUF_AUDIO_DTS;
       return 1;
@@ -939,7 +932,6 @@ static int demux_ts_parse_pes_header (xine_t *xine, demux_ts_media *m,
         return 0;
       }
 
-      m->content = p + 4;
       m->size    = packet_len - 4;
       m->type   |= BUF_AUDIO_LPCM_BE;
 
@@ -954,14 +946,12 @@ static int demux_ts_parse_pes_header (xine_t *xine, demux_ts_media *m,
       /* DVBSUB */
       long payload_len = ((buf[4] << 8) | buf[5]) - header_len - 3;
 
-      m->content = p;
       m->size = packet_len;
       m->type |= BUF_SPU_DVB;
       m->buf->decoder_info[2] = payload_len;
       return 1;
 
     } else if (p[0] == 0x0B && p[1] == 0x77) { /* ac3 - syncword */
-      m->content = p;
       m->size = packet_len;
       m->type |= BUF_AUDIO_A52;
       return 1;
@@ -969,7 +959,6 @@ static int demux_ts_parse_pes_header (xine_t *xine, demux_ts_media *m,
     } else if ((p[0] & 0xE0) == 0x20) {
       spu_id = (p[0] & 0x1f);
 
-      m->content   = p+1;
       m->size      = packet_len-1;
       m->type      = BUF_SPU_DVD + spu_id;
       return 1;
@@ -979,7 +968,6 @@ static int demux_ts_parse_pes_header (xine_t *xine, demux_ts_media *m,
         return 0;
       }
 
-      m->content   = p+4;
       m->size      = packet_len - 4;
       m->type      |= BUF_AUDIO_A52;
       return 1;
@@ -1001,7 +989,6 @@ static int demux_ts_parse_pes_header (xine_t *xine, demux_ts_media *m,
         return 0;
       }
 
-      m->content   = p+pcm_offset;
       m->size      = packet_len-pcm_offset;
       m->type      |= BUF_AUDIO_LPCM_BE;
       return 1;
@@ -1010,7 +997,6 @@ static int demux_ts_parse_pes_header (xine_t *xine, demux_ts_media *m,
 
   } else if ((stream_id & 0xf0) == 0xe0) {
 
-    m->content   = p;
     m->size      = packet_len;
     switch (m->descriptor_tag) {
     case ISO_11172_VIDEO:
@@ -1036,7 +1022,6 @@ static int demux_ts_parse_pes_header (xine_t *xine, demux_ts_media *m,
 
   } else if ((stream_id & 0xe0) == 0xc0) {
 
-    m->content   = p;
     m->size      = packet_len;
     switch (m->descriptor_tag) {
     case  ISO_11172_AUDIO:
@@ -1066,6 +1051,20 @@ static int demux_ts_parse_pes_header (xine_t *xine, demux_ts_media *m,
   }
 
   return 0 ;
+}
+
+static void update_extra_info(demux_ts_t *this, demux_ts_media *m)
+{
+  off_t length = this->input->get_length (this->input);
+
+  /* cache frame position */
+
+  if (length > 0) {
+    m->input_normpos = (double)this->frame_pos * 65535.0 / length;
+  }
+  if (this->rate) {
+    m->input_time = this->frame_pos * 1000 / this->rate;
+  }
 }
 
 /*
@@ -1117,14 +1116,7 @@ static void demux_ts_buffer_pes(demux_ts_t*this, unsigned char *ts,
       memcpy(m->buf->mem, ts+len-m->size, m->size);
       m->buf->size = m->size;
 
-      /* cache frame position */
-      off_t length = this->input->get_length (this->input);
-      if (length > 0) {
-        m->input_normpos = (double)this->frame_pos * 65535.0 / length;
-      }
-      if (this->rate) {
-        m->input_time = this->frame_pos * 1000 / this->rate;
-      }
+      update_extra_info(this, m);
 
       /* rate estimation */
       if ((this->tbre_pid == INVALID_PID) && (this->audio_fifo == m->fifo))
