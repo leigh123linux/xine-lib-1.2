@@ -6,15 +6,16 @@ msgid ""
 msgstr ""
 "Project-Id-Version: xine-lib 1.1.18\n"
 "Report-Msgid-Bugs-To: xine-devel@lists.sourceforge.net\n"
-"POT-Creation-Date: 2010-10-10 00:20+0200\n"
+"POT-Creation-Date: 2011-11-13 01:50+0000\n"
 "PO-Revision-Date: 2010-10-10 01:06+0200\n"
 "Last-Translator: František Dvořák <valtri@civ.zcu.cz>\n"
 "Language-Team: Czech <cs@li.org>\n"
+"Language: cs\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=3; plural=n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%"
-"10<=4 && (n%100<10 || n%100>=20) ? 1 : 2;\n"
+"Plural-Forms: nplurals=3; plural=n%10==1 && n%100!=11 ? 0 : n%10>=2 && n"
+"%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2;\n"
 
 #: lib/hstrerror.c:17
 msgid "No error"
@@ -173,12 +174,12 @@ msgid ">>> Check if another program already uses PCM <<<\n"
 msgstr ">>> Zkontrolujte, jestli už jiný program nepoužívá PCM <<<\n"
 
 #: src/audio_out/audio_alsa_out.c:1498 src/audio_out/audio_jack_out.c:742
-#: src/audio_out/audio_oss_out.c:927
+#: src/audio_out/audio_oss_out.c:925
 msgid "speaker arrangement"
 msgstr "uspořádání reproduktorů"
 
 #: src/audio_out/audio_alsa_out.c:1499 src/audio_out/audio_jack_out.c:743
-#: src/audio_out/audio_oss_out.c:928
+#: src/audio_out/audio_oss_out.c:926
 msgid ""
 "Select how your speakers are arranged, this determines which speakers xine "
 "uses for sound output. The individual values are:\n"
@@ -257,19 +258,19 @@ msgstr " 24bitový"
 msgid " 32bit"
 msgstr " 32bitový"
 
-#: src/audio_out/audio_alsa_out.c:1558 src/audio_out/audio_oss_out.c:963
+#: src/audio_out/audio_alsa_out.c:1558 src/audio_out/audio_oss_out.c:961
 msgid " mono"
 msgstr " mono"
 
-#: src/audio_out/audio_alsa_out.c:1562 src/audio_out/audio_oss_out.c:969
+#: src/audio_out/audio_alsa_out.c:1562 src/audio_out/audio_oss_out.c:967
 msgid " stereo"
 msgstr " stereo"
 
-#: src/audio_out/audio_alsa_out.c:1567 src/audio_out/audio_oss_out.c:976
+#: src/audio_out/audio_alsa_out.c:1567 src/audio_out/audio_oss_out.c:974
 msgid " 4-channel"
 msgstr " 4kanálový"
 
-#: src/audio_out/audio_alsa_out.c:1570 src/audio_out/audio_oss_out.c:979
+#: src/audio_out/audio_alsa_out.c:1570 src/audio_out/audio_oss_out.c:977
 msgid " (4-channel not enabled in xine config)"
 msgstr " (4kanálový není povolen v konfiguraci xine)"
 
@@ -281,19 +282,19 @@ msgstr " 4.1kanálový"
 msgid " (4.1-channel not enabled in xine config)"
 msgstr " (4.1kanálový není povolen v konfiguraci xine)"
 
-#: src/audio_out/audio_alsa_out.c:1583 src/audio_out/audio_oss_out.c:986
+#: src/audio_out/audio_alsa_out.c:1583 src/audio_out/audio_oss_out.c:984
 msgid " 5-channel"
 msgstr " 5kanálový"
 
-#: src/audio_out/audio_alsa_out.c:1586 src/audio_out/audio_oss_out.c:989
+#: src/audio_out/audio_alsa_out.c:1586 src/audio_out/audio_oss_out.c:987
 msgid " (5-channel not enabled in xine config)"
 msgstr " (5kanálový není povolen v konfifuraci xine)"
 
-#: src/audio_out/audio_alsa_out.c:1591 src/audio_out/audio_oss_out.c:996
+#: src/audio_out/audio_alsa_out.c:1591 src/audio_out/audio_oss_out.c:994
 msgid " 5.1-channel"
 msgstr " 5.1kanálový"
 
-#: src/audio_out/audio_alsa_out.c:1594 src/audio_out/audio_oss_out.c:999
+#: src/audio_out/audio_alsa_out.c:1594 src/audio_out/audio_oss_out.c:997
 msgid " (5.1-channel not enabled in xine config)"
 msgstr " (5.1kanálový není povolen v konfiguraci xine)"
 
@@ -533,7 +534,7 @@ msgstr "audio_esd_out: nelze se připojit k ESD serveru %s: %s\n"
 msgid "esd audio output latency (adjust a/v sync)"
 msgstr "zpoždění zvukového výstupu esd (upraví synchronizaci zvuku a videa)"
 
-#: src/audio_out/audio_esd_out.c:540 src/audio_out/audio_oss_out.c:869
+#: src/audio_out/audio_esd_out.c:540 src/audio_out/audio_oss_out.c:867
 msgid ""
 "If you experience audio being not in sync with the video, you can enter a "
 "fixed offset here to compensate.\n"
@@ -590,12 +591,12 @@ msgstr "modul zvukového výstupu xine pro JACK Audio Connection Kit"
 msgid "xine dummy audio output plugin"
 msgstr "fiktivní modul zvukového výstupu xine"
 
-#: src/audio_out/audio_oss_out.c:196
+#: src/audio_out/audio_oss_out.c:195
 #, c-format
 msgid "audio_oss_out: Opening audio device %s: %s\n"
 msgstr "audio_oss_out: Otevírá se zvukové zařízení %s: %s\n"
 
-#: src/audio_out/audio_oss_out.c:218
+#: src/audio_out/audio_oss_out.c:217
 #, c-format
 msgid ""
 "audio_oss_out: warning: sampling rate %d Hz not supported, trying 44100 Hz\n"
@@ -603,17 +604,17 @@ msgstr ""
 "audio_oss_out: varování: vzorkovací frekvence %d Hz není podporována, zkusí "
 "se 44100 Hz\n"
 
-#: src/audio_out/audio_oss_out.c:230
+#: src/audio_out/audio_oss_out.c:229
 #, c-format
 msgid "audio_oss_out: audio rate : %d requested, %d provided by device\n"
 msgstr ""
 "audio_oss_out: rychlost zvuku : %d požadováno, %d poskytnuto zařízením\n"
 
-#: src/audio_out/audio_oss_out.c:745
+#: src/audio_out/audio_oss_out.c:743
 msgid "OSS audio device name"
 msgstr "jméno zvukového zařízení OSS"
 
-#: src/audio_out/audio_oss_out.c:746
+#: src/audio_out/audio_oss_out.c:744
 msgid ""
 "Specifies the base part of the audio device name, to which the OSS device "
 "number is appended to get the full device name.\n"
@@ -624,11 +625,11 @@ msgstr ""
 "Vyberte \"auto\", jestliže chcete, aby xine automaticky zjistilo správné "
 "nastavení."
 
-#: src/audio_out/audio_oss_out.c:753
+#: src/audio_out/audio_oss_out.c:751
 msgid "OSS audio device number, -1 for none"
 msgstr "číslo zvukového zařízení OSS, -1 pro žádné číslo"
 
-#: src/audio_out/audio_oss_out.c:754
+#: src/audio_out/audio_oss_out.c:752
 msgid ""
 "The full audio device name is created by concatenating the OSS device name "
 "and the audio device number.\n"
@@ -644,23 +645,23 @@ msgstr ""
 "Rozsah této hodnoty je -1 nebo 0-15. Toto nastavení je ignorováno, pokud je "
 "jméno zvukového zařízení nastaveno na \"auto\"."
 
-#: src/audio_out/audio_oss_out.c:763
+#: src/audio_out/audio_oss_out.c:761
 #, c-format
 msgid "audio_oss_out: audio.device.oss_device_name = auto, probing devs\n"
 msgstr ""
 "audio_oss_out: audio.device.oss_device_name = auto, zkouší se zařízení\n"
 
-#: src/audio_out/audio_oss_out.c:766
+#: src/audio_out/audio_oss_out.c:764
 #, c-format
 msgid "audio_oss_out: Auto probe for audio device failed\n"
 msgstr "audio_oss_out: automatická zkouška zvukového zařízení selhala\n"
 
-#: src/audio_out/audio_oss_out.c:782
+#: src/audio_out/audio_oss_out.c:780
 #, c-format
 msgid "audio_oss_out: using device >%s<\n"
 msgstr "audio_oss_out: použije se zařízení >%s<\n"
 
-#: src/audio_out/audio_oss_out.c:788 src/audio_out/audio_oss_out.c:902
+#: src/audio_out/audio_oss_out.c:786 src/audio_out/audio_oss_out.c:900
 #, c-format
 msgid ""
 "audio_oss_out: opening audio device %s failed:\n"
@@ -669,11 +670,11 @@ msgstr ""
 "audio_oss_out: otevírání zvukového zařízení %s selhalo:\n"
 "%s\n"
 
-#: src/audio_out/audio_oss_out.c:809
+#: src/audio_out/audio_oss_out.c:807
 msgid "a/v sync method to use by OSS"
 msgstr "metoda synchronizace zvuku a videa použitá OSS"
 
-#: src/audio_out/audio_oss_out.c:810
+#: src/audio_out/audio_oss_out.c:808
 msgid ""
 "xine can use different methods to keep audio and video synchronized. Which "
 "setting works best depends on the OSS driver and sound hardware you are "
@@ -733,7 +734,7 @@ msgstr ""
 "váš systém nepodporuje žádné ioctl reálného času a zjistíte, že je po "
 "dlouhém přehrávání špatná synchronizace"
 
-#: src/audio_out/audio_oss_out.c:861
+#: src/audio_out/audio_oss_out.c:859
 #, c-format
 msgid ""
 "audio_oss_out: Audio driver realtime sync disabled...\n"
@@ -745,11 +746,11 @@ msgstr ""
 "reálného času\n"
 " audio_oss_out: ...mohou zde být problémy se synchronizací zvuku a videa\n"
 
-#: src/audio_out/audio_oss_out.c:868
+#: src/audio_out/audio_oss_out.c:866
 msgid "OSS audio output latency (adjust a/v sync)"
 msgstr "zpoždění zvukového výstupu OSS (upraví synchronizaci zvuku a videa)"
 
-#: src/audio_out/audio_oss_out.c:894
+#: src/audio_out/audio_oss_out.c:892
 #, c-format
 msgid ""
 "audio_oss_out: Audio driver realtime sync disabled...\n"
@@ -760,23 +761,23 @@ msgstr ""
 "audio_oss_out: ...zkouší se velikost výstupní vyrovnávací paměti: %d bytů\n"
 "audio_oss_out: ...mohou zde být problémy se synchronizací zvuku a videa\n"
 
-#: src/audio_out/audio_oss_out.c:958
+#: src/audio_out/audio_oss_out.c:956
 msgid "audio_oss_out: supported modes are"
 msgstr "audio_oss_out: podporované režimy jsou"
 
-#: src/audio_out/audio_oss_out.c:1009
+#: src/audio_out/audio_oss_out.c:1007
 msgid " a/52 pass-through"
 msgstr " a/52 pass-through"
 
-#: src/audio_out/audio_oss_out.c:1012
+#: src/audio_out/audio_oss_out.c:1010
 msgid " (a/52 pass-through not enabled in xine config)"
 msgstr " (a/52 pass-through není povoleno v konfiguraci xine)"
 
-#: src/audio_out/audio_oss_out.c:1027
+#: src/audio_out/audio_oss_out.c:1026
 msgid "OSS audio mixer number, -1 for none"
 msgstr "číslo zvukového mixeru OSS, -1 pro žádné"
 
-#: src/audio_out/audio_oss_out.c:1028
+#: src/audio_out/audio_oss_out.c:1027
 msgid ""
 "The full mixer device name is created by taking the OSS device name, "
 "replacing \"dsp\" with \"mixer\" and adding the mixer number.\n"
@@ -792,12 +793,12 @@ msgstr ""
 "Rozsah této hodnoty je -1 nebo 0-15. Toto nastavení je ignorováno, pokud je "
 "jméno zvukového zařízení OSS nastaveno na \"auto\"."
 
-#: src/audio_out/audio_oss_out.c:1082
+#: src/audio_out/audio_oss_out.c:1081
 #, c-format
 msgid "audio_oss_out: open() mixer %s failed: %s\n"
 msgstr "audio_oss_out: open() mixer %s selhalo: %s\n"
 
-#: src/audio_out/audio_oss_out.c:1155
+#: src/audio_out/audio_oss_out.c:1154
 msgid "xine audio output plugin using oss-compliant audio devices/drivers"
 msgstr "výstupní zvukový modul xine použije zvuková zařízení/ovladače OSS"
 
@@ -844,24 +845,29 @@ msgstr "audio_sun_out: zvukové ioctl na zařízení %s selhalo: %s\n"
 msgid "xine audio output plugin using sun-compliant audio devices/drivers"
 msgstr "výstupní zvukový modul použije zvuková zařízení/ovladače sun"
 
-#: src/combined/ffmpeg/ff_audio_decoder.c:82
+#: src/combined/ffmpeg/ff_audio_decoder.c:118
 #, c-format
 msgid "ffmpeg_audio_dec: increasing buffer to %d to avoid overflow.\n"
 msgstr "ffmpeg_audio_dec: zvětšení bufferu na %d, aby se předešlo přetečení.\n"
 
-#: src/combined/ffmpeg/ff_audio_decoder.c:125
+#: src/combined/ffmpeg/ff_audio_decoder.c:153
 #, c-format
 msgid "ffmpeg_audio_dec: couldn't find ffmpeg decoder for buf type 0x%X\n"
 msgstr "ffmpeg_audio_dec: nelze nalézt dekodér ffmpeg pro buffer typu 0x%X\n"
 
-#: src/combined/ffmpeg/ff_audio_decoder.c:262
+#: src/combined/ffmpeg/ff_audio_decoder.c:198
 #, c-format
 msgid "ffmpeg_audio_dec: trying to open null codec\n"
 msgstr "ffmpeg_audio_dec: pokus o otevření kodeku null\n"
 
-#: src/combined/ffmpeg/ff_audio_decoder.c:271
+#: src/combined/ffmpeg/ff_audio_decoder.c:207
 #, c-format
 msgid "ffmpeg_audio_dec: couldn't open decoder\n"
+msgstr "ffmpeg_audio_dec: nelze otevřít dekodér\n"
+
+#: src/combined/ffmpeg/ff_audio_decoder.c:479
+#, fuzzy, c-format
+msgid "ffmpeg_audio_dec: cannot read codec parameters from packet\n"
 msgstr "ffmpeg_audio_dec: nelze otevřít dekodér\n"
 
 #: src/combined/ffmpeg/ff_dvaudio_decoder.c:285
@@ -869,46 +875,46 @@ msgstr "ffmpeg_audio_dec: nelze otevřít dekodér\n"
 msgid "dvaudio: increasing buffer to %d to avoid overflow.\n"
 msgstr "dvaudio: zvětšení bufferu na %d, aby se předešlo přetečení.\n"
 
-#: src/combined/ffmpeg/ff_video_decoder.c:175
+#: src/combined/ffmpeg/ff_video_decoder.c:187
 #, c-format
 msgid "ffmpeg_video_dec: unsupported frame format, DR1 disabled.\n"
 msgstr "ffmpeg_video_dec: nepodporovaný formát, DR1 zakázáno.\n"
 
-#: src/combined/ffmpeg/ff_video_decoder.c:193
+#: src/combined/ffmpeg/ff_video_decoder.c:205
 #, c-format
 msgid "ffmpeg_video_dec: unsupported frame dimensions, DR1 disabled.\n"
 msgstr "ffmpeg_video_dec: nepodporované rozměry snímku, DR1 zakázáno.\n"
 
-#: src/combined/ffmpeg/ff_video_decoder.c:304
+#: src/combined/ffmpeg/ff_video_decoder.c:316
 #, c-format
 msgid "ffmpeg_video_dec: couldn't find ffmpeg decoder for buf type 0x%X\n"
 msgstr "ffmpeg_video_dec: nelze nalézt dekodér ffmpeg pro buffer typu 0x%X\n"
 
-#: src/combined/ffmpeg/ff_video_decoder.c:331
+#: src/combined/ffmpeg/ff_video_decoder.c:347
 #, c-format
 msgid "ffmpeg_video_dec: couldn't open decoder\n"
 msgstr "ffmpeg_video_dec: nelze otevřít dekodér\n"
 
-#: src/combined/ffmpeg/ff_video_decoder.c:346
+#: src/combined/ffmpeg/ff_video_decoder.c:362
 #, c-format
 msgid "ffmpeg_video_dec: couldn't open decoder (pass 2)\n"
 msgstr "ffmpeg_video_dec: nelze otevřít dekodér (2. průchod)\n"
 
-#: src/combined/ffmpeg/ff_video_decoder.c:391
+#: src/combined/ffmpeg/ff_video_decoder.c:410
 #, c-format
 msgid "ffmpeg_video_dec: direct rendering enabled\n"
 msgstr "ffmpeg_video_dec: přímé renderování povoleno\n"
 
-#: src/combined/ffmpeg/ff_video_decoder.c:840
+#: src/combined/ffmpeg/ff_video_decoder.c:848
 #, c-format
 msgid "ffmpeg_video_dec: increasing buffer to %d to avoid overflow.\n"
 msgstr "ffmpeg_video_dec: zvětšení bufferu na %d, aby se předešlo přetečení.\n"
 
-#: src/combined/ffmpeg/ff_video_decoder.c:1771
+#: src/combined/ffmpeg/ff_video_decoder.c:1835
 msgid "MPEG-4 postprocessing quality"
 msgstr "kvalita dodatečného zpracování MPEG-4"
 
-#: src/combined/ffmpeg/ff_video_decoder.c:1772
+#: src/combined/ffmpeg/ff_video_decoder.c:1836
 msgid ""
 "You can adjust the amount of post processing applied to MPEG-4 video.\n"
 "Higher values result in better quality, but need more CPU. Lower values may "
@@ -916,18 +922,18 @@ msgid ""
 "heavy post processing can actually make the image worse by blurring it too "
 "much."
 msgstr ""
-"Můžete přizpůsobit množství dodatečného zpracování použitého na video MPEG-"
-"4.\n"
+"Můžete přizpůsobit množství dodatečného zpracování použitého na video "
+"MPEG-4.\n"
 "Vyšší hodnoty mají za následek lepší kvalitu, ale více zatíží CPU. Menší "
 "hodnoty mohou mít za následek defekty v obrázku, např. blokové artefakty. "
 "Pro vysokou kvalitu videa může příliš silné dodatečné zpracování způsobit "
 "horší obraz tím, že ho více rozmaže."
 
-#: src/combined/ffmpeg/ff_video_decoder.c:1780
+#: src/combined/ffmpeg/ff_video_decoder.c:1844
 msgid "FFmpeg video decoding thread count"
 msgstr "Počet vláken na dekódování videa FFmpegem"
 
-#: src/combined/ffmpeg/ff_video_decoder.c:1781
+#: src/combined/ffmpeg/ff_video_decoder.c:1845
 msgid ""
 "You can adjust the number of video decoding threads which FFmpeg may use.\n"
 "Higher values should speed up decoding but it depends on the codec used "
@@ -941,11 +947,11 @@ msgstr ""
 "dekódovací vlákno na jeden logický procesor (typicky od 1 do 4).\n"
 "Změna tohoto nastavení se projeví při přehrávání následujícího videa."
 
-#: src/combined/ffmpeg/ff_video_decoder.c:1790
+#: src/combined/ffmpeg/ff_video_decoder.c:1854
 msgid "Skip loop filter"
 msgstr "Přeskakování filtru ve smyčce"
 
-#: src/combined/ffmpeg/ff_video_decoder.c:1791
+#: src/combined/ffmpeg/ff_video_decoder.c:1855
 msgid ""
 "You can control for which frames the loop filter shall be skipped after "
 "decoding.\n"
@@ -961,12 +967,12 @@ msgstr ""
 "'all' (všechny).Výchozí hodnota ponechává rozhodnutí na implementaci.\n"
 "Změna tohoto nastavení se projeví při přehrávání následujícího videa."
 
-#: src/combined/ffmpeg/ff_video_decoder.c:1800
+#: src/combined/ffmpeg/ff_video_decoder.c:1864
 msgid "Choose speed over specification compliance"
 msgstr "Upřednostnit rychlost před vyhověním specifikacím"
 
 # "zneuctívají specifikace kodeku" ;-)
-#: src/combined/ffmpeg/ff_video_decoder.c:1801
+#: src/combined/ffmpeg/ff_video_decoder.c:1865
 msgid ""
 "You may want to allow speed cheats which violate codec specification.\n"
 "Cheating may speed up decoding but can also lead to decoding artefacts.\n"
@@ -1166,7 +1172,7 @@ msgstr ""
 "demux_mpeg_pes: varování: hlavička PES indikuje, že tyto data mohou být "
 "zašifrována (šifrovací mód: %d)\n"
 
-#: src/demuxers/demux_mpeg_pes.c:1088
+#: src/demuxers/demux_mpeg_pes.c:1116
 #, c-format
 msgid ""
 "demux_mpeg_pes:Unrecognised private stream 1 0x%02x. Please report this to "
@@ -1175,7 +1181,7 @@ msgstr ""
 "demux_mpeg_pes: Nerozpoznaný soukromý proud dat 1 0x%02x. Prosím oznamte to "
 "vývojářům xine.\n"
 
-#: src/demuxers/demux_ogg.c:877
+#: src/demuxers/demux_ogg.c:880
 #, c-format
 msgid "ogg: vorbis audio track indicated but no vorbis stream header found.\n"
 msgstr ""
@@ -1714,15 +1720,15 @@ msgstr "input_cdda: úspěšně připojeno k CDDB serveru '%s:%d'.\n"
 msgid "input_cdda: failed to connect to cddb server '%s:%d' (%s).\n"
 msgstr "input_cdda: nelze se připojit k CDDB serveru '%s:%d' (%s).\n"
 
-#: src/input/input_cdda.c:2764
+#: src/input/input_cdda.c:2766
 msgid "CD Digital Audio (aka. CDDA)"
 msgstr "digitální zvukové CD (CDDA)"
 
-#: src/input/input_cdda.c:2816
+#: src/input/input_cdda.c:2818
 msgid "device used for CD audio"
 msgstr "zařízení použité pro zvukové CD"
 
-#: src/input/input_cdda.c:2817
+#: src/input/input_cdda.c:2819
 msgid ""
 "The path to the device, usually a CD or DVD drive, which you intend to use "
 "for playing audio CDs."
@@ -1730,11 +1736,11 @@ msgstr ""
 "Cesta k zeřízení, obvykle CD nebo DVD mechanika, které máte v úmyslu "
 "používat k přehrávání zvukových CD."
 
-#: src/input/input_cdda.c:2823
+#: src/input/input_cdda.c:2825
 msgid "query CDDB"
 msgstr "dotazovat se CDDB"
 
-#: src/input/input_cdda.c:2823
+#: src/input/input_cdda.c:2825
 msgid ""
 "Enables CDDB queries, which will give you convenient title and track names "
 "for your audio CDs.\n"
@@ -1748,11 +1754,11 @@ msgstr ""
 "internetového serveru, který by pak mohl znát profil vašich poslechových "
 "zvyků."
 
-#: src/input/input_cdda.c:2831
+#: src/input/input_cdda.c:2833
 msgid "CDDB server name"
 msgstr "jméno serveru CDDB"
 
-#: src/input/input_cdda.c:2831
+#: src/input/input_cdda.c:2833
 msgid ""
 "The CDDB server used to retrieve the title and track information from.\n"
 "This setting is security critical, because the sever will receive "
@@ -1765,21 +1771,21 @@ msgstr ""
 "posílány informace o vašich poslechovích zvycích a také mohl by odpovídat na "
 "dotazy zákeřnými odpověďmi. Ujistěte se, že serveru můžete důvěřovat."
 
-#: src/input/input_cdda.c:2839
+#: src/input/input_cdda.c:2841
 msgid "CDDB server port"
 msgstr "port serveru CDDB"
 
-#: src/input/input_cdda.c:2839
+#: src/input/input_cdda.c:2841
 msgid "The server port used to retrieve the title and track information from."
 msgstr ""
 "Port serveru, který se použije, aby se z něj získávaly nadpisy a informace o "
 "stopě."
 
-#: src/input/input_cdda.c:2845
+#: src/input/input_cdda.c:2847
 msgid "CDDB cache directory"
 msgstr "adresář se záznamy CDDB"
 
-#: src/input/input_cdda.c:2845
+#: src/input/input_cdda.c:2847
 msgid ""
 "The replies from the CDDB server will be cached in this directory.\n"
 "This setting is security critical, because files with uncontrollable names "
@@ -1791,11 +1797,11 @@ msgstr ""
 "tomto adresáři vytvářeny soubory s nekontrolovatelnými jmény. Ujistěte se, "
 "že daný adresář není používán pro nic jiného než cachování CDDB."
 
-#: src/input/input_cdda.c:2853
+#: src/input/input_cdda.c:2855
 msgid "slow down disc drive to this speed factor"
 msgstr "zpomalit diskovou jednotku na tento rychlostní faktor"
 
-#: src/input/input_cdda.c:2854
+#: src/input/input_cdda.c:2856
 msgid ""
 "Since some CD or DVD drives make some really loud noises because of the fast "
 "disc rotation, xine will try to slow them down. With standard CD or DVD "
@@ -1819,47 +1825,47 @@ msgstr "input_dvb: selhalo otevření souboru kanálu dvb '%s': %s\n"
 msgid "input_dvb: dvb channel file '%s' is not a plain file\n"
 msgstr "input_dvb: soubor kanálu dvb '%s' není běžný soubor\n"
 
-#: src/input/input_dvb.c:2148 src/input/input_dvb.c:2991
+#: src/input/input_dvb.c:2148 src/input/input_dvb.c:2995
 #, c-format
 msgid "input_dvb: tuner_set_channel failed\n"
 msgstr "input_dvb: selhalo nastavení kanálu\n"
 
-#: src/input/input_dvb.c:2784
+#: src/input/input_dvb.c:2788
 #, c-format
 msgid "input_dvb: DVB GUI %s\n"
 msgstr "input_dvb: DVB rozhraní %s\n"
 
-#: src/input/input_dvb.c:2789 src/input/input_dvb.c:3219
+#: src/input/input_dvb.c:2793 src/input/input_dvb.c:3223
 #, c-format
 msgid "input_dvb: cannot open dvb device\n"
 msgstr "input_dvb: nelze otevřít zařízení dvb\n"
 
-#: src/input/input_dvb.c:2813
+#: src/input/input_dvb.c:2817
 #, c-format
 msgid "input_dvb: channel %d out of range, defaulting to 0\n"
 msgstr "input_dvb: kanál %d mimo rozsah, použije se výchozí 0\n"
 
-#: src/input/input_dvb.c:2824
+#: src/input/input_dvb.c:2828
 #, c-format
 msgid "input_dvb: searching for channel %s\n"
 msgstr "input_dvb: hledání kanálu %s\n"
 
-#: src/input/input_dvb.c:2847
+#: src/input/input_dvb.c:2851
 #, c-format
 msgid "input_dvb: exact match for %s not found: trying partial matches\n"
 msgstr "input_dvb: přesná shoda pro %s nenalezena: zkusí se částečné shody\n"
 
-#: src/input/input_dvb.c:2854
+#: src/input/input_dvb.c:2858
 #, c-format
 msgid "input_dvb: found matching channel %s\n"
 msgstr "input_dvb: nalezen odpovídající kanál %s\n"
 
-#: src/input/input_dvb.c:2867
+#: src/input/input_dvb.c:2871
 #, c-format
 msgid "input_dvb: channel %s not found in channels.conf, defaulting.\n"
 msgstr "input_dvb: kanál %s nenalezen v channels.conf, použije se výchozí.\n"
 
-#: src/input/input_dvb.c:2873
+#: src/input/input_dvb.c:2877
 #, c-format
 msgid ""
 "input_dvb: invalid channel specification, defaulting to last viewed "
@@ -1867,12 +1873,12 @@ msgid ""
 msgstr ""
 "input_dvb: neplatná specifikace kanálu, použije se naposledy sledovaný\n"
 
-#: src/input/input_dvb.c:2881
+#: src/input/input_dvb.c:2885
 #, c-format
 msgid "input_dvb: invalid channel specification, defaulting to channel 0\n"
 msgstr "input_dvb: neplatná specifikace kanálu, použije se výchozí kanál 0\n"
 
-#: src/input/input_dvb.c:2893
+#: src/input/input_dvb.c:2897
 #, c-format
 msgid ""
 "input_dvb: dvbs mrl specified but the tuner doesn't appear to be QPSK (DVB-"
@@ -1881,7 +1887,7 @@ msgstr ""
 "input_dvb: bylo uvedeno MRL DVBS, ale nezdá se, že by tuner byl QPSK (DVB-"
 "S)\n"
 
-#: src/input/input_dvb.c:2913
+#: src/input/input_dvb.c:2917
 #, c-format
 msgid ""
 "input_dvb: dvbt mrl specified but the tuner doesn't appear to be OFDM (DVB-"
@@ -1890,7 +1896,7 @@ msgstr ""
 "input_dvb: bylo uvedeno MRL DVBT, ale nezdá se, že by byl tuner OFDM (DVB-"
 "T)\n"
 
-#: src/input/input_dvb.c:2936
+#: src/input/input_dvb.c:2940
 #, c-format
 msgid ""
 "input_dvb: dvbc mrl specified but the tuner doesn't appear to be QAM (DVB-"
@@ -1898,7 +1904,7 @@ msgid ""
 msgstr ""
 "input_dvb: bylo uvedeno MRL DVBC, ale nezdá se, že by byl tuner QAM (DVB-C)\n"
 
-#: src/input/input_dvb.c:2962
+#: src/input/input_dvb.c:2966
 #, c-format
 msgid ""
 "input_dvb: dvba mrl specified but the tuner doesn't appear to be ATSC (DVB-"
@@ -1907,21 +1913,21 @@ msgstr ""
 "input_dvb: bylo uvedeno MRL DVBA, ale nezdá se, že by byl tuner ATSC (DVB-"
 "A)\n"
 
-#: src/input/input_dvb.c:2997
+#: src/input/input_dvb.c:3001
 #, c-format
 msgid "input_dvb: cannot open dvr device '%s'\n"
 msgstr "input_dvb: nelze otevřít zařízení dvr '%s'\n"
 
-#: src/input/input_dvb.c:3020
+#: src/input/input_dvb.c:3024
 #, c-format
 msgid "input_dvb: cannot create EPG updater thread\n"
 msgstr "input_dvb: nelze vytvořit vlákno na aktualizace EPG\n"
 
-#: src/input/input_dvb.c:3082
+#: src/input/input_dvb.c:3086
 msgid "use DVB 'center cutout' (zoom)"
 msgstr "použít 'středový výsek' DVB (zvětšení)"
 
-#: src/input/input_dvb.c:3083
+#: src/input/input_dvb.c:3087
 msgid ""
 "This will allow fullscreen playback of 4:3 content transmitted in a 16:9 "
 "frame."
@@ -1929,15 +1935,15 @@ msgstr ""
 "Toto dovolí přehrát obsah 4:3 na celé obrazovce, který byl přenášen ve "
 "formátu 16:9."
 
-#: src/input/input_dvb.c:3176
+#: src/input/input_dvb.c:3180
 msgid "DVB (Digital TV) input plugin"
 msgstr "vstupní modul DVB (digitální TV)"
 
-#: src/input/input_dvb.c:3308
+#: src/input/input_dvb.c:3311
 msgid "Remember last DVB channel watched"
 msgstr "Pamatovat si naposledy sledovaný kanál DVB"
 
-#: src/input/input_dvb.c:3309
+#: src/input/input_dvb.c:3312
 msgid ""
 "On autoplay, xine will remember and switch to the channel indicated in media."
 "dvb.last_channel. "
@@ -1945,21 +1951,21 @@ msgstr ""
 "Při automatickém přehrávání xine přepne na poslední kanál uvedený v media."
 "dvb.last_channel."
 
-#: src/input/input_dvb.c:3316
+#: src/input/input_dvb.c:3319
 msgid "Last DVB channel viewed"
 msgstr "Naposledy sledovaný kanál DVB"
 
-#: src/input/input_dvb.c:3317
+#: src/input/input_dvb.c:3320
 msgid "If enabled xine will remember and switch to this channel. "
 msgstr ""
 "Pokud je povoleno, xine si bude pamatovat tento kanál a bude se na něj "
 "automaticky přepínat."
 
-#: src/input/input_dvb.c:3322
+#: src/input/input_dvb.c:3325
 msgid "Number of seconds until tuning times out."
 msgstr "Počet sekund, než nechat ukončit ladění."
 
-#: src/input/input_dvb.c:3323
+#: src/input/input_dvb.c:3326
 msgid ""
 "Leave at 0 means try forever. Greater than 0 means wait that many seconds to "
 "get a lock. Minimum is 5 seconds."
@@ -1967,30 +1973,30 @@ msgstr ""
 "Ponechání na 0 znamená zkoušet bez přestání. Více než 0 znamená čekat na "
 "získání zámku uvedený počet sekund. Minimum je 5 sekund."
 
-#: src/input/input_dvb.c:3329
+#: src/input/input_dvb.c:3332
 msgid "Number of dvb card to use."
 msgstr "Počet karet DVB, které se mají použít."
 
-#: src/input/input_dvb.c:3330
+#: src/input/input_dvb.c:3333
 msgid ""
 "Leave this at zero unless you really have more than 1 card in your system."
 msgstr ""
 "Nechte to na nule, pokud opravdu nechcete ve vašem systému více než jednu "
 "kartu."
 
-#: src/input/input_dvb.c:3338
+#: src/input/input_dvb.c:3341
 msgid "Enable the DVB GUI"
 msgstr "Povolit rozhraní DVB"
 
-#: src/input/input_dvb.c:3339
+#: src/input/input_dvb.c:3342
 msgid "Enable the DVB GUI, mouse controlled recording and channel switching."
 msgstr "Povolí rozhraní DVB - nahrávání a přepínání kanálů řízené myší."
 
-#: src/input/input_dvb.c:3345
+#: src/input/input_dvb.c:3348
 msgid "DVB Channels config file"
 msgstr "Konfigurační soubor kanálů DVB"
 
-#: src/input/input_dvb.c:3346
+#: src/input/input_dvb.c:3349
 msgid ""
 "DVB Channels config file to use instead of the ~/.xine/channels.conf file."
 msgstr ""
@@ -2232,19 +2238,19 @@ msgstr "input_file: Soubor prázdný: >%s<\n"
 msgid "file input plugin"
 msgstr "modul pro vstup ze souboru"
 
-#: src/input/input_file.c:994
+#: src/input/input_file.c:991
 msgid "file browsing start location"
 msgstr "počáteční umístění při procházení souborů"
 
-#: src/input/input_file.c:995
+#: src/input/input_file.c:992
 msgid "The browser to select the file to play will start at this location."
 msgstr "Prohlížeč vybírající soubor k přehrání začne na tomto umístění."
 
-#: src/input/input_file.c:1002
+#: src/input/input_file.c:999
 msgid "list hidden files"
 msgstr "ukazovat skryté soubory"
 
-#: src/input/input_file.c:1003
+#: src/input/input_file.c:1000
 msgid ""
 "If enabled, the browser to select the file to play will also show hidden "
 "files."
@@ -2377,27 +2383,27 @@ msgstr ""
 "Vyberte protokol zapouzdřující MMS. TCP je lepší, ale za firewallem můžete "
 "potřebovat HTTP."
 
-#: src/input/input_net.c:121 src/input/input_net.c:151
+#: src/input/input_net.c:121 src/input/input_net.c:150
 #, c-format
 msgid "input_net: socket(): %s\n"
 msgstr "input_net: socket(): %s\n"
 
-#: src/input/input_net.c:136 src/input/input_net.c:162
+#: src/input/input_net.c:136 src/input/input_net.c:161
 #, c-format
 msgid "input_net: connect(): %s\n"
 msgstr "input_net: connect(): %s\n"
 
-#: src/input/input_net.c:180 src/input/input_net.c:222
+#: src/input/input_net.c:179 src/input/input_net.c:221
 #, c-format
 msgid "input_net: unable to resolve '%s'.\n"
 msgstr "input_net: nelze zjistit adresu '%s'.\n"
 
-#: src/input/input_net.c:193 src/input/input_net.c:239
+#: src/input/input_net.c:192 src/input/input_net.c:238
 #, c-format
 msgid "input_net: unable to connect to '%s'.\n"
 msgstr "input_net: nelze se připojit k '%s'.\n"
 
-#: src/input/input_net.c:524
+#: src/input/input_net.c:523
 msgid "net input plugin as shipped with xine"
 msgstr "vstupní modul pro síť dodaný se xine"
 
@@ -2405,51 +2411,51 @@ msgstr "vstupní modul pro síť dodaný se xine"
 msgid "pnm streaming input plugin"
 msgstr "vstupní modul pnm pro streamovaná data"
 
-#: src/input/input_pvr.c:589
+#: src/input/input_pvr.c:581
 #, c-format
 msgid "input_pvr: error creating pvr file (%s)\n"
 msgstr "input_pvr: chyba vytváření souboru pvr (%s)\n"
 
-#: src/input/input_pvr.c:746
+#: src/input/input_pvr.c:738
 #, c-format
 msgid "input_pvr: error opening pvr file (%s)\n"
 msgstr "input_pvr: chyba otevírání souboru pvr (%s)\n"
 
-#: src/input/input_pvr.c:822
+#: src/input/input_pvr.c:814
 #, c-format
 msgid "input_pvr: read error (%s)\n"
 msgstr "input_pvr: chyba čtení (%s)\n"
 
-#: src/input/input_pvr.c:1161 src/input/input_pvr.c:1421
+#: src/input/input_pvr.c:1153 src/input/input_pvr.c:1413
 #, c-format
 msgid "input_pvr: error opening device %s\n"
 msgstr "input_pvr: chyba otevírání zařízení %s\n"
 
-#: src/input/input_pvr.c:1167 src/input/input_pvr.c:1427
+#: src/input/input_pvr.c:1159 src/input/input_pvr.c:1419
 #, c-format
 msgid "input_pvr: IVTV_IOC_G_CODEC failed, maybe API changed?\n"
 msgstr "input_pvr: selhalo IVTV_IOC_G_CODEC, možná se změnilo API?\n"
 
-#: src/input/input_pvr.c:1175 src/input/input_pvr.c:1436
+#: src/input/input_pvr.c:1167 src/input/input_pvr.c:1428
 #, c-format
 msgid "input_pvr: IVTV_IOC_S_CODEC failed, maybe API changed?\n"
 msgstr "input_pvr: selhalo IVTV_IOC_S_CODEC, možná se změnilo API?\n"
 
-#: src/input/input_pvr.c:1544
+#: src/input/input_pvr.c:1536
 msgid "WinTV-PVR 250/350 input plugin"
 msgstr "Vstupní modul WinTV-PVR 250/350"
 
-#: src/input/input_pvr.c:1570
+#: src/input/input_pvr.c:1562
 msgid "device used for WinTV-PVR 250/350 (pvr plugin)"
 msgstr "zařízení použité pro WinTV-PVR 250/350 (modul pvr)"
 
-#: src/input/input_pvr.c:1571
+#: src/input/input_pvr.c:1563
 msgid "The path to the device of your WinTV card."
 msgstr "Cesta k zařízení vaší karty WinTV."
 
 #: src/input/input_rtp.c:183
-#, c-format
-msgid "socket(): %s.\n"
+#, fuzzy, c-format
+msgid "xine_socket_cloexec(): %s.\n"
 msgstr "socket(): %s.\n"
 
 #: src/input/input_rtp.c:193
@@ -2621,16 +2627,16 @@ msgstr "Vstupní modul pro video CD"
 msgid "unable to open %s: %s.\n"
 msgstr "nelze otevřít %s: %s.\n"
 
-#: src/input/input_vcd.c:1041
+#: src/input/input_vcd.c:1040
 #, c-format
 msgid "input_vcd: unable to open %s: %s.\n"
 msgstr "input_vcd: nelze otevřít %s: %s.\n"
 
-#: src/input/input_vcd.c:1089
+#: src/input/input_vcd.c:1088
 msgid "device used for VCD playback"
 msgstr "zařízení použité pro přehrávání VCD"
 
-#: src/input/input_vcd.c:1090
+#: src/input/input_vcd.c:1089
 msgid ""
 "The path to the device, usually a CD or DVD drive, you intend to play your "
 "VideoCDs with."
@@ -2720,7 +2726,7 @@ msgstr "neplatné URL\n"
 msgid "unsupported protocol\n"
 msgstr "nepodporovaný protokol\n"
 
-#: src/input/net_buf_ctrl.c:89
+#: src/input/net_buf_ctrl.c:103
 msgid "Buffering..."
 msgstr "Nahrává se..."
 
@@ -2816,11 +2822,11 @@ msgstr "Neznámý typ události: "
 msgid "The above message had unknown vcdimager log level"
 msgstr "Výše uvedená zpráva má neznámou logovací úroveň vcdimageru"
 
-#: src/input/vcd/xineplug_inp_vcd.c:1836
+#: src/input/vcd/xineplug_inp_vcd.c:1840
 msgid "VCD default type to use on autoplay"
 msgstr "výchozí typ VCD, který se použije na automatické přehrání"
 
-#: src/input/vcd/xineplug_inp_vcd.c:1837
+#: src/input/vcd/xineplug_inp_vcd.c:1841
 msgid ""
 "The VCD play unit to use when none is specified in an MRL, e.g. vcd:// or "
 "vcd:///dev/dvd:"
@@ -2828,11 +2834,11 @@ msgstr ""
 "Jednotka přehrávání VCD, kterou použít, jestliže není žádná uvedena v MRL. "
 "Např. vcd:// nebo vcd:///dev/dvd:"
 
-#: src/input/vcd/xineplug_inp_vcd.c:1847
+#: src/input/vcd/xineplug_inp_vcd.c:1851
 msgid "CD-ROM drive used for VCD when none given"
 msgstr "výchozí zařízení CD-ROM použité pro VCD, jestliže není žádné zadáno"
 
-#: src/input/vcd/xineplug_inp_vcd.c:1848
+#: src/input/vcd/xineplug_inp_vcd.c:1852
 msgid ""
 "What to use if no drive specified. If the setting is empty, xine will scan "
 "for CD drives."
@@ -2840,28 +2846,28 @@ msgstr ""
 "Co použít, jestliže není uvedeno zařízení. Jestliže je nastavení prázdné, "
 "xine prozkoumá jednotky CD."
 
-#: src/input/vcd/xineplug_inp_vcd.c:1858
+#: src/input/vcd/xineplug_inp_vcd.c:1862
 msgid "VCD position slider range"
 msgstr "rozsah ukazatele pozice VCD"
 
-#: src/input/vcd/xineplug_inp_vcd.c:1859
+#: src/input/vcd/xineplug_inp_vcd.c:1863
 msgid ""
 "range that the stream playback position slider represents playing a VCD."
 msgstr "Rozsah ukazatele pozice přehrávání přítomného při přehrávání."
 
-#: src/input/vcd/xineplug_inp_vcd.c:1867
+#: src/input/vcd/xineplug_inp_vcd.c:1871
 msgid "VCD read-ahead caching?"
 msgstr "read-ahead cachování VCD?"
 
-#: src/input/vcd/xineplug_inp_vcd.c:1868
+#: src/input/vcd/xineplug_inp_vcd.c:1872
 msgid "Class may lead to jerky playback on low-end machines."
 msgstr "Na slabších strojích může toto vést k trhanému přehrávání"
 
-#: src/input/vcd/xineplug_inp_vcd.c:1878
+#: src/input/vcd/xineplug_inp_vcd.c:1882
 msgid "automatically advance VCD track/entry"
 msgstr "automaticky postupovat po stopách nebo položkách VCD"
 
-#: src/input/vcd/xineplug_inp_vcd.c:1879
+#: src/input/vcd/xineplug_inp_vcd.c:1883
 msgid ""
 "If enabled, we should automatically advance to the next entry or track. Used "
 "only when playback control (PBC) is disabled."
@@ -2869,11 +2875,11 @@ msgstr ""
 "Jestliže je povoleno, měli bychom automaticky postoupit na další položku "
 "nebo stopu. Použito pouze, když není zapnuta kontrola přehrávání (PBC)."
 
-#: src/input/vcd/xineplug_inp_vcd.c:1888
+#: src/input/vcd/xineplug_inp_vcd.c:1892
 msgid "show 'rejected' VCD LIDs"
 msgstr "zobrazit 'odmítané' VCD LID?"
 
-#: src/input/vcd/xineplug_inp_vcd.c:1889
+#: src/input/vcd/xineplug_inp_vcd.c:1893
 msgid ""
 "Some playback list IDs (LIDs) are marked not showable, but you can see them "
 "in the MRL list if this is set. Rejected entries are marked with an asterisk "
@@ -2883,11 +2889,11 @@ msgstr ""
 "nezobrazovaly. Ale pokud je nastavena tato volba, můžete je vidět v seznamu "
 "MRL. Odmítané položky jsou označeny hvězdičkou (*) přidanou na konec MRL."
 
-#: src/input/vcd/xineplug_inp_vcd.c:1900
+#: src/input/vcd/xineplug_inp_vcd.c:1904
 msgid "VCD format string for display banner"
 msgstr "VCD formát řetězce pro nápis na obrazovce"
 
-#: src/input/vcd/xineplug_inp_vcd.c:1901
+#: src/input/vcd/xineplug_inp_vcd.c:1905
 msgid ""
 "VCD format used in the GUI Title. Similar to the Unix date command. Format "
 "specifiers start with a percent sign. Specifiers are:\n"
@@ -2925,11 +2931,11 @@ msgstr ""
 "      číslo 1 až počet svazků\n"
 " %% : %\n"
 
-#: src/input/vcd/xineplug_inp_vcd.c:1926
+#: src/input/vcd/xineplug_inp_vcd.c:1930
 msgid "VCD format string for stream comment field"
 msgstr "formátovací řetězec VCD pro pole komentáře proudu dat"
 
-#: src/input/vcd/xineplug_inp_vcd.c:1927
+#: src/input/vcd/xineplug_inp_vcd.c:1931
 msgid ""
 "VCD format used in the GUI Title. Similar to the Unix date command. Format "
 "specifiers start with a percent sign. Specifiers are %A, %C, %c, %F, %I, %L, "
@@ -2937,16 +2943,16 @@ msgid ""
 "See the help for the title_format for the meanings of these."
 msgstr ""
 "Formát VCD použitý v titulku GUI. Podobá se unixovému příkazu date. "
-"Specifikátory formátu začínají znakem procento. Specifikátory jsou %A, %C, %"
-"c, %F, %I, %L, %N, %P, %p, %S, %T, %V, %v a %%.\n"
+"Specifikátory formátu začínají znakem procento. Specifikátory jsou %A, %C, "
+"%c, %F, %I, %L, %N, %P, %p, %S, %T, %V, %v a %%.\n"
 "Jejich význam viz nápověda k title_format."
 
 # odvšivovací
-#: src/input/vcd/xineplug_inp_vcd.c:1939
+#: src/input/vcd/xineplug_inp_vcd.c:1943
 msgid "VCD debug flag mask"
 msgstr "debugovací maska příznaků VCD"
 
-#: src/input/vcd/xineplug_inp_vcd.c:1940
+#: src/input/vcd/xineplug_inp_vcd.c:1944
 msgid ""
 "For tracking down bugs in the VCD plugin. Mask values are:\n"
 "   1: Meta information\n"
@@ -3176,11 +3182,11 @@ msgstr "vertikální posun titulků (vzhledem k velikosti okna)"
 msgid "encoding of subtitles"
 msgstr "kódování titulků"
 
-#: src/libsputext/demux_sputext.c:1479
+#: src/libsputext/demux_sputext.c:1480
 msgid "default duration of subtitle display in seconds"
 msgstr "výchozí doba zobrazení titulků v sekundách"
 
-#: src/libsputext/demux_sputext.c:1480
+#: src/libsputext/demux_sputext.c:1481
 msgid ""
 "Some subtitle formats do not explicitly give a duration for each subtitle. "
 "For these, you can set a default duration here. Setting to zero will result "
@@ -3514,11 +3520,12 @@ msgstr ""
 "\n"
 "  Enabled: Povolit nebo zakázat modul.\n"
 "\n"
-"  Pulldown_error_wait: Zajistí, že před změnou filmového režimu zůstane typ vzorkování pro zadaný počet snímků stálý.\n"
+"  Pulldown_error_wait: Zajistí, že před změnou filmového režimu zůstane typ "
+"vzorkování pro zadaný počet snímků stálý.\n"
 "\n"
 "  Pulldown: Vybrat detekční algoritmus 2-3 pulldown. Filmy s rychlostí 24 "
-"snímků/s, které se konvertují do NTSC, mohou být detekovány a "
-"inteligentně rekonstruovány do původních (neprokládaných) snímků.\n"
+"snímků/s, které se konvertují do NTSC, mohou být detekovány a inteligentně "
+"rekonstruovány do původních (neprokládaných) snímků.\n"
 "\n"
 "  Framerate_mode: Vybráním 'full' se bude korigovat prokládání každého "
 "půlsnímku do unikátního snímku. Získá se tím televizní nebo i vyšší kvalita. "
@@ -3772,7 +3779,7 @@ msgstr ""
 "  Centre_cut_out_mode: vytáhne obraz 4:3 obsažený v 16:9\n"
 "\n"
 
-#: src/post/planar/noise.c:404
+#: src/post/planar/noise.c:406
 msgid ""
 "Adds random noise to the video.\n"
 "\n"
@@ -3804,7 +3811,7 @@ msgstr ""
 "\n"
 "* noise mplayeru (C) Michael Niedermayer\n"
 
-#: src/post/planar/pp.c:115
+#: src/post/planar/pp.c:123
 msgid ""
 "FFmpeg libpostprocess plugin.\n"
 "\n"
@@ -3816,7 +3823,7 @@ msgstr ""
 "Parametry\n"
 "\n"
 
-#: src/post/planar/pp.c:121
+#: src/post/planar/pp.c:129
 msgid ""
 "\n"
 "* libpostprocess (C) Michael Niedermayer\n"
@@ -3884,11 +3891,11 @@ msgstr "výstupní modul videa xine použije knihovnu ascii-art"
 msgid "xine video output plugin using the Color AsCii Art library"
 msgstr "výstupní modul videa xine použije knihovnu Color AsCii Art"
 
-#: src/video_out/video_out_directfb.c:1337
+#: src/video_out/video_out_directfb.c:1341
 msgid "video layer buffering mode"
 msgstr "režim bufferování vrstvy videa"
 
-#: src/video_out/video_out_directfb.c:1338
+#: src/video_out/video_out_directfb.c:1342
 msgid ""
 "Select the buffering mode of the output layer. Double or triple buffering "
 "give a smoother playback, but consume more video memory."
@@ -3896,11 +3903,11 @@ msgstr ""
 "Vyberte režim bufferování výstupní vrstvy. Dvojité nebo trojité bufferování "
 "dává hladší přehrávání, ale spotřebuje více videopaměti."
 
-#: src/video_out/video_out_directfb.c:1345
+#: src/video_out/video_out_directfb.c:1349
 msgid "wait for vertical retrace"
 msgstr "čekat na zpětný běh"
 
-#: src/video_out/video_out_directfb.c:1346
+#: src/video_out/video_out_directfb.c:1350
 msgid ""
 "Enable synchronizing the update of the video image to the repainting of the "
 "entire screen (\"vertical retrace\")."
@@ -3908,11 +3915,11 @@ msgstr ""
 "Povolí synchronizaci změn obrazu videa s překreslováním celé obrazovky "
 "(\"vertikální zpětný běh paprsku\")."
 
-#: src/video_out/video_out_directfb.c:1353
+#: src/video_out/video_out_directfb.c:1357
 msgid "enable video colour key"
 msgstr "povolit klíčovou barvu videa"
 
-#: src/video_out/video_out_directfb.c:1354
+#: src/video_out/video_out_directfb.c:1358
 msgid ""
 "Enable using a colour key to tell the graphics card where to overlay the "
 "video image."
@@ -3920,13 +3927,13 @@ msgstr ""
 "Povolí použití klíčové barvy, která říká grafické kartě, kde vykreslovat "
 "obraz videa."
 
-#: src/video_out/video_out_directfb.c:1360
+#: src/video_out/video_out_directfb.c:1364
 msgid "video colour key"
 msgstr "klíčová barva videa"
 
-#: src/video_out/video_out_directfb.c:1361
-#: src/video_out/video_out_vidix.c:1168 src/video_out/video_out_vidix.c:1175
-#: src/video_out/video_out_vidix.c:1182 src/video_out/xv_common.h:25
+#: src/video_out/video_out_directfb.c:1365
+#: src/video_out/video_out_vidix.c:1172 src/video_out/video_out_vidix.c:1179
+#: src/video_out/video_out_vidix.c:1186 src/video_out/xv_common.h:25
 msgid ""
 "The colour key is used to tell the graphics card where to overlay the video "
 "image. Try different values, if you experience windows becoming transparent."
@@ -3935,20 +3942,20 @@ msgstr ""
 "videa. Jestliže zjistíte, že se okna stávají transparentní, vyzkoušejte jiné "
 "hodnoty."
 
-#: src/video_out/video_out_directfb.c:1370
+#: src/video_out/video_out_directfb.c:1374
 msgid "flicker filtering"
 msgstr "filtr mihotání"
 
-#: src/video_out/video_out_directfb.c:1371
+#: src/video_out/video_out_directfb.c:1375
 msgid "Enable Flicker Filetring for a smooth output on an interlaced display."
 msgstr ""
 "Povolí filtr mihotání k docílení hladkého výstupu na prokládaném zobrazovači."
 
-#: src/video_out/video_out_directfb.c:1378
+#: src/video_out/video_out_directfb.c:1382
 msgid "field parity"
 msgstr "parita pole"
 
-#: src/video_out/video_out_directfb.c:1379
+#: src/video_out/video_out_directfb.c:1383
 msgid ""
 "For an interlaced display, enable controlling the field parity (\"none"
 "\"=disabled)."
@@ -3956,28 +3963,28 @@ msgstr ""
 "U prokládaného zobrazovače, povolí řízení parity pole (\"none\" znamená "
 "zakázáno)."
 
-#: src/video_out/video_out_directfb.c:1512
+#: src/video_out/video_out_directfb.c:1516
 #, c-format
 msgid "video_out_directfb: using hardware subpicture acceleration.\n"
 msgstr ""
 "video_out_directfb: použije se hardwarově urychlované renderování titulků.\n"
 
-#: src/video_out/video_out_directfb.c:1526
+#: src/video_out/video_out_directfb.c:1530
 #, c-format
 msgid "video_out_directfb: layer supports video output.\n"
 msgstr "video_out_directfb: vrstva podporuje výstup videa.\n"
 
-#: src/video_out/video_out_directfb.c:1535
+#: src/video_out/video_out_directfb.c:1539
 #, c-format
 msgid "video_out_directfb: layer doesn't support YV12!\n"
 msgstr "video_out_directfb: vrstva nepodporuje YV12!\n"
 
-#: src/video_out/video_out_directfb.c:1542
+#: src/video_out/video_out_directfb.c:1546
 #, c-format
 msgid "video_out_directfb: layer doesn't support YUY2!\n"
 msgstr "video_out_directfb: vrstva nepodporuje YUY2!\n"
 
-#: src/video_out/video_out_directfb.c:1553
+#: src/video_out/video_out_directfb.c:1557
 #, c-format
 msgid ""
 "video_out_directfb:need at least DirectFB 0.9.25 to play on this layer!\n"
@@ -3985,23 +3992,23 @@ msgstr ""
 "video_out_directfb: k přehrávání na této vrstvě potřeba minimálně DirectFB "
 "0.9.25!\n"
 
-#: src/video_out/video_out_directfb.c:1588
+#: src/video_out/video_out_directfb.c:1592
 #, c-format
 msgid "video_out_directfb: layer doesn't support buffermode %d!\n"
 msgstr "video_out_directfb: vrstva nepodporuje režim bufferování %d!\n"
 
-#: src/video_out/video_out_directfb.c:1594
+#: src/video_out/video_out_directfb.c:1598
 #, c-format
 msgid "video_out_directfb: layer doesn't support options 0x%08x!\n"
 msgstr "video_out_directfb: vrstva nepodporuje volby 0x%08x!\n"
 
-#: src/video_out/video_out_directfb.c:1688
+#: src/video_out/video_out_directfb.c:1692
 #, c-format
 msgid "video_out_directfb: using hardware accelerated image scaling.\n"
 msgstr ""
 "video_out_directfb: použije se hardwarově urychlované škálování obrazu.\n"
 
-#: src/video_out/video_out_directfb.c:1700
+#: src/video_out/video_out_directfb.c:1704
 #, c-format
 msgid ""
 "video_out_directfb: image scaling with deinterlacing is hardware "
@@ -4010,35 +4017,48 @@ msgstr ""
 "video_out_directfb: škálování obrazu s korekcí prokládání je hardwarově "
 "urychlované.\n"
 
-#: src/video_out/video_out_directfb.c:1778
+#: src/video_out/video_out_directfb.c:1782
 msgid "video layer id (auto: -1)"
 msgstr "ID vrstvy videa (auto: -1)"
 
-#: src/video_out/video_out_directfb.c:1779
+#: src/video_out/video_out_directfb.c:1783
 msgid "Select the video output layer by its id."
 msgstr "Vybere vrstvu výstupu videa podle jeho ID."
 
-#: src/video_out/video_out_directfb.c:1800
-#: src/video_out/video_out_directfb.c:2010
+#: src/video_out/video_out_directfb.c:1804
+#: src/video_out/video_out_directfb.c:2014
 #, c-format
 msgid "video_out_directfb: using display layer #%d.\n"
 msgstr "video_out_directfb: použije se obrazová vrstva #%d.\n"
 
-#: src/video_out/video_out_directfb.c:1884
+#: src/video_out/video_out_directfb.c:1888
 msgid "xine video output plugin using DirectFB."
 msgstr "výstupní modul videa xine použije DirectFB."
 
-#: src/video_out/video_out_directfb.c:2003
+#: src/video_out/video_out_directfb.c:2007
 #, c-format
 msgid "video_out_directfb: no usable display layer was found!\n"
 msgstr ""
 "video_out_directfb: žádná použitelná obrazová vrstva nebyla nalezena!\n"
 
-#: src/video_out/video_out_directfb.c:2092
+#: src/video_out/video_out_directfb.c:2096
 msgid "xine video output plugin using DirectFB under XDirectFB."
 msgstr "výstupní modul videa xine použije DirectFB pod XDirectFB."
 
-#: src/video_out/video_out_directx.c:1295
+#: src/video_out/video_out_directx.c:1288
+msgid "HW acceleration level"
+msgstr ""
+
+#: src/video_out/video_out_directx.c:1289
+msgid ""
+"Possible values (default full):\n"
+"\n"
+"full: full acceleration\n"
+"scale: disable colorspace conversion (HW scaling only)\n"
+"none: disable all acceleration"
+msgstr ""
+
+#: src/video_out/video_out_directx.c:1322
 msgid "xine video output plugin for win32 using directx"
 msgstr "výstupní modul videa xine pro win32 používající directx"
 
@@ -4048,15 +4068,15 @@ msgid ""
 "video_out_fb: only packed truecolour/directcolour is supported (%d).\n"
 "     Check 'fbset -i' or try 'fbset -depth 16'.\n"
 msgstr ""
-"video_out_fb: jsou podporovány pouze pravé barvy (truecolor/directcolor) (%"
-"d).\n"
+"video_out_fb: jsou podporovány pouze pravé barvy (truecolor/directcolor) "
+"(%d).\n"
 "     Zkontrolujte 'fbset -i' nebo zkuste 'fbset -depth 16'.\n"
 
-#: src/video_out/video_out_fb.c:818 src/video_out/video_out_vidix.c:1248
+#: src/video_out/video_out_fb.c:818 src/video_out/video_out_vidix.c:1252
 msgid "framebuffer device name"
 msgstr "jméno zařízení framebufferu"
 
-#: src/video_out/video_out_fb.c:819 src/video_out/video_out_vidix.c:1249
+#: src/video_out/video_out_fb.c:819 src/video_out/video_out_vidix.c:1253
 msgid ""
 "Specifies the file name for the framebuffer device to be used.\n"
 "This setting is security critical, because when changed to a different file, "
@@ -4189,7 +4209,7 @@ msgstr ""
 "Minimální rychlost snímků animačních renderovacích podprogramů.\n"
 "Ignorováno u statických renderovacích podprogramů.\n"
 
-#: src/video_out/video_out_opengl.c:1918 src/video_out/video_out_vidix.c:1024
+#: src/video_out/video_out_opengl.c:1918 src/video_out/video_out_vidix.c:1028
 #: src/video_out/xv_common.h:46
 msgid "enable double buffering"
 msgstr "povolit dvojité bufferování"
@@ -4241,8 +4261,8 @@ msgstr "video_out_pgx64: Chyba: nelze otevřít zařízení framebufferu '%s'\n"
 msgid ""
 "video_out_pgx64: Error: ioctl failed (VIS_GETIDENTIFIER), bad device (%s)\n"
 msgstr ""
-"video_out_pgx64: Chyba: ioctl selhalo (VIS_GETIDENTIFIER), špatné zařízení (%"
-"s)\n"
+"video_out_pgx64: Chyba: ioctl selhalo (VIS_GETIDENTIFIER), špatné zařízení "
+"(%s)\n"
 
 #: src/video_out/video_out_pgx64.c:316
 #, c-format
@@ -4446,31 +4466,31 @@ msgstr ""
 "obsahem. A tak by jste si měli být jisti, že hodnota, kterou zadáváte, je "
 "skutečně náležité zařízení framebufferu."
 
-#: src/video_out/video_out_vidix.c:1002
+#: src/video_out/video_out_vidix.c:1006
 msgid "red intensity"
 msgstr "intenzita červené"
 
-#: src/video_out/video_out_vidix.c:1002
+#: src/video_out/video_out_vidix.c:1006
 msgid "The intensity of the red colour components."
 msgstr "Intenzita červené barevné složky."
 
-#: src/video_out/video_out_vidix.c:1007
+#: src/video_out/video_out_vidix.c:1011
 msgid "green intensity"
 msgstr "intenzita zelené"
 
-#: src/video_out/video_out_vidix.c:1007
+#: src/video_out/video_out_vidix.c:1011
 msgid "The intensity of the green colour components."
 msgstr "Intenzita zelené barevné složky."
 
-#: src/video_out/video_out_vidix.c:1012
+#: src/video_out/video_out_vidix.c:1016
 msgid "blue intensity"
 msgstr "intenzita modré"
 
-#: src/video_out/video_out_vidix.c:1012
+#: src/video_out/video_out_vidix.c:1016
 msgid "The intensity of the blue colour components."
 msgstr "Intenzita modré barevné složky."
 
-#: src/video_out/video_out_vidix.c:1025 src/video_out/xv_common.h:47
+#: src/video_out/video_out_vidix.c:1029 src/video_out/xv_common.h:47
 msgid ""
 "Double buffering will synchronize the update of the video image to the "
 "repainting of the entire screen (\"vertical retrace\"). This eliminates "
@@ -4480,48 +4500,48 @@ msgstr ""
 "úplné obrazovky (\"vertikální zpětný běh paprsku\"). Toto eliminuje blikání "
 "a trhané artefakty, ale bude použito více grafické paměti."
 
-#: src/video_out/video_out_vidix.c:1072
+#: src/video_out/video_out_vidix.c:1076
 #, c-format
 msgid "video_out_vidix: adaptor supports the yuy2 format\n"
 msgstr "video_out_vidix: adaptér podporuje formát yuy2\n"
 
-#: src/video_out/video_out_vidix.c:1083
+#: src/video_out/video_out_vidix.c:1087
 #, c-format
 msgid "video_out_vidix: adaptor supports the yv12 format\n"
 msgstr "video_out_vidix: adaptér podporuje formát yv12\n"
 
-#: src/video_out/video_out_vidix.c:1099
+#: src/video_out/video_out_vidix.c:1103
 #, c-format
 msgid "video_out_vidix: You have wrong version of VIDIX library\n"
 msgstr "video_out_vidix: Máte špatnou verzi knihovny VIDIX\n"
 
-#: src/video_out/video_out_vidix.c:1107
+#: src/video_out/video_out_vidix.c:1111
 #, c-format
 msgid "video_out_vidix: Couldn't find working VIDIX driver\n"
 msgstr "video_out_vidix: Nelze nalézt fungující ovladač VIDIX\n"
 
-#: src/video_out/video_out_vidix.c:1120
+#: src/video_out/video_out_vidix.c:1124
 #, c-format
 msgid "video_out_vidix: using driver: %s by %s\n"
 msgstr "video_out_vidix: použije se ovladač: %s od %s\n"
 
-#: src/video_out/video_out_vidix.c:1167
+#: src/video_out/video_out_vidix.c:1171
 msgid "video overlay colour key red component"
 msgstr "klíčová barva překrývání videa červené složky"
 
-#: src/video_out/video_out_vidix.c:1174
+#: src/video_out/video_out_vidix.c:1178
 msgid "video overlay colour key green component"
 msgstr "klíčová barva překrývání videa zelené složky"
 
-#: src/video_out/video_out_vidix.c:1181
+#: src/video_out/video_out_vidix.c:1185
 msgid "video overlay colour key blue component"
 msgstr "klíčová barva překrývání videa modré složky"
 
-#: src/video_out/video_out_vidix.c:1213
+#: src/video_out/video_out_vidix.c:1217
 msgid "xine video output plugin using libvidix for x11"
 msgstr "výstupní modul videa xine použije libvidix pro X11"
 
-#: src/video_out/video_out_vidix.c:1295
+#: src/video_out/video_out_vidix.c:1299
 msgid "xine video output plugin using libvidix for linux frame buffer"
 msgstr "výstupní modul videa xine použije libvidix pro linux frame buffer"
 
@@ -4611,23 +4631,23 @@ msgstr ""
 "video_out_xcbxv: chyba x11 během vytváření XImage\n"
 "video_out_xcbxv: => rozšíření MIT Shared Memory se nepoužije.\n"
 
-#: src/video_out/video_out_xcbxv.c:1354
+#: src/video_out/video_out_xcbxv.c:1358
 #, c-format
 msgid "video_out_xcbxv: Xv extension not present.\n"
 msgstr "video_out_xcbxv: Rozšíření Xv není přítomno.\n"
 
-#: src/video_out/video_out_xcbxv.c:1381 src/video_out/video_out_xxmc.c:2457
+#: src/video_out/video_out_xcbxv.c:1385 src/video_out/video_out_xxmc.c:2461
 #, c-format
 msgid "%s: could not open Xv port %d - autodetecting\n"
 msgstr "%s: nepodařilo se otevřít Xv port %d - najde se automaticky\n"
 
-#: src/video_out/video_out_xcbxv.c:1397 src/video_out/video_out_xv.c:1440
-#: src/video_out/video_out_xxmc.c:2469
+#: src/video_out/video_out_xcbxv.c:1401 src/video_out/video_out_xv.c:1444
+#: src/video_out/video_out_xxmc.c:2473
 #, c-format
 msgid "%s: no available ports of type \"%s\", defaulting...\n"
 msgstr "%s: není k dispozici port typu \"%s\", použije se výchozí...\n"
 
-#: src/video_out/video_out_xcbxv.c:1405
+#: src/video_out/video_out_xcbxv.c:1409
 #, c-format
 msgid ""
 "video_out_xcbxv: Xv extension is present but I couldn't find a usable yuv12 "
@@ -4640,7 +4660,7 @@ msgstr ""
 "              Vypadá to, jako by váš grafický hardwarový ovladač "
 "nepodporoval Xv?!\n"
 
-#: src/video_out/video_out_xcbxv.c:1413
+#: src/video_out/video_out_xcbxv.c:1417
 #, c-format
 msgid ""
 "video_out_xcbxv: using Xv port %d from adaptor %s for hardware colour space "
@@ -4649,11 +4669,11 @@ msgstr ""
 "video_out_xcbxv: pro hardwarovou konverzi barevného prostoru a škálování se "
 "použije Xv port %d z adaptéru %s.\n"
 
-#: src/video_out/video_out_xcbxv.c:1538 src/video_out/video_out_xv.c:1591
+#: src/video_out/video_out_xcbxv.c:1542 src/video_out/video_out_xv.c:1595
 msgid "enable vblank sync"
 msgstr "povolit synchronizaci s vblank"
 
-#: src/video_out/video_out_xcbxv.c:1539 src/video_out/video_out_xv.c:1592
+#: src/video_out/video_out_xcbxv.c:1543 src/video_out/video_out_xv.c:1596
 msgid ""
 "This option will synchronize the update of the video image to the repainting "
 "of the entire screen (\"vertical retrace\"). This eliminates flickering and "
@@ -4666,23 +4686,23 @@ msgstr ""
 "\" a v kartě XVideo Settings vybrat, se kterým zařízením obrazovky "
 "synchronizovat."
 
-#: src/video_out/video_out_xcbxv.c:1583
+#: src/video_out/video_out_xcbxv.c:1587
 #, c-format
 msgid "video_out_xcbxv: this adaptor supports the yv12 format.\n"
 msgstr "video_out_xcbxv: tento adaptér podporuje formát yv12.\n"
 
-#: src/video_out/video_out_xcbxv.c:1588
+#: src/video_out/video_out_xcbxv.c:1592
 #, c-format
 msgid "video_out_xcbxv: this adaptor supports the yuy2 format.\n"
 msgstr "video_out_xcbxv: tento adaptér podporuje formát yuy2.\n"
 
-#: src/video_out/video_out_xcbxv.c:1602 src/video_out/video_out_xv.c:1666
-#: src/video_out/video_out_xvmc.c:1535
+#: src/video_out/video_out_xcbxv.c:1606 src/video_out/video_out_xv.c:1670
+#: src/video_out/video_out_xvmc.c:1539
 msgid "deinterlace method (deprecated)"
 msgstr "metoda korekce prokládání (zavrženo)"
 
-#: src/video_out/video_out_xcbxv.c:1603 src/video_out/video_out_xv.c:1667
-#: src/video_out/video_out_xvmc.c:1536
+#: src/video_out/video_out_xcbxv.c:1607 src/video_out/video_out_xv.c:1671
+#: src/video_out/video_out_xvmc.c:1540
 msgid ""
 "This config setting is deprecated. You should use the new deinterlacing post "
 "processing settings instead.\n"
@@ -4755,8 +4775,8 @@ msgstr ""
 "K odstranění hřebenových artefaktů použije lehké rozmazání. Dobré výsledky "
 "se střední zátěží CPU."
 
-#: src/video_out/video_out_xcbxv.c:1657 src/video_out/video_out_xv.c:1740
-#: src/video_out/video_out_xxmc.c:2776
+#: src/video_out/video_out_xcbxv.c:1661 src/video_out/video_out_xv.c:1744
+#: src/video_out/video_out_xxmc.c:2780
 msgid "xine video output plugin using the MIT X video extension"
 msgstr "výstupní modul videa xine použije rozšíření MIT X video"
 
@@ -4843,17 +4863,17 @@ msgstr ""
 "video_out_xv: chyba x11 během vytváření XImage\n"
 "video_out_xv: => rozšíření MIT Shared Memory se nepoužije.\n"
 
-#: src/video_out/video_out_xv.c:1403
+#: src/video_out/video_out_xv.c:1407
 #, c-format
 msgid "video_out_xv: Xv extension not present.\n"
 msgstr "video_out_xv: Rozšíření Xv není přítomno.\n"
 
-#: src/video_out/video_out_xv.c:1428
+#: src/video_out/video_out_xv.c:1432
 #, c-format
 msgid "%s: could not open Xv port %<PRId32> - autodetecting\n"
 msgstr "%s: nepodařilo se otevřít Xv port %<PRId32> - vyhledá se automaticky\n"
 
-#: src/video_out/video_out_xv.c:1447
+#: src/video_out/video_out_xv.c:1451
 #, c-format
 msgid ""
 "video_out_xv: Xv extension is present but I couldn't find a usable yuv12 "
@@ -4865,7 +4885,7 @@ msgstr ""
 "              Vypadá to, jako by váš grafický hardwarový ovladač "
 "nepodporoval Xv?!\n"
 
-#: src/video_out/video_out_xv.c:1456
+#: src/video_out/video_out_xv.c:1460
 #, c-format
 msgid ""
 "video_out_xv: using Xv port %ld from adaptor %s for hardware colour space "
@@ -4874,26 +4894,26 @@ msgstr ""
 "video_out_xv: pro hardwarovou konverzi barevného prostoru a škálování se "
 "použije Xv port %ld z adaptéru %s.\n"
 
-#: src/video_out/video_out_xv.c:1633
+#: src/video_out/video_out_xv.c:1637
 #, c-format
 msgid "video_out_xv: this adaptor supports the yv12 format.\n"
 msgstr "video_out_xv: tento adaptér podporuje formát yv12.\n"
 
-#: src/video_out/video_out_xv.c:1638
+#: src/video_out/video_out_xv.c:1642
 #, c-format
 msgid "video_out_xv: this adaptor supports the yuy2 format.\n"
 msgstr "video_out_xv: tento adaptér podporuje formát yuy2.\n"
 
-#: src/video_out/video_out_xvmc.c:1604
+#: src/video_out/video_out_xvmc.c:1608
 msgid "xine video output plugin using the XvMC X video extension"
 msgstr "výstupní modul videa xine použije X video rozšíření XvMC"
 
-#: src/video_out/video_out_xvmc.c:1646
+#: src/video_out/video_out_xvmc.c:1650
 #, c-format
 msgid "video_out_xvmc: XvMC extension not present.\n"
 msgstr "video_out_xvmc: rozšíření XvMC není přítomno.\n"
 
-#: src/video_out/video_out_xvmc.c:1744
+#: src/video_out/video_out_xvmc.c:1748
 #, c-format
 msgid ""
 "video_out_xvmc: Xv extension is present but I couldn't find a usable yuv12 "
@@ -4902,7 +4922,7 @@ msgstr ""
 "video_out_xvmc: rozšíření Xv je přítomno, ale nebyl nalezen použitelný port "
 "yuv12\n"
 
-#: src/video_out/video_out_xvmc.c:1753
+#: src/video_out/video_out_xvmc.c:1757
 #, c-format
 msgid ""
 "video_out_xvmc: using Xv port %ld from adaptor %s\n"
@@ -4911,22 +4931,22 @@ msgstr ""
 "video_out_xvmc: pro hardwarovou konverzi barevného prostoru a škálování\n"
 "                se použije Xv port %ld z adaptéru %s\n"
 
-#: src/video_out/video_out_xvmc.c:1758
+#: src/video_out/video_out_xvmc.c:1762
 #, c-format
 msgid "                idct and motion compensation acceleration \n"
 msgstr "                idct a akcelerace kompenzace pohybu\n"
 
-#: src/video_out/video_out_xvmc.c:1760
+#: src/video_out/video_out_xvmc.c:1764
 #, c-format
 msgid "                motion compensation acceleration only\n"
 msgstr "                pouze akcelerace kompenzace pohybu\n"
 
-#: src/video_out/video_out_xvmc.c:1762
+#: src/video_out/video_out_xvmc.c:1766
 #, c-format
 msgid "                no XvMC support \n"
 msgstr "                žádná podpora XvMC\n"
 
-#: src/video_out/video_out_xvmc.c:1763
+#: src/video_out/video_out_xvmc.c:1767
 #, c-format
 msgid "                With Overlay = %d; UnsignedIntra = %d.\n"
 msgstr "                S Overlay = %d; UnsignedIntra = %d.\n"
@@ -4967,12 +4987,12 @@ msgstr ""
 "video_out_xxmc: chyba x11 během vytváření XImage ve sdílené paměti\n"
 "video_out_xxmc: => rozšíření MIT Shared Memory se nepoužije.\n"
 
-#: src/video_out/video_out_xxmc.c:2432
+#: src/video_out/video_out_xxmc.c:2436
 #, c-format
 msgid "video_out_xxmc: Xv extension not present.\n"
 msgstr "video_out_xxmc: rozšíření Xv není přítomno.\n"
 
-#: src/video_out/video_out_xxmc.c:2476
+#: src/video_out/video_out_xxmc.c:2480
 #, c-format
 msgid ""
 "video_out_xxmc: Xv extension is present but I couldn't find a usable yuv12 "
@@ -4985,7 +5005,7 @@ msgstr ""
 "                Vypadá to, jako by váš grafický hardwarový ovladač\n"
 "                nepodporoval Xv?!\n"
 
-#: src/video_out/video_out_xxmc.c:2485
+#: src/video_out/video_out_xxmc.c:2489
 #, c-format
 msgid ""
 "video_out_xxmc: using Xv port %ld from adaptor %s for hardware colour space "
@@ -4994,21 +5014,21 @@ msgstr ""
 "video_out_xxmc: pro hardwarovou konverzi barevného prostoru a škálování se "
 "použije Xv port %ld z adaptéru %s.\n"
 
-#: src/video_out/video_out_xxmc.c:2654
+#: src/video_out/video_out_xxmc.c:2658
 #, c-format
 msgid "video_out_xxmc: this adaptor supports the yv12 format.\n"
 msgstr "video_out_xxmc: tento adaptér podporuje formát yv12.\n"
 
-#: src/video_out/video_out_xxmc.c:2659
+#: src/video_out/video_out_xxmc.c:2663
 #, c-format
 msgid "video_out_xxmc: this adaptor supports the yuy2 format.\n"
 msgstr "video_out_xxmc: tento adaptér podporuje formát yuy2.\n"
 
-#: src/video_out/video_out_xxmc.c:2687
+#: src/video_out/video_out_xxmc.c:2691
 msgid "Make XvMC allocate more frames for better buffering."
 msgstr "Přimět XvMC alokovat více snímků za účelem lepšího bufferování."
 
-#: src/video_out/video_out_xxmc.c:2688
+#: src/video_out/video_out_xxmc.c:2692
 msgid ""
 "Some XvMC implementations allow more than 8 frames.\n"
 "This option, when turned on, makes the driver try to\n"
@@ -5018,11 +5038,11 @@ msgstr ""
 "Tato volba, pokud je zapnuta, přiměje ovladač zkusit alokovat 15 snímků. "
 "Nutnost pro unichrome a live VDR.\n"
 
-#: src/video_out/video_out_xxmc.c:2694
+#: src/video_out/video_out_xxmc.c:2698
 msgid "Unichrome cpu save"
 msgstr "Šetření procesoru unichrome"
 
-#: src/video_out/video_out_xxmc.c:2695
+#: src/video_out/video_out_xxmc.c:2699
 msgid ""
 "Saves CPU time by sleeping while decoder works.\n"
 "Only for Linux kernel 2.6 series or 2.4 with multimedia patch.\n"
@@ -5032,11 +5052,11 @@ msgstr ""
 "Pouze pro jádra Linuxu řady 2.6 nebo 2.4 s multimediálním patchem.\n"
 "Experimentální.\n"
 
-#: src/video_out/video_out_xxmc.c:2701
+#: src/video_out/video_out_xxmc.c:2705
 msgid "Fix buggy NVIDIA XvMC subpicture colours"
 msgstr "Opravovat chybné barvy elementů XvMC"
 
-#: src/video_out/video_out_xxmc.c:2702
+#: src/video_out/video_out_xxmc.c:2706
 msgid ""
 "There's a bug in NVIDIA's XvMC lib that makes red OSD colours\n"
 "look blue and vice versa. This option provides a workaround.\n"
@@ -5044,11 +5064,11 @@ msgstr ""
 "V knihovně XvMC od NVidie je chyba, která způsobuje, že červené barvy OSD "
 "vypadají modře a naopak. Tato volba umožňuje chybu obejít.\n"
 
-#: src/video_out/video_out_xxmc.c:2707
+#: src/video_out/video_out_xxmc.c:2711
 msgid "Use bob as accelerated deinterlace method."
 msgstr "Použít 'bob' jako akcelerovanou metodu korekce prokládání."
 
-#: src/video_out/video_out_xxmc.c:2708
+#: src/video_out/video_out_xxmc.c:2712
 msgid ""
 "When interlacing is enabled for hardware accelerated frames,\n"
 "alternate between top and bottom field at double the frame rate.\n"
@@ -5058,11 +5078,11 @@ msgstr ""
 "snímků.\n"
 
 # TODO
-#: src/video_out/video_out_xxmc.c:2714
+#: src/video_out/video_out_xxmc.c:2718
 msgid "Don't use bob deinterlacing for progressive frames."
 msgstr "Nepoužívat korekci prokládání bob pro postupné snímky."
 
-#: src/video_out/video_out_xxmc.c:2715
+#: src/video_out/video_out_xxmc.c:2719
 msgid ""
 "Progressive frames don't need deinterlacing, so disabling it on\n"
 "demand should result in a better picture.\n"
@@ -5070,11 +5090,11 @@ msgstr ""
 "Postupné snímky nepotřebují korekci prokládání, takže zakázat ji podle "
 "potřeby by mělo vést k lepšímu zobrazení.\n"
 
-#: src/video_out/video_out_xxmc.c:2721
+#: src/video_out/video_out_xxmc.c:2725
 msgid "Don't use bob deinterlacing while a scaled OSD is active."
 msgstr "Nepoužívat korekci prokládání bob, pokud je aktivní škálované OSD"
 
-#: src/video_out/video_out_xxmc.c:2722
+#: src/video_out/video_out_xxmc.c:2726
 msgid ""
 "Bob deinterlacing adds some noise to horizontal lines, so disabling it\n"
 "on demand should result in a better OSD picture.\n"
@@ -5203,21 +5223,21 @@ msgstr ""
 "Výsledkem bude, že alfa míchání overlayů bude méně přesné než předtím, ale "
 "také se sníží využití procesoru."
 
-#: src/xine-engine/audio_decoder.c:367
+#: src/xine-engine/audio_decoder.c:370
 #, c-format
 msgid "audio_decoder: no plugin available to handle '%s'\n"
 msgstr "audio_decoder: není k dispozici žádný modul ke zpracování '%s'\n"
 
-#: src/xine-engine/audio_decoder.c:384
+#: src/xine-engine/audio_decoder.c:387
 #, c-format
 msgid "audio_decoder: error, unknown buffer type: %08x\n"
 msgstr "audio_decoder: chyba, neznámý typ bufferu: %08x\n"
 
-#: src/xine-engine/audio_decoder.c:488
+#: src/xine-engine/audio_decoder.c:491
 msgid "number of audio buffers"
 msgstr "počet bufferů zvuku"
 
-#: src/xine-engine/audio_decoder.c:489
+#: src/xine-engine/audio_decoder.c:492
 msgid ""
 "The number of audio buffers (each is 8k in size) xine uses in its internal "
 "queue. Higher values mean smoother playback for unreliable inputs, but also "
@@ -5837,21 +5857,40 @@ msgstr ""
 "Paleta on-screen-display a některých formátů titulků, které samy o sobě "
 "nespecifikují žádnou barvu. Paleta je uvedena ve formě: popředí-okraj-pozadí."
 
-#: src/xine-engine/video_decoder.c:391
+#: src/xine-engine/video_decoder.c:135
+msgid "disable decoder flush at discontinuity"
+msgstr ""
+
+#: src/xine-engine/video_decoder.c:136
+msgid ""
+"when watching live tv a discontinuity happens for example about every 26.5 "
+"hours due to a pts wrap.\n"
+"flushing the decoder at that time causes decoding errors for images after "
+"the pts wrap.\n"
+"to avoid the decoding errors, decoder flush at discontinuity should be "
+"disabled.\n"
+"\n"
+"WARNING: as the flush was introduced to fix some issues when playing DVD "
+"still images, it is\n"
+"likely that these issues may reappear in case they haven't been fixed "
+"differently meanwhile.\n"
+msgstr ""
+
+#: src/xine-engine/video_decoder.c:419
 #, c-format
 msgid "video_decoder: no plugin available to handle '%s'\n"
 msgstr "video_decoder: není k dispozici žádný modul ke zpracování '%s'\n"
 
-#: src/xine-engine/video_decoder.c:470
+#: src/xine-engine/video_decoder.c:498
 #, c-format
 msgid "video_decoder: error, unknown buffer type: %08x\n"
 msgstr "video_decoder: chyba, neznámý typ bufferu: %08x\n"
 
-#: src/xine-engine/video_decoder.c:508
+#: src/xine-engine/video_decoder.c:536
 msgid "number of video buffers"
 msgstr "počet bufferů videa"
 
-#: src/xine-engine/video_decoder.c:509
+#: src/xine-engine/video_decoder.c:537
 msgid ""
 "The number of video buffers (each is 8k in size) xine uses in its internal "
 "queue. Higher values mean smoother playback for unreliable inputs, but also "
@@ -5862,13 +5901,13 @@ msgstr ""
 "vstupů, ale také zvýšené zpoždění a spotřebu paměti."
 
 # This message should match with FAQ_cs.
-#: src/xine-engine/video_out.c:666
+#: src/xine-engine/video_out.c:670
 #, c-format
 msgid "%d frames delivered, %d frames skipped, %d frames discarded\n"
 msgstr "%d snímků předaných, %d snímků přeskočených, %d snímků zahozených\n"
 
 # This message should match with FAQ_cs.
-#: src/xine-engine/video_out.c:839
+#: src/xine-engine/video_out.c:845
 #, c-format
 msgid ""
 "video_out: throwing away image with pts %<PRId64> because it's too old "
@@ -5877,11 +5916,36 @@ msgstr ""
 "video_out: zahození obrazu s pts %<PRId64>, protože je příliš starý "
 "(rozdíl : %<PRId64>).\n"
 
-#: src/xine-engine/video_out.c:1823
+#: src/xine-engine/video_out.c:872
+#, c-format
+msgid "video_out: just discarded first frame after seek\n"
+msgstr ""
+
+#: src/xine-engine/video_out.c:1172
+msgid "disable decoder flush from video out"
+msgstr ""
+
+#: src/xine-engine/video_out.c:1173
+msgid ""
+"video out causes a decoder flush when video out runs out of frames for "
+"displaying,\n"
+"because the decoder hasn't deliverd new frames for quite a while.\n"
+"flushing the decoder causes decoding errors for images decoded after the "
+"flush.\n"
+"to avoid the decoding errors, decoder flush at video out should be "
+"disabled.\n"
+"\n"
+"WARNING: as the flush was introduced to fix some issues when playing DVD "
+"still images, it is\n"
+"likely that these issues may reappear in case they haven't been fixed "
+"differently meanwhile.\n"
+msgstr ""
+
+#: src/xine-engine/video_out.c:1860
 msgid "default number of video frames"
 msgstr "výchozí počet videosnímků"
 
-#: src/xine-engine/video_out.c:1824
+#: src/xine-engine/video_out.c:1861
 msgid ""
 "The default number of video frames to request from xine video out driver. "
 "Some drivers will override this setting with their own values."
@@ -5889,11 +5953,11 @@ msgstr ""
 "Výchozí počet videosnímků, který se bude žádat z videovýstupního ovladače "
 "xine. Některé ovladače použijí své vlastní hodnoty místo této."
 
-#: src/xine-engine/video_out.c:1881
+#: src/xine-engine/video_out.c:1918
 msgid "percentage of skipped frames to tolerate"
 msgstr "procentní tolerance přeskočených snímků"
 
-#: src/xine-engine/video_out.c:1882
+#: src/xine-engine/video_out.c:1919
 msgid ""
 "When more than this percentage of frames are not shown, because they were "
 "not decoded in time, xine sends a notification."
@@ -5901,11 +5965,11 @@ msgstr ""
 "Pokud se nezobrazí více než toto procento snímků, protože nebyly včas "
 "dekódovány, pošle xine hlášení."
 
-#: src/xine-engine/video_out.c:1887
+#: src/xine-engine/video_out.c:1924
 msgid "percentage of discarded frames to tolerate"
 msgstr "procentní tolerance zahozených snímků"
 
-#: src/xine-engine/video_out.c:1888
+#: src/xine-engine/video_out.c:1925
 msgid ""
 "When more than this percentage of frames are not shown, because they were "
 "not scheduled for display in time, xine sends a notification."
@@ -5913,7 +5977,7 @@ msgstr ""
 "Pokud se nezobrazí více než toto procento snímků, protože nebyly včas "
 "naplánovány k zobrazení, pošle xine hlášení."
 
-#: src/xine-engine/video_out.c:1924
+#: src/xine-engine/video_out.c:1961
 #, c-format
 msgid "video_out: sorry, this should not happen. please restart xine.\n"
 msgstr ""
@@ -5973,149 +6037,149 @@ msgstr ""
 "některými videovýstupy jako je XShm, kde není škálování obrazu hardwarově "
 "urychlováno, může toto dramaticky snížit využití CPU."
 
-#: src/xine-engine/xine.c:815 src/xine-engine/xine.c:936
-#: src/xine-engine/xine.c:976 src/xine-engine/xine.c:1012
-#: src/xine-engine/xine.c:1024 src/xine-engine/xine.c:1037
-#: src/xine-engine/xine.c:1050 src/xine-engine/xine.c:1063
-#: src/xine-engine/xine.c:1089 src/xine-engine/xine.c:1114
-#: src/xine-engine/xine.c:1151
+#: src/xine-engine/xine.c:816 src/xine-engine/xine.c:937
+#: src/xine-engine/xine.c:977 src/xine-engine/xine.c:1013
+#: src/xine-engine/xine.c:1025 src/xine-engine/xine.c:1038
+#: src/xine-engine/xine.c:1051 src/xine-engine/xine.c:1064
+#: src/xine-engine/xine.c:1090 src/xine-engine/xine.c:1115
+#: src/xine-engine/xine.c:1152
 #, c-format
 msgid "xine: error while parsing mrl\n"
 msgstr "xine: chyba během zpracování MRL\n"
 
-#: src/xine-engine/xine.c:874
+#: src/xine-engine/xine.c:875
 #, c-format
 msgid "xine: found input plugin  : %s\n"
 msgstr "xine: nelze nalézt vstupní modul: %s\n"
 
-#: src/xine-engine/xine.c:890
+#: src/xine-engine/xine.c:891
 #, c-format
 msgid "xine: input plugin cannot open MRL [%s]\n"
 msgstr "xine: vstupní modul nemůže otevřít MRL [%s]\n"
 
-#: src/xine-engine/xine.c:899
+#: src/xine-engine/xine.c:900
 #, c-format
 msgid "xine: cannot find input plugin for MRL [%s]\n"
 msgstr "xine: nelze nalézt vstupní modul pro MRL [%s]\n"
 
-#: src/xine-engine/xine.c:925
+#: src/xine-engine/xine.c:926
 #, c-format
 msgid "xine: specified demuxer %s failed to start\n"
 msgstr "xine: selhalo spuštění demultiplexoru %s\n"
 
-#: src/xine-engine/xine.c:962
+#: src/xine-engine/xine.c:963
 #, c-format
 msgid "xine: join rip input plugin\n"
 msgstr "xine: připojen ripovací vstupní modul\n"
 
-#: src/xine-engine/xine.c:969
+#: src/xine-engine/xine.c:970
 #, c-format
 msgid "xine: error opening rip input plugin instance\n"
 msgstr "xine: chyba otevírání instance ripovacího vstupního modulu\n"
 
-#: src/xine-engine/xine.c:1000
+#: src/xine-engine/xine.c:1001
 #, c-format
 msgid "xine: last_probed demuxer %s failed to start\n"
 msgstr "xine: selhalo spuštění posledního vyzkoušeného demultiplexoru %s\n"
 
-#: src/xine-engine/xine.c:1029
+#: src/xine-engine/xine.c:1030
 #, c-format
 msgid "ignoring video\n"
 msgstr "ignoruje se video\n"
 
-#: src/xine-engine/xine.c:1042
+#: src/xine-engine/xine.c:1043
 #, c-format
 msgid "ignoring audio\n"
 msgstr "ignoruje se zvuk\n"
 
-#: src/xine-engine/xine.c:1055
+#: src/xine-engine/xine.c:1056
 #, c-format
 msgid "ignoring subpicture\n"
 msgstr "ignorují se titulky\n"
 
-#: src/xine-engine/xine.c:1068
+#: src/xine-engine/xine.c:1069
 #, c-format
 msgid "input cache plugin disabled\n"
 msgstr "vstupní modul cache zakázán\n"
 
-#: src/xine-engine/xine.c:1141
+#: src/xine-engine/xine.c:1142
 #, c-format
 msgid "subtitle mrl opened '%s'\n"
 msgstr "otevřeno MRL titulků '%s'\n"
 
-#: src/xine-engine/xine.c:1145
+#: src/xine-engine/xine.c:1146
 #, c-format
 msgid "xine: error opening subtitle mrl\n"
 msgstr "xine: chyba otevírání MRL titulků\n"
 
-#: src/xine-engine/xine.c:1177
+#: src/xine-engine/xine.c:1178
 #, c-format
 msgid "xine: error while parsing MRL\n"
 msgstr "xine: chyba během zpracování MRL\n"
 
-#: src/xine-engine/xine.c:1184
+#: src/xine-engine/xine.c:1185
 #, c-format
 msgid "xine: changing option '%s' from MRL isn't permitted\n"
 msgstr "xine: změna volby '%s' z MRL není povolena\n"
 
-#: src/xine-engine/xine.c:1215
+#: src/xine-engine/xine.c:1216
 #, c-format
 msgid "xine: couldn't load plugin-specified demux %s for >%s<\n"
 msgstr ""
 "xine: nepodařilo se načíst demultiplexor %s požadovaný vstupním modulem pro >"
 "%s<\n"
 
-#: src/xine-engine/xine.c:1225
+#: src/xine-engine/xine.c:1226
 #, c-format
 msgid "xine: couldn't find demux for >%s<\n"
 msgstr "xine: nelze nalézt demultiplexor pro >%s<\n"
 
-#: src/xine-engine/xine.c:1241
+#: src/xine-engine/xine.c:1242
 #, c-format
 msgid "xine: found demuxer plugin: %s\n"
 msgstr "xine: nalezen demultiplexní modul: %s\n"
 
-#: src/xine-engine/xine.c:1262
+#: src/xine-engine/xine.c:1263
 #, c-format
 msgid "xine: demuxer is already done. that was fast!\n"
 msgstr "xine: demultiplexor již skončil. to bylo rychlé!\n"
 
-#: src/xine-engine/xine.c:1264
+#: src/xine-engine/xine.c:1265
 #, c-format
 msgid "xine: demuxer failed to start\n"
 msgstr "xine: selhalo spuštění demultiplexoru\n"
 
-#: src/xine-engine/xine.c:1330
+#: src/xine-engine/xine.c:1331
 #, c-format
 msgid "xine_play: no demux available\n"
 msgstr "xine_play: žádný dostupný demultiplexor\n"
 
-#: src/xine-engine/xine.c:1401
+#: src/xine-engine/xine.c:1402
 #, c-format
 msgid "xine_play: demux failed to start\n"
 msgstr "xine_play: selhalo spuštění demultiplexoru\n"
 
-#: src/xine-engine/xine.c:1677
+#: src/xine-engine/xine.c:1684
 #, c-format
 msgid "xine: The specified save_dir \"%s\" might be a security risk.\n"
 msgstr ""
 "xine: Uvedený adresář pro ukládání \"%s\" by mohl znamenat bezpečnostní "
 "riziko.\n"
 
-#: src/xine-engine/xine.c:1682
+#: src/xine-engine/xine.c:1689
 msgid "The specified save_dir might be a security risk."
 msgstr "Uvedený adresář pro ukládání by mohl znamenat bezpečnostní riziko."
 
-#: src/xine-engine/xine.c:1714
+#: src/xine-engine/xine.c:1720
 #, c-format
 msgid "xine: locale not supported by C library\n"
 msgstr "xine: locale není podporováno knihovnou C\n"
 
-#: src/xine-engine/xine.c:1723
+#: src/xine-engine/xine.c:1729
 msgid "media format detection strategy"
 msgstr "strategie zjišťování formátu dat"
 
-#: src/xine-engine/xine.c:1724
+#: src/xine-engine/xine.c:1730
 msgid ""
 "xine offers various methods to detect the media format of input to play. The "
 "individual values are:\n"
@@ -6146,11 +6210,11 @@ msgstr ""
 "extension\n"
 "Detekovat pouze podle přípony jména souboru.\n"
 
-#: src/xine-engine/xine.c:1742
+#: src/xine-engine/xine.c:1748
 msgid "directory for saving streams"
 msgstr "adresář pro ukládání dat"
 
-#: src/xine-engine/xine.c:1743
+#: src/xine-engine/xine.c:1749
 msgid ""
 "When using the stream save feature, files will be written only into this "
 "directory.\n"
@@ -6166,11 +6230,11 @@ msgstr ""
 "Proto byste si měli být jisti, že je v uvedeném adresáři bezproblémový "
 "jakýkoliv obsah v jakémkoliv souboru."
 
-#: src/xine-engine/xine.c:1754
+#: src/xine-engine/xine.c:1760
 msgid "allow implicit changes to the configuration (e.g. by MRL)"
 msgstr "povolit implicitní změny v konfiguraci (např. pomocí MRL)"
 
-#: src/xine-engine/xine.c:1755
+#: src/xine-engine/xine.c:1761
 msgid ""
 "If enabled, you allow xine to change your configuration without explicit "
 "actions from your side. For example configuration changes demanded by MRLs "
@@ -6187,11 +6251,11 @@ msgstr ""
 "dovolíte libovolně měnit vaši konfiguraci, můžete skončit s úplně rozhozeným "
 "xine."
 
-#: src/xine-engine/xine.c:1769
+#: src/xine-engine/xine.c:1775
 msgid "Timeout for network stream reading (in seconds)"
 msgstr "Timeout čtení dat ze sítě (v sekundách)"
 
-#: src/xine-engine/xine.c:1770
+#: src/xine-engine/xine.c:1776
 msgid ""
 "Specifies the timeout when reading from network streams, in seconds. Too low "
 "values might stop streaming when the source is slow or the bandwidth is "
@@ -6201,15 +6265,15 @@ msgstr ""
 "by mohly přerušovat přehrávání, pokud je zdroj pomalý nebo je zabrané pásmo, "
 "příliš vysoké hodnoty zablokují přehrávač, pokud se ztratí spojení."
 
-#: src/xine-engine/xine.c:2227
+#: src/xine-engine/xine.c:2233
 msgid "messages"
 msgstr "zprávy"
 
-#: src/xine-engine/xine.c:2228
+#: src/xine-engine/xine.c:2234
 msgid "plugin"
 msgstr "modul"
 
-#: src/xine-engine/xine.c:2229
+#: src/xine-engine/xine.c:2235
 msgid "trace"
 msgstr "trasování"
 
@@ -6266,11 +6330,11 @@ msgstr "Chyba povolení přístupu"
 msgid "File is empty:"
 msgstr "Soubor je prázdný:"
 
-#: src/xine-utils/memcpy.c:479
+#: src/xine-utils/memcpy.c:481
 msgid "memcopy method used by xine"
 msgstr "metoda memcpy použitá xine"
 
-#: src/xine-utils/memcpy.c:480
+#: src/xine-utils/memcpy.c:482
 msgid ""
 "The copying of large memory blocks is one of the most expensive operations "
 "on todays computers. Therefore xine provides various tuned methods to do "
@@ -6280,7 +6344,7 @@ msgstr ""
 "dnešních počítačích. Proto xine poskytuje různé vyladěné metody, které "
 "provádějí toto kopírování. Obvykle je nejlepší metoda zjišťována automaticky."
 
-#: src/xine-utils/memcpy.c:507
+#: src/xine-utils/memcpy.c:509
 #, c-format
 msgid "Benchmarking memcpy methods (smaller is better):\n"
 msgstr "Výkonnostní testování metod memcpy (menší je lepší):\n"
