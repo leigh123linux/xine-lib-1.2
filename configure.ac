@@ -17,7 +17,7 @@ dnl   XINE_SUB += 1; XINE_PATCH = ''; continue with XINE_LT_* values below
 dnl
 XINE_MAJOR=1
 XINE_MINOR=1
-XINE_SUB=19
+XINE_SUB=20
 dnl XINE_PATCH should be left empty or set to ".1" or ".2" or something similar
 XINE_PATCH=
 dnl Release series number (usually $XINE_MAJOR.$XINE_MINOR)
@@ -52,12 +52,12 @@ dnl  * XINE_LT_AGE is the number of previous API versions still supported by
 dnl    this library
 dnl  * libtool has its own numbering scheme, because local library numbering
 dnl    schemes are platform dependent
-dnl  * in Linux, the library will be named
+dnl  * for GNU/Linux, the library will be named
 dnl    libname.so.(XINE_LT_CURRENT - XINE_LT_AGE).XINE_LT_AGE.XINE_LT_REVISION
 
-XINE_LT_CURRENT=30
+XINE_LT_CURRENT=31
 XINE_LT_REVISION=0
-XINE_LT_AGE=29
+XINE_LT_AGE=30
 
 dnl for a release tarball do "rm .cvsversion" before "make dist"
 if test -f "${srcdir-.}/.cvsversion"; then
