@@ -30,6 +30,7 @@
 #include <math.h>
 #include <unistd.h>
 #include <inttypes.h>
+#include <sys/stat.h>
 
 #include "xine_internal.h"
 #include "xineutils.h"
