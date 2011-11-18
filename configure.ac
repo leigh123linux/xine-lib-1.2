@@ -372,14 +372,7 @@ if test "x$with_external_ffmpeg" != "xno"; then
    
    AC_MSG_RESULT([using external ffmpeg])
 else
-  AC_MSG_NOTICE([
-*********************************************************************
-xine-lib is configured to use internal ffmpeg.
-
-This copy of ffmpeg is old. You are strongly advised to install a
-newer version (including development files) and to reconfigure
-xine-lib to use it.
-*********************************************************************])
+  AC_MSG_RESULT([using internal ffmpeg - NOT RECOMMENDED OR SUPPORTED])
   LIBFFMPEG_CPPFLAGS="-DHAVE_AV_CONFIG_H -DRUNTIME_CPUDETECT -DXINE_MPEG_ENCODER -D_ISOC9X_SOURCE -DCONFIG_DECODERS"
   AC_CHECK_TYPES(int_fast8_t, [], [LIBFFMPEG_CPPFLAGS="$LIBFFMPEG_CPPFLAGS -DEMULATE_FAST_INT"])
   AC_SUBST([LIBFFMPEG_CPPFLAGS])
@@ -3366,4 +3359,19 @@ if test "x$no_x" = "xyes"; then
       echo
       ;;
   esac
+fi
+
+dnl warn if internal ffmpeg is being used
+if test "x$with_external_ffmpeg" = "xno"; then
+  AC_MSG_NOTICE([
+*********************************************************************
+xine-lib is configured to use internal ffmpeg.
+
+This copy of ffmpeg is old and has known security problems.
+Don't use it. We don't want you to. We only care that xine-lib is
+compilable with it; beyond that, you're completely on your own.
+
+You are STRONGLY advised to install a newer version (including
+development files) and to reconfigure xine-lib to use it.
+*********************************************************************])
 fi
