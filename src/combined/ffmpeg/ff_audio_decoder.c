@@ -173,6 +173,7 @@ static void ff_audio_init_codec(ff_audio_decoder_t *this, unsigned int codec_typ
    *  - DVB streams where multiple AAC LATM frames are packed to single PES
    *  - DVB streams where MPEG audio frames do not follow PES packet boundaries
    */
+#if LIBAVCODEC_VERSION_MAJOR >= 53
   if (codec_type == BUF_AUDIO_AAC_LATM ||
       codec_type == BUF_AUDIO_MPEG) {
 
@@ -185,6 +186,7 @@ static void ff_audio_init_codec(ff_audio_decoder_t *this, unsigned int codec_typ
                "ffmpeg_audio_dec: couldn't init parser\n");
     }
   }
+#endif
 }
 
 static int ff_audio_open_codec(ff_audio_decoder_t *this, unsigned int codec_type) {
@@ -354,6 +356,7 @@ static int ff_audio_decode(xine_t *xine,
   int consumed;
   int parser_consumed = 0;
 
+#if LIBAVCODEC_VERSION_MAJOR >= 53
   if (parser_ctx) {
     uint8_t *outbuf;
     int      outsize;
@@ -380,6 +383,7 @@ static int ff_audio_decode(xine_t *xine,
     buf  = outbuf;
     size = outsize;
   }
+#endif /* LIBAVCODEC_VERSION_MAJOR >= 53 */
 
 #if AVAUDIO > 2
   AVPacket avpkt;
