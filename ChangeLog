@@ -1,3 +1,6 @@
+xine-lib (1.1.20.1) 2011-??-??
+  * Various bug fixes.
+
 xine-lib (1.1.20) 2011-11-13
   * Imagine that there's a large poppy here.
   * Ensure that file and socket descriptors are marked as CLOEXEC.
