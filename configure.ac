@@ -372,14 +372,7 @@ if test "x$with_external_ffmpeg" != "xno"; then
    
    AC_MSG_RESULT([using external ffmpeg])
 else
-  AC_MSG_NOTICE([
-*********************************************************************
-xine-lib is configured to use internal ffmpeg.
-
-This copy of ffmpeg is old. You are strongly advised to install a
-newer version (including development files) and to reconfigure
-xine-lib to use it.
-*********************************************************************])
+  AC_MSG_RESULT([using internal ffmpeg - NOT RECOMMENDED OR SUPPORTED])
   LIBFFMPEG_CPPFLAGS="-DHAVE_AV_CONFIG_H -DRUNTIME_CPUDETECT -DXINE_MPEG_ENCODER -D_ISOC9X_SOURCE -DCONFIG_DECODERS"
   AC_CHECK_TYPES(int_fast8_t, [], [LIBFFMPEG_CPPFLAGS="$LIBFFMPEG_CPPFLAGS -DEMULATE_FAST_INT"])
   AC_SUBST([LIBFFMPEG_CPPFLAGS])
@@ -1433,11 +1426,12 @@ if test "x$with_imagemagick" != "xno"; then
       dnl the flags for plain GraphicsMagick
       WAND_CFLAGS="$GRAPHICSMAGICKWAND_CFLAGS"
       WAND_LIBS="$GRAPHICSMAGICKWAND_LIBS"
+      AC_DEFINE([HAVE_GRAPHICSMAGICK], [1], [Define this if you have GraphicsMagick installed])
    fi
    if test "x$with_imagemagick" = "xyes" && test "x$have_imagemagick" = "xno"; then
       AC_MSG_ERROR([ImageMagick support requested, but neither Wand, MagickWand, nor GraphicsMagick were found])
    elif test "x$have_imagemagick" = "xyes"; then
-      AC_DEFINE([HAVE_WAND], [1], [Define this if you have ImageMagick installed])
+      AC_DEFINE([HAVE_WAND], [1], [Define this if you have ImageMagick or GraphicsMagick's compat layer installed])
    fi
 fi
 
@@ -1773,6 +1767,7 @@ if test "x$external_dvdnav" = "xyes"; then
   AM_PATH_DVDNAV(0.1.9,
 	  AC_DEFINE(HAVE_DVDNAV,1,[Define this if you have a suitable version of libdvdnav]),
 	  [AC_MSG_RESULT([*** no usable version of libdvdnav found, using internal copy ***])])
+  AC_CHECK_LIB(dvdread, navRead_DSI, DVDNAV_LIBS="$DVDNAV_LIBS -ldvdread",)
 else
   AC_MSG_RESULT([Use included DVDNAV support])
 fi
@@ -3366,4 +3361,19 @@ if test "x$no_x" = "xyes"; then
       echo
       ;;
   esac
+fi
+
+dnl warn if internal ffmpeg is being used
+if test "x$with_external_ffmpeg" = "xno"; then
+  AC_MSG_NOTICE([
+*********************************************************************
+xine-lib is configured to use internal ffmpeg.
+
+This copy of ffmpeg is old and has known security problems.
+Don't use it. We don't want you to. We only care that xine-lib is
+compilable with it; beyond that, you're completely on your own.
+
+You are STRONGLY advised to install a newer version (including
+development files) and to reconfigure xine-lib to use it.
+*********************************************************************])
 fi
