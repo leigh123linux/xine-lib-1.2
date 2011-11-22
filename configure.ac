@@ -1426,11 +1426,12 @@ if test "x$with_imagemagick" != "xno"; then
       dnl the flags for plain GraphicsMagick
       WAND_CFLAGS="$GRAPHICSMAGICKWAND_CFLAGS"
       WAND_LIBS="$GRAPHICSMAGICKWAND_LIBS"
+      AC_DEFINE([HAVE_GRAPHICSMAGICK], [1], [Define this if you have GraphicsMagick installed])
    fi
    if test "x$with_imagemagick" = "xyes" && test "x$have_imagemagick" = "xno"; then
       AC_MSG_ERROR([ImageMagick support requested, but neither Wand, MagickWand, nor GraphicsMagick were found])
    elif test "x$have_imagemagick" = "xyes"; then
-      AC_DEFINE([HAVE_WAND], [1], [Define this if you have ImageMagick installed])
+      AC_DEFINE([HAVE_WAND], [1], [Define this if you have ImageMagick or GraphicsMagick's compat layer installed])
    fi
 fi
 

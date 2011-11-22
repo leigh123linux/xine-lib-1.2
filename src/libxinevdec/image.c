@@ -54,6 +54,17 @@
 #include "xineutils.h"
 #include "bswap.h"
 
+#ifdef HAVE_GRAPHICSMAGICK
+# define MAGICK_VERSION 0x670
+#else
+# if !defined(MagickLibVersion) || MagickLibVersion < 0x671
+#  define MAGICK_VERSION 0x670
+#else
+#  define MAGICK_VERSION MagickLibVersion
+# endif
+#endif
+
+
 typedef struct {
   video_decoder_class_t   decoder_class;
 
@@ -101,7 +112,7 @@ static void image_decode_data (video_decoder_t *this_gen, buf_element_t *buf) {
     /*
      * this->image -> rgb data
      */
-#if !defined(MagickLibVersion) || MagickLibVersion < 0x671
+#if MAGICK_VERSION < 0x671
     InitializeMagick(NULL);
 #else
     MagickWandGenesis();
@@ -113,7 +124,7 @@ static void image_decode_data (video_decoder_t *this_gen, buf_element_t *buf) {
 
     if (!status) {
       DestroyMagickWand(wand);
-#if !defined(MagickLibVersion) || MagickLibVersion < 0x671
+#if MAGICK_VERSION < 0x671
       DestroyMagick();
 #else
       MagickWandTerminus();
@@ -125,7 +136,7 @@ static void image_decode_data (video_decoder_t *this_gen, buf_element_t *buf) {
     width = MagickGetImageWidth(wand) & ~1; /* must be even for init_yuv_planes */
     height = MagickGetImageHeight(wand);
     img_buf = malloc(width * height * 3);
-#if !defined(MagickLibVersion) || MagickLibVersion < 0x671
+#if MAGICK_VERSION < 0x671
     MagickGetImagePixels(wand, 0, 0, width, height, "RGB", CharPixel, img_buf);
     DestroyMagickWand(wand);
     DestroyMagick();
