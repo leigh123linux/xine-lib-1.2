@@ -99,7 +99,6 @@ typedef struct dvb_spu_decoder_s {
   char                 *pes_pkt_wrptr;
   unsigned int	pes_pkt_size;
 
-  uint64_t		pts;
   uint64_t		vpts;
   uint64_t		end_vpts;
 
@@ -759,7 +758,6 @@ static void spudec_decode_data (spu_decoder_t * this_gen, buf_element_t * buf)
       memset (this->pes_pkt, 0xff, 64*1024);
       this->pes_pkt_wrptr = this->pes_pkt;
       this->pes_pkt_size = buf->decoder_info[2];
-      this->pts = buf->pts;
 
       xine_fast_memcpy (this->pes_pkt, buf->content, buf->size);
       this->pes_pkt_wrptr += buf->size;
