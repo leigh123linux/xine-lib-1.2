@@ -998,12 +998,12 @@ static int demux_ts_parse_pes_header (xine_t *xine, demux_ts_media *m,
 
   /* packet_len = p[4] << 8 | p[5]; */
   stream_id  = p[3];
-  header_len = p[8];
+  header_len = p[8] + 9;
 
   /* sometimes corruption on header_len causes segfault in memcpy below */
-  if (header_len + 9 > packet_len) {
+  if (header_len > packet_len) {
     xprintf (xine, XINE_VERBOSITY_DEBUG,
-             "demux_ts: illegal value for PES_header_data_length (0x%x)\n", header_len);
+             "demux_ts: illegal value for PES_header_data_length (0x%x)\n", header_len - 9);
     return 0;
   }
 
@@ -1014,7 +1014,7 @@ static int demux_ts_parse_pes_header (xine_t *xine, demux_ts_media *m,
 
   if (p[7] & 0x80) { /* pts avail */
 
-    if (header_len < 5) {
+    if (header_len < 14) {
       return 0;
     }
 
@@ -1042,8 +1042,8 @@ static int demux_ts_parse_pes_header (xine_t *xine, demux_ts_media *m,
 
   m->pts       = pts;
 
-  p += header_len + 9;
-  packet_len -= header_len + 9;
+  p += header_len;
+  packet_len -= header_len;
 
   if (m->descriptor_tag == STREAM_VIDEO_VC1) {
     m->size      = packet_len;
@@ -1052,7 +1052,7 @@ static int demux_ts_parse_pes_header (xine_t *xine, demux_ts_media *m,
   }
 
   if (m->descriptor_tag == HDMV_SPU_BITMAP) {
-    long payload_len = ((buf[4] << 8) | buf[5]) - header_len - 3;
+    long payload_len = ((buf[4] << 8) | buf[5]) - header_len + 6;
 
     m->size = packet_len;
     m->type |= BUF_SPU_HDMV;
@@ -1119,7 +1119,7 @@ static int demux_ts_parse_pes_header (xine_t *xine, demux_ts_media *m,
     } else if (m->descriptor_tag == ISO_13818_PES_PRIVATE
 	     && p[0] == 0x20 && p[1] == 0x00) {
       /* DVBSUB */
-      long payload_len = ((buf[4] << 8) | buf[5]) - header_len - 3;
+      long payload_len = ((buf[4] << 8) | buf[5]) - header_len + 6;
 
       m->size = packet_len;
       m->type |= BUF_SPU_DVB;
