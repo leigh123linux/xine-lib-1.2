@@ -79,6 +79,8 @@ typedef struct {
 typedef struct		dvb_spu_class_s {
   spu_decoder_class_t	class;
   xine_t	       *xine;
+
+  int                   ignore_pts;
 } dvb_spu_class_t;
 
 typedef struct dvb_spu_decoder_s {
@@ -774,7 +776,7 @@ static void spudec_decode_data (spu_decoder_t * this_gen, buf_element_t * buf)
   /* don't ask metronom for a vpts but rather do the calculation
    * because buf->pts could be too far in future and metronom won't accept
    * further backwards pts (see metronom_got_spu_packet) */
-  if (buf->pts) {
+  if (!this->class->ignore_pts && buf->pts > 0) {
     metronom_t *const metronom = this->stream->metronom;
     const int64_t vpts_offset = metronom->get_option( metronom, METRONOM_VPTS_OFFSET );
     const int64_t spu_offset = metronom->get_option( metronom, METRONOM_SPU_OFFSET );
@@ -927,8 +929,12 @@ static spu_decoder_t *dvb_spu_class_open_plugin (spu_decoder_class_t * class_gen
   return (spu_decoder_t *) this;
 }
 
-static void dvb_spu_class_dispose (spu_decoder_class_t * this)
+static void dvb_spu_class_dispose (spu_decoder_class_t * this_gen)
 {
+  dvb_spu_class_t *this = (dvb_spu_class_t *) this_gen;
+
+  this->xine->config->unregister_callback(this->xine->config, "subtitles.dvb.ignore_pts");
+
   free (this);
 }
 
@@ -942,6 +948,13 @@ static char *dvb_spu_class_get_description (spu_decoder_class_t * this)
   return "DVB subtitle decoder plugin";
 }
 
+static void spu_dvb_ignore_pts_change(void *this_gen, xine_cfg_entry_t *value)
+{
+  dvb_spu_class_t *this = (dvb_spu_class_t *) this_gen;
+
+  this->ignore_pts = value->num_value;
+}
+
 static void *init_spu_decoder_plugin (xine_t * xine, void *data)
 {
   dvb_spu_class_t *this = calloc(1, sizeof (dvb_spu_class_t));
@@ -952,6 +965,12 @@ static void *init_spu_decoder_plugin (xine_t * xine, void *data)
   this->class.dispose = dvb_spu_class_dispose;
 
   this->xine = xine;
+
+  this->ignore_pts = xine->config->register_bool(xine->config,
+                                                 "subtitles.dvb.ignore_pts", 0,
+                                                 _("Ignore DVB subtitle timing"),
+                                                 _("Do not use PTS timestamps for DVB subtitle timing"),
+                                                 1, spu_dvb_ignore_pts_change, this);
 
   return &this->class;
 }
