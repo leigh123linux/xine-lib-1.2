@@ -289,7 +289,6 @@
 typedef struct {
   unsigned int     pid;
   fifo_buffer_t   *fifo;
-  uint32_t         size;
   uint32_t         type;
   int64_t          pts;
   buf_element_t   *buf;
@@ -1046,18 +1045,16 @@ static int demux_ts_parse_pes_header (xine_t *xine, demux_ts_media *m,
   packet_len -= header_len;
 
   if (m->descriptor_tag == STREAM_VIDEO_VC1) {
-    m->size      = packet_len;
     m->type      = BUF_VIDEO_VC1;
-    return 1;
+    return header_len;
   }
 
   if (m->descriptor_tag == HDMV_SPU_BITMAP) {
     long payload_len = ((buf[4] << 8) | buf[5]) - header_len + 6;
 
-    m->size = packet_len;
     m->type |= BUF_SPU_HDMV;
     m->buf->decoder_info[2] = payload_len;
-    return 1;
+    return header_len;
 
   } else
 
@@ -1076,27 +1073,23 @@ static int demux_ts_parse_pes_header (xine_t *xine, demux_ts_media *m,
      */
     if(m->descriptor_tag == HDMV_AUDIO_84_EAC3 ||
        m->descriptor_tag == STREAM_AUDIO_EAC3) {
-      m->size = packet_len;
       m->type |= BUF_AUDIO_EAC3;
-      return 1;
+      return header_len;
 
     } else if(m->descriptor_tag == STREAM_AUDIO_AC3) {    /* ac3 - raw */
-      m->size = packet_len;
       m->type |= BUF_AUDIO_A52;
-      return 1;
+      return header_len;
 
     } else if (m->descriptor_tag == HDMV_AUDIO_83_TRUEHD) {
       /* TODO: separate AC3 and TrueHD streams ... */
-      m->size = packet_len;
       m->type |= BUF_AUDIO_A52;
-      return 1;
+      return header_len;
 
     } else if (m->descriptor_tag == STREAM_AUDIO_DTS ||
                m->descriptor_tag == HDMV_AUDIO_82_DTS ||
                m->descriptor_tag == HDMV_AUDIO_86_DTS_HD_MA ) {
-      m->size = packet_len;
       m->type |= BUF_AUDIO_DTS;
-      return 1;
+      return header_len;
 
     } else if (packet_len < 2) {
       return 0;
@@ -1107,45 +1100,41 @@ static int demux_ts_parse_pes_header (xine_t *xine, demux_ts_media *m,
         return 0;
       }
 
-      m->size    = packet_len - 4;
       m->type   |= BUF_AUDIO_LPCM_BE;
 
       m->buf->decoder_flags  |= BUF_FLAG_SPECIAL;
       m->buf->decoder_info[1] = BUF_SPECIAL_LPCM_CONFIG;
       m->buf->decoder_info[2] = (p[3]<<24) | (p[2]<<16) | (p[1]<<8) | p[0];
 
-      return 1;
+      return header_len + 4;
 
     } else if (m->descriptor_tag == ISO_13818_PES_PRIVATE
 	     && p[0] == 0x20 && p[1] == 0x00) {
       /* DVBSUB */
       long payload_len = ((buf[4] << 8) | buf[5]) - header_len + 6;
 
-      m->size = packet_len;
       m->type |= BUF_SPU_DVB;
       m->buf->decoder_info[2] = payload_len;
-      return 1;
+      return header_len;
 
     } else if (p[0] == 0x0B && p[1] == 0x77) { /* ac3 - syncword */
-      m->size = packet_len;
       m->type |= BUF_AUDIO_A52;
-      return 1;
+      return header_len;
 
     } else if ((p[0] & 0xE0) == 0x20) {
       spu_id = (p[0] & 0x1f);
 
-      m->size      = packet_len-1;
       m->type      = BUF_SPU_DVD + spu_id;
-      return 1;
+      return header_len + 1;
+
     } else if ((p[0] & 0xF0) == 0x80) {
 
       if (packet_len < 4) {
         return 0;
       }
 
-      m->size      = packet_len - 4;
       m->type      |= BUF_AUDIO_A52;
-      return 1;
+      return header_len + 4;
 
 #if 0
     /* commented out: does not set PCM type. Decoder can't handle raw PCM stream without configuration. */
@@ -1164,15 +1153,13 @@ static int demux_ts_parse_pes_header (xine_t *xine, demux_ts_media *m,
         return 0;
       }
 
-      m->size      = packet_len-pcm_offset;
       m->type      |= BUF_AUDIO_LPCM_BE;
-      return 1;
+      return header_len + pcm_offset;
 #endif
     }
 
   } else if ((stream_id & 0xf0) == 0xe0) {
 
-    m->size      = packet_len;
     switch (m->descriptor_tag) {
     case ISO_11172_VIDEO:
     case ISO_13818_VIDEO:
@@ -1193,11 +1180,10 @@ static int demux_ts_parse_pes_header (xine_t *xine, demux_ts_media *m,
       m->type      = BUF_VIDEO_MPEG;
       break;
     }
-    return 1;
+    return header_len;
 
   } else if ((stream_id & 0xe0) == 0xc0) {
 
-    m->size      = packet_len;
     switch (m->descriptor_tag) {
     case  ISO_11172_AUDIO:
     case  ISO_13818_AUDIO:
@@ -1217,7 +1203,7 @@ static int demux_ts_parse_pes_header (xine_t *xine, demux_ts_media *m,
       m->type      |= BUF_AUDIO_MPEG;
       break;
     }
-    return 1;
+    return header_len;
 
   } else {
 #ifdef TS_LOG
@@ -1278,7 +1264,9 @@ static void demux_ts_buffer_pes(demux_ts_t*this, unsigned char *ts,
     /* allocate the buffer here, as pes_header needs a valid buf for dvbsubs */
     m->buf = m->fifo->buffer_pool_alloc(m->fifo);
 
-    if (!demux_ts_parse_pes_header(this->stream->xine, m, ts, len)) {
+    int pes_header_len = demux_ts_parse_pes_header(this->stream->xine, m, ts, len);
+
+    if (pes_header_len <= 0) {
       m->buf->free_buffer(m->buf);
       m->buf = NULL;
 
@@ -1288,8 +1276,13 @@ static void demux_ts_buffer_pes(demux_ts_t*this, unsigned char *ts,
     } else {
 
       m->corrupted_pes = 0;
-      memcpy(m->buf->mem, ts+len-m->size, m->size);
-      m->buf->size = m->size;
+
+      /* skip PES header */
+      ts  += pes_header_len;
+      len -= pes_header_len;
+
+      memcpy(m->buf->mem, ts, len);
+      m->buf->size = len;
 
       update_extra_info(this, m);
 
