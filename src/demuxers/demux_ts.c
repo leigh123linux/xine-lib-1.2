@@ -501,7 +501,11 @@ static void demux_ts_dynamic_pmt_clean (demux_ts_t *this) {
           spus++;
         }
       }
-      if (i > count) this->media[count] = *m;
+      if (i > count) {
+        this->media[count] = *m;
+        m->buf = NULL;
+        m->pid = INVALID_PID;
+      }
       count++;
     } else {
       /* drop this no longer needed media descriptor */
