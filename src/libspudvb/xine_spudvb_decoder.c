@@ -753,24 +753,25 @@ static void spudec_decode_data (spu_decoder_t * this_gen, buf_element_t * buf)
     }
     return;
   }
+
+  /* accumulate data */
+  if (buf->decoder_info[2]) {
+    memset (this->pes_pkt, 0xff, 64*1024);
+    this->pes_pkt_wrptr = this->pes_pkt;
+    this->pes_pkt_size = buf->decoder_info[2];
+
+    xine_fast_memcpy (this->pes_pkt, buf->content, buf->size);
+    this->pes_pkt_wrptr += buf->size;
+
+    this->vpts = 0;
+  }
   else {
-    if (buf->decoder_info[2]) {
-      memset (this->pes_pkt, 0xff, 64*1024);
-      this->pes_pkt_wrptr = this->pes_pkt;
-      this->pes_pkt_size = buf->decoder_info[2];
-
-      xine_fast_memcpy (this->pes_pkt, buf->content, buf->size);
+    if (this->pes_pkt && (this->pes_pkt_wrptr != this->pes_pkt)) {
+      xine_fast_memcpy (this->pes_pkt_wrptr, buf->content, buf->size);
       this->pes_pkt_wrptr += buf->size;
-
-      this->vpts = 0;
-    }
-    else {
-      if (this->pes_pkt && (this->pes_pkt_wrptr != this->pes_pkt)) {
-	xine_fast_memcpy (this->pes_pkt_wrptr, buf->content, buf->size);
-	this->pes_pkt_wrptr += buf->size;
-      }
     }
   }
+
   /* don't ask metronom for a vpts but rather do the calculation
    * because buf->pts could be too far in future and metronom won't accept
    * further backwards pts (see metronom_got_spu_packet) */
