@@ -1281,9 +1281,6 @@ static void demux_ts_buffer_pes(demux_ts_t*this, unsigned char *ts,
       ts  += pes_header_len;
       len -= pes_header_len;
 
-      memcpy(m->buf->mem, ts, len);
-      m->buf->size = len;
-
       update_extra_info(this, m);
 
       /* rate estimation */
@@ -1292,8 +1289,9 @@ static void demux_ts_buffer_pes(demux_ts_t*this, unsigned char *ts,
       if (m->pid == this->tbre_pid)
         demux_ts_tbre_update (this, TBRE_MODE_AUDIO_PTS, m->pts);
     }
+  }
 
-  } else if (!m->corrupted_pes) { /* no pus -- PES packet continuation */
+  if (!m->corrupted_pes) {
 
     if ((m->buf->size + len) > MAX_PES_BUF_SIZE) {
       demux_ts_send_buffer(m, 0);
