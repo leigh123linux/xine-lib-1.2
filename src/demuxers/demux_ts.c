@@ -413,6 +413,16 @@ typedef struct {
   config_values_t  *config;
 } demux_ts_class_t;
 
+static void reset_track_map(fifo_buffer_t *fifo)
+{
+  buf_element_t *buf = fifo->buffer_pool_alloc (fifo);
+
+  buf->type            = BUF_CONTROL_RESET_TRACK_MAP;
+  buf->decoder_info[1] = -1;
+
+  fifo->put (fifo, buf);
+}
+
 /* TJ. dynamic PMT support. The idea is:
    First, reuse unchanged pids and add new ones.
    Then, comb out those who are no longer referenced.
@@ -525,10 +535,7 @@ static void demux_ts_dynamic_pmt_clean (demux_ts_t *this) {
   }
   if ((tracks < this->audio_tracks_count) && this->audio_fifo) {
     /* at least 1 audio track removed, tell audio decoder loop */
-    buf_element_t *b = this->audio_fifo->buffer_pool_alloc (this->audio_fifo);
-    b->type = BUF_CONTROL_RESET_TRACK_MAP;
-    b->decoder_info[1] = -1;
-    this->audio_fifo->put (this->audio_fifo, b);
+    reset_track_map(this->audio_fifo);
 #ifdef LOG_DYNAMIC_PMT
     printf ("demux_ts: new audio track map\n");
 #endif
