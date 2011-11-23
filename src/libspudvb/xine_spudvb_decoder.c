@@ -790,7 +790,7 @@ static void spudec_decode_data (spu_decoder_t * this_gen, buf_element_t * buf)
   }
 
   /* completely ignore pts since it makes a lot of problems with various providers */
-  this->vpts = 0;
+  /* this->vpts = 0; */
 
   /* process the pes section */
 
