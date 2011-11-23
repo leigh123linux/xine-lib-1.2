@@ -99,8 +99,8 @@ typedef struct dvb_spu_decoder_s {
   char                 *pes_pkt_wrptr;
   unsigned int	pes_pkt_size;
 
-  uint64_t		vpts;
-  uint64_t		end_vpts;
+  int64_t		vpts;
+  int64_t		end_vpts;
 
   pthread_t	dvbsub_timer_thread;
   struct timespec       dvbsub_hide_timeout;
@@ -696,7 +696,7 @@ static void draw_subtitles (dvb_spu_decoder_t * this)
 
   pthread_mutex_lock(&this->dvbsub_osd_mutex);
 #ifdef LOG
-  printf("SPUDVB: this->vpts=%llu\n",this->vpts);
+  printf("SPUDVB: this->vpts=%"PRId64"\n", this->vpts);
 #endif
   for ( r=0; r<MAX_REGIONS; r++ ) {
 #ifdef LOG
@@ -783,7 +783,7 @@ static void spudec_decode_data (spu_decoder_t * this_gen, buf_element_t * buf)
     const int64_t curvpts = clock->get_current_time( clock );
     /* if buf->pts is unreliable, show page asap (better than nothing) */
 #ifdef LOG
-    printf("SPUDVB: spu_vpts=%lld - current_vpts=%lld\n", vpts, curvpts);
+    printf("SPUDVB: spu_vpts=%"PRId64" - current_vpts=%"PRId64"\n", vpts, curvpts);
 #endif
     if ( vpts<=curvpts || (vpts-curvpts)>(5*90000) )
       this->vpts = 0;
