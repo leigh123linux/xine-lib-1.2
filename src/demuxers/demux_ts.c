@@ -1570,6 +1570,9 @@ printf("Program Number is %i, looking for %i\n",program_number,this->program_num
   this->videoPid = INVALID_PID;
   this->spu_pid = INVALID_PID;
 
+  this->spu_langs_count = 0;
+  reset_track_map(this->video_fifo);
+
   /*
    * ES definitions start here...we are going to learn upto one video
    * PID and one audio PID.
@@ -1595,7 +1598,6 @@ printf("Program Number is %i, looking for %i\n",program_number,this->program_num
   /*
    * Extract the elementary streams.
    */
-  this->spu_langs_count = 0;
   while (section_length > 0) {
     unsigned int stream_info_length;
 
