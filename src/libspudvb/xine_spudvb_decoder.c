@@ -761,6 +761,8 @@ static void spudec_decode_data (spu_decoder_t * this_gen, buf_element_t * buf)
 
       xine_fast_memcpy (this->pes_pkt, buf->content, buf->size);
       this->pes_pkt_wrptr += buf->size;
+
+      this->vpts = 0;
     }
     else {
       if (this->pes_pkt && (this->pes_pkt_wrptr != this->pes_pkt)) {
