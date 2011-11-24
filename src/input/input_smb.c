@@ -356,7 +356,7 @@ static xine_mrl_t **smb_class_get_dir (input_class_t *this_gen,
 					(this->mrls_allocated_entries+1) * sizeof(xine_mrl_t*));
 				this->mrls[num_files] = calloc(1, sizeof(xine_mrl_t));
 			}else
-				memset(this->mrls[num_files], 0, sizeof(xine_mrl_t));
+				MRL_ZERO(this->mrls[num_files]);
 
 			MRL_DUPLICATE(&dir_files[i], this->mrls[num_files]);
 
@@ -373,7 +373,7 @@ static xine_mrl_t **smb_class_get_dir (input_class_t *this_gen,
 					(this->mrls_allocated_entries+1) * sizeof(xine_mrl_t*));
 				this->mrls[num_files] = calloc(1, sizeof(xine_mrl_t));
 			}else
-				memset(this->mrls[num_files], 0, sizeof(xine_mrl_t));
+				MRL_ZERO(this->mrls[num_files]);
 
 			MRL_DUPLICATE(&norm_files[i], this->mrls[num_files]);
 
@@ -455,6 +455,12 @@ static void
 smb_class_dispose (input_class_t *this_gen)
 {
 	smb_input_class_t *this = (smb_input_class_t *) this_gen;
+
+	while(this->mrls_allocated_entries) {
+		MRL_ZERO(this->mrls[this->mrls_allocated_entries - 1]);
+		free(this->mrls[this->mrls_allocated_entries--]);
+	}
+	free(this->mrls);
 
 	free (this);
 }

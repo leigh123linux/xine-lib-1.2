@@ -187,7 +187,7 @@ typedef struct {
   int                  mrls_allocated_entries;
   xine_mrl_t         **mrls;
 
-  char                *autoplaylist[MAX_TRACKS];
+  char               **autoplaylist;
 
 } cdda_input_class_t;
 
@@ -2545,14 +2545,7 @@ static xine_mrl_t** cdda_class_get_dir(input_class_t *this_gen,
   }
   for (i = 0 ; i < num_tracks ; i++) {
     if (i < this->mrls_allocated_entries) {
-      if (this->mrls[i]->origin)
-	free(this->mrls[i]->origin);
-      if (this->mrls[i]->mrl)
-	free(this->mrls[i]->mrl);
-      if (this->mrls[i]->link) {
-	free(this->mrls[i]->link);
-	this->mrls[i]->link = NULL;
-      }
+      MRL_ZERO(this->mrls[i]);
     }
     else {
       this->mrls[i] = (xine_mrl_t *) xine_xmalloc(sizeof(xine_mrl_t));
@@ -2578,6 +2571,21 @@ static xine_mrl_t** cdda_class_get_dir(input_class_t *this_gen,
   return this->mrls;
 }
 
+static void free_autoplay_list(cdda_input_class_t *this)
+{
+  /* free old playlist */
+  if (this->autoplaylist) {
+    unsigned int i;
+    for( i = 0; this->autoplaylist[i]; i++ ) {
+      free( this->autoplaylist[i] );
+      this->autoplaylist[i] = NULL;
+    }
+
+    free(this->autoplaylist);
+    this->autoplaylist = NULL;
+  }
+}
+
 static char ** cdda_class_get_autoplay_list (input_class_t *this_gen,
 					    int *num_files) {
 
@@ -2589,11 +2597,7 @@ static char ** cdda_class_get_autoplay_list (input_class_t *this_gen,
 
   lprintf("cdda_class_get_autoplay_list for >%s<\n", this->cdda_device);
 
-  /* free old playlist */
-  for( i = 0; this->autoplaylist[i]; i++ ) {
-    free( this->autoplaylist[i] );
-    this->autoplaylist[i] = NULL;
-  }
+  free_autoplay_list(this);
 
   /* get the CD TOC */
   toc = init_cdrom_toc();
@@ -2651,6 +2655,8 @@ static char ** cdda_class_get_autoplay_list (input_class_t *this_gen,
     num_tracks--;
   if (num_tracks >= MAX_TRACKS-1)
     num_tracks = MAX_TRACKS - 2;
+
+  this->autoplaylist = calloc(num_tracks + 2, sizeof(char *));
   for ( i = 0; i <= num_tracks; i++ )
     this->autoplaylist[i] = _x_asprintf("cdda:/%d",i+toc->first_track);
 
@@ -2779,7 +2785,14 @@ static void cdda_class_dispose (input_class_t *this_gen) {
   config->unregister_callback(config, "media.audio_cd.drive_slowdown");
 #endif
 
+  free_autoplay_list(this);
+
+  while (this->mrls_allocated_entries) {
+    MRL_ZERO(this->mrls[this->mrls_allocated_entries - 1]);
+    free(this->mrls[this->mrls_allocated_entries--]);
+  }
   free (this->mrls);
+
   free (this);
 }
 
