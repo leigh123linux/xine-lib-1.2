@@ -21,11 +21,11 @@ endif
 
 if HAVE_V4L
 in_v4l = xineplug_inp_v4l.la
-in_pvr = xineplug_inp_pvr.la
 endif
 
 if HAVE_V4L2
 in_v4l2 = xineplug_inp_v4l2.la
+in_pvr = xineplug_inp_pvr.la
 endif
 
 if HAVE_GNOME_VFS
@@ -164,5 +164,5 @@ xineplug_inp_pvr_la_CFLAGS = $(VISIBILITY_FLAG) $(AM_CFLAGS)
 xineplug_inp_pvr_la_LDFLAGS = $(xineplug_ldflags)
 
 xineinclude_HEADERS = input_plugin.h
-noinst_HEADERS = net_buf_ctrl.h mms.h mmsh.h pnm.h media_helper.h videodev2.h http_helper.h
+noinst_HEADERS = net_buf_ctrl.h mms.h mmsh.h pnm.h media_helper.h http_helper.h
 
