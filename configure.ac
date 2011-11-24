@@ -1302,7 +1302,7 @@ if test "x$enable_a52dec" = "xno"; then
   AC_MSG_RESULT([a52dec support disabled])
 elif test "x$external_a52dec" = "xyes"; then
   have_a52="yes"
-  AC_CHECK_HEADERS([a52dec/a52.h a52dec/a52_internal.h],, have_a52="no",
+  AC_CHECK_HEADERS([a52dec/a52.h],, have_a52="no",
 [
   #ifdef HAVE_SYS_TYPES_H
   # include <sys/types.h>
