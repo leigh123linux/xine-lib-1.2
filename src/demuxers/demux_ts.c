@@ -2360,10 +2360,14 @@ static int demux_ts_get_optional_data(demux_plugin_t *this_gen,
 
     case DEMUX_OPTIONAL_DATA_SPULANG:
       if (channel>=0 && channel<this->spu_langs_count) {
-        memcpy(str, this->spu_langs[channel].desc.lang, 3);
-	str[3] = 0;}
-      else
+        if (this->spu_langs[channel].desc.lang[0]) {
+          strcpy(str, this->spu_langs[channel].desc.lang);
+        } else {
+          sprintf(str, "%3i", channel);
+        }
+      } else {
         strcpy(str, "none");
+      }
       return DEMUX_OPTIONAL_SUCCESS;
 
     default:
