@@ -524,8 +524,8 @@ void xine_probe_fast_memcpy(xine_t *xine)
 
   /* some initial activity to ensure that we're not running slowly :-) */
   for(j=0;j<50;j++) {
-    memcpy_method[i].function(buf2,buf1,BUFSIZE);
-    memcpy_method[i].function(buf1,buf2,BUFSIZE);
+    memcpy_method[1].function(buf2,buf1,BUFSIZE);
+    memcpy_method[1].function(buf1,buf2,BUFSIZE);
   }
 
   for(i=1; memcpy_method[i].name; i++)
