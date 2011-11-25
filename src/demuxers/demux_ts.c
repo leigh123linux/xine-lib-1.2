@@ -2348,10 +2348,14 @@ static int demux_ts_get_optional_data(demux_plugin_t *this_gen,
     {
     case DEMUX_OPTIONAL_DATA_AUDIOLANG:
       if ((channel >= 0) && (channel < this->audio_tracks_count)) {
-        if (this->audio_tracks[channel].lang[0])
+        if (this->audio_tracks[channel].lang[0]) {
           strcpy(str, this->audio_tracks[channel].lang);
-        else
+        } else {
+          /* input plugin may know the language */
+          if (this->input->get_capabilities(this->input) & INPUT_CAP_AUDIOLANG)
+            return DEMUX_OPTIONAL_UNSUPPORTED;
           sprintf(str, "%3i", channel);
+        }
       }
       else {
         strcpy(str, "none");
@@ -2363,6 +2367,9 @@ static int demux_ts_get_optional_data(demux_plugin_t *this_gen,
         if (this->spu_langs[channel].desc.lang[0]) {
           strcpy(str, this->spu_langs[channel].desc.lang);
         } else {
+          /* input plugin may know the language */
+          if (this->input->get_capabilities(this->input) & INPUT_CAP_SPULANG)
+            return DEMUX_OPTIONAL_UNSUPPORTED;
           sprintf(str, "%3i", channel);
         }
       } else {
