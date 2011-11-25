@@ -296,6 +296,7 @@ typedef struct {
   uint16_t         descriptor_tag; /* +0x100 for PES stream IDs (no available TS descriptor tag?) */
   uint8_t          keep;           /* used by demux_ts_dynamic_pmt_*() */
   int              corrupted_pes;
+  int              pes_bytes_left; /* butes left if PES packet size is known */
 
   int              input_normpos;
   int              input_time;
@@ -995,7 +996,6 @@ static int demux_ts_parse_pes_header (xine_t *xine, demux_ts_media *m,
     return 0 ;
   }
 
-  /* packet_len = p[4] << 8 | p[5]; */
   stream_id  = p[3];
   header_len = p[8] + 9;
 
@@ -1041,6 +1041,9 @@ static int demux_ts_parse_pes_header (xine_t *xine, demux_ts_media *m,
 
   m->pts       = pts;
 
+  m->pes_bytes_left = (int)(p[4] << 8 | p[5]) - header_len + 6;
+  lprintf("PES packet payload left: %d bytes\n", m->pes_bytes_left);
+
   p += header_len;
   packet_len -= header_len;
 
@@ -1050,10 +1053,8 @@ static int demux_ts_parse_pes_header (xine_t *xine, demux_ts_media *m,
   }
 
   if (m->descriptor_tag == HDMV_SPU_BITMAP) {
-    long payload_len = ((buf[4] << 8) | buf[5]) - header_len + 6;
-
     m->type |= BUF_SPU_HDMV;
-    m->buf->decoder_info[2] = payload_len;
+    m->buf->decoder_info[2] = m->pes_bytes_left;
     return header_len;
 
   } else
@@ -1111,10 +1112,8 @@ static int demux_ts_parse_pes_header (xine_t *xine, demux_ts_media *m,
     } else if (m->descriptor_tag == ISO_13818_PES_PRIVATE
 	     && p[0] == 0x20 && p[1] == 0x00) {
       /* DVBSUB */
-      long payload_len = ((buf[4] << 8) | buf[5]) - header_len + 6;
-
       m->type |= BUF_SPU_DVB;
-      m->buf->decoder_info[2] = payload_len;
+      m->buf->decoder_info[2] = m->pes_bytes_left;
       return header_len;
 
     } else if (p[0] == 0x0B && p[1] == 0x77) { /* ac3 - syncword */
@@ -1294,11 +1293,21 @@ static void demux_ts_buffer_pes(demux_ts_t*this, unsigned char *ts,
   if (!m->corrupted_pes) {
 
     if ((m->buf->size + len) > MAX_PES_BUF_SIZE) {
+      m->pes_bytes_left -= m->buf->size;
       demux_ts_send_buffer(m, 0);
       m->buf = m->fifo->buffer_pool_alloc(m->fifo);
     }
+
     memcpy(m->buf->mem + m->buf->size, ts, len);
     m->buf->size += len;
+
+    if (m->pes_bytes_left > 0 && m->buf->size >= m->pes_bytes_left) {
+      /* PES payload complete */
+      m->pes_bytes_left -= m->buf->size;
+      demux_ts_flush_media(m);
+      /* skip rest data - there shouldn't be any */
+      m->corrupted_pes = 1;
+    }
   }
 }
 
