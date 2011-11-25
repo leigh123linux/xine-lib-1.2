@@ -2348,7 +2348,7 @@ static int demux_ts_get_optional_data(demux_plugin_t *this_gen,
     {
     case DEMUX_OPTIONAL_DATA_AUDIOLANG:
       if ((channel >= 0) && (channel < this->audio_tracks_count)) {
-        if(this->audio_tracks[channel].lang)
+        if (this->audio_tracks[channel].lang[0])
           strcpy(str, this->audio_tracks[channel].lang);
         else
           sprintf(str, "%3i", _x_get_audio_channel(this->stream));
