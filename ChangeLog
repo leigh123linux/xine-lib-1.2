@@ -1,3 +1,6 @@
+xine-lib (1.1.21) 2011-??-??
+  * mpeg-ts fixes and enhancements
+
 xine-lib (1.1.20.1) 2011-??-??
   * Various bug fixes.
   * Use the current ImageMagick API (if using ImageMagick).
