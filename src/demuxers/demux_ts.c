@@ -2356,11 +2356,12 @@ static int demux_ts_get_optional_data(demux_plugin_t *this_gen,
             return DEMUX_OPTIONAL_UNSUPPORTED;
           sprintf(str, "%3i", channel);
         }
+        return DEMUX_OPTIONAL_SUCCESS;
       }
       else {
         strcpy(str, "none");
       }
-      return DEMUX_OPTIONAL_SUCCESS;
+      return DEMUX_OPTIONAL_UNSUPPORTED;
 
     case DEMUX_OPTIONAL_DATA_SPULANG:
       if (channel>=0 && channel<this->spu_langs_count) {
@@ -2372,10 +2373,11 @@ static int demux_ts_get_optional_data(demux_plugin_t *this_gen,
             return DEMUX_OPTIONAL_UNSUPPORTED;
           sprintf(str, "%3i", channel);
         }
+        return DEMUX_OPTIONAL_SUCCESS;
       } else {
         strcpy(str, "none");
       }
-      return DEMUX_OPTIONAL_SUCCESS;
+      return DEMUX_OPTIONAL_UNSUPPORTED;
 
     default:
       return DEMUX_OPTIONAL_UNSUPPORTED;
