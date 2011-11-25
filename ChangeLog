@@ -3,6 +3,7 @@ xine-lib (1.1.20.1) 2011-??-??
   * Use the current ImageMagick API (if using ImageMagick).
   * Fix PVR plugin input building (needs V4L2).
   * Fixes related to unknown audio & subtitle languages.
+  * Memory leak fixes
 
 xine-lib (1.1.20) 2011-11-13
   * Imagine that there's a large poppy here.
