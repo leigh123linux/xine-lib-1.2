@@ -469,7 +469,10 @@ static int demux_ts_dynamic_pmt_find (demux_ts_t *this,
     }
     m->pid = pid;
 
-    m->buf = 0;
+    if (m->buf) {
+      m->buf->free_buffer(m->buf);
+      m->buf = NULL;
+    }
     m->counter = INVALID_CC;
     m->corrupted_pes = 1;
 
