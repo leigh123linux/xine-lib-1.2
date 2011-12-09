@@ -182,8 +182,6 @@
 
 #define BUF_SIZE (NPKT_PER_READ * (PKT_SIZE + 4))
 
-#define MAX_PES_BUF_SIZE 2048
-
 #define CORRUPT_PES_THRESHOLD 10
 
 #define NULL_PID 0x1fff
@@ -1295,7 +1293,7 @@ static void demux_ts_buffer_pes(demux_ts_t*this, unsigned char *ts,
 
   if (!m->corrupted_pes) {
 
-    if ((m->buf->size + len) > MAX_PES_BUF_SIZE) {
+    if ((m->buf->size + len) > m->buf->max_size) {
       m->pes_bytes_left -= m->buf->size;
       demux_ts_send_buffer(m, 0);
       m->buf = m->fifo->buffer_pool_alloc(m->fifo);
