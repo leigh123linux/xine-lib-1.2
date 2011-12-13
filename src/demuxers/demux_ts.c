@@ -1109,6 +1109,7 @@ static int demux_ts_parse_pes_header (xine_t *xine, demux_ts_media *m,
       m->buf->decoder_info[1] = BUF_SPECIAL_LPCM_CONFIG;
       m->buf->decoder_info[2] = (p[3]<<24) | (p[2]<<16) | (p[1]<<8) | p[0];
 
+      m->pes_bytes_left -= 4;
       return header_len + 4;
 
     } else if (m->descriptor_tag == ISO_13818_PES_PRIVATE
@@ -1126,6 +1127,7 @@ static int demux_ts_parse_pes_header (xine_t *xine, demux_ts_media *m,
       spu_id = (p[0] & 0x1f);
 
       m->type      = BUF_SPU_DVD + spu_id;
+      m->pes_bytes_left -= 1;
       return header_len + 1;
 
     } else if ((p[0] & 0xF0) == 0x80) {
@@ -1135,6 +1137,7 @@ static int demux_ts_parse_pes_header (xine_t *xine, demux_ts_media *m,
       }
 
       m->type      |= BUF_AUDIO_A52;
+      m->pes_bytes_left -= 4;
       return header_len + 4;
 
 #if 0
@@ -1155,6 +1158,7 @@ static int demux_ts_parse_pes_header (xine_t *xine, demux_ts_media *m,
       }
 
       m->type      |= BUF_AUDIO_LPCM_BE;
+      m->pes_bytes_left -= pcm_offset;
       return header_len + pcm_offset;
 #endif
     }
