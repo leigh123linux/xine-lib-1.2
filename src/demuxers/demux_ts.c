@@ -565,6 +565,7 @@ static void demux_ts_dynamic_pmt_clear (demux_ts_t *this) {
   this->audio_tracks_count = 0;
   this->spu_pid = INVALID_PID;
   this->spu_langs_count = 0;
+  this->spu_media = 0;
 
   this->pcr_pid = INVALID_PID;
 
