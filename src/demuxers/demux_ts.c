@@ -2300,15 +2300,8 @@ static void demux_ts_event_handler (demux_ts_t *this) {
 
     case XINE_EVENT_PIDS_CHANGE:
 
-      this->videoPid    = INVALID_PID;
-      this->pcr_pid     = INVALID_PID;
-      this->audio_tracks_count = 0;
-      this->media_num   = 0;
+      demux_ts_dynamic_pmt_clear(this);
       this->send_newpts = 1;
-      this->spu_pid     = INVALID_PID;
-      this->spu_media   = 0;
-      this->spu_langs_count= 0;
-      this->last_pmt_crc = 0;
       _x_demux_control_start (this->stream);
       break;
 
