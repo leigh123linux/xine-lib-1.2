@@ -813,11 +813,13 @@ static void demux_ts_flush(demux_ts_t *this)
  */
 static void demux_ts_parse_pat (demux_ts_t*this, unsigned char *original_pkt,
                                 unsigned char *pkt, unsigned int pusi) {
+#ifdef TS_PAT_LOG
   uint32_t       table_id;
+  uint32_t       version_number;
+#endif
   uint32_t       section_syntax_indicator;
   int32_t        section_length;
   uint32_t       transport_stream_id;
-  uint32_t       version_number;
   uint32_t       current_next_indicator;
   uint32_t       section_number;
   uint32_t       last_section_number;
@@ -848,11 +850,15 @@ static void demux_ts_parse_pat (demux_ts_t*this, unsigned char *original_pkt,
 	     "demux_ts: demux error! PAT with invalid pointer\n");
     return;
   }
+#ifdef TS_PAT_LOG
   table_id = (unsigned int)pkt[5] ;
+#endif
   section_syntax_indicator = (((unsigned int)pkt[6] >> 7) & 1) ;
   section_length = (((unsigned int)pkt[6] & 0x03) << 8) | pkt[7];
   transport_stream_id = ((uint32_t)pkt[8] << 8) | pkt[9];
+#ifdef TS_PAT_LOG
   version_number = ((uint32_t)pkt[10] >> 1) & 0x1f;
+#endif
   current_next_indicator = ((uint32_t)pkt[10] & 0x01);
   section_number = (uint32_t)pkt[11];
   last_section_number = (uint32_t)pkt[12];
@@ -1407,11 +1413,13 @@ static void demux_ts_parse_pmt (demux_ts_t     *this,
                                 unsigned int   pusi,
                                 uint32_t       program_count) {
 
+#ifdef TS_PMT_LOG
   uint32_t       table_id;
+  uint32_t       version_number;
+#endif
   uint32_t       section_syntax_indicator;
   uint32_t       section_length = 0; /* to calm down gcc */
   uint32_t       program_number;
-  uint32_t       version_number;
   uint32_t       current_next_indicator;
   uint32_t       section_number;
   uint32_t       last_section_number;
@@ -1441,11 +1449,15 @@ static void demux_ts_parse_pmt (demux_ts_t     *this,
     this->pmt[program_count] = (uint8_t *) calloc(4096, sizeof(unsigned char));
     this->pmt_write_ptr[program_count] = this->pmt[program_count];
 
+#ifdef TS_PMT_LOG
     table_id                  =  pkt[5] ;
+#endif
     section_syntax_indicator  = (pkt[6] >> 7) & 0x01;
     section_length            = (((uint32_t) pkt[6] << 8) | pkt[7]) & 0x03ff;
     program_number            =  ((uint32_t) pkt[8] << 8) | pkt[9];
+#ifdef TS_PMT_LOG
     version_number            = (pkt[10] >> 1) & 0x1f;
+#endif
     current_next_indicator    =  pkt[10] & 0x01;
     section_number            =  pkt[11];
     last_section_number       =  pkt[12];
@@ -2114,7 +2126,9 @@ static void demux_ts_parse_packet (demux_ts_t*this) {
   unsigned int   sync_byte;
   unsigned int   transport_error_indicator;
   unsigned int   payload_unit_start_indicator;
+#ifdef TS_HEADER_LOG
   unsigned int   transport_priority;
+#endif
   unsigned int   pid;
   unsigned int   transport_scrambling_control;
   unsigned int   adaptation_field_control;
@@ -2132,7 +2146,9 @@ static void demux_ts_parse_packet (demux_ts_t*this) {
   sync_byte                      = originalPkt[0];
   transport_error_indicator      = (originalPkt[1]  >> 7) & 0x01;
   payload_unit_start_indicator   = (originalPkt[1] >> 6) & 0x01;
+#ifdef TS_HEADER_LOG
   transport_priority             = (originalPkt[1] >> 5) & 0x01;
+#endif
   pid                            = ((originalPkt[1] << 8) |
 				    originalPkt[2]) & 0x1fff;
   transport_scrambling_control   = (originalPkt[3] >> 6)  & 0x03;
