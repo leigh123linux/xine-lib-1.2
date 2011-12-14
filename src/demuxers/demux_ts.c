@@ -332,6 +332,7 @@ typedef struct {
   fifo_buffer_t   *video_fifo;
 
   input_plugin_t  *input;
+  unsigned int     read_retries;
 
   int              status;
 
@@ -1975,8 +1976,19 @@ static unsigned char * demux_synchronise(demux_ts_t* this) {
       this->frame_pos = this->input->get_current_pos (this->input);
 
       read_length = this->input->read(this->input, this->buf,
-				      this->pkt_size * NPKT_PER_READ);
-      if (read_length < 0 || read_length % this->pkt_size) {
+                                      this->pkt_size * NPKT_PER_READ);
+
+      if (read_length < 0) {
+        xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG,
+                 "demux_ts: read returned %d\n", read_length);
+        if (this->read_retries > 2)
+          this->status = DEMUX_FINISHED;
+        this->read_retries++;
+        return NULL;
+      }
+      this->read_retries = 0;
+
+      if (read_length % this->pkt_size) {
 	xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG,
 		 "demux_ts: read returned %d bytes (not a multiple of %d!)\n",
 		 read_length, this->pkt_size);
