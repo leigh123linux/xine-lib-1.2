@@ -474,6 +474,7 @@ static int demux_ts_dynamic_pmt_find (demux_ts_t *this,
     }
     m->counter = INVALID_CC;
     m->corrupted_pes = 1;
+    m->pts = 0;
 
     m->descriptor_tag = descriptor_tag;
 
@@ -2470,6 +2471,7 @@ static int demux_ts_seek (demux_plugin_t *this_gen,
     m->buf            = NULL;
     m->counter        = INVALID_CC;
     m->corrupted_pes  = 1;
+    m->pts            = 0;
   }
 
   if( !playing ) {
