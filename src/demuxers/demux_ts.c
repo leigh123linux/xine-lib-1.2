@@ -798,6 +798,7 @@ static void demux_ts_flush(demux_ts_t *this)
   unsigned int i;
   for (i = 0; i < this->media_num; ++i) {
     demux_ts_flush_media(&this->media[i]);
+    this->media[i].corrupted_pes = 1;
   }
 }
 
