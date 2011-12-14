@@ -1995,6 +1995,7 @@ static unsigned char * demux_synchronise(demux_ts_t* this) {
        */
 
       if (this->npkt_read == 0) {
+        demux_ts_flush(this);
 	xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG, "demux_ts: read 0 packets\n");
 	this->status = DEMUX_FINISHED;
 	return NULL;
