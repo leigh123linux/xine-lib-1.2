@@ -1539,13 +1539,13 @@ static void free_xine_playlist(bluray_input_class_t *this)
   this->xine_playlist_size = 0;
 }
 
-static char **bluray_class_get_autoplay_list (input_class_t *this_gen, int *num_files)
+static const char * const *bluray_class_get_autoplay_list (input_class_t *this_gen, int *num_files)
 {
   static const char * const autoplay_list[] = { "bluray:/", NULL };
 
   *num_files = 1;
 
-  return (char**)autoplay_list;
+  return autoplay_list;
 }
 
 static xine_mrl_t **bluray_class_get_dir(input_class_t *this_gen, const char *filename, int *nFiles)
@@ -1691,13 +1691,13 @@ static void *bluray_init_plugin (xine_t *xine, void *data)
   return this;
 }
 
-static char **bd_class_get_autoplay_list (input_class_t *this_gen, int *num_files)
+static const char * const *bd_class_get_autoplay_list (input_class_t *this_gen, int *num_files)
 {
   static const char * const autoplay_list[] = { "bd:/", NULL };
 
   *num_files = 1;
 
-  return (char **)autoplay_list;
+  return autoplay_list;
 }
 
 static void *bd_init_plugin (xine_t *xine, void *data)
