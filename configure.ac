@@ -1674,6 +1674,22 @@ fi
 AM_CONDITIONAL(HAVE_GDK_PIXBUF, test "x$no_gdkpixbuf" != "xyes")
 
 dnl ---------------------------------------------
+dnl libbluray support 
+dnl ---------------------------------------------
+AC_ARG_ENABLE([bluray],
+  AS_HELP_STRING([--disable-bluray], [Do not build BluRay support]),
+  [with_bluray=$enableval], [with_bluray=yes])
+
+if test "x$with_bluray" != "xno"; then
+  PKG_CHECK_MODULES([LIBBLURAY], [libbluray >= 0.2.1],
+    [have_libbluray=yes],
+    AC_MSG_RESULT(*** All of the libbluray dependent parts will be disabled ***))
+  AC_SUBST(LIBBLURAY_CFLAGS)
+  AC_SUBST(LIBBLURAY_LIBS)
+fi
+AM_CONDITIONAL(HAVE_LIBBLURAY, test "x$have_libbluray" = "xyes")
+
+dnl ---------------------------------------------
 dnl libsmbclient support
 dnl ---------------------------------------------
 
@@ -2953,6 +2969,9 @@ if test "x$have_v4l2" = "xyes"; then
 fi
 if test "x$have_libsmbclient" = "xyes"; then
   echo "   - smbclient"
+fi
+if test "x$have_libbluray" = x"yes"; then
+  echo "   - bluray"
 fi
 echo ""
 
