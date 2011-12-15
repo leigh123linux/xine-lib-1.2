@@ -21,15 +21,15 @@
  *   (c) 2001 James Courtier-Dutton James@superbug.demon.co.uk
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
 #ifndef __sun
 #define _XOPEN_SOURCE 500
 #endif
 /* avoid compiler warnings */
 #define _BSD_SOURCE 1
+
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
 #include <stdlib.h>
 #include <unistd.h>
