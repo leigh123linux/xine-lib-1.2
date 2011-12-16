@@ -46,11 +46,13 @@
 
 #if defined(ARCH_X86) || defined(ARCH_X86_64)
 
+#ifndef __x86_64__
 static jmp_buf sigill_return;
 
 static void sigill_handler (int n) {
   longjmp(sigill_return, 1);
 }
+#endif
 
 static uint32_t arch_accel (void)
 {
