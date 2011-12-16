@@ -874,13 +874,10 @@ static vo_driver_t *open_plugin (video_driver_class_t *class_gen, const void *vi
    syncfb_class_t   *class = (syncfb_class_t *) class_gen;
    config_values_t  *config = class->config;
    syncfb_driver_t*  this;
-   Display*          display = NULL;
    unsigned int      i;
    x11_visual_t*     visual = (x11_visual_t *) visual_gen;
    XColor            dummy;
    XWindowAttributes attr;
-
-   display     = visual->display;
 
    if(!(this = calloc(1, sizeof (syncfb_driver_t))))
      return NULL;
