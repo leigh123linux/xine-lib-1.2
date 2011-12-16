@@ -82,11 +82,19 @@ typedef struct flac_decoder_s {
  * FLAC callback functions
  */
 
+#ifdef LEGACY_FLAC
 static FLAC__StreamDecoderReadStatus
 flac_read_callback (const FLAC__StreamDecoder *decoder,
                     FLAC__byte buffer[],
                     unsigned *bytes,
                     void *client_data)
+#else
+static FLAC__StreamDecoderReadStatus
+flac_read_callback (const FLAC__StreamDecoder *decoder,
+                    FLAC__byte buffer[],
+                    size_t *bytes,
+                    void *client_data)
+#endif
 {
     flac_decoder_t *this = (flac_decoder_t *)client_data;
     int number_of_bytes_to_copy;
