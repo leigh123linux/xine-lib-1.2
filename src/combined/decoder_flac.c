@@ -72,9 +72,9 @@ typedef struct flac_decoder_s {
   int channels;
 
   unsigned char *buf;
-  int            buf_size;
-  int            buf_pos;
-  int            min_size;
+  size_t         buf_size;
+  size_t         buf_pos;
+  size_t         min_size;
 
 } flac_decoder_t;
 
@@ -97,16 +97,16 @@ flac_read_callback (const FLAC__StreamDecoder *decoder,
 #endif
 {
     flac_decoder_t *this = (flac_decoder_t *)client_data;
-    int number_of_bytes_to_copy;
+    size_t number_of_bytes_to_copy;
 
-    lprintf("flac_read_callback: %d\n", *bytes);
+    lprintf("flac_read_callback: %zd\n", (size_t)*bytes);
 
     if (this->buf_pos > *bytes)
         number_of_bytes_to_copy = *bytes;
     else
         number_of_bytes_to_copy = this->buf_pos;
 
-    lprintf("number_of_bytes_to_copy: %d\n", number_of_bytes_to_copy);
+    lprintf("number_of_bytes_to_copy: %zd\n", number_of_bytes_to_copy);
 
     *bytes = number_of_bytes_to_copy;
 
