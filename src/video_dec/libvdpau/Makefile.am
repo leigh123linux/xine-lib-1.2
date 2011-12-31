@@ -22,7 +22,7 @@ endif
 xineplug_LTLIBRARIES = $(vdpau_h264_module) $(vdpau_h264_alter_module) $(vdpau_mpeg12_module) $(vdpau_vc1_module) $(vdpau_mpeg4_module)
 
 xineplug_decode_vdpau_h264_alter_la_SOURCES = alterh264_decode.c
-xineplug_decode_vdpau_h264_alter_la_CFLAGS = $(AM_CFLAGS)
+xineplug_decode_vdpau_h264_alter_la_CFLAGS = $(AM_CFLAGS) -fno-strict-aliasing
 xineplug_decode_vdpau_h264_alter_la_LIBADD = $(XINE_LIB) $(DYNAMIC_LD_LIBS)
 
 xineplug_decode_vdpau_h264_la_SOURCES = nal.c dpb.c cpb.c h264_parser.c vdpau_h264.c
