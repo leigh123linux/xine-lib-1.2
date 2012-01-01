@@ -1,4 +1,4 @@
-xine-lib (1.1.90) (Unreleased)
+xine-lib (1.2.0) 2012-01-01
   * Add support for VDR.
   * Add support for VDPAU.
   * xine-config is deprecated in favour of pkg-config libxine.
