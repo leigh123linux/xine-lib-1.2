@@ -41,6 +41,10 @@ AC_DEFUN([XINE_AUDIO_OUT_PLUGINS], [
             default_with_pulseaudio=yes
             default_with_jack=yes
             ;;
+        gnu*)
+            default_with_pulseaudio=yes
+            default_with_jack=yes
+            ;;
         irix*)
             default_enable_irixal=yes
             default_enable_oss=no
