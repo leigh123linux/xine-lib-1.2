@@ -27,6 +27,10 @@
 
 #include <pthread.h>
 #include <errno.h>
+
+/*#define LOG*/
+#define LOG_MODULE "spudvb"
+
 #include <xine/xine_internal.h>
 #include <xine/spu.h>
 #include <xine/osd.h>
@@ -34,9 +38,6 @@
 
 #define SPU_MAX_WIDTH 1920
 #define SPU_MAX_HEIGHT 1080
-
-/*#define LOG*/
-#define LOG_MODULE "spudvb"
 
 typedef struct {
   int			x, y;
