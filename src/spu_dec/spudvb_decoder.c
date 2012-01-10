@@ -181,7 +181,6 @@ static void update_region (dvb_spu_decoder_t * this, int region_id, int region_w
 
   dvbsub_func_t *dvbsub = this->dvbsub;
   region_t *reg = &dvbsub->regions[region_id];
-  page_t *page = &dvbsub->page;
 
   /* reject invalid sizes and set some limits ! */
   if ( region_width<=0 || region_height<=0 || region_width>SPU_MAX_WIDTH || region_height>SPU_MAX_HEIGHT ) {
@@ -730,7 +729,6 @@ static void process_object_data_segment (dvb_spu_decoder_t * this)
 
   dvbsub_func_t *dvbsub = this->dvbsub;
 
-  int j;
   int old_i;
   int r;
 
@@ -926,7 +924,6 @@ static void spudec_decode_data (spu_decoder_t * this_gen, buf_element_t * buf)
       int new_i;
       int data_identifier, subtitle_stream_id;
       int segment_length, segment_type;
-      int PES_header_data_length;
       int PES_packet_length;
       int i;
 
