@@ -1218,8 +1218,8 @@ static vo_driver_t *open_plugin(video_driver_class_t *class_gen, const void *vis
   if (xv_port != 0) {
     if (! xv_open_port(this, xv_port)) {
       xprintf(class->xine, XINE_VERBOSITY_NONE,
-	      _("%s: could not open Xv port %d - autodetecting\n"),
-	      LOG_MODULE, xv_port);
+	      _("%s: could not open Xv port %lu - autodetecting\n"),
+	      LOG_MODULE, (unsigned long)xv_port);
       adaptor_it = adaptor_first;
       xv_port = xv_autodetect_port (this, &adaptor_it, xv_port, prefer_type);
     } else
