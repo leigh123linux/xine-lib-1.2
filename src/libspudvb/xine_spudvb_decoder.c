@@ -25,8 +25,9 @@
  * - Implement support for teletext based subtitles
  */
 
-#include "pthread.h"
+#include <pthread.h>
 #include <errno.h>
+
 #include "xine_internal.h"
 #include "bswap.h"
 #include "osd.h"
