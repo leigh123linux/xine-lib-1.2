@@ -1914,7 +1914,7 @@ static void vdpau_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen)
 
     vdpau_grab_current_output_surface( this, frame->vo_frame.vpts );
     vdp_queue_get_time( vdp_queue, &current_time );
-    vdp_queue_display( vdp_queue, this->output_surface[this->current_output_surface], 0, 0, 0 ); /* display _now_ */
+    vdp_queue_display( vdp_queue, this->output_surface[this->current_output_surface], this->sc.gui_width, this->sc.gui_height, 0 ); /* display _now_ */
     vdpau_shift_queue( this_gen );
 
     int dm;
@@ -1951,7 +1951,7 @@ static void vdpau_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen)
       if ( stream_speed > 0 )
         current_time += frame->vo_frame.duration * 1000000ull * XINE_FINE_SPEED_NORMAL / (180 * stream_speed);
 
-      vdp_queue_display( vdp_queue, this->output_surface[this->current_output_surface], 0, 0, current_time );
+      vdp_queue_display( vdp_queue, this->output_surface[this->current_output_surface], this->sc.gui_width, this->sc.gui_height, current_time );
       vdpau_shift_queue( this_gen );
     }
   }
@@ -1964,7 +1964,7 @@ static void vdpau_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen)
       fprintf(stderr, "vo_vdpau: vdp_video_mixer_render error : %s\n", vdp_get_error_string( st ) );
 
     vdpau_grab_current_output_surface( this, frame->vo_frame.vpts );
-    vdp_queue_display( vdp_queue, this->output_surface[this->current_output_surface], 0, 0, 0 );
+    vdp_queue_display( vdp_queue, this->output_surface[this->current_output_surface], this->sc.gui_width, this->sc.gui_height, 0 );
     vdpau_shift_queue( this_gen );
   }
 
