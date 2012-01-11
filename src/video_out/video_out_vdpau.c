@@ -350,6 +350,8 @@ typedef struct {
   int                screen;
   Drawable           drawable;
   pthread_mutex_t    drawable_lock;
+  uint32_t           display_width;
+  uint32_t           display_height;
 
   config_values_t   *config;
 
@@ -2333,6 +2335,18 @@ static void vdpau_dispose (vo_driver_t *this_gen)
 
 
 
+static void vdpau_update_display_dimension (vdpau_driver_t *this)
+{
+  XLockDisplay (this->display);
+
+  this->display_width  = DisplayWidth(this->display, this->screen);
+  this->display_height = DisplayHeight(this->display, this->screen);
+
+  XUnlockDisplay(this->display);
+}
+
+
+
 static int vdpau_reinit_error( VdpStatus st, const char *msg )
 {
   if ( st != VDP_STATUS_OK ) {
@@ -2395,10 +2409,13 @@ static void vdpau_reinit( vo_driver_t *this_gen )
     return;
   }
 
+  vdpau_update_display_dimension(this);
   this->current_output_surface = 0;
   this->init_queue = 0;
   int i;
   for ( i=0; i<this->queue_length; ++i ) {
+    this->output_surface_width[i] = this->display_width;
+    this->output_surface_height[i] = this->display_height;
     st = vdp_output_surface_create( vdp_device, VDP_RGBA_FORMAT_B8G8R8A8, this->output_surface_width[i], this->output_surface_height[i], &this->output_surface[i] );
     if ( vdpau_reinit_error( st, "Can't create output surface !!" ) ) {
       int j;
@@ -2832,6 +2849,8 @@ static vo_driver_t *vdpau_open_plugin (video_driver_class_t *class_gen, const vo
   if ( vdpau_init_error( st, "Can't create video surface !!", &this->vo_driver, 1 ) )
     return NULL;
 
+  vdpau_update_display_dimension(this);
+
   this->queue_length = config->register_num (config, "video.output.vdpau_display_queue_length", 3, /* default */
        _("default length of display queue"),
        _("The default number of video output surfaces to create for the display queue"),
@@ -2840,16 +2859,13 @@ static vo_driver_t *vdpau_open_plugin (video_driver_class_t *class_gen, const vo
     this->queue_length = 2;
   if (this->queue_length > NOUTPUTSURFACE)
     this->queue_length = NOUTPUTSURFACE;
-  fprintf(stderr, "vo_vdpau: using %d output surfaces for display queue\n", this->queue_length);
+  fprintf(stderr, "vo_vdpau: using %d output surfaces of size %dx%d for display queue\n", this->queue_length, this->display_width, this->display_height);
 
-  for ( i=0; i<this->queue_length; ++i ) {
-    this->output_surface_width[i] = 320;
-    this->output_surface_height[i] = 240;
-  }
   this->current_output_surface = 0;
   this->init_queue = 0;
-
   for ( i=0; i<this->queue_length; ++i ) {
+    this->output_surface_width[i] = this->display_width;
+    this->output_surface_height[i] = this->display_height;
     st = vdp_output_surface_create( vdp_device, VDP_RGBA_FORMAT_B8G8R8A8, this->output_surface_width[i], this->output_surface_height[i], &this->output_surface[i] );
     if ( vdpau_init_error( st, "Can't create output surface !!", &this->vo_driver, 1 ) ) {
       int j;
