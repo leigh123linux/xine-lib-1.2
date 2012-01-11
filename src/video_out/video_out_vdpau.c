@@ -187,31 +187,30 @@ static VdpDecoderCreate *orig_vdp_decoder_create;
 static VdpDecoderDestroy *orig_vdp_decoder_destroy;
 static VdpDecoderRender *orig_vdp_decoder_render;
 
+#ifdef LOCKDISPLAY
+#define DO_LOCKDISPLAY          XLockDisplay(guarded_display);
+#define DO_UNLOCKDISPLAY        XUnlockDisplay(guarded_display);
 static Display *guarded_display;
+#else
+#define DO_LOCKDISPLAY
+#define DO_UNLOCKDISPLAY
+#endif
 
 static VdpStatus guarded_vdp_video_surface_putbits_ycbcr(VdpVideoSurface surface, VdpYCbCrFormat source_ycbcr_format, void const *const *source_data, uint32_t const *source_pitches)
 {
   VdpStatus r;
-#ifdef LOCKDISPLAY
-  XLockDisplay(guarded_display);
-#endif
+  DO_LOCKDISPLAY
   r = orig_vdp_video_surface_putbits_ycbcr(surface, source_ycbcr_format, source_data, source_pitches);
-#ifdef LOCKDISPLAY
-  XUnlockDisplay(guarded_display);
-#endif
+  DO_UNLOCKDISPLAY
   return r;
 }
 
 static VdpStatus guarded_vdp_video_surface_create(VdpDevice device, VdpChromaType chroma_type, uint32_t width, uint32_t height,VdpVideoSurface *surface)
 {
   VdpStatus r;
-#ifdef LOCKDISPLAY
-  XLockDisplay(guarded_display);
-#endif
+  DO_LOCKDISPLAY
   r = orig_vdp_video_surface_create(device, chroma_type, width, height, surface);
-#ifdef LOCKDISPLAY
-  XUnlockDisplay(guarded_display);
-#endif
+  DO_UNLOCKDISPLAY
   return r;
 }
 
@@ -227,65 +226,45 @@ static VdpStatus guarded_vdp_video_surface_destroy(VdpVideoSurface surface)
 static VdpStatus guarded_vdp_output_surface_create(VdpDevice device, VdpChromaType chroma_type, uint32_t width, uint32_t height,VdpVideoSurface *surface)
 {
   VdpStatus r;
-#ifdef LOCKDISPLAY
-  XLockDisplay(guarded_display);
-#endif
+  DO_LOCKDISPLAY
   r = orig_vdp_output_surface_create(device, chroma_type, width, height, surface);
-#ifdef LOCKDISPLAY
-  XUnlockDisplay(guarded_display);
-#endif
+  DO_UNLOCKDISPLAY
   return r;
 }
 
 static VdpStatus guarded_vdp_output_surface_destroy(VdpVideoSurface surface)
 {
   VdpStatus r;
-#ifdef LOCKDISPLAY
-  XLockDisplay(guarded_display);
-#endif
+  DO_LOCKDISPLAY
   r = orig_vdp_output_surface_destroy(surface);
-#ifdef LOCKDISPLAY
-  XUnlockDisplay(guarded_display);
-#endif
+  DO_UNLOCKDISPLAY
   return r;
 }
 
 static VdpStatus guarded_vdp_decoder_create(VdpDevice device, VdpDecoderProfile profile, uint32_t width, uint32_t height, uint32_t max_references, VdpDecoder *decoder)
 {
   VdpStatus r;
-#ifdef LOCKDISPLAY
-  XLockDisplay(guarded_display);
-#endif
+  DO_LOCKDISPLAY
   r = orig_vdp_decoder_create(device, profile, width, height, max_references, decoder);
-#ifdef LOCKDISPLAY
-  XUnlockDisplay(guarded_display);
-#endif
+  DO_UNLOCKDISPLAY
   return r;
 }
 
 static VdpStatus guarded_vdp_decoder_destroy(VdpDecoder decoder)
 {
   VdpStatus r;
-#ifdef LOCKDISPLAY
-  XLockDisplay(guarded_display);
-#endif
+  DO_LOCKDISPLAY
   r = orig_vdp_decoder_destroy(decoder);
-#ifdef LOCKDISPLAY
-  XUnlockDisplay(guarded_display);
-#endif
+  DO_UNLOCKDISPLAY
   return r;
 }
 
 static VdpStatus guarded_vdp_decoder_render(VdpDecoder decoder, VdpVideoSurface target, VdpPictureInfo const *picture_info, uint32_t bitstream_buffer_count, VdpBitstreamBuffer const *bitstream_buffers)
 {
   VdpStatus r;
-#ifdef LOCKDISPLAY
-  XLockDisplay(guarded_display);
-#endif
+  DO_LOCKDISPLAY
   r = orig_vdp_decoder_render(decoder, target, picture_info, bitstream_buffer_count, bitstream_buffers);
-#ifdef LOCKDISPLAY
-  XUnlockDisplay(guarded_display);
-#endif
+  DO_UNLOCKDISPLAY
   return r;
 }
 
@@ -1940,9 +1919,7 @@ static void vdpau_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen)
   if ( this->init_queue>1 )
     vdp_queue_block( vdp_queue, this->output_surface[this->current_output_surface], &last_time );
 
-#ifdef LOCKDISPLAY
-  XLockDisplay( this->display );
-#endif
+  DO_LOCKDISPLAY
 
   vdpau_check_output_size( this_gen );
 
@@ -1974,13 +1951,9 @@ static void vdpau_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen)
     
     if ( (dm != DEINT_HALF_TEMPORAL) && (dm != DEINT_HALF_TEMPORAL_SPATIAL) && frame->vo_frame.future_frame ) {  /* process second field */
       if ( this->init_queue >= this->queue_length ) {
-#ifdef LOCKDISPLAY
-        XUnlockDisplay(this->display);
-#endif
+        DO_UNLOCKDISPLAY
         vdp_queue_block( vdp_queue, this->output_surface[this->current_output_surface], &last_time );
-#ifdef LOCKDISPLAY
-        XLockDisplay(this->display);
-#endif
+        DO_LOCKDISPLAY
       }
 
       vdpau_check_output_size( this_gen );
@@ -2017,9 +1990,7 @@ static void vdpau_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen)
     vdpau_shift_queue( this_gen );
   }
 
-#ifdef LOCKDISPLAY
-  XUnlockDisplay( this->display );
-#endif
+  DO_UNLOCKDISPLAY
 
   if ( stream_speed ) 
     vdpau_backup_frame( this_gen, frame_gen );
@@ -2245,18 +2216,14 @@ static int vdpau_gui_data_exchange (vo_driver_t *this_gen, int data_type, void *
     case XINE_GUI_SEND_EXPOSE_EVENT: {
       if ( this->init_queue ) {
         pthread_mutex_lock(&this->drawable_lock); /* wait for other thread which is currently displaying */
-#ifdef LOCKDISPLAY
-        XLockDisplay( this->display );
-#endif
+        DO_LOCKDISPLAY
         int previous;
         if ( this->current_output_surface )
           previous = this->current_output_surface - 1;
         else
           previous = this->queue_length - 1;
         vdp_queue_display( vdp_queue, this->output_surface[previous], 0, 0, 0 );
-#ifdef LOCKDISPLAY
-        XUnlockDisplay( this->display );
-#endif
+        DO_UNLOCKDISPLAY
         pthread_mutex_unlock(&this->drawable_lock);
       }
       break;
@@ -2265,34 +2232,26 @@ static int vdpau_gui_data_exchange (vo_driver_t *this_gen, int data_type, void *
     case XINE_GUI_SEND_DRAWABLE_CHANGED: {
       VdpStatus st;
       pthread_mutex_lock(&this->drawable_lock); /* wait for other thread which is currently displaying */
-#ifdef LOCKDISPLAY
-      XLockDisplay( this->display );
-#endif
+      DO_LOCKDISPLAY
       this->drawable = (Drawable) data;
       vdp_queue_destroy( vdp_queue );
       vdp_queue_target_destroy( vdp_queue_target );
       st = vdp_queue_target_create_x11( vdp_device, this->drawable, &vdp_queue_target );
       if ( st != VDP_STATUS_OK ) {
         fprintf(stderr, "vo_vdpau: FATAL !! Can't recreate presentation queue target after drawable change !!\n" );
-#ifdef LOCKDISPLAY
-        XUnlockDisplay( this->display );
-#endif
+        DO_UNLOCKDISPLAY
         pthread_mutex_unlock(&this->drawable_lock);
         break;
       }
       st = vdp_queue_create( vdp_device, vdp_queue_target, &vdp_queue );
       if ( st != VDP_STATUS_OK ) {
         fprintf(stderr, "vo_vdpau: FATAL !! Can't recreate presentation queue after drawable change !!\n" );
-#ifdef LOCKDISPLAY
-        XUnlockDisplay( this->display );
-#endif
+        DO_UNLOCKDISPLAY
         pthread_mutex_unlock(&this->drawable_lock);
         break;
       }
       vdp_queue_set_background_color( vdp_queue, &this->back_color );
-#ifdef LOCKDISPLAY
-      XUnlockDisplay( this->display );
-#endif
+      DO_UNLOCKDISPLAY
       pthread_mutex_unlock(&this->drawable_lock);
       this->sc.force_redraw = 1;
       break;
@@ -2408,9 +2367,7 @@ static void vdpau_reinit( vo_driver_t *this_gen )
   fprintf(stderr,"vo_vdpau: VDPAU was pre-empted. Reinit.\n");
   vdpau_driver_t *this = (vdpau_driver_t *)this_gen;
 
-#ifdef LOCKDISPLAY
-  XLockDisplay(guarded_display);
-#endif
+  DO_LOCKDISPLAY
   vdpau_release_back_frames(this_gen);
 
   VdpStatus st = vdp_device_create_x11( this->display, this->screen, &vdp_device, &vdp_get_proc_address );
@@ -2421,25 +2378,18 @@ static void vdpau_reinit( vo_driver_t *this_gen )
       fprintf(stderr, "No vdpau implementation.\n" );
     else
       fprintf(stderr, "unsupported GPU?\n" );
-#ifdef LOCKDISPLAY
-    XUnlockDisplay(guarded_display);
-#endif	
+    DO_UNLOCKDISPLAY
     return;
   }
 
   st = vdp_queue_target_create_x11( vdp_device, this->drawable, &vdp_queue_target );
   if ( vdpau_reinit_error( st, "Can't create presentation queue target !!" ) ) {
-#ifdef LOCKDISPLAY
-    XUnlockDisplay(guarded_display);
-#endif	  
-
+    DO_UNLOCKDISPLAY
     return;
   }
   st = vdp_queue_create( vdp_device, vdp_queue_target, &vdp_queue );
   if ( vdpau_reinit_error( st, "Can't create presentation queue !!" ) ) {
-#ifdef LOCKDISPLAY
-    XUnlockDisplay(guarded_display);
-#endif
+    DO_UNLOCKDISPLAY
     return;
   }
   vdp_queue_set_background_color( vdp_queue, &this->back_color );
@@ -2448,9 +2398,7 @@ static void vdpau_reinit( vo_driver_t *this_gen )
   VdpChromaType chroma = VDP_CHROMA_TYPE_420;
   st = orig_vdp_video_surface_create( vdp_device, chroma, this->soft_surface_width, this->soft_surface_height, &this->soft_surface );
   if ( vdpau_reinit_error( st, "Can't create video surface !!" ) ) {
-#ifdef LOCKDISPLAY
-    XUnlockDisplay(guarded_display);
-#endif
+    DO_UNLOCKDISPLAY
     return;
   }
 
@@ -2467,9 +2415,7 @@ static void vdpau_reinit( vo_driver_t *this_gen )
       for ( j=0; j<i; ++j )
         vdp_output_surface_destroy( this->output_surface[j] );
       vdp_video_surface_destroy( this->soft_surface );
-#ifdef LOCKDISPLAY
-      XUnlockDisplay(guarded_display);
-#endif	  
+      DO_UNLOCKDISPLAY
       return;
     }
   }
@@ -2521,9 +2467,7 @@ static void vdpau_reinit( vo_driver_t *this_gen )
     orig_vdp_video_surface_destroy( this->soft_surface );
     for ( i=0; i<this->queue_length; ++i )
       vdp_output_surface_destroy( this->output_surface[i] );
-#ifdef LOCKDISPLAY
-    XUnlockDisplay(guarded_display);
-#endif
+    DO_UNLOCKDISPLAY
     return;
   }
   this->video_mixer_chroma = chroma;
@@ -2540,9 +2484,7 @@ static void vdpau_reinit( vo_driver_t *this_gen )
 
   this->vdp_runtime_nr++;
   this->reinit_needed = 0;
-#ifdef LOCKDISPLAY
-  XUnlockDisplay(guarded_display);
-#endif
+  DO_UNLOCKDISPLAY
   fprintf(stderr,"vo_vdpau: Reinit done.\n");
 }
 
@@ -2585,7 +2527,10 @@ static vo_driver_t *vdpau_open_plugin (video_driver_class_t *class_gen, const vo
   if (!this)
     return NULL;
 
+#ifdef LOCKDISPLAY
   guarded_display     = visual->display;
+#endif
+
   this->display       = visual->display;
   this->screen        = visual->screen;
   this->drawable      = visual->d;
