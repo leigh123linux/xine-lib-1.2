@@ -1601,8 +1601,8 @@ static void vdpau_grab_current_output_surface (vdpau_driver_t *this, int64_t vpt
     frame->grab_frame.vpts = -1;
 
     VdpOutputSurface grab_surface = this->output_surface[this->current_output_surface];
-    int width = this->output_surface_width[this->current_output_surface];
-    int height = this->output_surface_height[this->current_output_surface];
+    int width = this->sc.gui_width;
+    int height = this->sc.gui_height;
 
     /* take cropping parameters into account */
     width = width - frame->grab_frame.crop_left - frame->grab_frame.crop_right;
