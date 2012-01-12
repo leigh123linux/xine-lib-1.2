@@ -826,7 +826,7 @@ static int xv_gui_data_exchange (vo_driver_t *this_gen,
 
   case XINE_GUI_SEND_DRAWABLE_CHANGED:
     pthread_mutex_lock(&this->main_mutex);
-    this->window = (xcb_window_t) data;
+    this->window = (xcb_window_t) (long) data;
     xcb_free_gc(this->connection, this->gc);
     this->gc = xcb_generate_id(this->connection);
     xcb_create_gc(this->connection, this->gc, this->window, 0, NULL);
@@ -973,9 +973,9 @@ static int xv_check_yv12(xcb_connection_t *connection, xcb_xv_port_t port) {
 static void xv_check_capability (xv_driver_t *this,
 				 int property, xcb_xv_attribute_info_t *attr,
 				 int base_id,
-				 char *config_name,
-				 char *config_desc,
-				 char *config_help) {
+				 const char *config_name,
+				 const char *config_desc,
+				 const char *config_help) {
   int          int_default;
   cfg_entry_t *entry;
   const char  *str_prop = xcb_xv_attribute_info_name(attr);
