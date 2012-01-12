@@ -92,7 +92,7 @@ typedef struct fb_frame_s
 
   vo_scale_t         sc;
 
-  uint8_t           *chunk[3]; /* mem alloc by xmalloc_aligned           */
+  void              *chunk[3]; /* mem alloc by xmalloc_aligned           */
 
   yuv2rgb_t         *yuv2rgb;  /* yuv2rgb converter for this frame */
   uint8_t           *rgb_dst;
