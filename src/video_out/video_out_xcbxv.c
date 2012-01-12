@@ -968,7 +968,7 @@ static int xv_gui_data_exchange (vo_driver_t *this_gen,
 
   case XINE_GUI_SEND_DRAWABLE_CHANGED:
     pthread_mutex_lock(&this->main_mutex);
-    this->window = (xcb_window_t) data;
+    this->window = (xcb_window_t) (long) data;
     xcb_free_gc(this->connection, this->gc);
     this->gc = xcb_generate_id(this->connection);
     xcb_create_gc(this->connection, this->gc, this->window, 0, NULL);
