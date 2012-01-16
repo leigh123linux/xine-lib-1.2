@@ -1846,7 +1846,7 @@ static int parse_block (demux_matroska_t *this, size_t block_size,
   uint64_t          track_num;
   uint8_t          *data;
   uint8_t           flags;
-  int               gap, lacing, num_len;
+  int               lacing, num_len;
   int16_t           timecode_diff;
   int64_t           pts, xduration;
   int               decoder_flags = 0;
@@ -1866,7 +1866,7 @@ static int parse_block (demux_matroska_t *this, size_t block_size,
 
   lprintf("track_num: %" PRIu64 ", timecode_diff: %d, flags: 0x%x\n", track_num, timecode_diff, flags);
 
-  gap = flags & 1;
+  /*gap = flags & 1;*/
   lacing = (flags >> 1) & 0x3;
 /*fprintf(stderr, "lacing: %x\n", lacing);*/
 
@@ -2070,7 +2070,6 @@ static int parse_block (demux_matroska_t *this, size_t block_size,
 
 static int parse_simpleblock(demux_matroska_t *this, size_t block_len, uint64_t cluster_timecode, uint64_t block_duration)
 {
-  int has_block           = 0;
   off_t block_pos         = 0;
   off_t file_len          = 0;
   int normpos             = 0;
@@ -2085,7 +2084,6 @@ static int parse_simpleblock(demux_matroska_t *this, size_t block_len, uint64_t 
   if (!read_block_data(this, block_len, this->compress_maxlen))
     return 0;
 
-  has_block = 1;
     /* we have the duration, we can parse the block now */
   if (!parse_block(this, block_len, cluster_timecode, block_duration,
                    normpos, is_key))
