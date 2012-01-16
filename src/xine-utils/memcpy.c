@@ -408,7 +408,18 @@ static struct {
   { NULL, NULL, 0, 0 }
 };
 
-#if (defined(ARCH_X86) || defined(ARCH_X86_64)) && defined(HAVE_SYS_TIMES_H)
+#ifdef HAVE_POSIX_TIMERS
+/* Prefer clock_gettime() where available. */
+static int64_t _x_gettime(void)
+{
+  struct timespec tm;
+  return (clock_gettime (CLOCK_THREAD_CPUTIME_ID, &tm) == -1)
+       ? times (NULL)
+       : (int64_t)tm.tv_sec * 1e9 + tm.tv_nsec;
+}
+#  define rdtsc(x) _x_gettime()
+
+#elif (defined(ARCH_X86) || defined(ARCH_X86_64)) && defined(HAVE_SYS_TIMES_H)
 static int64_t rdtsc(int config_flags)
 {
   int64_t x;
@@ -510,6 +521,12 @@ void xine_probe_fast_memcpy(xine_t *xine)
   /* make sure buffers are present on physical memory */
   memset(buf1,0,BUFSIZE);
   memset(buf2,0,BUFSIZE);
+
+  /* some initial activity to ensure that we're not running slowly :-) */
+  for(j=0;j<50;j++) {
+    memcpy_method[1].function(buf2,buf1,BUFSIZE);
+    memcpy_method[1].function(buf1,buf2,BUFSIZE);
+  }
 
   for(i=1; memcpy_method[i].name; i++)
   {
