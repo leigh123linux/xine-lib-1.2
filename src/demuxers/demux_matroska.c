@@ -2049,6 +2049,13 @@ static int parse_block (demux_matroska_t *this, size_t block_size,
     }
     /* send each frame to the decoder */
     for (i = 0; i <= lace_num; i++) {
+
+      if (headers_len) {
+        data -= headers_len;
+        xine_fast_memcpy(data, track->compress_settings, headers_len);
+        frame[i] += headers_len;
+      }
+
       if (track->handle_content != NULL) {
         track->handle_content((demux_plugin_t *)this, track,
                                decoder_flags,
