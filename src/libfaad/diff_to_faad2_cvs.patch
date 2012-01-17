@@ -1,0 +1,101 @@
+--- faad2-cvs-15092004/libfaad/common.h	2004-09-08 03:43:12.000000000 -0600
++++ libfaad/common.h	2005-10-29 19:21:53.000000000 -0600
+@@ -147,23 +147,6 @@
+ 
+ /* END COMPILE TIME DEFINITIONS */
+ 
+-#if defined(_WIN32) && !defined(__MINGW32__)
+-
+-#include <stdlib.h>
+-
+-typedef unsigned __int64 uint64_t;
+-typedef unsigned __int32 uint32_t;
+-typedef unsigned __int16 uint16_t;
+-typedef unsigned __int8 uint8_t;
+-typedef __int64 int64_t;
+-typedef __int32 int32_t;
+-typedef __int16 int16_t;
+-typedef __int8  int8_t;
+-typedef float float32_t;
+-
+-
+-#else
+-
+ #include <stdio.h>
+ #if HAVE_SYS_TYPES_H
+ # include <sys/types.h>
+@@ -188,6 +171,8 @@
+ #if HAVE_STRINGS_H
+ # include <strings.h>
+ #endif
++
++/* precedence defining int-types by header files for all platforms */
+ #if HAVE_INTTYPES_H
+ # include <inttypes.h>
+ #else
+@@ -195,6 +180,17 @@
+ #  include <stdint.h>
+ # else
+ /* we need these... */
++#  ifdef WIN32
++typedef unsigned __int64 uint64_t;
++typedef unsigned __int32 uint32_t;
++typedef unsigned __int16 uint16_t;
++typedef unsigned __int8 uint8_t;
++typedef __int64 int64_t;
++typedef __int32 int32_t;
++typedef __int16 int16_t;
++typedef __int8  int8_t;
++#  else /* WIN32 */
++typedef float float32_t;
+ typedef unsigned long long uint64_t;
+ typedef unsigned long uint32_t;
+ typedef unsigned short uint16_t;
+@@ -203,6 +199,7 @@
+ typedef long int32_t;
+ typedef short int16_t;
+ typedef char int8_t;
++#  endif /* WIN32 */
+ # endif
+ #endif
+ #if HAVE_UNISTD_H
+@@ -227,8 +224,6 @@
+ # endif
+ #endif
+ 
+-#endif
+-
+ #ifdef WORDS_BIGENDIAN
+ #define ARCH_IS_BIG_ENDIAN
+ #endif
+@@ -289,6 +284,7 @@
+   }
+ 
+ 
++#ifndef HAVE_LRINTF
+   #if defined(_WIN32) && !defined(__MINGW32__)
+     #define HAS_LRINTF
+     static INLINE int lrintf(float f)
+@@ -315,7 +311,7 @@
+         return i;
+     }
+   #endif
+-
++#endif
+ 
+   #ifdef __ICL /* only Intel C compiler has fmath ??? */
+ 
+--- faad2-cvs-15092004/libfaad/bits.h	2004-09-04 08:56:28.000000000 -0600
++++ libfaad/bits.h	2005-10-29 19:21:53.000000000 -0600
+@@ -56,9 +56,9 @@
+ } bitfile;
+ 
+ 
+-#if defined (_WIN32) && !defined(_WIN32_WCE) && !defined(__MINGW32__)
++#if defined(_MSC_VER)
+ #define BSWAP(a) __asm mov eax,a __asm bswap eax __asm mov a, eax
+-#elif defined(LINUX) || defined(DJGPP) || defined(__MINGW32__)
++#elif defined(LINUX) || defined(DJGPP) || defined (__MINGW32__) || defined (__CYGWIN__)
+ #define BSWAP(a) __asm__ ( "bswapl %0\n" : "=r" (a) : "0" (a) )
+ #else
+ #define BSWAP(a) \

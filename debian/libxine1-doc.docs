@@ -1,0 +1,8 @@
+debian/tmp/usr/share/doc/libxine1/faq/*
+debian/tmp/usr/share/doc/libxine1/README_xxmc.html
+debian/tmp/usr/share/doc/libxine1/README
+debian/tmp/usr/share/doc/libxine1/faq.*
+debian/tmp/usr/share/doc/libxine1/README.syncfb*
+debian/tmp/usr/share/doc/libxine1/README.opengl*
+debian/tmp/usr/share/doc/libxine1/README.dxr3*
+debian/tmp/usr/share/doc/libxine1/README.dvb*
