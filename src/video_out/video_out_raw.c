@@ -61,7 +61,7 @@ typedef struct {
 
   int                width, height, format, flags;
   double             ratio;
-  uint8_t           *chunk[4]; /* mem alloc by xmalloc_aligned           */
+  void              *chunk[4]; /* mem alloc by xmalloc_aligned           */
   uint8_t           *rgb, *rgb_dst;
   yuv2rgb_t         *yuv2rgb; /* yuv2rgb converter set up for this frame */
 
