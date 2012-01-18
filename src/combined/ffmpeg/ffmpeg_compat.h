@@ -43,6 +43,27 @@
 # undef AVCODEC_HAS_REORDERED_OPAQUE
 #endif
 
+/**/
+#if LIBAVCODEC_VERSION_MAJOR > 53 || (LIBAVCODEC_VERSION_MAJOR == 53 && LIBAVCODEC_VERSION_MINOR >= 8)
+#  define avcodec_init() do {} while(0)
+#endif
+
+/* avcodec_alloc_context() */
+#if LIBAVCODEC_VERSION_MAJOR >= 54 || (LIBAVCODEC_VERSION_MAJOR == 53 && LIBAVCODEC_VERSION_MINOR >= 6)
+#  define AVCONTEXT 3
+#  define avcodec_alloc_context() avcodec_alloc_context3(NULL)
+#else
+#  define AVCONTEXT 1
+#endif
+
+/* avcodec_open() */
+#if LIBAVCODEC_VERSION_MAJOR >= 54 || (LIBAVCODEC_VERSION_MAJOR == 53 && LIBAVCODEC_VERSION_MINOR >= 6)
+#  define AVOPEN 2
+#  define avcodec_open(ctx,codec) avcodec_open2(ctx, codec, NULL)
+#else
+#  define AVOPEN 1
+#endif
+
 /* avcodec_thread_init() */
 #if LIBAVCODEC_VERSION_MAJOR >= 53 || (LIBAVCODEC_VERSION_MAJOR == 52 && LIBAVCODEC_VERSION_MINOR >= 112)
 #  define DEPRECATED_AVCODEC_THREAD_INIT 1

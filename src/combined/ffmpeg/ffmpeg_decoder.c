@@ -28,6 +28,7 @@
 #include "xine_internal.h"
 
 #include "ffmpeg_decoder.h"
+#include "ffmpeg_compat.h"
 
 /*
  * common initialisation
