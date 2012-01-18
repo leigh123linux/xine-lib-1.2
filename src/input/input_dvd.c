@@ -93,9 +93,9 @@
 #endif
 
 /* Xine includes */
-#include "xineutils.h"
-#include "buffer.h"
-#include "xine_internal.h"
+#include <xine/xineutils.h>
+#include <xine/buffer.h>
+#include <xine/xine_internal.h>
 #include "media_helper.h"
 
 /* Print debug messages? */
@@ -157,16 +157,12 @@
 #  endif /* _MSC_VER */
 #endif
 
-/* Array to hold MRLs returned by get_autoplay_list */
-#define MAX_DIR_ENTRIES 1250
-#define MAX_STR_LEN     255
-
 #if defined (__FreeBSD__)
 # define off64_t off_t
 # define lseek64 lseek
 #endif
 
-static const char *dvdnav_menu_table[] = {
+static const char *const dvdnav_menu_table[] = {
   NULL,
   NULL,
   "Title",
@@ -235,8 +231,6 @@ typedef struct {
   int32_t             language;
   int32_t             region;
   int32_t             play_single_chapter;
-
-  char               *filelist[MAX_DIR_ENTRIES];
 
 } dvd_input_class_t;
 
@@ -343,12 +337,11 @@ static void send_mouse_enter_leave_event(dvd_input_plugin_t *this, int direction
     this->mouse_in = !this->mouse_in;
 
   if(direction != this->mouse_in) {
-    xine_event_t        event;
-    xine_spu_button_t   spu_event;
-
-    spu_event.direction = direction;
-    spu_event.button    = this->mouse_buttonN;
-
+    xine_spu_button_t spu_event = {
+      .direction = direction,
+      .button    = this->mouse_buttonN
+    };
+    xine_event_t event;
     event.type        = XINE_EVENT_SPU_BUTTON;
     event.stream      = this->stream;
     event.data        = &spu_event;
@@ -738,13 +731,14 @@ static buf_element_t *dvd_plugin_read_block (input_plugin_t *this_gen,
       {
 	dvdnav_cell_change_event_t *cell_event =
 	 (dvdnav_cell_change_event_t*) (block);
-        xine_event_t event;
 
 	/* Tell xine to update the UI */
-	event.type = XINE_EVENT_UI_CHANNELS_CHANGED;
-	event.stream = this->stream;
-	event.data = NULL;
-	event.data_length = 0;
+        xine_event_t event = {
+	  .type = XINE_EVENT_UI_CHANNELS_CHANGED,
+	  .stream = this->stream,
+	  .data = NULL,
+	  .data_length = 0
+	};
 	xine_event_send(this->stream, &event);
 
 	if( !update_title_display(this) ) {
@@ -858,8 +852,9 @@ static buf_element_t *dvd_plugin_read_block (input_plugin_t *this_gen,
   return buf;
 }
 
-static off_t dvd_plugin_read (input_plugin_t *this_gen, char *ch_buf, off_t len) {
+static off_t dvd_plugin_read (input_plugin_t *this_gen, void *buf_gen, off_t len) {
 /*  dvd_input_plugin_t *this = (dvd_input_plugin_t*)this_gen; */
+  char *ch_buf = (char *)buf_gen;
 
   if (len < 4)
     return -1;
@@ -1484,7 +1479,6 @@ static int dvd_plugin_open (input_plugin_t *this_gen) {
 
   char                  *locator, *locator_orig;
   char                  *title_part;
-  xine_event_t           event;
   xine_cfg_entry_t       region_entry, lang_entry, cfg_entry;
 
   trace_print("Called\n");
@@ -1595,12 +1589,15 @@ static int dvd_plugin_open (input_plugin_t *this_gen) {
   free(class->eject_device);
   class->eject_device = strdup(this->current_dvd_device);
 
-  /* Tell Xine to update the UI */
-  event.type = XINE_EVENT_UI_CHANNELS_CHANGED;
-  event.stream = this->stream;
-  event.data = NULL;
-  event.data_length = 0;
-  xine_event_send(this->stream, &event);
+  { /* Tell Xine to update the UI */
+    const xine_event_t event = {
+      .type = XINE_EVENT_UI_CHANNELS_CHANGED,
+      .stream = this->stream,
+      .data = NULL,
+      .data_length = 0
+    };
+    xine_event_send(this->stream, &event);
+  }
 
   update_title_display(this);
 
@@ -1625,12 +1622,12 @@ static int dvd_plugin_open (input_plugin_t *this_gen) {
 static input_plugin_t *dvd_class_get_instance (input_class_t *class_gen, xine_stream_t *stream, const char *data) {
   dvd_input_plugin_t    *this;
   dvd_input_class_t     *class = (dvd_input_class_t*)class_gen;
-  static char *handled_mrl = "dvd:/";
+  static const char handled_mrl[] = "dvd:/";
 
   trace_print("Called\n");
 
   /* Check we can handle this MRL */
-  if (strncasecmp (data, handled_mrl, strlen(handled_mrl) ) != 0)
+  if (strncasecmp (data, handled_mrl, sizeof(handled_mrl)-1 ) != 0)
     return NULL;
 
   this = calloc(1, sizeof (dvd_input_plugin_t));
@@ -1687,18 +1684,6 @@ static input_plugin_t *dvd_class_get_instance (input_class_t *class_gen, xine_st
   return &this->input_plugin;
 }
 
-static const char *dvd_class_get_description (input_class_t *this_gen) {
-  trace_print("Called\n");
-
-  return "DVD Navigator";
-}
-
-static const char *dvd_class_get_identifier (input_class_t *this_gen) {
-  trace_print("Called\n");
-
-  return "DVD";
-}
-
 /* FIXME: adapt to new api. */
 #if 0
 static xine_mrl_t **dvd_class_get_dir (input_class_t *this_gen,
@@ -1718,17 +1703,16 @@ static xine_mrl_t **dvd_class_get_dir (input_class_t *this_gen,
 }
 #endif
 
-static char **dvd_class_get_autoplay_list (input_class_t *this_gen,
+static const char * const *dvd_class_get_autoplay_list (input_class_t *this_gen,
 					    int *num_files) {
 
-  dvd_input_class_t *this = (dvd_input_class_t *) this_gen;
+  static const char * const filelist[] = {"dvd:/", NULL};
+
   trace_print("get_autoplay_list entered\n");
 
-  this->filelist[0] = "dvd:/";
-  this->filelist[1] = NULL;
   *num_files = 1;
 
-  return this->filelist;
+  return filelist;
 }
 
 static void dvd_class_dispose(input_class_t *this_gen) {
@@ -1756,9 +1740,9 @@ static void *init_class (xine_t *xine, void *data) {
   dvd_input_class_t   *this;
   config_values_t     *config = xine->config;
   void                *dvdcss;
-  static const char   *skip_modes[] = {"skip program", "skip part", "skip title", NULL};
-  static const char   *seek_modes[] = {"seek in program chain", "seek in program", NULL};
-  static const char   *play_single_chapter_modes[] = {"entire dvd", "one chapter", NULL};
+  static const char *const skip_modes[] = {"skip program", "skip part", "skip title", NULL};
+  static const char *const seek_modes[] = {"seek in program chain", "seek in program", NULL};
+  static const char *const play_single_chapter_modes[] = {"entire dvd", "one chapter", NULL};
 
   trace_print("Called\n");
 #ifdef INPUT_DEBUG
@@ -1771,8 +1755,8 @@ static void *init_class (xine_t *xine, void *data) {
     return NULL;
 
   this->input_class.get_instance       = dvd_class_get_instance;
-  this->input_class.get_identifier     = dvd_class_get_identifier;
-  this->input_class.get_description    = dvd_class_get_description;
+  this->input_class.identifier         = "DVD";
+  this->input_class.description        = N_("DVD Navigator");
 /*
   this->input_class.get_dir            = dvd_class_get_dir;
 */
@@ -1802,8 +1786,7 @@ static void *init_class (xine_t *xine, void *data) {
   {
     /* we have found libdvdcss, enable the specific config options */
     char *raw_device;
-    static const char *decrypt_modes[] = { "key", "disc", "title", NULL };
-    char *css_cache_default, *css_cache;
+    static const char *const decrypt_modes[] = { "key", "disc", "title", NULL };
     int mode;
 
     raw_device = config->register_filename(config, "media.dvd.raw_device",
@@ -1827,21 +1810,6 @@ static void *init_class (xine_t *xine, void *data) {
 				   "copy protected DVDs. Try the various methods, if you have problems "
 				   "playing scrambled DVDs."), 20, NULL, NULL);
     xine_setenv("DVDCSS_METHOD", decrypt_modes[mode], 0);
-
-    css_cache_default = _x_asprintf("%s/.dvdcss/", xine_get_homedir());
-    css_cache = config->register_filename(config, "media.dvd.css_cache_path", css_cache_default, XINE_CONFIG_STRING_IS_DIRECTORY_NAME,
-					_("path to the title key cache"),
-					_("Since cracking the copy protection of scrambled DVDs can "
-					  "be quite time consuming, libdvdcss will cache the cracked "
-					  "keys in this directory.\nThis setting is security critical, "
-					  "because files with uncontrollable names will be created in "
-					  "this directory. Be sure to use a dedicated directory not "
-					  "used for anything but DVD key caching."),
-					XINE_CONFIG_SECURITY, NULL, NULL);
-    if (strlen(css_cache) > 0)
-      xine_setenv("DVDCSS_CACHE", css_cache, 0);
-    free(css_cache_default);
-
 
     if(xine->verbosity > XINE_VERBOSITY_NONE)
       xine_setenv("DVDCSS_VERBOSE", "2", 0);
@@ -1923,6 +1891,6 @@ static void *init_class (xine_t *xine, void *data) {
 
 const plugin_info_t xine_plugin_info[] EXPORTED = {
   /* type, API, "name", version, special_info, init_function */
-  { PLUGIN_INPUT | PLUGIN_MUST_PRELOAD, 17, "DVD", XINE_VERSION_CODE, NULL, init_class },
+  { PLUGIN_INPUT | PLUGIN_MUST_PRELOAD, 18, "DVD", XINE_VERSION_CODE, NULL, init_class },
   { PLUGIN_NONE, 0, "", 0, NULL, NULL }
 };

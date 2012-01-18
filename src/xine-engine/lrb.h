@@ -24,11 +24,7 @@
 #ifndef HAVE_LRB_H
 #define HAVE_LRB_H
 
-#ifdef XINE_COMPILE
-#  include "buffer.h"
-#else
-#  include <xine/buffer.h>
-#endif
+#include <xine/buffer.h>
 
 typedef struct {
 

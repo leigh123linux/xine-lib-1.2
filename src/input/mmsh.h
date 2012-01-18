@@ -24,7 +24,7 @@
 #define HAVE_MMSH_H
 
 #include <inttypes.h>
-#include "xine_internal.h"
+#include <xine/xine_internal.h>
 
 typedef struct mmsh_s mmsh_t;
 

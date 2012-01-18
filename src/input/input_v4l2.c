@@ -29,9 +29,9 @@
 /*
 #define LOG
 */
-#include "input_plugin.h"
-#include "xine_plugin.h"
-#include "xine_internal.h"
+#include <xine/input_plugin.h>
+#include <xine/xine_plugin.h>
+#include <xine/xine_internal.h>
 
 #include <string.h>
 #include <sys/types.h>
@@ -340,7 +340,7 @@ static void v4l2_input_dispose(input_plugin_t *this_gen) {
     free(this);
 }
 
-static off_t v4l2_input_read(input_plugin_t *this_gen, char *buf, off_t nlen) {
+static off_t v4l2_input_read(input_plugin_t *this_gen, void *buf, off_t nlen) {
     /* Only block reads are supported. */
     return 0;
 }
@@ -430,28 +430,15 @@ static input_plugin_t *v4l2_class_get_instance(input_class_t *gen_cls, xine_stre
     return &this->input_plugin;
 }
 
-static const char *v4l2_class_get_description(input_class_t *this_gen) {
-    /* TODO: Translatable with _() */
-    return "v4l2 input plugin";
-}
-
-static const char *v4l2_class_get_identifier(input_class_t *this_gen) {
-    return "v4l2";
-}
-
-static void v4l2_class_dispose(input_class_t *this_gen) {
-    free(this_gen);
-}
-
 static void *v4l2_init_class(xine_t *xine, void *data) {
     v4l2_input_class_t *this;
-    this = malloc(sizeof(v4l2_input_class_t));
+    this = calloc(1, sizeof(v4l2_input_class_t));
     this->input_class.get_instance = v4l2_class_get_instance;
-    this->input_class.get_description = v4l2_class_get_description;
-    this->input_class.get_identifier = v4l2_class_get_identifier;
+    this->input_class.description = N_("v4l2 input plugin");
+    this->input_class.identifier = "v4l2";
     this->input_class.get_dir = NULL;
     this->input_class.get_autoplay_list = NULL;
-    this->input_class.dispose = v4l2_class_dispose;
+    this->input_class.dispose = default_input_class_dispose;
     this->input_class.eject_media = NULL;
     return &this->input_class;
 }
@@ -462,6 +449,6 @@ const input_info_t input_info_v4l2 = {
 
 const plugin_info_t xine_plugin_info[] EXPORTED = {
     /* type, API, "name", version, special_info, init_function */
-    { PLUGIN_INPUT, 17, "v4l2", XINE_VERSION_CODE, &input_info_v4l2, v4l2_init_class },
+    { PLUGIN_INPUT, 18, "v4l2", XINE_VERSION_CODE, &input_info_v4l2, v4l2_init_class },
     { PLUGIN_NONE, 0, "", 0, NULL, NULL }
 };

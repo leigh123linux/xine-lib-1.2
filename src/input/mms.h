@@ -24,7 +24,7 @@
 #define HAVE_MMS_H
 
 #include <inttypes.h>
-#include "xine_internal.h"
+#include <xine/xine_internal.h>
 
 typedef struct mms_s mms_t;
 

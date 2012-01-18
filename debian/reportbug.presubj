@@ -21,9 +21,9 @@ with xine-ui, then file the bug against gxine)
 Report bugs for xine crashes
 ============================
 
-If you report a bug that applications linked against libxine1
+If you report a bug that applications linked against libxine2
 (xine-ui, gxine, amarok, totem, etc) segfault, please install the
-packages 'xine-ui' and 'libxine1-dbg', and try to reproduce it with
+packages 'xine-ui' and 'libxine2-dbg', and try to reproduce it with
 this command:
 
 > ulimit -c unlimited ; /usr/bin/xine --bug-report <mrl>

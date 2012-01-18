@@ -40,11 +40,11 @@
 
 #define XINE_ENGINE_INTERNAL
 
-#include "xine_internal.h"
-#include "audio_out.h"
-#include "video_out.h"
-#include "demuxers/demux.h"
-#include "post.h"
+#include <xine/xine_internal.h>
+#include <xine/audio_out.h>
+#include <xine/video_out.h>
+#include <xine/demux.h>
+#include <xine/post.h>
 
 /*
  * version information / checking
@@ -322,15 +322,6 @@ void xine_config_reset (xine_t *this) {
   pthread_mutex_unlock(&config->config_lock);
 }
 
-#ifndef XINE_DISABLE_DEPRECATED_FEATURES
-int xine_gui_send_vo_data (xine_stream_t *stream,
-			   int type, void *data) {
-
-  return stream->video_driver->gui_data_exchange (stream->video_driver,
-						  type, data);
-}
-#endif
-
 int xine_port_send_gui_data (xine_video_port_t *vo,
 			   int type, void *data) {
 
@@ -474,6 +465,8 @@ void xine_set_param (xine_stream_t *stream, int param, int value) {
     stream->xine->verbosity = value;
     break;
 
+  case XINE_PARAM_VO_SHARPNESS:
+  case XINE_PARAM_VO_NOISE_REDUCTION:
   case XINE_PARAM_VO_HUE:
   case XINE_PARAM_VO_SATURATION:
   case XINE_PARAM_VO_CONTRAST:
@@ -639,6 +632,8 @@ int xine_get_param (xine_stream_t *stream, int param) {
     ret = stream->xine->verbosity;
     break;
 
+  case XINE_PARAM_VO_SHARPNESS:
+  case XINE_PARAM_VO_NOISE_REDUCTION:
   case XINE_PARAM_VO_HUE:
   case XINE_PARAM_VO_SATURATION:
   case XINE_PARAM_VO_CONTRAST:
@@ -860,6 +855,20 @@ void xine_osd_draw_bitmap(xine_osd_t *this, uint8_t *bitmap,
   this->osd.renderer->draw_bitmap(&this->osd, bitmap, x1, y1, width, height, palette_map);
 }
 
+void xine_osd_set_argb_buffer(xine_osd_t *this, uint32_t *argb_buffer,
+    int dirty_x, int dirty_y, int dirty_width, int dirty_height) {
+  this->osd.renderer->set_argb_buffer(&this->osd, argb_buffer, dirty_x, dirty_y, dirty_width, dirty_height);
+}
+
+void xine_osd_set_extent(xine_osd_t *this, int extent_width, int extent_height) {
+  this->osd.renderer->set_extent(&this->osd, extent_width, extent_height);
+}
+
+void xine_osd_set_video_window(xine_osd_t *this, int window_x, int window_y, int window_width, int window_height) {
+  this->osd.renderer->set_video_window(&this->osd, window_x, window_y, window_width, window_height);
+}
+
+
 const char *const *xine_post_list_inputs(xine_post_t *this_gen) {
   post_plugin_t *this = (post_plugin_t *)this_gen;
   return this->input_ids;
@@ -957,7 +966,7 @@ int _x_message(xine_stream_t *stream, int type, ...) {
   va_list                 ap;
   char                   *s, *params;
   char                   *args[1025];
-  static const char      *std_explanation[] = {
+  static const char *const std_explanation[] = {
     "",
     N_("Warning:"),
     N_("Unknown host:"),

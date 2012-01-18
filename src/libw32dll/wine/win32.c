@@ -12,7 +12,7 @@ for DLL to know too much about its environment.
 ************************************************************/
 
 #include "config.h"
-#include "attributes.h"
+#include <xine/attributes.h>
 
 #define QTX
 
@@ -3036,9 +3036,9 @@ static int WINAPI expGetSystemPaletteEntries(int hdc, int iStartIndex, int nEntr
 
 static int WINAPI expGetTimeZoneInformation(LPTIME_ZONE_INFORMATION lpTimeZoneInformation)
 {
-    const short name[]={'C', 'e', 'n', 't', 'r', 'a', 'l', ' ', 'S', 't', 'a',
+    static const short name[]={'C', 'e', 'n', 't', 'r', 'a', 'l', ' ', 'S', 't', 'a',
     'n', 'd', 'a', 'r', 'd', ' ', 'T', 'i', 'm', 'e', 0};
-    const short pname[]={'C', 'e', 'n', 't', 'r', 'a', 'l', ' ', 'D', 'a', 'y',
+    static const short pname[]={'C', 'e', 'n', 't', 'r', 'a', 'l', ' ', 'D', 'a', 'y',
     'l', 'i', 'g', 'h', 't', ' ', 'T', 'i', 'm', 'e', 0};
     dbgprintf("GetTimeZoneInformation(%p) => TIME_ZONE_ID_STANDARD\n", lpTimeZoneInformation);
     memset(lpTimeZoneInformation, 0, sizeof(TIME_ZONE_INFORMATION));

@@ -70,9 +70,9 @@ static void xvmc_render_macro_blocks(vo_frame_t *current_image,
 				     int second_field,
 				     xvmc_macroblocks_t *macroblocks) {
   xxmc_driver_t *this           = (xxmc_driver_t *) current_image->driver;
-  xxmc_frame_t  *current_frame  = (xxmc_frame_t *)  current_image;
-  xxmc_frame_t  *forward_frame  = (xxmc_frame_t *)  forward_ref_image;
-  xxmc_frame_t  *backward_frame = (xxmc_frame_t *)  backward_ref_image;
+  xxmc_frame_t  *current_frame  = XXMC_FRAME(current_image);
+  xxmc_frame_t  *forward_frame  = XXMC_FRAME(forward_ref_image);
+  xxmc_frame_t  *backward_frame = XXMC_FRAME(backward_ref_image);
   int           flags;
 
   lprintf ("xvmc_render_macro_blocks\n");

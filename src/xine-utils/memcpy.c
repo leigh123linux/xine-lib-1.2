@@ -1,4 +1,4 @@
-/*
+;/*
  * Copyright (C) 2001-2004 the xine project
  *
  * This file is part of xine, a free video player.
@@ -52,7 +52,8 @@
 #define LOG
 */
 
-#include "xine_internal.h"
+#include <xine/xine_internal.h>
+#include "../xine-engine/xine_private.h"
 
 void *(* xine_fast_memcpy)(void *to, const void *from, size_t len);
 
@@ -384,29 +385,29 @@ static void *linux_kernel_memcpy(void *to, const void *from, size_t len) {
 #endif /* _MSC_VER */
 #endif /* ARCH_X86 */
 
-static struct {
-  char *name;
-  void *(* function)(void *to, const void *from, size_t len);
-
-  uint64_t time; /* This type could be used for non-MSC build too! */
+static const struct {
+  const char name[16];
+  void *(*const  function)(void *to, const void *from, size_t len);
 
   uint32_t cpu_require;
 } memcpy_method[] =
 {
-  { NULL, NULL, 0, 0 },
-  { "libc memcpy()", memcpy, 0, 0 },
+  { "", NULL, 0 },
+  { "libc", memcpy, 0 },
 #if (defined(ARCH_X86) || defined(ARCH_X86_64)) && !defined(_MSC_VER)
-  { "linux kernel memcpy()", linux_kernel_memcpy, 0, 0 },
-  { "MMX optimized memcpy()", mmx_memcpy, 0, MM_MMX },
-  { "MMXEXT optimized memcpy()", mmx2_memcpy, 0, MM_MMXEXT },
-  { "SSE optimized memcpy()", sse_memcpy, 0, MM_MMXEXT|MM_SSE },
+  { "linux kernel", linux_kernel_memcpy, 0 },
+  { "MMX ", mmx_memcpy, MM_MMX },
+  { "MMXEXT", mmx2_memcpy, MM_MMXEXT },
+  { "SSE", sse_memcpy, MM_MMXEXT|MM_SSE },
 #endif /* ARCH_X86 */
 #if defined (ARCH_PPC) && !defined (HOST_OS_DARWIN)
-  { "ppcasm_memcpy()", ppcasm_memcpy, 0, 0 },
-  { "ppcasm_cacheable_memcpy()", ppcasm_cacheable_memcpy, 0, MM_ACCEL_PPC_CACHE32 },
+  { "ppcasm", ppcasm_memcpy, 0 },
+  { "ppcasm_cached", ppcasm_cacheable_memcpy, MM_ACCEL_PPC_CACHE32 },
 #endif /* ARCH_PPC && !HOST_OS_DARWIN */
-  { NULL, NULL, 0, 0 }
+  { "", NULL, 0 }
 };
+
+static uint64_t memcpy_timing[sizeof(memcpy_method)/sizeof(memcpy_method[0])] = { 0, };
 
 #ifdef HAVE_POSIX_TIMERS
 /* Prefer clock_gettime() where available. */
@@ -459,7 +460,7 @@ static void update_fast_memcpy(void *user_data, xine_cfg_entry_t *entry) {
   if (method != 0
       && (config_flags & memcpy_method[method].cpu_require) ==
       memcpy_method[method].cpu_require ) {
-    lprintf("using %s\n", memcpy_method[method].name );
+    lprintf("using %s memcpy()\n", memcpy_method[method].name );
     xine_fast_memcpy = memcpy_method[method].function;
     return;
   } else {
@@ -474,7 +475,7 @@ void xine_probe_fast_memcpy(xine_t *xine)
   char             *buf1, *buf2;
   int               i, j, best;
   int               config_flags = -1;
-  static const char *memcpy_methods[] = {
+  static const char *const memcpy_methods[] = {
     "probe", "libc",
 #if (defined(ARCH_X86) || defined(ARCH_X86_64)) && !defined(_MSC_VER)
     "kernel", "mmx", "mmxext", "sse",
@@ -500,7 +501,7 @@ void xine_probe_fast_memcpy(xine_t *xine)
   if( best != 0 &&
      (config_flags & memcpy_method[best].cpu_require) ==
       memcpy_method[best].cpu_require ) {
-    lprintf("using %s\n", memcpy_method[best].name );
+    lprintf("using %s memcpy()\n", memcpy_method[best].name );
     xine_fast_memcpy = memcpy_method[best].function;
     return;
   }
@@ -528,7 +529,7 @@ void xine_probe_fast_memcpy(xine_t *xine)
     memcpy_method[1].function(buf1,buf2,BUFSIZE);
   }
 
-  for(i=1; memcpy_method[i].name; i++)
+  for(i=1; memcpy_method[i].name[0]; i++)
   {
     if( (config_flags & memcpy_method[i].cpu_require) !=
          memcpy_method[i].cpu_require )
@@ -541,11 +542,11 @@ void xine_probe_fast_memcpy(xine_t *xine)
     }
 
     t = rdtsc(config_flags) - t;
-    memcpy_method[i].time = t;
+    memcpy_timing[i] = t;
 
-    xprintf(xine, XINE_VERBOSITY_LOG, "\t%s : %" PRIu64 "\n", memcpy_method[i].name, t);
+    xprintf(xine, XINE_VERBOSITY_LOG, "\t%s memcpy() : %" PRIu64 "\n", memcpy_method[i].name, t);
 
-    if( best == 0 || t < memcpy_method[best].time )
+    if( best == 0 || t < memcpy_timing[best] )
       best = i;
   }
 

@@ -51,7 +51,7 @@
 #define LOG
 */
 
-#include "xine_internal.h"
+#include <xine/xine_internal.h>
 #include "x11osd.h"
 
 struct x11osd

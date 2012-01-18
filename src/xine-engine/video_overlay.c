@@ -29,11 +29,11 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
-#include "buffer.h"
-#include "xine_internal.h"
+#include <xine/buffer.h>
+#include <xine/xine_internal.h>
 #include "bswap.h"
-#include "xineutils.h"
-#include "video_overlay.h"
+#include <xine/xineutils.h>
+#include <xine/video_overlay.h>
 
 /*
 #define LOG_DEBUG
@@ -174,6 +174,8 @@ static void internal_video_overlay_free_handle(video_overlay_t *this, int32_t ha
   pthread_mutex_lock( &this->objects_mutex );
 
   if( this->objects[handle].overlay ) {
+    set_argb_layer_ptr(&this->objects[handle].overlay->argb_layer, NULL);
+
     if( this->objects[handle].overlay->rle )
       free( this->objects[handle].overlay->rle );
     free( this->objects[handle].overlay );
@@ -396,6 +398,8 @@ static int video_overlay_event( video_overlay_t *this, int64_t vpts ) {
 #endif
         /* free any overlay associated with this event */
         if (this->events[this_event].event->object.overlay != NULL) {
+          set_argb_layer_ptr(&this->events[this_event].event->object.overlay->argb_layer, NULL);
+
           if( this->events[this_event].event->object.overlay->rle != NULL )
             free( this->events[this_event].event->object.overlay->rle );
           free(this->events[this_event].event->object.overlay);
@@ -410,6 +414,8 @@ static int video_overlay_event( video_overlay_t *this, int64_t vpts ) {
 #endif
         /* free any overlay associated with this event */
         if( this->events[this_event].event->object.overlay != NULL) {
+          set_argb_layer_ptr(&this->events[this_event].event->object.overlay->argb_layer, NULL);
+
           if( this->events[this_event].event->object.overlay->rle != NULL )
             free( this->events[this_event].event->object.overlay->rle );
           free(this->events[this_event].event->object.overlay);

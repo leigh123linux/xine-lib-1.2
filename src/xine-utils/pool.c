@@ -22,9 +22,9 @@
 #endif
 
 #include <assert.h>
-#include "attributes.h"
-#include "pool.h"
-#include "array.h"
+#include <xine/attributes.h>
+#include <xine/pool.h>
+#include <xine/array.h>
 
 #define MIN_CHUNK_SIZE    32
 #define MAX_CHUNK_SIZE 65536

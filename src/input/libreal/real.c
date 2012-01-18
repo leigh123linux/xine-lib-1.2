@@ -37,8 +37,8 @@
 #include "real.h"
 #include "asmrp.h"
 #include "sdpplin.h"
-#include "xine_internal.h"
-#include "xineutils.h"
+#include <xine/xine_internal.h>
+#include <xine/xineutils.h>
 #include "bswap.h"
 
 #define XOR_TABLE_LEN 37
@@ -317,14 +317,13 @@ void real_calc_response_and_checksum (char *response, char *chksum, char *challe
   size_t ch_len, resp_len;
   int   i;
   char *ptr;
-  char  buf[128];
+  char  buf[128] = { 0, };
 
   /* initialize return values */
   memset(response, 0, 64);
   memset(chksum, 0, 34);
 
   /* initialize buffer */
-  memset(buf, 0, 128);
   ptr=buf;
   _X_BE_32C(ptr, 0xa1e9149d);
   ptr+=4;
@@ -354,10 +353,10 @@ void real_calc_response_and_checksum (char *response, char *chksum, char *challe
   calc_response_string (response, buf);
 
   /* add tail */
-  resp_len = strlen (response);
-  strcpy (&response[resp_len], "01d0a8e3");
+  strcat(response, "01d0a8e3");
 
   /* calculate checksum */
+  resp_len = strlen (response);
   for (i=0; i<resp_len/4; i++)
     chksum[i] = response[i*4];
 }
