@@ -33,6 +33,7 @@
 #endif
 
 #if LIBAVCODEC_VERSION_MAJOR >= 53 || (LIBAVCODEC_VERSION_MAJOR == 52 && LIBAVCODEC_VERSION_MINOR >= 32)
+#else
 #  define pp_context	pp_context_t
 #  define pp_mode	pp_mode_t
 #endif
