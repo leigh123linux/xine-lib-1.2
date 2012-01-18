@@ -1201,7 +1201,8 @@ void _x_scan_plugins (xine_t *this) {
   xine_list_delete (plugindirs);
   free(homedir);
 
-  save_catalog (this);
+  if ((_x_flags & XINE_FLAG_NO_WRITE_CACHE) == 0)
+    save_catalog (this);
 
   load_required_plugins (this);
 
