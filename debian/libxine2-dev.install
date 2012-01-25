@@ -9,4 +9,4 @@ usr/lib/xine/plugins/*/vidix/*.la
 usr/share/aclocal/xine.m4
 usr/share/man/man1/xine-config.1
 ../dh_xine				usr/bin
-../xine.pm				usr/share/perl5/Debian/Debhelper/Sequence/xine.pm
+../xine.pm				usr/share/perl5/Debian/Debhelper/Sequence
