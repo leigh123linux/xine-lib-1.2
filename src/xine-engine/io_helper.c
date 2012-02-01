@@ -38,7 +38,7 @@
 
 #define XINE_ENGINE_INTERNAL
 
-#include "io_helper.h"
+#include <xine/io_helper.h>
 
 /* private constants */
 #define XIO_FILE_READ             0
@@ -246,7 +246,7 @@ int _x_io_select (xine_stream_t *stream, int fd, int state, int timeout_msec) {
            *   aborts current read if action pending. otherwise xine
            *   cannot be stopped when no more data is available.
            */
-          if (stream && stream->demux_action_pending)
+          if (stream && _x_action_pending(stream))
             return XIO_ABORTED;
           break;
         case WAIT_ABANDONED:
@@ -290,7 +290,7 @@ int _x_io_select (xine_stream_t *stream, int fd, int state, int timeout_msec) {
      *   aborts current read if action pending. otherwise xine
      *   cannot be stopped when no more data is available.
      */
-    if (stream && stream->demux_action_pending)
+    if (stream && _x_action_pending(stream))
       return XIO_ABORTED;
 
     total_time_usec += XIO_POLLING_INTERVAL;
@@ -326,7 +326,8 @@ int _x_io_tcp_connect_finish(xine_stream_t *stream, int fd, int timeout_msec) {
 }
 
 
-static off_t xio_rw_abort(xine_stream_t *stream, int fd, int cmd, char *buf, off_t todo) {
+static off_t xio_rw_abort(xine_stream_t *stream, int fd, int cmd, void *buf_gen, off_t todo) {
+  uint8_t *buf = buf_gen;
 
   off_t ret = -1;
   off_t total = 0;
@@ -413,19 +414,19 @@ static off_t xio_rw_abort(xine_stream_t *stream, int fd, int cmd, char *buf, off
   return total;
 }
 
-off_t _x_io_tcp_read (xine_stream_t *stream, int s, char *buf, off_t todo) {
+off_t _x_io_tcp_read (xine_stream_t *stream, int s, void *buf, off_t todo) {
   return xio_rw_abort (stream, s, XIO_TCP_READ, buf, todo);
 }
 
-off_t _x_io_tcp_write (xine_stream_t *stream, int s, char *buf, off_t todo) {
+off_t _x_io_tcp_write (xine_stream_t *stream, int s, void *buf, off_t todo) {
   return xio_rw_abort (stream, s, XIO_TCP_WRITE, buf, todo);
 }
 
-off_t _x_io_file_read (xine_stream_t *stream, int s, char *buf, off_t todo) {
+off_t _x_io_file_read (xine_stream_t *stream, int s, void *buf, off_t todo) {
   return xio_rw_abort (stream, s, XIO_FILE_READ, buf, todo);
 }
 
-off_t _x_io_file_write (xine_stream_t *stream, int s, char *buf, off_t todo) {
+off_t _x_io_file_write (xine_stream_t *stream, int s, void *buf, off_t todo) {
   return xio_rw_abort (stream, s, XIO_FILE_WRITE, buf, todo);
 }
 

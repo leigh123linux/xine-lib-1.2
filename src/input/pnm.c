@@ -25,6 +25,8 @@
 # include "config.h"
 #endif
 
+#include <config.h>
+
 #include <unistd.h>
 #include <stdio.h>
 #include <sys/socket.h>
@@ -47,9 +49,9 @@
 #include "pnm.h"
 #include "libreal/rmff.h"
 #include "bswap.h"
-#include "io_helper.h"
-#include "xineutils.h"
-#include "xine_internal.h"
+#include <xine/io_helper.h>
+#include <xine/xineutils.h>
+#include <xine/xine_internal.h>
 
 #define BUF_SIZE 4096
 #define HEADER_SIZE 4096

@@ -31,6 +31,8 @@
 # include "config.h"
 #endif
 
+#include <xine/attributes.h>
+
 #include "goom_graphic.h"
 
 /*	Warning:  at this writing, the version of GAS packaged
@@ -58,7 +60,7 @@ typedef	union {
 	char			b[8];	/* 8 Byte (8-bit) values */
 	unsigned char		ub[8];	/* 8 Unsigned Byte */
 	float			s[2];	/* Single-precision (32-bit) value */
-} __attribute__ ((aligned (8))) mmx_t;	/* On an 8-byte (64-bit) boundary */
+} ATTR_ALIGN(8) mmx_t;	/* On an 8-byte (64-bit) boundary */
 
 
 

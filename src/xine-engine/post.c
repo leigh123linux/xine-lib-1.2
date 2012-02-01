@@ -25,7 +25,7 @@
 #define POST_INTERNAL
 #define XINE_ENGINE_INTERNAL
 
-#include "post.h"
+#include <xine/post.h>
 #include <stdarg.h>
 
 
@@ -90,6 +90,16 @@ static vo_frame_t *post_video_get_last_frame(xine_video_port_t *port_gen) {
   return frame;
 }
 
+static xine_grab_video_frame_t *post_video_new_grab_video_frame(xine_video_port_t *port_gen) {
+  post_video_port_t *port = (post_video_port_t *)port_gen;
+  xine_grab_video_frame_t *frame;
+
+  if (port->port_lock) pthread_mutex_lock(port->port_lock);
+  frame = port->original_port->new_grab_video_frame(port->original_port);
+  if (port->port_lock) pthread_mutex_unlock(port->port_lock);
+  return frame;
+}
+
 static void post_video_enable_ovl(xine_video_port_t *port_gen, int ovl_enable) {
   post_video_port_t *port = (post_video_port_t *)port_gen;
 
@@ -144,6 +154,14 @@ static void post_video_flush(xine_video_port_t *port_gen) {
   if (port->port_lock) pthread_mutex_unlock(port->port_lock);
 }
 
+static void post_video_trigger_drawing(xine_video_port_t *port_gen) {
+  post_video_port_t *port = (post_video_port_t *)port_gen;
+
+  if (port->port_lock) pthread_mutex_lock(port->port_lock);
+  port->original_port->trigger_drawing(port->original_port);
+  if (port->port_lock) pthread_mutex_unlock(port->port_lock);
+}
+
 static int post_video_status(xine_video_port_t *port_gen, xine_stream_t *stream,
                              int *width, int *height, int64_t *img_duration) {
   post_video_port_t *port = (post_video_port_t *)port_gen;
@@ -187,6 +205,7 @@ static int post_video_rewire(xine_post_out_t *output_gen, void *data) {
   if (!new_port)
     return 0;
 
+  this->running_ticket->lock_port_rewiring(this->running_ticket, -1);
   this->running_ticket->revoke(this->running_ticket, 1);
 
   if (input_port->original_port->status(input_port->original_port, input_port->stream,
@@ -197,6 +216,7 @@ static int post_video_rewire(xine_post_out_t *output_gen, void *data) {
   input_port->original_port = new_port;
 
   this->running_ticket->issue(this->running_ticket, 1);
+  this->running_ticket->unlock_port_rewiring(this->running_ticket);
 
   return 1;
 }
@@ -213,11 +233,13 @@ post_video_port_t *_x_post_intercept_video_port(post_plugin_t *post, xine_video_
   port->new_port.open                = post_video_open;
   port->new_port.get_frame           = post_video_get_frame;
   port->new_port.get_last_frame      = post_video_get_last_frame;
+  port->new_port.new_grab_video_frame = post_video_new_grab_video_frame;
   port->new_port.enable_ovl          = post_video_enable_ovl;
   port->new_port.close               = post_video_close;
   port->new_port.exit                = post_video_exit;
   port->new_port.get_overlay_manager = post_video_get_overlay_manager;
   port->new_port.flush               = post_video_flush;
+  port->new_port.trigger_drawing     = post_video_trigger_drawing;
   port->new_port.status              = post_video_status;
   port->new_port.get_property        = post_video_get_property;
   port->new_port.set_property        = post_video_set_property;
@@ -378,9 +400,10 @@ vo_frame_t *_x_post_intercept_video_frame(vo_frame_t *frame, post_video_port_t *
   new_frame->dispose          =
     port->new_frame->dispose          ? port->new_frame->dispose          : post_frame_dispose;
 
-  if (!port->new_frame->draw) {
+  if (!port->new_frame->draw || (port->route_preprocessing_procs && port->route_preprocessing_procs(port, frame))) {
     /* draw will most likely modify the frame, so the decoder
-     * should only request preprocessing when there is no new draw */
+     * should only request preprocessing when there is no new draw
+     * but route_preprocessing_procs() can override this decision */
     if (frame->proc_frame       && !new_frame->proc_frame)
       new_frame->proc_frame       = post_frame_proc_frame;
     if (frame->proc_slice       && !new_frame->proc_slice)
@@ -696,6 +719,7 @@ static int post_audio_rewire(xine_post_out_t *output_gen, void *data) {
   if (!new_port)
     return 0;
 
+  this->running_ticket->lock_port_rewiring(this->running_ticket, -1);
   this->running_ticket->revoke(this->running_ticket, 1);
 
   if (input_port->original_port->status(input_port->original_port, input_port->stream,
@@ -706,6 +730,7 @@ static int post_audio_rewire(xine_post_out_t *output_gen, void *data) {
   input_port->original_port = new_port;
 
   this->running_ticket->issue(this->running_ticket, 1);
+  this->running_ticket->unlock_port_rewiring(this->running_ticket);
 
   return 1;
 }
@@ -873,7 +898,7 @@ int _x_post_dispose(post_plugin_t *this) {
     /* since the plugin loader does not know, when the plugin gets disposed,
      * we have to handle the reference counter here */
     pthread_mutex_lock(&this->xine->plugin_catalog->lock);
-    ((plugin_node_t *)this->node)->ref--;
+    this->node->ref--;
     pthread_mutex_unlock(&this->xine->plugin_catalog->lock);
 
     return 1;

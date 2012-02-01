@@ -22,7 +22,7 @@
 #ifndef HAVE_MEDIA_HELPER_H
 #define HAVE_MEDIA_HELPER_H
 
-#include "xine_internal.h"
+#include <xine/xine_internal.h>
 
 int media_eject_media (xine_t *xine, const char *device);
 

@@ -49,7 +49,7 @@
 #define LOG
 */
 
-#include "xine_internal.h"
+#include <xine/xine_internal.h>
 #include "xcbosd.h"
 
 struct xcbosd

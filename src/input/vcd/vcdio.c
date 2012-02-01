@@ -1,22 +1,22 @@
 /*
   $Id: vcdio.c,v 1.9 2007/03/23 21:47:31 dsalt Exp $
- 
+
   Copyright (C) 2002, 2003, 2004, 2005 Rocky Bernstein <rocky@panix.com>
-  
+
   This program is free software; you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
   the Free Software Foundation; either version 2 of the License, or
   (at your option) any later version.
-  
+
   This program is distributed in the hope that it will be useful,
   but WITHOUT ANY WARRANTY; without even the implied warranty of
   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
   GNU General Public License for more details.
-  
+
   You should have received a copy of the GNU General Public License
   along with this program; if not, write to the Free Software
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
- 
+
  */
 
 #ifdef HAVE_CONFIG_H
@@ -63,30 +63,30 @@
 
 #define FREE_AND_NULL(ptr) if (NULL != ptr) free(ptr); ptr = NULL;
 
-/*! Closes VCD device specified via "this", and also wipes memory of it 
+/*! Closes VCD device specified via "this", and also wipes memory of it
    from it inside "this". */
 int
-vcdio_close(vcdplayer_t *p_vcdplayer) 
+vcdio_close(vcdplayer_t *p_vcdplayer)
 {
   p_vcdplayer->b_opened = false;
 
   FREE_AND_NULL(p_vcdplayer->psz_source);
   FREE_AND_NULL(p_vcdplayer->track);
   FREE_AND_NULL(p_vcdplayer->segment);
-  FREE_AND_NULL(p_vcdplayer->entry); 
-  
+  FREE_AND_NULL(p_vcdplayer->entry);
+
   return vcdinfo_close(p_vcdplayer->vcd);
 }
 
 
 /*! Opens VCD device and initializes things.
 
-   - do nothing if the device had already been open and is the same device. 
+   - do nothing if the device had already been open and is the same device.
    - if the device had been open and is a different, close it before trying
-     to open new device. 
+     to open new device.
 */
 bool
-vcdio_open(vcdplayer_t *p_vcdplayer, char *intended_vcd_device) 
+vcdio_open(vcdplayer_t *p_vcdplayer, char *intended_vcd_device)
 {
   vcdinfo_obj_t *p_vcdinfo = p_vcdplayer->vcd;
   unsigned int i;
@@ -137,60 +137,60 @@ vcdio_open(vcdplayer_t *p_vcdplayer, char *intended_vcd_device)
     }
   }
 
-  /* 
-     Save summary info on tracks, segments and entries... 
+  /*
+     Save summary info on tracks, segments and entries...
    */
 
   if ( 0 < (p_vcdplayer->i_tracks = vcdinfo_get_num_tracks(p_vcdinfo)) ) {
-    p_vcdplayer->track = (vcdplayer_play_item_info_t *) 
+    p_vcdplayer->track = (vcdplayer_play_item_info_t *)
       calloc(p_vcdplayer->i_tracks, sizeof(vcdplayer_play_item_info_t));
-    
-    for (i=0; i<p_vcdplayer->i_tracks; i++) { 
+
+    for (i=0; i<p_vcdplayer->i_tracks; i++) {
       track_t i_track=i+1;
-      p_vcdplayer->track[i].size 
+      p_vcdplayer->track[i].size
         = vcdinfo_get_track_sect_count(p_vcdinfo, i_track);
-      p_vcdplayer->track[i].start_LSN 
+      p_vcdplayer->track[i].start_LSN
         = vcdinfo_get_track_lsn(p_vcdinfo, i_track);
     }
-  } else 
+  } else
     p_vcdplayer->track = NULL;
-    
+
   if ( 0 < (p_vcdplayer->i_entries = vcdinfo_get_num_entries(p_vcdinfo)) ) {
-    p_vcdplayer->entry = (vcdplayer_play_item_info_t *) 
+    p_vcdplayer->entry = (vcdplayer_play_item_info_t *)
       calloc(p_vcdplayer->i_entries, sizeof(vcdplayer_play_item_info_t));
 
-    for (i=0; i<p_vcdplayer->i_entries; i++) { 
+    for (i=0; i<p_vcdplayer->i_entries; i++) {
       p_vcdplayer->entry[i].size
         = vcdinfo_get_entry_sect_count(p_vcdinfo, i);
-      p_vcdplayer->entry[i].start_LSN 
+      p_vcdplayer->entry[i].start_LSN
         = vcdinfo_get_entry_lsn(p_vcdinfo, i);
     }
-  } else 
+  } else
     p_vcdplayer->entry = NULL;
-  
+
   if ( 0 < (p_vcdplayer->i_segments = vcdinfo_get_num_segments(p_vcdinfo)) ) {
-    p_vcdplayer->segment = (vcdplayer_play_item_info_t *) 
+    p_vcdplayer->segment = (vcdplayer_play_item_info_t *)
       calloc(p_vcdplayer->i_segments,  sizeof(vcdplayer_play_item_info_t));
-    
-    for (i=0; i<p_vcdplayer->i_segments; i++) { 
-      p_vcdplayer->segment[i].size 
+
+    for (i=0; i<p_vcdplayer->i_segments; i++) {
+      p_vcdplayer->segment[i].size
         = vcdinfo_get_seg_sector_count(p_vcdinfo, i);
-      p_vcdplayer->segment[i].start_LSN 
+      p_vcdplayer->segment[i].start_LSN
         = vcdinfo_get_seg_lsn(p_vcdinfo, i);
     }
-  } else 
+  } else
     p_vcdplayer->segment = NULL;
-  
+
   return true;
 }
 
 /*!
-  seek position, return new position 
+  seek position, return new position
 
   if seeking failed, -1 is returned
 */
-off_t 
-vcdio_seek (vcdplayer_t *p_vcdplayer, off_t offset, int origin) 
+off_t
+vcdio_seek (vcdplayer_t *p_vcdplayer, off_t offset, int origin)
 {
 
   switch (origin) {
@@ -198,54 +198,54 @@ vcdio_seek (vcdplayer_t *p_vcdplayer, off_t offset, int origin)
     {
       lsn_t old_lsn = p_vcdplayer->i_lsn;
       p_vcdplayer->i_lsn = p_vcdplayer->origin_lsn + (offset / M2F2_SECTOR_SIZE);
-      
-      dbg_print(INPUT_DBG_SEEK_SET, "seek_set to %ld => %u (start is %u)\n", 
+
+      dbg_print(INPUT_DBG_SEEK_SET, "seek_set to %ld => %u (start is %u)\n",
 		(long int) offset, p_vcdplayer->i_lsn, p_vcdplayer->origin_lsn);
 
       /* Seek was successful. Invalidate entry location by setting
-         entry number back to 1. Over time it will adjust upward 
+         entry number back to 1. Over time it will adjust upward
          to the correct value. */
-      if ( !vcdplayer_pbc_is_on(p_vcdplayer) 
-           && p_vcdplayer->play_item.type != VCDINFO_ITEM_TYPE_TRACK 
+      if ( !vcdplayer_pbc_is_on(p_vcdplayer)
+           && p_vcdplayer->play_item.type != VCDINFO_ITEM_TYPE_TRACK
            && p_vcdplayer->i_lsn < old_lsn) {
         dbg_print(INPUT_DBG_SEEK_SET, "seek_set entry backwards\n");
         p_vcdplayer->next_entry = 1;
       }
       break;
     }
-    
-  case SEEK_CUR: 
+
+  case SEEK_CUR:
     {
       off_t diff;
       if (offset) {
         LOG_ERR(p_vcdplayer, "%s: %d\n",
-                _("SEEK_CUR not implemented for non-zero offset"), 
+                _("SEEK_CUR not implemented for non-zero offset"),
                 (int) offset);
         return (off_t) -1;
       }
-      
+
       if (p_vcdplayer->slider_length == VCDPLAYER_SLIDER_LENGTH_TRACK) {
         diff = p_vcdplayer->i_lsn - p_vcdplayer->track_lsn;
-        dbg_print(INPUT_DBG_SEEK_CUR, 
-                  "current pos: %u, track diff %ld\n", 
+        dbg_print(INPUT_DBG_SEEK_CUR,
+                  "current pos: %u, track diff %ld\n",
                   p_vcdplayer->i_lsn, (long int) diff);
       } else {
         diff = p_vcdplayer->i_lsn - p_vcdplayer->origin_lsn;
-        dbg_print(INPUT_DBG_SEEK_CUR, 
-                  "current pos: %u, entry diff %ld\n", 
+        dbg_print(INPUT_DBG_SEEK_CUR,
+                  "current pos: %u, entry diff %ld\n",
                   p_vcdplayer->i_lsn, (long int) diff);
       }
-      
+
       if (diff < 0) {
         dbg_print(INPUT_DBG_SEEK_CUR, "Error: diff < 0\n");
         return (off_t) 0;
       } else {
         return (off_t)diff * M2F2_SECTOR_SIZE;
       }
-      
+
       break;
     }
-    
+
   case SEEK_END:
     LOG_ERR(p_vcdplayer, "%s\n", _("SEEK_END not implemented yet."));
     return (off_t) -1;
@@ -258,7 +258,7 @@ vcdio_seek (vcdplayer_t *p_vcdplayer, off_t offset, int origin)
   return offset ; /* FIXME */
 }
 
-/* 
+/*
  * Local variables:
  *  c-file-style: "gnu"
  *  tab-width: 8

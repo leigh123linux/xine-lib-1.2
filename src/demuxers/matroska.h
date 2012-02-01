@@ -22,9 +22,9 @@
 #ifndef MATROSKA_H
 #define MATROSKA_H
 
-#include "xine_internal.h"
-#include "xineutils.h"
-#include "demux.h"
+#include <xine/xine_internal.h>
+#include <xine/xineutils.h>
+#include <xine/demux.h>
 
 #include "ebml.h"
 
