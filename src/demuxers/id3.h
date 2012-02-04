@@ -25,17 +25,18 @@
 #ifndef ID3_H
 #define ID3_H
 
-#include "xine_internal.h"
-#include "xineutils.h"
+#include <xine/xine_internal.h>
+#include <xine/xineutils.h>
 #include "bswap.h"
 
 /* id3v2 */
-#define FOURCC_TAG BE_FOURCC
-#define ID3V22_TAG        FOURCC_TAG('I', 'D', '3', 2) /* id3 v2.2 header tag */
-#define ID3V23_TAG        FOURCC_TAG('I', 'D', '3', 3) /* id3 v2.3 header tag */
-#define ID3V24_TAG        FOURCC_TAG('I', 'D', '3', 4) /* id3 v2.4 header tag */
-#define ID3V24_FOOTER_TAG FOURCC_TAG('3', 'D', 'I', 0) /* id3 v2.4 footer tag */
+#define ID3V22_TAG        ME_FOURCC('I', 'D', '3', 2) /* id3 v2.2 header tag */
+#define ID3V23_TAG        ME_FOURCC('I', 'D', '3', 3) /* id3 v2.3 header tag */
+#define ID3V24_TAG        ME_FOURCC('I', 'D', '3', 4) /* id3 v2.4 header tag */
+#define ID3V24_FOOTER_TAG ME_FOURCC('3', 'D', 'I', 0) /* id3 v2.4 footer tag */
 
+#define ID3V2X_TAG        ME_FOURCC('I', 'D', '3', 0) /* id3 v2.x header tag */
+#define ID3V2X_MASK      ~ME_FOURCC( 0 ,  0 ,  0 , 0xFF) /* id3 v2.x header mask */
 
 /*
  *  ID3 v2.2
@@ -163,17 +164,14 @@ int id3v1_parse_tag (input_plugin_t *input, xine_stream_t *stream);
  */
 int id3v2_parse_tag(input_plugin_t *input,
 		    xine_stream_t *stream,
-		    int8_t *mp3_frame_header);
+		    uint32_t id3_signature);
 
 /**
  * @brief Checks if the given buffer is an ID3 tag preamble
  * @param ptr Pointer to the first 10 bytes of the ID3 tag
  */
-static inline int id3v2_istag(uint8_t *ptr) {
-  return
-    (ptr[0] == 'I') &&
-    (ptr[1] == 'D') &&
-    (ptr[2] == '3');
+static inline int id3v2_istag(uint32_t id3_signature) {
+  return (id3_signature & ID3V2X_MASK) == ID3V2X_TAG;
 }
 
 #if 0

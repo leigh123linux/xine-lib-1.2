@@ -40,10 +40,10 @@
 #define LOG
 */
 
-#include "xine_internal.h"
-#include "xineutils.h"
-#include "compat.h"
-#include "demux.h"
+#include <xine/xine_internal.h>
+#include <xine/xineutils.h>
+#include <xine/compat.h>
+#include <xine/demux.h>
 #include "bswap.h"
 #include "group_games.h"
 
@@ -532,7 +532,7 @@ static int open_ipmovie_file(demux_ipmovie_t *this) {
       IPMOVIE_SIGNATURE_SIZE)
     return 0;
 
-  if (strncmp(signature, IPMOVIE_SIGNATURE, IPMOVIE_SIGNATURE_SIZE) != 0)
+  if (memcmp(signature, IPMOVIE_SIGNATURE, IPMOVIE_SIGNATURE_SIZE) != 0)
     return 0;
 
   /* file is qualified; skip over the signature bytes (+ 6 unknown) in the stream */
@@ -691,19 +691,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
 
   switch (stream->content_detection_method) {
 
-  case METHOD_BY_EXTENSION: {
-    const char *extensions, *mrl;
-
-    mrl = input->get_mrl (input);
-    extensions = class_gen->get_extensions (class_gen);
-
-    if (!_x_demux_check_extension (mrl, extensions)) {
-      free (this);
-      return NULL;
-    }
-  }
-  /* falling through is intended */
-
+  case METHOD_BY_MRL:
   case METHOD_BY_CONTENT:
   case METHOD_EXPLICIT:
 
@@ -722,39 +710,17 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
   return &this->demux_plugin;
 }
 
-static const char *get_description (demux_class_t *this_gen) {
-  return "Interplay MVE Movie demux plugin";
-}
-
-static const char *get_identifier (demux_class_t *this_gen) {
-  return "Interplay MVE";
-}
-
-static const char *get_extensions (demux_class_t *this_gen) {
-  return "mve mv8";
-}
-
-static const char *get_mimetypes (demux_class_t *this_gen) {
-  return NULL;
-}
-
-static void class_dispose (demux_class_t *this_gen) {
-  demux_ipmovie_class_t *this = (demux_ipmovie_class_t *) this_gen;
-
-  free (this);
-}
-
 void *demux_ipmovie_init_plugin (xine_t *xine, void *data) {
   demux_ipmovie_class_t     *this;
 
   this = calloc(1, sizeof(demux_ipmovie_class_t));
 
   this->demux_class.open_plugin     = open_plugin;
-  this->demux_class.get_description = get_description;
-  this->demux_class.get_identifier  = get_identifier;
-  this->demux_class.get_mimetypes   = get_mimetypes;
-  this->demux_class.get_extensions  = get_extensions;
-  this->demux_class.dispose         = class_dispose;
+  this->demux_class.description     = N_("Interplay MVE Movie demux plugin");
+  this->demux_class.identifier      = "Interplay MVE";
+  this->demux_class.mimetypes       = NULL;
+  this->demux_class.extensions      = "mve mv8";
+  this->demux_class.dispose         = default_demux_class_dispose;
 
   return this;
 }

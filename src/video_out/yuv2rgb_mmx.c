@@ -31,8 +31,15 @@
 #include <string.h>
 #include <inttypes.h>
 
+#ifdef HAVE_FFMPEG_AVUTIL_H
+#  include <mem.h>
+#else
+#  include <libavutil/mem.h>
+#endif
+
 #include "yuv2rgb.h"
-#include "xineutils.h"
+#include <xine/xineutils.h>
+#include "xine_mmx.h"
 
 #define CPU_MMXEXT 0
 #define CPU_MMX 1
@@ -70,7 +77,7 @@ void mmx_yuv2rgb_set_csc_levels(yuv2rgb_factory_t *this,
 
   /* 'table_mmx' is 64bit aligned for better performance */
   if (this->table_mmx == NULL) {
-    this->table_mmx = xine_xmalloc_aligned (8, sizeof(mmx_csc_t), &this->table_mmx_base);
+    this->table_mmx = av_mallocz(sizeof(mmx_csc_t));
   }
 
   if( brightness <= 16 ) {

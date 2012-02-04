@@ -1,6 +1,69 @@
 #ifndef _XINE_OS_INTERNAL_H
 #define _XINE_OS_INTERNAL_H
 
+/* When using Apple's GCC, __APPLE__ will be defined.  This is a whole lot of
+ * messiness, but it's necessary in order to perform universal builds properly.
+ * It's meant to over-ride configure time stuff that would be different at
+ * compile time.
+ */
+#if defined(__APPLE__) && defined(XINE_MACOSX_UNIVERSAL_BINARY)
+
+/* __ppc__, __ppc64__, __i386__, __x86_64__ are interesting arch macros */
+#undef HOST_ARCH
+#if defined(__ppc__) || defined(__ppc64__)
+#define ARCH_PPC
+#if defined(__ppc64__)
+#define HOST_ARCH           "darwin/powerpc64"
+#else
+#define HOST_ARCH           "darwin/powerpc"
+#endif
+#elif defined(__i386__) || defined(__x86_64__)
+#define ARCH_X86
+#define BITFIELD_LSBF
+#define HAVE_MMX
+#if defined(__x86_64__)
+#define ARCH_X86_64
+#define HOST_ARCH           "darwin/x86_64"
+#elif defined(__i386__)
+#define ARCH_X86_32
+#define HOST_ARCH           "darwin/x86_32"
+#else
+#error unrecognized/unsupported CPU type building for Apple Darwin
+#endif
+#endif
+
+/* See /Developer/SDKs/MacOSX10.4u.sdk/usr/include/machine/limits.h */
+#if SIZEOF_INT != 4
+#undef  SIZEOF_INT
+#define SIZEOF_INT 4
+#endif
+
+#if defined(__LP64__) && SIZEOF_LONG != 8
+#undef  SIZEOF_LONG
+#define SIZEOF_LONG 8
+#elif !defined(__LP64__) && SIZEOF_LONG != 4
+#undef  SIZEOF_LONG
+#define SIZEOF_LONG 4
+#endif
+
+/* WORDS_BIGENDIAN (replaces AC_C_BIGENDIAN autoconf test at compile time) */
+#include <machine/endian.h>
+#if BYTE_ORDER == BIG_ENDIAN
+#define WORDS_BIGENDIAN 1
+#else
+#undef  WORDS_BIGENDIAN
+#endif
+
+#if defined(__LP64__)
+#define FPM_64BIT           1
+#elif defined(__ppc__) || defined(__ppc64__)
+#define FPM_PPC             1
+#elif defined(__i386__) || defined(__x86_64__)
+#define FPM_INTEL           1
+#endif
+
+#endif  /* __APPLE__ */
+
 #include <stddef.h>
 #include <stdarg.h>
 
@@ -21,7 +84,8 @@
 #endif
 
 #include <inttypes.h>
-#include "../src/xine-utils/attributes.h"
+#include <pthread.h>
+#include <xine/attributes.h>
 
 
 #if defined(WIN32) || defined(__CYGWIN__)
@@ -148,6 +212,13 @@ int xine_private_vasprintf(char **string, const char *format, va_list ap) XINE_F
 #define HAVE_STRNDUP
 #define strndup(S, N) xine_private_strndup((S), (N))
 char *xine_private_strndup(const char *s, size_t n);
+#endif
+
+/* replacement of pthread_mutex_timedlock */
+#ifndef HAVE_PTHREAD_MUTEX_TIMEDLOCK
+#define HAVE_PTHREAD_MUTEX_TIMEDLOCK
+#define pthread_mutex_timedlock(M, T) xine_private_pthread_mutex_timedlock((M), (T))
+int xine_private_pthread_mutex_timedlock(pthread_mutex_t *mutex, const struct timespec *abs_timeout);
 #endif
 
 /* handle non-standard function names */

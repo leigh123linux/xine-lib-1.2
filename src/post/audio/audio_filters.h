@@ -20,7 +20,7 @@
  * catalog for audio filter plugins
  */
 
-#include "xine_internal.h"
+#include <xine/xine_internal.h>
 
 
 void *upmix_init_plugin(xine_t *xine, void *data);

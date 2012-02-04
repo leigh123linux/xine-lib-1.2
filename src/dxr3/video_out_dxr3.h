@@ -26,8 +26,8 @@
 #  include <X11/Xlib.h>
 #endif
 
-#include "xine_internal.h"
-#include "vo_scale.h"
+#include <xine/xine_internal.h>
+#include <xine/vo_scale.h>
 #include "dxr3_scr.h"
 #include "dxr3.h"
 

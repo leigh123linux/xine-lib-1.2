@@ -46,9 +46,9 @@
 #error "you need to add cdrom / VCD support for your platform to input_vcd and configure.in"
 #endif
 
-#include "xine_internal.h"
-#include "xineutils.h"
-#include "input_plugin.h"
+#include <xine/xine_internal.h>
+#include <xine/xineutils.h>
+#include <xine/input_plugin.h>
 #include "media_helper.h"
 
 #if defined(__sun)
@@ -338,9 +338,10 @@ static int sun_vcd_read(vcd_input_plugin_t *this, long lba, cdsector_t *data)
 
 #if defined (__linux__)
 static off_t vcd_plugin_read (input_plugin_t *this_gen,
-				char *buf, off_t nlen) {
+			      void *buf_gen, off_t nlen) {
 
   vcd_input_plugin_t *this = (vcd_input_plugin_t *) this_gen;
+  char *buf = (char *)buf_gen;
   static struct cdrom_msf  msf ;
   static cdsector_t        data;
   struct cdrom_msf0       *end_msf;
@@ -396,8 +397,9 @@ static off_t vcd_plugin_read (input_plugin_t *this_gen,
 }
 #elif defined (__FreeBSD_kernel__) || (defined(BSD) && BSD >= 199306)
 static off_t vcd_plugin_read (input_plugin_t *this_gen,
-				char *buf, off_t nlen) {
+			      void *buf_gen, off_t nlen) {
   vcd_input_plugin_t *this = (vcd_input_plugin_t *) this_gen;
+  char *buf = (char *)buf_gen;
   static cdsector_t data;
   int bsize = 2352;
 
@@ -420,9 +422,10 @@ static off_t vcd_plugin_read (input_plugin_t *this_gen,
 }
 #elif defined (__sun)
 static off_t vcd_plugin_read (input_plugin_t *this_gen,
-				char *buf, off_t nlen) {
+			      void *buf_gen, off_t nlen) {
 
   vcd_input_plugin_t *this = (vcd_input_plugin_t *) this_gen;
+  char *buf = (char *)buf_gen;
   static cdsector_t        data;
   struct cdrom_msf0       *end_msf;
   long			   lba;
@@ -920,15 +923,6 @@ static input_plugin_t *vcd_class_get_instance (input_class_t *cls_gen, xine_stre
 /*
  * vcd input plugin class stuff
  */
-
-static const char *vcd_class_get_description (input_class_t *this_gen) {
-  return _("Video CD input plugin");
-}
-
-static const char *vcd_class_get_identifier (input_class_t *this_gen) {
-  return "vcdo";
-}
-
 static void vcd_filelist_dispose(vcd_input_class_t *this) {
   if ( this->filelist == NULL ) return;
 
@@ -1064,7 +1058,7 @@ static char ** vcd_class_get_autoplay_list (input_class_t *this_gen, int *num_fi
 
   /* printf ("%d tracks\n", this->total_tracks); */
 
-  return this->filelist;
+  return (const char * const *)this->filelist;
 }
 
 static void *init_class (xine_t *xine, void *data) {
@@ -1077,8 +1071,8 @@ static void *init_class (xine_t *xine, void *data) {
   this->xine   = xine;
 
   this->input_class.get_instance       = vcd_class_get_instance;
-  this->input_class.get_identifier     = vcd_class_get_identifier;
-  this->input_class.get_description    = vcd_class_get_description;
+  this->input_class.identifier         = "vcdo";
+  this->input_class.description        = N_("Video CD input plugin");
   this->input_class.get_dir            = vcd_class_get_dir;
   this->input_class.get_autoplay_list  = vcd_class_get_autoplay_list;
   this->input_class.dispose            = vcd_class_dispose;
@@ -1102,6 +1096,6 @@ static void *init_class (xine_t *xine, void *data) {
 
 const plugin_info_t xine_plugin_info[] EXPORTED = {
   /* type, API, "name", version, special_info, init_function */
-  { PLUGIN_INPUT | PLUGIN_MUST_PRELOAD, 17, "VCDO", XINE_VERSION_CODE, NULL, init_class },
+  { PLUGIN_INPUT | PLUGIN_MUST_PRELOAD, 18, "VCDO", XINE_VERSION_CODE, NULL, init_class },
   { PLUGIN_NONE, 0, "", 0, NULL, NULL }
 };

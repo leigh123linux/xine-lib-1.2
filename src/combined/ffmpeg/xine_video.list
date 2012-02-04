@@ -1,7 +1,4 @@
 type=video
-config=VP6F=VP6
-config=FLV1=FLV
-config=THEORA=
 
 # xine-lib BUF_VIDEO_	ffmpeg CODEC_ID_	description or comment
 # ("!"=ignore)					(quote any "s)

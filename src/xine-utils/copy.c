@@ -25,7 +25,7 @@
 #include "config.h"
 #endif
 
-#include "xineutils.h"
+#include <xine/xineutils.h>
 
 void yv12_to_yv12
   (const unsigned char *y_src, int y_src_pitch, unsigned char *y_dst, int y_dst_pitch,

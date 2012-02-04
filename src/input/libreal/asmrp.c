@@ -47,7 +47,7 @@
 */
 
 #include "asmrp.h"
-#include "xineutils.h"
+#include <xine/xineutils.h>
 
 #define ASMRP_SYM_NONE         0
 #define ASMRP_SYM_EOF          1

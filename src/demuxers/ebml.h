@@ -83,20 +83,26 @@ int ebml_skip(ebml_parser_t *ebml, ebml_elem_t *elem);
 /* EBML types */
 int ebml_read_uint(ebml_parser_t *ebml, ebml_elem_t *elem, uint64_t *val);
 
+#if 0
 int ebml_read_sint(ebml_parser_t *ebml, ebml_elem_t *elem, int64_t *val);
+#endif
 
 int ebml_read_float(ebml_parser_t *ebml, ebml_elem_t  *elem, double *val);
 
 int ebml_read_ascii(ebml_parser_t *ebml, ebml_elem_t *elem, char *str);
 
+#if 0
 int ebml_read_utf8(ebml_parser_t *ebml, ebml_elem_t *elem, char *str);
+#endif
 
 char *ebml_alloc_read_ascii(ebml_parser_t *ebml, ebml_elem_t *elem);
 
+#if 0
 int ebml_read_date(ebml_parser_t *ebml, ebml_elem_t *elem, int64_t *date);
+#endif
 
 int ebml_read_master(ebml_parser_t *ebml, ebml_elem_t *elem);
 
-int ebml_read_binary(ebml_parser_t *ebml, ebml_elem_t *elem, uint8_t *binary);
+int ebml_read_binary(ebml_parser_t *ebml, ebml_elem_t *elem, void *binary);
 
 #endif /* EBML_H */

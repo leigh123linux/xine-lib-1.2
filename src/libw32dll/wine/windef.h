@@ -7,8 +7,9 @@
 #ifndef __WINE_WINDEF_H
 #define __WINE_WINDEF_H
 
+#include "config.h"
+
 #ifdef __WINE__
-# include "config.h"
 # undef UNICODE
 #endif
 
@@ -493,14 +494,14 @@ typedef LRESULT CALLBACK (*WNDPROC16)(HWND16,UINT16,WPARAM16,LPARAM);
 
 /* Macro for structure packing. */
 
+#define WINE_PACKED XINE_PACKED
+
 #if defined(__GNUC__) || defined(__ICC)
 #ifndef _EGCS_
-#define WINE_PACKED   __attribute__((packed))
 #define WINE_UNUSED   __attribute__((unused))
 #define WINE_NORETURN __attribute__((noreturn))
 #endif
 #else
-#define WINE_PACKED    /* nothing */
 #define WINE_UNUSED    /* nothing */
 #define WINE_NORETURN  /* nothing */
 #endif

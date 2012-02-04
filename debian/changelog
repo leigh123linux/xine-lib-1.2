@@ -1,3 +1,11 @@
+xine-lib-1.2 (1.2.1~hg-0) experimental; urgency=low
+
+  * Hg snapshot.
+  * Adjust for libxine2.
+  * libxine-dev → libxine2-dev.
+
+ -- Darren Salt <linux@youmustbejoking.demon.co.uk>  Wed, 25 Jan 2012 00:53:33 +0000
+
 xine-lib (1.1.21~hg-0) unstable; urgency=low
 
   * Hg snapshot (dev build). Changelog is irrelevant :-)
