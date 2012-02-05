@@ -24,7 +24,7 @@
 
 #include <stdio.h>
 #include <pthread.h>
-#include "xineutils.h"
+#include <xine/xineutils.h>
 
 /*
 #define DBG_MUTEX

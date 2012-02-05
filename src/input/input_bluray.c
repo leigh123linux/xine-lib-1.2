@@ -54,9 +54,10 @@
 
 #define XINE_ENGINE_INTERNAL
 
-#include "xine_internal.h"
-#include "xineutils.h"
-#include "input_plugin.h"
+#include <xine/xine_internal.h>
+#include <xine/xineutils.h>
+#include <xine/input_plugin.h>
+
 #include "media_helper.h"
 
 /* */
@@ -866,7 +867,7 @@ static uint32_t bluray_plugin_get_capabilities (input_plugin_t *this_gen)
     }                                      \
   } while (0)
 
-static off_t bluray_plugin_read (input_plugin_t *this_gen, char *buf, off_t len)
+static off_t bluray_plugin_read (input_plugin_t *this_gen, void *buf, off_t len)
 {
   bluray_input_plugin_t *this = (bluray_input_plugin_t *) this_gen;
   off_t result;
@@ -1538,19 +1539,9 @@ static void free_xine_playlist(bluray_input_class_t *this)
   this->xine_playlist_size = 0;
 }
 
-static const char *bluray_class_get_description (input_class_t *this_gen)
+static const char * const *bluray_class_get_autoplay_list (input_class_t *this_gen, int *num_files)
 {
-  return _("BluRay input plugin");
-}
-
-static const char *bluray_class_get_identifier (input_class_t *this_gen)
-{
-  return "bluray";
-}
-
-static char **bluray_class_get_autoplay_list (input_class_t *this_gen, int *num_files)
-{
-  static char *autoplay_list[] = { "bluray:/", NULL };
+  static const char * const autoplay_list[] = { "bluray:/", NULL };
 
   *num_files = 1;
 
@@ -1635,12 +1626,13 @@ static void *bluray_init_plugin (xine_t *xine, void *data)
   this->xine = xine;
 
   this->input_class.get_instance       = bluray_class_get_instance;
-  this->input_class.get_identifier     = bluray_class_get_identifier;
-  this->input_class.get_description    = bluray_class_get_description;
   this->input_class.get_dir            = bluray_class_get_dir;
   this->input_class.get_autoplay_list  = bluray_class_get_autoplay_list;
   this->input_class.dispose            = bluray_class_dispose;
   this->input_class.eject_media        = bluray_class_eject_media;
+
+  this->input_class.identifier     = "bluray";
+  this->input_class.description    = _("BluRay input plugin");
 
   this->mountpoint =
     config->register_filename(config, "media.bluray.mountpoint",
@@ -1699,19 +1691,9 @@ static void *bluray_init_plugin (xine_t *xine, void *data)
   return this;
 }
 
-static const char *bd_class_get_description (input_class_t *this_gen)
+static const char * const *bd_class_get_autoplay_list (input_class_t *this_gen, int *num_files)
 {
-  return _("BluRay input plugin (using menus)");
-}
-
-static const char *bd_class_get_identifier (input_class_t *this_gen)
-{
-  return "bd";
-}
-
-static char **bd_class_get_autoplay_list (input_class_t *this_gen, int *num_files)
-{
-  static char *autoplay_list[] = { "bd:/", NULL };
+  static const char * const autoplay_list[] = { "bd:/", NULL };
 
   *num_files = 1;
 
@@ -1723,8 +1705,9 @@ static void *bd_init_plugin (xine_t *xine, void *data)
   bluray_input_class_t *this = bluray_init_plugin(xine, data);
 
   if (this) {
-    this->input_class.get_identifier     = bd_class_get_identifier;
-    this->input_class.get_description    = bd_class_get_description;
+    this->input_class.identifier  = "bluray";
+    this->input_class.description = _("BluRay input plugin (using menus)");
+
     this->input_class.get_dir            = NULL;
     this->input_class.get_autoplay_list  = bd_class_get_autoplay_list;
   }

@@ -36,9 +36,9 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#include "xine_internal.h"
-#include "video_out.h"
-#include "alphablend.h"
+#include <xine/xine_internal.h>
+#include <xine/video_out.h>
+#include <xine/alphablend.h>
 #include "bswap.h"
 
 

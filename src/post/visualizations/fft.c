@@ -184,18 +184,6 @@ double fft_amp (int n, complex_t wave[], int bits)
 }
 
 /*
- *  Calculate phase of component n in the decimated wave[] array.
- */
-double fft_phase (int n, complex_t wave[], int bits)
-{
-  n = PERMUTE (n, bits);
-  if (REAL(n) != 0.0)
-    return (atan (IMAG(n) / REAL(n)));
-  else
-    return (0.0);
-}
-
-/*
  *  Scale sampled values.
  *  Do this *before* the fft.
  */

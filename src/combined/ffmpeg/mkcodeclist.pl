@@ -38,9 +38,9 @@ while (defined ($line = <LIST>)) {
     $Type = $type;
     $Type =~ tr/a-z/A-Z/;
   } elsif (substr ($line, 0, 7) eq 'config=') { 
-    # "#ifdef CONFIG_FOO_DECODER" mappings
+    # avcodec minimum version mappings
     ($a, $f, $t) = split (/=/, $line, 3);
-    $config{$f} = $t;
+    $config{$f} = $t if $t =~ /^\d+,\d+,\d+$/
   } else {
     # codec details
     push @known, [split (/\s+/, $line, 3)];
@@ -63,6 +63,7 @@ my $w = ($out ne '-');
 if ($w) {
   # Write the C source code for the codec lists
   open LIST, "> $out" or die $!;
+  print LIST "#ifndef AV_VERSION_INT\n# define AV_VERSION_INT(a,b,c) 0x7FFFFFFF\n#endif\n" or die $!;
   print LIST "static const ff_codec_t ff_${type}_lookup[] = {\n" or die $!;
   foreach $line (@known) {
     next if $line->[0] eq '!';
@@ -73,12 +74,12 @@ if ($w) {
   foreach $line (@known) {
     next if $line->[0] eq '!';
     next unless defined $codecs{$line->[1]};
-    $a = $line->[1];
+    $a = '';
     $a = $config{$a} if defined $config{$a};
     if ($a eq '') {
       print LIST "  BUF_${Type}_$line->[0],\n" or die $!;
     } else {
-      print LIST "  #ifdef CONFIG_${a}_DECODER\n  BUF_${Type}_$line->[0],\n  #endif\n" or die $!;
+      print LIST "  #if LIBAVCODEC_VERSION_INT >= AV_VERSION_INT($a)\n  BUF_${Type}_$line->[0],\n  #endif\n" or die $!;
     }
   }
   print LIST "  0,\n};\n" or die $!;

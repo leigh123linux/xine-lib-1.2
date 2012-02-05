@@ -33,12 +33,12 @@
 #include <sys/uio.h>
 #include <inttypes.h>
 
-#include "xine_internal.h"
-#include "xineutils.h"
-#include "audio_out.h"
-#include "metronom.h"
+#include <xine/xine_internal.h>
+#include <xine/xineutils.h>
+#include <xine/audio_out.h>
+#include <xine/metronom.h>
 
-#define AO_OUT_ESD_IFACE_VERSION 8
+#define AO_OUT_ESD_IFACE_VERSION 9
 
 #define	REBLOCK		      1	    /* reblock output to ESD_BUF_SIZE blks */
 #define GAP_TOLERANCE         5000
@@ -563,22 +563,6 @@ static ao_driver_t *open_plugin (audio_driver_class_t *class_gen,
 /*
  * class functions
  */
-
-static char* get_identifier (audio_driver_class_t *this_gen) {
-  return "esd";
-}
-
-static char* get_description (audio_driver_class_t *this_gen) {
-  return _("xine audio output plugin using esound");
-}
-
-static void dispose_class (audio_driver_class_t *this_gen) {
-
-  esd_class_t *this = (esd_class_t *) this_gen;
-
-  free (this);
-}
-
 static void *init_class (xine_t *xine, void *data) {
 
   esd_class_t        *this;
@@ -588,9 +572,9 @@ static void *init_class (xine_t *xine, void *data) {
     return NULL;
 
   this->driver_class.open_plugin     = open_plugin;
-  this->driver_class.get_identifier  = get_identifier;
-  this->driver_class.get_description = get_description;
-  this->driver_class.dispose         = dispose_class;
+  this->driver_class.identifier      = "esd";
+  this->driver_class.description     = N_("xine audio output plugin using esound");
+  this->driver_class.dispose         = default_audio_driver_class_dispose;
 
   this->xine = xine;
 

@@ -21,7 +21,7 @@
 #ifndef HAVE_GROUP_AUDIO_H
 #define HAVE_GROUP_AUDIO_H
 
-#include "xine_internal.h"
+#include <xine/xine_internal.h>
 
 void *demux_aac_init_plugin (xine_t *xine, void *data);
 void *demux_ac3_init_plugin (xine_t *xine, void *data);
@@ -39,13 +39,5 @@ void *demux_tta_init_plugin (xine_t *xine, void *data);
 void *demux_voc_init_plugin (xine_t *xine, void *data);
 void *demux_vox_init_plugin (xine_t *xine, void *data);
 void *demux_wav_init_plugin (xine_t *xine, void *data);
-
-#ifdef HAVE_NOSEFART
-void *demux_nsf_init_plugin (xine_t *xine, void *data);
-#endif
-
-#ifdef HAVE_MODPLUG
-void *demux_mod_init_plugin (xine_t *xine, void *data);
-#endif
 
 #endif

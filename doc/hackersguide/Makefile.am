@@ -1,39 +1,33 @@
+include $(top_srcdir)/misc/Makefile.quiet
 include $(top_srcdir)/misc/Makefile.common
 
-hackersguide_sgml = hackersguide.sgml \
-		    intro.sgml \
-		    library.sgml \
-		    overview.sgml \
-		    internals.sgml \
-		    stream.sgml \
-		    output.sgml
-hackersguide_fig = architecture.fig \
-		   library.fig \
-		   overlays.fig \
-		   post_frame.fig
+hackersguide_docbook = hackersguide.docbook \
+		    intro.docbook \
+		    library.docbook \
+		    overview.docbook \
+		    internals.docbook \
+		    stream.docbook \
+		    output.docbook
+hackersguide_svg = architecture.svg \
+		   library.svg \
+		   overlays.svg \
+		   post_frame.svg
 
+hackersguidedir = $(htmldir)/hackersguide
 hackersguide_DATA = hackersguide.html \
             architecture.png library.png overlays.png post_frame.png
 
-EXTRA_DIST = README $(hackersguide_sgml) $(hackersguide_fig) \
+EXTRA_DIST = README $(hackersguide_docbook) $(hackersguide_svg) \
 	 $(hackersguide_DATA)
 
-hackersguidedir = $(htmldir)/hackersguide
+DISTCLEANFILES = $(hackersguide_DATA)
+
+SUFFIXES = .png .fig
 
 docs: $(hackersguide_DATA)
 
-distclean-local: clean-docs
-
-docs-prepare: $(addprefix $(srcdir)/, $(hackersguide_sgml))
-	if test "$(srcdir)" != "."  -a "$(srcdir)" != "`pwd`"; then \
-	  for file in $(hackersguide_sgml) ; do \
-	    test -f ./$$file -a ./$$file -nt $(srcdir)/$$file || cp $(srcdir)/$$file .; \
-	  done ; \
-	fi
-
 clean-docs:
 	rm -f $(hackersguide_DATA)
-	test "x$(srcdir)" = x. || rm -f $(hackersguide_sgml) *.fig
 
 dist-hook:
 	@if test x"$(distcheck_lax)" = x ; then \
@@ -42,36 +36,44 @@ dist-hook:
 	  $(MAKE) docs ; \
 	fi
 
-if HAVE_SGMLTOOLS
-hackersguide.html: $(hackersguide_sgml)
-	@$(MAKE) docs-prepare
-	$(SGMLTOOLS) -b onehtml hackersguide.sgml;
+distclean-local: clean-docs
+
+AM_V_FAKE = $(am__v_FAKE_$(V))
+am__v_FAKE_ = $(am__v_FAKE_$(AM_DEFAULT_VERBOSITY))
+am__v_FAKE_0 = @echo "  FAKE  " $@;
+
+if HAVE_XMLTO
+hackersguide.html: $(hackersguide_docbook)
+	$(AM_V_GEN)xmlto xhtml-nochunks "$(srcdir)/hackersguide.docbook"
 else
-hackersguide.html: $(hackersguide_sgml)
-	@$(MAKE) docs-prepare
-	if test x"$(fail_if_missing)" = x"yes"; then \
-	  echo "Please install sgmltools-lite."; \
+hackersguide.html: $(hackersguide_docbook)
+	$(AM_V_FAKE)if test x"$(fail_if_missing)" = x"yes"; then \
+	  echo "Please install xmlto."; \
 	  exit 1; \
-	fi
+	fi; \
 	if test x"$(fail_if_missing)" != x"yes"; then \
 	  touch $@; \
 	  sleep 1; \
-	  touch $(notdir $^); \
+	  touch $^; \
 	fi
 endif
+	$(AM_V_at)$(SED) -i -e '/<img [^>]*alt=/! s/<img /<img alt="" /g' $@ # we want valid XHTML 1.1
 
-if HAVE_FIG2DEV
-%.png: %.fig
-	$(FIG2DEV) -L png -S 4 $< $@;
+if HAVE_RSVG
+.svg.png:
+	$(AM_V_GEN)rsvg -f png $^ $@
+if HAVE_OPTIPNG
+	$(AM_V_at)optipng -quiet $@
+endif
 else
-%.png: %.fig
-	if test x"$(fail_if_missing)" = x"yes"; then \
-	  echo "Please install fig2dev."; \
+.svg.png:
+	$(AM_V_FAKE)if test x"$(fail_if_missing)" = x"yes"; then \
+	  echo "Please install rsvg."; \
 	  exit 1; \
-	fi
+	fi; \
 	if test x"$(fail_if_missing)" != x"yes"; then \
 	  touch $@; \
 	  sleep 1; \
-	  touch $(notdir $^); \
+	  touch $^; \
 	fi
 endif

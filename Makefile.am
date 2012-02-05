@@ -2,15 +2,17 @@
 ## Process this file with automake to produce Makefile.in
 ##
 
-AUTOMAKE_OPTIONS = 1.8 no-dist-gzip dist-bzip2
+include $(top_srcdir)/misc/Makefile.quiet
+
+AUTOMAKE_OPTIONS = 1.9 no-dist-gzip dist-bzip2
 
 ACLOCAL_AMFLAGS = -I m4
 
-SUBDIRS = doc m4 po misc include lib src win32
+SUBDIRS = doc m4 po misc include lib src win32 contrib
 
 DEBFILES = debian/README.Debian debian/changelog debian/control \
 	debian/copyright debian/rules debian/compat \
-	debian/shlibdeps.sh debian/libxine-dev.install debian/libxine1.install
+	debian/shlibdeps.sh debian/libxine2-dev.install debian/libxine1.install
 
 EXTRA_DIST = config.rpath autogen.sh \
 	     configure \
@@ -21,10 +23,10 @@ EXTRA_DIST = config.rpath autogen.sh \
 	     libtool \
 	     ltmain.sh \
 	     missing \
-	     depcomp \
-	     @DEPCOMP@
+	     depcomp
 
-CONFIG_CLEAN_FILES = libtool
+CLEANFILES = a.out
+CONFIG_CLEAN_FILES = libtool po/Makevars.extra
 
 dist_doc_DATA = COPYING NEWS README TODO CREDITS ChangeLog
 
@@ -41,22 +43,8 @@ pass2:
 	@$(MAKE) MULTIPASS_CFLAGS='$(PASS2_CFLAGS)'
 
 
-debug:
-	@list='$(SUBDIRS)'; for subdir in $$list; do \
-	  (cd $$subdir && $(MAKE) $@) || exit;\
-	done;
-
-debug-install: install-debug
-
-install-debug: debug
-	@list='$(SUBDIRS)'; for subdir in $$list; do \
-	  (cd $$subdir && $(MAKE) $@) || exit; \
-	done;
-	$(MAKE) $(AM_MAKEFLAGS) install-data-hook
-
-
 prune-cache:
-	-rm -f config.cache
+	-rm -rf config.cache autom4te.cache
 
 
 release-check:
@@ -91,6 +79,9 @@ install-data-hook:
 	@if test -x "$(top_srcdir)/post-install.sh" ; then \
 	  $(top_srcdir)/post-install.sh ; \
 	fi
+
+dist-hook:
+	cp -p $(srcdir)/version.sh $(distdir)
 
 
 mostlyclean-generic:

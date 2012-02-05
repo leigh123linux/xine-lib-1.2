@@ -45,10 +45,11 @@
 #define LOG
 */
 
-#include "xine_internal.h"
-#include "video_out.h"
-#include "metronom.h"
-#include "xineutils.h"
+#include <xine/xine_internal.h>
+#include <xine/video_out.h>
+#include <xine/metronom.h>
+#include <xine/xineutils.h>
+#include <yuv2rgb.h>
 
 #define NUM_FRAME_BUFFERS          15
 #define MAX_USEC_TO_SLEEP       20000
@@ -65,6 +66,24 @@
 #define EXPERIMENTAL_FRAME_QUEUE_OPTIMIZATION 1
 
 static vo_frame_t * crop_frame( xine_video_port_t *this_gen, vo_frame_t *img );
+
+typedef struct vos_grab_video_frame_s vos_grab_video_frame_t;
+struct vos_grab_video_frame_s {
+  xine_grab_video_frame_t grab_frame;
+
+  vos_grab_video_frame_t *next;
+  int finished;
+  xine_video_port_t *video_port;
+  vo_frame_t *vo_frame;
+  yuv2rgb_factory_t *yuv2rgb_factory;
+  yuv2rgb_t *yuv2rgb;
+  int vo_width, vo_height;
+  int grab_width, grab_height;
+  int y_stride, uv_stride;
+  int img_size;
+  uint8_t *img;
+};
+
 
 typedef struct {
   vo_frame_t        *first;
@@ -91,8 +110,12 @@ typedef struct {
   img_buf_fifo_t           *free_img_buf_queue;
   img_buf_fifo_t           *display_img_buf_queue;
 
-  vo_frame_t               *last_frame;
   vo_frame_t               *img_backup;
+
+  vo_frame_t               *last_frame;
+  vos_grab_video_frame_t   *pending_grab_request;
+  pthread_mutex_t           grab_lock;
+  pthread_cond_t            grab_cond;
 
   uint32_t                  video_loop_running:1;
   uint32_t                  video_opened:1;
@@ -133,6 +156,9 @@ typedef struct {
   int                       frame_drop_cpt;
   int                       frame_drop_suggested;
   int                       crop_left, crop_right, crop_top, crop_bottom;
+  pthread_mutex_t           trigger_drawing_mutex;
+  pthread_cond_t            trigger_drawing_cond;
+  int                       trigger_drawing;
 } vos_t;
 
 
@@ -326,6 +352,288 @@ static void vo_frame_dec_lock (vo_frame_t *img) {
 
   pthread_mutex_unlock (&img->mutex);
 }
+
+
+/*
+ * functions for grabbing RGB images from displayed frames
+ */
+static void vo_dispose_grab_video_frame(xine_grab_video_frame_t *frame_gen)
+{
+  vos_grab_video_frame_t *frame = (vos_grab_video_frame_t *) frame_gen;
+
+  if (frame->vo_frame)
+    vo_frame_dec_lock(frame->vo_frame);
+
+  if (frame->yuv2rgb)
+    frame->yuv2rgb->dispose(frame->yuv2rgb);
+
+  if (frame->yuv2rgb_factory)
+    frame->yuv2rgb_factory->dispose(frame->yuv2rgb_factory);
+
+  free(frame->img);
+  free(frame->grab_frame.img);
+  free(frame);
+}
+
+
+static int vo_grab_grab_video_frame (xine_grab_video_frame_t *frame_gen) {
+  vos_grab_video_frame_t *frame = (vos_grab_video_frame_t *) frame_gen;
+  vos_t *this = (vos_t *) frame->video_port;
+  vo_frame_t *vo_frame;
+  int format, y_stride, uv_stride;
+  uint8_t *base[3];
+
+  if (frame->grab_frame.flags & XINE_GRAB_VIDEO_FRAME_FLAGS_WAIT_NEXT) {
+    struct timeval tvnow, tvdiff, tvtimeout;
+    struct timespec ts;
+
+    /* calculate absolute timeout time */
+    tvdiff.tv_sec = frame->grab_frame.timeout / 1000;
+    tvdiff.tv_usec = frame->grab_frame.timeout % 1000;
+    tvdiff.tv_usec *= 1000;
+    gettimeofday(&tvnow, NULL);
+    timeradd(&tvnow, &tvdiff, &tvtimeout);
+    ts.tv_sec  = tvtimeout.tv_sec;
+    ts.tv_nsec = tvtimeout.tv_usec;
+    ts.tv_nsec *= 1000;
+
+    pthread_mutex_lock(&this->grab_lock);
+
+    /* insert grab request into grab queue */
+    frame->next = this->pending_grab_request;
+    this->pending_grab_request = frame;
+
+    /* wait until our request is finished */
+    frame->finished = 0;
+    while (!frame->finished) {
+      if (pthread_cond_timedwait(&this->grab_cond, &this->grab_lock, &ts) == ETIMEDOUT) {
+        vos_grab_video_frame_t *prev = this->pending_grab_request;
+        while (prev) {
+          if (prev == frame) {
+            this->pending_grab_request = frame->next;
+            break;
+          } else if (prev->next == frame) {
+            prev->next = frame->next;
+            break;
+          }
+          prev = prev->next;
+        }
+        frame->next = NULL;
+        pthread_mutex_unlock(&this->grab_lock);
+        return 1;   /* no frame available */
+      }
+    }
+
+    pthread_mutex_unlock(&this->grab_lock);
+
+    vo_frame = frame->vo_frame;
+    frame->vo_frame = NULL;
+    if (!vo_frame)
+      return -1; /* error happened */
+  } else {
+    pthread_mutex_lock(&this->grab_lock);
+
+    /* use last displayed frame */
+    vo_frame = this->last_frame;
+    if (!vo_frame) {
+      pthread_mutex_unlock(&this->grab_lock);
+      return 1;   /* no frame available */
+    }
+    if (vo_frame->format != XINE_IMGFMT_YV12 && vo_frame->format != XINE_IMGFMT_YUY2 && !vo_frame->proc_provide_standard_frame_data) {
+      pthread_mutex_unlock(&this->grab_lock);
+      return -1; /* error happened */
+    }
+    vo_frame_inc_lock(vo_frame);
+    pthread_mutex_unlock(&this->grab_lock);
+    frame->grab_frame.vpts = vo_frame->vpts;
+  }
+
+  int width = vo_frame->width;
+  int height = vo_frame->height;
+
+  if (vo_frame->format == XINE_IMGFMT_YV12 || vo_frame->format == XINE_IMGFMT_YUY2) {
+    format = vo_frame->format;
+    y_stride = vo_frame->pitches[0];
+    uv_stride = vo_frame->pitches[1];
+    base[0] = vo_frame->base[0];
+    base[1] = vo_frame->base[1];
+    base[2] = vo_frame->base[2];
+  } else {
+    /* retrieve standard format image data from output driver */
+    xine_current_frame_data_t data;
+    memset(&data, 0, sizeof(data));
+    vo_frame->proc_provide_standard_frame_data(vo_frame, &data);
+    if (data.img_size > frame->img_size) {
+      free(frame->img);
+      frame->img_size = data.img_size;
+      frame->img = calloc(data.img_size, sizeof(uint8_t));
+      if (!frame->img) {
+        vo_frame_dec_lock(vo_frame);
+        return -1; /* error happened */
+      }
+    }
+    data.img = frame->img;
+    vo_frame->proc_provide_standard_frame_data(vo_frame, &data);
+    format = data.format;
+    if (format == XINE_IMGFMT_YV12) {
+      y_stride = width;
+      uv_stride = width / 2;
+      base[0] = data.img;
+      base[1] = data.img + width * height;
+      base[2] = data.img + width * height + width * height / 4;
+    } else { // XINE_IMGFMT_YUY2
+      y_stride = width * 2;
+      uv_stride = 0;
+      base[0] = data.img;
+      base[1] = NULL;
+      base[2] = NULL;
+    }
+  }
+
+  /* take cropping parameters into account */
+  int crop_left = (vo_frame->crop_left + frame->grab_frame.crop_left) & ~1;
+  int crop_right = (vo_frame->crop_right + frame->grab_frame.crop_right) & ~1;
+  int crop_top = vo_frame->crop_top + frame->grab_frame.crop_top;
+  int crop_bottom = vo_frame->crop_bottom + frame->grab_frame.crop_bottom;
+
+  if (crop_left || crop_right || crop_top || crop_bottom) {
+    if ((width - crop_left - crop_right) >= 8)
+      width = width - crop_left - crop_right;
+    else
+      crop_left = crop_right = 0;
+
+    if ((height - crop_top - crop_bottom) >= 8)
+      height = height - crop_top - crop_bottom;
+    else
+      crop_top = crop_bottom = 0;
+
+    if (format == XINE_IMGFMT_YV12) {
+      base[0] += crop_top * y_stride + crop_left;
+      base[1] += crop_top/2 * uv_stride + crop_left/2;
+      base[2] += crop_top/2 * uv_stride + crop_left/2;
+    } else { // XINE_IMGFMT_YUY2
+      base[0] += crop_top * y_stride + crop_left*2;
+    }
+  }
+
+  /* if caller does not specify frame size we return the actual size of grabbed frame */
+  if (frame->grab_frame.width <= 0)
+    frame->grab_frame.width = width;
+  if (frame->grab_frame.height <= 0)
+    frame->grab_frame.height = height;
+
+  /* allocate grab frame image buffer */
+  if (frame->grab_frame.width != frame->grab_width || frame->grab_frame.height != frame->grab_height) {
+    free(frame->grab_frame.img);
+    frame->grab_frame.img = NULL;
+  }
+  if (frame->grab_frame.img == NULL) {
+    frame->grab_frame.img = (uint8_t *) calloc(frame->grab_frame.width * frame->grab_frame.height, 3);
+    if (frame->grab_frame.img == NULL) {
+      vo_frame_dec_lock(vo_frame);
+      return -1; /* error happened */
+    }
+  }
+
+  /* initialize yuv2rgb factory */
+  if (!frame->yuv2rgb_factory) {
+    frame->yuv2rgb_factory = yuv2rgb_factory_init(MODE_24_RGB, 0, NULL);
+    if (!frame->yuv2rgb_factory) {
+      vo_frame_dec_lock(vo_frame);
+      return -1; /* error happened */
+    }
+    frame->yuv2rgb_factory->matrix_coefficients = 1; /* ITU-R Rec. 709 (1990) */
+    frame->yuv2rgb_factory->set_csc_levels (frame->yuv2rgb_factory, 0, 128, 128);
+  }
+
+  /* retrieve a yuv2rgb converter */
+  if (!frame->yuv2rgb) {
+    frame->yuv2rgb = frame->yuv2rgb_factory->create_converter(frame->yuv2rgb_factory);
+    if (!frame->yuv2rgb) {
+      vo_frame_dec_lock(vo_frame);
+      return -1; /* error happened */
+    }
+  }
+
+  /* configure yuv2rgb converter */
+  if (width != frame->vo_width ||
+        height != frame->vo_height ||
+        frame->grab_frame.width != frame->grab_width ||
+        frame->grab_frame.height != frame->grab_height ||
+        y_stride != frame->y_stride ||
+        uv_stride != frame->uv_stride) {
+    frame->vo_width = width;
+    frame->vo_height = height;
+    frame->grab_width = frame->grab_frame.width;
+    frame->grab_height = frame->grab_frame.height;
+    frame->y_stride = y_stride;
+    frame->uv_stride = uv_stride;
+    frame->yuv2rgb->configure(frame->yuv2rgb, width, height, y_stride, uv_stride, frame->grab_width, frame->grab_height, frame->grab_width * 3);
+  }
+
+  /* convert YUV to RGB image taking possible scaling into account */
+  /* FIXME: have to swap U and V planes to get correct colors for YV12 frames?? */
+  if(format == XINE_IMGFMT_YV12)
+    frame->yuv2rgb->yuv2rgb_fun(frame->yuv2rgb, frame->grab_frame.img, base[0], base[2], base[1]);
+  else
+    frame->yuv2rgb->yuy22rgb_fun(frame->yuv2rgb, frame->grab_frame.img, base[0]);
+
+  vo_frame_dec_lock(vo_frame);
+  return 0;
+}
+
+
+static xine_grab_video_frame_t *vo_new_grab_video_frame(xine_video_port_t *this_gen)
+{
+  vos_grab_video_frame_t *frame = calloc(1, sizeof(vos_grab_video_frame_t));
+  if (frame) {
+    frame->grab_frame.dispose = vo_dispose_grab_video_frame;
+    frame->grab_frame.grab = vo_grab_grab_video_frame;
+    frame->grab_frame.vpts = -1;
+    frame->grab_frame.timeout = XINE_GRAB_VIDEO_FRAME_DEFAULT_TIMEOUT;
+    frame->video_port = this_gen;
+  }
+  return (xine_grab_video_frame_t *)frame;
+}
+
+
+static void vo_grab_current_frame (vos_t *this, vo_frame_t *vo_frame, int64_t vpts)
+{
+  pthread_mutex_lock(&this->grab_lock);
+
+  /* hold current frame for snapshot feature */
+  if (this->last_frame)
+    vo_frame_dec_lock(this->last_frame);
+  vo_frame_inc_lock(vo_frame);
+  this->last_frame = vo_frame;
+
+  /* process grab queue */
+  vos_grab_video_frame_t *frame = this->pending_grab_request;
+  if (frame) {
+    while (frame) {
+      if (frame->vo_frame)
+        vo_frame_dec_lock(frame->vo_frame);
+      frame->vo_frame = NULL;
+
+      if (vo_frame->format == XINE_IMGFMT_YV12 || vo_frame->format == XINE_IMGFMT_YUY2 || vo_frame->proc_provide_standard_frame_data) {
+        vo_frame_inc_lock(vo_frame);
+        frame->vo_frame = vo_frame;
+        frame->grab_frame.vpts = vpts;
+      }
+
+      frame->finished = 1;
+      vos_grab_video_frame_t *next = frame->next;
+      frame->next = NULL;
+      frame = next;
+    }
+
+    this->pending_grab_request = NULL;
+    pthread_cond_broadcast(&this->grab_cond);
+  }
+
+  pthread_mutex_unlock(&this->grab_lock);
+}
+
 
 /* call vo_driver->proc methods for the entire frame */
 static void vo_frame_driver_proc(vo_frame_t *img)
@@ -954,8 +1262,8 @@ static vo_frame_t *get_next_frame (vos_t *this, int64_t cur_vpts,
         img->vpts = cur_vpts;
         /* extra info of the backup is thrown away, because it is not up to date */
         _x_extra_info_reset(img->extra_info);
+        img->future_frame = NULL;
       }
-
       return img;
 
     } else {
@@ -1014,6 +1322,13 @@ static vo_frame_t *get_next_frame (vos_t *this, int64_t cur_vpts,
      * remove frame from display queue and show it
      */
 
+    if ( img ) {
+      if ( img->next )
+        img->future_frame = img->next;
+      else
+        img->future_frame = NULL;
+    }
+    
     img = vo_remove_from_img_buf_queue_int (this->display_img_buf_queue, 1, 0, 0, 0, 0, 0);
     pthread_mutex_unlock(&this->display_img_buf_queue->mutex);
 
@@ -1050,12 +1365,7 @@ static void overlay_and_display_frame (vos_t *this,
 						  this->video_loop_running && this->overlay_enabled);
   }
 
-  /* hold current frame for snapshot feature */
-  if( this->last_frame ) {
-    vo_frame_dec_lock( this->last_frame );
-  }
-  vo_frame_inc_lock( img );
-  this->last_frame = img;
+  vo_grab_current_frame (this, img, vpts);
 
   this->driver->display_frame (this->driver, img);
 
@@ -1090,6 +1400,32 @@ static void check_redraw_needed (vos_t *this, int64_t vpts) {
 
   if( this->driver->redraw_needed (this->driver) )
     this->redraw_needed = 1;
+}
+
+static int interruptable_sleep(vos_t *this, int usec_to_sleep)
+{
+  int timedout = 0;
+
+  struct timeval now;
+  gettimeofday(&now, 0);
+
+  pthread_mutex_lock (&this->trigger_drawing_mutex);
+  if (!this->trigger_drawing) {
+    struct timespec abstime;
+    abstime.tv_sec  = now.tv_sec + usec_to_sleep / 1000000;
+    abstime.tv_nsec = now.tv_usec * 1000 + (usec_to_sleep % 1000000) * 1000;
+
+    if (abstime.tv_nsec > 1000000000) {
+      abstime.tv_nsec -= 1000000000;
+      abstime.tv_sec++;
+    }
+
+    timedout = pthread_cond_timedwait(&this->trigger_drawing_cond, &this->trigger_drawing_mutex, &abstime);
+  }
+  this->trigger_drawing = 0;
+  pthread_mutex_unlock (&this->trigger_drawing_mutex);
+
+  return timedout;
 }
 
 /* special loop for paused mode
@@ -1137,7 +1473,7 @@ static void paused_loop( vos_t *this, int64_t vpts )
     }
 
     pthread_mutex_unlock( &this->free_img_buf_queue->mutex );
-    xine_usec_sleep (20000);
+    interruptable_sleep(this, 20000);
     pthread_mutex_lock( &this->free_img_buf_queue->mutex );
   }
 
@@ -1280,7 +1616,11 @@ static void *video_out_loop (void *this_gen) {
 		"video_out: vpts/clock error, next_vpts=%" PRId64 " cur_vpts=%" PRId64 "\n", next_frame_vpts,vpts);
 
       if (usec_to_sleep > 0)
-        xine_usec_sleep (usec_to_sleep);
+      {
+        /* honor trigger update only when a backup img is available */
+        if (0 == interruptable_sleep(this, usec_to_sleep) && this->img_backup)
+          break;
+      }
 
       if (this->discard_frames)
         break;
@@ -1307,10 +1647,13 @@ static void *video_out_loop (void *this_gen) {
     vo_frame_dec_lock( this->img_backup );
     this->img_backup = NULL;
   }
+
+  pthread_mutex_lock(&this->grab_lock);
   if (this->last_frame) {
     vo_frame_dec_lock( this->last_frame );
     this->last_frame = NULL;
   }
+  pthread_mutex_unlock(&this->grab_lock);
 
   return NULL;
 }
@@ -1442,6 +1785,14 @@ static int vo_get_property (xine_video_port_t *this_gen, int property) {
     ret = this->video_loop_running ? this->display_img_buf_queue->num_buffers : -1;
     break;
 
+  case VO_PROP_BUFS_FREE:
+    ret = this->video_loop_running ? this->free_img_buf_queue->num_buffers : -1;
+    break;
+
+  case VO_PROP_BUFS_TOTAL:
+    ret = this->video_loop_running ? this->free_img_buf_queue->num_buffers_max : -1;
+    break;
+
   case VO_PROP_NUM_STREAMS:
     pthread_mutex_lock(&this->streams_lock);
     ret = xine_list_size(this->streams);
@@ -1464,6 +1815,8 @@ static int vo_get_property (xine_video_port_t *this_gen, int property) {
     ret = this->crop_bottom;
     break;
 
+  case XINE_PARAM_VO_SHARPNESS:
+  case XINE_PARAM_VO_NOISE_REDUCTION:
   case XINE_PARAM_VO_HUE:
   case XINE_PARAM_VO_SATURATION:
   case XINE_PARAM_VO_CONTRAST:
@@ -1558,6 +1911,8 @@ static int vo_set_property (xine_video_port_t *this_gen, int property, int value
     ret = this->crop_bottom = value;
     break;
 
+  case XINE_PARAM_VO_SHARPNESS:
+  case XINE_PARAM_VO_NOISE_REDUCTION:
   case XINE_PARAM_VO_HUE:
   case XINE_PARAM_VO_SATURATION:
   case XINE_PARAM_VO_CONTRAST:
@@ -1669,12 +2024,28 @@ static void vo_exit (xine_video_port_t *this_gen) {
   free (this->free_img_buf_queue);
   free (this->display_img_buf_queue);
 
+  pthread_cond_destroy(&this->trigger_drawing_cond);
+  pthread_mutex_destroy(&this->trigger_drawing_mutex);
+
+  pthread_mutex_destroy(&this->grab_lock);
+  pthread_cond_destroy(&this->grab_cond);
+
   free (this);
 }
 
 static vo_frame_t *vo_get_last_frame (xine_video_port_t *this_gen) {
   vos_t      *this = (vos_t *) this_gen;
-  return this->last_frame;
+  vo_frame_t *last_frame;
+  
+  pthread_mutex_lock(&this->grab_lock);
+
+  last_frame = this->last_frame;
+  if (last_frame)
+    vo_frame_inc_lock(last_frame);
+
+  pthread_mutex_unlock(&this->grab_lock);
+
+  return last_frame;
 }
 
 /*
@@ -1736,6 +2107,15 @@ static void vo_flush (xine_video_port_t *this_gen) {
     this->discard_frames--;
     pthread_mutex_unlock(&this->display_img_buf_queue->mutex);
   }
+}
+
+static void vo_trigger_drawing (xine_video_port_t *this_gen) {
+  vos_t      *this = (vos_t *) this_gen;
+
+  pthread_mutex_lock (&this->trigger_drawing_mutex);
+  this->trigger_drawing = 1;
+  pthread_cond_signal (&this->trigger_drawing_cond);
+  pthread_mutex_unlock (&this->trigger_drawing_mutex);
 }
 
 /* crop_frame() will allocate a new frame to copy in the given image
@@ -1827,12 +2207,14 @@ xine_video_port_t *_x_vo_new_port (xine_t *xine, vo_driver_t *driver, int grabon
   this->vo.open                  = vo_open;
   this->vo.get_frame             = vo_get_frame;
   this->vo.get_last_frame        = vo_get_last_frame;
+  this->vo.new_grab_video_frame  = vo_new_grab_video_frame;
   this->vo.close                 = vo_close;
   this->vo.exit                  = vo_exit;
   this->vo.get_capabilities      = vo_get_capabilities;
   this->vo.enable_ovl            = vo_enable_overlay;
   this->vo.get_overlay_manager   = vo_get_overlay_manager;
   this->vo.flush                 = vo_flush;
+  this->vo.trigger_drawing       = vo_trigger_drawing;
   this->vo.get_property          = vo_get_property;
   this->vo.set_property          = vo_set_property;
   this->vo.status                = vo_status;
@@ -1845,8 +2227,12 @@ xine_video_port_t *_x_vo_new_port (xine_t *xine, vo_driver_t *driver, int grabon
   this->display_img_buf_queue = vo_new_img_buf_queue ();
   this->video_loop_running    = 0;
 
-  this->last_frame            = NULL;
   this->img_backup            = NULL;
+
+  this->last_frame            = NULL;
+  this->pending_grab_request  = NULL;
+  pthread_mutex_init(&this->grab_lock, NULL);
+  pthread_cond_init(&this->grab_cond, NULL);
 
   this->overlay_source        = _x_video_overlay_new_manager(xine);
   this->overlay_source->init (this->overlay_source);
@@ -1926,6 +2312,9 @@ xine_video_port_t *_x_vo_new_port (xine_t *xine, vo_driver_t *driver, int grabon
       "were not scheduled for display in time, xine sends a notification."),
     20, NULL, NULL);
 
+  pthread_mutex_init(&this->trigger_drawing_mutex, NULL);
+  pthread_cond_init(&this->trigger_drawing_cond, NULL);
+  this->trigger_drawing = 0;
 
   if (grabonly) {
 

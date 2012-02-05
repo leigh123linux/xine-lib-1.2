@@ -44,7 +44,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 
-#include "xineutils.h"
+#include <xine/xineutils.h>
 
 #ifndef O_CLOEXEC
 #  define O_CLOEXEC  0

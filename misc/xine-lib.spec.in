@@ -1,5 +1,5 @@
 %define shortname  libxine
-%define name       libxine1
+%define name       libxine2
 %define version    @SPEC_VERSION@
 %define release    0
 
@@ -14,9 +14,6 @@
 %endif
 %if %{?BUILD_ALSA:0}%{!?BUILD_ALSA:1}
 %define BUILD_ALSA      0
-%endif
-%if %{?BUILD_ARTS:0}%{!?BUILD_ARTS:1}
-%define BUILD_ARTS      0
 %endif
 %if %{?BUILD_DEVEL:0}%{!?BUILD_DEVEL:1}
 %define BUILD_DEVEL     1
@@ -689,17 +686,11 @@ fi
 %if %BUILD_STK
             --with-libstk \
 %endif
-%if %BUILD_ARTS
-            --with-arts \
-%endif
             --enable-syncfb --without-internal-vcdlibs
 
 # Error in libfaad when compiling with mmx or sse enabled, remove it
-%{__mv} src/libfaad/Makefile src/libfaad/Makefile_save
-%{__cat} src/libfaad/Makefile_save | %{__sed} -e "s/-mmmx/-mno-mmx/g" -e "s/-msse/-mno-sse/g" > src/libfaad/Makefile
-# another problem with libavcodec
-%{__mv} src/libffmpeg/libavcodec/i386/Makefile src/libffmpeg/libavcodec/i386/Makefile_save
-%{__cat} src/libffmpeg/libavcodec/i386/Makefile_save | %{__sed} -e "s/-O3/-Os/g" -e "s/-O2/-Os/g" > src/libffmpeg/libavcodec/i386/Makefile
+%{__mv} contrib/libfaad/Makefile contrib/libfaad/Makefile_save
+%{__cat} contrib/libfaad/Makefile_save | %{__sed} -e "s/-mmmx/-mno-mmx/g" -e "s/-msse/-mno-sse/g" > contrib/libfaad/Makefile
 
 %{__make} %{?jobs:-j%{jobs}}
 
@@ -736,14 +727,6 @@ echo "%defattr(-,root,root)" > ${RPM_BUILD_DIR}/filelist_%{name}_alsa
 %{__mv} ${RPM_BUILD_DIR}/filelist_%{name} ${RPM_BUILD_DIR}/filelist_%{name}_old
 %{__grep} "xineplug_ao_out_alsa\." ${RPM_BUILD_DIR}/filelist_%{name}_old | %{__cat} - >> ${RPM_BUILD_DIR}/filelist_%{name}_alsa
 %{__grep} -v "xineplug_ao_out_alsa\." ${RPM_BUILD_DIR}/filelist_%{name}_old | %{__cat} - > ${RPM_BUILD_DIR}/filelist_%{name}
-%{__rm} ${RPM_BUILD_DIR}/filelist_%{name}_old
-%endif
-
-%if %BUILD_ARTS
-echo "%defattr(-,root,root)" > ${RPM_BUILD_DIR}/filelist_%{name}_arts
-%{__mv} ${RPM_BUILD_DIR}/filelist_%{name} ${RPM_BUILD_DIR}/filelist_%{name}_old
-%{__grep} "xineplug_ao_out_arts\." ${RPM_BUILD_DIR}/filelist_%{name}_old | %{__cat} - >> ${RPM_BUILD_DIR}/filelist_%{name}_arts
-%{__grep} -v "xineplug_ao_out_arts\." ${RPM_BUILD_DIR}/filelist_%{name}_old | %{__cat} - > ${RPM_BUILD_DIR}/filelist_%{name}
 %{__rm} ${RPM_BUILD_DIR}/filelist_%{name}_old
 %endif
 

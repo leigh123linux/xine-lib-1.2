@@ -26,7 +26,7 @@
 #include "goom_fx.h"
 #include "goomsl.h"
 
-#include "xine_internal.h"
+#include <xine/xine_internal.h>
 
 /* #define VERBOSE */
 

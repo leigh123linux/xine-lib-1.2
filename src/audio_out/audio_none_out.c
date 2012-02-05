@@ -31,11 +31,11 @@
 #include <unistd.h>
 #include <inttypes.h>
 
-#include "xine_internal.h"
-#include "xineutils.h"
-#include "audio_out.h"
+#include <xine/xine_internal.h>
+#include <xine/xineutils.h>
+#include <xine/audio_out.h>
 
-#define AO_OUT_NONE_IFACE_VERSION 8
+#define AO_OUT_NONE_IFACE_VERSION 9
 
 #define AUDIO_NUM_FRAGMENTS     15
 #define AUDIO_FRAGMENT_SIZE   8192
@@ -214,22 +214,6 @@ static ao_driver_t *open_plugin (audio_driver_class_t *class_gen,
 /*
  * class functions
  */
-
-static char* get_identifier (audio_driver_class_t *this_gen) {
-  return "none";
-}
-
-static char* get_description (audio_driver_class_t *this_gen) {
-  return _("xine dummy audio output plugin");
-}
-
-static void dispose_class (audio_driver_class_t *this_gen) {
-
-  none_class_t *this = (none_class_t *) this_gen;
-
-  free (this);
-}
-
 static void *init_class (xine_t *xine, void *data) {
 
   none_class_t        *this;
@@ -241,9 +225,9 @@ static void *init_class (xine_t *xine, void *data) {
     return NULL;
 
   this->driver_class.open_plugin     = open_plugin;
-  this->driver_class.get_identifier  = get_identifier;
-  this->driver_class.get_description = get_description;
-  this->driver_class.dispose         = dispose_class;
+  this->driver_class.identifier      = "none";
+  this->driver_class.description     = N_("xine dummy audio output plugin");
+  this->driver_class.dispose         = default_audio_driver_class_dispose;
 
   this->config = xine->config;
   this->xine   = xine;
