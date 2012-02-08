@@ -2470,10 +2470,10 @@ static void ts_rewrite_packets (dvb_input_plugin_t *this, unsigned char * origin
 
       crc = av_crc(this->class->av_crc, 0xffffffff, originalPkt+1, 12);
 
-      originalPkt[13]=(crc>>24) & 0xff;
-      originalPkt[14]=(crc>>16) & 0xff;
-      originalPkt[15]=(crc>>8) & 0xff;
-      originalPkt[16]=crc & 0xff;
+      originalPkt[13]=(crc    ) & 0xff;
+      originalPkt[14]=(crc>> 8) & 0xff;
+      originalPkt[15]=(crc>>16) & 0xff;
+      originalPkt[16]=(crc>>24) & 0xff;
       memset(originalPkt+17,0xFF,PKT_SIZE-21); /* stuff the remainder */
 
     }
