@@ -1263,8 +1263,7 @@ static void dvb_parse_si(dvb_input_plugin_t *this) {
     xprintf(this->stream->xine,XINE_VERBOSITY_LOG,"input_dvb: Error setting up Internal PAT filter - reverting to rc6 hehaviour\n");
     dvb_set_pidfilter (this,VIDFILTER,this->channels[this->channel].pid[VIDFILTER], DMX_PES_OTHER, DMX_OUT_TS_TAP);
     dvb_set_pidfilter (this,AUDFILTER,this->channels[this->channel].pid[AUDFILTER], DMX_PES_OTHER, DMX_OUT_TS_TAP);
-    free(tmpbuffer);
-    return;
+    goto done;
   }
   result = read (tuner->fd_pidfilter[INTERNAL_FILTER], tmpbuffer, 3);
 
@@ -1308,7 +1307,7 @@ static void dvb_parse_si(dvb_input_plugin_t *this) {
     xprintf(this->stream->xine,XINE_VERBOSITY_LOG,"input_dvb: WARNING **** Reverting to rc6 hehaviour. Please regenerate your channels.conf in ?zap format ****\n");
     dvb_set_pidfilter (this,VIDFILTER,this->channels[this->channel].pid[VIDFILTER], DMX_PES_OTHER, DMX_OUT_TS_TAP);
     dvb_set_pidfilter (this,AUDFILTER,this->channels[this->channel].pid[AUDFILTER], DMX_PES_OTHER, DMX_OUT_TS_TAP);
-    return;
+    goto done;
   }
   result = read(tuner->fd_pidfilter[INTERNAL_FILTER],tmpbuffer,3);
 
@@ -1336,6 +1335,7 @@ static void dvb_parse_si(dvb_input_plugin_t *this) {
 
   xprintf(this->stream->xine,XINE_VERBOSITY_DEBUG,"input_dvb: Setup of PID filters complete\n");
 
+done:
   free(tmpbuffer);
 }
 
