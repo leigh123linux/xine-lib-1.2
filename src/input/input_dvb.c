@@ -1304,7 +1304,7 @@ static void dvb_parse_si(dvb_input_plugin_t *this) {
 
   if((poll(&pfd,1,15000)<1) || this->channels[this->channel].pmtpid==0) /* PMT timed out or couldn't be found - default to using channels.conf info */
   {
-    xprintf(this->stream->xine,XINE_VERBOSITY_LOG,"input_dvb: WARNING **** Reverting to rc6 hehaviour. Please regenerate your channels.conf in ?zap format ****\n");
+    xprintf(this->stream->xine,XINE_VERBOSITY_LOG,"input_dvb: PMT scan timed out. Using video & audio PID info from channels.conf.\n");
     dvb_set_pidfilter (this,VIDFILTER,this->channels[this->channel].pid[VIDFILTER], DMX_PES_OTHER, DMX_OUT_TS_TAP);
     dvb_set_pidfilter (this,AUDFILTER,this->channels[this->channel].pid[AUDFILTER], DMX_PES_OTHER, DMX_OUT_TS_TAP);
     goto done;
