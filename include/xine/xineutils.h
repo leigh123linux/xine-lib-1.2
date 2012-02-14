@@ -254,18 +254,20 @@ extern void (*yuy2_to_yv12)
    unsigned char *v_dst, int v_dst_pitch,
    int width, int height) XINE_PROTECTED;
 
-#define SCALEFACTOR 65536
+/* convert full range rgb to mpeg range yuv */
+#define SCALESHIFT 16
+#define SCALEFACTOR (1<<SCALESHIFT)
 #define CENTERSAMPLE 128
 
 #define COMPUTE_Y(r, g, b) \
   (unsigned char) \
-  ((y_r_table[r] + y_g_table[g] + y_b_table[b]) / SCALEFACTOR)
+  (((y_r_table[r] + y_g_table[g] + y_b_table[b]) >> SCALESHIFT) + 16)
 #define COMPUTE_U(r, g, b) \
   (unsigned char) \
-  ((u_r_table[r] + u_g_table[g] + u_b_table[b]) / SCALEFACTOR + CENTERSAMPLE)
+  (((u_r_table[r] + u_g_table[g] + u_b_table[b]) >> SCALESHIFT) + CENTERSAMPLE)
 #define COMPUTE_V(r, g, b) \
   (unsigned char) \
-  ((v_r_table[r] + v_g_table[g] + v_b_table[b]) / SCALEFACTOR + CENTERSAMPLE)
+  (((v_r_table[r] + v_g_table[g] + v_b_table[b]) >> SCALESHIFT) + CENTERSAMPLE)
 
 #define UNPACK_BGR15(packed_pixel, r, g, b) \
   b = (packed_pixel & 0x7C00) >> 7; \
