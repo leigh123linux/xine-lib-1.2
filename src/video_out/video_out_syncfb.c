@@ -663,6 +663,8 @@ static int syncfb_get_property(vo_driver_t* this_gen, int property)
 {
   syncfb_driver_t* this = (syncfb_driver_t *) this_gen;
 
+  if ((property < 0) || (property >= VO_NUM_PROPERTIES)) return 0;
+
   switch (property) {
     case VO_PROP_WINDOW_WIDTH:
       this->props[property].value = this->sc.gui_width;
@@ -690,6 +692,8 @@ static int syncfb_get_property(vo_driver_t* this_gen, int property)
 static int syncfb_set_property(vo_driver_t* this_gen, int property, int value)
 {
   syncfb_driver_t* this = (syncfb_driver_t *) this_gen;
+
+  if ((property < 0) || (property >= VO_NUM_PROPERTIES)) return 0;
 
   switch (property) {
     case VO_PROP_INTERLACED:
@@ -801,6 +805,10 @@ static void syncfb_get_property_min_max(vo_driver_t *this_gen,
 {
   syncfb_driver_t* this = (syncfb_driver_t *) this_gen;
 
+  if ((property < 0) || (property >= VO_NUM_PROPERTIES)) {
+    *min = *max = 0;
+    return;
+  }
   *min = this->props[property].min;
   *max = this->props[property].max;
 }
