@@ -76,7 +76,8 @@
  * next 9 defines.
  */
 
-#if 1
+/* convert full range rgb to mpeg range yuv */
+#if 0
 
 #define Y_R (SCALEFACTOR *  0.29900)
 #define Y_G (SCALEFACTOR *  0.58700)
