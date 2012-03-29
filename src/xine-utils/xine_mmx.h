@@ -46,9 +46,20 @@ typedef	union {
 			      : /* nothing */ \
 			      : "m" (mem))
 
+/* load dword from memory or gp register */
+#define	mmx_a2r(op,any,reg) \
+	__asm__ __volatile__ (#op " %0, %%" #reg \
+			      : /* nothing */ \
+			      : "g" (any))
+
 #define	mmx_r2m(op,reg,mem) \
 	__asm__ __volatile__ (#op " %%" #reg ", %0" \
 			      : "=m" (mem) \
+			      : /* nothing */ )
+
+#define	mmx_r2a(op,reg,any) \
+	__asm__ __volatile__ (#op " %%" #reg ", %0" \
+			      : "=g" (any) \
 			      : /* nothing */ )
 
 #define	mmx_r2r(op,regs,regd) \
@@ -60,6 +71,8 @@ typedef	union {
 #define	movd_m2r(var,reg)	mmx_m2r (movd, var, reg)
 #define	movd_r2m(reg,var)	mmx_r2m (movd, reg, var)
 #define	movd_r2r(regs,regd)	mmx_r2r (movd, regs, regd)
+#define	movd_a2r(any,reg)	mmx_a2r (movd, any, reg)
+#define	movd_r2a(reg,any)	mmx_r2a (movd, reg, any)
 
 #define	movq_m2r(var,reg)	mmx_m2r (movq, var, reg)
 #define	movq_r2m(reg,var)	mmx_r2m (movq, reg, var)
