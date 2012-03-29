@@ -266,6 +266,12 @@ typedef	union {
 #define	sfence() __asm__ __volatile__ ("sfence\n\t")
 
 typedef	union {
+	int64_t			q[2];	/* Quadword (64-bit) value */
+	uint64_t		uq[2];	/* Unsigned Quadword */
+	short			w[8];	/* 4 Word (16-bit) values */
+	unsigned short		uw[8];	/* 4 Unsigned Word */
+	char			b[16];	/* 8 Byte (8-bit) values */
+	unsigned char		ub[16];	/* 8 Unsigned Byte */
 	float			sf[4];	/* Single-precision (32-bit) value */
 } ATTR_ALIGN(16) sse_t;	/* On a 16 byte (128-bit) boundary */
 
