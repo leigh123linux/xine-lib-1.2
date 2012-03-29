@@ -504,6 +504,22 @@ typedef	union {
 	__asm__ __volatile__ ("ldmxcsr %0" \
 			      : /* nothing */ \
 			      : "X" (mem))
+
+/* SSE2 */
+
+#define movdqa_m2r(var, reg)    mmx_m2r (movdqa, var, reg)
+#define movdqa_r2m(reg, var)    mmx_r2m (movdqa, reg, var)
+#define movdqa_r2r(regs, regd)  mmx_r2r (movdqa, regs, regd)
+
+#define movdqu_m2r(var, reg)    mmx_m2r (movdqu, var, reg)
+#define movdqu_r2m(reg, var)    mmx_r2m (movdqu, reg, var)
+
+#define pshufd_m2r(var, reg, imm)   mmx_m2ri (pshufd, var, reg, imm)
+#define pshufd_r2r(regs, regd, imm)   mmx_r2ri (pshufd, regs, regd, imm)
+
+#define pshuflw_m2r(var, reg, imm)  mmx_m2ri (pshuflw, var, reg, imm)
+#define pshuflw_r2r(regs, regd, imm)  mmx_r2ri (pshuflw, regs, regd, imm)
+
 #endif /*ARCH_X86 */
 
 #endif /*XINE_MMX_H*/
