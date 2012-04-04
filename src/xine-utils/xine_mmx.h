@@ -247,7 +247,9 @@ typedef	union {
 #define	pminub_r2r(regs,regd)		mmx_r2r (pminub, regs, regd)
 
 #define	pmovmskb(mmreg,reg) \
-	__asm__ __volatile__ ("movmskps %" #mmreg ", %" #reg)
+	__asm__ __volatile__ ("pmovmskb %" #mmreg ", %" #reg)
+#define pmovmskb_r2a(mmreg,regvar) \
+	__asm__ __volatile__ ("pmovmskb %%" #mmreg ", %0" : "=r" (regvar))
 
 #define	pmulhuw_m2r(var,reg)		mmx_m2r (pmulhuw, var, reg)
 #define	pmulhuw_r2r(regs,regd)		mmx_r2r (pmulhuw, regs, regd)
