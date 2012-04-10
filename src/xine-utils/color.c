@@ -654,25 +654,19 @@ static void yuv411_to_yv12_c
 
 }
 
-#define C_YUV420_YUYV_PROGRESSIVE( )                                          \
-    utmp = 3 * *p_u++;                                                        \
-    vtmp = 3 * *p_v++;                                                        \
-    *p_line1++ = *p_y1++;                *p_line2++ = *p_y2++;                \
-    *p_line1++ = (*p_ut++ + utmp) >> 2;  *p_line2++ = (utmp + *p_ub++) >> 2;  \
-    *p_line1++ = *p_y1++;                *p_line2++ = *p_y2++;                \
-    *p_line1++ = (*p_vt++ + vtmp) >> 2;  *p_line2++ = (vtmp + *p_vb++) >> 2;  \
+#define C_YUV420_YUYV_PROGRESSIVE(p_y1,p_y2,p_u,p_ut,p_ub,p_v,p_vt,p_vb,p_line1,p_line2)  \
+    utmp = 3 * *p_u++;                                                                    \
+    vtmp = 3 * *p_v++;                                                                    \
+    *p_line1++ = *p_y1++;                *p_line2++ = *p_y2++;                            \
+    *p_line1++ = (*p_ut++ + utmp) >> 2;  *p_line2++ = (utmp + *p_ub++) >> 2;              \
+    *p_line1++ = *p_y1++;                *p_line2++ = *p_y2++;                            \
+    *p_line1++ = (*p_vt++ + vtmp) >> 2;  *p_line2++ = (vtmp + *p_vb++) >> 2;              \
 
-#define C_YUV420_YUYV_INTERLACED_ODD( )                                                   \
+#define C_YUV420_YUYV_INTERLACED(p_y1,p_y2,p_u,p_ut,p_ub,p_v,p_vt,p_vb,p_line1,p_line2)   \
     *p_line1++ = *p_y1++;                   *p_line2++ = *p_y2++;                         \
     *p_line1++ = (*p_ut++ + *p_u * 7) >> 3; *p_line2++ = (*p_u++ * 5 + *p_ub++ * 3) >> 3; \
     *p_line1++ = *p_y1++;                   *p_line2++ = *p_y2++;                         \
     *p_line1++ = (*p_vt++ + *p_v * 7) >> 3; *p_line2++ = (*p_v++ * 5 + *p_vb++ * 3) >> 3; \
-
-#define C_YUV420_YUYV_INTERLACED_EVEN( )                                                  \
-    *p_line1++ = *p_y1++;                       *p_line2++ = *p_y2++;                     \
-    *p_line1++ = (*p_ut++ * 3 + *p_u * 5) >> 3; *p_line2++ = (*p_u++ * 7 + *p_ub++) >> 3; \
-    *p_line1++ = *p_y1++;                       *p_line2++ = *p_y2++;                     \
-    *p_line1++ = (*p_vt++ * 3 + *p_v * 5) >> 3; *p_line2++ = (*p_v++ * 7 + *p_vb++) >> 3; \
 
 /*****************************************************************************
  * I420_YUY2: planar YUV 4:2:0 to packed YUYV 4:2:2
@@ -724,7 +718,7 @@ static void yv12_to_yuy2_c
 
           for( i_x = width / 2 ; i_x-- ; )
           {
-              C_YUV420_YUYV_PROGRESSIVE( );
+              C_YUV420_YUYV_PROGRESSIVE(p_y1,p_y2,p_u,p_ut,p_ub,p_v,p_vt,p_vb,p_line1,p_line2);
           }
 
           p_y2 += i_source_margin;
@@ -755,7 +749,7 @@ static void yv12_to_yuy2_c
 
           for( i_x = width / 2 ; i_x-- ; )
           {
-              C_YUV420_YUYV_INTERLACED_ODD( );
+              C_YUV420_YUYV_INTERLACED(p_y1,p_y2,p_u,p_ut,p_ub,p_v,p_vt,p_vb,p_line1,p_line2);
           }
 
           p_y2 += i_source_margin + y_src_pitch;
@@ -789,9 +783,10 @@ static void yv12_to_yuy2_c
             p_vb = p_v;
           }
 
+          /* swap arguments for even lines */
           for( i_x = width / 2 ; i_x-- ; )
           {
-              C_YUV420_YUYV_INTERLACED_EVEN( );
+              C_YUV420_YUYV_INTERLACED(p_y2,p_y1,p_u,p_ub,p_ut,p_v,p_vb,p_vt,p_line2,p_line1);
           }
 
           p_y2 += i_source_margin + y_src_pitch;
@@ -808,7 +803,7 @@ static void yv12_to_yuy2_c
 
 #if defined(ARCH_X86) || defined(ARCH_X86_64)
 
-#define MMXEXT_YUV420_YUYV_PROGRESSIVE( )                                          \
+#define MMXEXT_YUV420_YUYV_PROGRESSIVE(p_y1,p_y2,p_u,p_ut,p_ub,p_v,p_vt,p_vb,p_line1,p_line2)  \
 do {                                                                               \
    __asm__ __volatile__(".align 8 \n\t"                                            \
     "movq       (%0), %%mm0 \n\t"  /* Load 8 Y          y7 y6 y5 y4 y3 y2 y1 y0 */ \
@@ -867,7 +862,7 @@ do {                                                                            
   p_ub += 4; p_vb += 4; p_ut += 4; p_vt += 4;                                      \
 } while(0)
 
-#define MMXEXT_YUV420_YUYV_INTERLACED_ODD( )                                       \
+#define MMXEXT_YUV420_YUYV_INTERLACED(p_y1,p_y2,p_u,p_ut,p_ub,p_v,p_vt,p_vb,p_line1,p_line2)  \
 do {                                                                               \
    __asm__ __volatile__(".align 8 \n\t"                                            \
     "movd       (%0), %%mm1 \n\t"  /* Load 4 Cb         00 00 00 00 u3 u2 u1 u0 */ \
@@ -937,77 +932,6 @@ do {                                                                            
   p_ub += 4; p_vb += 4; p_ut += 4; p_vt += 4;                                      \
 } while(0)
 
-#define MMXEXT_YUV420_YUYV_INTERLACED_EVEN( )                                      \
-/* same as above, except the assembly input arguments are switched */              \
-do {                                                                               \
-   __asm__ __volatile__(".align 8 \n\t"                                            \
-    "movd       (%0), %%mm1 \n\t"  /* Load 4 Cb         00 00 00 00 u3 u2 u1 u0 */ \
-    "movd       (%1), %%mm2 \n\t"  /* Load 4 Cr         00 00 00 00 v3 v2 v1 v0 */ \
-    "pxor      %%mm7, %%mm7 \n\t"  /*                   00 00 00 00 00 00 00 00 */ \
-    "punpcklbw %%mm7, %%mm1 \n\t"  /*                   00 u3 00 u2 00 u1 00 u0 */ \
-    "punpcklbw %%mm7, %%mm2 \n\t"  /*                   00 v3 00 v2 00 v1 00 v0 */ \
-    "movq      %%mm1, %%mm3 \n\t"  /*                   00 u3 00 u2 00 u1 00 u0 */ \
-    "movq      %%mm2, %%mm4 \n\t"  /*                   00 v3 00 v2 00 v1 00 v0 */ \
-    "psllw        $2, %%mm3 \n\t"  /* Cb * 4                                    */ \
-    "psllw        $2, %%mm4 \n\t"  /* Cr * 4                                    */ \
-    "paddw     %%mm3, %%mm1 \n\t"  /* Cb * 5                                    */ \
-    "paddw     %%mm4, %%mm2 \n\t"  /* Cr * 5                                    */ \
-    "psrlw        $1,  %%mm3 \n\t" /* Cb * 2                                    */ \
-    "psrlw        $1,  %%mm4 \n\t" /* Cr * 2                                    */ \
-    "paddw     %%mm1, %%mm3 \n\t"  /* Cb * 7                                    */ \
-    "paddw     %%mm2, %%mm4 \n\t"  /* Cr * 7                                    */ \
-    :                                                                              \
-    : "r" (p_u), "r" (p_v) );                                                      \
-   __asm__ __volatile__(                                                           \
-    "movd       (%1), %%mm5 \n\t"  /* Load 4 Cbt        00 00 00 00 u3 u2 u1 u0 */ \
-    "movd       (%2), %%mm6 \n\t"  /* Load 4 Crt        00 00 00 00 v3 v2 v1 v0 */ \
-    "movq       (%0), %%mm0 \n\t"  /* Load 8 Y          y7 y6 y5 y4 y3 y2 y1 y0 */ \
-    "punpcklbw %%mm7, %%mm5 \n\t"  /*                   00 u3 00 u2 00 u1 00 u0 */ \
-    "punpcklbw %%mm7, %%mm6 \n\t"  /*                   00 v3 00 v2 00 v1 00 v0 */ \
-    "paddw     %%mm3, %%mm5 \n\t"  /* Cb1 = Cbt + 7*Cb                          */ \
-    "paddw     %%mm4, %%mm6 \n\t"  /* Cr1 = Crt + 7*Cr                          */ \
-    "psrlw        $3, %%mm5 \n\t"  /* Cb1 = (Cbt + 7*Cb) / 8                    */ \
-    /* either the shifts by 3 and 8 or mask off bits and shift by 5             */ \
-    "psrlw        $3, %%mm6 \n\t"  /* Cr1 = (Crt + 7*Cr) / 8                    */ \
-    "psllw        $8, %%mm6 \n\t"                                                  \
-    "por       %%mm5, %%mm6 \n\t"  /* Cr1 Cb1 interl    v3 u3 v2 u2 v1 u1 v0 u0 */ \
-    "movq      %%mm0, %%mm3 \n\t"  /*                   y7 y6 y5 y4 y3 y2 y1 y0 */ \
-    "punpcklbw %%mm6, %%mm3 \n\t"  /*                   v1 y3 u1 y2 v0 y1 u0 y0 */ \
-    "movntq    %%mm3, (%3)  \n\t"  /* Store low YUYV1                           */ \
-    "punpckhbw %%mm6, %%mm0 \n\t"  /*                   v3 y7 u3 y6 v2 y5 u2 y4 */ \
-    "movntq    %%mm0, 8(%3) \n\t"  /* Store high YUYV1                          */ \
-    :                                                                              \
-    : "r" (p_y2), "r" (p_ub), "r" (p_vb), "r" (p_line2) );                         \
-   __asm__ __volatile__(                                                           \
-    "movd       (%1), %%mm3 \n\t"  /* Load 4 Cbb        00 00 00 00 u3 u2 u1 u0 */ \
-    "movd       (%2), %%mm4 \n\t"  /* Load 4 Crb        00 00 00 00 v3 v2 v1 v0 */ \
-    "movq       (%0), %%mm0 \n\t"  /* Load 8 Y          Y7 Y6 Y5 Y4 Y3 Y2 Y1 Y0 */ \
-    "punpcklbw %%mm7, %%mm3 \n\t"  /*                   00 u3 00 u2 00 u1 00 u0 */ \
-    "punpcklbw %%mm7, %%mm4 \n\t"  /*                   00 v3 00 v2 00 v1 00 v0 */ \
-    "movq      %%mm3, %%mm5 \n\t"  /*                   00 u3 00 u2 00 u1 00 u0 */ \
-    "movq      %%mm4, %%mm6 \n\t"  /*                   00 v3 00 v2 00 v1 00 v0 */ \
-    "psllw        $1, %%mm5 \n\t"  /* Cbb * 2                                   */ \
-    "psllw        $1, %%mm6 \n\t"  /* Crb * 2                                   */ \
-    "paddw     %%mm5, %%mm3 \n\t"  /* Cbb * 3                                   */ \
-    "paddw     %%mm6, %%mm4 \n\t"  /* Crb * 3                                   */ \
-    "paddw     %%mm3, %%mm1 \n\t"  /* Cb2 = 3*Cbb + 5*Cb                        */ \
-    "paddw     %%mm4, %%mm2 \n\t"  /* Cr2 = 3*Crb + 5*Cr                        */ \
-    "psrlw        $3, %%mm1 \n\t"  /* Cb2 = (3*Cbb + 5*Cb) / 8                  */ \
-    /* either the shifts by 3 and 8 or mask off bits and shift by 5             */ \
-    "psrlw        $3, %%mm2 \n\t"  /* Cr2 = (3*Crb + 5*Cr) / 8                  */ \
-    "psllw        $8, %%mm2 \n\t"                                                  \
-    "por       %%mm1, %%mm2 \n\t"  /* Cr2 Cb2 interl    v3 u3 v2 u2 v1 u1 v0 u0 */ \
-    "movq      %%mm0, %%mm1 \n\t"  /*                   Y7 Y6 Y5 Y4 Y3 Y2 Y1 Y0 */ \
-    "punpcklbw %%mm2, %%mm1 \n\t"  /*                   v1 Y3 u1 Y2 v0 Y1 u0 Y0 */ \
-    "movntq    %%mm1, (%3)  \n\t"  /* Store low YUYV2                           */ \
-    "punpckhbw %%mm2, %%mm0 \n\t"  /*                   v3 Y7 u3 Y6 v2 Y5 u2 Y4 */ \
-    "movntq    %%mm0, 8(%3) \n\t"  /* Store high YUYV2                          */ \
-    :                                                                              \
-    : "r" (p_y1),  "r" (p_ut), "r" (p_vt),  "r" (p_line1) );                       \
-  p_line1 += 16; p_line2 += 16; p_y1 += 8; p_y2 += 8; p_u += 4; p_v += 4;          \
-  p_ub += 4; p_vb += 4; p_ut += 4; p_vt += 4;                                      \
-} while(0)
-
 #endif
 
 static void yv12_to_yuy2_mmxext
@@ -1053,11 +977,11 @@ static void yv12_to_yuy2_mmxext
 
           for( i_x = width / 8 ; i_x-- ; )
           {
-              MMXEXT_YUV420_YUYV_PROGRESSIVE( );
+              MMXEXT_YUV420_YUYV_PROGRESSIVE(p_y1,p_y2,p_u,p_ut,p_ub,p_v,p_vt,p_vb,p_line1,p_line2);
           }
           for( i_x = (width % 8) / 2 ; i_x-- ; )
           {
-              C_YUV420_YUYV_PROGRESSIVE( );
+              C_YUV420_YUYV_PROGRESSIVE(p_y1,p_y2,p_u,p_ut,p_ub,p_v,p_vt,p_vb,p_line1,p_line2);
           }
 
           p_y2 += i_source_margin;
@@ -1088,11 +1012,11 @@ static void yv12_to_yuy2_mmxext
 
           for( i_x = width / 8 ; i_x-- ; )
           {
-              MMXEXT_YUV420_YUYV_INTERLACED_ODD( );
+              MMXEXT_YUV420_YUYV_INTERLACED(p_y1,p_y2,p_u,p_ut,p_ub,p_v,p_vt,p_vb,p_line1,p_line2);
           }
           for( i_x = (width % 8) / 2 ; i_x-- ; )
           {
-              C_YUV420_YUYV_INTERLACED_ODD( );
+              C_YUV420_YUYV_INTERLACED(p_y1,p_y2,p_u,p_ut,p_ub,p_v,p_vt,p_vb,p_line1,p_line2);
           }
 
           p_y2 += i_source_margin + y_src_pitch;
@@ -1126,13 +1050,14 @@ static void yv12_to_yuy2_mmxext
             p_vb = p_v;
           }
 
+          /* swap arguments for even lines */
           for( i_x = width / 8 ; i_x-- ; )
           {
-              MMXEXT_YUV420_YUYV_INTERLACED_EVEN( );
+              MMXEXT_YUV420_YUYV_INTERLACED(p_y2,p_y1,p_u,p_ub,p_ut,p_v,p_vb,p_vt,p_line2,p_line1);
           }
           for( i_x = (width % 8) / 2 ; i_x-- ; )
           {
-              C_YUV420_YUYV_INTERLACED_EVEN( );
+              C_YUV420_YUYV_INTERLACED(p_y2,p_y1,p_u,p_ub,p_ut,p_v,p_vb,p_vt,p_line2,p_line1);
           }
 
           p_y2 += i_source_margin + y_src_pitch;
