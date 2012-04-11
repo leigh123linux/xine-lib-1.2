@@ -802,6 +802,7 @@ static void yv12_to_yuy2_c
 
 
 #if defined(ARCH_X86) || defined(ARCH_X86_64)
+static const int64_t __attribute__((__used__)) byte_one = 0x0101010101010101ll;
 
 #define MMX_YUV420_YUYV_PROGRESSIVE(p_y1,p_y2,p_u,p_ut,p_ub,p_v,p_vt,p_vb,p_line1,p_line2)  \
 do {                                                                               \
@@ -861,6 +862,51 @@ do {                                                                            
   p_line1 += 16; p_line2 += 16; p_y1 += 8; p_y2 += 8; p_u += 4; p_v += 4;          \
   p_ub += 4; p_vb += 4; p_ut += 4; p_vt += 4;                                      \
 } while(0)
+
+#define MMXEXT_YUV420_YUYV_PROGRESSIVE(p_y1,p_y2,p_u,p_ut,p_ub,p_v,p_vt,p_vb,p_line1,p_line2)  \
+do {                                                                               \
+   __asm__ __volatile__(                                                           \
+    "movd         %0, %%mm1 \n\t"  /* Load 4 Cb         00 00 00 00 u3 u2 u1 u0 */ \
+    "movd         %1, %%mm2 \n\t"  /* Load 4 Cr         00 00 00 00 v3 v2 v1 v0 */ \
+    "movd         %2, %%mm3 \n\t"  /* Load 4 Cbt        00 00 00 00 u3 u2 u1 u0 */ \
+    "movd         %3, %%mm4 \n\t"  /* Load 4 Crt        00 00 00 00 v3 v2 v1 v0 */ \
+    "punpcklbw %%mm2, %%mm1 \n\t"  /*                   v3 u3 v2 u2 v1 u1 v0 u0 */ \
+    :                                                                              \
+    : "m" (*p_u), "m" (*p_v), "m" (*p_ut), "m" (*p_vt) );                          \
+   __asm__ __volatile__(                                                           \
+    "movq       (%0), %%mm0 \n\t"  /* Load 8 Y          y7 y6 y5 y4 y3 y2 y1 y0 */ \
+    "punpcklbw %%mm4, %%mm3 \n\t"  /*                   v3 u3 v2 u2 v1 u1 v0 u0 */ \
+    "pavgb     %%mm1, %%mm3 \n\t"  /* CrCb1 = 1/2(CrCbt + CrCb)                 */ \
+    /* for correct rounding                                                     */ \
+    "psubusb   %%mm7, %%mm3 \n\t"                                                  \
+    "pavgb     %%mm1, %%mm3 \n\t"  /* CrCb1 = 1/2(1/2(CrCbt + CrCb) + CrCb)     */ \
+    "movq      %%mm0, %%mm2 \n\t"  /*                   y7 y6 y5 y4 y3 y2 y1 y0 */ \
+    "punpcklbw %%mm3, %%mm2 \n\t"  /*                   v1 y3 u1 y2 v0 y1 u0 y0 */ \
+    "movntq    %%mm2, (%1)  \n\t"  /* Store low YUYV1                           */ \
+    "punpckhbw %%mm3, %%mm0 \n\t"  /*                   v3 y7 u3 y6 v2 y5 u2 y4 */ \
+    "movntq    %%mm0, 8(%1) \n\t"  /* Store high YUYV1                          */ \
+    :                                                                              \
+    : "r" (p_y1), "r" (p_line1) );                                                 \
+   __asm__ __volatile__(                                                           \
+    "movd         %1, %%mm3 \n\t"  /* Load 4 Cbb        00 00 00 00 u3 u2 u1 u0 */ \
+    "movd         %2, %%mm4 \n\t"  /* Load 4 Crb        00 00 00 00 v3 v2 v1 v0 */ \
+    "movq       (%0), %%mm0 \n\t"  /* Load 8 Y          Y7 Y6 Y5 Y4 Y3 Y2 Y1 Y0 */ \
+    "punpcklbw %%mm4, %%mm3 \n\t"  /*                   v3 u3 v2 u2 v1 u1 v0 u0 */ \
+    "pavgb     %%mm1, %%mm3 \n\t"  /* CrCb2 = 1/2(CrCbb + CrCb)                 */ \
+    /* for correct rounding                                                     */ \
+    "psubusb   %%mm7, %%mm3 \n\t"                                                  \
+    "pavgb     %%mm1, %%mm3 \n\t"  /* CrCb2 = 1/2(1/2(CrCbb + CrCb) + CrCb)     */ \
+    "movq      %%mm0, %%mm2 \n\t"  /*                   Y7 Y6 Y5 Y4 Y3 Y2 Y1 Y0 */ \
+    "punpcklbw %%mm3, %%mm2 \n\t"  /*                   v1 Y3 u1 Y2 v0 Y1 u0 Y0 */ \
+    "movntq    %%mm2, (%3)  \n\t"  /* Store low YUYV2                           */ \
+    "punpckhbw %%mm3, %%mm0 \n\t"  /*                   v3 Y7 u3 Y6 v2 Y5 u2 Y4 */ \
+    "movntq    %%mm0, 8(%3) \n\t"  /* Store high YUYV2                          */ \
+    :                                                                              \
+    : "r" (p_y2), "m" (*p_ub), "m" (*p_vb), "r" (p_line2) );                       \
+  p_line1 += 16; p_line2 += 16; p_y1 += 8; p_y2 += 8; p_u += 4; p_v += 4;          \
+  p_ub += 4; p_vb += 4; p_ut += 4; p_vt += 4;                                      \
+} while(0)
+
 
 #define MMX_YUV420_YUYV_INTERLACED(p_y1,p_y2,p_u,p_ut,p_ub,p_v,p_vt,p_vb,p_line1,p_line2)  \
 do {                                                                               \
@@ -932,8 +978,185 @@ do {                                                                            
   p_ub += 4; p_vb += 4; p_ut += 4; p_vt += 4;                                      \
 } while(0)
 
+#define MMXEXT_YUV420_YUYV_INTERLACED(p_y1,p_y2,p_u,p_ut,p_ub,p_v,p_vt,p_vb,p_line1,p_line2)  \
+do {                                                                               \
+   __asm__ __volatile__(                                                           \
+    "movd         %0, %%mm1 \n\t"  /* Load 4 Cb         00 00 00 00 u3 u2 u1 u0 */ \
+    "movd         %1, %%mm2 \n\t"  /* Load 4 Cr         00 00 00 00 v3 v2 v1 v0 */ \
+    "movd         %2, %%mm3 \n\t"  /* Load 4 Cbt        00 00 00 00 u3 u2 u1 u0 */ \
+    "movd         %3, %%mm4 \n\t"  /* Load 4 Crt        00 00 00 00 v3 v2 v1 v0 */ \
+    "punpcklbw %%mm2, %%mm1 \n\t"  /*                   v3 u3 v2 u2 v1 u1 v0 u0 */ \
+    :                                                                              \
+    : "m" (*p_u), "m" (*p_v), "m" (*p_ut), "m" (*p_vt) );                          \
+   __asm__ __volatile__(                                                           \
+    "movq       (%0), %%mm0 \n\t"  /* Load 8 Y          y7 y6 y5 y4 y3 y2 y1 y0 */ \
+    "punpcklbw %%mm4, %%mm3 \n\t"  /*                   v3 u3 v2 u2 v1 u1 v0 u0 */ \
+    "pavgb     %%mm1, %%mm3 \n\t"  /* CrCb1 = 1/2(CrCbt + CrCb)                 */ \
+    "pavgb     %%mm1, %%mm3 \n\t"  /* CrCb1 = 1/2(1/2(CrCbt + CrCb) + CrCb)     */ \
+    /* for correct rounding                                                     */ \
+    "psubusb   %%mm7, %%mm3 \n\t"                                                  \
+    "pavgb     %%mm1, %%mm3 \n\t"  /* CrCb1 = 1/8CrCbt + 7/8CrCb                */ \
+    "movq      %%mm0, %%mm2 \n\t"  /*                   y7 y6 y5 y4 y3 y2 y1 y0 */ \
+    "punpcklbw %%mm3, %%mm2 \n\t"  /*                   v1 y3 u1 y2 v0 y1 u0 y0 */ \
+    "movntq    %%mm2, (%1)  \n\t"  /* Store low YUYV1                           */ \
+    "punpckhbw %%mm3, %%mm0 \n\t"  /*                   v3 y7 u3 y6 v2 y5 u2 y4 */ \
+    "movntq    %%mm0, 8(%1) \n\t"  /* Store high YUYV1                          */ \
+    :                                                                              \
+    : "r" (p_y1), "r" (p_line1) );                                                 \
+   __asm__ __volatile__(                                                           \
+    "movd         %1, %%mm3 \n\t"  /* Load 4 Cbb        00 00 00 00 u3 u2 u1 u0 */ \
+    "movd         %2, %%mm4 \n\t"  /* Load 4 Crb        00 00 00 00 v3 v2 v1 v0 */ \
+    "movq       (%0), %%mm0 \n\t"  /* Load 8 Y          Y7 Y6 Y5 Y4 Y3 Y2 Y1 Y0 */ \
+    "punpcklbw %%mm4, %%mm3 \n\t"  /*                   v3 u3 v2 u2 v1 u1 v0 u0 */ \
+    "pavgb     %%mm1, %%mm3 \n\t"  /* CrCb2 = 1/2(CrCbb + CrCb)                 */ \
+    "pavgb     %%mm3, %%mm1 \n\t"  /* CrCb2 = 1/4CrCbb + 3/4CrCb                */ \
+    /* other cases give error smaller than one with repeated pavgb but here we  */ \
+    /* would get a max error of 1.125. Subtract one to compensate for repeated  */ \
+    /* rounding up (which will give max error of 0.625 which isn't perfect      */ \
+    /* rounding but good enough).                                               */ \
+    "psubusb   %%mm7, %%mm1 \n\t"                                                  \
+    "pavgb     %%mm1, %%mm3 \n\t"  /* CrCb2 = 3/8CrCbb + 5/8CrCb                */ \
+    "movq      %%mm0, %%mm2 \n\t"  /*                   Y7 Y6 Y5 Y4 Y3 Y2 Y1 Y0 */ \
+    "punpcklbw %%mm3, %%mm2 \n\t"  /*                   v1 Y3 u1 Y2 v0 Y1 u0 Y0 */ \
+    "movntq    %%mm2, (%3)  \n\t"  /* Store low YUYV2                           */ \
+    "punpckhbw %%mm3, %%mm0 \n\t"  /*                   v3 Y7 u3 Y6 v2 Y5 u2 Y4 */ \
+    "movntq    %%mm0, 8(%3) \n\t"  /* Store high YUYV2                          */ \
+    :                                                                              \
+    : "r" (p_y2),  "m" (*p_ub), "m" (*p_vb),  "r" (p_line2) );                     \
+  p_line1 += 16; p_line2 += 16; p_y1 += 8; p_y2 += 8; p_u += 4; p_v += 4;          \
+  p_ub += 4; p_vb += 4; p_ut += 4; p_vt += 4;                                      \
+} while(0)
+
 #endif
 
+static void yv12_to_yuy2_mmxext
+  (const unsigned char *y_src, int y_src_pitch,
+   const unsigned char *u_src, int u_src_pitch,
+   const unsigned char *v_src, int v_src_pitch,
+   unsigned char *yuy2_map, int yuy2_pitch,
+   int width, int height, int progressive ) {
+#if defined(ARCH_X86) || defined(ARCH_X86_64)
+    uint8_t *p_line1, *p_line2 = yuy2_map;
+    const uint8_t *p_y1, *p_y2 = y_src;
+    const uint8_t *p_u = u_src;
+    const uint8_t *p_v = v_src;
+    const uint8_t *p_ub, *p_vb;
+    const uint8_t *p_ut = u_src;
+    const uint8_t *p_vt = v_src;
+
+    int i_x, i_y;
+    int utmp, vtmp;
+
+    const int i_source_margin = y_src_pitch - width;
+    const int i_source_u_margin = u_src_pitch - width/2;
+    const int i_source_v_margin = v_src_pitch - width/2;
+    const int i_dest_margin = yuy2_pitch - width*2;
+
+    __asm__ __volatile__(
+     "movq %0, %%mm7 \n\t"
+     :
+     : "m" (byte_one) );
+
+    if( progressive ) {
+
+      for( i_y = height / 2; i_y-- ; )
+      {
+          p_line1 = p_line2;
+          p_line2 += yuy2_pitch;
+
+          p_y1 = p_y2;
+          p_y2 += y_src_pitch;
+
+          if( i_y > 1 ) {
+            p_ub = p_u + u_src_pitch;
+            p_vb = p_v + v_src_pitch;
+          } else {
+            p_ub = p_u;
+            p_vb = p_v;
+          }
+
+          for( i_x = width / 8 ; i_x-- ; )
+          {
+              MMXEXT_YUV420_YUYV_PROGRESSIVE(p_y1,p_y2,p_u,p_ut,p_ub,p_v,p_vt,p_vb,p_line1,p_line2);
+          }
+          for( i_x = (width % 8) / 2 ; i_x-- ; )
+          {
+              C_YUV420_YUYV_PROGRESSIVE(p_y1,p_y2,p_u,p_ut,p_ub,p_v,p_vt,p_vb,p_line1,p_line2);
+          }
+
+          p_y2 += i_source_margin;
+          p_u += i_source_u_margin;
+          p_v += i_source_v_margin;
+          p_ut = p_u - u_src_pitch;
+          p_vt = p_v - v_src_pitch;
+          p_line2 += i_dest_margin;
+      }
+
+    } else {
+
+      for( i_y = height / 4 ; i_y-- ; )
+      {
+          p_line1 = p_line2;
+          p_line2 += 2 * yuy2_pitch;
+
+          p_y1 = p_y2;
+          p_y2 += 2 * y_src_pitch;
+
+          if( i_y > 1 ) {
+            p_ub = p_u + 2 * u_src_pitch;
+            p_vb = p_v + 2 * v_src_pitch;
+          } else {
+            p_ub = p_u;
+            p_vb = p_v;
+          }
+          
+          /* 2 odd lines */
+          for( i_x = width / 8 ; i_x-- ; )
+          {
+              MMXEXT_YUV420_YUYV_INTERLACED(p_y1,p_y2,p_u,p_ut,p_ub,p_v,p_vt,p_vb,p_line1,p_line2);
+          }
+          for( i_x = (width % 8) / 2 ; i_x-- ; )
+          {
+              C_YUV420_YUYV_INTERLACED(p_y1,p_y2,p_u,p_ut,p_ub,p_v,p_vt,p_vb,p_line1,p_line2);
+          }
+          
+          p_y1 += i_source_margin;
+          p_y2 += i_source_margin;
+          p_u += i_source_u_margin;
+          p_v += i_source_v_margin;
+          p_ut += i_source_u_margin;
+          p_vt += i_source_v_margin;
+          p_ub += i_source_u_margin;
+          p_vb += i_source_v_margin;
+          p_line1 += i_dest_margin;
+          p_line2 += i_dest_margin;
+
+          /* 2 even lines - arguments need to be swapped */
+          for( i_x = width / 8 ; i_x-- ; )
+          {
+              MMXEXT_YUV420_YUYV_INTERLACED(p_y2,p_y1,p_u,p_ub,p_ut,p_v,p_vb,p_vt,p_line2,p_line1);
+          }
+          for( i_x = (width % 8) / 2 ; i_x-- ; )
+          {
+              C_YUV420_YUYV_INTERLACED(p_y2,p_y1,p_u,p_ub,p_ut,p_v,p_vb,p_vt,p_line2,p_line1);
+          }
+
+          p_y2 += i_source_margin;
+          p_u += i_source_u_margin;
+          p_v += i_source_v_margin;
+          p_ut = p_u - 2 * u_src_pitch;
+          p_vt = p_v - 2 * v_src_pitch;
+          p_line2 += i_dest_margin;
+      }
+    }
+
+    sfence();
+    emms();
+
+#endif
+}
+
+/* identical to yv12_to_yuy2_c with the obvious exception... */
 static void yv12_to_yuy2_mmx
   (const unsigned char *y_src, int y_src_pitch,
    const unsigned char *u_src, int u_src_pitch,
@@ -1258,7 +1481,9 @@ void init_yuv_conversion(void) {
     yuv444_to_yuy2 = yuv444_to_yuy2_c;
 
   /* determine best YV12 -> YUY2 converter to use */
-  if (xine_mm_accel() & MM_ACCEL_X86_MMX)
+  if (xine_mm_accel() & MM_ACCEL_X86_MMXEXT)
+    yv12_to_yuy2 = yv12_to_yuy2_mmxext;
+  else if (xine_mm_accel() & MM_ACCEL_X86_MMX)
     yv12_to_yuy2 = yv12_to_yuy2_mmx;
   else
     yv12_to_yuy2 = yv12_to_yuy2_c;
