@@ -805,7 +805,7 @@ static void yv12_to_yuy2_c
 
 #define MMX_YUV420_YUYV_PROGRESSIVE(p_y1,p_y2,p_u,p_ut,p_ub,p_v,p_vt,p_vb,p_line1,p_line2)  \
 do {                                                                               \
-   __asm__ __volatile__(".align 8 \n\t"                                            \
+   __asm__ __volatile__(                                                           \
     "movq       (%0), %%mm0 \n\t"  /* Load 8 Y          y7 y6 y5 y4 y3 y2 y1 y0 */ \
     "movd       (%1), %%mm1 \n\t"  /* Load 4 Cb         00 00 00 00 u3 u2 u1 u0 */ \
     "movd       (%2), %%mm2 \n\t"  /* Load 4 Cr         00 00 00 00 v3 v2 v1 v0 */ \
@@ -864,7 +864,7 @@ do {                                                                            
 
 #define MMX_YUV420_YUYV_INTERLACED(p_y1,p_y2,p_u,p_ut,p_ub,p_v,p_vt,p_vb,p_line1,p_line2)  \
 do {                                                                               \
-   __asm__ __volatile__(".align 8 \n\t"                                            \
+   __asm__ __volatile__(                                                           \
     "movd       (%0), %%mm1 \n\t"  /* Load 4 Cb         00 00 00 00 u3 u2 u1 u0 */ \
     "movd       (%1), %%mm2 \n\t"  /* Load 4 Cr         00 00 00 00 v3 v2 v1 v0 */ \
     "pxor      %%mm7, %%mm7 \n\t"  /*                   00 00 00 00 00 00 00 00 */ \
@@ -1131,7 +1131,7 @@ static void yuy2_to_yv12_c
 /* yuy2->yv12 with subsampling (some ideas from mplayer's yuy2toyv12) */
 #define MMXEXT_YUYV_YUV420( )                                                      \
 do {                                                                               \
-   __asm__ __volatile__(".align 8 \n\t"                                            \
+   __asm__ __volatile__(                                                           \
     "movq       (%0), %%mm0 \n\t"  /* Load              v1 y3 u1 y2 v0 y1 u0 y0 */ \
     "movq      8(%0), %%mm1 \n\t"  /* Load              v3 y7 u3 y6 v2 y5 u2 y4 */ \
     "movq      %%mm0, %%mm2 \n\t"  /*                   v1 y3 u1 y2 v0 y1 u0 y0 */ \
@@ -1145,7 +1145,7 @@ do {                                                                            
     "movntq    %%mm2, (%1)  \n\t"  /* Store YYYYYYYY line1                      */ \
     :                                                                              \
     : "r" (p_line1), "r" (p_y1) );                                                 \
-   __asm__ __volatile__(".align 8 \n\t"                                            \
+   __asm__ __volatile__(                                                           \
     "movq       (%0), %%mm1 \n\t"  /* Load              v1 y3 u1 y2 v0 y1 u0 y0 */ \
     "movq      8(%0), %%mm2 \n\t"  /* Load              v3 y7 u3 y6 v2 y5 u2 y4 */ \
     "movq      %%mm1, %%mm3 \n\t"  /*                   v1 y3 u1 y2 v0 y1 u0 y0 */ \
