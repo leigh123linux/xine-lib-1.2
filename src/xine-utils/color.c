@@ -803,7 +803,7 @@ static void yv12_to_yuy2_c
 
 #if defined(ARCH_X86) || defined(ARCH_X86_64)
 
-#define MMXEXT_YUV420_YUYV_PROGRESSIVE(p_y1,p_y2,p_u,p_ut,p_ub,p_v,p_vt,p_vb,p_line1,p_line2)  \
+#define MMX_YUV420_YUYV_PROGRESSIVE(p_y1,p_y2,p_u,p_ut,p_ub,p_v,p_vt,p_vb,p_line1,p_line2)  \
 do {                                                                               \
    __asm__ __volatile__(".align 8 \n\t"                                            \
     "movq       (%0), %%mm0 \n\t"  /* Load 8 Y          y7 y6 y5 y4 y3 y2 y1 y0 */ \
@@ -847,22 +847,22 @@ do {                                                                            
     :                                                                              \
     : "r" (p_ut), "r" (p_vt), "r" (p_ub), "r" (p_vb) );                            \
    __asm__ __volatile__(                                                           \
-    "movntq    %%mm1, (%0)  \n\t"  /* Store low YUYV1                           */ \
+    "movq      %%mm1, (%0)  \n\t"  /* Store low YUYV1                           */ \
     "punpckhbw %%mm3, %%mm0 \n\t"  /*                   v3 y7 u3 y6 v2 y5 u2 y4 */ \
-    "movntq    %%mm0, 8(%0) \n\t"  /* Store high YUYV1                          */ \
+    "movq      %%mm0, 8(%0) \n\t"  /* Store high YUYV1                          */ \
     "movq       (%2), %%mm0 \n\t"  /* Load 8 Y          Y7 Y6 Y5 Y4 Y3 Y2 Y1 Y0 */ \
     "movq      %%mm0, %%mm1 \n\t"  /*                   Y7 Y6 Y5 Y4 Y3 Y2 Y1 Y0 */ \
     "punpcklbw %%mm2, %%mm1 \n\t"  /*                   v1 Y3 u1 Y2 v0 Y1 u0 Y0 */ \
-    "movntq    %%mm1, (%1)  \n\t"  /* Store low YUYV2                           */ \
+    "movq      %%mm1, (%1)  \n\t"  /* Store low YUYV2                           */ \
     "punpckhbw %%mm2, %%mm0 \n\t"  /*                   v3 Y7 u3 Y6 v2 Y5 u2 Y4 */ \
-    "movntq    %%mm0, 8(%1) \n\t"  /* Store high YUYV2                          */ \
+    "movq      %%mm0, 8(%1) \n\t"  /* Store high YUYV2                          */ \
     :                                                                              \
     : "r" (p_line1),  "r" (p_line2),  "r" (p_y2) );                                \
   p_line1 += 16; p_line2 += 16; p_y1 += 8; p_y2 += 8; p_u += 4; p_v += 4;          \
   p_ub += 4; p_vb += 4; p_ut += 4; p_vt += 4;                                      \
 } while(0)
 
-#define MMXEXT_YUV420_YUYV_INTERLACED(p_y1,p_y2,p_u,p_ut,p_ub,p_v,p_vt,p_vb,p_line1,p_line2)  \
+#define MMX_YUV420_YUYV_INTERLACED(p_y1,p_y2,p_u,p_ut,p_ub,p_v,p_vt,p_vb,p_line1,p_line2)  \
 do {                                                                               \
    __asm__ __volatile__(".align 8 \n\t"                                            \
     "movd       (%0), %%mm1 \n\t"  /* Load 4 Cb         00 00 00 00 u3 u2 u1 u0 */ \
@@ -897,9 +897,9 @@ do {                                                                            
     "por       %%mm5, %%mm6 \n\t"  /* Cr1 Cb1 interl    v3 u3 v2 u2 v1 u1 v0 u0 */ \
     "movq      %%mm0, %%mm3 \n\t"  /*                   y7 y6 y5 y4 y3 y2 y1 y0 */ \
     "punpcklbw %%mm6, %%mm3 \n\t"  /*                   v1 y3 u1 y2 v0 y1 u0 y0 */ \
-    "movntq    %%mm3, (%3)  \n\t"  /* Store low YUYV1                           */ \
+    "movq      %%mm3, (%3)  \n\t"  /* Store low YUYV1                           */ \
     "punpckhbw %%mm6, %%mm0 \n\t"  /*                   v3 y7 u3 y6 v2 y5 u2 y4 */ \
-    "movntq    %%mm0, 8(%3) \n\t"  /* Store high YUYV1                          */ \
+    "movq      %%mm0, 8(%3) \n\t"  /* Store high YUYV1                          */ \
     :                                                                              \
     : "r" (p_y1), "r" (p_ut), "r" (p_vt), "r" (p_line1) );                         \
    __asm__ __volatile__(                                                           \
@@ -923,9 +923,9 @@ do {                                                                            
     "por       %%mm1, %%mm2 \n\t"  /* Cr2 Cb2 interl    v3 u3 v2 u2 v1 u1 v0 u0 */ \
     "movq      %%mm0, %%mm1 \n\t"  /*                   Y7 Y6 Y5 Y4 Y3 Y2 Y1 Y0 */ \
     "punpcklbw %%mm2, %%mm1 \n\t"  /*                   v1 Y3 u1 Y2 v0 Y1 u0 Y0 */ \
-    "movntq    %%mm1, (%3)  \n\t"  /* Store low YUYV2                           */ \
+    "movq      %%mm1, (%3)  \n\t"  /* Store low YUYV2                           */ \
     "punpckhbw %%mm2, %%mm0 \n\t"  /*                   v3 Y7 u3 Y6 v2 Y5 u2 Y4 */ \
-    "movntq    %%mm0, 8(%3) \n\t"  /* Store high YUYV2                          */ \
+    "movq      %%mm0, 8(%3) \n\t"  /* Store high YUYV2                          */ \
     :                                                                              \
     : "r" (p_y2),  "r" (p_ub), "r" (p_vb),  "r" (p_line2) );                       \
   p_line1 += 16; p_line2 += 16; p_y1 += 8; p_y2 += 8; p_u += 4; p_v += 4;          \
@@ -934,7 +934,7 @@ do {                                                                            
 
 #endif
 
-static void yv12_to_yuy2_mmxext
+static void yv12_to_yuy2_mmx
   (const unsigned char *y_src, int y_src_pitch,
    const unsigned char *u_src, int u_src_pitch,
    const unsigned char *v_src, int v_src_pitch,
@@ -977,7 +977,7 @@ static void yv12_to_yuy2_mmxext
 
           for( i_x = width / 8 ; i_x-- ; )
           {
-              MMXEXT_YUV420_YUYV_PROGRESSIVE(p_y1,p_y2,p_u,p_ut,p_ub,p_v,p_vt,p_vb,p_line1,p_line2);
+              MMX_YUV420_YUYV_PROGRESSIVE(p_y1,p_y2,p_u,p_ut,p_ub,p_v,p_vt,p_vb,p_line1,p_line2);
           }
           for( i_x = (width % 8) / 2 ; i_x-- ; )
           {
@@ -1012,7 +1012,7 @@ static void yv12_to_yuy2_mmxext
 
           for( i_x = width / 8 ; i_x-- ; )
           {
-              MMXEXT_YUV420_YUYV_INTERLACED(p_y1,p_y2,p_u,p_ut,p_ub,p_v,p_vt,p_vb,p_line1,p_line2);
+              MMX_YUV420_YUYV_INTERLACED(p_y1,p_y2,p_u,p_ut,p_ub,p_v,p_vt,p_vb,p_line1,p_line2);
           }
           for( i_x = (width % 8) / 2 ; i_x-- ; )
           {
@@ -1053,7 +1053,7 @@ static void yv12_to_yuy2_mmxext
           /* swap arguments for even lines */
           for( i_x = width / 8 ; i_x-- ; )
           {
-              MMXEXT_YUV420_YUYV_INTERLACED(p_y2,p_y1,p_u,p_ub,p_ut,p_v,p_vb,p_vt,p_line2,p_line1);
+              MMX_YUV420_YUYV_INTERLACED(p_y2,p_y1,p_u,p_ub,p_ut,p_v,p_vb,p_vt,p_line2,p_line1);
           }
           for( i_x = (width % 8) / 2 ; i_x-- ; )
           {
@@ -1258,8 +1258,8 @@ void init_yuv_conversion(void) {
     yuv444_to_yuy2 = yuv444_to_yuy2_c;
 
   /* determine best YV12 -> YUY2 converter to use */
-  if (xine_mm_accel() & MM_ACCEL_X86_MMXEXT)
-    yv12_to_yuy2 = yv12_to_yuy2_mmxext;
+  if (xine_mm_accel() & MM_ACCEL_X86_MMX)
+    yv12_to_yuy2 = yv12_to_yuy2_mmx;
   else
     yv12_to_yuy2 = yv12_to_yuy2_c;
 
