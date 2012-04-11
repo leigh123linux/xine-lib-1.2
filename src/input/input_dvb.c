@@ -1455,9 +1455,17 @@ static void load_epg_data(dvb_input_plugin_t *this)
        return;
     }
     n = read(this->tuner->fd_pidfilter[EITFILTER], eit, 3);
+    if (n != 3) {
+       xprintf(this->stream->xine,XINE_VERBOSITY_LOG,"Error reading EPG section length\n");
+       break;
+    }
     /*table_id =*/ getbits(eit, 0, 8);
     section_len = (unsigned int)getbits(eit, 12, 12);
     n = read(this->tuner->fd_pidfilter[EITFILTER], eit + 3, section_len);
+    if (n != section_len) {
+       xprintf(this->stream->xine,XINE_VERBOSITY_LOG,"Error reading EPG section data\n");
+       break;
+    }
 
     service_id = (unsigned int)getbits(eit, 24, 16);
 
