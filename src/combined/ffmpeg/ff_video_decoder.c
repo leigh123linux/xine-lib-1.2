@@ -823,7 +823,7 @@ static void ff_convert_frame(ff_video_decoder_t *this, vo_frame_t *img) {
       du += img->pitches[1];
       dv += img->pitches[2];
 
-      if (this->context->pix_fmt != PIX_FMT_YUV420P) {
+      if (this->context->pix_fmt != PIX_FMT_YUV420P && this->context->pix>fmt != PIX_FMT_YUVJ420P) {
         su += 2*this->av_frame->linesize[1];
         sv += 2*this->av_frame->linesize[2];
       } else {
