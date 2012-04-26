@@ -145,7 +145,7 @@ AC_DEFUN([XINE_LIB_SUMMARY], [
             echo "   - Musepack (*INTERNAL* library)"
         fi
     fi
-    if test x"$with_external_ffmpeg" = x"yes"; then
+    if test x"$with_external_ffmpeg" != x"no"; then
         echo "   - ffmpeg (external library)"
     else
         echo "   - ffmpeg (*INTERNAL* library):"
