@@ -2020,9 +2020,11 @@ static qt_error build_frame_table(qt_trak *trak,
 
           /* offset pts for reordered video */
           if (ptsoffs_index < trak->timeoffs_to_sample_count) {
-            trak->frames[frame_counter].ptsoffs = 90000 *
-              trak->timeoffs_to_sample_table[ptsoffs_index].duration /
-              trak->timescale;
+            /* TJ. this is 32 bit signed. All casts necessary for my gcc 4.5.0 */
+            int i = trak->timeoffs_to_sample_table[ptsoffs_index].duration;
+            if ((sizeof (int) > 4) && (i & 0x80000000))
+              i |= ~0xffffffffL;
+            trak->frames[frame_counter].ptsoffs = (int)90000 * i / (int)trak->timescale;
             ptsoffs_index_countdown--;
             /* time to refresh countdown? */
             if (!ptsoffs_index_countdown) {
