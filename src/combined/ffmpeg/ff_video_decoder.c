@@ -1619,8 +1619,8 @@ static void ff_handle_buffer (ff_video_decoder_t *this, buf_element_t *buf) {
           img->duration = video_step_to_use;
 
         /* additionally crop away the extra pixels due to adjusting frame size above */
-        img->crop_right  = this->crop_right  + (img->width  - this->bih.biWidth);
-        img->crop_bottom = this->crop_bottom + (img->height - this->bih.biHeight);
+        img->crop_right  = img->width  - this->bih.biWidth;
+        img->crop_bottom = img->height - this->bih.biHeight;
 
         /* transfer some more frame settings for deinterlacing */
         img->progressive_frame = !this->av_frame->interlaced_frame;
@@ -1656,8 +1656,8 @@ static void ff_handle_buffer (ff_video_decoder_t *this, buf_element_t *buf) {
       img->duration  = video_step_to_use;
 
       /* additionally crop away the extra pixels due to adjusting frame size above */
-      img->crop_right  = ((this->bih.biWidth  <= 0) ? 0 : this->crop_right)  + (img->width  - this->bih.biWidth);
-      img->crop_bottom = ((this->bih.biHeight <= 0) ? 0 : this->crop_bottom) + (img->height - this->bih.biHeight);
+      img->crop_right  = this->bih.biWidth  <= 0 ? 0 : (img->width  - this->bih.biWidth);
+      img->crop_bottom = this->bih.biHeight <= 0 ? 0 : (img->height - this->bih.biHeight);
 
       img->bad_frame = 1;
       this->skipframes = img->draw(img, this->stream);
