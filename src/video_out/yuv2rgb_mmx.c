@@ -86,6 +86,8 @@ void mmx_yuv2rgb_set_csc_levels(yuv2rgb_factory_t *this,
   }
 
   yoffset += brightness;
+  /* TV set behaviour: contrast affects color difference as well */
+  saturation = (contrast * saturation + 64) >> 7;
 
   csc = (mmx_csc_t *) this->table_mmx;
 
