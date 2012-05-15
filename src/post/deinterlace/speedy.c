@@ -344,6 +344,89 @@ static unsigned int diff_factor_packed422_scanline_mmx( uint8_t *cur, uint8_t *o
 }
 #endif
 
+#if defined(ARCH_X86) || defined(ARCH_X86_64)
+
+static const sse_t dqwYMask = { uq: { 0x00ff00ff00ff00ffULL, 0x00ff00ff00ff00ffULL }};
+static const sse_t dqwCMask = { uq: { 0xff00ff00ff00ff00ULL, 0xff00ff00ff00ff00ULL }};
+
+static unsigned int diff_factor_packed422_scanline_sse2_aligned( uint8_t *cur, uint8_t *old, int width )
+{
+    register unsigned int temp;
+
+    width /= 8;
+
+    movdqa_m2r( dqwYMask, xmm1 );
+    movd_m2r( BitShift, xmm7 );
+    pxor_r2r( xmm0, xmm0 );
+
+    while( width-- ) {
+        movdqa_m2r( *cur, xmm4 );
+        movdqa_m2r( *old, xmm5 );
+
+        pand_r2r( xmm1, xmm4 );
+        pand_r2r( xmm1, xmm5 );
+
+        psubw_r2r( xmm5, xmm4 );   /* mm4 = Y1 - Y2            */
+        pmaddwd_r2r( xmm4, xmm4 ); /* mm4 = (Y1 - Y2)^2        */
+        psrld_r2r( xmm7, xmm4 );   /* divide mm4 by 2^BitShift */
+        paddd_r2r( xmm4, xmm0 );   /* keep total in mm0        */
+
+        cur += 16;
+        old += 16;
+    }
+
+    pshufd_r2r(xmm0, xmm1, 0x0e);
+    paddd_r2r(xmm1, xmm0);
+    pshufd_r2r(xmm0, xmm1, 0x01);
+    paddd_r2r(xmm1, xmm0);
+
+    movd_r2a(xmm0, temp);
+    return temp;
+}
+#endif
+
+#if defined(ARCH_X86) || defined(ARCH_X86_64)
+static unsigned int diff_factor_packed422_scanline_sse2( uint8_t *cur, uint8_t *old, int width )
+{
+    if (0 == (((unsigned int)cur|(unsigned int)old) & 15)) {
+        return diff_factor_packed422_scanline_sse2_aligned(cur, old, width);
+    }
+
+    register unsigned int temp;
+
+    width /= 8;
+
+    movdqa_m2r( dqwYMask, xmm1 );
+    movd_m2r( BitShift, xmm7 );
+    pxor_r2r( xmm0, xmm0 );
+
+    while( width-- ) {
+        movdqu_m2r( *cur, xmm4 );
+        movdqu_m2r( *old, xmm5 );
+
+        pand_r2r( xmm1, xmm4 );
+        pand_r2r( xmm1, xmm5 );
+
+        psubw_r2r( xmm5, xmm4 );   /* mm4 = Y1 - Y2            */
+        pmaddwd_r2r( xmm4, xmm4 ); /* mm4 = (Y1 - Y2)^2        */
+        psrld_r2r( xmm7, xmm4 );   /* divide mm4 by 2^BitShift */
+        paddd_r2r( xmm4, xmm0 );   /* keep total in mm0        */
+
+        cur += 16;
+        old += 16;
+    }
+
+    pshufd_r2r(xmm0, xmm1, 0x0e);
+    paddd_r2r(xmm1, xmm0);
+    pshufd_r2r(xmm0, xmm1, 0x01);
+    paddd_r2r(xmm1, xmm0);
+
+    movd_r2a(xmm0, temp);
+
+    return temp;
+}
+#endif
+
 #define ABS(a) (((a) < 0)?-(a):(a))
 
 #if defined(ARCH_X86) || defined(ARCH_X86_64)
@@ -2458,6 +2541,13 @@ void setup_speedy_calls( uint32_t accel, int verbose )
         if( verbose ) {
             printf( "speedycode: No MMX or MMXEXT support detected, using C fallbacks.\n" );
         }
+    }
+
+    if( speedy_accel & MM_ACCEL_X86_SSE2 ) {
+        if( verbose ) {
+            printf( "speedycode: Using SSE2 optimized functions.\n" );
+        }
+        diff_factor_packed422_scanline = diff_factor_packed422_scanline_sse2;
     }
 #endif
 }
