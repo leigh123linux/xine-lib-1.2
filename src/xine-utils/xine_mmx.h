@@ -517,6 +517,10 @@ typedef	union {
 #define movdqu_m2r(var, reg)    mmx_m2r (movdqu, var, reg)
 #define movdqu_r2m(reg, var)    mmx_r2m (movdqu, reg, var)
 
+#define	pslldq_i2r(imm,reg)	mmx_i2r (pslldq, imm, reg)
+
+#define	psrldq_i2r(imm,reg)	mmx_i2r (psrldq, imm, reg)
+
 #define pshufd_m2r(var, reg, imm)   mmx_m2ri (pshufd, var, reg, imm)
 #define pshufd_r2r(regs, regd, imm)   mmx_r2ri (pshufd, regs, regd, imm)
 
