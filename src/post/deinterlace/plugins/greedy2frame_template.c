@@ -171,7 +171,6 @@ static void DeinterlaceGreedy2Frame_MMX(uint8_t *output, int outstride,
         * See above for a description of the algorithm.
         * weave if (weave(M) AND (weave(T) OR weave(B)))
         */
-            ".align 8 \n\t"
             "movq %0, %%mm1			\n\t"     // T1
             "movq %1, %%mm0			\n\t"     // M1
             "movq %2, %%mm3			\n\t"     // B1
