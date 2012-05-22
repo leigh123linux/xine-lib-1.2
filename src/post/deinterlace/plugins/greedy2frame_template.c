@@ -91,8 +91,8 @@
   static int64_t qwGreedyTwoFrameThreshold;
 #endif
 
-#if defined(IS_SSE)
-static void DeinterlaceGreedy2Frame_SSE(uint8_t *output, int outstride,
+#if defined(IS_MMXEXT)
+static void DeinterlaceGreedy2Frame_MMXEXT(uint8_t *output, int outstride,
                                  deinterlace_frame_data_t *data,
                                  int bottom_field, int second_field, int width, int height )
 #elif defined(IS_3DNOW)
@@ -196,7 +196,7 @@ static void DeinterlaceGreedy2Frame_MMX(uint8_t *output, int outstride,
 	*/
 	    "movq %%mm3, %%mm7			\n\t" /* mm7 = B1 */
 
-#if defined(IS_SSE)
+#if defined(IS_MMXEXT)
             "pavgb %%mm1, %%mm7			\n\t"
 #elif defined(IS_3DNOW)
             "pavgusb %%mm1, %%mm7		\n\t"
@@ -215,7 +215,7 @@ static void DeinterlaceGreedy2Frame_MMX(uint8_t *output, int outstride,
 	  * which should make weave look better when there is small amounts of
 	  * movement
 	  */
-#if defined(IS_SSE)
+#if defined(IS_MMXEXT)
             "movq    %%mm0, %%mm4		\n\t"
             "movq    %%mm2, %%mm5		\n\t"
             "psubusb %%mm2, %%mm4		\n\t"
@@ -281,7 +281,7 @@ static void DeinterlaceGreedy2Frame_MMX(uint8_t *output, int outstride,
  * and green where we are going to bob
  */
 #ifdef CHECK_BOBWEAVE
-#ifdef IS_SSE
+#ifdef IS_MMXEXT
             "movntq %%mm4, %0			\n\t"
 #else
             "movq %%mm4, %0			\n\t"
@@ -292,7 +292,7 @@ static void DeinterlaceGreedy2Frame_MMX(uint8_t *output, int outstride,
             "pand    %%mm4, %%mm0		\n\t"
             "pandn   %%mm7, %%mm4		\n\t"
             "por     %%mm0, %%mm4		\n\t"
-#ifdef IS_SSE
+#ifdef IS_MMXEXT
             "movntq %%mm4, %0			\n\t"
 #else
             "movq %%mm4, %0			\n\t"
@@ -323,7 +323,7 @@ static void DeinterlaceGreedy2Frame_MMX(uint8_t *output, int outstride,
         B0 += PitchRest;
     }
 
-#ifdef IS_SSE
+#ifdef IS_MMXEXT
     asm("sfence\n\t");
 #endif
 

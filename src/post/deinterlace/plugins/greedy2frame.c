@@ -47,9 +47,9 @@
 static int GreedyTwoFrameThreshold = 4;
 static int GreedyTwoFrameThreshold2 = 8;
 
-#define IS_SSE 1
+#define IS_MMXEXT 1
 #include "greedy2frame_template.c"
-#undef IS_SSE
+#undef IS_MMXEXT
 
 static deinterlace_method_t greedy2framemethod =
 {
@@ -61,7 +61,7 @@ static deinterlace_method_t greedy2framemethod =
     0,
     0,
     0,
-    DeinterlaceGreedy2Frame_SSE,
+    DeinterlaceGreedy2Frame_MMXEXT,
     1,
     NULL
 };
