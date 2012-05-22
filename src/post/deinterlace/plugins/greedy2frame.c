@@ -52,6 +52,39 @@
 #include "greedy2frame_template.c"
 #undef IS_MMXEXT
 
+#include "greedy2frame_template_sse2.c"
+
+static void DeinterlaceGreedy2Frame(uint8_t *output, int outstride,
+                                    deinterlace_frame_data_t *data,
+                                    int bottom_field, int second_field, int width, int height )
+
+{
+    if (xine_mm_accel() & MM_ACCEL_X86_SSE2) {
+        if (((uintptr_t)output & 15) || (outstride & 15) ||
+            width & 7 ||
+            ((uintptr_t)data->f0 & 15) || ((uintptr_t)data->f1 & 15)) {
+            /*
+             * instead of using an unaligned sse2 version just fall back to mmx
+             * which has no alignment restriction (though might be slow unaliged,
+             * but shouldn't hit this hopefully anyway). Plus in my experiments this
+             * was at least as fast as a naive unaligned sse2 version anyway (due to
+             * the inability to use streaming stores).
+             */
+            DeinterlaceGreedy2Frame_MMXEXT(output, outstride, data,
+                                           bottom_field, second_field, width, height );
+        } else {
+            DeinterlaceGreedy2Frame_SSE2(output, outstride, data,
+                                         bottom_field, second_field, width, height );
+        }
+    }
+    else {
+        DeinterlaceGreedy2Frame_MMXEXT(output, outstride, data,
+                                       bottom_field, second_field, width, height );
+        /* could fall back to 3dnow/mmx here too */
+    }
+}
+
+
 static deinterlace_method_t greedy2framemethod =
 {
     "Greedy 2-frame (DScaler)",
@@ -62,7 +95,7 @@ static deinterlace_method_t greedy2framemethod =
     0,
     0,
     0,
-    DeinterlaceGreedy2Frame_MMXEXT,
+    DeinterlaceGreedy2Frame,
     1,
     NULL
 };
