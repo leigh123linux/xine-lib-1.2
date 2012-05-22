@@ -33,6 +33,7 @@
 
 #include <xine/attributes.h>
 #include <xine/xineutils.h>
+#include "xine_mmx.h"
 #include "deinterlace.h"
 #include "speedtools.h"
 #include "speedy.h"
@@ -44,8 +45,8 @@
 // uncomment next line to see this
 //#define CHECK_BOBWEAVE
 
-static int GreedyTwoFrameThreshold = 4;
-static int GreedyTwoFrameThreshold2 = 8;
+#define GREEDYTWOFRAMETHRESHOLD 4
+#define GREEDYTWOFRAMETHRESHOLD2 8
 
 #define IS_MMXEXT 1
 #include "greedy2frame_template.c"

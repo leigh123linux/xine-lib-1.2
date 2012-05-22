@@ -87,8 +87,10 @@
 
 #if !defined(MASKS_DEFINED)
 #define MASKS_DEFINED
-  static const int64_t __attribute__((__used__)) Mask = 0x7f7f7f7f7f7f7f7fll;
-  static int64_t qwGreedyTwoFrameThreshold;
+static const mmx_t Mask = { uq: 0x7f7f7f7f7f7f7f7fll };
+#define TP GREEDYTWOFRAMETHRESHOLD, GREEDYTWOFRAMETHRESHOLD2
+static const mmx_t GreedyTwoFrameThreshold = { ub: {TP, TP, TP, TP} };
+#undef TP
 #endif
 
 #if defined(IS_MMXEXT)
@@ -120,13 +122,6 @@ static void DeinterlaceGreedy2Frame_MMX(uint8_t *output, int outstride,
     uint32_t Pitch = stride*2;
     uint32_t LineLength = stride;
     uint32_t PitchRest = Pitch - (LineLength >> 3)*8;
-
-    qwGreedyTwoFrameThreshold = GreedyTwoFrameThreshold;
-    qwGreedyTwoFrameThreshold += (GreedyTwoFrameThreshold2 << 8);
-    qwGreedyTwoFrameThreshold += (qwGreedyTwoFrameThreshold << 48) +
-                                (qwGreedyTwoFrameThreshold << 32) +
-                                (qwGreedyTwoFrameThreshold << 16);
-
 
     if( second_field ) {
         M1 = data->f0;
@@ -300,7 +295,7 @@ static void DeinterlaceGreedy2Frame_MMX(uint8_t *output, int outstride,
 #endif
 
           : "=m" (*Dest2)
-          : "m" (*T0), "m" (*B0), "m" (qwGreedyTwoFrameThreshold) );
+          : "m" (*T0), "m" (*B0), "m" (GreedyTwoFrameThreshold) );
 
           /* Advance to the next set of pixels. */
           T1 += 8;
