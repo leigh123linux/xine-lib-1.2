@@ -170,10 +170,10 @@ static void DeinterlaceGreedy2Frame_SSE2(uint8_t *output, int outstride,
         * See above for a description of the algorithm.
         * weave if (weave(M) AND (weave(T) OR weave(B)))
         */
-            "movdqa  (%4), %%xmm1		\n\t" /* xmm1 = T1 */
-            "movdqa  (%5), %%xmm0		\n\t" /* xmm0 = T0 */
-            "movdqa  (%q6,%4), %%xmm3		\n\t" /* xmm3 = B1 */
-            "movdqa  (%q6,%5), %%xmm2		\n\t" /* xmm2 = B0 */
+            "movdqa  (%3), %%xmm1		\n\t" /* xmm1 = T1 */
+            "movdqa  (%4), %%xmm0		\n\t" /* xmm0 = T0 */
+            "movdqa  (%q5,%3), %%xmm3		\n\t" /* xmm3 = B1 */
+            "movdqa  (%q5,%4), %%xmm2		\n\t" /* xmm2 = B0 */
 
             /* calculate |T1-T0| keep T1 put result in xmm5 */
             "movdqa  %%xmm1, %%xmm5		\n\t"
@@ -183,14 +183,21 @@ static void DeinterlaceGreedy2Frame_SSE2(uint8_t *output, int outstride,
 
             "movdqa  (%0), %%xmm0		\n\t" /* xmm0 = M1 */
             /* T1 is data for line to copy */
-            "movntdq  %%xmm1, %3		\n\t"
+            "movntdq  %%xmm1, %2		\n\t"
 
             /* if |T1-T0| > Threshold we want 0 else dword minus one */
             "psrlw   $1, %%xmm5			\n\t"
             "pand    %%xmm6, %%xmm5		\n\t"
-            "pcmpgtb %2, %%xmm5			\n\t"
+            "pcmpgtb %1, %%xmm5			\n\t"
             "pcmpeqd %%xmm7, %%xmm5		\n\t"
 
+            "prefetcht0  64(%q5,%3)		\n\t"
+            "prefetcht0  64(%q5,%4)		\n\t"
+          :
+          : "r" (M1), "m" (GreedyTwoFrameThreshold128),
+            "m" (*Destc), "r" (T1), "r" (T0), "r" (Pitch) );
+
+          asm volatile (
             /* calculate |B1-B0| keep B1 put result in xmm4 */
             "movdqa  %%xmm3, %%xmm4		\n\t"
             "psubusb %%xmm2, %%xmm4		\n\t"
@@ -204,9 +211,6 @@ static void DeinterlaceGreedy2Frame_SSE2(uint8_t *output, int outstride,
             "pand    %%xmm6, %%xmm4		\n\t"
             "pcmpgtb %2, %%xmm4			\n\t"
             "pcmpeqd %%xmm7, %%xmm4		\n\t"
-
-            "prefetcht0  64(%q6,%4)		\n\t"
-            "prefetcht0  64(%q6,%5)		\n\t"
 
             "por     %%xmm4, %%xmm5		\n\t"
 
@@ -235,26 +239,23 @@ static void DeinterlaceGreedy2Frame_SSE2(uint8_t *output, int outstride,
             "pcmpeqd %%xmm7, %%xmm4		\n\t" /* do we want to bob */
 
             "pand   %%xmm5, %%xmm4		\n\t"
-          :
-          : "r" (M1), "r" (M0), "m" (GreedyTwoFrameThreshold128),
-            "m" (*Destc), "r" (T1), "r" (T0), "r" (Pitch) );
 
-          asm volatile(
 /* debugging feature
  * output the value of xmm4 at this point which is pink where we will weave
  * and green where we are going to bob
  */
 #ifdef CHECK_BOBWEAVE
-            "movntdq  %%xmm4, %0		\n\t"
+            "movntdq  %%xmm4, %3		\n\t"
 #else
             /* xmm4 now is 1 where we want to weave and 0 where we want to bob */
             "pand    %%xmm4, %%xmm3		\n\t"
             "pandn   %%xmm1, %%xmm4		\n\t"
             "por     %%xmm3, %%xmm4		\n\t"
-            "movntdq  %%xmm4, %0		\n\t"
+            "movntdq  %%xmm4, %3		\n\t"
 #endif
           :
-          : "m" (*Dest2));
+          : "r" (M1), "r" (M0), "m" (GreedyTwoFrameThreshold128),
+            "m" (*Dest2));
 
           /* Advance to the next set of pixels. */
           T1 += 16;
