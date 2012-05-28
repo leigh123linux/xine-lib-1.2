@@ -854,7 +854,7 @@ static void ff_convert_frame(ff_video_decoder_t *this, vo_frame_t *img) {
           p = sv, q = dv;
           for (x = img->width / 2; x > 0; x--) *q++ = ctab[*p++];
         } else {
-          p = su, q = sv;
+          p = su, q = du;
           for (x = img->width / 2; x > 0; x--) {*q++ = ctab[*p]; p += 2;}
           p = sv, q = dv;
           for (x = img->width / 2; x > 0; x--) {*q++ = ctab[*p]; p += 2;}
