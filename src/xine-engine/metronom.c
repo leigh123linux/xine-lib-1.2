@@ -269,21 +269,10 @@ static int64_t metronom_got_spu_packet (metronom_t *this, int64_t pts) {
   pthread_mutex_lock (&this->lock);
 
   if (this->master) {
-    metronom_t *master = this->master;
-
     pthread_mutex_lock(&this->master->lock);
-    pthread_mutex_unlock(&this->lock);
 
     this->vpts_offset = this->master->vpts_offset;
     this->spu_offset  = this->master->spu_offset;
-
-    /* no recursion, please */
-    this->master = NULL;
-    vpts = master->got_spu_packet(this, pts);
-    this->master = master;
-
-    pthread_mutex_unlock(&this->master->lock);
-    return vpts;
   }
 
   vpts = pts + this->vpts_offset + this->spu_offset;
@@ -293,6 +282,10 @@ static int64_t metronom_got_spu_packet (metronom_t *this, int64_t pts) {
     vpts = this->spu_vpts;
 
   this->spu_vpts = vpts;
+
+  if (this->master) {
+    pthread_mutex_unlock(&this->master->lock);
+  }
 
   pthread_mutex_unlock (&this->lock);
   return vpts;
@@ -422,10 +415,7 @@ static void metronom_got_video_frame (metronom_t *this, vo_frame_t *img) {
   pthread_mutex_lock (&this->lock);
 
   if (this->master) {
-    metronom_t *master = this->master;
-
     pthread_mutex_lock(&this->master->lock);
-    pthread_mutex_unlock(&this->lock);
 
     if (!this->discontinuity_handled_count) {
       /* we are not initialized yet */
@@ -442,14 +432,6 @@ static void metronom_got_video_frame (metronom_t *this, vo_frame_t *img) {
 
     this->vpts_offset = this->master->vpts_offset;
     this->av_offset   = this->master->av_offset;
-
-    /* no recursion, please */
-    this->master = NULL;
-    master->got_video_frame(this, img);
-    this->master = master;
-
-    pthread_mutex_unlock(&this->master->lock);
-    return;
   }
 
   lprintf("got_video_frame pts = %" PRId64 ", duration = %d\n", pts, img->duration);
@@ -536,6 +518,10 @@ static void metronom_got_video_frame (metronom_t *this, vo_frame_t *img) {
    */
   this->video_vpts += this->img_duration;
 
+  if (this->master) {
+    pthread_mutex_unlock(&this->master->lock);
+  }
+
   pthread_mutex_unlock (&this->lock);
 }
 
@@ -589,10 +575,7 @@ static int64_t metronom_got_audio_samples (metronom_t *this, int64_t pts,
   pthread_mutex_lock (&this->lock);
 
   if (this->master) {
-    metronom_t *master = this->master;
-
     pthread_mutex_lock(&this->master->lock);
-    pthread_mutex_unlock(&this->lock);
 
     if (!this->discontinuity_handled_count) {
       /* we are not initialized yet */
@@ -609,14 +592,6 @@ static int64_t metronom_got_audio_samples (metronom_t *this, int64_t pts,
     }
 
     this->vpts_offset = this->master->vpts_offset;
-
-    /* no recursion, please */
-    this->master = NULL;
-    vpts = master->got_audio_samples(this, pts, nsamples);
-    this->master = master;
-
-    pthread_mutex_unlock(&this->master->lock);
-    return vpts;
   }
 
   if (pts && pts != this->last_audio_pts) {
@@ -679,6 +654,10 @@ static int64_t metronom_got_audio_samples (metronom_t *this, int64_t pts,
   this->vpts_offset += nsamples * this->audio_drift_step / AUDIO_SAMPLE_NUM;
 
   lprintf("audio vpts for %10"PRId64" : %10"PRId64"\n", pts, vpts);
+
+  if (this->master) {
+    pthread_mutex_unlock(&this->master->lock);
+  }
 
   pthread_mutex_unlock (&this->lock);
 
