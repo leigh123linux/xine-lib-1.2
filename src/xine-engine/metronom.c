@@ -269,10 +269,10 @@ static int64_t metronom_got_spu_packet (metronom_t *this, int64_t pts) {
   pthread_mutex_lock (&this->lock);
 
   if (this->master) {
-    pthread_mutex_lock(&this->master->lock);
+    this->master->set_option(this->master, METRONOM_LOCK, 1);
 
-    this->vpts_offset = this->master->vpts_offset;
-    this->spu_offset  = this->master->spu_offset;
+    this->vpts_offset = this->master->get_option(this->master, METRONOM_VPTS_OFFSET | METRONOM_NO_LOCK);
+    this->spu_offset  = this->master->get_option(this->master, METRONOM_SPU_OFFSET | METRONOM_NO_LOCK);
   }
 
   vpts = pts + this->vpts_offset + this->spu_offset;
@@ -284,7 +284,7 @@ static int64_t metronom_got_spu_packet (metronom_t *this, int64_t pts) {
   this->spu_vpts = vpts;
 
   if (this->master) {
-    pthread_mutex_unlock(&this->master->lock);
+    this->master->set_option(this->master, METRONOM_LOCK, 0);
   }
 
   pthread_mutex_unlock (&this->lock);
@@ -415,14 +415,13 @@ static void metronom_got_video_frame (metronom_t *this, vo_frame_t *img) {
   pthread_mutex_lock (&this->lock);
 
   if (this->master) {
-    pthread_mutex_lock(&this->master->lock);
+    this->master->set_option(this->master, METRONOM_LOCK, 1);
 
     if (!this->discontinuity_handled_count) {
       /* we are not initialized yet */
-      if (this->master->video_vpts > this->master->audio_vpts)
-        this->video_vpts = this->audio_vpts = this->master->video_vpts;
-      else
-        this->video_vpts = this->audio_vpts = this->master->audio_vpts;
+
+      this->video_vpts = this->audio_vpts = this->master->get_option(this->master, METRONOM_VPTS | METRONOM_NO_LOCK);
+
       /* when being attached to the first master, do not drift into
        * his vpts values but adopt at once */
       this->force_audio_jump = 1;
@@ -430,8 +429,8 @@ static void metronom_got_video_frame (metronom_t *this, vo_frame_t *img) {
       this->discontinuity_handled_count++;
     }
 
-    this->vpts_offset = this->master->vpts_offset;
-    this->av_offset   = this->master->av_offset;
+    this->vpts_offset = this->master->get_option(this->master, METRONOM_VPTS_OFFSET | METRONOM_NO_LOCK);
+    this->av_offset   = this->master->get_option(this->master, METRONOM_AV_OFFSET | METRONOM_NO_LOCK);
   }
 
   lprintf("got_video_frame pts = %" PRId64 ", duration = %d\n", pts, img->duration);
@@ -519,7 +518,7 @@ static void metronom_got_video_frame (metronom_t *this, vo_frame_t *img) {
   this->video_vpts += this->img_duration;
 
   if (this->master) {
-    pthread_mutex_unlock(&this->master->lock);
+    this->master->set_option(this->master, METRONOM_LOCK, 0);
   }
 
   pthread_mutex_unlock (&this->lock);
@@ -575,14 +574,13 @@ static int64_t metronom_got_audio_samples (metronom_t *this, int64_t pts,
   pthread_mutex_lock (&this->lock);
 
   if (this->master) {
-    pthread_mutex_lock(&this->master->lock);
+    this->master->set_option(this->master, METRONOM_LOCK, 1);
 
     if (!this->discontinuity_handled_count) {
       /* we are not initialized yet */
-      if (this->master->video_vpts > this->master->audio_vpts)
-        this->video_vpts = this->audio_vpts = this->master->video_vpts;
-      else
-        this->video_vpts = this->audio_vpts = this->master->audio_vpts;
+
+      this->video_vpts = this->audio_vpts = this->master->get_option(this->master, METRONOM_VPTS | METRONOM_NO_LOCK);
+
       this->audio_vpts_rmndr = 0;
       /* when being attached to the first master, do not drift into
        * his vpts values but adopt at once */
@@ -591,7 +589,7 @@ static int64_t metronom_got_audio_samples (metronom_t *this, int64_t pts,
       this->discontinuity_handled_count++;
     }
 
-    this->vpts_offset = this->master->vpts_offset;
+    this->vpts_offset = this->master->get_option(this->master, METRONOM_VPTS_OFFSET | METRONOM_NO_LOCK);
   }
 
   if (pts && pts != this->last_audio_pts) {
@@ -656,7 +654,7 @@ static int64_t metronom_got_audio_samples (metronom_t *this, int64_t pts,
   lprintf("audio vpts for %10"PRId64" : %10"PRId64"\n", pts, vpts);
 
   if (this->master) {
-    pthread_mutex_unlock(&this->master->lock);
+    this->master->set_option(this->master, METRONOM_LOCK, 0);
   }
 
   pthread_mutex_unlock (&this->lock);
@@ -665,6 +663,19 @@ static int64_t metronom_got_audio_samples (metronom_t *this, int64_t pts,
 }
 
 static void metronom_set_option (metronom_t *this, int option, int64_t value) {
+
+  if (option == METRONOM_LOCK) {
+    if (value) {
+      pthread_mutex_lock (&this->lock);
+      if (this->master)
+        this->master->set_option(this->master, option, value);
+    } else {
+      if (this->master)
+        this->master->set_option(this->master, option, value);
+      pthread_mutex_unlock (&this->lock);
+    }
+    return;
+  }
 
   pthread_mutex_lock (&this->lock);
 
@@ -725,14 +736,23 @@ static void metronom_clock_set_option (metronom_clock_t *this,
 static int64_t metronom_get_option (metronom_t *this, int option) {
 
   int64_t result;
+  int mutex_locked;
 
-  pthread_mutex_lock (&this->lock);
+  if (option & METRONOM_NO_LOCK) {
+    mutex_locked = 0;
+  } else {
+    pthread_mutex_lock (&this->lock);
+    mutex_locked = 1;
+  }
 
   if (this->master) {
     result = this->master->get_option(this->master, option);
-    pthread_mutex_unlock (&this->lock);
+    if (mutex_locked)
+      pthread_mutex_unlock (&this->lock);
     return result;
   }
+
+  option &= ~METRONOM_NO_LOCK;
 
   switch (option) {
   case METRONOM_AV_OFFSET:
@@ -750,13 +770,21 @@ static int64_t metronom_get_option (metronom_t *this, int option) {
   case METRONOM_PREBUFFER:
     result = this->prebuffer;
     break;
+  case METRONOM_VPTS:
+      if (this->video_vpts > this->audio_vpts)
+        result = this->video_vpts;
+      else
+        result = this->audio_vpts;
+      break;
   default:
     result = 0;
     xprintf(this->xine, XINE_VERBOSITY_NONE, "unknown option in get_option: %d\n", option);
     break;
   }
 
-  pthread_mutex_unlock (&this->lock);
+  if (mutex_locked) {
+    pthread_mutex_unlock (&this->lock);
+  }
 
   return result;
 }
@@ -776,11 +804,15 @@ static void metronom_set_master(metronom_t *this, metronom_t *master) {
   pthread_mutex_lock(&this->lock);
   /* someone might currently be copying values from the old master,
    * so we need his lock too */
-  if (old_master) pthread_mutex_lock(&old_master->lock);
+  if (old_master)
+    old_master->set_option(old_master, METRONOM_LOCK, 1);
+
   this->master = master;
   /* new master -> we have to reinit */
   this->discontinuity_handled_count = 0;
-  if (old_master) pthread_mutex_unlock(&old_master->lock);
+
+  if (old_master)
+    old_master->set_option(old_master, METRONOM_LOCK, 0);
   pthread_mutex_unlock(&this->lock);
 }
 

@@ -217,6 +217,16 @@ struct metronom_s {
 #define METRONOM_SPU_OFFSET       5
 #define METRONOM_VPTS_OFFSET      6
 #define METRONOM_PREBUFFER        7
+#define METRONOM_VPTS             8
+/* METRONOM_LOCK can be used to lock metronom when multiple options needs to be fetched atomically (ex. VPTS_OFFSET and AV_OFFSET).
+ * example:
+ *   metronom->set_option(metronom, METRONOM_LOCK, 1);
+ *   vpts_offset = metronom->get_option(metronom, METRONOM_VPTS_OFFSET|METRONOM_NO_LOCK);
+ *   av_offset   = metronom->get_option(metronom, METRONOM_AV_OFFSET|METRONOM_NO_LOCK);
+ *   metronom->set_option(metronom, METRONOM_LOCK, 0);
+ */
+#define METRONOM_LOCK             9
+#define METRONOM_NO_LOCK          0x8000
 
 metronom_t *_x_metronom_init (int have_video, int have_audio, xine_t *xine) XINE_MALLOC XINE_PROTECTED;
 
