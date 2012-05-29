@@ -26,18 +26,18 @@
 #ifndef ATTRIBUTE_H_
 #define ATTRIBUTE_H_
 
-#ifdef ATTRIBUTE_ALIGNED_MAX
-#define ATTR_ALIGN(align) __attribute__ ((__aligned__ ((ATTRIBUTE_ALIGNED_MAX < align) ? ATTRIBUTE_ALIGNED_MAX : align)))
-#else
-#define ATTR_ALIGN(align)
-#endif
-
 #ifdef XINE_COMPILE
 # include "configure.h"
 #else
 # if __GNUC__ > 2 || (__GNUC__ == 2 && __GNUC_MINOR__ >= 95 )
 #  define SUPPORT_ATTRIBUTE_PACKED 1
 # endif
+
+#ifdef ATTRIBUTE_ALIGNED_MAX
+#define ATTR_ALIGN(align) __attribute__ ((__aligned__ ((ATTRIBUTE_ALIGNED_MAX < align) ? ATTRIBUTE_ALIGNED_MAX : align)))
+#else
+#define ATTR_ALIGN(align)
+#endif
 
 # if __GNUC__ > 3 || (__GNUC__ == 3 && __GNUC_MINOR__ >= 3 )
 #  define SUPPORT_ATTRIBUTE_DEPRECATED 1
