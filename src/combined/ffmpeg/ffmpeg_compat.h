@@ -24,9 +24,13 @@
 #define XINE_AVCODEC_COMPAT_H
 
 #ifndef LIBAVCODEC_VERSION_MAJOR
-#  error ffmpeg headers must be included first !
+#  ifdef LIBAVCODEC_VERSION_INT
+#    define LIBAVCODEC_VERSION_MAJOR ((LIBAVCODEC_VERSION_INT)>>16)
+#    define LIBAVCODEC_VERSION_MINOR (((LIBAVCODEC_VERSION_INT)>>8) & 0xff)
+#  else
+#    error ffmpeg headers must be included first !
+#  endif
 #endif
-
 
 #if LIBAVCODEC_VERSION_MAJOR > 51
 #  define bits_per_sample bits_per_coded_sample
