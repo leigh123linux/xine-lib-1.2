@@ -2350,12 +2350,6 @@ case "$host_or_hostalias" in
     AC_DEFINE(FPM_INTEL,1,[Define to select libmad fixed point arithmetic implementation])
     arch_x86="32"
     enable_impure_text="yes"
-
-    case "$host_or_hostalias" in
-      *-*-cygwin) 
-        LIBS="$LIBS @INTLLIBS@ -lkernel32"
-        ;;
-    esac
     ;;
   x86_64-*)
     AC_DEFINE_UNQUOTED(ARCH_X86_64,,[Define this if you're running x86 architecture 64 bits])
