@@ -145,12 +145,20 @@ struct ff_video_decoder_s {
 static void ff_check_colorspace (ff_video_decoder_t *this) {
   int i, cm;
 
+#ifdef AVCODEC_HAS_COLORSPACE
   cm = this->context->colorspace << 1;
+#else
+  cm = 0;
+#endif
+
   /* ffmpeg bug: color_range not set by svq3 decoder */
   i = this->context->pix_fmt;
-  if (cm && ((i == PIX_FMT_YUVJ420P) || (i == PIX_FMT_YUVJ444P) ||
-    (this->context->color_range == AVCOL_RANGE_JPEG)))
+  if (cm && ((i == PIX_FMT_YUVJ420P) || (i == PIX_FMT_YUVJ444P)))
     cm |= 1;
+#ifdef AVCODEC_HAS_COLORSPACE
+  if (this->context->color_range == AVCOL_RANGE_JPEG)
+    cm |= 1;
+#endif
 
   /* report changes of colorspyce and/or color range */
   if (cm != this->color_matrix) {

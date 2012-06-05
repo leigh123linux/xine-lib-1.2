@@ -48,6 +48,11 @@
 # undef AVCODEC_HAS_REORDERED_OPAQUE
 #endif
 
+/* colorspace and color_range were added before 52.29.0 */
+#if LIBAVCODEC_VERSION_MAJOR > 52 || (LIBAVCODEC_VERSION_MAJOR == 52 && LIBAVCODEC_VERSION_MINOR >= 29)
+# define AVCODEC_HAS_COLORSPACE
+#endif
+
 /**/
 #if LIBAVCODEC_VERSION_MAJOR > 53 || (LIBAVCODEC_VERSION_MAJOR == 53 && LIBAVCODEC_VERSION_MINOR >= 8)
 #  define avcodec_init() do {} while(0)
