@@ -543,7 +543,6 @@ case "$host_or_hostalias" in
             AC_CHECK_LIB(iberty, strncomp, [GOOM_LIBS="-liberty"])
             AC_SUBST(GOOM_LIBS)
         fi
-        LDFLAGS="-no-undefined $LDFLAGS"
         ;;
 
     *)
@@ -728,9 +727,6 @@ case "$host_or_hostalias" in
                 CC_CHECK_CFLAGS([-fno-inline-functions],   [W32_NO_OPTIMIZE="$W32_NO_OPTIMIZE -fno-inline-functions"])
                 CC_CHECK_CFLAGS([-fno-rename-registers],   [W32_NO_OPTIMIZE="$W32_NO_OPTIMIZE -fno-rename-registers"])
                 AC_SUBST(W32_NO_OPTIMIZE)
-                case "$host_or_hostalias" in
-                    *-*-cygwin*) LIBS="$LIBS @INTLLIBS@ -lkernel32" ;;
-                esac
                 ;;
         esac
 
