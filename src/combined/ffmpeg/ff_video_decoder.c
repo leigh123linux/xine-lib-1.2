@@ -470,9 +470,10 @@ static void init_video_codec (ff_video_decoder_t *this, unsigned int codec_type)
       break;
   }
 
+#ifdef AVCODEC_HAS_REORDERED_OPAQUE
   /* dont want initial AV_NOPTS_VALUE here */
   this->context->reordered_opaque = 0;
-
+#endif
 }
 
 static void choose_speed_over_accuracy_cb(void *user_data, xine_cfg_entry_t *entry) {
