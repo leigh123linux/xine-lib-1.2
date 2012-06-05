@@ -10,7 +10,7 @@ lib_LTLIBRARIES = libxine.la
 XINEUTILS_LIB  = $(top_builddir)/src/xine-utils/libxineutils.la
 DEF_FILE = libxine-$(XINE_MAJOR).def
 if WIN32
-def_ldflags=-Wl,--output-def,$(DEF_FILE) $(LDFLAGS_NOUNDEFINED)
+def_ldflags=-Wl,--output-def,$(DEF_FILE)
 endif
 
 libxine_la_SOURCES = xine.c metronom.c configfile.c buffer.c \
@@ -30,7 +30,7 @@ libxine_la_LIBADD = $(PTHREAD_LIBS) $(DYNAMIC_LD_LIBS) $(LTLIBINTL) $(ZLIB_LIBS)
 		    -lm $(XINEUTILS_LIB) $(LTLIBICONV) $(FT2_LIBS) $(FONTCONFIG_LIBS) \
                     $(LIBXINEPOSIX) $(RT_LIBS) $(NET_LIBS)
 
-libxine_la_LDFLAGS =  \
+libxine_la_LDFLAGS = $(LDFLAGS_NOUNDEFINED) \
 	-version-info $(XINE_LT_CURRENT):$(XINE_LT_REVISION):$(XINE_LT_AGE) \
 	$(def_ldflags)
 
