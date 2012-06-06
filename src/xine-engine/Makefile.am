@@ -48,7 +48,7 @@ install-exec-local:
 	-cp -p $(DEF_FILE) $(DESTDIR)$(libdir)
 
 uninstall-local:
-	-rm -f $(DEF_FILE)
+	-rm -f $(DESTDIR)$(libdir)/$(DEF_FILE)
 endif
 
 $(XINEUTILS_LIB):
