@@ -69,8 +69,9 @@ $(YUV_LIB):
 
 if WIN32
 install-exec-local:
-	cp -p $(DEF_FILE) $(DESTDIR)$(libdir)
+	-cp -p $(DEF_FILE) $(DESTDIR)$(libdir)
 endif
 
 uninstall-local:
-	rm -f $(DEF_FILE) "$(DESTDIR)$(libdir)"/libxine-interface.la
+	rm -f "$(DESTDIR)$(libdir)"/libxine-interface.la
+	-rm -f $(DESTDIR)$(libdir)/$(DEF_FILE)
