@@ -45,10 +45,10 @@ noinst_HEADERS = bswap.h ffmpeg_bswap.h xine_private.h
 
 if WIN32
 install-exec-local:
-	cp -p $(DEF_FILE) $(DESTDIR)$(libdir)
+	-cp -p $(DEF_FILE) $(DESTDIR)$(libdir)
 
 uninstall-local:
-	rm -f $(DEF_FILE)
+	-rm -f $(DEF_FILE)
 endif
 
 $(XINEUTILS_LIB):
