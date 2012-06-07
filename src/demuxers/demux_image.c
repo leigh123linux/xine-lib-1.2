@@ -158,6 +158,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen,
       return NULL;
     }
     if (memcmp (header, "GIF", 3) == 0 /* GIF */
+        || memcmp (header, "BM", 2) == 0 /* BMP */
         || memcmp (header, "\377\330\377", 3) == 0 /* JPEG */
 	|| (_X_BE_16(&header[0]) == 0xffd8) /* another JPEG */
 	|| memcmp (header, "\x89PNG", 4) == 0) { /* PNG */
@@ -213,7 +214,7 @@ static void *init_class (xine_t *xine, void *data) {
   this->demux_class.description     = N_("image demux plugin");
   this->demux_class.identifier      = "imagedmx";
   this->demux_class.mimetypes       = NULL;
-  this->demux_class.extensions      = "png gif jpg jpeg";
+  this->demux_class.extensions      = "png gif jpg jpeg bmp";
   this->demux_class.dispose         = default_demux_class_dispose;
 
   lprintf("class opened\n");
