@@ -56,7 +56,7 @@ dnl  * for GNU/Linux, the library will be named
 dnl    libname.so.(XINE_LT_CURRENT - XINE_LT_AGE).XINE_LT_AGE.XINE_LT_REVISION
 
 XINE_LT_CURRENT=31
-XINE_LT_REVISION=1
+XINE_LT_REVISION=2
 XINE_LT_AGE=30
 
 dnl for a release tarball do "rm .cvsversion" before "make dist"
