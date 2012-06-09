@@ -1196,7 +1196,11 @@ dnl ---------------------------------------------
 AC_CHECK_PROG(XMLTO, xmlto, xmlto, no)
 AM_CONDITIONAL([HAVE_XMLTO], [test "$XMLTO" != "no"])
 
-AC_CHECK_PROG(RSVG, rsvg, rsvg, no)
+AC_CHECK_PROG(RSVG, rsvg-convert, rsvg-convert, no)
+AM_CONDITIONAL([HAVE_RSVG_CONVERT], [test "$RSVG" != "no"])
+if test "$RSVG" = no; then
+  AC_CHECK_PROG(RSVG, rsvg, rsvg, no)
+fi
 AM_CONDITIONAL([HAVE_RSVG], [test "$RSVG" != "no"])
 
 dnl ---------------------------------------------
