@@ -1,7 +1,12 @@
-xine-lib (1.2.1.1) 2012-??-??
+xine-lib (1.2.2) 2012-06-09
   * Fix musepack decoder compilation if libmpcdec headers aren't available.
   * Configure tests for xinerama & VideoCD support now soft-fail properly.
   * The DVB plugin is working again.
+  * OpenGL OSD fix.
+  * YUV conversion MMX/SSE optimisations.
+  * YUV420 H.264 is playable now; YUVJ444P is correctly handled.
+  * Support FLAC in Matroska; support BMP.
+  * Various build fixes for Windows.
 
 xine-lib (1.2.1) 2012-02-04
   * The "I'm at Tyneside LUG" release.
