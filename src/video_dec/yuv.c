@@ -111,8 +111,7 @@ static void yuv_decode_data (video_decoder_t *this_gen,
     free (this->buf);
     this->buf = NULL;
 
-    this->bufsize = VIDEOBUFSIZE;
-    this->buf = malloc(this->bufsize);
+    this->bufsize = this->width = this->height;
     this->size = 0;
 
     this->decoder_ok = 1;
@@ -122,18 +121,21 @@ static void yuv_decode_data (video_decoder_t *this_gen,
 
       case BUF_VIDEO_YUY2:
         this->width = (this->width + 1) & ~1;
+        this->bufsize = this->width * this->height * 2;
         _x_meta_info_set_utf8(this->stream, XINE_META_INFO_VIDEOCODEC, "Raw YUY2");
         break;
 
       case BUF_VIDEO_YV12:
         this->width = (this->width + 1) & ~1;
         this->height = (this->height + 1) & ~1;
+        this->bufsize = this->width * this->height * 3 / 2;
         _x_meta_info_set_utf8(this->stream, XINE_META_INFO_VIDEOCODEC, "Raw YV12");
         break;
 
       case BUF_VIDEO_YVU9:
         this->width = (this->width + 3) & ~3;
         this->height = (this->height + 3) & ~3;
+        this->bufsize = this->width * this->height * 9 / 8;
         _x_meta_info_set_utf8(this->stream, XINE_META_INFO_VIDEOCODEC, "Raw YVU9");
         break;
 
@@ -144,10 +146,13 @@ static void yuv_decode_data (video_decoder_t *this_gen,
       case BUF_VIDEO_I420:
         this->width = (this->width + 1) & ~1;
         this->height = (this->height + 1) & ~1;
+        this->bufsize = this->width * this->height * 3 / 2;
         _x_meta_info_set_utf8(this->stream, XINE_META_INFO_VIDEOCODEC, "Raw I420");
         break;
 
     }
+
+    this->buf = malloc(this->bufsize);
 
     _x_stream_info_set(this->stream, XINE_STREAM_INFO_VIDEO_WIDTH,  this->width);
     _x_stream_info_set(this->stream, XINE_STREAM_INFO_VIDEO_HEIGHT, this->height);
