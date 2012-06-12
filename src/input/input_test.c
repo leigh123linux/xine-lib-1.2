@@ -577,6 +577,13 @@ static input_plugin_t *test_class_get_instance (input_class_t *cls_gen,
  * plugin class functions
  */
 
+static const char * const *test_class_get_autoplay_list (input_class_t *this_gen, int *num_files)
+{
+  *num_files = sizeof(test_names) / sizeof(test_names[0]) - 1;
+
+  return test_names + 1;
+}
+
 static xine_mrl_t **test_class_get_dir (input_class_t *this_gen, const char *filename,
   int *nFiles) {
   test_input_class_t *this = (test_input_class_t *) this_gen;
@@ -617,7 +624,7 @@ static void *init_plugin (xine_t *xine, void *data) {
   this->input_class.identifier         = "test";
   this->input_class.description        = N_("test card input plugin");
   this->input_class.get_dir            = test_class_get_dir;
-  this->input_class.get_autoplay_list  = NULL;
+  this->input_class.get_autoplay_list  = test_class_get_autoplay_list;
   this->input_class.dispose            = test_class_dispose;
   this->input_class.eject_media        = NULL;
 
