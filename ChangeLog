@@ -1,3 +1,6 @@
+xine-lib (1.2.3) ????-??-??
+  * Add test image generator input plugin
+
 xine-lib (1.2.2) 2012-06-09
   * Fix musepack decoder compilation if libmpcdec headers aren't available.
   * Configure tests for xinerama & VideoCD support now soft-fail properly.
