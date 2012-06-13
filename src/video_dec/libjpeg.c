@@ -146,6 +146,8 @@ static void jpeg_decode_data (video_decoder_t *this_gen, buf_element_t *buf) {
     int         width, height;
     vo_frame_t *img;
     int         max_width, max_height;
+    uint8_t    *slice_start[1] = {NULL};
+    int         slice_line = 0;
 
     /* query max. image size vo can handle */
     max_width = this->stream->video_out->get_property( this->stream->video_out,
@@ -209,6 +211,9 @@ static void jpeg_decode_data (video_decoder_t *this_gen, buf_element_t *buf) {
 
     linesize = cinfo.output_width * cinfo.output_components;
     buffer = (cinfo.mem->alloc_sarray)((void*)&cinfo, JPOOL_IMAGE, linesize, 1);
+    if (img->proc_slice && !(img->height & 0xf)) {
+      slice_start[0] = img->base[0];
+    }
 
     /* cut to frame width */
     if (cinfo.output_width > img->width) {
@@ -236,6 +241,20 @@ static void jpeg_decode_data (video_decoder_t *this_gen, buf_element_t *buf) {
           *dst++ = buffer[0][i + 1];
         }
       }
+
+      if (slice_start[0]) {
+        slice_line++;
+        if (slice_line == 16) {
+          img->proc_slice(img, slice_start);
+          slice_start[0] += 16 * img->pitches[0];
+          slice_line = 0;
+        }
+      }
+    }
+
+    /* final slice */
+    if (slice_start[0] && slice_line) {
+      img->proc_slice(img, slice_start);
     }
 
     jpeg_finish_decompress(&cinfo);
