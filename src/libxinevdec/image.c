@@ -153,6 +153,20 @@ static void image_decode_data (video_decoder_t *this_gen, buf_element_t *buf) {
     lprintf("image loaded successfully\n");
 
     /*
+     * alloc video frame and set cropping
+     */
+    img = this->stream->video_out->get_frame (this->stream->video_out, width, height,
+					      (double)width / (double)height,
+					      XINE_IMGFMT_YUY2,
+					      VO_BOTH_FIELDS);
+
+    if (width > img->width)
+      width = img->width;
+    if (height > img->height)
+      height = img->height;
+    img->ratio = (double)width / (double)height;
+
+    /*
      * rgb data -> yuv_planes
      */
     width &= ~1; /* must be even for init_yuv_planes */
@@ -176,12 +190,8 @@ static void image_decode_data (video_decoder_t *this_gen, buf_element_t *buf) {
     free(img_buf);
 
     /*
-     * alloc and draw video frame
+     * draw video frame
      */
-    img = this->stream->video_out->get_frame (this->stream->video_out, width,
-					      height, (double)width/(double)height,
-					      XINE_IMGFMT_YUY2,
-					      VO_BOTH_FIELDS);
     img->pts = buf->pts;
     img->duration = 3600;
     img->bad_frame = 0;
