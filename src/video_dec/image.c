@@ -312,7 +312,7 @@ static const uint32_t supported_types[] = { BUF_VIDEO_IMAGE, BUF_VIDEO_JPEG, 0 }
 
 static const decoder_info_t dec_info_image = {
   supported_types,     /* supported types */
-  6                    /* priority        */
+  7                    /* priority        */
 };
 
 const plugin_info_t xine_plugin_info[] EXPORTED = {
