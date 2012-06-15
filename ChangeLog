@@ -1,3 +1,6 @@
+xine-lib (1.1.22) ????-??-??
+  * Fix segfault when trying to display large images with Xv output plugins
+
 xine-lib (1.1.21) 2012-06-09
   * Fix a potential double-free (goom) when playing AAC files.
   * Fix a possible clean-up crash in the goom FFT code.
