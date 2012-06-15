@@ -102,7 +102,7 @@ static void image_decode_data (video_decoder_t *this_gen, buf_element_t *buf) {
   this->index += buf->size;
 
   if (buf->decoder_flags & BUF_FLAG_FRAME_END) {
-    int                width, height, i;
+    int                width, height, i, x, y, img_stride;
     int                status;
     MagickWand        *wand;
     uint8_t           *img_buf, *img_buf_ptr;
@@ -133,9 +133,10 @@ static void image_decode_data (video_decoder_t *this_gen, buf_element_t *buf) {
       return;
     }
 
-    width = MagickGetImageWidth(wand) & ~1; /* must be even for init_yuv_planes */
+    width = MagickGetImageWidth(wand);
     height = MagickGetImageHeight(wand);
     img_buf = malloc(width * height * 3);
+    img_stride = 3 * width;
 #if MAGICK_VERSION < 0x671
     MagickGetImagePixels(wand, 0, 0, width, height, "RGB", CharPixel, img_buf);
     DestroyMagickWand(wand);
@@ -154,10 +155,13 @@ static void image_decode_data (video_decoder_t *this_gen, buf_element_t *buf) {
     /*
      * rgb data -> yuv_planes
      */
+    width &= ~1; /* must be even for init_yuv_planes */
     init_yuv_planes(&yuv_planes, width, height);
 
     img_buf_ptr = img_buf;
-    for (i=0; i < width*height; i++) {
+    i = 0;
+    for (y = 0; y < height; y++) {
+    for (x = 0; x < width; x++) {
       uint8_t r = *(img_buf_ptr++);
       uint8_t g = *(img_buf_ptr++);
       uint8_t b = *(img_buf_ptr++);
@@ -165,6 +169,9 @@ static void image_decode_data (video_decoder_t *this_gen, buf_element_t *buf) {
       yuv_planes.y[i] = COMPUTE_Y(r, g, b);
       yuv_planes.u[i] = COMPUTE_U(r, g, b);
       yuv_planes.v[i] = COMPUTE_V(r, g, b);
+      i++;
+    }
+    img_buf_ptr += img_stride - 3 * width;
     }
     free(img_buf);
 
