@@ -233,6 +233,51 @@ static uint32_t xshm_get_capabilities (vo_driver_t *this_gen) {
   return capabilities;
 }
 
+static void xshm_compute_ideal_size (xshm_driver_t *this, xshm_frame_t *frame) {
+  _x_vo_scale_compute_ideal_size( &frame->sc );
+}
+
+static void xshm_compute_rgb_size (xshm_driver_t *this, xshm_frame_t *frame) {
+  _x_vo_scale_compute_output_size( &frame->sc );
+
+  /* avoid problems in yuv2rgb */
+  if (frame->sc.output_height < 1)
+    frame->sc.output_height = 1;
+  if (frame->sc.output_width < 8)
+    frame->sc.output_width = 8;
+  if (frame->sc.output_width & 1) /* yuv2rgb_mlib needs an even YUV2 width */
+    frame->sc.output_width++;
+
+  lprintf("frame source (%d) %d x %d => screen output %d x %d%s\n",
+	  frame->vo_frame.id,
+	  frame->sc.delivered_width, frame->sc.delivered_height,
+	  frame->sc.output_width, frame->sc.output_height,
+	  ( frame->sc.delivered_width != frame->sc.output_width
+	    || frame->sc.delivered_height != frame->sc.output_height
+	    ? ", software scaling"
+	   : "" )
+	  );
+}
+
+static void xshm_frame_field (vo_frame_t *vo_img, int which_field) {
+  xshm_frame_t  *frame = (xshm_frame_t *) vo_img ;
+  /* xshm_driver_t *this = (xshm_driver_t *) vo_img->driver; */
+
+  switch (which_field) {
+  case VO_TOP_FIELD:
+    frame->rgb_dst = frame->image;
+    break;
+  case VO_BOTTOM_FIELD:
+    frame->rgb_dst = frame->image + frame->bytes_per_line;
+    break;
+  case VO_BOTH_FIELDS:
+    frame->rgb_dst = frame->image;
+    break;
+  }
+
+  frame->yuv2rgb->next_slice (frame->yuv2rgb, NULL);
+}
+
 static void xshm_frame_proc_slice (vo_frame_t *vo_img, uint8_t **src) {
   xshm_frame_t  *frame = (xshm_frame_t *) vo_img ;
   /*xshm_driver_t *this = (xshm_driver_t *) vo_img->driver; */
@@ -258,25 +303,6 @@ static void xshm_frame_proc_slice (vo_frame_t *vo_img, uint8_t **src) {
 				  src[0]);
 
   lprintf ("copy...done\n");
-}
-
-static void xshm_frame_field (vo_frame_t *vo_img, int which_field) {
-  xshm_frame_t  *frame = (xshm_frame_t *) vo_img ;
-  /* xshm_driver_t *this = (xshm_driver_t *) vo_img->driver; */
-
-  switch (which_field) {
-  case VO_TOP_FIELD:
-    frame->rgb_dst = frame->image;
-    break;
-  case VO_BOTTOM_FIELD:
-    frame->rgb_dst = frame->image + frame->bytes_per_line;
-    break;
-  case VO_BOTH_FIELDS:
-    frame->rgb_dst = frame->image;
-    break;
-  }
-
-  frame->yuv2rgb->next_slice (frame->yuv2rgb, NULL);
 }
 
 static void xshm_frame_dispose (vo_frame_t *vo_img) {
@@ -327,32 +353,6 @@ static vo_frame_t *xshm_alloc_frame (vo_driver_t *this_gen) {
   frame->yuv2rgb = this->yuv2rgb_factory->create_converter (this->yuv2rgb_factory);
 
   return (vo_frame_t *) frame;
-}
-
-static void xshm_compute_ideal_size (xshm_driver_t *this, xshm_frame_t *frame) {
-  _x_vo_scale_compute_ideal_size( &frame->sc );
-}
-
-static void xshm_compute_rgb_size (xshm_driver_t *this, xshm_frame_t *frame) {
-  _x_vo_scale_compute_output_size( &frame->sc );
-
-  /* avoid problems in yuv2rgb */
-  if (frame->sc.output_height < 1)
-    frame->sc.output_height = 1;
-  if (frame->sc.output_width < 8)
-    frame->sc.output_width = 8;
-  if (frame->sc.output_width & 1) /* yuv2rgb_mlib needs an even YUV2 width */
-    frame->sc.output_width++;
-
-  lprintf("frame source (%d) %d x %d => screen output %d x %d%s\n",
-	  frame->vo_frame.id,
-	  frame->sc.delivered_width, frame->sc.delivered_height,
-	  frame->sc.output_width, frame->sc.output_height,
-	  ( frame->sc.delivered_width != frame->sc.output_width
-	    || frame->sc.delivered_height != frame->sc.output_height
-	    ? ", software scaling"
-	   : "" )
-	  );
 }
 
 static void xshm_update_frame_format (vo_driver_t *this_gen,
