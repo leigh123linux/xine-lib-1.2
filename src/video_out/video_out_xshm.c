@@ -23,6 +23,8 @@
  * Aaron Holtzman <aholtzma@ess.engr.uvic.ca>
  *
  * xine-specific code by Guenter Bartsch <bartscgr@studbox.uni-stuttgart.de>
+ *
+ * crop support added by Torsten Jager <t.jager@gmx.de>
  */
 
 #ifdef HAVE_CONFIG_H
@@ -67,6 +69,7 @@
 #include <xine/xineutils.h>
 #include <xine/vo_scale.h>
 #include "x11osd.h"
+#include "xine_mmx.h"
 
 #define LOCK_DISPLAY(this) {if(this->lock_display) this->lock_display(this->user_data); \
                             else XLockDisplay(this->display);}
@@ -88,7 +91,14 @@ typedef struct {
   yuv2rgb_t         *yuv2rgb; /* yuv2rgb converter set up for this frame */
   uint8_t           *rgb_dst;
 
+  int                state, offs0, offs1; /* crop helpers */
+  uint8_t            *crop_start, *crop_flush, *crop_stop;
 } xshm_frame_t;
+
+/* frame.state */
+#define FS_DONE  1
+#define FS_LATE  2
+#define FS_FLAGS 4
 
 typedef struct {
 
@@ -317,7 +327,8 @@ static void dispose_ximage (xshm_driver_t *this,
 
 static uint32_t xshm_get_capabilities (vo_driver_t *this_gen) {
   xshm_driver_t *this = (xshm_driver_t *) this_gen;
-  uint32_t capabilities = VO_CAP_YV12 | VO_CAP_YUY2 | VO_CAP_BRIGHTNESS | VO_CAP_CONTRAST | VO_CAP_SATURATION;
+  uint32_t capabilities = VO_CAP_CROP | VO_CAP_YV12 | VO_CAP_YUY2 | VO_CAP_BRIGHTNESS
+    | VO_CAP_CONTRAST | VO_CAP_SATURATION;
 
   if( this->xoverlay )
     capabilities |= VO_CAP_UNSCALED_OVERLAY;
@@ -370,29 +381,175 @@ static void xshm_frame_field (vo_frame_t *vo_img, int which_field) {
   frame->yuv2rgb->next_slice (frame->yuv2rgb, NULL);
 }
 
+static void xshm_frame_proc_setup (vo_frame_t *vo_img) {
+  xshm_frame_t  *frame = (xshm_frame_t *) vo_img ;
+  xshm_driver_t *this = (xshm_driver_t *) vo_img->driver;
+  int changed = 0, i;
+  int width, height, gui_width, gui_height;
+  double gui_pixel_aspect;
+
+  /* Aargh... libmpeg2 decoder calls frame->proc_slice directly, preferredly
+    while still in mmx mode. This will trash our floating point aspect ratio
+    calculations below. Switching back once per frame should not harm
+    performance too much. */
+#ifdef HAVE_MMX
+  emms ();
+#endif
+
+  if (!(frame->state & FS_LATE)) {
+    /* adjust cropping to what yuv2rgb can handle */
+    if (vo_img->format == XINE_IMGFMT_YV12) {
+      vo_img->crop_left &= ~7;
+      vo_img->crop_top &= ~1;
+    } else {
+      vo_img->crop_left &= ~3;
+    }
+    /* check for crop changes */
+    if ((vo_img->crop_left != frame->sc.crop_left)
+      || (vo_img->crop_top != frame->sc.crop_top)
+      || (vo_img->crop_right != frame->sc.crop_right)
+      || (vo_img->crop_bottom != frame->sc.crop_bottom)) {
+      frame->sc.crop_left = vo_img->crop_left;
+      frame->sc.crop_top = vo_img->crop_top;
+      frame->sc.crop_right = vo_img->crop_right;
+      frame->sc.crop_bottom = vo_img->crop_bottom;
+      changed = 1;
+    }
+  }
+
+  if (!(frame->state & FS_DONE))
+    changed = 1;
+
+  /* just deal with cropped part */
+  width  = frame->sc.delivered_width - frame->sc.crop_left - frame->sc.crop_right;
+  height = frame->sc.delivered_height - frame->sc.crop_top - frame->sc.crop_bottom;
+
+  if (frame->sc.delivered_ratio == 0.0) {
+    frame->sc.delivered_ratio = height ? (double)width / (double)height : 1.0;
+    changed = 1;
+  }
+  
+  /* ask gui what output size we'll have for this frame */
+  /* get the gui_pixel_aspect before calling xshm_compute_ideal_size() */
+  /* note: gui_width and gui_height may be bogus because we may have not yet */
+  /*       updated video_pixel_aspect (see _x_vo_scale_compute_ideal_size).  */
+  frame->sc.dest_size_cb (frame->sc.user_data, width, height,
+    frame->sc.video_pixel_aspect, &gui_width, &gui_height, &gui_pixel_aspect);
+
+  if (changed || (gui_pixel_aspect != frame->sc.gui_pixel_aspect)
+    || (this->sc.user_ratio != frame->sc.user_ratio)) {
+
+    frame->sc.gui_pixel_aspect   = gui_pixel_aspect;
+    frame->sc.user_ratio         = this->sc.user_ratio;
+
+    xshm_compute_ideal_size (this, frame);
+
+    /* now we have updated video_aspect_pixel we use the callback   */
+    /* again to obtain the correct gui_width and gui_height values. */
+    frame->sc.dest_size_cb (frame->sc.user_data, width, height,
+      frame->sc.video_pixel_aspect, &gui_width, &gui_height, &gui_pixel_aspect);
+
+    changed = 1;
+  }
+
+  if (changed || (frame->sc.gui_width != gui_width)
+    || (frame->sc.gui_height != gui_height)) {
+    int w = frame->sc.output_width, h = frame->sc.output_height;
+
+    frame->sc.gui_width  = gui_width;
+    frame->sc.gui_height = gui_height;
+
+    xshm_compute_rgb_size (this, frame);
+
+    if (!frame->image || (w != frame->sc.output_width) || (h != frame->sc.output_height)) {
+      /* (re)allocate XImage */
+      LOCK_DISPLAY(this);
+      if (frame->image)
+        dispose_ximage (this, &frame->shminfo, frame->image);
+      frame->image = create_ximage (this, &frame->shminfo,
+        frame->sc.output_width, frame->sc.output_height);
+      UNLOCK_DISPLAY(this);
+    }
+
+    changed = 1;
+  }
+
+  if (changed || !(frame->state & FS_FLAGS)) {
+    /* set up colorspace converter */
+    switch (vo_img->flags & VO_BOTH_FIELDS) {
+      case VO_TOP_FIELD:
+      case VO_BOTTOM_FIELD:
+        frame->yuv2rgb->configure (frame->yuv2rgb, width, height,
+          2 * frame->vo_frame.pitches[0], 2 * frame->vo_frame.pitches[1],
+          frame->sc.output_width, frame->sc.output_height,
+          frame->image->bytes_per_line * 2);
+      break;
+      case VO_BOTH_FIELDS:
+        frame->yuv2rgb->configure (frame->yuv2rgb, width, height,
+          frame->vo_frame.pitches[0], frame->vo_frame.pitches[1],
+          frame->sc.output_width, frame->sc.output_height,
+          frame->image->bytes_per_line);
+      break;
+    }
+  }
+
+  frame->state |= FS_FLAGS | FS_DONE;
+
+  xshm_frame_field (vo_img, vo_img->flags & VO_BOTH_FIELDS);
+
+  /* cache helpers */
+  i = frame->sc.crop_top & 15;
+  if (i)
+    i -= 16;
+  if (vo_img->format == XINE_IMGFMT_YV12) {
+    frame->offs0 = i * vo_img->pitches[0] + frame->sc.crop_left;
+    frame->offs1 = (i * vo_img->pitches[1] + frame->sc.crop_left) / 2;
+  } else {
+    frame->offs0 = i * vo_img->pitches[0] + frame->sc.crop_left * 2;
+  }
+  frame->crop_start = vo_img->base[0] + frame->sc.crop_top * vo_img->pitches[0];
+  frame->crop_flush = frame->crop_stop = vo_img->base[0]
+    + (frame->sc.delivered_height - frame->sc.crop_bottom) * vo_img->pitches[0];
+  if (i + frame->sc.crop_bottom < 0)
+    frame->crop_flush -= 16 * vo_img->pitches[0];
+
+}
+
 static void xshm_frame_proc_slice (vo_frame_t *vo_img, uint8_t **src) {
   xshm_frame_t  *frame = (xshm_frame_t *) vo_img ;
+  uint8_t *src0;
   /*xshm_driver_t *this = (xshm_driver_t *) vo_img->driver; */
 
-  vo_img->proc_called = 1;
-
-  if( frame->vo_frame.crop_left || frame->vo_frame.crop_top ||
-      frame->vo_frame.crop_right || frame->vo_frame.crop_bottom )
-  {
-    /* we don't support crop, so don't even waste cpu cycles.
-     * cropping will be performed by video_out.c
-     */
-    return;
+  /* delayed setup */
+  if (!vo_img->proc_called) {
+    xshm_frame_proc_setup (vo_img);
+    vo_img->proc_called = 1;
   }
+
+  src0 = src[0] + frame->offs0;
+  if ((src0 < frame->crop_start) || (src0 >= frame->crop_stop))
+    return;
 
   lprintf ("copy... (format %d)\n", frame->format);
 
   if (frame->format == XINE_IMGFMT_YV12)
     frame->yuv2rgb->yuv2rgb_fun (frame->yuv2rgb, frame->rgb_dst,
-				 src[0], src[1], src[2]);
+      src0, src[1] + frame->offs1, src[2] + frame->offs1);
   else
     frame->yuv2rgb->yuy22rgb_fun (frame->yuv2rgb, frame->rgb_dst,
-				  src[0]);
+                                  src0);
+
+  if (src0 >= frame->crop_flush) {
+    if (vo_img->format == XINE_IMGFMT_YV12) {
+      frame->yuv2rgb->yuv2rgb_fun (frame->yuv2rgb, frame->rgb_dst,
+        src0 + 16 * vo_img->pitches[0],
+        src[1] + frame->offs1 + 8 * vo_img->pitches[1],
+        src[2] + frame->offs1 + 8 * vo_img->pitches[2]);
+    } else {
+      frame->yuv2rgb->yuy22rgb_fun (frame->yuv2rgb, frame->rgb_dst,
+        src0 + 16 * vo_img->pitches[0]);
+    }
+  }
 
   lprintf ("copy...done\n");
 }
@@ -451,149 +608,59 @@ static void xshm_update_frame_format (vo_driver_t *this_gen,
 				      vo_frame_t *frame_gen,
 				      uint32_t width, uint32_t height,
 				      double ratio, int format, int flags) {
-  xshm_driver_t  *this = (xshm_driver_t *) this_gen;
   xshm_frame_t   *frame = (xshm_frame_t *) frame_gen;
-  int             do_adapt;
-  int             gui_width;
-  int             gui_height;
-  double          gui_pixel_aspect;
-  int             pitch;
+  int             i, j, pitch;
 
   flags &= VO_BOTH_FIELDS;
 
-  /* ask gui what output size we'll have for this frame */
-  /* get the gui_pixel_aspect before calling xshm_compute_ideal_size() */
-  /* note: gui_width and gui_height may be bogus because we may have not yet*/
-  /*       updated video_pixel_aspect (see _x_vo_scale_compute_ideal_size). */
-  frame->sc.dest_size_cb (frame->sc.user_data, width, height,
-                          frame->sc.video_pixel_aspect,
-                          &gui_width, &gui_height,
-                          &gui_pixel_aspect);
-
-  /* find out if we need to adapt this frame */
-  do_adapt = 0;
-
+  /* (re)allocate yuv buffers */
   if ((width != frame->sc.delivered_width)
       || (height != frame->sc.delivered_height)
-      || (ratio != frame->sc.delivered_ratio)
-      || (flags != frame->flags)
-      || (format != frame->format)
-      || (gui_pixel_aspect != frame->sc.gui_pixel_aspect)
-      || (this->sc.user_ratio != frame->sc.user_ratio)) {
-
-    do_adapt = 1;
-
-    lprintf ("frame format (from decoder) has changed => adapt\n");
+      || (format != frame->format)) {
 
     frame->sc.delivered_width    = width;
     frame->sc.delivered_height   = height;
-    frame->sc.delivered_ratio    = ratio;
-    frame->sc.gui_pixel_aspect   = gui_pixel_aspect;
-    frame->flags                 = flags;
     frame->format                = format;
-    frame->sc.user_ratio         = this->sc.user_ratio;
 
-    xshm_compute_ideal_size (this, frame);
+    av_freep (&frame->vo_frame.base[0]);
+    av_freep (&frame->vo_frame.base[1]);
+    av_freep (&frame->vo_frame.base[2]);
 
-    /* now we have updated video_aspect_pixel we use the callback   */
-    /* again to obtain the correct gui_width and gui_height values. */
-    frame->sc.dest_size_cb (frame->sc.user_data, width, height,
-                            frame->sc.video_pixel_aspect,
-                            &gui_width, &gui_height,
-                            &gui_pixel_aspect);
-  }
-
-  if ((frame->sc.gui_width != gui_width) ||
-      (frame->sc.gui_height != gui_height) ||
-      do_adapt) {
-
-    do_adapt = 1;
-    frame->sc.gui_width  = gui_width;
-    frame->sc.gui_height = gui_height;
-
-    xshm_compute_rgb_size (this, frame);
-
-    lprintf ("gui_size has changed => adapt\n");
-  }
-
-
-  /* ok, now do what we have to do */
-
-  if (do_adapt) {
-
-    lprintf ("updating frame to %d x %d\n",
-	     frame->sc.output_width, frame->sc.output_height);
-
-    LOCK_DISPLAY(this);
-
-    /*
-     * (re-) allocate XImage
-     */
-
-    if (frame->image) {
-
-      dispose_ximage (this, &frame->shminfo, frame->image);
-
-      av_freep(&frame->vo_frame.base[0]);
-      av_freep(&frame->vo_frame.base[1]);
-      av_freep(&frame->vo_frame.base[2]);
-
-      frame->image = NULL;
-    }
-
-    frame->image = create_ximage (this, &frame->shminfo,
-				  frame->sc.output_width, frame->sc.output_height);
-
-    UNLOCK_DISPLAY(this);
-
+    /* bottom black pad for certain crop_top > crop_bottom cases */
     if (format == XINE_IMGFMT_YV12) {
       pitch = (width + 7) & ~7;
       frame->vo_frame.pitches[0] = pitch;
-      frame->vo_frame.base[0] = av_malloc (pitch * height);
+      frame->vo_frame.base[0] = av_malloc (pitch * (height + 16));
+      memset (frame->vo_frame.base[0] + pitch * height, 0, pitch * 16);
       pitch = ((width + 15) & ~15) >> 1;
       frame->vo_frame.pitches[1] = pitch;
       frame->vo_frame.pitches[2] = pitch;
-      frame->vo_frame.base[1] = av_malloc (pitch * ((height + 1) / 2));
-      frame->vo_frame.base[2] = av_malloc (pitch * ((height + 1) / 2));
+      frame->vo_frame.base[1] = av_malloc (pitch * ((height + 17) / 2));
+      memset (frame->vo_frame.base[1] + pitch * height / 2, 128, pitch * 8);
+      frame->vo_frame.base[2] = av_malloc (pitch * ((height + 17) / 2));
+      memset (frame->vo_frame.base[2] + pitch * height / 2, 128, pitch * 8);
     } else {
       pitch = ((width + 3) & ~3) << 1;
       frame->vo_frame.pitches[0] = pitch;
-      frame->vo_frame.base[0] = av_malloc (pitch * height);
+      frame->vo_frame.base[0] = av_malloc (pitch * (height + 16));
+      for (j = pitch * height; j < pitch * (height + 16); j++)
+        (frame->vo_frame.base[0])[j] = (j & 1) << 7;
     }
 
-    lprintf ("stripe out_ht=%i, deliv_ht=%i\n",
-	    frame->sc.output_height, frame->sc.delivered_height);
-
-    /*
-     * set up colorspace converter
-     */
-
-    switch (flags) {
-    case VO_TOP_FIELD:
-    case VO_BOTTOM_FIELD:
-      frame->yuv2rgb->configure (frame->yuv2rgb,
-				 frame->sc.delivered_width,
-				 frame->sc.delivered_height,
-				 2*frame->vo_frame.pitches[0],
-				 2*frame->vo_frame.pitches[1],
-				 frame->sc.output_width,
-				 frame->sc.output_height,
-				 frame->image->bytes_per_line*2);
-      break;
-    case VO_BOTH_FIELDS:
-      frame->yuv2rgb->configure (frame->yuv2rgb,
-				 frame->sc.delivered_width,
-				 frame->sc.delivered_height,
-				 frame->vo_frame.pitches[0],
-				 frame->vo_frame.pitches[1],
-				 frame->sc.output_width,
-				 frame->sc.output_height,
-				 frame->image->bytes_per_line);
-      break;
-    }
+    /* defer the rest to xshm_frame_proc_setup () */
+    frame->state &= ~(FS_DONE | FS_LATE);
   }
 
-  xshm_frame_field ((vo_frame_t *)frame, flags);
+  if (!isnan (ratio) && (ratio < 1000.0) && (ratio > 0.001)
+    && (ratio != frame->sc.delivered_ratio)) {
+    frame->sc.delivered_ratio  = ratio;
+    frame->state &= ~FS_DONE;
+  }
+
+  if (flags != frame->flags) {
+    frame->flags = flags;
+    frame->state &= ~FS_FLAGS;
+  }
 }
 
 static void xshm_overlay_clut_yuv2rgb(xshm_driver_t  *this, vo_overlay_t *overlay,
@@ -652,6 +719,8 @@ static void xshm_overlay_blend (vo_driver_t *this_gen,
 				vo_frame_t *frame_gen, vo_overlay_t *overlay) {
   xshm_driver_t  *this  = (xshm_driver_t *) this_gen;
   xshm_frame_t   *frame = (xshm_frame_t *) frame_gen;
+  int width = frame->sc.delivered_width - frame->sc.crop_left - frame->sc.crop_right;
+  int height = frame->sc.delivered_height - frame->sc.crop_top - frame->sc.crop_bottom;
 
   /* Alpha Blend here */
   if (overlay->rle) {
@@ -669,19 +738,19 @@ static void xshm_overlay_blend (vo_driver_t *this_gen,
         case 16:
          _x_blend_rgb16 ((uint8_t *)frame->image->data, overlay,
 		      frame->sc.output_width, frame->sc.output_height,
-		      frame->sc.delivered_width, frame->sc.delivered_height,
+		      width, height,
                       &this->alphablend_extra_data);
          break;
         case 24:
          _x_blend_rgb24 ((uint8_t *)frame->image->data, overlay,
 		      frame->sc.output_width, frame->sc.output_height,
-		      frame->sc.delivered_width, frame->sc.delivered_height,
+		      width, height,
                       &this->alphablend_extra_data);
          break;
         case 32:
          _x_blend_rgb32 ((uint8_t *)frame->image->data, overlay,
 		      frame->sc.output_width, frame->sc.output_height,
-		      frame->sc.delivered_width, frame->sc.delivered_height,
+		      width, height,
                       &this->alphablend_extra_data);
          break;
         default:
@@ -724,6 +793,12 @@ static int xshm_redraw_needed (vo_driver_t *this_gen) {
     this->sc.delivered_height   = this->cur_frame->sc.delivered_height;
     this->sc.delivered_width    = this->cur_frame->sc.delivered_width;
     this->sc.video_pixel_aspect = this->cur_frame->sc.video_pixel_aspect;
+
+    this->sc.crop_left          = this->cur_frame->sc.crop_left;
+    this->sc.crop_right         = this->cur_frame->sc.crop_right;
+    this->sc.crop_top           = this->cur_frame->sc.crop_top;
+    this->sc.crop_bottom        = this->cur_frame->sc.crop_bottom;
+
     if( _x_vo_scale_redraw_needed( &this->sc ) ) {
 
       clean_output_area (this, this->cur_frame);
@@ -753,6 +828,12 @@ static void xshm_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen) {
   this->sc.delivered_height   = frame->sc.delivered_height;
   this->sc.delivered_width    = frame->sc.delivered_width;
   this->sc.video_pixel_aspect = frame->sc.video_pixel_aspect;
+
+    this->sc.crop_left          = frame->sc.crop_left;
+    this->sc.crop_right         = frame->sc.crop_right;
+    this->sc.crop_top           = frame->sc.crop_top;
+    this->sc.crop_bottom        = frame->sc.crop_bottom;
+
   if( _x_vo_scale_redraw_needed( &this->sc ) ) {
 
     clean_output_area (this, frame);
@@ -795,6 +876,27 @@ static void xshm_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen) {
   UNLOCK_DISPLAY(this);
 
   lprintf ("display frame done\n");
+
+  /* just in case somebody changes crop this late - take over for next time */
+  /* adjust cropping to what yuv2rgb can handle */
+  if (frame_gen->format == XINE_IMGFMT_YV12) {
+    frame_gen->crop_left &= ~7;
+    frame_gen->crop_top &= ~1;
+  } else {
+    frame_gen->crop_left &= ~3;
+  }
+  /* check for crop changes */
+  if ((frame_gen->crop_left != frame->sc.crop_left)
+    || (frame_gen->crop_top != frame->sc.crop_top)
+    || (frame_gen->crop_right != frame->sc.crop_right)
+    || (frame_gen->crop_bottom != frame->sc.crop_bottom)) {
+    frame->sc.crop_left = frame_gen->crop_left;
+    frame->sc.crop_top = frame_gen->crop_top;
+    frame->sc.crop_right = frame_gen->crop_right;
+    frame->sc.crop_bottom = frame_gen->crop_bottom;
+    frame->state &= ~FS_DONE;
+    frame->state |= FS_LATE;
+  }
 }
 
 static int xshm_get_property (vo_driver_t *this_gen, int property) {
