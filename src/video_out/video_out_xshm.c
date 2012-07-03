@@ -457,6 +457,7 @@ static void xshm_update_frame_format (vo_driver_t *this_gen,
   int             gui_width;
   int             gui_height;
   double          gui_pixel_aspect;
+  int             pitch;
 
   flags &= VO_BOTH_FIELDS;
 
@@ -546,15 +547,18 @@ static void xshm_update_frame_format (vo_driver_t *this_gen,
     UNLOCK_DISPLAY(this);
 
     if (format == XINE_IMGFMT_YV12) {
-      frame->vo_frame.pitches[0] = 8*((width + 7) / 8);
-      frame->vo_frame.pitches[1] = 8*((width + 15) / 16);
-      frame->vo_frame.pitches[2] = 8*((width + 15) / 16);
-      frame->vo_frame.base[0] = av_mallocz(frame->vo_frame.pitches[0] * height);
-      frame->vo_frame.base[1] = av_mallocz(frame->vo_frame.pitches[1] * ((height+1)/2));
-      frame->vo_frame.base[2] = av_mallocz(frame->vo_frame.pitches[2] * ((height+1)/2));
+      pitch = (width + 7) & ~7;
+      frame->vo_frame.pitches[0] = pitch;
+      frame->vo_frame.base[0] = av_malloc (pitch * height);
+      pitch = ((width + 15) & ~15) >> 1;
+      frame->vo_frame.pitches[1] = pitch;
+      frame->vo_frame.pitches[2] = pitch;
+      frame->vo_frame.base[1] = av_malloc (pitch * ((height + 1) / 2));
+      frame->vo_frame.base[2] = av_malloc (pitch * ((height + 1) / 2));
     } else {
-      frame->vo_frame.pitches[0] = 8*((width + 3) / 4);
-      frame->vo_frame.base[0] = av_mallocz(frame->vo_frame.pitches[0] * height);
+      pitch = ((width + 3) & ~3) << 1;
+      frame->vo_frame.pitches[0] = pitch;
+      frame->vo_frame.base[0] = av_malloc (pitch * height);
     }
 
     lprintf ("stripe out_ht=%i, deliv_ht=%i\n",
