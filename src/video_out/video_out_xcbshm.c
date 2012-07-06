@@ -863,7 +863,8 @@ static int xshm_set_property (vo_driver_t *this_gen,
     this->yuv2rgb_factory->set_csc_levels (this->yuv2rgb_factory,
 					   this->yuv2rgb_brightness,
 					   this->yuv2rgb_contrast,
-					   this->yuv2rgb_saturation);
+					   this->yuv2rgb_saturation,
+					   CM_DEFAULT);
     this->sc.force_redraw = 1;
     break;
 
@@ -872,7 +873,8 @@ static int xshm_set_property (vo_driver_t *this_gen,
     this->yuv2rgb_factory->set_csc_levels (this->yuv2rgb_factory,
 					   this->yuv2rgb_brightness,
 					   this->yuv2rgb_contrast,
-					   this->yuv2rgb_saturation);
+					   this->yuv2rgb_saturation,
+					   CM_DEFAULT);
     this->sc.force_redraw = 1;
     break;
 
@@ -881,7 +883,8 @@ static int xshm_set_property (vo_driver_t *this_gen,
     this->yuv2rgb_factory->set_csc_levels (this->yuv2rgb_factory,
 					   this->yuv2rgb_brightness,
 					   this->yuv2rgb_contrast,
-					   this->yuv2rgb_saturation);
+					   this->yuv2rgb_saturation,
+					   CM_DEFAULT);
     this->sc.force_redraw = 1;
     break;
 
@@ -1323,7 +1326,8 @@ static vo_driver_t *xshm_open_plugin(video_driver_class_t *class_gen, const void
   this->yuv2rgb_factory->set_csc_levels (this->yuv2rgb_factory,
 					 this->yuv2rgb_brightness,
 					 this->yuv2rgb_contrast,
-					 this->yuv2rgb_saturation);
+					 this->yuv2rgb_saturation,
+					 CM_DEFAULT);
 
   this->xoverlay = xcbosd_create(this->xine, this->connection, this->screen,
                                  this->window, XCBOSD_SHAPED);

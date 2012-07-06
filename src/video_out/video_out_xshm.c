@@ -951,7 +951,8 @@ static int xshm_set_property (vo_driver_t *this_gen,
     this->yuv2rgb_factory->set_csc_levels (this->yuv2rgb_factory,
 					   this->yuv2rgb_brightness,
 					   this->yuv2rgb_contrast,
-					   this->yuv2rgb_saturation);
+					   this->yuv2rgb_saturation,
+					   CM_DEFAULT);
     this->sc.force_redraw = 1;
     break;
 
@@ -960,7 +961,8 @@ static int xshm_set_property (vo_driver_t *this_gen,
     this->yuv2rgb_factory->set_csc_levels (this->yuv2rgb_factory,
 					   this->yuv2rgb_brightness,
 					   this->yuv2rgb_contrast,
-					   this->yuv2rgb_saturation);
+					   this->yuv2rgb_saturation,
+					   CM_DEFAULT);
     this->sc.force_redraw = 1;
     break;
 
@@ -969,7 +971,8 @@ static int xshm_set_property (vo_driver_t *this_gen,
     this->yuv2rgb_factory->set_csc_levels (this->yuv2rgb_factory,
 					   this->yuv2rgb_brightness,
 					   this->yuv2rgb_contrast,
-					   this->yuv2rgb_saturation);
+					   this->yuv2rgb_saturation,
+					   CM_DEFAULT);
     this->sc.force_redraw = 1;
     break;
 
@@ -1364,7 +1367,8 @@ static vo_driver_t *xshm_open_plugin_2 (video_driver_class_t *class_gen, const v
   this->yuv2rgb_factory->set_csc_levels (this->yuv2rgb_factory,
 					 this->yuv2rgb_brightness,
 					 this->yuv2rgb_contrast,
-					 this->yuv2rgb_saturation);
+					 this->yuv2rgb_saturation,
+					 CM_DEFAULT);
 
   LOCK_DISPLAY(this);
   this->xoverlay = x11osd_create (this->xine, this->display, this->screen,

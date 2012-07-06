@@ -1640,7 +1640,8 @@ static int opengl_set_property (vo_driver_t *this_gen,
     this->yuv2rgb_factory->set_csc_levels (this->yuv2rgb_factory,
 					   this->yuv2rgb_brightness,
 					   this->yuv2rgb_contrast,
-					   this->yuv2rgb_saturation);
+					   this->yuv2rgb_saturation,
+					   CM_DEFAULT);
     this->sc.force_redraw = 1;
     break;
   case VO_PROP_CONTRAST:
@@ -1648,7 +1649,8 @@ static int opengl_set_property (vo_driver_t *this_gen,
     this->yuv2rgb_factory->set_csc_levels (this->yuv2rgb_factory,
 					   this->yuv2rgb_brightness,
 					   this->yuv2rgb_contrast,
-					   this->yuv2rgb_saturation);
+					   this->yuv2rgb_saturation,
+					   CM_DEFAULT);
     this->sc.force_redraw = 1;
     break;
   case VO_PROP_SATURATION:
@@ -1656,7 +1658,8 @@ static int opengl_set_property (vo_driver_t *this_gen,
     this->yuv2rgb_factory->set_csc_levels (this->yuv2rgb_factory,
 					   this->yuv2rgb_brightness,
 					   this->yuv2rgb_contrast,
-					   this->yuv2rgb_saturation);
+					   this->yuv2rgb_saturation,
+					   CM_DEFAULT);
     this->sc.force_redraw = 1;
     break;
   default:
@@ -1889,7 +1892,8 @@ static vo_driver_t *opengl_open_plugin (video_driver_class_t *class_gen, const v
   this->yuv2rgb_factory->set_csc_levels (this->yuv2rgb_factory,
 					 this->yuv2rgb_brightness,
 					 this->yuv2rgb_contrast,
-					 this->yuv2rgb_saturation);
+					 this->yuv2rgb_saturation,
+					 CM_DEFAULT);
 
   XLockDisplay (this->display);
   this->xoverlay = x11osd_create (this->xine, this->display, this->screen,
