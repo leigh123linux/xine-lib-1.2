@@ -26,7 +26,7 @@
  *
  * ported to xcb by Christoph Pfister - Feb 2007
  *
- * crop support added by Torsten Jager <t.jager@gmx.de>
+ * fullrange/HD color and crop support added by Torsten Jager <t.jager@gmx.de>
  */
 
 #define LOG_MODULE "video_out_xcbshm"
@@ -113,11 +113,14 @@ typedef struct {
   int                scanline_pad;
   int                use_shm;
 
-  int                yuv2rgb_brightness;
-  int                yuv2rgb_contrast;
-  int                yuv2rgb_saturation;
+  int                brightness;
+  int                contrast;
+  int                saturation;
   uint8_t           *yuv2rgb_cmap;
   yuv2rgb_factory_t *yuv2rgb_factory;
+
+  /* color matrix switching */
+  int                cm_active, cm_state;
 
   vo_scale_t         sc;
 
@@ -140,6 +143,10 @@ typedef struct {
   xine_t              *xine;
 } xshm_class_t;
 
+
+/* import common color matrix stuff */
+#define CM_DRIVER_T xshm_driver_t
+#include "color_matrix.c"
 
 /*
  * allocate an XImage, try XShm first but fall back to
@@ -238,7 +245,7 @@ static void dispose_ximage(xshm_driver_t *this, xshm_frame_t *frame)
 static uint32_t xshm_get_capabilities (vo_driver_t *this_gen) {
   xshm_driver_t *this = (xshm_driver_t *) this_gen;
   uint32_t capabilities = VO_CAP_CROP | VO_CAP_YV12 | VO_CAP_YUY2 | VO_CAP_BRIGHTNESS
-    | VO_CAP_CONTRAST | VO_CAP_SATURATION;
+    | VO_CAP_CONTRAST | VO_CAP_SATURATION | VO_CAP_COLOR_MATRIX | VO_CAP_FULLRANGE;
 
   if( this->xoverlay )
     capabilities |= VO_CAP_UNSCALED_OVERLAY;
@@ -418,6 +425,17 @@ static void xshm_frame_proc_setup (vo_frame_t *vo_img) {
     + (frame->sc.delivered_height - frame->sc.crop_bottom) * vo_img->pitches[0];
   if (i + frame->sc.crop_bottom < 0)
     frame->crop_flush -= 16 * vo_img->pitches[0];
+
+  /* switch color matrix/range */
+  i = cm_from_frame (vo_img);
+  if (i != this->cm_active) {
+    this->cm_active = i;
+    this->yuv2rgb_factory->set_csc_levels (this->yuv2rgb_factory,
+      this->brightness, this->contrast, this->saturation, i);
+    xprintf (this->xine, XINE_VERBOSITY_LOG,
+      "video_out_xcbshm: b %d c %d s %d [%s]\n",
+      this->brightness, this->contrast, this->saturation, cm_names[i]);
+  }
 }
 
 static void xshm_frame_proc_slice (vo_frame_t *vo_img, uint8_t **src) {
@@ -820,11 +838,11 @@ static int xshm_get_property (vo_driver_t *this_gen, int property) {
   case VO_PROP_MAX_NUM_FRAMES:
     return 15;
   case VO_PROP_BRIGHTNESS:
-    return this->yuv2rgb_brightness;
+    return this->brightness;
   case VO_PROP_CONTRAST:
-    return this->yuv2rgb_contrast;
+    return this->contrast;
   case VO_PROP_SATURATION:
-    return this->yuv2rgb_saturation;
+    return this->saturation;
   case VO_PROP_WINDOW_WIDTH:
     return this->sc.gui_width;
   case VO_PROP_WINDOW_HEIGHT:
@@ -859,32 +877,20 @@ static int xshm_set_property (vo_driver_t *this_gen,
     break;
 
   case VO_PROP_BRIGHTNESS:
-    this->yuv2rgb_brightness = value;
-    this->yuv2rgb_factory->set_csc_levels (this->yuv2rgb_factory,
-					   this->yuv2rgb_brightness,
-					   this->yuv2rgb_contrast,
-					   this->yuv2rgb_saturation,
-					   CM_DEFAULT);
+    this->brightness = value;
+    this->cm_active = 0;
     this->sc.force_redraw = 1;
     break;
 
   case VO_PROP_CONTRAST:
-    this->yuv2rgb_contrast = value;
-    this->yuv2rgb_factory->set_csc_levels (this->yuv2rgb_factory,
-					   this->yuv2rgb_brightness,
-					   this->yuv2rgb_contrast,
-					   this->yuv2rgb_saturation,
-					   CM_DEFAULT);
+    this->contrast = value;
+    this->cm_active = 0;
     this->sc.force_redraw = 1;
     break;
 
   case VO_PROP_SATURATION:
-    this->yuv2rgb_saturation = value;
-    this->yuv2rgb_factory->set_csc_levels (this->yuv2rgb_factory,
-					   this->yuv2rgb_brightness,
-					   this->yuv2rgb_contrast,
-					   this->yuv2rgb_saturation,
-					   CM_DEFAULT);
+    this->saturation = value;
+    this->cm_active = 0;
     this->sc.force_redraw = 1;
     break;
 
@@ -1018,6 +1024,8 @@ static void xshm_dispose (vo_driver_t *this_gen) {
     this->cur_frame->vo_frame.dispose (&this->cur_frame->vo_frame);
 
   this->yuv2rgb_factory->dispose (this->yuv2rgb_factory);
+
+  cm_close (this);
 
   pthread_mutex_lock(&this->main_mutex);
   xcb_free_gc(this->connection, this->gc);
@@ -1317,17 +1325,13 @@ static vo_driver_t *xshm_open_plugin(video_driver_class_t *class_gen, const void
     return NULL;
   }
 
-  this->yuv2rgb_brightness = 0;
-  this->yuv2rgb_contrast   = 128;
-  this->yuv2rgb_saturation = 128;
+  cm_init (this);
 
-  this->yuv2rgb_factory = yuv2rgb_factory_init (mode, swapped,
-						this->yuv2rgb_cmap);
-  this->yuv2rgb_factory->set_csc_levels (this->yuv2rgb_factory,
-					 this->yuv2rgb_brightness,
-					 this->yuv2rgb_contrast,
-					 this->yuv2rgb_saturation,
-					 CM_DEFAULT);
+  this->brightness = 0;
+  this->contrast   = 128;
+  this->saturation = 128;
+
+  this->yuv2rgb_factory = yuv2rgb_factory_init (mode, swapped, this->yuv2rgb_cmap);
 
   this->xoverlay = xcbosd_create(this->xine, this->connection, this->screen,
                                  this->window, XCBOSD_SHAPED);
