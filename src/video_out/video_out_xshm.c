@@ -609,7 +609,7 @@ static void xshm_update_frame_format (vo_driver_t *this_gen,
 				      uint32_t width, uint32_t height,
 				      double ratio, int format, int flags) {
   xshm_frame_t   *frame = (xshm_frame_t *) frame_gen;
-  int             i, j, pitch;
+  int             j, pitch;
 
   flags &= VO_BOTH_FIELDS;
 
