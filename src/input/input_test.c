@@ -62,7 +62,7 @@ typedef struct {
   int               width, height, type;
 } test_input_plugin_t;
 
-static const char * const test_names[TEST_MAX_NAMES + 1] = {
+static const char * const test_names[TEST_MAX_NAMES + 1 + 1] = {
   "test://",
   "test://color_circle.bmp",
   "test://rgb_levels.bmp",
@@ -73,7 +73,8 @@ static const char * const test_names[TEST_MAX_NAMES + 1] = {
   "test://rgb_levels.y4m",
   "test://saturation_levels.y4m",
   "test://uv_square.y4m",
-  "test://y_resolution.y4m"
+  "test://y_resolution.y4m",
+  NULL
 };
 
 /* TJ. the generator code - actually a cut down version of my "testvideo" project */
@@ -579,7 +580,7 @@ static input_plugin_t *test_class_get_instance (input_class_t *cls_gen,
 
 static const char * const *test_class_get_autoplay_list (input_class_t *this_gen, int *num_files)
 {
-  *num_files = sizeof(test_names) / sizeof(test_names[0]) - 1;
+  *num_files = sizeof(test_names) / sizeof(test_names[0]) - 2;
 
   return test_names + 1;
 }
