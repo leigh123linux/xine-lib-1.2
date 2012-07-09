@@ -77,6 +77,19 @@ static const char * const test_names[TEST_MAX_NAMES + 1 + 1] = {
   NULL
 };
 
+const char * const test_titles[TEST_MAX_NAMES/2] = {
+  N_("Color Circle"),
+  N_("RGB Levels"),
+  N_("Saturation Levels"),
+  N_("UV Square"),
+  N_("Luminance Resolution"),
+};
+
+static const char * const test_cm[] = {
+  " ITU-R 470 BG / SDTV",
+  " ITU-R 709 / HDTV",
+};
+
 /* TJ. the generator code - actually a cut down version of my "testvideo" project */
 
 static void put32le (unsigned int v, unsigned char *p) {
@@ -418,6 +431,16 @@ static int test_make (test_input_plugin_t * this) {
         *q2++ = a > 255 ? 255 : a;
       }
     }
+  }
+
+  /* human-friendly title */
+  if (type > 0 && type <= TEST_MAX_NAMES / 2) {
+    char *title = _x_asprintf("%s (%s)%s",
+                              _(test_titles[type-1]),
+                              yuv ? "YUV" : "RGB",
+                              yuv ? test_cm[!!hdtv] : "");
+    _x_meta_info_set(this->stream, XINE_META_INFO_TITLE, title);
+    free(title);
   }
 
   return (1);
