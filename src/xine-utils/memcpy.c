@@ -499,6 +499,7 @@ void xine_probe_fast_memcpy(xine_t *xine)
 
   /* check if function is configured and valid for this machine */
   if( best != 0 &&
+      best < sizeof(memcpy_methods)/sizeof(memcpy_method[0]) &&
      (config_flags & memcpy_method[best].cpu_require) ==
       memcpy_method[best].cpu_require ) {
     lprintf("using %s memcpy()\n", memcpy_method[best].name );
