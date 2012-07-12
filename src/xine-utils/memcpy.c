@@ -163,6 +163,7 @@ int d0, d1, d2;
   return (to);
 }
 
+#define AVX_MMREG_SIZE 32
 #define SSE_MMREG_SIZE 16
 #define MMX_MMREG_SIZE 8
 
@@ -246,6 +247,96 @@ static void * sse_memcpy(void * to, const void * from, size_t len)
         :: "r" (from), "r" (to) : "memory");
         from = ((const unsigned char *)from) + 64;
         to = ((unsigned char *)to) + 64;
+      }
+    /* since movntq is weakly-ordered, a "sfence"
+     * is needed to become ordered again. */
+    __asm__ __volatile__ ("sfence":::"memory");
+  }
+  /*
+   *	Now do the tail of the block
+   */
+  if(len) linux_kernel_memcpy_impl(to, from, len);
+  return retval;
+}
+
+static void * avx_memcpy(void * to, const void * from, size_t len)
+{
+  void *retval;
+  size_t i;
+  retval = to;
+
+  /* PREFETCH has effect even for MOVSB instruction ;) */
+  __asm__ __volatile__ (
+    "   prefetchnta (%0)\n"
+    "   prefetchnta 32(%0)\n"
+    "   prefetchnta 64(%0)\n"
+    "   prefetchnta 96(%0)\n"
+    "   prefetchnta 128(%0)\n"
+    "   prefetchnta 160(%0)\n"
+    "   prefetchnta 192(%0)\n"
+    "   prefetchnta 224(%0)\n"
+    "   prefetchnta 256(%0)\n"
+    "   prefetchnta 288(%0)\n"
+    : : "r" (from) );
+
+  if(len >= MIN_LEN)
+  {
+    register uintptr_t delta;
+    /* Align destinition to MMREG_SIZE -boundary */
+    delta = ((uintptr_t)to)&(AVX_MMREG_SIZE-1);
+    if(delta)
+    {
+      delta=AVX_MMREG_SIZE-delta;
+      len -= delta;
+      small_memcpy(to, from, delta);
+    }
+    i = len >> 7; /* len/128 */
+    len&=127;
+    if(((uintptr_t)from) & 31)
+      /* if SRC is misaligned */
+      for(; i>0; i--)
+      {
+        __asm__ __volatile__ (
+        "prefetchnta 320(%0)\n"
+        "prefetchnta 352(%0)\n"
+        "prefetchnta 384(%0)\n"
+        "prefetchnta 416(%0)\n"
+        "vmovups    (%0), %%ymm0\n"
+        "vmovups  32(%0), %%ymm1\n"
+        "vmovups  64(%0), %%ymm2\n"
+        "vmovups  96(%0), %%ymm3\n"
+        "vmovntps %%ymm0,   (%1)\n"
+        "vmovntps %%ymm1, 32(%1)\n"
+        "vmovntps %%ymm2, 64(%1)\n"
+        "vmovntps %%ymm3, 96(%1)\n"
+        :: "r" (from), "r" (to) : "memory");
+        from = ((const unsigned char *)from) + 128;
+        to = ((unsigned char *)to) + 128;
+      }
+    else
+      /*
+         Only if SRC is aligned on 16-byte boundary.
+         It allows to use movaps instead of movups, which required data
+         to be aligned or a general-protection exception (#GP) is generated.
+      */
+      for(; i>0; i--)
+      {
+        __asm__ __volatile__ (
+        "prefetchnta 320(%0)\n"
+        "prefetchnta 352(%0)\n"
+        "prefetchnta 384(%0)\n"
+        "prefetchnta 416(%0)\n"
+        "vmovaps    (%0), %%ymm0\n"
+        "vmovaps  32(%0), %%ymm1\n"
+        "vmovaps  64(%0), %%ymm2\n"
+        "vmovaps  96(%0), %%ymm3\n"
+        "vmovntps %%ymm0,   (%1)\n"
+        "vmovntps %%ymm1, 32(%1)\n"
+        "vmovntps %%ymm2, 64(%1)\n"
+        "vmovntps %%ymm3, 96(%1)\n"
+        :: "r" (from), "r" (to) : "memory");
+        from = ((const unsigned char *)from) + 128;
+        to = ((unsigned char *)to) + 128;
       }
     /* since movntq is weakly-ordered, a "sfence"
      * is needed to become ordered again. */
@@ -399,6 +490,7 @@ static const struct {
   { "MMX ", mmx_memcpy, MM_MMX },
   { "MMXEXT", mmx2_memcpy, MM_MMXEXT },
   { "SSE", sse_memcpy, MM_MMXEXT|MM_SSE },
+  { "AVX", avx_memcpy, MM_ACCEL_X86_AVX },
 #endif /* ARCH_X86 */
 #if defined (ARCH_PPC) && !defined (HOST_OS_DARWIN)
   { "ppcasm", ppcasm_memcpy, 0 },
@@ -478,7 +570,7 @@ void xine_probe_fast_memcpy(xine_t *xine)
   static const char *const memcpy_methods[] = {
     "probe", "libc",
 #if (defined(ARCH_X86) || defined(ARCH_X86_64)) && !defined(_MSC_VER)
-    "kernel", "mmx", "mmxext", "sse",
+    "kernel", "mmx", "mmxext", "sse", "avx",
 #endif
 #if defined (ARCH_PPC) && !defined (HOST_OS_DARWIN)
     "ppcasm_memcpy", "ppcasm_cacheable_memcpy",
