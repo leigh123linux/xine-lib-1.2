@@ -159,8 +159,13 @@ typedef struct {
 
   int		            zoom_x;
   int		            zoom_y;
+
+  int                cm_state;
 } opengl2_driver_t;
 
+/* import common color matrix stuff */
+#define CM_DRIVER_T opengl2_driver_t
+#include "color_matrix.c"
 
 
 typedef struct {
@@ -343,24 +348,6 @@ static const char *yuv422_frag=
 "}\n";
 
 
-
-float yuv_601[] = {
-    1.16438,  0.00000,  1.59603, -0.87420,
-    1.16438, -0.39176, -0.81297,  0.53167,
-    1.16438,  2.01723,  0.00000, -1.08563
-};
-
-float yuv_709[] = {
-    1.16438,  0.00000,  1.79274, -0.97295,
-    1.16438, -0.21325, -0.53291,  0.30148,
-    1.16438,  2.11240,  0.00000, -1.13340
-};
-
-float yuv_240[] = {
-    1.16438,  0.00000,  1.79411, -0.97363,
-    1.16438, -0.25798, -0.54258,  0.32879,
-    1.16438,  2.07871,  0.00000, -1.11649
-};
 
 static void load_csc_matrix( GLuint prog, float *cf )
 {
@@ -766,39 +753,66 @@ static int opengl2_redraw_needed( vo_driver_t *this_gen )
 
 
 
-static void opengl2_update_csc_matrix( opengl2_driver_t *that, opengl2_frame_t *frame )
-{
-  float *color_standard = (frame->height > 576) ? yuv_709 : yuv_601;
+static void opengl2_update_csc_matrix (opengl2_driver_t *that, opengl2_frame_t *frame) {
+  int color_standard;
+
+  color_standard = cm_from_frame (&frame->vo_frame);
 
   if ( that->update_csc || that->color_standard != color_standard ) {
-    float hue = that->hue/100.0;
-    float saturation = that->saturation/100.0;
-    float contrast = that->contrast/100.0;
-    float brightness = that->brightness/100.0;
+    float hue = (float)that->hue * 3.14159265359 / 128.0;
+    float saturation = (float)that->saturation / 128.0;
+    float contrast = (float)that->contrast / 128.0;
+    float brightness = that->brightness;
     float uvcos = saturation * cos( hue );
     float uvsin = saturation * sin( hue );
-    float uc, vc;
+    float kb, kr;
+    float vr, vg, ug, ub;
+    float ygain, yoffset;
     int i;
 
-    for (i=0; i<3; ++i ) {
-      that->csc_matrix[(i * 4) + 0] = color_standard[(i * 4) + 0];
-      uc = color_standard[(i * 4) + 1];
-      vc = color_standard[(i * 4) + 2];
+    switch (color_standard >> 1) {
+      case 1:  kb = 0.0722; kr = 0.2126; break; /* ITU-R 709 */
+      case 4:  kb = 0.1100; kr = 0.3000; break; /* FCC */
+      case 7:  kb = 0.0870; kr = 0.2120; break; /* SMPTE 240 */
+      default: kb = 0.1140; kr = 0.2990;        /* ITU-R 601 */
+    }
+    vr = 2.0 * (1.0 - kr);
+    vg = -2.0 * kr * (1.0 - kr) / (1.0 - kb - kr);
+    ug = -2.0 * kb * (1.0 - kb) / (1.0 - kb - kr);
+    ub = 2.0 * (1.0 - kb);
 
-      that->csc_matrix[(i * 4) + 3] = brightness - (16.0/219.0);
-      that->csc_matrix[(i * 4) + 1] = (uvcos * uc) + (uvsin * vc);
-      that->csc_matrix[(i * 4) + 3] += ((-128.0 / 255.0) * uvcos * uc) - ((128.0 / 255.0) * uvsin * vc);
-      that->csc_matrix[(i * 4) + 2] = (uvsin * uc) + (uvcos * vc);
-      that->csc_matrix[(i * 4) + 3] += ((-128.0 / 255.0) * uvsin * uc) - ((128.0 / 255.0) * uvcos * vc);
+    if (color_standard & 1) {
+      /* fullrange mode */
+      yoffset = brightness;
+      ygain = contrast;
+      uvcos *= contrast * 255.0 / 254.0;
+      uvsin *= contrast * 255.0 / 254.0;
+    } else {
+      /* mpeg range */
+      yoffset = brightness - 16.0;
+      ygain = contrast * 255.0 / 219.0;
+      uvcos *= contrast * 255.0 / 224.0;
+      uvsin *= contrast * 255.0 / 224.0;
+    }
 
-      that->csc_matrix[(i * 4) + 0] *= contrast;
-      that->csc_matrix[(i * 4) + 1] *= contrast;
-      that->csc_matrix[(i * 4) + 2] *= contrast;
-      that->csc_matrix[(i * 4) + 3] *= contrast;
+    /* csc_matrix[rgb][yuv1] */
+    that->csc_matrix[1] = -uvsin * vr;
+    that->csc_matrix[2] = uvcos * vr;
+    that->csc_matrix[5] = uvcos * ug - uvsin * vg;
+    that->csc_matrix[6] = uvcos * vg + uvsin * ug;
+    that->csc_matrix[9] = uvcos * ub;
+    that->csc_matrix[10] = uvsin * ub;
+    for (i = 0; i < 12; i += 4) {
+      that->csc_matrix[i] = ygain;
+      that->csc_matrix[i + 3] = (yoffset * ygain
+        - 128.0 * (that->csc_matrix[i + 1] + that->csc_matrix[i + 2])) / 255.0;
     }
 
     that->color_standard = color_standard;
     that->update_csc = 0;
+
+    xprintf (that->xine, XINE_VERBOSITY_LOG,"video_out_opengl2: b %d c %d s %d h %d [%s]\n",
+      that->brightness, that->contrast, that->saturation, that->hue, cm_names[color_standard]);
   }
 }
 
@@ -1319,13 +1333,13 @@ static void opengl2_get_property_min_max( vo_driver_t *this_gen, int property, i
 {
   switch ( property ) {
     case VO_PROP_HUE:
-      *max = 314; *min = -314; break;
+      *max = 127; *min = -128; break;
     case VO_PROP_SATURATION:
-      *max = 1000; *min = 0; break;
+      *max = 255; *min = 0; break;
     case VO_PROP_CONTRAST:
-      *max = 1000; *min = 0; break;
+      *max = 255; *min = 0; break;
     case VO_PROP_BRIGHTNESS:
-      *max = 100; *min = -100; break;
+      *max = 127; *min = -128; break;
     case VO_PROP_SHARPNESS:
       *max = 100; *min = -100; break;
     default:
@@ -1402,6 +1416,8 @@ static void opengl2_set_bicubic( void *this_gen, xine_cfg_entry_t *entry )
 static void opengl2_dispose( vo_driver_t *this_gen )
 {
   opengl2_driver_t *this = (opengl2_driver_t *) this_gen;
+
+  cm_close (this);
 
   pthread_mutex_destroy(&this->drawable_lock);
 
@@ -1544,19 +1560,23 @@ static vo_driver_t *opengl2_open_plugin( video_driver_class_t *class_gen, const 
 
   this->capabilities = VO_CAP_YV12 | VO_CAP_YUY2 | VO_CAP_CROP | VO_CAP_UNSCALED_OVERLAY | VO_CAP_CUSTOM_EXTENT_OVERLAY;// | VO_CAP_ARGB_LAYER_OVERLAY | VO_CAP_VIDEO_WINDOW_OVERLAY;
 
+  this->capabilities |= VO_CAP_COLOR_MATRIX | VO_CAP_FULLRANGE;
+
   this->capabilities |= VO_CAP_HUE;
   this->capabilities |= VO_CAP_SATURATION;
   this->capabilities |= VO_CAP_CONTRAST;
   this->capabilities |= VO_CAP_BRIGHTNESS;
 
   this->update_csc = 1;
-  this->color_standard = yuv_601;
+  this->color_standard = 10;
   this->hue = 0;
-  this->saturation = 100;
-  this->contrast = 100;
+  this->saturation = 128;
+  this->contrast = 128;
   this->brightness = 0;
   this->sharpness = 0;
   this->sharpness_program.compiled = 0;
+
+  cm_init (this);
 
   this->bicubic_pass1_program.compiled = 0;
   this->bicubic_pass2_program.compiled = 0;
