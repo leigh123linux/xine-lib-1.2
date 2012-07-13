@@ -1221,9 +1221,11 @@ static void opengl2_display_frame( vo_driver_t *this_gen, vo_frame_t *frame_gen 
 
   opengl2_redraw_needed( this_gen );
 
+  XLockDisplay (this->display);
   pthread_mutex_lock(&this->drawable_lock); /* protect drawable from being changed */
   opengl2_draw( this, frame );
   pthread_mutex_unlock(&this->drawable_lock); /* allow changing drawable again */
+  XUnlockDisplay (this->display);
 
   frame->vo_frame.free( &frame->vo_frame );
 }
