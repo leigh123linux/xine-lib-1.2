@@ -259,6 +259,7 @@ static void * sse_memcpy(void * to, const void * from, size_t len)
   return retval;
 }
 
+#ifdef HAVE_AVX
 static void * avx_memcpy(void * to, const void * from, size_t len)
 {
   void *retval;
@@ -348,6 +349,7 @@ static void * avx_memcpy(void * to, const void * from, size_t len)
   if(len) linux_kernel_memcpy_impl(to, from, len);
   return retval;
 }
+#endif /* HAVE_AVX */
 
 static void * mmx_memcpy(void * to, const void * from, size_t len)
 {
@@ -490,7 +492,9 @@ static const struct {
   { "MMX ", mmx_memcpy, MM_MMX },
   { "MMXEXT", mmx2_memcpy, MM_MMXEXT },
   { "SSE", sse_memcpy, MM_MMXEXT|MM_SSE },
+# ifdef HAVE_AVX
   { "AVX", avx_memcpy, MM_ACCEL_X86_AVX },
+# endif /* HAVE_AVX */
 #endif /* ARCH_X86 */
 #if defined (ARCH_PPC) && !defined (HOST_OS_DARWIN)
   { "ppcasm", ppcasm_memcpy, 0 },
@@ -570,7 +574,10 @@ void xine_probe_fast_memcpy(xine_t *xine)
   static const char *const memcpy_methods[] = {
     "probe", "libc",
 #if (defined(ARCH_X86) || defined(ARCH_X86_64)) && !defined(_MSC_VER)
-    "kernel", "mmx", "mmxext", "sse", "avx",
+    "kernel", "mmx", "mmxext", "sse",
+# ifdef HAVE_AVX
+    "avx",
+# endif /* HAVE_AVX */
 #endif
 #if defined (ARCH_PPC) && !defined (HOST_OS_DARWIN)
     "ppcasm_memcpy", "ppcasm_cacheable_memcpy",
