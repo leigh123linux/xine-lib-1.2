@@ -207,7 +207,7 @@ AC_DEFUN([XINE_VIDEO_OUT_PLUGINS], [
             AC_MSG_CHECKING([for OpenGL 2.0])
             ac_save_LIBS="$LIBS"
             LIBS="$LIBS $X_LIBS -lGL -lm"
-            AC_LINK_IFELSE(AC_LANG_PROGRAM([[
+            AC_LINK_IFELSE([AC_LANG_PROGRAM([[
                 #define GL_GLEXT_PROTOTYPES
                 #include <GL/gl.h>
                 #include <GL/glext.h>
@@ -224,7 +224,7 @@ AC_DEFUN([XINE_VIDEO_OUT_PLUGINS], [
                 /* GL_ARB_framebuffer_object */
                 glFramebufferTexture2D (GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_RECTANGLE_ARB, 2, 0);
                 /* GL_ARB_shader_objects */
-                glGetUniformLocationARB (3, "tex");]]),
+                glGetUniformLocationARB (3, "tex");]])],
                 [have_opengl2=yes], [have_opengl2=no])
             LIBS="$ac_save_LIBS"
             AC_MSG_RESULT($have_opengl2)
