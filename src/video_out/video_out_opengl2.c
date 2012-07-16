@@ -131,7 +131,7 @@ typedef struct {
 
   opengl2_program_t  sharpness_program;
   float              csc_matrix[3 * 4];
-  float             *color_standard;
+  int                color_standard;
   int                update_csc;
   int                saturation;
   int                contrast;
