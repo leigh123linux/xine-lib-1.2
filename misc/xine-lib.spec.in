@@ -1,5 +1,5 @@
 %define shortname  libxine
-%define name       libxine2
+%define name       libxine1
 %define version    @PACKAGE_VERSION@
 %define release    0
 

@@ -3,7 +3,7 @@
 #DATE=`date +%y%m%d`
 DATE=1
 
-PKGNAME=libxine2
+PKGNAME=libxine1
 
 # Some rpm checks
 RPMVERSION=`rpm --version | tr [A-Z] [a-z] | sed -e 's/[a-z]//g' -e 's/\.//g' -e 's/ //g'`
