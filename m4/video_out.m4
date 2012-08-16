@@ -281,7 +281,7 @@ AC_DEFUN([XINE_VIDEO_OUT_PLUGINS], [
         saved_LDFLAGS="$LDFLAGS" LDFLAGS="$LDFLAGS -L/usr/openwin/lib"
         AC_CHECK_LIB([dga], [XDgaGrabDrawable],
                      [AC_CHECK_HEADER([dga/dga.h],
-                                      [SUNDGA_CFLAGS="-I/usr/openwin/include"
+                                      [SUNDGA_CPPFLAGS="-I/usr/openwin/include"
                                        SUNDGA_LIBS="-L/usr/openwin/lib -R/usr/openwin/lib -ldga"
                                        have_sundga=yes])])
         CPPFLAGS="$saved_CPPFLAGS" LDFLAGS="$saved_LDFLAGS"
