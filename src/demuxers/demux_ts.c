@@ -181,7 +181,10 @@
 #define BODY_SIZE (188 - 4)
 /* more PIDS are needed due "auto-detection". 40 spare media entries  */
 #define MAX_PIDS ((BODY_SIZE - 1 - 13) / 4) + 40
-#define MAX_PMTS ((BODY_SIZE - 1 - 13) / 4) + 10
+
+#define MAX_PMTS 128
+#define PAT_BUF_SIZE (4 * MAX_PMTS + 20)
+
 #define SYNC_BYTE   0x47
 
 #define MIN_SYNCS 3
@@ -367,6 +370,8 @@ typedef struct {
   demux_ts_media   media[MAX_PIDS];
 
   /* PAT */
+  uint8_t          pat[PAT_BUF_SIZE];
+  int              pat_write_pos;
   uint32_t         last_pat_crc;
   uint32_t         transport_stream_id;
   /* programs */
@@ -798,14 +803,12 @@ static void demux_ts_flush(demux_ts_t *this)
  * demux_ts_parse_pat
  *
  * Parse a program association table (PAT).
- * The PAT is expected to be exactly one section long,
- * and that section is expected to be contained in a single TS packet.
+ * The PAT is expected to be exactly one section long.
  *
- * The PAT is assumed to contain a single program definition, though
- * we can cope with the stupidity of SPTSs which contain NITs.
+ * We can cope with the stupidity of SPTSs which contain NITs.
  */
 static void demux_ts_parse_pat (demux_ts_t*this, unsigned char *original_pkt,
-                                unsigned char *pkt, unsigned int pusi) {
+                                unsigned char *pkt, unsigned int pusi, int len) {
 #ifdef TS_PAT_LOG
   uint32_t       table_id;
   uint32_t       version_number;
@@ -824,47 +827,67 @@ static void demux_ts_parse_pat (demux_ts_t*this, unsigned char *original_pkt,
   unsigned int   pmt_pid;
   unsigned int   program_count;
 
-  /*
-   * A PAT in a single section should start with a payload unit start
-   * indicator set.
-   */
-  if (!pusi) {
+  /* reassemble the section */
+  if (pusi) {
+    this->pat_write_pos = 0;
+    /* offset the section by n + 1 bytes. this is sometimes used to let it end
+       at an exact TS packet boundary */
+    len -= (unsigned int)pkt[0] + 1;
+    pkt += (unsigned int)pkt[0] + 1;
+    if (len < 1) {
+      xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG,
+        "demux_ts: demux error! PAT with invalid pointer\n");
+      return;
+    }
+  } else {
+    if (!this->pat_write_pos)
+      return;
+  }
+  if (len > PAT_BUF_SIZE - this->pat_write_pos)
+    len = PAT_BUF_SIZE - this->pat_write_pos;
+  memcpy (this->pat + this->pat_write_pos, pkt, len);
+  this->pat_write_pos +=len;
+
+  /* lets see if we got the section length already */
+  pkt = this->pat;
+  if (this->pat_write_pos < 3)
+    return;
+  section_length = ((((uint32_t)pkt[1] << 8) | pkt[2]) & 0x03ff) + 3;
+  /* this should be at least the head plus crc */
+  if (section_length < 8 + 4) {
+    this->pat_write_pos = 0;
+    return;
+  }
+  /* and it should fit into buf */
+  if (section_length > PAT_BUF_SIZE) {
     xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG,
-	     "demux_ts: demux error! PAT without payload unit start indicator\n");
+      "demux_ts: PAT too large (%d bytes)\n", section_length);
+    this->pat_write_pos = 0;
     return;
   }
 
-  /*
-   * sections start with a pointer. Skip it!
-   */
-  pkt += pkt[4];
-  if (pkt - original_pkt > PKT_SIZE) {
-    xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG,
-	     "demux_ts: demux error! PAT with invalid pointer\n");
+  /* lets see if we got the section complete */
+  if (this->pat_write_pos < section_length)
     return;
-  }
+
+  /* OK now parse it */
+  this->pat_write_pos = 0;
 #ifdef TS_PAT_LOG
-  table_id = (unsigned int)pkt[5] ;
+  table_id                  = (unsigned int)pkt[0];
 #endif
-  section_syntax_indicator = (((unsigned int)pkt[6] >> 7) & 1) ;
-  section_length = (((unsigned int)pkt[6] & 0x03) << 8) | pkt[7];
-  transport_stream_id = ((uint32_t)pkt[8] << 8) | pkt[9];
+  section_syntax_indicator  = (pkt[1] >> 7) & 0x01;
+  transport_stream_id       = ((uint32_t)pkt[3] << 8) | pkt[4];
 #ifdef TS_PAT_LOG
-  version_number = ((uint32_t)pkt[10] >> 1) & 0x1f;
+  version_number            = ((uint32_t)pkt[5] >> 1) & 0x1f;
 #endif
-  current_next_indicator = ((uint32_t)pkt[10] & 0x01);
-  section_number = (uint32_t)pkt[11];
-  last_section_number = (uint32_t)pkt[12];
-  crc32 = (uint32_t)pkt[4+section_length] << 24;
-  crc32 |= (uint32_t)pkt[5+section_length] << 16;
-  crc32 |= (uint32_t)pkt[6+section_length] << 8;
-  crc32 |= (uint32_t)pkt[7+section_length] ;
+  current_next_indicator    =  pkt[5] & 0x01;
+  section_number            =  pkt[6];
+  last_section_number       =  pkt[7];
 
 #ifdef TS_PAT_LOG
   printf ("demux_ts: PAT table_id: %.2x\n", table_id);
   printf ("              section_syntax: %d\n", section_syntax_indicator);
-  printf ("              section_length: %d (%#.3x)\n",
-          section_length, section_length);
+  printf ("              section_length: %d (%#.3x)\n", section_length, section_length);
   printf ("              transport_stream_id: %#.4x\n", transport_stream_id);
   printf ("              version_number: %d\n", version_number);
   printf ("              c/n indicator: %d\n", current_next_indicator);
@@ -872,24 +895,22 @@ static void demux_ts_parse_pat (demux_ts_t*this, unsigned char *original_pkt,
   printf ("              last_section_number: %d\n", last_section_number);
 #endif
 
-  if ((section_syntax_indicator != 1) || !(current_next_indicator)) {
+  if ((section_syntax_indicator != 1) || !current_next_indicator)
     return;
-  }
-
-  if (pkt - original_pkt > BODY_SIZE - 1 - 3 - section_length) {
-    xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG,
-	     "demux_ts: FIXME: (unsupported )PAT spans multiple TS packets\n");
-    return;
-  }
 
   if ((section_number != 0) || (last_section_number != 0)) {
     xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG,
-	     "demux_ts: FIXME: (unsupported) PAT consists of multiple (%d) sections\n", last_section_number);
+      "demux_ts: FIXME (unsupported) PAT consists of multiple (%d) sections\n", last_section_number);
     return;
   }
 
   /* Check CRC. */
-  calc_crc32 = htonl(av_crc(this->class->av_crc, 0xffffffff, pkt+5, section_length+3-4));
+  crc32  = (uint32_t) pkt[section_length - 4] << 24;
+  crc32 |= (uint32_t) pkt[section_length - 3] << 16;
+  crc32 |= (uint32_t) pkt[section_length - 2] << 8;
+  crc32 |= (uint32_t) pkt[section_length - 1];
+
+  calc_crc32 = htonl (av_crc (this->class->av_crc, 0xffffffff, pkt, section_length - 4));
   if (crc32 != calc_crc32) {
     xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG,
 	     "demux_ts: demux error! PAT with invalid CRC32: packet_crc32: %.8x calc_crc32: %.8x\n",
@@ -920,8 +941,8 @@ static void demux_ts_parse_pat (demux_ts_t*this, unsigned char *original_pkt,
    * Process all programs in the program loop.
    */
   program_count = 0;
-  for (program = pkt + 13;
-       (program < pkt + 13 + section_length - 9) && (program_count < MAX_PMTS);
+  for (program = pkt + 8;
+       (program < pkt + section_length - 4) && (program_count < MAX_PMTS);
        program += 4) {
     program_number = ((unsigned int)program[0] << 8) | program[1];
     pmt_pid = (((unsigned int)program[2] & 0x1f) << 8) | program[3];
@@ -2227,8 +2248,8 @@ static void demux_ts_parse_packet (demux_ts_t*this) {
 
   /* PAT */
   if (pid == 0) {
-    demux_ts_parse_pat(this, originalPkt, originalPkt+data_offset-4,
-		       payload_unit_start_indicator);
+    demux_ts_parse_pat(this, originalPkt, originalPkt + data_offset,
+		       payload_unit_start_indicator, PKT_SIZE - data_offset);
     return;
   }
 
