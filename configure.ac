@@ -915,9 +915,12 @@ AC_FUNC_FSEEKO
 AC_REPLACE_FUNCS([asprintf basename gettimeofday setenv strcasestr strndup strpbrk strsep strtok_r timegm unsetenv memmem])
 
 AC_LIBSOURCE([hstrerror.c])
+saveLIBS="${LIBS}"
+LIBS="${LIBS} ${NET_LIBS}"
 AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <netdb.h>]], [[hstrerror(0)]])],
                [AC_DEFINE([HAVE_HSTRERROR], 1, [Define to 1 if you have 'hstrerror' in <netdb.h>])],
                [AC_LIBOBJ([hstrerror])])
+LIBS="${saveLIBS}"
 
 AC_LIBSOURCE([dirent_msvc.c])
 AC_CHECK_FUNC([opendir],
