@@ -43,7 +43,7 @@ libxine_la_CFLAGS = $(AM_CFLAGS) -fno-strict-aliasing
 libxine_la_LIBADD = $(PTHREAD_LIBS) $(DYNAMIC_LD_LIBS) $(LTLIBINTL) $(ZLIB_LIBS) \
 		    -lm $(XINEUTILS_LIB) $(YUV_LIB) $(LTLIBICONV) $(FT2_LIBS) $(FONTCONFIG_LIBS) \
                     $(LIBXINEPOSIX) $(RT_LIBS) $(NET_LIBS) $(XDG_BASEDIR_LIBS) \
-                    $(AVUTIL_LIBS)
+                    $(AVUTIL_LIBS) $(MLIB_LIBS)
 
 libxine_la_LDFLAGS = $(LDFLAGS_NOUNDEFINED) $(AM_LDFLAGS) $(def_ldflags) $(GCSECTIONS) \
 	-weak libxine-interface.la \
