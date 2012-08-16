@@ -51,6 +51,7 @@
 #include <AudioUnit/AudioUnitProperties.h>
 #include <AudioUnit/AudioUnitParameters.h>
 #include <AudioUnit/AudioOutputUnit.h>
+#include <CoreServices/CoreServices.h>
 
 #define AO_OUT_COREAUDIO_IFACE_VERSION 9
 
