@@ -455,7 +455,7 @@ static int demux_ts_dynamic_pmt_find (demux_ts_t *this,
   if (i < MAX_PIDS) {
     /* prepare new media descriptor */
 #ifdef LOG_DYNAMIC_PMT
-    char *name = "";
+    const char *name = "";
     if (type == BUF_VIDEO_BASE) name = "video";
     else if (type == BUF_AUDIO_BASE) name = "audio";
     else if (type == BUF_SPU_BASE) name = "subtitle";
@@ -535,7 +535,7 @@ static void demux_ts_dynamic_pmt_clean (demux_ts_t *this) {
     } else {
       /* drop this no longer needed media descriptor */
 #ifdef LOG_DYNAMIC_PMT
-      char *name = "";
+      const char *name = "";
       if (type == BUF_VIDEO_BASE) name = "video";
       else if (type == BUF_AUDIO_BASE) name = "audio";
       else if (type == BUF_SPU_BASE) name = "subtitle";
