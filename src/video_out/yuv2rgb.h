@@ -1,6 +1,6 @@
 
 #ifndef HAVE_YUV2RGB_H
-#define HAVE_YUV2RGB_h
+#define HAVE_YUV2RGB_H
 
 #include "config.h"
 
