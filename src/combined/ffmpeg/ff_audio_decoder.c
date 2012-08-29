@@ -316,6 +316,10 @@ static void ff_handle_header_buffer(ff_audio_decoder_t *this, buf_element_t *buf
                           this->context->extradata_size);
         break;
       }
+
+    case BUF_AUDIO_EAC3:
+      break;
+
     default:
       xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
               "ffmpeg_audio_dec: unknown header with buf type 0x%X\n", codec_type);
