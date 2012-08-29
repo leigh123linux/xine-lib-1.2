@@ -98,6 +98,7 @@ src/post/planar/pp.c
 src/post/planar/unsharp.c
 src/vdr/input_vdr.c
 src/vdr/post_vdr_video.c
+src/video_out/color_matrix.c
 src/video_out/video_out_aa.c
 src/video_out/video_out_caca.c
 src/video_out/video_out_directfb.c
@@ -105,6 +106,7 @@ src/video_out/video_out_directx.c
 src/video_out/video_out_fb.c
 src/video_out/video_out_none.c
 src/video_out/video_out_opengl.c
+src/video_out/video_out_opengl2.c
 src/video_out/video_out_pgx32.c
 src/video_out/video_out_pgx64.c
 src/video_out/video_out_sdl.c
