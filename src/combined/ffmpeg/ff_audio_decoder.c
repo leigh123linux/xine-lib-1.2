@@ -162,13 +162,14 @@ static void ff_audio_init_codec(ff_audio_decoder_t *this, unsigned int codec_typ
   this->context->codec_type  = this->codec->type;
   this->context->codec_tag   = _x_stream_info_get(this->stream, XINE_STREAM_INFO_AUDIO_FOURCC);
 
-  /* Use parser for AAC LATM and MPEG.
+  /* Use parser for EAC3, AAC LATM and MPEG.
    * Fixes:
    *  - DVB streams where multiple AAC LATM frames are packed to single PES
    *  - DVB streams where MPEG audio frames do not follow PES packet boundaries
    */
 #if AVPARSE > 1
   if (codec_type == BUF_AUDIO_AAC_LATM ||
+      codec_type == BUF_AUDIO_EAC3 ||
       codec_type == BUF_AUDIO_MPEG) {
 
     xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG,
