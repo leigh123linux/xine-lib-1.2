@@ -544,7 +544,9 @@ static int vo_grab_grab_video_frame (xine_grab_video_frame_t *frame_gen) {
       return -1; /* error happened */
     }
     if ((cm >> 1) == 2) /* color matrix undefined */
-      cm = (cm & 1) | (vo_frame->height - vo_frame->crop_top - vo_frame->crop_bottom >= 720 ? 2 : 10);
+      cm = (cm & 1) |
+        ((vo_frame->height - vo_frame->crop_top - vo_frame->crop_bottom >= 720) ||
+         (vo_frame->width - vo_frame->crop_left - vo_frame->crop_right >= 1280) ? 2 : 10);
     else if ((cm >> 1) == 0) /* converted RGB source, always ITU 601 */
       cm = (cm & 1) | 10;
     frame->yuv2rgb_factory->set_csc_levels (frame->yuv2rgb_factory, 0, 128, 128, cm);

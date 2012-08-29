@@ -166,7 +166,8 @@ static int cm_from_frame (vo_frame_t *frame) {
   int cm = VO_GET_FLAGS_CM (frame->flags);
   int cf = this->cm_state;
 
-  cm_m[10] = (frame->height - frame->crop_top - frame->crop_bottom) >= 720 ? 1 : 5;
+  cm_m[10] = (frame->height - frame->crop_top - frame->crop_bottom >= 720) ||
+             (frame->width - frame->crop_left - frame->crop_right >= 1280) ? 1 : 5;
   cm_r[0] = cm & 1;
   return ((cm_m[((cf >> 2) << 3) | (cm >> 1)] << 1) | cm_r[cf & 2]);
 }
