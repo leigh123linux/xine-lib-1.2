@@ -346,6 +346,18 @@ static void ff_audio_reset_parser(ff_audio_decoder_t *this)
   }
 }
 
+static void ff_audio_output_close(ff_audio_decoder_t *this)
+{
+  if (this->output_open) {
+    this->stream->audio_out->close (this->stream->audio_out, this->stream);
+    this->output_open = 0;
+  }
+
+  this->audio_bits = 0;
+  this->audio_sample_rate = 0;
+  this->audio_channels = 0;
+}
+
 static int ff_audio_decode(xine_t *xine,
                            AVCodecContext *ctx,
                            AVCodecParserContext *parser_ctx,
@@ -469,6 +481,16 @@ static void ff_audio_decode_data (audio_decoder_t *this_gen, buf_element_t *buf)
           if (offset)
             memmove(this->buf, &this->buf[offset], this->size);
           return;
+        }
+
+        if (this->output_open) {
+          if (this->audio_bits        != this->context->bits_per_sample ||
+              this->audio_sample_rate != this->context->sample_rate ||
+              this->audio_channels    != this->context->channels) {
+            xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
+                    _("ffmpeg_audio_dec: codec parameters changed\n"));
+            ff_audio_output_close(this);
+          }
         }
 
 	if (!this->output_open) {
@@ -609,9 +631,7 @@ static void ff_audio_dispose (audio_decoder_t *this_gen) {
     pthread_mutex_unlock (&ffmpeg_lock);
   }
 
-  if (this->output_open)
-    this->stream->audio_out->close (this->stream->audio_out, this->stream);
-  this->output_open = 0;
+  ff_audio_output_close(this);
 
   free16 (this->buf);
   free16 (this->decode_buffer);
