@@ -281,6 +281,8 @@ static void yuv_decode_data (video_decoder_t *this_gen,
 
       }
 
+      VO_SET_FLAGS_CM (this->height >= 720 ? 2 : 10, img->flags);
+
       img->duration  = this->video_step;
       img->pts       = buf->pts;
       img->bad_frame = 0;
