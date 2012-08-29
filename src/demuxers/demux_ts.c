@@ -378,7 +378,7 @@ typedef struct {
   uint32_t         program_number[MAX_PMTS];
   uint32_t         pmt_pid[MAX_PMTS];
   uint8_t         *pmt[MAX_PMTS];
-  uint8_t         *pmt_write_ptr[MAX_PMTS];
+  int              pmt_write_pos[MAX_PMTS];
   uint32_t         last_pmt_crc;
   /*
    * Stuff to do with the transport header. As well as the video
@@ -971,7 +971,7 @@ static void demux_ts_parse_pat (demux_ts_t*this, unsigned char *original_pkt,
       if (this->pmt[program_count] != NULL) {
 	free(this->pmt[program_count]);
 	this->pmt[program_count] = NULL;
-	this->pmt_write_ptr[program_count] = NULL;
+	this->pmt_write_pos[program_count] = 0;
       }
     }
 #ifdef TS_PAT_LOG
@@ -1413,8 +1413,7 @@ static int apid_check(demux_ts_t*this, unsigned int pid) {
 /*
  * NAME demux_ts_parse_pmt
  *
- * Parse a PMT. The PMT is expected to be exactly one section long,
- * and that section is expected to be contained in a single TS packet.
+ * Parse a PMT. The PMT is expected to be exactly one section long.
  *
  * In other words, the PMT is assumed to describe a reasonable number of
  * video, audio and other streams (with descriptors).
@@ -1424,6 +1423,7 @@ static void demux_ts_parse_pmt (demux_ts_t     *this,
                                 unsigned char *originalPkt,
                                 unsigned char *pkt,
                                 unsigned int   pusi,
+                                int            plen,
                                 uint32_t       program_count) {
 
 #ifdef TS_PMT_LOG
@@ -1431,7 +1431,7 @@ static void demux_ts_parse_pmt (demux_ts_t     *this,
   uint32_t       version_number;
 #endif
   uint32_t       section_syntax_indicator;
-  uint32_t       section_length = 0; /* to calm down gcc */
+  uint32_t       section_length;
   uint32_t       program_number;
   uint32_t       current_next_indicator;
   uint32_t       section_number;
@@ -1443,154 +1443,119 @@ static void demux_ts_parse_pmt (demux_ts_t     *this,
   unsigned int	 pid;
   unsigned char *stream;
   unsigned int	 i;
-  int		 count;
-  uint8_t	*ptr = NULL;
-  unsigned char  len;
-  unsigned int   offset=0;
   int            mi;
 
-  /*
-   * A new section should start with the payload unit start
-   * indicator set. We allocate some mem (max. allowed for a PM section)
-   * to copy the complete section into one chunk.
-   */
+  /* reassemble the section */
   if (pusi) {
-    pkt+=pkt[4]; /* pointer to start of section */
-    offset=1;
-
-    free(this->pmt[program_count]);
-    this->pmt[program_count] = (uint8_t *) calloc(4096, sizeof(unsigned char));
-    this->pmt_write_ptr[program_count] = this->pmt[program_count];
-
-#ifdef TS_PMT_LOG
-    table_id                  =  pkt[5] ;
-#endif
-    section_syntax_indicator  = (pkt[6] >> 7) & 0x01;
-    section_length            = (((uint32_t) pkt[6] << 8) | pkt[7]) & 0x03ff;
-    program_number            =  ((uint32_t) pkt[8] << 8) | pkt[9];
-#ifdef TS_PMT_LOG
-    version_number            = (pkt[10] >> 1) & 0x1f;
-#endif
-    current_next_indicator    =  pkt[10] & 0x01;
-    section_number            =  pkt[11];
-    last_section_number       =  pkt[12];
-
-#ifdef TS_PMT_LOG
-    printf ("demux_ts: PMT table_id: %2x\n", table_id);
-    printf ("              section_syntax: %d\n", section_syntax_indicator);
-    printf ("              section_length: %d (%#.3x)\n",
-            section_length, section_length);
-    printf ("              program_number: %#.4x\n", program_number);
-    printf ("              version_number: %d\n", version_number);
-    printf ("              c/n indicator: %d\n", current_next_indicator);
-    printf ("              section_number: %d\n", section_number);
-    printf ("              last_section_number: %d\n", last_section_number);
-#endif
-
-    if ((section_syntax_indicator != 1) || !current_next_indicator) {
-#ifdef TS_PMT_LOG
-      printf ("ts_demux: section_syntax_indicator != 1 "
-              "|| !current_next_indicator\n");
-#endif
+    /* allocate space for largest possible section */
+    if (!this->pmt[program_count])
+      this->pmt[program_count] = malloc (4098);
+    if (!this->pmt[program_count])
+      return;
+    this->pmt_write_pos[program_count] = 0;
+    /* offset the section by n + 1 bytes. this is sometimes used to let it end
+       at an exact TS packet boundary */
+    plen -= (unsigned int)pkt[0] + 1;
+    pkt += (unsigned int)pkt[0] + 1;
+    if (plen < 1) {
+      xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG,
+        "demux_ts: demux error! PMT with invalid pointer\n");
       return;
     }
+  } else {
+    if (!this->pmt_write_pos[program_count])
+      return;
+  }
+  if (plen > 4098 - this->pmt_write_pos[program_count])
+    plen = 4098 - this->pmt_write_pos[program_count];
+  memcpy (this->pmt[program_count] + this->pmt_write_pos[program_count], pkt, plen);
+  this->pmt_write_pos[program_count] += plen;
 
-    if (program_number != this->program_number[program_count]) {
-      /* several programs can share the same PMT pid */
+  /* lets see if we got the section length already */
+  pkt = this->pmt[program_count];
+  if (this->pmt_write_pos[program_count] < 3)
+    return;
+  section_length = ((((uint32_t)pkt[1] << 8) | pkt[2]) & 0xfff) + 3;
+  /* this should be at least the head plus crc */
+  if (section_length < 8 + 4) {
+    this->pmt_write_pos[program_count] = 0;
+    return;
+  }
+
+  /* lets see if we got the section complete */
+  if (this->pmt_write_pos[program_count] < section_length)
+    return;
+
+  /* OK now parse it */
+  this->pmt_write_pos[program_count] = 0;
+#ifdef TS_PMT_LOG
+  table_id                  = (unsigned int)pkt[0];
+#endif
+  section_syntax_indicator  = (pkt[1] >> 7) & 0x01;
+  program_number            = ((uint32_t)pkt[3] << 8) | pkt[4];
+#ifdef TS_PMT_LOG
+  version_number            = ((uint32_t)pkt[5] >> 1) & 0x1f;
+#endif
+  current_next_indicator    =  pkt[5] & 0x01;
+  section_number            =  pkt[6];
+  last_section_number       =  pkt[7];
+
+#ifdef TS_PMT_LOG
+  printf ("demux_ts: PMT table_id: %.2x\n", table_id);
+  printf ("              section_syntax: %d\n", section_syntax_indicator);
+  printf ("              section_length: %d (%#.3x)\n", section_length, section_length);
+  printf ("              program_number: %#.4x\n", program_number);
+  printf ("              version_number: %d\n", version_number);
+  printf ("              c/n indicator: %d\n", current_next_indicator);
+  printf ("              section_number: %d\n", section_number);
+  printf ("              last_section_number: %d\n", last_section_number);
+#endif
+
+  if ((section_syntax_indicator != 1) || !current_next_indicator)
+    return;
+
+  if ((section_number != 0) || (last_section_number != 0)) {
+    xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG,
+      "demux_ts: FIXME (unsupported) PMT consists of multiple (%d) sections\n", last_section_number);
+    return;
+  }
+
+  /* Check CRC. */
+  crc32  = (uint32_t) pkt[section_length - 4] << 24;
+  crc32 |= (uint32_t) pkt[section_length - 3] << 16;
+  crc32 |= (uint32_t) pkt[section_length - 2] << 8;
+  crc32 |= (uint32_t) pkt[section_length - 1];
+
+  calc_crc32 = htonl (av_crc (this->class->av_crc, 0xffffffff, pkt, section_length - 4));
+  if (crc32 != calc_crc32) {
+    xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG,
+      "demux_ts: demux error! PMT with invalid CRC32: packet_crc32: %#.8x calc_crc32: %#.8x\n",
+      crc32, calc_crc32);
+    return;
+  }
+#ifdef TS_PMT_LOG
+  printf ("demux_ts: PMT CRC32 ok.\n");
+#endif
+
+  if (program_number != this->program_number[program_count]) {
+    /* several programs can share the same PMT pid */
 #ifdef TS_PMT_LOG
 printf("Program Number is %i, looking for %i\n",program_number,this->program_number[program_count]);
       printf ("ts_demux: waiting for next PMT on this PID...\n");
 #endif
-      return;
-    }
-
-    if ((section_number != 0) || (last_section_number != 0)) {
-      xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG,
-	       "demux_ts: FIXME (unsupported) PMT consists of multiple (%d) sections\n", last_section_number);
-      return;
-    }
-
-  }
-
-  if (!this->pmt[program_count]) {
-    /* not the first TS packet of a PMT, or the calloc didn't work */
-#ifdef TS_PMT_LOG
-    printf ("ts_demux: not the first TS packet of a PMT...\n");
-#endif
     return;
   }
 
-  if (!pusi){
-    section_length = (this->pmt[program_count][1] << 8
-		      | this->pmt[program_count][2]) & 0x03ff;
-  }
-
-  count=ts_payloadsize(originalPkt);
-
-  ptr = originalPkt+offset+(PKT_SIZE-count);
-  len = count-offset;
-  memcpy (this->pmt_write_ptr[program_count], ptr, len);
-  this->pmt_write_ptr[program_count] +=len;
-
+  if (crc32 == this->last_pmt_crc) {
 #ifdef TS_PMT_LOG
-  printf ("ts_demux: wr_ptr: %p, will be %p when finished\n",
-	  this->pmt_write_ptr[program_count],
-	  this->pmt[program_count] + section_length);
-#endif
-  if (this->pmt_write_ptr[program_count] < this->pmt[program_count]
-      + section_length) {
-    /* didn't get all TS packets for this section yet */
-#ifdef TS_PMT_LOG
-    printf ("ts_demux: didn't get all PMT TS packets yet...\n");
+    printf("demux_ts: PMT with CRC32=%d already parsed. Skipping.\n", crc32);
 #endif
     return;
   }
+  this->last_pmt_crc = crc32;
 
-  if (!section_length) {
-    free (this->pmt[program_count]);
-    this->pmt[program_count] = NULL;
-#ifdef TS_PMT_LOG
-    printf ("ts_demux: eek, zero-length section?\n");
-#endif
-    return;
-  }
-
-#ifdef TS_PMT_LOG
-  printf ("ts_demux: have all TS packets for the PMT section\n");
-#endif
-
-  crc32  = (uint32_t) this->pmt[program_count][section_length+3-4] << 24;
-  crc32 |= (uint32_t) this->pmt[program_count][section_length+3-3] << 16;
-  crc32 |= (uint32_t) this->pmt[program_count][section_length+3-2] << 8;
-  crc32 |= (uint32_t) this->pmt[program_count][section_length+3-1] ;
-
-  /* Check CRC. */
-  calc_crc32 = htonl(av_crc(this->class->av_crc, 0xffffffff,
-			    this->pmt[program_count], section_length+3-4));
-
-  if (crc32 != calc_crc32) {
-    xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG,
-	     "demux_ts: demux error! PMT with invalid CRC32: packet_crc32: %#.8x calc_crc32: %#.8x\n",
-	     crc32,calc_crc32);
-    return;
-  }
-  else {
-#ifdef TS_PMT_LOG
-    printf ("demux_ts: PMT CRC32 ok.\n");
-#endif
-    if ( crc32==this->last_pmt_crc ) {
-#ifdef TS_PMT_LOG
-      printf("demux_ts: PMT with CRC32=%d already parsed. Skipping.\n", crc32);
-#endif
-      return;
-    }
-    else {
-#ifdef TS_PMT_LOG
-      printf("demux_ts: new PMT, parsing...\n");
-#endif
-      this->last_pmt_crc = crc32;
-    }
-  }
+  /* dont "parse" the CRC */
+  section_length -= 4;
 
   /*
    * Forget the current video, audio and subtitle PIDs; if the PMT has not
@@ -1608,8 +1573,7 @@ printf("Program Number is %i, looking for %i\n",program_number,this->program_num
    * ES definitions start here...we are going to learn upto one video
    * PID and one audio PID.
    */
-  program_info_length = ((this->pmt[program_count][10] << 8)
-                       | this->pmt[program_count][11]) & 0x0fff;
+  program_info_length = ((pkt[10] << 8) | pkt[11]) & 0x0fff;
 
 /* Program info descriptor is currently just ignored.
  * printf ("demux_ts: program_info_desc: ");
@@ -1617,8 +1581,8 @@ printf("Program Number is %i, looking for %i\n",program_number,this->program_num
  *       printf ("%.2x ", this->pmt[program_count][12+i]);
  * printf ("\n");
  */
-  stream = &this->pmt[program_count][12] + program_info_length;
-  coded_length = 13 + program_info_length;
+  stream = pkt + 12 + program_info_length;
+  coded_length = 12 + program_info_length;
   if (coded_length > section_length) {
     xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG,
 	     "demux error! PMT with inconsistent progInfo length\n");
@@ -2264,8 +2228,8 @@ static void demux_ts_parse_packet (demux_ts_t*this) {
               this->program_number[program_count],
               this->pmt_pid[program_count]);
 #endif
-      demux_ts_parse_pmt (this, originalPkt, originalPkt+data_offset-4,
-                          payload_unit_start_indicator,
+      demux_ts_parse_pmt (this, originalPkt, originalPkt + data_offset,
+                          payload_unit_start_indicator, PKT_SIZE - data_offset,
                           program_count);
       return;
     }
@@ -2664,7 +2628,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen,
     this->program_number[i]          = INVALID_PROGRAM;
     this->pmt_pid[i]                 = INVALID_PID;
     this->pmt[i]                     = NULL;
-    this->pmt_write_ptr[i]           = NULL;
+    this->pmt_write_pos[i]           = 0;
   }
 
   this->scrambled_npids = 0;
