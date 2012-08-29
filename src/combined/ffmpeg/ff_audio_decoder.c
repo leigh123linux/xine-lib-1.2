@@ -453,7 +453,7 @@ static void ff_audio_decode_data (audio_decoder_t *this_gen, buf_element_t *buf)
       /* pad input data */
       memset(&this->buf[this->size], 0, FF_INPUT_BUFFER_PADDING_SIZE);
 
-      while (this->size>0) {
+      while (this->size>=0) {
         decode_buffer_size = AVCODEC_MAX_AUDIO_FRAME_SIZE;
 
 	bytes_consumed =
