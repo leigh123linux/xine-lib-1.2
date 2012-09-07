@@ -290,7 +290,7 @@ static void post_frame_free(vo_frame_t *vo_img) {
     vo_img->free(vo_img);
     if (port->frame_lock) pthread_mutex_unlock(port->frame_lock);
     _x_post_dec_usage(port);
-  } else {
+  } else if (vo_img->next) {
     /* this frame is still in use */
     _x_post_frame_copy_down(vo_img, vo_img->next);
     vo_img->next->free(vo_img->next);
