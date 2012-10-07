@@ -136,6 +136,93 @@ static int adiff (int a, int b) {
   return (d < 12 * 255 ? d : 24 * 255 - d);
 }
 
+/* gimmick #2588: the XINE logo ;-) */
+static void render_parallelogram (unsigned char *buf, int buf_width, int buf_height, unsigned int gray,
+  int x, int y, int width, int height, int slant, int sc) {
+  int i, o;
+  if (height < 2) return;
+  /* slant compensation */
+  if (sc) {
+    i = (width * slant + height / 2) / height;
+    width = isqr (width * width + i * i);
+  }
+  /* 3 bytes per pixel */
+  width *= 3;
+  /* OK now render */
+  height--;
+  for (i = 0; i <= height; i++) {
+    o = (buf_height - 1 - y - i) * buf_width + x;
+    o += (slant * i + height / 2) / height;
+    o *= 3;
+    memset (buf + o, gray, width);
+  }
+}
+
+static void render_turn (unsigned char *buf, int buf_width, int buf_height, unsigned int gray,
+  int x, int y, int size, int quad) {
+  int cx = quad & 1 ? 0 : size;
+  int cy = quad & 2 ? 0 : size;
+  int i, j, d, e;
+  int _min = size * size, _max = 4 * _min;
+  unsigned char *p;
+  for (i = 0; i < size; i++) {
+    for (j = 0; j < size; j++) {
+      d = 2 * (i - cy) + 1;
+      d *= d;
+      e = 2 * (j - cx) + 1;
+      e *= e;
+      d += e;
+      if ((d < _min) || (d > _max)) continue;
+      p = buf + 3 * ((buf_height - 1 - y - i) * buf_width + x + j);
+      *p++ = gray;
+      *p++ = gray;
+      *p = gray;
+    }
+  }
+}
+
+static void render_xine_logo (unsigned char *buf, int buf_width, int buf_height, unsigned int gray) {
+  int height = buf_height / 30 >= 10 ? buf_height / 30 : 10;
+  int width = height / 4;
+  int top = buf_height - 2 * height;
+  int left = buf_width - 4 * height - 3 * width;
+  /* safety */
+  if ((top < 0) || (left < 0)) return;
+  /* X */
+  render_parallelogram (buf, buf_width, buf_height, gray,
+    left, top, width, height, height - width, 1);
+  render_parallelogram (buf, buf_width, buf_height, gray,
+    left + height - width, top, width, height, width - height, 1);
+  left += height + width / 2;
+  /* I */
+  render_parallelogram (buf, buf_width, buf_height, gray,
+    left, top, width, height, 0, 0);
+  left += 3 * width / 2;
+  /* N */
+  render_parallelogram (buf, buf_width, buf_height, gray,
+    left, top, width, height, 0, 0);
+  render_parallelogram (buf, buf_width, buf_height, gray,
+    left + width, top, height - 3 * width, width, 0, 0);
+  render_turn (buf, buf_width, buf_height, gray,
+    left + height - 2 * width, top, 2 * width, 1);
+  render_parallelogram (buf, buf_width, buf_height, gray,
+    left + height - width, top + 2 * width, width, height - 2 * width, 0, 0);
+  left += height + width / 2;
+  /* E */
+  render_turn (buf, buf_width, buf_height, gray,
+    left, top, 2 * width, 0);
+  render_parallelogram (buf, buf_width, buf_height, gray,
+    left + 2 * width, top, height - 2 * width, width, 0, 0);
+  render_parallelogram (buf, buf_width, buf_height, gray,
+    left, top + 2 * width, width, height - 4 * width, 0, 0);
+  render_parallelogram (buf, buf_width, buf_height, gray,
+    left + width, top + (height - width) / 2, height - width, width, 0, 0);
+  render_turn (buf, buf_width, buf_height, gray,
+    left, top + height - 2 * width, 2 * width, 2);
+  render_parallelogram (buf, buf_width, buf_height, gray,
+    left + 2 * width, top + height - width, height - 2  * width, width, 0, 0);
+}
+
 static int test_make (test_input_plugin_t * this) {
   int width, height, x, y, cx, cy, d, r, dx, dy, a, red, green, blue, angle = 0;
   int mpeg = 0, hdtv = 0, yuv = 0, gray = 0;
@@ -367,6 +454,8 @@ static int test_make (test_input_plugin_t * this) {
       }
     break;
   }
+
+  render_xine_logo (this->bmp_head + 54, width, height, 150);
 
   if (yuv) {
     int fb, fr, yb, yr, yg, yo, ubvr, vb, ur, ug, vg;
