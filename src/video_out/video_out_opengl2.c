@@ -416,7 +416,8 @@ static int opengl2_check_textures_size( opengl2_driver_t *this_gen, int w, int h
 {
   opengl2_driver_t *this = this_gen;
   opengl2_yuvtex_t *ytex = &this->yuvtex;
-  
+
+  w = (w + 15) & ~15;
   if ( (w == ytex->width) && (h == ytex->height) )
     return 1;
 
@@ -717,14 +718,14 @@ static void opengl2_update_frame_format( vo_driver_t *this_gen, vo_frame_t *fram
     av_freep (&frame->vo_frame.base[2]);
 
     if (format == XINE_IMGFMT_YV12) {
-      frame->vo_frame.pitches[0] = 8*((width + 7) / 8);
-      frame->vo_frame.pitches[1] = 8*((width + 15) / 16);
-      frame->vo_frame.pitches[2] = 8*((width + 15) / 16);
+      frame->vo_frame.pitches[0] = (width + 15) & ~15;
+      frame->vo_frame.pitches[1] = ((width + 15) & ~15) >> 1;
+      frame->vo_frame.pitches[2] = ((width + 15) & ~15) >> 1;
       frame->vo_frame.base[0] = av_mallocz (frame->vo_frame.pitches[0] * height);
       frame->vo_frame.base[1] = av_mallocz (frame->vo_frame.pitches[1] * ((height+1)/2));
       frame->vo_frame.base[2] = av_mallocz (frame->vo_frame.pitches[2] * ((height+1)/2));
     } else if (format == XINE_IMGFMT_YUY2){
-      frame->vo_frame.pitches[0] = 8*((width + 3) / 4);
+      frame->vo_frame.pitches[0] = ((width + 15) & ~15) << 1;
       frame->vo_frame.base[0] = av_mallocz (frame->vo_frame.pitches[0] * height);
     }
 
@@ -1107,21 +1108,21 @@ static void opengl2_draw( opengl2_driver_t *that, opengl2_frame_t *frame )
     glBindTexture( GL_TEXTURE_RECTANGLE_ARB, that->yuvtex.y );
     glBindBuffer( GL_PIXEL_UNPACK_BUFFER_ARB, that->videoPBO );
     void *mem = glMapBuffer( GL_PIXEL_UNPACK_BUFFER_ARB, GL_WRITE_ONLY );
-    memcpy( mem, frame->vo_frame.base[0], frame->vo_frame.pitches[0] * frame->height );
+    xine_fast_memcpy (mem, frame->vo_frame.base[0], frame->vo_frame.pitches[0] * frame->height);
     glUnmapBuffer( GL_PIXEL_UNPACK_BUFFER_ARB );
-    glTexSubImage2D( GL_TEXTURE_RECTANGLE_ARB, 0, 0, 0, frame->width, frame->height, GL_LUMINANCE, GL_UNSIGNED_BYTE, 0 );
+    glTexSubImage2D( GL_TEXTURE_RECTANGLE_ARB, 0, 0, 0, frame->vo_frame.pitches[0], frame->height, GL_LUMINANCE, GL_UNSIGNED_BYTE, 0 );
     glActiveTexture( GL_TEXTURE1 );
     glBindTexture( GL_TEXTURE_RECTANGLE_ARB, that->yuvtex.u );
     mem = glMapBuffer( GL_PIXEL_UNPACK_BUFFER_ARB, GL_WRITE_ONLY );
-    memcpy( mem, frame->vo_frame.base[1], frame->vo_frame.pitches[1] * ((frame->height+1)/2) );
+    xine_fast_memcpy (mem, frame->vo_frame.base[1], frame->vo_frame.pitches[1] * frame->height / 2);
     glUnmapBuffer( GL_PIXEL_UNPACK_BUFFER_ARB );
-    glTexSubImage2D( GL_TEXTURE_RECTANGLE_ARB, 0, 0, 0, frame->width/2, frame->height/2, GL_LUMINANCE, GL_UNSIGNED_BYTE, 0 );
+    glTexSubImage2D( GL_TEXTURE_RECTANGLE_ARB, 0, 0, 0, frame->vo_frame.pitches[1], frame->height/2, GL_LUMINANCE, GL_UNSIGNED_BYTE, 0 );
     glActiveTexture( GL_TEXTURE2 );
     glBindTexture( GL_TEXTURE_RECTANGLE_ARB, that->yuvtex.v );
     mem = glMapBuffer( GL_PIXEL_UNPACK_BUFFER_ARB, GL_WRITE_ONLY );
-    memcpy( mem, frame->vo_frame.base[2], frame->vo_frame.pitches[2] * ((frame->height+1)/2) );
+    xine_fast_memcpy (mem, frame->vo_frame.base[2], frame->vo_frame.pitches[2] * frame->height / 2);
     glUnmapBuffer( GL_PIXEL_UNPACK_BUFFER_ARB );
-    glTexSubImage2D( GL_TEXTURE_RECTANGLE_ARB, 0, 0, 0, frame->width/2, frame->height/2, GL_LUMINANCE, GL_UNSIGNED_BYTE, 0 );
+    glTexSubImage2D( GL_TEXTURE_RECTANGLE_ARB, 0, 0, 0, frame->vo_frame.pitches[2], frame->height/2, GL_LUMINANCE, GL_UNSIGNED_BYTE, 0 );
     glBindBuffer( GL_PIXEL_UNPACK_BUFFER_ARB, 0 );
 
     glUseProgram( that->yuv420_program.program );
@@ -1135,9 +1136,9 @@ static void opengl2_draw( opengl2_driver_t *that, opengl2_frame_t *frame )
     glBindTexture( GL_TEXTURE_RECTANGLE_ARB, that->yuvtex.yuv );
     glBindBuffer( GL_PIXEL_UNPACK_BUFFER_ARB, that->videoPBO );
     void *mem = glMapBuffer( GL_PIXEL_UNPACK_BUFFER_ARB, GL_WRITE_ONLY );
-    memcpy( mem, frame->vo_frame.base[0], frame->vo_frame.pitches[0] * frame->height );
+    xine_fast_memcpy (mem, frame->vo_frame.base[0], frame->vo_frame.pitches[0] * frame->height);
     glUnmapBuffer( GL_PIXEL_UNPACK_BUFFER_ARB );
-    glTexSubImage2D( GL_TEXTURE_RECTANGLE_ARB, 0, 0, 0, frame->width, frame->height, GL_LUMINANCE_ALPHA, GL_UNSIGNED_BYTE, 0 );
+    glTexSubImage2D( GL_TEXTURE_RECTANGLE_ARB, 0, 0, 0, frame->vo_frame.pitches[0] / 2, frame->height, GL_LUMINANCE_ALPHA, GL_UNSIGNED_BYTE, 0 );
     glBindBuffer( GL_PIXEL_UNPACK_BUFFER_ARB, 0 );
 
     glUseProgram( that->yuv422_program.program );
