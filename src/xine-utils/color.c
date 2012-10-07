@@ -455,6 +455,7 @@ static void yuv444_to_yuy2_mmx(const yuv_planes_t *yuv_planes, unsigned char *yu
           psrlq_i2r(16, mm1);      /* toss out 2 C samples and loop again */
         }
       }
+      dest_plane += row_inc;
     }
   }
 
