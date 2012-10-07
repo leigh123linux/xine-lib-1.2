@@ -609,6 +609,36 @@ static int opengl2_process_ovl( opengl2_driver_t *this_gen, vo_overlay_t *overla
 }
 
 
+static int opengl2_process_rgba_ovl( opengl2_driver_t *this_gen, vo_overlay_t *overlay )
+{
+  opengl2_overlay_t *ovl = &this_gen->overlays[this_gen->ovl_changed-1];
+
+  if ( overlay->width<=0 || overlay->height<=0 )
+    return 0;
+
+  if ( (overlay->width*overlay->height)!=(ovl->ovl_w*ovl->ovl_h) )
+    ovl->ovl_rgba = (uint8_t*)realloc( ovl->ovl_rgba, overlay->width*overlay->height*4 );
+
+  ovl->ovl_w = overlay->width;
+  ovl->ovl_h = overlay->height;
+  ovl->ovl_x = overlay->x;
+  ovl->ovl_y = overlay->y;
+  ovl->unscaled = overlay->unscaled;
+  if ( overlay->extent_width == -1 )
+    ovl->vid_scale = 1;
+  else
+    ovl->vid_scale = 0;
+
+  pthread_mutex_lock(&overlay->argb_layer->mutex);
+
+  memcpy(ovl->ovl_rgba, overlay->argb_layer->buffer, overlay->width * overlay->height * 4);
+
+  pthread_mutex_unlock(&overlay->argb_layer->mutex);
+
+  return 1;
+}
+
+
 static void opengl2_overlay_begin (vo_driver_t *this_gen, vo_frame_t *frame_gen, int changed)
 {
   //fprintf(stderr, "opengl2_overlay_begin\n");
@@ -621,14 +651,18 @@ static void opengl2_overlay_begin (vo_driver_t *this_gen, vo_frame_t *frame_gen,
 
 static void opengl2_overlay_blend (vo_driver_t *this_gen, vo_frame_t *frame_gen, vo_overlay_t *overlay)
 {
-  //fprintf(stderr, "opengl2_overlay_blend\n");
   opengl2_driver_t  *this = (opengl2_driver_t *) this_gen;
   opengl2_frame_t *frame = (opengl2_frame_t *) frame_gen;
 
   if ( !this->ovl_changed || this->ovl_changed>XINE_VORAW_MAX_OVL )
     return;
 
-  if (overlay->rle) {
+  if (overlay->argb_layer && overlay->argb_layer->buffer) {
+    if ( opengl2_process_rgba_ovl( this, overlay ) )
+      ++this->ovl_changed;
+  }
+
+  else if (overlay->rle) {
     if (!overlay->rgb_clut || !overlay->hili_rgb_clut)
       opengl2_overlay_clut_yuv2rgb(this, overlay, frame);
     if ( opengl2_process_ovl( this, overlay ) )
@@ -1559,7 +1593,7 @@ static vo_driver_t *opengl2_open_plugin( video_driver_class_t *class_gen, const 
 
   glXMakeCurrent( this->display, None, NULL );
 
-  this->capabilities = VO_CAP_YV12 | VO_CAP_YUY2 | VO_CAP_CROP | VO_CAP_UNSCALED_OVERLAY | VO_CAP_CUSTOM_EXTENT_OVERLAY;// | VO_CAP_ARGB_LAYER_OVERLAY | VO_CAP_VIDEO_WINDOW_OVERLAY;
+  this->capabilities = VO_CAP_YV12 | VO_CAP_YUY2 | VO_CAP_CROP | VO_CAP_UNSCALED_OVERLAY | VO_CAP_CUSTOM_EXTENT_OVERLAY | VO_CAP_ARGB_LAYER_OVERLAY;// | VO_CAP_VIDEO_WINDOW_OVERLAY;
 
   this->capabilities |= VO_CAP_COLOR_MATRIX | VO_CAP_FULLRANGE;
 
