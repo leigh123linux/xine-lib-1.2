@@ -825,6 +825,8 @@ seq_parameter_set_data (vdpau_h264_alter_decoder_t * this_gen)
     lprintf ("mb_adaptive_frame_field_flag = %u\n",
 	     sp->mb_adaptive_frame_field_flag);
   }
+  else
+    sp->mb_adaptive_frame_field_flag = 0;
   sp->direct_8x8_inference_flag = read_bits (&seq->br, 1);
   lprintf ("direct_8x8_inference_flag = %u\n", sp->direct_8x8_inference_flag);
   sp->frame_cropping_flag = read_bits (&seq->br, 1);
@@ -1222,6 +1224,7 @@ slice_header (vdpau_h264_alter_decoder_t * this_gen, uint8_t nal_ref_idc,
       && !seq->cur_pic.completed)
     seq->startup_frame = 1;
 
+  lprintf ("seq_parameter_set_id = %u\n", pic->seq_parameter_set_id);
   sp = seq->seq_param[pic->seq_parameter_set_id];
   if (sp->separate_colour_plane_flag)
     read_bits (&seq->br, 2);	/* colour_plane_id */
