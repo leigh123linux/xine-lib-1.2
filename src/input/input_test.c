@@ -755,12 +755,16 @@ static void *init_plugin (xine_t *xine, void *data) {
   return this;
 }
 
+static input_info_t input_info_test = {
+  110                       /* priority */
+};
+
 /*
  * exported plugin catalog entry
  */
 
 const plugin_info_t xine_plugin_info[] EXPORTED = {
   /* type, API, "name", version, special_info, init_function */
-  { PLUGIN_INPUT | PLUGIN_MUST_PRELOAD, 18, "test", XINE_VERSION_CODE, NULL, init_plugin },
+  { PLUGIN_INPUT | PLUGIN_MUST_PRELOAD, 18, "TEST", XINE_VERSION_CODE, &input_info_test, init_plugin },
   { PLUGIN_NONE, 0, "", 0, NULL, NULL }
 };
