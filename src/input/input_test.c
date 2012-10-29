@@ -131,6 +131,7 @@ static int adiff (int a, int b) {
 static void render_parallelogram (unsigned char *buf, int buf_width, int buf_height, unsigned int gray,
   int x, int y, int width, int height, int slant, int sc) {
   int i, o;
+  int pitch = (3 * buf_width + 3) & ~3;
   if (height < 2) return;
   /* slant compensation */
   if (sc) {
@@ -142,9 +143,7 @@ static void render_parallelogram (unsigned char *buf, int buf_width, int buf_hei
   /* OK now render */
   height--;
   for (i = 0; i <= height; i++) {
-    o = (buf_height - 1 - y - i) * buf_width + x;
-    o += (slant * i + height / 2) / height;
-    o *= 3;
+    o = (buf_height - 1 - y - i) * pitch + 3 * (x + (slant * i + height / 2) / height);
     memset (buf + o, gray, width);
   }
 }
@@ -156,6 +155,7 @@ static void render_turn (unsigned char *buf, int buf_width, int buf_height, unsi
   int i, j, d, e;
   int _min = size * size, _max = 4 * _min;
   unsigned char *p;
+  int pitch = (3 * buf_width + 3) & ~3;
   for (i = 0; i < size; i++) {
     for (j = 0; j < size; j++) {
       d = 2 * (i - cy) + 1;
@@ -164,7 +164,7 @@ static void render_turn (unsigned char *buf, int buf_width, int buf_height, unsi
       e *= e;
       d += e;
       if ((d < _min) || (d > _max)) continue;
-      p = buf + 3 * ((buf_height - 1 - y - i) * buf_width + x + j);
+      p = buf + (buf_height - 1 - y - i) * pitch + 3 * (x + j);
       *p++ = gray;
       *p++ = gray;
       *p = gray;
@@ -217,6 +217,7 @@ static void render_xine_logo (unsigned char *buf, int buf_width, int buf_height,
 static int test_make (test_input_plugin_t * this) {
   int width, height, x, y, cx, cy, d, r, dx, dy, a, red, green, blue;
   int type, yuv, mpeg;
+  int pad, pitch;
   int angle = 0, hdtv = 0, gray = 0;
   unsigned char *p;
 
@@ -237,8 +238,12 @@ static int test_make (test_input_plugin_t * this) {
   height = width * 9 / 16;
   height &= ~1;
 
+  /* BMP rows must be n * 4 bytes long */
+  pitch = (width * 3 + 3) & ~3;
+  pad = pitch - width * 3;
+
   /* (re)allocate buffer */
-  a = 54 + width * height * 3;
+  a = 54 + pitch * height;
   if (yuv) {
     if (height >= 720) hdtv = 1;
     a += 80 + width * height * 3 / 2;
@@ -256,9 +261,9 @@ static int test_make (test_input_plugin_t * this) {
   /* make file heads */
   p = this->buf;
   this->bmp_head = p;
-  this->filesize = 54 + width * height * 3;
+  this->filesize = 54 + pitch * height;
   if (yuv) {
-    p += 54 + width * height * 3;
+    p += 54 + pitch * height;
     this->y4m_head = p;
     this->headsize = sprintf (p,
       "YUV4MPEG2 W%d H%d F25:1 Ip A0:0 C420mpeg2 XYSCSS=420MPEG2\n", width, height);
@@ -273,14 +278,14 @@ static int test_make (test_input_plugin_t * this) {
   memset (p, 0, 54);
   p[0] = 'B';
   p[1] = 'M';
-  put32le (54 + width * height * 3, p + 2); /* file size */
+  put32le (54 + pitch * height, p + 2); /* file size */
   put32le (54, p + 10); /* header size */
   put32le (40, p + 14); /* ?? */
   put32le (width, p + 18);
   put32le (height, p + 22);
   p[26] = 1; /* ?? */
   p[28] = 24; /* depth */
-  put32le (width * height * 3, p + 34); /* bitmap size */
+  put32le (pitch * height, p + 34); /* bitmap size */
   put32le (2835, p + 38); /* ?? */
   put32le (2835, p + 42); /* ?? */
   p += 54;
@@ -314,6 +319,7 @@ static int test_make (test_input_plugin_t * this) {
           *p++ = green;
           *p++ = red;
         }
+        for (x = pad; x; x--) *p++ = 0;
       }
     break;
 
@@ -324,7 +330,7 @@ static int test_make (test_input_plugin_t * this) {
       cx = (width / 2 - 8 * dx) & ~1;
       cy = (height / 2 - 8 * dy) & ~1;
       /* bottom gray */
-      d = cy * width * 3;
+      d = cy * pitch;
       memset (p, 127, d);
       p += d;
       /* color bars */
@@ -344,14 +350,15 @@ static int test_make (test_input_plugin_t * this) {
           *p++ = green;
           *p++ = red;
         }
+        for (x = pad; x; x--) *p++ = 0;
         /* duplicate it further */
         for (d = 1; d < dy; d++) {
-          memcpy (p, q, width * 3);
-          p += width * 3;
+          memcpy (p, q, pitch);
+          p += pitch;
         }
       }
       /* top gray */
-      memset (p, 127, (height - cy - 16 * dy) * width * 3);
+      memset (p, 127, (height - cy - 16 * dy) * pitch);
     break;
 
     case 3: {
@@ -362,7 +369,7 @@ static int test_make (test_input_plugin_t * this) {
       cx = (width / 2 - 8 * dx) & ~1;
       cy = (height / 2 - 8 * dy) & ~1;
       /* bottom gray */
-      d = cy * width * 3;
+      d = cy * pitch;
       memset (p, 127, d);
       p += d;
       /* color bars */
@@ -383,14 +390,15 @@ static int test_make (test_input_plugin_t * this) {
           *p++ = green;
           *p++ = red;
         }
+        for (x = pad; x; x--) *p++ = 0;
         /* duplicate it further */
         for (d = 1; d < dy; d++) {
-          memcpy (p, q, width * 3);
-          p += width * 3;
+          memcpy (p, q, pitch);
+          p += pitch;
         }
       }
       /* top gray */
-      memset (p, 127, (height - cy - 16 * dy) * width * 3);
+      memset (p, 127, (height - cy - 16 * dy) * pitch);
     } break;
 
     case 4: {
@@ -424,6 +432,7 @@ static int test_make (test_input_plugin_t * this) {
           *p++ = green;
           *p++ = red;
         }
+        for (x = pad; x; x--) *p++ = 0;
       }
     } break;
 
@@ -447,6 +456,7 @@ static int test_make (test_input_plugin_t * this) {
           *p++ = red;
           *p++ = red;
         }
+        for (x = pad; x; x--) *p++ = 0;
       }
     break;
   }
@@ -494,7 +504,7 @@ static int test_make (test_input_plugin_t * this) {
     }
     q = this->y4m_frame + 6;
     for (y = height - 1; y >= 0; y--) {
-      p = this->bmp_head + 54 + y * width * 3;
+      p = this->bmp_head + 54 + y * pitch;
       for (x = width; x; x--) {
         *q++ = (_yb[p[0]] + _yg[p[1]] + _yr[p[2]]) >> SSHIFT;
         p += 3;
@@ -502,8 +512,8 @@ static int test_make (test_input_plugin_t * this) {
     }
     q2 = q + width * height / 4;
     for (y = height - 2; y >= 0; y -= 2) {
-      p = this->bmp_head + 54 + 3 * y * width;
-      p2 = p + 3 * width;
+      p = this->bmp_head + 54 + y * pitch;
+      p2 = p + pitch;
       for (x = width / 2; x; x--) {
         blue  = (unsigned int)*p++ + *p2++;
         green = (unsigned int)*p++ + *p2++;
