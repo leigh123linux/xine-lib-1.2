@@ -69,6 +69,7 @@ typedef struct {
   int                  aspect_d;
   int                  progressive;
   int                  top_field_first;
+  int                  color_matrix;
 
   unsigned int         frame_pts_inc;
   unsigned int         frame_size;
@@ -88,6 +89,8 @@ static int open_yuv4mpeg2_file(demux_yuv4mpeg2_t *this) {
   this->bih.biWidth = this->bih.biHeight = this->fps_n = this->fps_d =
     this->aspect_n = this->aspect_d = this->progressive =
     this->top_field_first = this->data_start = 0;
+
+  this->color_matrix = 4; /* undefined, mpeg range */
 
   if (_x_demux_read_header(this->input, header, Y4M_HEADER_BYTES) != Y4M_HEADER_BYTES)
     return 0;
@@ -179,6 +182,17 @@ static int open_yuv4mpeg2_file(demux_yuv4mpeg2_t *this) {
           header_ptr = header_endptr;
 
         break;
+      case 'X':
+        /* private extra info */
+        if (!strncasecmp (header_ptr + 1, "XINE_CM=", 8)) {
+          int i = strtol(header_ptr + 9, &header_endptr, 10);
+          if (header_endptr > header_ptr + 9) {
+            this->color_matrix = i;
+            header_ptr = header_endptr;
+            break;
+          }
+        }
+        /* fall through */
       default:
         /* skip whatever this is */
         while ((*header_ptr != ' ') && (header_ptr < header_end))
@@ -256,6 +270,9 @@ static int demux_yuv4mpeg2_send_chunk(demux_plugin_t *this_gen) {
       buf->extra_info->input_normpos = (int)((double) current_file_pos * 65535 / this->data_size);
     buf->extra_info->input_time = pts / 90;
     buf->pts = pts;
+
+    buf->decoder_flags |= BUF_FLAG_COLOR_MATRIX;
+    buf->decoder_info[4] = this->color_matrix;
 
     buf->size = MIN(bytes_remaining, buf->max_size);
     bytes_remaining -= buf->size;

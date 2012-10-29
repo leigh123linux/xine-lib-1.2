@@ -65,6 +65,7 @@ typedef struct yuv_decoder_s {
 
   int               progressive;
   int               top_field_first;
+  int               color_matrix;
 
 } yuv_decoder_t;
 
@@ -107,6 +108,8 @@ static void yuv_decode_data (video_decoder_t *this_gen,
 
     this->progressive = buf->decoder_info[3];
     this->top_field_first = buf->decoder_info[4];
+
+    this->color_matrix = 4; /* undefined, mpeg range */
 
     free (this->buf);
     this->buf = NULL;
@@ -179,6 +182,9 @@ static void yuv_decode_data (video_decoder_t *this_gen,
 
       src = this->buf;
     }
+
+    if (buf->decoder_flags & BUF_FLAG_COLOR_MATRIX)
+      this->color_matrix = buf->decoder_info[4];
 
     if (buf->decoder_flags & BUF_FLAG_FRAME_END) {
 
@@ -281,7 +287,7 @@ static void yuv_decode_data (video_decoder_t *this_gen,
 
       }
 
-      VO_SET_FLAGS_CM (this->height >= 720 ? 2 : 10, img->flags);
+      VO_SET_FLAGS_CM (this->color_matrix, img->flags);
 
       img->duration  = this->video_step;
       img->pts       = buf->pts;

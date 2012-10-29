@@ -58,11 +58,12 @@ static const char * const test_names[] = {
   "test://saturation_levels.y4m",
   "test://uv_square.y4m",
   "test://y_resolution.y4m",
+  "test://rgb_levels_fullrange.y4m",
   NULL
 };
-static const char test_type[]          = {2, 1, 2, 3, 4, 5, 1, 2, 3, 4, 5};
-static const char test_is_yuv[]        = {0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1};
-static const char test_is_mpeg_range[] = {0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1};
+static const char test_type[]          = {2, 1, 2, 3, 4, 5, 1, 2, 3, 4, 5, 2};
+static const char test_is_yuv[]        = {0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1};
+static const char test_is_mpeg_range[] = {0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0};
 
 #define TEST_FILES ((sizeof (test_names) / sizeof (char *)) - 1)
 
@@ -246,7 +247,7 @@ static int test_make (test_input_plugin_t * this) {
   a = 54 + pitch * height;
   if (yuv) {
     if (height >= 720) hdtv = 1;
-    a += 80 + width * height * 3 / 2;
+    a += 88 + width * height * 3 / 2;
   }
   if (this->buf && (a != this->bufsize)) {
     free (this->buf);
@@ -265,9 +266,11 @@ static int test_make (test_input_plugin_t * this) {
   if (yuv) {
     p += 54 + pitch * height;
     this->y4m_head = p;
+    /* use inofficial extension to announce color matrix here ;-) */
     this->headsize = sprintf (p,
-      "YUV4MPEG2 W%d H%d F25:1 Ip A0:0 C420mpeg2 XYSCSS=420MPEG2\n", width, height);
-    p += 74;
+      "YUV4MPEG2 W%d H%d F25:1 Ip A0:0 C420mpeg2 XYSCSS=420MPEG2 XXINE_CM=%d\n",
+      width, height, (hdtv ? 2 : 10) | !mpeg);
+    p += 82;
     this->y4m_frame = p;
     memcpy (p, "FRAME\n", 6);
     this->framesize = 6 + width * height * 3 / 2;

@@ -407,6 +407,11 @@ struct buf_element_s {
  * the buffer                                                         */
 #define BUF_FLAG_AUDIO_PADDING 0x2000
 
+/** decoder_info[4] has (mpeg_color_matrix << 1) | fullrange.
+  * Useful for raw YUV which cannot tell this otherwise.
+  * Valid until revoked or next stream.                               */
+#define BUF_FLAG_COLOR_MATRIX 0x4000
+
 /**
  * \defgroup buffer_special Special buffer types:
  * Sometimes there is a need to relay special information from a demuxer
