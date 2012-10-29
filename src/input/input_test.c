@@ -45,24 +45,8 @@
 #include <xine/input_plugin.h>
 #include <xine/video_out.h>
 
-#define TEST_MAX_NAMES 10
-
-typedef struct {
-  input_class_t     input_class;
-  xine_t           *xine;
-  xine_mrl_t       *mrls[TEST_MAX_NAMES + 1], m[TEST_MAX_NAMES];
-} test_input_class_t;
-
-typedef struct {
-  input_plugin_t    input_plugin;
-  xine_stream_t    *stream;
-
-  unsigned char    *buf, *bmp_head, *y4m_head, *y4m_frame;
-  off_t             filesize, filepos, headsize, framesize;
-  int               width, height, type;
-} test_input_plugin_t;
-
-static const char * const test_names[TEST_MAX_NAMES + 1 + 1] = {
+/* describe tests here */
+static const char * const test_names[] = {
   "test://",
   "test://color_circle.bmp",
   "test://rgb_levels.bmp",
@@ -76,21 +60,30 @@ static const char * const test_names[TEST_MAX_NAMES + 1 + 1] = {
   "test://y_resolution.y4m",
   NULL
 };
+static const char test_type[]          = {2, 1, 2, 3, 4, 5, 1, 2, 3, 4, 5};
+static const char test_is_yuv[]        = {0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1};
+static const char test_is_mpeg_range[] = {0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1};
 
-const char * const test_titles[TEST_MAX_NAMES/2] = {
-  N_("Color Circle"),
-  N_("RGB Levels"),
-  N_("Saturation Levels"),
-  N_("UV Square"),
-  N_("Luminance Resolution"),
-};
+#define TEST_FILES ((sizeof (test_names) / sizeof (char *)) - 1)
 
-static const char * const test_cm[] = {
-  " ITU-R 470 BG / SDTV",
-  " ITU-R 709 / HDTV",
-};
+typedef struct {
+  input_class_t     input_class;
+  xine_t           *xine;
+  xine_mrl_t       *mrls[TEST_FILES], m[TEST_FILES];
+} test_input_class_t;
+
+typedef struct {
+  input_plugin_t    input_plugin;
+  xine_stream_t    *stream;
+
+  unsigned char    *buf, *bmp_head, *y4m_head, *y4m_frame;
+  off_t             filesize, filepos, headsize, framesize;
+  int               bufsize, index;
+} test_input_plugin_t;
 
 /* TJ. the generator code - actually a cut down version of my "testvideo" project */
+/* It also reminisces good old Amiga coding style - strictly integer math, no     */
+/* unnecessary memory allocations ...                                             */
 
 static void put32le (unsigned int v, unsigned char *p) {
   p[0] = v;
@@ -101,10 +94,8 @@ static void put32le (unsigned int v, unsigned char *p) {
 
 /* square root */
 static unsigned int isqr (unsigned int v) {
-  unsigned int a, b, c, e = 0;
+  unsigned int a, b = v, c = 0, e = 0;
   if (v == 0) return (0);
-  c = 0;
-  b = v;
   while (b) {b >>= 2; c++;}
   a = 1 << (c - 1);
   c = 1 << c;
@@ -224,14 +215,17 @@ static void render_xine_logo (unsigned char *buf, int buf_width, int buf_height,
 }
 
 static int test_make (test_input_plugin_t * this) {
-  int width, height, x, y, cx, cy, d, r, dx, dy, a, red, green, blue, angle = 0;
-  int mpeg = 0, hdtv = 0, yuv = 0, gray = 0;
-  unsigned char *p, *buf;
-  int type = this->type;
+  int width, height, x, y, cx, cy, d, r, dx, dy, a, red, green, blue;
+  int type, yuv, mpeg;
+  int angle = 0, hdtv = 0, gray = 0;
+  unsigned char *p;
 
-  if (this->buf) free (this->buf);
-  this->buf = NULL;
+  /* mode */
+  type = test_type[this->index];
+  yuv  = test_is_yuv[this->index];
+  mpeg = test_is_mpeg_range[this->index];
 
+  /* dimensions */
   width = 320;
   if (this->stream && this->stream->video_out) {
     x = this->stream->video_out->get_property (this->stream->video_out,
@@ -243,22 +237,24 @@ static int test_make (test_input_plugin_t * this) {
   height = width * 9 / 16;
   height &= ~1;
 
-  this->width = width;
-  this->height = height;
-
+  /* (re)allocate buffer */
   a = 54 + width * height * 3;
-  if (type > TEST_MAX_NAMES / 2) {
-    type -= TEST_MAX_NAMES / 2;
-    yuv = 1;
-    mpeg = 1;
+  if (yuv) {
     if (height >= 720) hdtv = 1;
     a += 80 + width * height * 3 / 2;
   }
+  if (this->buf && (a != this->bufsize)) {
+    free (this->buf);
+    this->buf = NULL;
+  }
+  if (!this->buf) {
+    this->buf = malloc (a);
+    if (!this->buf) return (1);
+    this->bufsize = a;
+  }
 
-  buf = malloc (a);
-  if (!buf) return (1);
-
-  this->buf = p = buf;
+  /* make file heads */
+  p = this->buf;
   this->bmp_head = p;
   this->filesize = 54 + width * height * 3;
   if (yuv) {
@@ -273,7 +269,6 @@ static int test_make (test_input_plugin_t * this) {
     this->filesize = this->headsize + 10 * 25 * this->framesize;
   }
   this->filepos = 0;
-
   p = this->bmp_head;
   memset (p, 0, 54);
   p[0] = 'B';
@@ -290,6 +285,7 @@ static int test_make (test_input_plugin_t * this) {
   put32le (2835, p + 42); /* ?? */
   p += 54;
 
+  /* generate RGB image */
   switch (type) {
 
     case 1:
@@ -455,8 +451,10 @@ static int test_make (test_input_plugin_t * this) {
     break;
   }
 
+  /* add logo */
   render_xine_logo (this->bmp_head + 54, width, height, 150);
 
+  /* convert to YUV */
   if (yuv) {
     int fb, fr, yb, yr, yg, yo, ubvr, vb, ur, ug, vg;
     int i, _yb[256], _yr[256], _yg[256];
@@ -494,10 +492,9 @@ static int test_make (test_input_plugin_t * this) {
       _vb[i] = vb * i;
       _vg[i] = vg * i;
     }
-    p = this->bmp_head + 54 + width * height * 3;
     q = this->y4m_frame + 6;
     for (y = height - 1; y >= 0; y--) {
-      p = buf + 54 + y * width * 3;
+      p = this->bmp_head + 54 + y * width * 3;
       for (x = width; x; x--) {
         *q++ = (_yb[p[0]] + _yg[p[1]] + _yr[p[2]]) >> SSHIFT;
         p += 3;
@@ -508,28 +505,34 @@ static int test_make (test_input_plugin_t * this) {
       p = this->bmp_head + 54 + 3 * y * width;
       p2 = p + 3 * width;
       for (x = width / 2; x; x--) {
-        blue = (unsigned int)*p++ + *p2++;
+        blue  = (unsigned int)*p++ + *p2++;
         green = (unsigned int)*p++ + *p2++;
-        red = (unsigned int)*p++ + *p2++;
-        blue += (unsigned int)*p++ + *p2++;
+        red   = (unsigned int)*p++ + *p2++;
+        blue  += (unsigned int)*p++ + *p2++;
         green += (unsigned int)*p++ + *p2++;
-        red += (unsigned int)*p++ + *p2++;
-        a = (_ubvr[blue] + _ug[green] + _ur[red]) >> (SSHIFT + 2);
-        *q++ = a > 255 ? 255 : a;
-        a = (_ubvr[red] + _vg[green] + _vb[blue]) >> (SSHIFT + 2);
-        *q2++ = a > 255 ? 255 : a;
+        red   += (unsigned int)*p++ + *p2++;
+        *q++  = (_ubvr[blue] + _ug[green] + _ur[red]) >> (SSHIFT + 2);
+        *q2++ = (_ubvr[red] + _vg[green] + _vb[blue]) >> (SSHIFT + 2);
       }
     }
   }
 
-  /* human-friendly title */
-  if (type > 0 && type <= TEST_MAX_NAMES / 2) {
-    char *title = _x_asprintf("%s (%s)%s",
-                              _(test_titles[type-1]),
-                              yuv ? "YUV" : "RGB",
-                              yuv ? test_cm[!!hdtv] : "");
-    _x_meta_info_set(this->stream, XINE_META_INFO_TITLE, title);
-    free(title);
+  /* add readable title */
+  {
+    char *test_titles[5] = {
+      _("Color Circle"),
+      _("RGB Levels"),
+      _("Saturation Levels"),
+      _("UV Square"),
+      _("Luminance Resolution")
+    };
+    char *temp;
+
+    temp = _x_asprintf ("%s [%s%s]", test_titles[type - 1],
+      yuv ? (mpeg ? "" : "full swing ") : "",
+      yuv ? (hdtv ? "ITU-R 709 YUV" : " ITU-R 601 YUV") : "RGB");
+    _x_meta_info_set (this->stream, XINE_META_INFO_TITLE, temp);
+    free(temp);
   }
 
   return (1);
@@ -547,7 +550,7 @@ static off_t test_plugin_read (input_plugin_t *this_gen, void *buf, off_t len) {
   if (!this->buf || (len < 0) || !buf) return -1;
   if (len > this->filesize - this->filepos) len = this->filesize - this->filepos;
 
-  if (this->type > TEST_MAX_NAMES / 2) {
+  if (test_is_yuv[this->index]) {
     char *p = this->y4m_frame, *q = buf;
     off_t l = len, d;
     d = this->headsize - this->filepos;
@@ -632,7 +635,7 @@ static uint32_t test_plugin_get_blocksize (input_plugin_t *this_gen) {
 static const char *test_plugin_get_mrl (input_plugin_t *this_gen) {
   test_input_plugin_t *this = (test_input_plugin_t *) this_gen;
 
-  return test_names[this->type];
+  return test_names[this->index];
 }
 
 static int test_plugin_get_optional_data (input_plugin_t *this_gen, void *data,
@@ -659,15 +662,14 @@ static input_plugin_t *test_class_get_instance (input_class_t *cls_gen,
   test_input_plugin_t *this;
   int i;
 
-  for (i = 0; i < TEST_MAX_NAMES + 1; i++) {
+  for (i = 0; i < TEST_FILES; i++) {
     if (!strcasecmp (data, test_names[i])) break;
   }
-  if (i == TEST_MAX_NAMES + 1) return NULL;
-  if (i == 0) i = 2;
+  if (i == TEST_FILES) return NULL;
 
   this = (test_input_plugin_t *) calloc(1, sizeof (test_input_plugin_t));
   this->stream = stream;
-  this->type = i;
+  this->index = i;
 
   this->input_plugin.open               = test_plugin_open;
   this->input_plugin.get_capabilities   = test_plugin_get_capabilities;
@@ -690,10 +692,8 @@ static input_plugin_t *test_class_get_instance (input_class_t *cls_gen,
  * plugin class functions
  */
 
-static const char * const *test_class_get_autoplay_list (input_class_t *this_gen, int *num_files)
-{
-  *num_files = sizeof(test_names) / sizeof(test_names[0]) - 2;
-
+static const char * const * test_get_autoplay_list (input_class_t *this_gen, int *num_files) {
+  if (num_files) *num_files = TEST_FILES - 1;
   return test_names + 1;
 }
 
@@ -703,27 +703,28 @@ static xine_mrl_t **test_class_get_dir (input_class_t *this_gen, const char *fil
   int i;
   xine_mrl_t *m;
 
-  for (i = 0; i < TEST_MAX_NAMES; i++) {
-    m = &this->m[i];
-    this->mrls[i] = m;
+  if (!this->mrls[0]) {
+    for (i = 0; i < TEST_FILES - 1; i++) {
+      m = &this->m[i];
+      this->mrls[i] = m;
 
-    m->origin = test_names[0];
-    m->mrl = test_names[i + 1];
-    m->link = NULL;
-    m->type = mrl_file | mrl_file_normal;
-    m->size = 54 + 1024 * 576 * 3;
+      m->origin = (char *)test_names[0];
+      m->mrl = (char *)test_names[i + 1];
+      m->link = NULL;
+      m->type = mrl_file | mrl_file_normal;
+      m->size = 54 + 1024 * 576 * 3; /* for true size, call test_plugin_get_length () */
+    }
+
+    this->mrls[i] = NULL;
   }
 
-  *nFiles = i;
-  this->mrls[i] = NULL;
+  if (nFiles) *nFiles = TEST_FILES - 1;
 
   return this->mrls;
 }
 
 static void test_class_dispose (input_class_t *this_gen) {
-  test_input_class_t *this = (test_input_class_t *) this_gen;
-
-  free (this);
+  free (this_gen);
 }
 
 static void *init_plugin (xine_t *xine, void *data) {
@@ -737,7 +738,7 @@ static void *init_plugin (xine_t *xine, void *data) {
   this->input_class.identifier         = "test";
   this->input_class.description        = N_("test card input plugin");
   this->input_class.get_dir            = test_class_get_dir;
-  this->input_class.get_autoplay_list  = test_class_get_autoplay_list;
+  this->input_class.get_autoplay_list  = test_get_autoplay_list;
   this->input_class.dispose            = test_class_dispose;
   this->input_class.eject_media        = NULL;
 
