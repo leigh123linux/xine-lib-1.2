@@ -42,6 +42,12 @@
 #include <sys/time.h>
 #include <sys/types.h>
 
+#ifdef HAVE_FFMPEG_AVUTIL_H
+#  include <base64.h>
+#else
+#  include <libavutil/base64.h>
+#endif
+
 #define LOG_MODULE "rtsp"
 #define LOG_VERBOSE
 /*
@@ -74,6 +80,7 @@ struct rtsp_s {
 
   unsigned int  cseq;
   char         *session;
+  char         *auth;
 
   char        *answers[MAX_FIELDS];   /* data of last message */
   char        *scheduled[MAX_FIELDS]; /* will be sent with next message */
@@ -180,6 +187,10 @@ static void rtsp_send_request(rtsp_t *s, const char *type, const char *what) {
 
   buf = _x_asprintf("%s %s %s",type, what, rtsp_protocol_version);
   rtsp_put(s,buf);
+
+  if (s->auth) {
+    rtsp_put(s, s->auth);
+  }
 
   if (payload)
     while (*payload) {
@@ -427,11 +438,22 @@ int rtsp_read_data(rtsp_t *s, void *buffer_gen, unsigned int size) {
  * connect to a rtsp server
  */
 
+static void rtsp_basicauth (const char *user, const char *password, char** dest) {
+  const size_t totlen = strlen(user) + (password ? strlen(password) : 0) + 1;
+  const size_t enclen = ((totlen + 2) * 4 ) / 3 + 12;
+  char         tmp[totlen + 1];
+
+  snprintf(tmp, totlen + 1, "%s:%s", user, password ? : "");
+
+  *dest = malloc(enclen);
+  av_base64_encode(*dest, enclen, tmp, totlen);
+}
+
 rtsp_t *rtsp_connect(xine_stream_t *stream, const char *mrl, const char *user_agent) {
 
   rtsp_t *s = malloc(sizeof(rtsp_t));
   char *mrl_ptr=strdup(mrl);
-  char *slash, *colon;
+  char *slash, *colon, *amp;
   int hostend, i;
   size_t pathbegin;
 
@@ -468,8 +490,34 @@ rtsp_t *rtsp_connect(xine_stream_t *stream, const char *mrl, const char *user_ag
   else
     s->user_agent=strdup("User-Agent: RealMedia Player Version 6.0.9.1235 (linux-2.0-libc6-i386-gcc2.95)");
 
+  amp  =strchr(mrl_ptr,'@');
   slash=strchr(mrl_ptr,'/');
   colon=strchr(mrl_ptr,':');
+
+  if (amp && (!slash || amp < slash)) {
+    char *username = NULL, *password = NULL;
+    /* xxx@host:port/ */
+    if (colon && colon < amp) {
+      /* xxx:yyy@host:port/ */
+      username = strndup(mrl_ptr, colon - mrl_ptr);
+      password = strndup(colon + 1, amp - colon - 1);
+    } else {
+      username = strndup(mrl_ptr, amp - mrl_ptr);
+    }
+
+    mrl_ptr = amp + 1;
+    slash = strchr(mrl_ptr, '/');
+    colon = strchr(mrl_ptr, ':');
+
+    if (username) {
+      char *auth;
+      rtsp_basicauth(username, password, &auth);
+      s->auth = _x_asprintf("Authorization: Basic %s", auth);
+      free(auth);
+    }
+    free(username);
+    free(password);
+  }
 
   if(!slash) slash=mrl_ptr+strlen(mrl_ptr)+1;
   if(!colon) colon=slash;
@@ -530,6 +578,7 @@ void rtsp_close(rtsp_t *s) {
   if (s->mrl) free(s->mrl);
   if (s->session) free(s->session);
   if (s->user_agent) free(s->user_agent);
+  free(s->auth);
   rtsp_free_answers(s);
   rtsp_unschedule_all(s);
   free(s);
