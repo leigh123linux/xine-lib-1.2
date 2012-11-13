@@ -162,6 +162,9 @@ static int rtsp_get_code(rtsp_t *s, const char *string) {
 
   if(code != 200)
     xprintf(s->stream->xine, XINE_VERBOSITY_DEBUG, "librtsp: server responds: '%s'\n", string);
+  if (code == 401)
+    _x_message(s->stream, XINE_MSG_AUTHENTICATION_NEEDED,
+               s->mrl, NULL, NULL);
 
   return code;
 }
