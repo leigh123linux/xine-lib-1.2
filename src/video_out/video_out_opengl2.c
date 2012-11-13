@@ -82,6 +82,7 @@ typedef struct {
   
   int       unscaled;
   int       vid_scale;
+  int       type; /* GL_RGBA or GL_BGRA */
 } opengl2_overlay_t;
 
 
@@ -560,6 +561,7 @@ static int opengl2_process_ovl( opengl2_driver_t *this_gen, vo_overlay_t *overla
     ovl->vid_scale = 1;
   else
     ovl->vid_scale = 0;
+  ovl->type = GL_RGBA;
 
   int num_rle = overlay->num_rle;
   rle_elem_t *rle = overlay->rle;
@@ -628,6 +630,7 @@ static int opengl2_process_rgba_ovl( opengl2_driver_t *this_gen, vo_overlay_t *o
     ovl->vid_scale = 1;
   else
     ovl->vid_scale = 0;
+  ovl->type = GL_BGRA;
 
   pthread_mutex_lock(&overlay->argb_layer->mutex);
 
@@ -880,7 +883,7 @@ static void opengl2_update_overlays( opengl2_driver_t *that )
         o->tex_h = o->ovl_h;
       }
       glBindTexture( GL_TEXTURE_RECTANGLE_ARB, o->tex );
-      glTexImage2D( GL_TEXTURE_RECTANGLE_ARB, 0, GL_RGBA, o->tex_w, o->tex_h, 0, GL_RGBA, GL_UNSIGNED_BYTE, o->ovl_rgba );
+      glTexImage2D( GL_TEXTURE_RECTANGLE_ARB, 0, GL_RGBA, o->tex_w, o->tex_h, 0, o->type, GL_UNSIGNED_BYTE, o->ovl_rgba );
       glTexParameterf( GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
       glTexParameterf( GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );
       glTexParameteri( GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
