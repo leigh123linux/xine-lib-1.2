@@ -148,6 +148,9 @@ static void jpeg_decode_data (video_decoder_t *this_gen, buf_element_t *buf) {
     int         max_width, max_height;
     uint8_t    *slice_start[1] = {NULL};
     int         slice_line = 0;
+    int         fullrange;
+    uint8_t     ytab[256], ctab[256];
+    int         frame_flags = VO_BOTH_FIELDS;
 
     /* query max. image size vo can handle */
     max_width = this->stream->video_out->get_property( this->stream->video_out,
@@ -203,11 +206,26 @@ static void jpeg_decode_data (video_decoder_t *this_gen, buf_element_t *buf) {
     if (max_height > 0 && cinfo.output_height > max_height)
       height = max_height;
 
+    /* TJ. As far as I know JPEG always uses fullrange ITU-R 601 YUV.
+       Let vo handle it (fast, good quality) or shrink to mpeg range here.
+       In any case, set cm flags _before_ calling proc_slice (). */
+    fullrange = !!(this->stream->video_out->get_capabilities (this->stream->video_out) & VO_CAP_FULLRANGE);
+    if (fullrange) {
+      VO_SET_FLAGS_CM (11, frame_flags);
+    } else {
+      unsigned int i;
+      for (i = 0; i < 256; i++) {
+        ytab[i] = (219 * i + 16 * 255 + 127) / 255;
+        ctab[i] = (112 * i + (127 - 112) * 128 + 63) / 127;
+      }
+      VO_SET_FLAGS_CM (10, frame_flags);
+    }
+
     img = this->stream->video_out->get_frame (this->stream->video_out,
                                               width, height,
                                               (double)width/(double)height,
 					      XINE_IMGFMT_YUY2,
-    					      VO_BOTH_FIELDS);
+                                              frame_flags);
 
     linesize = cinfo.output_width * cinfo.output_components;
     buffer = (cinfo.mem->alloc_sarray)((void*)&cinfo, JPOOL_IMAGE, linesize, 1);
@@ -233,12 +251,24 @@ static void jpeg_decode_data (video_decoder_t *this_gen, buf_element_t *buf) {
         continue;
       }
 
-      for (i = 0; i < linesize; i += 3) {
-        *dst++ = buffer[0][i];
-        if (i & 1) {
-          *dst++ = buffer[0][i + 2];
-        } else {
-          *dst++ = buffer[0][i + 1];
+      if (fullrange) {
+        for (i = 0; i < linesize; i += 3) {
+          *dst++ = buffer[0][i];
+          if (i & 1) {
+            *dst++ = buffer[0][i + 2];
+          } else {
+            *dst++ = buffer[0][i + 1];
+          }
+        }
+      } else {
+        for (i = 0; i < linesize; i += 3) {
+          /* are these casts paranoid? */
+          *dst++ = ytab[(uint8_t)buffer[0][i]];
+          if (i & 1) {
+            *dst++ = ctab[(uint8_t)buffer[0][i + 2]];
+          } else {
+            *dst++ = ctab[(uint8_t)buffer[0][i + 1]];
+          }
         }
       }
 
