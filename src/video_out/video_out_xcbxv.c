@@ -74,6 +74,8 @@ typedef struct {
   int                max;
   xcb_atom_t         atom;
 
+  int                defer;
+
   cfg_entry_t       *entry;
 
   xv_driver_t       *this;
@@ -148,6 +150,7 @@ struct xv_driver_s {
   /* color matrix switching */
   int                cm_active, cm_state;
   xcb_atom_t         cm_atom;
+  int                fullrange_mode;
 };
 
 typedef struct {
@@ -585,6 +588,64 @@ static int xv_redraw_needed (vo_driver_t *this_gen) {
   return ret;
 }
 
+static void xv_new_color (xv_driver_t *this, int cm) {
+  int brig = this->props[VO_PROP_BRIGHTNESS].value;
+  int cont = this->props[VO_PROP_CONTRAST].value;
+  int satu = this->props[VO_PROP_SATURATION].value;
+  int cm2, fr = 0, a, b;
+  xcb_atom_t atom;
+
+  if (cm & 1) {
+    /* fullrange emulation. Do not report this via get_property (). */
+    if (this->fullrange_mode == 1) {
+      /* modification routine 1 for TV set style bcs controls 0% - 200% */
+      satu -= this->props[VO_PROP_SATURATION].min;
+      satu  = (satu * (112 * 255) + (127 * 219 / 2)) / (127 * 219);
+      satu += this->props[VO_PROP_SATURATION].min;
+      if (satu > this->props[VO_PROP_SATURATION].max)
+        satu = this->props[VO_PROP_SATURATION].max;
+      cont -= this->props[VO_PROP_CONTRAST].min;
+      cont  = (cont * 219 + 127) / 255;
+      a     = cont * (this->props[VO_PROP_BRIGHTNESS].max - this->props[VO_PROP_BRIGHTNESS].min);
+      cont += this->props[VO_PROP_CONTRAST].min;
+      b     = 256 * (this->props[VO_PROP_CONTRAST].max - this->props[VO_PROP_CONTRAST].min);
+      brig += (16 * a + b / 2) / b;
+      if (brig > this->props[VO_PROP_BRIGHTNESS].max)
+        brig = this->props[VO_PROP_BRIGHTNESS].max;
+      fr = 1;
+    }
+    /* maybe add more routines for non-standard controls later */
+  }
+  pthread_mutex_lock(&this->main_mutex);
+  atom = this->props[VO_PROP_BRIGHTNESS].atom;
+  if (atom != XCB_NONE)
+    xcb_xv_set_port_attribute (this->connection, this->xv_port, atom, brig);
+  atom = this->props[VO_PROP_CONTRAST].atom;
+  if (atom != XCB_NONE)
+    xcb_xv_set_port_attribute (this->connection, this->xv_port, atom, cont);
+  atom = this->props[VO_PROP_SATURATION].atom;
+  if (atom != XCB_NONE)
+    xcb_xv_set_port_attribute (this->connection, this->xv_port, atom, satu);
+  pthread_mutex_unlock(&this->main_mutex);
+
+  /* so far only binary nvidia drivers support this. why not nuveau? */
+  if (this->cm_atom != XCB_NONE) {
+    cm2 = (0xc00c >> cm) & 1;
+    pthread_mutex_lock(&this->main_mutex);
+    xcb_xv_set_port_attribute (this->connection, this->xv_port, this->cm_atom, cm2);
+    pthread_mutex_unlock(&this->main_mutex);
+    cm2 = cm2 ? 2 : 10;
+  } else {
+    cm2 = 10;
+  }
+
+  cm2 |= fr;
+  xprintf (this->xine, XINE_VERBOSITY_LOG, "video_out_xcbxv: %s b %d  c %d  s %d  [%s]\n",
+    fr ? "modified " : "", brig, cont, satu, cm_names[cm2]);
+
+  this->cm_active = cm;
+}
+
 static void xv_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen) {
   xv_driver_t  *this  = (xv_driver_t *) this_gen;
   xv_frame_t   *frame = (xv_frame_t *) frame_gen;
@@ -594,17 +655,8 @@ static void xv_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen) {
   */
 
   cm = cm_from_frame (frame_gen);
-  if (cm != this->cm_active) {
-    this->cm_active = cm;
-    cm = (0xc00c >> cm) & 1;
-    if (this->cm_atom != XCB_NONE) {
-      pthread_mutex_lock(&this->main_mutex);
-      xcb_xv_set_port_attribute (this->connection, this->xv_port, this->cm_atom, cm);
-      pthread_mutex_unlock(&this->main_mutex);
-      xprintf (this->xine, XINE_VERBOSITY_LOG, "video_out_xcbxv: color_matrix %s\n",
-        cm_names[cm ? 2 : 10]);
-    }
-  }
+  if (cm != this->cm_active)
+    xv_new_color (this, cm);
 
   /*
    * queue frames (deinterlacing)
@@ -713,6 +765,15 @@ static int xv_set_property (vo_driver_t *this_gen,
   xv_driver_t *this = (xv_driver_t *) this_gen;
 
   if ((property < 0) || (property >= VO_NUM_PROPERTIES)) return 0;
+
+  if (this->props[property].defer == 1) {
+    /* value is out of bound */
+    if((value < this->props[property].min) || (value > this->props[property].max))
+      value = (this->props[property].min + this->props[property].max) >> 1;
+    this->props[property].value = value;
+    this->cm_active = 0;
+    return value;
+  }
 
   if (this->props[property].atom != XCB_NONE) {
     xcb_xv_get_port_attribute_cookie_t get_attribute_cookie;
@@ -1141,6 +1202,16 @@ static void xv_update_xv_pitch_alignment(void *this_gen, xine_cfg_entry_t *entry
   this->use_pitch_alignment = entry->num_value;
 }
 
+static void xv_fullrange_cb_config (void *this_gen, xine_cfg_entry_t *entry) {
+  xv_driver_t *this = (xv_driver_t *)this_gen;
+  this->fullrange_mode = entry->num_value;
+  if (this->fullrange_mode)
+    this->capabilities |= VO_CAP_FULLRANGE;
+  else
+    this->capabilities &= ~VO_CAP_FULLRANGE;
+  this->cm_active = 0;
+}
+
 static xcb_xv_port_t xv_open_port (xv_driver_t *this, xcb_xv_port_t port) {
   xcb_xv_grab_port_cookie_t grab_port_cookie;
   xcb_xv_grab_port_reply_t *grab_port_reply;
@@ -1336,6 +1407,7 @@ static vo_driver_t *open_plugin(video_driver_class_t *class_gen, const void *vis
     this->props[i].min   = 0;
     this->props[i].max   = 0;
     this->props[i].atom  = XCB_NONE;
+    this->props[i].defer = 0;
     this->props[i].entry = NULL;
     this->props[i].this  = this;
   }
@@ -1470,6 +1542,33 @@ static vo_driver_t *open_plugin(video_driver_class_t *class_gen, const void *vis
   else
     xprintf(this->xine, XINE_VERBOSITY_DEBUG, LOG_MODULE ": no port attributes defined.\n");
   free(query_adaptors_reply);
+
+  this->props[VO_PROP_BRIGHTNESS].defer = 1;
+  this->props[VO_PROP_CONTRAST].defer   = 1;
+  this->props[VO_PROP_SATURATION].defer = 1;
+  if ((this->props[VO_PROP_BRIGHTNESS].atom != XCB_NONE) &&
+    (this->props[VO_PROP_CONTRAST].atom != XCB_NONE)) {
+    static const char * const xv_fullrange_conf_labels[] = {"Off", "Normal", NULL};
+    this->fullrange_mode = this->xine->config->register_enum (
+      this->xine->config,
+      "video.output.xv_fullrange",
+      0,
+      (char **)xv_fullrange_conf_labels,
+      _("Fullrange color emulation"),
+      _("Emulate fullrange color by modifying brightness/contrast/saturation settings.\n\n"
+        "Off:    Let decoders convert such video.\n"
+        "        Works with all graphics cards, but needs a bit more CPU power.\n\n"
+        "Normal: Fast and better quality. Should work at least with some newer cards\n"
+        "        (GeForce 7+, 210+).\n\n"),
+      10,
+      xv_fullrange_cb_config,
+      this
+    );
+    if (this->fullrange_mode)
+      this->capabilities |= VO_CAP_FULLRANGE;
+  } else {
+    this->fullrange_mode = 0;
+  }
 
   /*
    * check supported image formats
