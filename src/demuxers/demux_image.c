@@ -82,7 +82,6 @@ static int demux_image_next (demux_plugin_t *this_gen, int preview, int first_fr
     if (first_fragment &&
         ( memcmp (buf->content, "\377\330\377", 3) == 0 || /* JPEG */
           (_X_BE_16(&buf->content[0]) == 0xffd8))) {        /* another JPEG */
-          fprintf(stderr, "JPEG\n");
           this->buf_type = BUF_VIDEO_JPEG;
         }
 
