@@ -786,7 +786,7 @@ static int opengl2_redraw_needed( vo_driver_t *this_gen )
     _x_vo_scale_compute_output_size( &this->sc );
     return 1;
   }
-  return 0;
+  return this->update_csc;
 }
 
 
