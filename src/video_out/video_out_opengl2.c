@@ -632,11 +632,7 @@ static int opengl2_process_rgba_ovl( opengl2_driver_t *this_gen, vo_overlay_t *o
     ovl->vid_scale = 0;
   ovl->type = GL_BGRA;
 
-  pthread_mutex_lock(&overlay->argb_layer->mutex);
-
   memcpy(ovl->ovl_rgba, overlay->argb_layer->buffer, overlay->width * overlay->height * 4);
-
-  pthread_mutex_unlock(&overlay->argb_layer->mutex);
 
   return 1;
 }
@@ -661,8 +657,15 @@ static void opengl2_overlay_blend (vo_driver_t *this_gen, vo_frame_t *frame_gen,
     return;
 
   if (overlay->argb_layer && overlay->argb_layer->buffer) {
-    if ( opengl2_process_rgba_ovl( this, overlay ) )
-      ++this->ovl_changed;
+
+    pthread_mutex_lock(&overlay->argb_layer->mutex); /* buffer can be changed or freed while unlocked */
+
+    if (overlay->argb_layer->buffer) {
+      if ( opengl2_process_rgba_ovl( this, overlay ) )
+        ++this->ovl_changed;
+    }
+
+    pthread_mutex_unlock(&overlay->argb_layer->mutex);
   }
 
   else if (overlay->rle) {
