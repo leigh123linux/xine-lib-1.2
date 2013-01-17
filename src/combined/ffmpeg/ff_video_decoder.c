@@ -1337,6 +1337,10 @@ static void ff_handle_mpeg12_buffer (ff_video_decoder_t *this, buf_element_t *bu
         free_img = 0;
       }
 
+      /* transfer some more frame settings for deinterlacing */
+      img->progressive_frame = !this->av_frame->interlaced_frame;
+      img->top_field_first   = this->av_frame->top_field_first;
+
       /* get back reordered pts */
       img->pts = ff_untag_pts (this, this->av_frame->reordered_opaque);
       ff_check_pts_tagging (this, this->av_frame->reordered_opaque);
