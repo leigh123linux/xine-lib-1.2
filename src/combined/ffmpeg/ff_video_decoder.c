@@ -138,6 +138,8 @@ struct ff_video_decoder_s {
 #ifdef LOG
   enum PixelFormat  debug_fmt;
 #endif
+
+  uint8_t           set_stream_info;
 };
 
 /* import color matrix names */
@@ -213,7 +215,7 @@ static int get_buffer(AVCodecContext *context, AVFrame *av_frame){
       this->aspect_ratio = (double)width / (double)height;
       this->aspect_ratio_prio = 1;
       lprintf("default aspect ratio: %f\n", this->aspect_ratio);
-      set_stream_info(this);
+      this->set_stream_info = 1;
     }
   }
 
@@ -1320,6 +1322,11 @@ static void ff_handle_mpeg12_buffer (ff_video_decoder_t *this, buf_element_t *bu
       offset += len;
     }
 
+    if( this->set_stream_info) {
+      set_stream_info(this);
+      this->set_stream_info = 0;
+    }
+
     if (got_picture && this->av_frame->data[0]) {
       /* got a picture, draw it */
       if(!this->av_frame->opaque) {
@@ -1534,6 +1541,11 @@ static void ff_handle_buffer (ff_video_decoder_t *this, buf_element_t *buf) {
 	this->aspect_ratio_prio = 2;
 	lprintf("ffmpeg aspect ratio: %f\n", this->aspect_ratio);
 	set_stream_info(this);
+      }
+
+      if( this->set_stream_info) {
+        set_stream_info(this);
+        this->set_stream_info = 0;
       }
 
       if (got_picture && this->av_frame->data[0]) {
@@ -1899,6 +1911,7 @@ static video_decoder_t *ff_video_open_plugin (video_decoder_class_t *class_gen, 
   this->mpeg_parser       = NULL;
 
   this->dr1_frames        = xine_list_new();
+  this->set_stream_info   = 0;
 
 #ifdef LOG
   this->debug_fmt = -1;
