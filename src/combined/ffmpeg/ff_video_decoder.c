@@ -1591,7 +1591,7 @@ static void ff_handle_buffer (ff_video_decoder_t *this, buf_element_t *buf) {
             free_img = 1;
           }
 
-          pp_postprocess(this->av_frame->data, this->av_frame->linesize,
+          pp_postprocess((const uint8_t **)this->av_frame->data, this->av_frame->linesize,
                         img->base, img->pitches,
                         img->width, img->height,
                         this->av_frame->qscale_table, this->av_frame->qstride,
