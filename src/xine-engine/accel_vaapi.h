@@ -1,5 +1,6 @@
 /*
- * Copyright (C) 2008 the xine project
+ * Copyright (C) 2012 Edgar Hucek <gimli|@dark-green.com>
+ * Copyright (C) 2012-2013 xine developers
  *
  * This file is part of xine, a free video player.
  *
