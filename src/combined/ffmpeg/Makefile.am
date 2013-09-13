@@ -37,7 +37,10 @@ AV_CPP = $(CPP) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAG
 avcodec_audio.list: AV_CODECS:=/CODEC_ID_PCM_S16LE/,/CODEC_ID_DVD_SUBTITLE/
 avcodec_video.list: AV_CODECS:=/CODEC_ID_MPEG1VIDEO/,/CODEC_ID_PCM_S16LE/
 
-avcodec_audio.list avcodec_video.list:
+# that weird shell call just yields full path of the avcodec.h file
+avcodec_audio.list avcodec_video.list: $(shell \
+ echo '#include "$(srcdir)/ffmpeg_decoder.h"' | $(AV_CPP) -M - |\
+ sed -e 's/ \+/\n/g;' | sed -n -e '/avcodec\.h/p;')
 	$(AM_V_GEN)echo '#include "$(srcdir)/ffmpeg_decoder.h"' | $(AV_CPP) - |\
 	  sed -e $(AV_CODECS)'! d; s/^[ \t]*//; s/[=,].*//; /^$$/ d' >$@
 
