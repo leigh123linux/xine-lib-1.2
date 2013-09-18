@@ -543,7 +543,7 @@ case "$host_or_hostalias" in
         esac
 
         if test "$WIN32_SYS" = "mingw32"; then
-            WIN32_AM_CPPFLAGS='-I$(top_srcdir)/win32/include'
+            WIN32_INCLUDES='-I$(top_srcdir)/win32/include'
             LIBS="-lwinmm -lwsock32 $LIBS"
             LDFLAGS="-Wl,--enable-stdcall-fixup $LDFLAGS"
             dnl iberty has been needed only in older versions
@@ -1140,8 +1140,8 @@ dnl ---------------------------------------------
 dnl some include paths ( !!! DO NOT REMOVE !!! )
 dnl ---------------------------------------------
 
-AM_CPPFLAGS='-I$(top_srcdir) -I$(top_builddir)/include -I$(top_srcdir)/include -I$(top_srcdir)/src -I$(top_builddir)/src/xine-engine -I$(top_srcdir)/src/xine-engine -I$(top_srcdir)/src/xine-utils $(INTLDIR) -I$(top_builddir)/src/input -I$(top_srcdir)/src/input $(WIN32_AM_CPPFLAGS) -I$(top_builddir)/lib -I$(top_srcdir)/lib'
-AC_SUBST(AM_CPPFLAGS)
+INCLUDES='-I$(top_srcdir) -I$(top_builddir)/include -I$(top_srcdir)/include -I$(top_srcdir)/src -I$(top_builddir)/src/xine-engine -I$(top_srcdir)/src/xine-engine -I$(top_srcdir)/src/xine-utils $(INTLDIR) -I$(top_builddir)/src/input -I$(top_srcdir)/src/input $(WIN32_INCLUDES) -I$(top_builddir)/lib -I$(top_srcdir)/lib'
+AC_SUBST(INCLUDES)
 
 dnl We check for warnings here rather than with optimisations since we
 dnl want them to be _always_ enabled, to make sure the code is sane
