@@ -1,5 +1,27 @@
-xine-lib (1.2.3.1) 2013-??-??
-  * Distribute one missing header file. No VAAPI plugin without this.
+xine-lib (1.2.4) 2013-??-??
+  * Some VAAPI plugin fixes (build, image size changes).
+  * ffmpeg multi-channel playback fixes:
+    - Handle channel configuration changes sooner.
+    - Generic layout if none provided; follow user changes.
+    - Defer opening output if nothing to play.
+    - Don't re-open with identical settings.
+    - Don't use the bits-per-sample value (may not match decoder output).
+  * ffmpeg video fixes:
+    - Default to square pixels, avoiding black bars & unnecessary scaling.
+    - Avoid CODEC_FLAG_EMU_EDGE (and some possible segfaults).
+    - Use MPEG2VIDEO.
+  * OpenGL2 output: don't render into invalid drawable.
+  * Fix a possible xine_play() hang related to display locking.
+  * FLV demuxer rewrite:
+    - Improved metadata parsing.
+    - PTS/DTS fixes.
+    - Large file support on 32-bit.
+    - Much improved seeking.
+    - Much optimisation.
+    - More codecs supported.
+  * audio_out speed control fixes.
+  * Optimised RGB→YUY2 conversion.
+  * Avoid a possible performance penalty where AVX-optimised memcpy is used.
 
 xine-lib (1.2.3) 2013-05-29
   * Add VAAPI HW decoding support
