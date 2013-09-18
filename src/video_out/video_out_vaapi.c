@@ -72,6 +72,12 @@
 
 #include "accel_vaapi.h"
 
+#ifdef HAVE_FFMPEG_AVUTIL_H
+#  include <mem.h>
+#else
+#  include <libavutil/mem.h>
+#endif
+
 #ifndef VA_SURFACE_ATTRIB_SETTABLE
 #define vaCreateSurfaces(d, f, w, h, s, ns, a, na) \
     vaCreateSurfaces(d, w, h, f, ns, s)
@@ -1637,7 +1643,7 @@ static void vaapi_property_callback (void *property_gen, xine_cfg_entry_t *entry
 
   lprintf("vaapi_property_callback property=%d, value=%d\n", property->type, entry->num_value );
 
-  VAStatus vaStatus = vaSetDisplayAttributes(va_context->va_display, &attr, 1);
+  /*VAStatus vaStatus = */ vaSetDisplayAttributes(va_context->va_display, &attr, 1);
   //vaapi_check_status((vo_driver_t *)this, vaStatus, "vaSetDisplayAttributes()");
 
   vaapi_show_display_props((vo_driver_t*)this);
@@ -1769,7 +1775,7 @@ static void vaapi_display_attribs(vo_driver_t *this_gen) {
 static void vaapi_set_background_color(vo_driver_t *this_gen) {
   vaapi_driver_t      *this = (vaapi_driver_t *)this_gen;
   ff_vaapi_context_t  *va_context = this->va_context;
-  VAStatus            vaStatus;
+  //VAStatus            vaStatus;
 
   if(!va_context->valid_context)
     return;
@@ -1780,7 +1786,7 @@ static void vaapi_set_background_color(vo_driver_t *this_gen) {
   attr.type  = VADisplayAttribBackgroundColor;
   attr.value = 0x000000;
 
-  vaStatus = vaSetDisplayAttributes(va_context->va_display, &attr, 1);
+  /*vaStatus =*/ vaSetDisplayAttributes(va_context->va_display, &attr, 1);
   //vaapi_check_status(this_gen, vaStatus, "vaSetDisplayAttributes()");
 }
 
