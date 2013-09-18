@@ -3683,13 +3683,12 @@ static int vaapi_gui_data_exchange (vo_driver_t *this_gen,
   return 0;
 }
 
-static void vaapi_dispose (vo_driver_t *this_gen) {
+static void vaapi_dispose_locked (vo_driver_t *this_gen) {
   vaapi_driver_t      *this = (vaapi_driver_t *) this_gen;
   ff_vaapi_context_t  *va_context = this->va_context;
 
-  lprintf("vaapi_dispose\n");
+  // vaapi_lock is locked at this point, either from vaapi_dispose or vaapi_open_plugin
 
-  pthread_mutex_lock(&this->vaapi_lock);
   DO_LOCKDISPLAY;
 
   this->ovl_yuv2rgb->dispose(this->ovl_yuv2rgb);
@@ -3717,6 +3716,12 @@ static void vaapi_dispose (vo_driver_t *this_gen) {
   pthread_mutex_destroy(&this->vaapi_lock);
 
   free (this);
+}
+
+static void vaapi_dispose (vo_driver_t *this_gen) {
+  lprintf("vaapi_dispose\n");
+  pthread_mutex_lock(&((vaapi_driver_t *)this_gen)->vaapi_lock);
+  vaapi_dispose_locked(this_gen);
 }
 
 static void vaapi_vdr_osd_width_flag( void *this_gen, xine_cfg_entry_t *entry )
@@ -3977,7 +3982,7 @@ static vo_driver_t *vaapi_open_plugin (video_driver_class_t *class_gen, const vo
   this->va_context->last_sub_image_fmt       = 0;
 
   if(vaapi_init_internal((vo_driver_t *)this, SW_CONTEXT_INIT_FORMAT, SW_WIDTH, SW_HEIGHT, 0) != VA_STATUS_SUCCESS) {
-    vaapi_dispose((vo_driver_t *)this);
+    vaapi_dispose_locked((vo_driver_t *)this);
     return NULL;
   }
   vaapi_close((vo_driver_t *)this);
