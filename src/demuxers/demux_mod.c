@@ -46,7 +46,7 @@
 #include <xine/xineutils.h>
 #include <xine/compat.h>
 #include <xine/demux.h>
-#include "modplug.h"
+#include <libmodplug/modplug.h>
 #include "bswap.h"
 
 #define MOD_SAMPLERATE 44100
