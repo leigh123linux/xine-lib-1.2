@@ -516,11 +516,28 @@ static int vo_grab_grab_video_frame (xine_grab_video_frame_t *frame_gen) {
     }
   }
 
+  /* get pixel aspect ratio */
+  double sar = 1.0;
+  {
+    int sarw = vo_frame->width  - vo_frame->crop_left - vo_frame->crop_right;
+    int sarh = vo_frame->height - vo_frame->crop_top  - vo_frame->crop_bottom;
+    if ((vo_frame->ratio > 0.0) && (sarw > 0) && (sarh > 0))
+      sar = vo_frame->ratio * sarh / sarw;
+  }
+
   /* if caller does not specify frame size we return the actual size of grabbed frame */
-  if (frame->grab_frame.width <= 0)
-    frame->grab_frame.width = width;
-  if (frame->grab_frame.height <= 0)
-    frame->grab_frame.height = height;
+  if ((frame->grab_frame.width <= 0) && (frame->grab_frame.height <= 0)) {
+    if (sar > 1.0) {
+      frame->grab_frame.width  = sar * width + 0.5;
+      frame->grab_frame.height = height;
+    } else {
+      frame->grab_frame.width  = width;
+      frame->grab_frame.height = (double)height / sar + 0.5;
+    }
+  } else if (frame->grab_frame.width <= 0)
+    frame->grab_frame.width = frame->grab_frame.height * width * sar / height + 0.5;
+  else if (frame->grab_frame.height <= 0)
+    frame->grab_frame.height = (frame->grab_frame.width * height) / (sar * width) + 0.5;
 
   /* allocate grab frame image buffer */
   if (frame->grab_frame.width != frame->grab_width || frame->grab_frame.height != frame->grab_height) {
