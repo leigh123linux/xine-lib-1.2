@@ -578,9 +578,8 @@ static int vo_grab_grab_video_frame (xine_grab_video_frame_t *frame_gen) {
   }
 
   /* convert YUV to RGB image taking possible scaling into account */
-  /* FIXME: have to swap U and V planes to get correct colors for YV12 frames?? */
   if(format == XINE_IMGFMT_YV12)
-    frame->yuv2rgb->yuv2rgb_fun(frame->yuv2rgb, frame->grab_frame.img, base[0], base[2], base[1]);
+    frame->yuv2rgb->yuv2rgb_fun(frame->yuv2rgb, frame->grab_frame.img, base[0], base[1], base[2]);
   else
     frame->yuv2rgb->yuy22rgb_fun(frame->yuv2rgb, frame->grab_frame.img, base[0]);
 
