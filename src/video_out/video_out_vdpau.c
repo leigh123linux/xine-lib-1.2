@@ -59,9 +59,9 @@
 
 #define NUM_FRAMES_BACK 1
 
+#ifndef HAVE_THREAD_SAFE_X11
 #define LOCKDISPLAY /*define this if you have a buggy libX11/xcb*/
-//#undef LOCKDISPLAY 
-
+#endif
 
 #define DEINT_BOB                    1
 #define DEINT_HALF_TEMPORAL          2
