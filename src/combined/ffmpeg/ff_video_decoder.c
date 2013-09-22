@@ -1100,6 +1100,35 @@ static int ff_vc1_find_header(ff_video_decoder_t *this, buf_element_t *buf)
     }
 
     lprintf("ff_video_decoder: found VC1 sequence header\n");
+
+#if AVPARSE > 1
+    AVCodecParserContext *parser_context;
+    uint8_t *outbuf;
+    int      outsize;
+
+    parser_context = av_parser_init(CODEC_ID_VC1);
+    if (!parser_context) {
+      xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
+              "ffmpeg_video_dec: couldn't init VC1 parser\n");
+      return 1;
+    }
+
+    parser_context->flags |= PARSER_FLAG_COMPLETE_FRAMES;
+    av_parser_parse2 (parser_context, this->context,
+                      &outbuf, &outsize, this->context->extradata, this->context->extradata_size,
+                      0, 0, 0);
+
+
+    xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
+            "ffmpeg_video_dec: parsed VC1 video size %dx%d\n",
+            this->context->width, this->context->height);
+
+    this->bih.biWidth  = this->context->width;
+    this->bih.biHeight = this->context->height;
+
+    av_parser_close(parser_context);
+#endif /* AVPARSE > 1 */
+
     return 1;
   }
 
