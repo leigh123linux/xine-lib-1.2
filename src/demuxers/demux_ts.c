@@ -1357,6 +1357,35 @@ static void demux_ts_buffer_pes(demux_ts_t*this, unsigned char *ts,
       demux_ts_flush_media(m);
       /* skip rest data - there shouldn't be any */
       m->corrupted_pes = 1;
+    } else {
+
+      /* If video data ends to sequence end code, flush buffer. */
+      /* (there won't be any more data -> no pusi -> last buffer is never flushed) */
+      if (m->pid == this->videoPid && m->buf->size > 4 && m->buf->mem[m->buf->size-4] == 0) {
+
+        if (m->type == BUF_VIDEO_MPEG) {
+          if (!memcmp(&m->buf->mem[m->buf->size-4], "\x00\x00\x01\xb7", 4)) {
+            xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG,
+                    "demux_ts: PID 0x%.4x: flushing after MPEG end of sequence code\n", m->pid);
+            demux_ts_flush_media(m);
+          }
+
+        } else if (m->type == BUF_VIDEO_H264) {
+          if ((!memcmp(&m->buf->mem[m->buf->size-4], "\x00\x00\x01\x0a", 4)) ||
+              (m->buf->size > 5 &&
+               !memcmp(&m->buf->mem[m->buf->size-5], "\x00\x00\x01\x0a", 4))) {
+            xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG,
+                    "demux_ts: PID 0x%.4x: flushing after H.264 end of sequence code\n", m->pid);
+            demux_ts_flush_media(m);
+          }
+        } else if (m->type == BUF_VIDEO_VC1) {
+          if (!memcmp(&m->buf->mem[m->buf->size-4], "\x00\x00\x01\x0a", 4)) {
+            xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG,
+                    "demux_ts: PID 0x%.4x: flushing after VC-1 end of sequence code\n", m->pid);
+            demux_ts_flush_media(m);
+          }
+        }
+      }
     }
   }
 }
