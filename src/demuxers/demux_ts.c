@@ -1856,6 +1856,11 @@ printf("Program Number is %i, looking for %i\n",program_number,this->program_num
           }
         }
       }
+
+      xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG,
+              "demux_ts: PMT unknown stream_type: 0x%.2x pid: 0x%.4x\n",
+              stream[0], pid);
+
 #ifdef TS_PMT_LOG
       printf ("demux_ts: PMT unknown stream_type: 0x%.2x pid: 0x%.4x\n",
               stream[0], pid);
