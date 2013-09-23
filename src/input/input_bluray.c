@@ -169,6 +169,7 @@ static void clear_overlay(xine_osd_t *osd)
   osd->osd.y1 = osd->osd.height;
   osd->osd.x2 = 0;
   osd->osd.y2 = 0;
+  osd->osd.area_touched = 0;
 }
 
 static xine_osd_t *get_overlay(bluray_input_plugin_t *this, int plane)
@@ -293,17 +294,25 @@ static void overlay_proc(void *this_gen, const BD_OVERLAY * const ov)
       return;
 
     case BD_OVERLAY_CLEAR:
-      xine_osd_hide(osd, 0);
       clear_overlay(osd);
       return;
 
-    case BD_OVERLAY_FLUSH:
-      xine_osd_show(osd, 0);
+#if BLURAY_VERSION >= BLURAY_VERSION_CODE(0, 3, 0)
+    case BD_OVERLAY_HIDE:
+      osd->osd.area_touched = 0; /* will be hiden at next commit time */
+      break;
+#endif
 
+    case BD_OVERLAY_FLUSH:
+      if (!osd->osd.area_touched) {
+        xine_osd_hide(osd, 0);
+      } else {
+        xine_osd_show(osd, 0);
+      }
 #if BLURAY_VERSION < BLURAY_VERSION_CODE(0, 2, 2)
       if (ov->plane == 1) {
-        this->menu_open = 1;
-        send_num_buttons(this, 1);
+        this->menu_open = !!osd->osd.area_touched;
+        send_num_buttons(this, !!osd->osd.area_touched);
       }
 #endif
       return;
