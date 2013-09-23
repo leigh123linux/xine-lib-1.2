@@ -204,16 +204,16 @@ static void close_overlay(bluray_input_plugin_t *this, int plane)
   }
 }
 
-static void open_overlay(bluray_input_plugin_t *this, const BD_OVERLAY * const ov)
+static void open_overlay(bluray_input_plugin_t *this, int plane, uint16_t x, uint16_t y, uint16_t w, uint16_t h)
 {
-  lprintf("open_overlay(%d,%d)\n", ov->w, ov->h);
+  lprintf("open_overlay(#%d,%d,%d)\n", plane, w, h);
 
-  if (this->osd[ov->plane]) {
-    close_overlay(this, ov->plane);
+  if (this->osd[plane]) {
+    close_overlay(this, plane);
   }
 
-  this->osd[ov->plane] = xine_osd_new(this->stream, ov->x, ov->y, ov->w, ov->h);
-  clear_overlay(this->osd[ov->plane]);
+  this->osd[plane] = xine_osd_new(this->stream, x, y, w, h);
+  clear_overlay(this->osd[plane]);
 }
 
 static void draw_bitmap(xine_osd_t *osd, const BD_OVERLAY * const ov)
@@ -269,7 +269,7 @@ static void overlay_proc(void *this_gen, const BD_OVERLAY * const ov)
 
   switch (ov->cmd) {
     case BD_OVERLAY_INIT:
-      open_overlay(this, ov);
+      open_overlay(this, ov->plane, ov->x, ov->y, ov->w, ov->h);
       return;
     case BD_OVERLAY_CLOSE:
       close_overlay(this, ov->plane);
