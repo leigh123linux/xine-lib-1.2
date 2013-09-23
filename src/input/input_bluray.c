@@ -617,6 +617,38 @@ static void update_title_info(bluray_input_plugin_t *this, int playlist_id)
  * libbluray event handling
  */
 
+static void fifos_wait(bluray_input_plugin_t *this)
+{
+  if (!this->stream)
+    return;
+
+  if (this->stream->video_fifo) {
+    buf_element_t *buf = this->stream->video_fifo->buffer_pool_alloc(this->stream->video_fifo);
+    if (buf) {
+      buf->type = BUF_CONTROL_FLUSH_DECODER;
+      this->stream->video_fifo->put(this->stream->video_fifo, buf);
+    }
+  }
+
+  time_t start = time(NULL);
+
+  while (1) {
+    int vb = -1, ab = -1, vf = -1, af = -1;
+    _x_query_buffer_usage(this->stream, &vb, &ab, &vf, &af);
+
+    if (vb <= 0 && ab <= 0 && vf <= 0 && af <= 0)
+      break;
+
+    xine_usec_sleep(5000);
+
+    if (time(NULL) > start + 10) {
+      LOGMSG("fifos_wait timeout");
+      break;
+    }
+  }
+}
+
+
 static void stream_flush(bluray_input_plugin_t *this)
 {
   if (this->stream_flushed || !this->stream)
@@ -778,6 +810,7 @@ static void handle_libbluray_event(bluray_input_plugin_t *this, BD_EVENT ev)
       case BD_EVENT_END_OF_TITLE:
         lprintf("BD_EVENT_END_OF_TITLE\n");
         stream_flush(this);
+        fifos_wait(this);
         this->end_of_title = 1;
         break;
 
