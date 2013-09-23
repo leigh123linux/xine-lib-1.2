@@ -177,6 +177,7 @@ static xine_osd_t *get_overlay(bluray_input_plugin_t *this, int plane)
   if (!this->pg_enable) {
     _x_select_spu_channel(this->stream, -1);
   }
+  this->stream->video_out->enable_ovl(this->stream->video_out, 1);
   return this->osd[plane];
 }
 
