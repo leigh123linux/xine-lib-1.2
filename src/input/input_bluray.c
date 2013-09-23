@@ -174,10 +174,6 @@ static void clear_overlay(xine_osd_t *osd)
 
 static xine_osd_t *get_overlay(bluray_input_plugin_t *this, int plane)
 {
-  if (!this->osd[plane]) {
-    this->osd[plane] = xine_osd_new(this->stream, 0, 0, 1920, 1080);
-    clear_overlay(this->osd[plane]);
-  }
   if (!this->pg_enable) {
     _x_select_spu_channel(this->stream, -1);
   }
@@ -283,6 +279,10 @@ static void overlay_proc(void *this_gen, const BD_OVERLAY * const ov)
   }
 
   osd = get_overlay(this, ov->plane);
+  if (!osd) {
+    LOGMSG("overlay_proc(): overlay not open (cmd=%d)\n", ov->cmd);
+    return;
+  }
 
   switch (ov->cmd) {
     case BD_OVERLAY_DRAW:
