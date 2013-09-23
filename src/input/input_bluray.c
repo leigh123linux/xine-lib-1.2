@@ -254,6 +254,7 @@ static void overlay_proc(void *this_gen, const BD_OVERLAY * const ov)
 {
   bluray_input_plugin_t *this = (bluray_input_plugin_t *) this_gen;
   xine_osd_t *osd;
+  int64_t vpts = 0;
 
   if (!this) {
     return;
@@ -284,6 +285,10 @@ static void overlay_proc(void *this_gen, const BD_OVERLAY * const ov)
     return;
   }
 
+  if (ov->pts > 0) {
+    vpts = ov->pts + this->stream->metronom->get_option(this->stream->metronom, METRONOM_VPTS_OFFSET);
+  }
+
   switch (ov->cmd) {
     case BD_OVERLAY_DRAW:
       draw_bitmap(osd, ov);
@@ -305,9 +310,9 @@ static void overlay_proc(void *this_gen, const BD_OVERLAY * const ov)
 
     case BD_OVERLAY_FLUSH:
       if (!osd->osd.area_touched) {
-        xine_osd_hide(osd, 0);
+        xine_osd_hide(osd, vpts);
       } else {
-        xine_osd_show(osd, 0);
+        xine_osd_show(osd, vpts);
       }
 #if BLURAY_VERSION < BLURAY_VERSION_CODE(0, 2, 2)
       if (ov->plane == 1) {
