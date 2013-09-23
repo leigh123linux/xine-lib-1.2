@@ -1,4 +1,4 @@
-xine-lib (1.2.4) 2013-??-??
+xine-lib (1.2.4) 2013-09-24
   * Some VAAPI plugin fixes (build, image size changes).
   * ffmpeg multi-channel playback fixes:
     - Handle channel configuration changes sooner.
