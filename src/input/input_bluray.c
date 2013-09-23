@@ -194,10 +194,13 @@ static void close_overlay(bluray_input_plugin_t *this, int plane)
   if (plane < 2 && this->osd[plane]) {
     xine_osd_free(this->osd[plane]);
     this->osd[plane] = NULL;
+
+#if BLURAY_VERSION < BLURAY_VERSION_CODE(0, 2, 2)
     if (plane == 1) {
       send_num_buttons(this, 0);
       this->menu_open = 0;
     }
+#endif
   }
 }
 
@@ -292,10 +295,12 @@ static void overlay_proc(void *this_gen, const BD_OVERLAY * const ov)
     case BD_OVERLAY_FLUSH:
       xine_osd_show(osd, 0);
 
+#if BLURAY_VERSION < BLURAY_VERSION_CODE(0, 2, 2)
       if (ov->plane == 1) {
         this->menu_open = 1;
         send_num_buttons(this, 1);
       }
+#endif
       return;
 
     default:
@@ -639,6 +644,17 @@ static void handle_libbluray_event(bluray_input_plugin_t *this, BD_EVENT ev)
           update_spu_channel(this, this->pg_stream);
         }
         break;
+
+#if BLURAY_VERSION >= BLURAY_VERSION_CODE(0, 2, 2)
+      case BD_EVENT_POPUP:
+        lprintf("BD_EVENT_POPUP %d\n", ev.param);
+        break;
+
+      case BD_EVENT_MENU:
+        this->menu_open = !!ev.param;
+        send_num_buttons(this, ev.param);
+        break;
+#endif
 
       default:
         lprintf("unhandled libbluray event %d [param %d]\n", ev.event, ev.param);
