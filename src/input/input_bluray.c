@@ -232,6 +232,11 @@ static void draw_bitmap(xine_osd_t *osd, const BD_OVERLAY * const ov)
     xine_osd_set_palette(osd, color, trans);
   }
 
+#if BLURAY_VERSION >= BLURAY_VERSION_CODE(0, 3, 0)
+  if (ov->palette_update_flag)
+    return;
+#endif
+
   /* uncompress and draw bitmap */
   if (ov->img) {
     const BD_PG_RLE_ELEM *rlep = ov->img;
