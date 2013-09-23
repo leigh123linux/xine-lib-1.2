@@ -22,6 +22,7 @@ xine-lib (1.2.4) 2013-??-??
   * audio_out speed control fixes.
   * Optimised RGB→YUY2 conversion.
   * Avoid a possible performance penalty where AVX-optimised memcpy is used.
+  * Add BD-J (BluRay Java) support with ARGB overlay capable video drivers (opengl2, vaapi, vdpau)
 
 xine-lib (1.2.3) 2013-05-29
   * Add VAAPI HW decoding support

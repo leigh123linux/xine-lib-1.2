@@ -104,6 +104,43 @@ typedef struct {
   int             parental;
 } bluray_input_class_t;
 
+#if BLURAY_VERSION >= BLURAY_VERSION_CODE(0, 2, 4)
+
+typedef struct {
+  BD_ARGB_BUFFER   buf;
+  pthread_mutex_t  buf_lock;
+} XINE_BD_ARGB_BUFFER;
+
+static void osd_buf_lock(BD_ARGB_BUFFER *buf_gen)
+{
+  XINE_BD_ARGB_BUFFER *buf = (XINE_BD_ARGB_BUFFER*)buf_gen;
+  pthread_mutex_lock(&buf->buf_lock);
+}
+
+static void osd_buf_unlock(BD_ARGB_BUFFER *buf_gen)
+{
+  XINE_BD_ARGB_BUFFER *buf = (XINE_BD_ARGB_BUFFER*)buf_gen;
+  pthread_mutex_unlock(&buf->buf_lock);
+}
+
+static void osd_buf_init(XINE_BD_ARGB_BUFFER *buf)
+{
+  buf->buf.lock   = osd_buf_lock;
+  buf->buf.unlock = osd_buf_unlock;
+  pthread_mutex_init(&buf->buf_lock, NULL);
+}
+
+static void osd_buf_destroy(XINE_BD_ARGB_BUFFER *buf)
+{
+  if (buf->buf.lock) {
+    buf->buf.lock   = NULL;
+    buf->buf.unlock = NULL;
+    pthread_mutex_destroy(&buf->buf_lock);
+  }
+}
+
+#endif /* BLURAY_VERSION >= 0.2.4 */
+
 typedef struct {
   input_plugin_t        input_plugin;
 
@@ -112,6 +149,9 @@ typedef struct {
   xine_stream_t        *stream;
   xine_event_queue_t   *event_queue;
   xine_osd_t           *osd[2];
+#if BLURAY_VERSION >= BLURAY_VERSION_CODE(0, 2, 4)
+  XINE_BD_ARGB_BUFFER   osd_buf;
+#endif
 
   char                 *mrl;
   char                 *disc_root;
@@ -139,8 +179,35 @@ typedef struct {
   uint8_t            demux_action_req : 1;
   uint8_t            end_of_title : 1;
   uint8_t            pg_enable : 1;
+  uint8_t            has_video : 1;
   int                mouse_inside_button;
 } bluray_input_plugin_t;
+
+static void queue_black_frame(bluray_input_plugin_t *this)
+{
+  vo_frame_t *img    = NULL;
+
+  this->class->xine->port_ticket->acquire(this->class->xine->port_ticket, 1);
+  img = this->stream->video_out->get_frame(this->stream->video_out,
+                                           1920, 1080, 16.0/9.0,
+                                           XINE_IMGFMT_YV12, VO_BOTH_FIELDS);
+  this->class->xine->port_ticket->release(this->class->xine->port_ticket, 1);
+
+  if (img) {
+    if (img->format == XINE_IMGFMT_YV12 && img->base[0] && img->base[1] && img->base[2]) {
+      memset(img->base[0], 0x00, img->pitches[0] * img->height);
+      memset(img->base[1], 0x80, img->pitches[1] * img->height / 2);
+      memset(img->base[2], 0x80, img->pitches[2] * img->height / 2);
+      img->duration  = 0;
+      img->pts       = 0;
+      img->bad_frame = 0;
+      img->draw(img, this->stream);
+    }
+    img->free(img);
+  }
+
+  this->has_video = 1;
+}
 
 /*
  * overlay
@@ -189,7 +256,14 @@ static void close_overlay(bluray_input_plugin_t *this, int plane)
     return;
   }
 
+  lprintf("close_overlay(#%d)\n", plane);
+
   if (plane < 2 && this->osd[plane]) {
+
+#if BLURAY_VERSION >= BLURAY_VERSION_CODE(0, 2, 4)
+    osd_buf_lock(&this->osd_buf.buf);
+#endif
+
     xine_osd_free(this->osd[plane]);
     this->osd[plane] = NULL;
 
@@ -198,6 +272,13 @@ static void close_overlay(bluray_input_plugin_t *this, int plane)
       send_num_buttons(this, 0);
       this->menu_open = 0;
     }
+#endif
+
+#if BLURAY_VERSION >= BLURAY_VERSION_CODE(0, 2, 4)
+    free(this->osd_buf.buf.buf[plane]);
+    this->osd_buf.buf.buf[plane] = NULL;
+
+    osd_buf_unlock(&this->osd_buf.buf);
 #endif
   }
 }
@@ -328,6 +409,91 @@ static void overlay_proc(void *this_gen, const BD_OVERLAY * const ov)
       return;
   }
 }
+
+#if BLURAY_VERSION >= BLURAY_VERSION_CODE(0, 2, 4)
+
+static void open_argb_overlay(bluray_input_plugin_t *this, int plane, uint16_t x, uint16_t y, uint16_t w, uint16_t h)
+{
+  lprintf("open_argb_overlay(#%d,%d,%d)\n", plane, ov->w, ov->h);
+
+  open_overlay(this, plane, x, y, w, h);
+
+  if (xine_osd_get_capabilities(this->osd[plane]) & XINE_OSD_CAP_ARGB_LAYER) {
+    this->osd_buf.buf.width = w;
+    this->osd_buf.buf.height = h;
+    this->osd_buf.buf.buf[plane] = calloc(sizeof(uint32_t), w * h);
+  } else {
+    LOGMSG("open_argb_overlay() failed: video driver does not support ARGB overlays.\n");
+  }
+}
+
+static xine_osd_t *get_argb_overlay(bluray_input_plugin_t *this, int plane)
+{
+  if (!this->osd_buf.buf.buf[plane]) {
+    return NULL;
+  }
+  return get_overlay(this, plane);
+}
+
+static void argb_overlay_proc(void *this_gen, const BD_ARGB_OVERLAY * const ov)
+{
+  bluray_input_plugin_t *this = (bluray_input_plugin_t *) this_gen;
+  xine_osd_t *osd;
+  int64_t vpts = 0;
+
+  if (!this) {
+    return;
+  }
+
+  if (!ov) {
+    /* hide OSD */
+    close_overlay(this, -1);
+    return;
+  }
+
+  if (ov->pts > 0) {
+    vpts = ov->pts + this->stream->metronom->get_option(this->stream->metronom, METRONOM_VPTS_OFFSET);
+  }
+
+  switch (ov->cmd) {
+    case BD_ARGB_OVERLAY_INIT:
+      open_argb_overlay(this, ov->plane, 0, 0, ov->w, ov->h);
+      return;
+
+    case BD_ARGB_OVERLAY_CLOSE:
+      close_overlay(this, ov->plane);
+      return;
+  }
+
+  osd = get_argb_overlay(this, ov->plane);
+  if (!osd) {
+    LOGMSG("argb_overlay_proc(): ARGB overlay not open (cmd=%d)\n", ov->cmd);
+    return;
+  }
+
+  switch (ov->cmd) {
+    case BD_ARGB_OVERLAY_FLUSH:
+
+      osd_buf_lock(&this->osd_buf.buf);
+
+      xine_osd_set_argb_buffer(osd, this->osd_buf.buf.buf[ov->plane],
+                               this->osd_buf.buf.dirty[ov->plane].x0,
+                               this->osd_buf.buf.dirty[ov->plane].y0,
+                               this->osd_buf.buf.dirty[ov->plane].x1 - this->osd_buf.buf.dirty[ov->plane].x0 + 1,
+                               this->osd_buf.buf.dirty[ov->plane].y1 - this->osd_buf.buf.dirty[ov->plane].y0 + 1);
+
+      xine_osd_show(osd, vpts);
+
+      osd_buf_unlock(&this->osd_buf.buf);
+      return;
+
+   default:
+      lprintf("unknown ARGB overlay command %d\n", ov->cmd);
+      return;
+  }
+}
+
+#endif /* BLURAY_VERSION >= 0.2.4 */
 
 /*
  * stream info
@@ -595,6 +761,12 @@ static void handle_libbluray_event(bluray_input_plugin_t *this, BD_EVENT ev)
           _x_set_fine_speed(this->stream, ev.param ? XINE_SPEED_PAUSE : XINE_SPEED_NORMAL);
         }
         break;
+
+#if BLURAY_VERSION >= BLURAY_VERSION_CODE(0, 3, 0)
+      case BD_EVENT_IDLE:
+        xine_usec_sleep(10000);
+        break;
+#endif
 
       /* playback position */
 
@@ -920,6 +1092,10 @@ static off_t bluray_plugin_read (input_plugin_t *this_gen, void *buf, off_t len)
   if (!this || !this->bdh || len < 0 || this->error)
     return -1;
 
+  if (!this->has_video) {
+    queue_black_frame(this);
+  }
+
   handle_events(this);
   CHECK_READ_INTERRUPT;
 
@@ -1184,8 +1360,12 @@ static void bluray_plugin_dispose (input_plugin_t *this_gen)
 {
   bluray_input_plugin_t *this = (bluray_input_plugin_t *) this_gen;
 
-  if (this->bdh)
+  if (this->bdh) {
+#if BLURAY_VERSION >= BLURAY_VERSION_CODE(0, 2, 4)
+    bd_register_argb_overlay_proc(this->bdh, NULL, NULL, NULL);
+#endif
     bd_register_overlay_proc(this->bdh, NULL, NULL);
+  }
 
   close_overlay(this, -1);
 
@@ -1202,6 +1382,10 @@ static void bluray_plugin_dispose (input_plugin_t *this_gen)
 
   if (this->bdh)
     bd_close(this->bdh);
+
+#if BLURAY_VERSION >= BLURAY_VERSION_CODE(0, 2, 4)
+  osd_buf_destroy(&this->osd_buf);
+#endif
 
   free (this->mrl);
   free (this->disc_root);
@@ -1453,6 +1637,13 @@ static int bluray_plugin_open (input_plugin_t *this_gen)
   }
 
   /* register overlay (graphics) handler */
+
+#if BLURAY_VERSION >= BLURAY_VERSION_CODE(0, 2, 4)
+  if (this->stream->video_out->get_capabilities(this->stream->video_out) & VO_CAP_ARGB_LAYER_OVERLAY) {
+    osd_buf_init(&this->osd_buf);
+    bd_register_argb_overlay_proc(this->bdh, this, argb_overlay_proc, &this->osd_buf.buf);
+  }
+#endif
 
   bd_register_overlay_proc(this->bdh, this, overlay_proc);
 
