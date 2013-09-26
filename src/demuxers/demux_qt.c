@@ -131,8 +131,9 @@ typedef unsigned int qt_atom;
 #define RMVC_ATOM QT_ATOM('r', 'm', 'v', 'c')
 #define QTIM_ATOM QT_ATOM('q', 't', 'i', 'm')
 
-/* placeholder for cutting and pasting */
+/* placeholder for cutting and pasting
 #define _ATOM QT_ATOM('', '', '', '')
+*/
 
 #define ATOM_PREAMBLE_SIZE 8
 #define PALETTE_COUNT 256
