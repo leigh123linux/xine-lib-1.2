@@ -104,6 +104,8 @@ typedef struct demux_sputext_class_s {
 
 } demux_sputext_class_t;
 
+void *init_sputext_demux_class (xine_t *xine, void *data);
+
 /*
  * Demuxer code start
  */
