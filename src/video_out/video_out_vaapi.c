@@ -3051,7 +3051,7 @@ static void yuy2_to_nv12(const uint8_t *src_yuy2_map, int yuy2_pitch,
   int width   = (src_width > dst_width) ? dst_width : src_width;
 
   int y, x;
-  int uv_dst_size = dst_height * uv_dst_pitch / 2;
+  /*int uv_dst_size = dst_height * uv_dst_pitch / 2;*/
 
   const uint8_t *yuy2_map = src_yuy2_map;
   for(y = 0; y < height; y++) {
