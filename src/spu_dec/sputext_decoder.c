@@ -155,7 +155,7 @@ typedef struct sputext_decoder_s {
   subtitle_size      subtitle_size;   /* size of subtitles */
   int                vertical_offset;
   char               font[FILENAME_MAX]; /* subtitle font */
-  char              *buf_encoding;    /* encoding of subtitle buffer */
+  const char         *buf_encoding;    /* encoding of subtitle buffer */
 
   int                width;          /* frame width                */
   int                height;         /* frame height               */
