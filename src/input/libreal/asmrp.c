@@ -362,7 +362,7 @@ static void asmrp_get_sym (asmrp_t *p) {
 
 }
 
-static int asmrp_find_id (asmrp_t *p, char *s) {
+static int asmrp_find_id (asmrp_t *p, const char *s) {
 
   int i;
 
@@ -374,7 +374,7 @@ static int asmrp_find_id (asmrp_t *p, char *s) {
   return -1;
 }
 
-static int asmrp_set_id (asmrp_t *p, char *s, int v) {
+static int asmrp_set_id (asmrp_t *p, const char *s, int v) {
 
   int i;
 
