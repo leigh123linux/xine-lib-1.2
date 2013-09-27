@@ -1923,7 +1923,7 @@ void _x_dispose_xx44_palette(xx44_palette_t *p)
 }
 
 static void colorToPalette(const uint32_t *icolor, unsigned char *palette_p,
-			   unsigned num_xvmc_components, char *xvmc_components)
+			   unsigned num_xvmc_components, const char *xvmc_components)
 {
   const clut_t *color = (const clut_t *) icolor;
   unsigned int i;
@@ -1941,7 +1941,7 @@ static void colorToPalette(const uint32_t *icolor, unsigned char *palette_p,
 
 void _x_xx44_to_xvmc_palette(const xx44_palette_t *p,unsigned char *xvmc_palette,
 			  unsigned first_xx44_entry, unsigned num_xx44_entries,
-			  unsigned num_xvmc_components, char *xvmc_components)
+			  unsigned num_xvmc_components, const char *xvmc_components)
 {
   register unsigned int i;
   register const uint32_t *cluts = p->cluts + first_xx44_entry;
