@@ -1309,12 +1309,12 @@ void yuv2rgb_init_mmx (yuv2rgb_factory_t *this) {
   if (this->swapped) switch (this->mode) {
   case MODE_24_RGB:
     this->yuv2rgb_fun = mmx_bgr24;
-    break;
+    return;
   case MODE_24_BGR:
     this->yuv2rgb_fun = mmx_rgb24;
-    break;
+    return;
   default:
-    return; /* other swapped formats not yet */
+    return; /* other swapped formats yet unsupported */
   }
 
   switch (this->mode) {
