@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012 the xine project
+ * Copyright (C) 2012-2013 the xine project
  *
  * This file is part of xine, a free video player.
  *
@@ -117,7 +117,7 @@ static void cm_init (CM_DRIVER_T *this) {
   this->cm_state = this->xine->config->register_enum (
     this->xine->config,
     CM_CONFIG_NAME,
-    CM_CONFIG_SD,
+    CM_CONFIG_SIZE,
     (char **)cm_conf_labels,
     _("Output color matrix"),
     _("Tell how output colors should be calculated.\n\n"
