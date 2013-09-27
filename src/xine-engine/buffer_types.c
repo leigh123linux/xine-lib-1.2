@@ -808,6 +808,7 @@ static const audio_db_t audio_db[] = {
   {
     0x2000,
     ME_FOURCC('m', 's', 0x20, 0x00),
+    ME_FOURCC('a', 'c', '-', '3'),
     0
   },
   BUF_AUDIO_A52,

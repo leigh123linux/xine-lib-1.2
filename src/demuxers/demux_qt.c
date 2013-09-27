@@ -108,6 +108,8 @@ typedef unsigned int qt_atom;
 #define IN24_FOURCC ME_FOURCC('i', 'n', '2', '4')
 #define NI42_FOURCC ME_FOURCC('4', '2', 'n', 'i')
 #define AVC1_FOURCC ME_FOURCC('a', 'v', 'c', '1')
+#define AC_3_FOURCC ME_FOURCC('a', 'c', '-', '3')
+#define EAC3_FOURCC ME_FOURCC('e', 'c', '-', '3')
 
 #define UDTA_ATOM QT_ATOM('u', 'd', 't', 'a')
 #define META_ATOM QT_ATOM('m', 'e', 't', 'a')
@@ -1283,6 +1285,8 @@ static qt_error parse_trak_atom (qt_trak *trak,
            * further, do not do load these parameters if the audio is just
            * PCM ('raw ', 'twos', 'sowt' or 'in24') */
           if ((current_stsd_atom_size > 0x24) &&
+              (trak->stsd_atoms[k].audio.codec_fourcc != AC_3_FOURCC) &&
+              (trak->stsd_atoms[k].audio.codec_fourcc != EAC3_FOURCC) &&
               (trak->stsd_atoms[k].audio.codec_fourcc != TWOS_FOURCC) &&
               (trak->stsd_atoms[k].audio.codec_fourcc != SOWT_FOURCC) &&
               (trak->stsd_atoms[k].audio.codec_fourcc != RAW_FOURCC)  &&
@@ -1319,6 +1323,12 @@ static qt_error parse_trak_atom (qt_trak *trak,
             trak->stsd_atoms[k].audio.vbr = 1;
 
           if (trak->stsd_atoms[k].audio.codec_fourcc == SAMR_FOURCC)
+            trak->stsd_atoms[k].audio.vbr = 1;
+
+          if (trak->stsd_atoms[k].audio.codec_fourcc == AC_3_FOURCC)
+            trak->stsd_atoms[k].audio.vbr = 1;
+
+          if (trak->stsd_atoms[k].audio.codec_fourcc == EAC3_FOURCC)
             trak->stsd_atoms[k].audio.vbr = 1;
 
           if (trak->stsd_atoms[k].audio.codec_fourcc == ALAC_FOURCC) {
