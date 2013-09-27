@@ -699,13 +699,12 @@ static int is_qt_file(input_plugin_t *qt_file) {
   off_t moov_atom_offset = -1;
   int64_t moov_atom_size = -1;
   int i;
-  int len;
 
   /* if the input is non-seekable, be much more stringent about qualifying
    * a QT file: In this case, the moov must be the first atom in the file */
   if ((qt_file->get_capabilities(qt_file) & INPUT_CAP_SEEKABLE) == 0) {
     unsigned char preview[MAX_PREVIEW_SIZE] = { 0, };
-    len = qt_file->get_optional_data(qt_file, preview, INPUT_OPTIONAL_DATA_PREVIEW);
+    qt_file->get_optional_data(qt_file, preview, INPUT_OPTIONAL_DATA_PREVIEW);
     if (_X_BE_32(&preview[4]) == MOOV_ATOM)
       return 1;
     else {
@@ -798,7 +797,7 @@ static void parse_meta_atom(qt_info *info, unsigned char *meta_atom) {
     const uint8_t *const current_atom = &meta_atom[i];
     const qt_atom current_atom_code = _X_BE_32(&current_atom[4]);
     const uint32_t current_atom_size = _X_BE_32(&current_atom[0]);
-    uint32_t handler_type = 0;
+    /*uint32_t handler_type = 0;*/
 
     switch (current_atom_code) {
     case HDLR_ATOM: {
@@ -813,7 +812,7 @@ static void parse_meta_atom(qt_info *info, unsigned char *meta_atom) {
 	return;
       }
 
-      handler_type = _X_BE_32(&current_atom[12]);
+      /*handler_type = _X_BE_32(&current_atom[12]);*/
     }
       break;
 
