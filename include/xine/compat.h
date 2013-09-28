@@ -47,6 +47,9 @@ extern "C" {
 #define XINE_PATH_MAX   PATH_MAX
 #endif
 
+#if !defined offsetof && defined __GNUC__
+#define offsetof(type, member)  __builtin_offsetof(type, member)
+#endif
 
 #ifdef __cplusplus
 }
