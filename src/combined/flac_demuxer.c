@@ -97,6 +97,8 @@ typedef struct demux_flac_class_s {
 
 } demux_flac_class_t;
 
+void *demux_flac_init_class (xine_t *xine, void *data);
+
 /* FLAC Callbacks */
 static
 #ifdef LEGACY_FLAC
@@ -226,6 +228,10 @@ flac_length_callback (const FLAC__SeekableStreamDecoder *decoder,
     lprintf("flac_length_callback\n");
 
     offset = input->get_length (input);
+
+    if (offset > 0) {
+      *stream_length = offset;
+    }
 
     /* FIXME, can flac handle -1 as offset ? */
 #ifdef LEGACY_FLAC
