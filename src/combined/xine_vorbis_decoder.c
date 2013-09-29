@@ -40,6 +40,8 @@
 #include <ogg/ogg.h>
 #include <vorbis/codec.h>
 
+#include "ogg_combined.h"
+
 #define MAX_NUM_SAMPLES 4096
 #define INIT_BUFSIZE    8192
 

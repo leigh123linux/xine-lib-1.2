@@ -45,6 +45,8 @@
 #include <speex/speex_callbacks.h>
 #include <speex/speex_stereo.h>
 
+#include "ogg_combined.h"
+
 #define MAX_FRAME_SIZE 2000
 
 typedef struct {

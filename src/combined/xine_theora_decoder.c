@@ -45,6 +45,8 @@
 #include <xine/metronom.h>
 #include <xine/xineutils.h>
 
+#include "ogg_combined.h"
+
 typedef struct theora_class_s {
   video_decoder_class_t   decoder_class;
 } theora_class_t;
