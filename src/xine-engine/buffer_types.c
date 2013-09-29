@@ -1205,6 +1205,13 @@ static const audio_db_t audio_db[] = {
   BUF_AUDIO_AAC_LATM,
   "AAC LATM"
 },
+{
+  {
+    0
+  },
+  BUF_AUDIO_ADPCM_G726,
+  "ADPCM G.726"
+},
 { { 0 }, 0, "last entry" }
 };
 
