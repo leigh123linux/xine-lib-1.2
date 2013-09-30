@@ -574,6 +574,10 @@ static int ao_alsa_open(ao_driver_t *this_gen, uint32_t bits, uint32_t rate, int
 	     "audio_alsa_out: Unable to determine current swparams: %s\n", snd_strerror(err));
     goto close;
   }
+
+#if defined(SND_LIB_VERSION) && SND_LIB_VERSION >= 0x010016
+  /* snd_pcm_sw_params_set_xfer_align() is deprecated, alignment is always 1 */
+#else
   /* align all transfers to 1 sample */
   err = snd_pcm_sw_params_set_xfer_align(this->audio_fd, swparams, 1);
   if (err < 0) {
@@ -581,6 +585,8 @@ static int ao_alsa_open(ao_driver_t *this_gen, uint32_t bits, uint32_t rate, int
 	     "audio_alsa_out: Unable to set transfer alignment: %s\n", snd_strerror(err));
     goto close;
   }
+#endif
+
   /* allow the transfer when at least period_size samples can be processed */
   err = snd_pcm_sw_params_set_avail_min(this->audio_fd, swparams, period_size);
   if (err < 0) {
