@@ -317,7 +317,7 @@ static int pp_draw(vo_frame_t *frame, xine_stream_t *stream)
                                                       this->params.quality);
 
     if(this->our_mode)
-      pp_postprocess(yv12_frame->base, yv12_frame->pitches,
+      pp_postprocess((const uint8_t **)yv12_frame->base, yv12_frame->pitches,
                      out_frame->base, out_frame->pitches,
                      (frame->width+7)&(~7), frame->height,
                      NULL, 0,
