@@ -626,7 +626,7 @@ char *yytext_ptr;
 #include "goomsl.h"
 #include "goomsl_private.h"
 #include "goomsl_yacc.h"
-void yyerror(char *);
+void yyerror(const char *);
 void yyparse(void);
 
 GoomSL *currentGoomSL;

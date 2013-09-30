@@ -133,7 +133,7 @@ void gsl_instr_set_namespace(Instruction *_this, GoomHash *ns)
   _this->vnamespace[_this->cur_param-1] = ns;
 } /* }}} */
 
-void gsl_instr_add_param(Instruction *instr, char *param, int type)
+void gsl_instr_add_param(Instruction *instr, const char *param, int type)
 { /* {{{ */
   int len;
   if (instr==NULL)

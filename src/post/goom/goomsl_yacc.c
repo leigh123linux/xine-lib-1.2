@@ -115,7 +115,7 @@
 /* #define VERBOSE  */
 
     int yylex(void);
-    void yyerror(char *);
+    void yyerror(const char *);
     extern GoomSL *currentGoomSL;
 
     static NodeType *nodeNew(const char *str, int type, int line_number);
@@ -173,7 +173,7 @@
       gsl_instr_add_param(currentGoomSL->instr, name, TYPE_LABEL);
     } /* }}} */
 
-    static void GSL_PUT_JXXX(char *name, char *iname, int instr_id, int line_number)
+    static void GSL_PUT_JXXX(const char *name, const char *iname, int instr_id, int line_number)
     { /* {{{ */
 #ifdef VERBOSE
       printf("%s %s\n", iname, name);
@@ -181,11 +181,11 @@
       currentGoomSL->instr = gsl_instr_init(currentGoomSL, iname, instr_id, 1, line_number);
       gsl_instr_add_param(currentGoomSL->instr, name, TYPE_LABEL);
     } /* }}} */
-    static void GSL_PUT_JZERO(char *name,int line_number)
+    static void GSL_PUT_JZERO(const char *name,int line_number)
     { /* {{{ */
       GSL_PUT_JXXX(name,"jzero.i",INSTR_JZERO,line_number);
     } /* }}} */
-    static void GSL_PUT_JNZERO(char *name, int line_number)
+    static void GSL_PUT_JNZERO(const char *name, int line_number)
     { /* {{{ */
       GSL_PUT_JXXX(name,"jnzero.i",INSTR_JNZERO,line_number);
     } /* }}} */
@@ -2986,7 +2986,7 @@ yyreturn:
 
 
 
-void yyerror(char *str)
+void yyerror(const char *str)
 { /* {{{ */
     fprintf(stderr, "ERROR: Line %d, %s\n", currentGoomSL->num_lines, str);
     currentGoomSL->compilationOK = 0;
