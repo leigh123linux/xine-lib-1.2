@@ -1008,7 +1008,7 @@ static void vdpau_process_overlays (vdpau_driver_t *this)
 
 static void vdpau_frame_proc_slice (vo_frame_t *vo_img, uint8_t **src)
 {
-  vdpau_frame_t  *frame = (vdpau_frame_t *) vo_img ;
+  /*vdpau_frame_t  *frame = (vdpau_frame_t *) vo_img;*/
 
   vo_img->proc_called = 1;
 }
