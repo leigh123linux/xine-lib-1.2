@@ -1458,7 +1458,10 @@ static char *gsl_read_file(const char *fname)
   fsize = ftell(f);
   rewind(f);
   buffer = (char*)malloc(fsize+512);
-  fread(buffer,1,fsize,f);
+  if (fread(buffer,1,fsize,f) != fsize) {
+    fprintf(stderr, "ERROR: Could not read file %s\n", fname);
+    exit(1);
+  }
   fclose(f);
   buffer[fsize]=0;
   return buffer;
