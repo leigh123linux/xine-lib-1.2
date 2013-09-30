@@ -1539,8 +1539,8 @@ static void vdpau_update_noise( vdpau_driver_t *this_gen )
     fprintf(stderr, "vo_vdpau: enable noise reduction.\n" );
   }
 
-  VdpVideoMixerAttribute attributes [] = { VDP_VIDEO_MIXER_ATTRIBUTE_NOISE_REDUCTION_LEVEL };
-  void* attribute_values[] = { &value };
+  const VdpVideoMixerAttribute attributes [] = { VDP_VIDEO_MIXER_ATTRIBUTE_NOISE_REDUCTION_LEVEL };
+  const void * const attribute_values[] = { &value };
   VdpStatus st = vdp_video_mixer_set_attribute_values( this_gen->video_mixer, 1, attributes, attribute_values );
   if ( st != VDP_STATUS_OK )
     fprintf(stderr, "vo_vdpau: error, can't set noise reduction level !!\n" );
@@ -1568,8 +1568,8 @@ static void vdpau_update_sharpness( vdpau_driver_t *this_gen )
     fprintf(stderr, "vo_vdpau: enable sharpness.\n" );
   }
 
-  VdpVideoMixerAttribute attributes [] = { VDP_VIDEO_MIXER_ATTRIBUTE_SHARPNESS_LEVEL };
-  void* attribute_values[] = { &value };
+  const VdpVideoMixerAttribute attributes [] = { VDP_VIDEO_MIXER_ATTRIBUTE_SHARPNESS_LEVEL };
+  const void * const attribute_values[] = { &value };
   VdpStatus st = vdp_video_mixer_set_attribute_values( this_gen->video_mixer, 1, attributes, attribute_values );
   if ( st != VDP_STATUS_OK )
     fprintf(stderr, "vo_vdpau: error, can't set sharpness level !!\n" );
@@ -1651,8 +1651,8 @@ static void vdpau_update_csc_matrix (vdpau_driver_t *that, vdpau_frame_t *frame)
     that->color_matrix = color_matrix;
     that->update_csc = 0;
 
-    VdpVideoMixerAttribute attributes [] = {VDP_VIDEO_MIXER_ATTRIBUTE_CSC_MATRIX};
-    void* attribute_values[] = {&matrix};
+    const VdpVideoMixerAttribute attributes [] = {VDP_VIDEO_MIXER_ATTRIBUTE_CSC_MATRIX};
+    const void * const attribute_values[] = {&matrix};
     st = vdp_video_mixer_set_attribute_values (that->video_mixer, 1, attributes, attribute_values);
     if (st != VDP_STATUS_OK)
       fprintf (stderr, "vo_vdpau: error, can't set csc matrix !!\n");
@@ -1669,8 +1669,8 @@ static void vdpau_update_skip_chroma( vdpau_driver_t *this_gen )
   if ( !this_gen->skip_chroma_is_supported )
     return;
 
-  VdpVideoMixerAttribute attributes [] = { VDP_VIDEO_MIXER_ATTRIBUTE_SKIP_CHROMA_DEINTERLACE };
-  void* attribute_values[] = { &(this_gen->skip_chroma) };
+  const VdpVideoMixerAttribute attributes [] = { VDP_VIDEO_MIXER_ATTRIBUTE_SKIP_CHROMA_DEINTERLACE };
+  const void* attribute_values[] = { &(this_gen->skip_chroma) };
   VdpStatus st = vdp_video_mixer_set_attribute_values( this_gen->video_mixer, 1, attributes, attribute_values );
   if ( st != VDP_STATUS_OK )
     fprintf(stderr, "vo_vdpau: error, can't set skip_chroma !!\n" );
@@ -1695,8 +1695,8 @@ static void vdpau_update_background( vdpau_driver_t *this_gen )
     return;
 
   VdpVideoMixerAttribute attributes [] = { VDP_VIDEO_MIXER_ATTRIBUTE_BACKGROUND_COLOR };
-  VdpColor bg = { (this_gen->background >> 16) / 255.f, ((this_gen->background >> 8) & 0xff) / 255.f, (this_gen->background & 0xff) / 255.f, 1 };
-  void* attribute_values[] = { &bg };
+  const VdpColor bg = { (this_gen->background >> 16) / 255.f, ((this_gen->background >> 8) & 0xff) / 255.f, (this_gen->background & 0xff) / 255.f, 1 };
+  const void* attribute_values[] = { &bg };
   VdpStatus st = vdp_video_mixer_set_attribute_values( this_gen->video_mixer, 1, attributes, attribute_values );
   if ( st != VDP_STATUS_OK )
     printf( "vo_vdpau: error, can't set background_color !!\n" );
