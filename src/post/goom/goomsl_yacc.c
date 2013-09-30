@@ -199,7 +199,7 @@
    }}
 
     /* */
-    void gsl_prepare_struct(GSL_Struct *s, int s_align, int i_align, int f_align)
+    static void gsl_prepare_struct(GSL_Struct *s, int s_align, int i_align, int f_align)
     {
       int i;
       int consumed = 0;
@@ -291,7 +291,7 @@
     }
 
     /* Returns the ID of a struct from its name */
-    int gsl_get_struct_id(const char *name) /* {{{ */
+    static int gsl_get_struct_id(const char *name) /* {{{ */
     {
       HashValue *ret = goom_hash_get(currentGoomSL->structIDS, name);
       if (ret != NULL) return ret->i;
@@ -299,7 +299,7 @@
     } /* }}} */
 
     /* Adds the definition of a struct */
-    void gsl_add_struct(const char *name, GSL_Struct *gsl_struct) /* {{{ */
+    static void gsl_add_struct(const char *name, GSL_Struct *gsl_struct) /* {{{ */
     {
       /* Prepare the struct: ie calculate internal storage format */
       gsl_prepare_struct(gsl_struct, STRUCT_ALIGNMENT, STRUCT_ALIGNMENT, STRUCT_ALIGNMENT);
@@ -320,7 +320,7 @@
     } /* }}} */
     
     /* Creates a field for a struct */
-    GSL_StructField *gsl_new_struct_field(const char *name, int type)
+    static GSL_StructField *gsl_new_struct_field(const char *name, int type)
     {
       GSL_StructField *field = (GSL_StructField*)malloc(sizeof(GSL_StructField));
       strcpy(field->name, name);
@@ -329,7 +329,7 @@
     }
     
     /* Create as field for a struct which will be a struct itself */
-    GSL_StructField *gsl_new_struct_field_struct(const char *name, const char *type)
+    static GSL_StructField *gsl_new_struct_field_struct(const char *name, const char *type)
     {
       GSL_StructField *field = gsl_new_struct_field(name, gsl_get_struct_id(type));
       if (field->type < 0) {
@@ -341,7 +341,7 @@
     }
 
     /* Creates a Struct */
-    GSL_Struct *gsl_new_struct(GSL_StructField *field)
+    static GSL_Struct *gsl_new_struct(GSL_StructField *field)
     {
       GSL_Struct *s = (GSL_Struct*)malloc(sizeof(GSL_Struct));
       s->nbFields = 1;
@@ -350,7 +350,7 @@
     }
 
     /* Adds a field to a struct */
-    void gsl_add_struct_field(GSL_Struct *s, GSL_StructField *field)
+    static void gsl_add_struct_field(GSL_Struct *s, GSL_StructField *field)
     {
       s->fields[s->nbFields++] = field;
     }
@@ -1281,7 +1281,7 @@
     } /* }}} */
 
 
-    void gsl_declare_global_variable(int type, char *name) {
+    static void gsl_declare_global_variable(int type, char *name) {
       switch(type){
         case -1: break;
         case FLOAT_TK:gsl_float_decl_global(name);break;
