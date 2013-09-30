@@ -175,7 +175,7 @@ static void image_decode_data (video_decoder_t *this_gen, buf_element_t *buf) {
       }
     }
     rgb2yuy2_free (rgb2yuy2);
-    gdk_pixbuf_unref (pixbuf);
+    g_object_unref (pixbuf);
 
     /*
      * draw video frame
