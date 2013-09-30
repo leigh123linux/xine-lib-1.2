@@ -255,7 +255,9 @@ static video_decoder_t *open_plugin (video_decoder_class_t *class_gen,
 
   lprintf("opened\n");
 
+#if (GLIB_MAJOR_VERSION < 2 || (GLIB_MAJOR_VERSION == 2 && GLIB_MINOR_VERSION <= 35))
   g_type_init ();
+#endif
 
   this = (image_decoder_t *) calloc(1, sizeof(image_decoder_t));
 
