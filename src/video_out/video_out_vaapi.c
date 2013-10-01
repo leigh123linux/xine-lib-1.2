@@ -553,50 +553,54 @@ static int gl_visual_attr[] = {
 
 static void delay_usec(unsigned int usec)
 {
+    // FIXME: xine_usec_sleep?
     int was_error;
 
 #if defined(USE_NANOSLEEP)
     struct timespec elapsed, tv;
+
+    elapsed.tv_sec = 0;
+    elapsed.tv_nsec = usec * 1000;
+
+    do {
+        errno = 0;
+        tv.tv_sec = elapsed.tv_sec;
+        tv.tv_nsec = elapsed.tv_nsec;
+        was_error = nanosleep(&tv, &elapsed);
+    } while (was_error && (errno == EINTR));
+
 #elif defined(USE_COND_TIMEDWAIT)
     // Use a local mutex and cv, so threads remain independent
     pthread_cond_t delay_cond = PTHREAD_COND_INITIALIZER;
     pthread_mutex_t delay_mutex = PTHREAD_MUTEX_INITIALIZER;
     struct timespec elapsed;
     uint64_t future;
-#else
-    struct timeval tv;
-#ifndef SELECT_SETS_REMAINING
-    uint64_t then, now, elapsed;
-#endif
-#endif
 
-    // Set the timeout interval - Linux only needs to do this once
-#if defined(SELECT_SETS_REMAINING)
-    tv.tv_sec = 0;
-    tv.tv_usec = usec;
-#elif defined(USE_NANOSLEEP)
-    elapsed.tv_sec = 0;
-    elapsed.tv_nsec = usec * 1000;
-#elif defined(USE_COND_TIMEDWAIT)
     future = get_ticks_usec() + usec;
     elapsed.tv_sec = future / 1000000;
     elapsed.tv_nsec = (future % 1000000) * 1000;
-#else
-    then = get_ticks_usec();
-#endif
 
     do {
         errno = 0;
-#if defined(USE_NANOSLEEP)
-        tv.tv_sec = elapsed.tv_sec;
-        tv.tv_nsec = elapsed.tv_nsec;
-        was_error = nanosleep(&tv, &elapsed);
-#elif defined(USE_COND_TIMEDWAIT)
         was_error = pthread_mutex_lock(&delay_mutex);
         was_error = pthread_cond_timedwait(&delay_cond, &delay_mutex, &elapsed);
         was_error = pthread_mutex_unlock(&delay_mutex);
-#else
-#ifndef SELECT_SETS_REMAINING
+    } while (was_error && (errno == EINTR));
+
+#else // using select()
+    struct timeval tv;
+# ifndef SELECT_SETS_REMAINING
+    uint64_t then, now, elapsed;
+
+    then = get_ticks_usec();
+# endif
+
+    tv.tv_sec = 0;
+    tv.tv_usec = usec;
+
+    do {
+        errno = 0;
+# ifndef SELECT_SETS_REMAINING
         // Calculate the time interval left (in case of interrupt)
         now = get_ticks_usec();
         elapsed = now - then;
@@ -606,10 +610,10 @@ static void delay_usec(unsigned int usec)
         usec -= elapsed;
         tv.tv_sec = 0;
         tv.tv_usec = usec;
-#endif
+# endif
         was_error = select(0, NULL, NULL, NULL, &tv);
-#endif
     } while (was_error && (errno == EINTR));
+#endif
 }
 
 static void vaapi_x11_wait_event(Display *dpy, Window w, int type)
