@@ -160,11 +160,6 @@ typedef struct {
   int                  send_newpts;
   int                  buf_flag_seek;
 
-  uint32_t             last_ts;
-  uint32_t             next_ts;
-  int                  last_seq;
-  int                  next_seq;
-
   int                  fragment_size; /* video sub-demux */
   int                  fragment_count;
   uint32_t            *fragment_tab;
@@ -1000,72 +995,43 @@ static void check_newpts (demux_real_t *this, int64_t pts, int video, int previe
     this->last_pts[video] = pts;
 }
 
-static uint32_t real_fix_timestamp (demux_real_t *this, uint8_t *hdr, uint32_t ts_in) {
-  int      pict_type;
-  int      seq;
-  uint32_t ts_out;
-
-  switch(this->video_stream->buf_type) {
+static uint32_t real_get_reordered_pts (demux_real_t *this, uint8_t *hdr, uint32_t dts) {
+  int      pict_type; /* I1/I2/P/B-frame */
+  uint32_t t, pts;
+  /* lower 13 bits of pts are stored within the frame */
+  pict_type = hdr[0];
+  t = ((((uint32_t)hdr[1] << 8) | hdr[2]) << 8) | hdr[3];
+  switch (this->video_stream->buf_type) {
     case BUF_VIDEO_RV20:
-      pict_type = (hdr[0] & 0xC0) >> 6;
-      seq       = ((hdr[1] & 0x7F) << 6) + ((hdr[2] & 0xFC) >> 2);
-      break;
+      pict_type >>= 6;
+      t         >>= 10;
+    break;
     case BUF_VIDEO_RV30:
-      pict_type = (hdr[0] & 0x18) >> 3;
-      seq       = ((hdr[1] & 0x0F) << 9) + (hdr[2] << 1) + ((hdr[3] & 0x80) >> 7);
-      break;
+      pict_type >>= 3;
+      t         >>= 7;
+    break;
     case BUF_VIDEO_RV40:
-      pict_type = (hdr[0] & 0x60) >> 5;
-      seq       = ((hdr[1] & 0x07) << 10) + (hdr[2] << 2) + ((hdr[3] & 0xC0) >> 6);
-      break;
+      pict_type >>= 5;
+      t         >>= 6;
+    break;
     default:
       xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG,
               "demux_real: can't fix timestamp for buf type 0x%08x\n",
               this->video_stream->buf_type);
-      return ts_in;
-      break;
+      return (dts);
+    break;
   }
 
-  switch (pict_type) {
-    case 0:
-    case 1:
-      /* I frame */
-      ts_out = this->next_ts;
-
-      this->last_ts = this->next_ts;
-      this->next_ts = ts_in;
-
-      this->last_seq = this->next_seq;
-      this->next_seq = seq;
-      break;
-    case 2:
-      /* P frame */
-      ts_out = this->next_ts;
-
-      this->last_ts  = this->next_ts;
-      if (seq < this->next_seq)
-        this->next_ts += seq + 8192 - this->next_seq;
-      else
-        this->next_ts += seq - this->next_seq;
-
-      this->last_seq = this->next_seq;
-      this->next_seq = seq;
-      break;
-    case 3:
-      /* B frame */
-      if (seq < this->last_seq)
-        ts_out = ((seq + 8192 - this->last_seq) + this->last_ts);
-      else
-        ts_out = ((seq - this->last_seq) + this->last_ts);
-      break;
-    default:
-      xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG,
-              "demux_real: unknown pict_type: %d\n", pict_type);
-      ts_out = 0;
-      break;
-  }
-
-  return ts_out;
+  pict_type &= 3;
+  t &= 0x1fff;
+  pts = (dts & (~0x1fff)) | t;
+  /* snap to dts +/- 4.095 seconds */
+  if (dts + 0x1000 < pts) pts -= 0x2000;
+  else if (dts > pts + 0x1000) pts += 0x2000;
+  xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG,
+    "demux_real: video pts: %d.%03d:%04d -> %d.%03d (%d)\n",
+    dts / 1000, dts % 1000, t, pts / 1000, pts % 1000, pict_type);
+  return (pts);
 }
 
 static int stream_read_char (demux_real_t *this) {
@@ -1330,14 +1296,14 @@ static int demux_real_send_chunk(demux_plugin_t *this_gen) {
         /* if the video stream has b-frames fix the timestamps */
         if((this->video_stream->format >= 0x20200002) &&
            (buf->decoder_flags & BUF_FLAG_FRAME_START))
-          pts = (int64_t) real_fix_timestamp(this, buf->content, timestamp) * 90;
+          pts = (int64_t)real_get_reordered_pts (this, buf->content, timestamp) * 90;
 
         /* this test was moved from ffmpeg video decoder.
          * fixme: is pts only valid on frame start? */
-        if( buf->decoder_flags & BUF_FLAG_FRAME_START )
+        if (buf->decoder_flags & BUF_FLAG_FRAME_START) {
           buf->pts = pts;
-        else
-          buf->pts = 0;
+          check_newpts (this, pts, PTS_VIDEO, 0);
+        } else buf->pts = 0;
         pts = 0;
 
         buf->extra_info->input_normpos = normpos;
@@ -1639,9 +1605,6 @@ static int demux_real_seek (demux_plugin_t *this_gen,
   this->send_newpts     = 1;
   this->old_seqnum      = -1;
   this->fragment_size   = 0;
-
-  this->next_ts         = 0;
-  this->next_seq        = 0;
 
   this->status          = DEMUX_OK;
 

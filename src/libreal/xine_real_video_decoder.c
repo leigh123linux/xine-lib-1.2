@@ -420,7 +420,7 @@ static void realdec_decode_data (video_decoder_t *this_gen, buf_element_t *buf) 
                                                   XINE_IMGFMT_YV12,
                                                   VO_BOTH_FIELDS);
 
-        img->pts       = this->pts;
+        img->pts       = (int64_t)transform_out.timestamp * 90;
         img->duration  = this->duration;
         _x_stream_info_set(this->stream, XINE_STREAM_INFO_FRAME_DURATION, this->duration);
         img->bad_frame = 0;
