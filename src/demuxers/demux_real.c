@@ -122,6 +122,7 @@ typedef struct {
   uint8_t             *frame_buffer;
   uint32_t             frame_num_bytes;
   uint32_t             sub_packet_cnt;
+  uint32_t             audio_time;
 } real_stream_t;
 
 typedef struct {
@@ -1089,7 +1090,7 @@ static int demux_real_send_chunk(demux_plugin_t *this_gen) {
   const uint16_t stream   = _X_BE_16(&header[4]);
   const off_t offset __attr_unused = this->input->get_current_pos(this->input);
   uint16_t size     = _X_BE_16(&header[2]) - DATA_PACKET_HEADER_SIZE;
-  const uint32_t timestamp= _X_BE_32(&header[6]);
+  uint32_t timestamp= _X_BE_32(&header[6]);
   int64_t pts      = (int64_t) timestamp * 90;
 
   /* Data packet header with version 1 contains 1 extra byte */
@@ -1338,6 +1339,35 @@ static int demux_real_send_chunk(demux_plugin_t *this_gen) {
       goto discard;
     else
       this->audio_need_keyframe = 0;
+
+    /* speed up when not debugging */
+    if (this->stream->xine->verbosity == XINE_VERBOSITY_DEBUG + 1) {
+      xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG + 1,
+        "demux_real: audio pts: %d.%03d %s%s\n",
+        timestamp / 1000, timestamp % 1000,
+        keyframe ? "*" : " ",
+        this->audio_stream->sub_packet_cnt ? " " : "s");
+    }
+
+    /* cook audio frames are fairly long (almost 2 seconds). For obfuscation
+       purposes, they are sent as multiple fragments in intentionally wrong order.
+       The first sent fragment has the timestamp for the whole frame.
+
+       Sometimes, the remaining fragments all carry the same time, and appear
+       immediately thereafter. This is easy.
+
+       Sometimes, the remaining fragments carry fake timestamps interpolated across
+       the frame duration. Consequently, they will be muxed between the next few
+       video frames. We get the complete frame ~2 seconds late. This is ugly.
+       Let's be careful not to trap metronom into a big lag. */
+    if (!this->audio_stream->sub_packet_cnt)
+      this->audio_stream->audio_time = timestamp;
+    else
+      timestamp = this->audio_stream->audio_time;
+    /* nasty kludge, maybe this is somewhere in mdpr? */
+    if (this->audio_stream->buf_type == BUF_AUDIO_COOK)
+      timestamp += 120;
+    pts = (int64_t) timestamp * 90;
 
     /* if we have a seekable stream then use the timestamp for the data
      * packet for more accurate seeking - if not then estimate time using
