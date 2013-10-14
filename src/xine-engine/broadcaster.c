@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2000-2011 the xine project
+ * Copyright (C) 2000-2013 the xine project
  * May 2003 - Miguel Freitas
  * This feature was sponsored by 1Control
  *
