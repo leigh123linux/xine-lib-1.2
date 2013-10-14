@@ -1,3 +1,10 @@
+xine-lib (1.2.5) 201?-??-??
+  * Add support for AC3 and EAC3 to the Quicktime demuxer.
+  * Recognise & use ADPCM G.726 and ATRAC3. (ffmpeg/libva)
+  * Some colour format conversion fixes.
+  * Fix RealVideo re-ordered PTS: pass through, let the decoder re-order it.
+  * Fix some problems with COOK audio.
+
 xine-lib (1.2.4) 2013-09-24
   * Some VAAPI plugin fixes (build, image size changes).
   * ffmpeg multi-channel playback fixes:
