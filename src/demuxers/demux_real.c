@@ -1031,9 +1031,11 @@ static uint32_t real_get_reordered_pts (demux_real_t *this, uint8_t *hdr, uint32
   /* snap to dts +/- 4.095 seconds */
   if (dts + 0x1000 < pts) pts -= 0x2000;
   else if (dts > pts + 0x1000) pts += 0x2000;
-  xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG,
-    "demux_real: video pts: %d.%03d:%04d -> %d.%03d (%d)\n",
-    dts / 1000, dts % 1000, t, pts / 1000, pts % 1000, pict_type);
+  if (this->stream->xine->verbosity == XINE_VERBOSITY_DEBUG + 1) {
+    xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG + 1,
+      "demux_real: video pts: %d.%03d:%04d -> %d.%03d (%d)\n",
+      dts / 1000, dts % 1000, t, pts / 1000, pts % 1000, pict_type);
+  }
   return (pts);
 }
 
