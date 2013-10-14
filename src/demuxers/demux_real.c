@@ -158,7 +158,6 @@ typedef struct {
 
   int64_t              last_pts[2];
   int                  send_newpts;
-  int                  buf_flag_seek;
 
   int                  fragment_size; /* video sub-demux */
   int                  fragment_count;
@@ -971,27 +970,30 @@ static int demux_real_parse_references( demux_real_t *this) {
 #define WRAP_THRESHOLD           220000
 #define PTS_AUDIO                0
 #define PTS_VIDEO                1
+#define PTS_BOTH                 2
 
 static void check_newpts (demux_real_t *this, int64_t pts, int video, int preview) {
   const int64_t diff = pts - this->last_pts[video];
-  lprintf ("check_newpts %"PRId64"\n", pts);
 
-  if (!preview && pts &&
-      (this->send_newpts || (this->last_pts[video] && abs(diff)>WRAP_THRESHOLD) ) ) {
+  if (preview)
+    return;
 
-    lprintf ("diff=%"PRId64"\n", diff);
-
-    if (this->buf_flag_seek) {
-      _x_demux_control_newpts(this->stream, pts, BUF_FLAG_SEEK);
-      this->buf_flag_seek = 0;
-    } else {
-      _x_demux_control_newpts(this->stream, pts, 0);
-    }
-    this->send_newpts = 0;
-    this->last_pts[1-video] = 0;
+  /* Metronom does not strictly follow audio pts. They usually are too coarse
+     for seamless playback. Instead, it takes the latest discontinuity as a
+     starting point. This can lead to terrible lags for our very long audio frames.
+     So let's make sure audio has the last word here. */
+  if (this->send_newpts > video) {
+    _x_demux_control_newpts (this->stream, pts, BUF_FLAG_SEEK);
+    this->send_newpts         = video;
+    this->last_pts[video]     = pts;
+    this->last_pts[1 - video] = 0;
+  } else if (pts && (this->last_pts[video]) && (abs (diff) > WRAP_THRESHOLD)) {
+    _x_demux_control_newpts (this->stream, pts, 0);
+    this->send_newpts         = 0;
+    this->last_pts[1 - video] = 0;
   }
 
-  if (!preview && pts )
+  if (pts)
     this->last_pts[video] = pts;
 }
 
@@ -1515,6 +1517,7 @@ static void demux_real_send_headers(demux_plugin_t *this_gen) {
 
   this->last_pts[0]   = 0;
   this->last_pts[1]   = 0;
+  this->send_newpts   = PTS_BOTH;
 
   this->avg_bitrate   = 1;
 
@@ -1590,7 +1593,6 @@ static int demux_real_seek (demux_plugin_t *this_gen,
       if(this->audio_stream)
         this->audio_stream->sub_packet_cnt = 0;
 
-      this->buf_flag_seek = 1;
       _x_demux_flush_engine(this->stream);
     }
   }
@@ -1602,7 +1604,7 @@ static int demux_real_seek (demux_plugin_t *this_gen,
     this->input->seek_time(this->input, start_time, SEEK_SET);
   }
 
-  this->send_newpts     = 1;
+  this->send_newpts     = PTS_BOTH;
   this->old_seqnum      = -1;
   this->fragment_size   = 0;
 
