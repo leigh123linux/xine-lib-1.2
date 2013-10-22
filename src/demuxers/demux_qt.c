@@ -318,6 +318,9 @@ typedef struct {
   unsigned int timeoffs_to_sample_count;
   time_to_sample_table_t *timeoffs_to_sample_table;
 
+  /* what to add to output buffer type */
+  int audio_index;
+
 } qt_trak;
 
 typedef struct {
@@ -332,6 +335,10 @@ typedef struct {
 
   int               trak_count;
   qt_trak          *traks;
+
+#define MAX_AUDIO_TRAKS 8
+  int               audio_trak_count;
+  int               audio_traks[MAX_AUDIO_TRAKS];
 
   /* the trak numbers that won their respective frame count competitions */
   int               video_trak;
@@ -2456,10 +2463,8 @@ static int demux_qt_send_chunk(demux_plugin_t *this_gen) {
   unsigned int frame_aligned_buf_size;
   int frame_duration;
   int first_buf;
-  qt_trak *video_trak = NULL;
-  qt_trak *audio_trak = NULL;
-  int dispatch_audio;  /* boolean for deciding which trak to dispatch */
-  int64_t pts_diff;
+  qt_trak *trak = NULL;
+  off_t current_pos = this->input->get_current_pos (this->input);
 
   /* if this is DRM-protected content, finish playback before it even
    * tries to start */
@@ -2478,117 +2483,105 @@ static int demux_qt_send_chunk(demux_plugin_t *this_gen) {
     return this->status;
   }
 
-  if (this->qt->video_trak != -1) {
-    video_trak = &this->qt->traks[this->qt->video_trak];
-  }
-  if (this->qt->audio_trak != -1) {
-    audio_trak = &this->qt->traks[this->qt->audio_trak];
-  }
+  /* Decide the trak from which to dispatch a frame. Policy: Dispatch
+   * the frames in offset order as much as possible. If the pts difference
+   * between the current frames from the audio and video traks is too
+   * wide, make an exception. This exception deals with non-interleaved
+   * Quicktime files. */
+  do {
+    int traks[MAX_AUDIO_TRAKS + 1];
+    int trak_count = 0;
+    int min_trak = -1, next_trak = -1;
+    int64_t min_pts = 0, max_pts = 0; /* avoid warning */
+    off_t next_pos = 0x7fffffffffffffffLL;
+    int i;
 
-  if (!audio_trak && !video_trak) {
-    /* something is really wrong if this case is reached */
-    this->status = DEMUX_FINISHED;
-    return this->status;
+    /* Step 1: list yet unfinished traks. */
+    if (this->qt->video_trak >= 0) {
+      trak = &this->qt->traks[this->qt->video_trak];
+      if (trak->current_frame < trak->frame_count)
+        traks[trak_count++] = this->qt->video_trak;
+    }
+    for (i = 0; i < this->qt->audio_trak_count; i++) {
+      trak = &this->qt->traks[this->qt->audio_traks[i]];
+      if (trak->current_frame < trak->frame_count)
+        traks[trak_count++] = this->qt->audio_traks[i];
+    }
+
+    /* Step 2: handle trivial cases. */
+    if (trak_count == 0) {
+      this->status = DEMUX_FINISHED;
+      return this->status;
+    }
+    if (trak_count == 1) {
+      trak = &this->qt->traks[traks[0]];
+      break;
+    }
+
+    /* Step 3: find
+       * The minimum pts and the trak who has it.
+       * The maximum pts.
+       * The forward nearest to current position and the trak thereof. */
+    for (i = 0; i < trak_count; i++) {
+      int64_t pts;
+      off_t pos;
+      trak = &this->qt->traks[traks[i]];
+      pts  = trak->frames[trak->current_frame].pts;
+      if (i == 0) {
+        min_pts  = max_pts = pts;
+        min_trak = traks[i];
+      } else if (pts < min_pts) {
+        min_pts  = pts;
+        min_trak = traks[i];
+      } else if (pts > max_pts)
+        max_pts  = pts;
+      pos = trak->frames[trak->current_frame].offset;
+      if ((pos >= current_pos) && (pos < next_pos)) {
+        next_pos = pos;
+        next_trak = traks[i];
+      }
+    }
+
+    /* Step 4: after seek, or if the pts scissors opened too much, send minimum pts trak next.
+       Otherwise, take next one by offset. */
+    i = this->qt->seek_flag || (next_trak < 0) || (max_pts - min_pts > MAX_PTS_DIFF) ?
+      min_trak : next_trak;
+    trak = &this->qt->traks[i];
+  } while (0);
+
+  if (this->stream->xine->verbosity == XINE_VERBOSITY_DEBUG + 1) {
+    xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG + 1,
+      "demux_qt: sending trak %d dts %"PRId64" pos %"PRId64"\n",
+      trak - this->qt->traks,
+      trak->frames[trak->current_frame].pts,
+      trak->frames[trak->current_frame].offset);
   }
 
   /* check if it is time to seek */
   if (this->qt->seek_flag) {
     this->qt->seek_flag = 0;
 
-    /* if audio is present, send pts of current audio frame, otherwise
-     * send current video frame pts */
-    if (audio_trak)
-      _x_demux_control_newpts(this->stream,
-        audio_trak->frames[audio_trak->current_frame].pts,
-        BUF_FLAG_SEEK);
-    else
-      _x_demux_control_newpts(this->stream,
-        video_trak->frames[video_trak->current_frame].pts,
-        BUF_FLAG_SEEK);
+    /* send min pts of all used traks, usually audio (see demux_qt_seek ()). */
+    _x_demux_control_newpts (this->stream, trak->frames[trak->current_frame].pts, BUF_FLAG_SEEK);
   }
 
-  /* Decide the trak from which to dispatch a frame. Policy: Dispatch
-   * the frames in offset order as much as possible. If the pts difference
-   * between the current frames from the audio and video traks is too
-   * wide, make an exception. This exception deals with non-interleaved
-   * Quicktime files. */
-  if (!audio_trak) {
+  if (trak->type == MEDIA_VIDEO) {
+    i = trak->current_frame++;
 
-    /* only video is present */
-    dispatch_audio = 0;
-    if (video_trak->current_frame >= video_trak->frame_count) {
-      this->status = DEMUX_FINISHED;
-      return this->status;
-    }
-
-  } else if (!video_trak) {
-
-    /* only audio is present */
-    dispatch_audio = 1;
-    if (audio_trak->current_frame >= audio_trak->frame_count) {
-      this->status = DEMUX_FINISHED;
-      return this->status;
-    }
-
-  } else {
-
-    /* both audio and video are present; start making some tough choices */
-
-    /* check the frame count limits */
-    if ((audio_trak->current_frame >= audio_trak->frame_count) &&
-        (video_trak->current_frame >= video_trak->frame_count)) {
-
-      this->status = DEMUX_FINISHED;
-      return this->status;
-
-    } else if (video_trak->current_frame >= video_trak->frame_count) {
-
-      dispatch_audio = 1;
-
-    } else if (audio_trak->current_frame >= audio_trak->frame_count) {
-
-      dispatch_audio = 0;
-
-    } else {
-
-      /* at this point, it is certain that both traks still have frames
-       * yet to be dispatched */
-      pts_diff  = audio_trak->frames[audio_trak->current_frame].pts;
-      pts_diff -= video_trak->frames[video_trak->current_frame].pts;
-
-      if (pts_diff > MAX_PTS_DIFF) {
-        /* if diff is +max_diff, audio is too far ahead of video */
-        dispatch_audio = 0;
-      } else if (pts_diff < -MAX_PTS_DIFF) {
-        /* if diff is -max_diff, video is too far ahead of audio */
-        dispatch_audio = 1;
-      } else if (audio_trak->frames[audio_trak->current_frame].offset <
-                 video_trak->frames[video_trak->current_frame].offset) {
-        /* pts diff is not too wide, decide based on earlier offset */
-        dispatch_audio = 1;
-      } else {
-        dispatch_audio = 0;
-      }
-    }
-  }
-
-  if (!dispatch_audio) {
-    i = video_trak->current_frame++;
-
-    if (video_trak->frames[i].media_id != video_trak->properties->video.media_id) {
+    if (trak->frames[i].media_id != trak->properties->video.media_id) {
       this->status = DEMUX_OK;
       return this->status;
     }
 
-    remaining_sample_bytes = video_trak->frames[i].size;
-    this->input->seek(this->input, video_trak->frames[i].offset,
-      SEEK_SET);
+    remaining_sample_bytes = trak->frames[i].size;
+    if (trak->frames[i].offset != current_pos)
+      this->input->seek (this->input, trak->frames[i].offset, SEEK_SET);
 
-    if (i + 1 < video_trak->frame_count) {
+    if (i + 1 < trak->frame_count) {
       /* frame duration is the pts diff between this video frame and
        * the next video frame */
-      frame_duration  = video_trak->frames[i + 1].pts;
-      frame_duration -= video_trak->frames[i].pts;
+      frame_duration  = trak->frames[i + 1].pts;
+      frame_duration -= trak->frames[i].pts;
     } else {
       /* give the last frame some fixed duration */
       frame_duration = 12000;
@@ -2600,10 +2593,10 @@ static int demux_qt_send_chunk(demux_plugin_t *this_gen) {
      * to compensate. */
     if (!frame_duration) {
       frame_duration = 1;
-      video_trak->properties->video.edit_list_compensation++;
+      trak->properties->video.edit_list_compensation++;
     } else {
-      frame_duration -= video_trak->properties->video.edit_list_compensation;
-      video_trak->properties->video.edit_list_compensation = 0;
+      frame_duration -= trak->properties->video.edit_list_compensation;
+      trak->properties->video.edit_list_compensation = 0;
     }
 
     _x_stream_info_set(this->stream, XINE_STREAM_INFO_FRAME_DURATION,
@@ -2611,19 +2604,19 @@ static int demux_qt_send_chunk(demux_plugin_t *this_gen) {
 
     debug_video_demux("  qt: sending off video frame %d from offset 0x%"PRIX64", %d bytes, media id %d, %"PRId64" pts\n",
       i,
-      video_trak->frames[i].offset,
-      video_trak->frames[i].size,
-      video_trak->frames[i].media_id,
-      video_trak->frames[i].pts);
+      trak->frames[i].offset,
+      trak->frames[i].size,
+      trak->frames[i].media_id,
+      trak->frames[i].pts);
 
     while (remaining_sample_bytes) {
       buf = this->video_fifo->buffer_pool_alloc (this->video_fifo);
-      buf->type = video_trak->properties->video.codec_buftype;
+      buf->type = trak->properties->video.codec_buftype;
       if( this->data_size )
-        buf->extra_info->input_normpos = (int)( (double) (video_trak->frames[i].offset - this->data_start)
+        buf->extra_info->input_normpos = (int)( (double) (trak->frames[i].offset - this->data_start)
                                                 * 65535 / this->data_size);
-      buf->extra_info->input_time = video_trak->frames[i].pts / 90;
-      buf->pts = video_trak->frames[i].pts + (int64_t)video_trak->frames[i].ptsoffs;
+      buf->extra_info->input_time = trak->frames[i].pts / 90;
+      buf->pts = trak->frames[i].pts + (int64_t)trak->frames[i].ptsoffs;
 
       buf->decoder_flags |= BUF_FLAG_FRAMERATE;
       buf->decoder_info[0] = frame_duration;
@@ -2641,7 +2634,7 @@ static int demux_qt_send_chunk(demux_plugin_t *this_gen) {
         break;
       }
 
-      if (video_trak->frames[i].keyframe)
+      if (trak->frames[i].keyframe)
         buf->decoder_flags |= BUF_FLAG_KEYFRAME;
       if (!remaining_sample_bytes)
         buf->decoder_flags |= BUF_FLAG_FRAME_END;
@@ -2649,11 +2642,11 @@ static int demux_qt_send_chunk(demux_plugin_t *this_gen) {
       this->video_fifo->put(this->video_fifo, buf);
     }
 
-  } else {
+  } else { /* trak->type == MEDIA_AUDIO */
     /* load an audio sample and packetize it */
-    i = audio_trak->current_frame++;
+    i = trak->current_frame++;
 
-    if (audio_trak->frames[i].media_id != audio_trak->properties->audio.media_id) {
+    if (trak->frames[i].media_id != trak->properties->audio.media_id) {
       this->status = DEMUX_OK;
       return this->status;
     }
@@ -2662,24 +2655,24 @@ static int demux_qt_send_chunk(demux_plugin_t *this_gen) {
     if (!this->audio_fifo)
       return this->status;
 
-    remaining_sample_bytes = audio_trak->frames[i].size;
+    remaining_sample_bytes = trak->frames[i].size;
 
-    this->input->seek(this->input, audio_trak->frames[i].offset,
-      SEEK_SET);
+    if (trak->frames[i].offset != current_pos)
+      this->input->seek (this->input, trak->frames[i].offset, SEEK_SET);
 
     debug_audio_demux("  qt: sending off audio frame %d from offset 0x%"PRIX64", %d bytes, media id %d, %"PRId64" pts\n",
       i,
-      audio_trak->frames[i].offset,
-      audio_trak->frames[i].size,
-      audio_trak->frames[i].media_id,
-      audio_trak->frames[i].pts);
+      trak->frames[i].offset,
+      trak->frames[i].size,
+      trak->frames[i].media_id,
+      trak->frames[i].pts);
 
     first_buf = 1;
     while (remaining_sample_bytes) {
       buf = this->audio_fifo->buffer_pool_alloc (this->audio_fifo);
-      buf->type = audio_trak->properties->audio.codec_buftype;
+      buf->type = trak->properties->audio.codec_buftype;
       if( this->data_size )
-        buf->extra_info->input_normpos = (int)( (double) (audio_trak->frames[i].offset - this->data_start)
+        buf->extra_info->input_normpos = (int)( (double) (trak->frames[i].offset - this->data_start)
                                                 * 65535 / this->data_size);
       /* The audio chunk is often broken up into multiple 8K buffers when
        * it is sent to the audio decoder. Only attach the proper timestamp
@@ -2690,20 +2683,20 @@ static int demux_qt_send_chunk(demux_plugin_t *this_gen) {
       if ((buf->type == BUF_AUDIO_LPCM_BE) ||
           (buf->type == BUF_AUDIO_LPCM_LE)) {
         if (first_buf) {
-          buf->extra_info->input_time = audio_trak->frames[i].pts / 90;
-          buf->pts = audio_trak->frames[i].pts;
+          buf->extra_info->input_time = trak->frames[i].pts / 90;
+          buf->pts = trak->frames[i].pts;
           first_buf = 0;
         } else {
           buf->extra_info->input_time = 0;
           buf->pts = 0;
         }
       } else {
-        buf->extra_info->input_time = audio_trak->frames[i].pts / 90;
-        buf->pts = audio_trak->frames[i].pts;
+        buf->extra_info->input_time = trak->frames[i].pts / 90;
+        buf->pts = trak->frames[i].pts;
       }
 
       /* 24-bit audio doesn't fit evenly into the default 8192-byte buffers */
-      if (audio_trak->properties->audio.bits == 24)
+      if (trak->properties->audio.bits == 24)
         frame_aligned_buf_size = 8184;
       else
         frame_aligned_buf_size = buf->max_size;
@@ -2723,9 +2716,9 @@ static int demux_qt_send_chunk(demux_plugin_t *this_gen) {
 
       /* Special case alert: If this is signed, 8-bit data, transform
        * the data to unsigned. */
-      if ((audio_trak->properties->audio.bits == 8) &&
-          ((audio_trak->properties->audio.codec_fourcc == TWOS_FOURCC) ||
-           (audio_trak->properties->audio.codec_fourcc == SOWT_FOURCC)))
+      if ((trak->properties->audio.bits == 8) &&
+          ((trak->properties->audio.codec_fourcc == TWOS_FOURCC) ||
+           (trak->properties->audio.codec_fourcc == SOWT_FOURCC)))
         for (j = 0; j < buf->size; j++)
           buf->content[j] += 0x80;
 
@@ -2733,6 +2726,7 @@ static int demux_qt_send_chunk(demux_plugin_t *this_gen) {
         buf->decoder_flags |= BUF_FLAG_FRAME_END;
       }
 
+      buf->type |= trak->audio_index;
       this->audio_fifo->put(this->audio_fifo, buf);
     }
   }
@@ -2747,6 +2741,9 @@ static void demux_qt_send_headers(demux_plugin_t *this_gen) {
   qt_trak *video_trak = NULL;
   qt_trak *audio_trak = NULL;
   unsigned int audio_bitrate;
+
+  int tnum;
+  int audio_index = 0;
 
   /* for deciding data start and data size */
   int64_t first_video_offset = -1;
@@ -2829,31 +2826,6 @@ static void demux_qt_send_headers(demux_plugin_t *this_gen) {
   }
 
   if (this->qt->audio_trak != -1) {
-
-    /* in mp4 files the audio fourcc is always 'mp4a' - the codec is
-     * specified by the object type id field in the esds atom */
-    if(audio_trak->properties->audio.codec_fourcc == MP4A_FOURCC) {
-      switch(audio_trak->object_type_id) {
-        case 107:
-          audio_trak->properties->audio.codec_buftype = BUF_AUDIO_MPEG;
-          break;
-        default:
-          /* default to AAC if we have no better idea */
-          audio_trak->properties->audio.codec_buftype = BUF_AUDIO_AAC;
-          break;
-      }
-    } else {
-      audio_trak->properties->audio.codec_buftype =
-        _x_formattag_to_buf_audio(audio_trak->properties->audio.codec_fourcc);
-    }
-
-    if( !audio_trak->properties->audio.codec_buftype &&
-         audio_trak->properties->audio.codec_fourcc )
-    {
-      audio_trak->properties->audio.codec_buftype = BUF_AUDIO_UNKNOWN;
-      _x_report_audio_format_tag (this->stream->xine, LOG_MODULE,
-				  audio_trak->properties->audio.codec_fourcc);
-    }
 
     _x_stream_info_set(this->stream, XINE_STREAM_INFO_HAS_AUDIO, 1);
     _x_stream_info_set(this->stream, XINE_STREAM_INFO_AUDIO_CHANNELS,
@@ -2951,9 +2923,43 @@ static void demux_qt_send_headers(demux_plugin_t *this_gen) {
     this->video_fifo->put (this->video_fifo, buf);
   }
 
-  if ((this->qt->audio_trak != -1) &&
-      (audio_trak->properties->audio.codec_buftype) &&
-      this->audio_fifo) {
+  for (tnum = 0; tnum < this->qt->trak_count; tnum++) {
+
+    audio_trak = &this->qt->traks[tnum];
+    if (audio_trak->type != MEDIA_AUDIO)
+      continue;
+
+    /* in mp4 files the audio fourcc is always 'mp4a' - the codec is
+     * specified by the object type id field in the esds atom */
+    if (audio_trak->properties->audio.codec_fourcc == MP4A_FOURCC) {
+      switch (audio_trak->object_type_id) {
+        case 107:
+          audio_trak->properties->audio.codec_buftype = BUF_AUDIO_MPEG;
+          break;
+        default:
+          /* default to AAC if we have no better idea */
+          audio_trak->properties->audio.codec_buftype = BUF_AUDIO_AAC;
+          break;
+      }
+    } else {
+      audio_trak->properties->audio.codec_buftype =
+        _x_formattag_to_buf_audio (audio_trak->properties->audio.codec_fourcc);
+    }
+
+    if (!audio_trak->properties->audio.codec_buftype &&
+         audio_trak->properties->audio.codec_fourcc) {
+      audio_trak->properties->audio.codec_buftype = BUF_AUDIO_UNKNOWN;
+      _x_report_audio_format_tag (this->stream->xine, LOG_MODULE,
+        audio_trak->properties->audio.codec_fourcc);
+    }
+
+    if ((audio_trak->properties->audio.codec_buftype == 0) ||
+        (audio_index >= MAX_AUDIO_TRAKS) ||
+        (this->audio_fifo == NULL))
+      continue;
+
+    this->qt->audio_traks[audio_index] = tnum;
+    audio_trak->audio_index = audio_index;
 
     /* set the audio bitrate field (only for CBR audio) */
     if (!audio_trak->properties->audio.vbr) {
@@ -2968,7 +2974,7 @@ static void demux_qt_send_headers(demux_plugin_t *this_gen) {
     }
 
     buf = this->audio_fifo->buffer_pool_alloc (this->audio_fifo);
-    buf->type = audio_trak->properties->audio.codec_buftype;
+    buf->type = audio_trak->properties->audio.codec_buftype | audio_index;
     buf->decoder_flags = BUF_FLAG_HEADER|BUF_FLAG_STDHEADER|BUF_FLAG_FRAME_END;
     buf->decoder_info[0] = 0;
     buf->decoder_info[1] = audio_trak->properties->audio.sample_rate;
@@ -2990,7 +2996,7 @@ static void demux_qt_send_headers(demux_plugin_t *this_gen) {
 
     if( audio_trak->decoder_config ) {
       buf = this->audio_fifo->buffer_pool_alloc (this->audio_fifo);
-      buf->type = audio_trak->properties->audio.codec_buftype;
+      buf->type = audio_trak->properties->audio.codec_buftype | audio_index;
       buf->size = 0;
       buf->decoder_flags = BUF_FLAG_SPECIAL|BUF_FLAG_HEADER;
       buf->decoder_info[1] = BUF_SPECIAL_DECODER_CONFIG;
@@ -3006,9 +3012,10 @@ static void demux_qt_send_headers(demux_plugin_t *this_gen) {
     buf->decoder_info[2] = audio_trak->properties->audio.properties_atom_size;
     buf->decoder_info_ptr[2] = audio_trak->properties->audio.properties_atom;
     buf->size = 0;
-    buf->type = audio_trak->properties->audio.codec_buftype;
+    buf->type = audio_trak->properties->audio.codec_buftype | audio_index;
     this->audio_fifo->put (this->audio_fifo, buf);
 
+    this->qt->audio_trak_count = ++audio_index;
   }
 }
 
@@ -3079,7 +3086,8 @@ static int demux_qt_seek (demux_plugin_t *this_gen,
   demux_qt_t *this = (demux_qt_t *) this_gen;
   qt_trak *video_trak = NULL;
   qt_trak *audio_trak = NULL;
-  int64_t keyframe_pts;
+  int i;
+  int64_t keyframe_pts = -1;
 
   start_pos = (off_t) ( (double) start_pos / 65535 *
               this->data_size );
@@ -3099,32 +3107,32 @@ static int demux_qt_seek (demux_plugin_t *this_gen,
     this->status = binary_seek(video_trak, start_pos, start_time);
     if (this->status != DEMUX_OK)
       return this->status;
-  }
-
-  if (this->qt->audio_trak != -1) {
-    audio_trak = &this->qt->traks[this->qt->audio_trak];
-    this->status = binary_seek(audio_trak, start_pos, start_time);
-    if (this->status != DEMUX_OK)
-      return this->status;
-  }
-
-  /* search back in the video trak for the nearest keyframe */
-  if (video_trak)
+    /* search back in the video trak for the nearest keyframe */
     while (video_trak->current_frame) {
       if (video_trak->frames[video_trak->current_frame].keyframe) {
         break;
       }
       video_trak->current_frame--;
     }
+    keyframe_pts = video_trak->frames[video_trak->current_frame].pts;
+  }
+
+  /* seek all supported audio traks */
+  for (i = 0; i < this->qt->audio_trak_count; i++) {
+    audio_trak = &this->qt->traks[this->qt->audio_traks[i]];
+    this->status = binary_seek(audio_trak, start_pos, start_time);
+    if (this->status != DEMUX_OK)
+      return this->status;
+  }
 
   /* not done yet; now that the nearest keyframe has been found, seek
    * back to the first audio frame that has a pts less than or equal to
    * that of the keyframe; do not go through with this process there is
    * no video trak */
-  if (audio_trak && video_trak) {
-    keyframe_pts = video_trak->frames[video_trak->current_frame].pts;
+  if (keyframe_pts >= 0) for (i = 0; i < this->qt->audio_trak_count; i++) {
+    audio_trak = &this->qt->traks[this->qt->audio_traks[i]];
     while (audio_trak->current_frame) {
-      if (audio_trak->frames[audio_trak->current_frame].pts < keyframe_pts) {
+      if (audio_trak->frames[audio_trak->current_frame].pts <= keyframe_pts) {
         break;
       }
       audio_trak->current_frame--;
