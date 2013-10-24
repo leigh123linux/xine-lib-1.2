@@ -321,6 +321,8 @@ typedef struct {
   /* what to add to output buffer type */
   int audio_index;
 
+  int lang;
+
 } qt_trak;
 
 typedef struct {
@@ -1014,6 +1016,7 @@ static qt_error parse_trak_atom (qt_trak *trak,
 	if ( version > 1 ) continue; /* unsupported, undocumented */
 
 	trak->timescale = _X_BE_32(&trak_atom[i + (version == 0 ? 0x10 : 0x18) ]);
+	trak->lang = _X_BE_16 (trak_atom + i + (version == 0 ? 0x18 : 0x24));
       }
       break;
 
@@ -3176,11 +3179,39 @@ static int demux_qt_get_stream_length (demux_plugin_t *this_gen) {
 }
 
 static uint32_t demux_qt_get_capabilities(demux_plugin_t *this_gen) {
-  return DEMUX_CAP_NOCAP;
+  return DEMUX_CAP_AUDIOLANG;
 }
 
 static int demux_qt_get_optional_data(demux_plugin_t *this_gen,
 					void *data, int data_type) {
+  demux_qt_t *this = (demux_qt_t *) this_gen;
+
+  /* be a bit paranoid */
+  if (this == NULL || this->stream == NULL)
+    return DEMUX_OPTIONAL_UNSUPPORTED;
+
+  switch (data_type) {
+    case DEMUX_OPTIONAL_DATA_AUDIOLANG: {
+      char *str   = data;
+      int channel = *((int *)data);
+      if ((channel < 0) || (channel >= this->qt->audio_trak_count)) {
+        strcpy (str, "none");
+      } else {
+        int lang = this->qt->traks[this->qt->audio_traks[channel]].lang;
+        if ((lang < 0x400) || (lang == 0x7fff)) {
+          sprintf (str, "%d", channel);
+        } else {
+          int i;
+          for (i = 10; i >= 0; i -= 5)
+            *str++ = 0x60 | ((lang >> i) & 0x1f);
+          *str = 0;
+        }
+        return DEMUX_OPTIONAL_SUCCESS;
+      }
+    }
+    break;
+    default: ;
+  }
   return DEMUX_OPTIONAL_UNSUPPORTED;
 }
 
