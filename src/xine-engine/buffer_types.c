@@ -799,6 +799,25 @@ static const video_db_t video_db[] = {
   BUF_VIDEO_VP8,
   "On2 VP8"
 },
+
+{
+  {
+    ME_FOURCC('V','P','9','0'),
+    0
+  },
+  BUF_VIDEO_VP9,
+  "VP9"
+},
+{
+  {
+    ME_FOURCC('h','e','v','c'),
+    0
+  },
+  BUF_VIDEO_HEVC,
+  "HEVC"
+},
+
+
 { { 0 }, 0, "last entry" }
 };
 
