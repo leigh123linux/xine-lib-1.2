@@ -83,6 +83,7 @@ CAVS			CAVS			Chinese AVS
 VMNC			VMNC			VMware Screen Codec
 THEORA_RAW		THEORA			Theora
 SNOW			SNOW			Snow
+HEVC			HEVC			HEVC/H.265
 
 # disabled codecs (ref. configure.ac)
 !			BMP
