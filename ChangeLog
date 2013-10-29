@@ -1,4 +1,8 @@
 xine-lib (1.2.5) 201?-??-??
+  * Recognise & use HEVC/H.265. (ffmpeg)
+  * Add support for HEVC/H.265 to the mpeg-ts demuxer.
+  * Add support for HEVC/H.265 and VP9 to the matroska demuxer.
+  * Add VP8/VP9 decoder using libvpx.
   * Add support for AC3 and EAC3 to the Quicktime demuxer.
   * Recognise & use ADPCM G.726 and ATRAC3. (ffmpeg/libva)
   * Some colour format conversion fixes.
