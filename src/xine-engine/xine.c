@@ -1240,6 +1240,7 @@ static int open_internal (xine_stream_t *stream, const char *mrl) {
 
   }
 
+  no_cache = no_cache || (stream->input_plugin->get_capabilities(stream->input_plugin) & INPUT_CAP_NO_CACHE);
   if( !no_cache )
     /* enable buffered input plugin (request optimizer) */
     stream->input_plugin = _x_cache_plugin_get_instance(stream);

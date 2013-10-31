@@ -311,6 +311,12 @@ struct input_plugin_s {
 
 #define INPUT_CAP_RIP_FORBIDDEN        0x00000100
 
+/*
+ * INPUT_CAP_NO_CACHE:
+ *   do not use input cache plugin
+ */
+#define INPUT_CAP_NO_CACHE             0x00000200
+
 
 #define INPUT_IS_SEEKABLE(input) (((input)->get_capabilities(input) & INPUT_CAP_SEEKABLE) != 0)
 
