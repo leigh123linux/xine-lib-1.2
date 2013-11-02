@@ -578,6 +578,11 @@ Christoph Pfister <christophpfister@gmail.com>
 Albert Lee <trisk+xine@acm.jhu.edu>
   Solaris portability fixes (and other miscellaneous fixes)
 
+Torsten Jager <t.jager@gmx.de>
+  Test card input plugin, color matrix and fullrange video support,
+  rgb to yuy2 converter, ffmpeg audio channel mixer, demux improvements,
+  german translation, optimizations, bugfixes
+
 Christophe Thommeret <hftom@free.fr>
   OpenGL 2.0 video out plugin, new VDPAU h264 decoder,
   VDPAU bugfixes
