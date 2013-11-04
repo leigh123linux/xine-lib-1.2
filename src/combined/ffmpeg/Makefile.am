@@ -29,6 +29,12 @@ xineplug_decode_ff_la_LIBADD = $(XINE_LIB) $(MLIB_LIBS) -lm $(ZLIB_LIBS) \
 	$(FFMPEG_LIBS) $(AVUTIL_LIBS) $(FFMPEG_POSTPROC_LIBS) $(PTHREAD_LIBS) $(LTLIBINTL)
 xineplug_decode_ff_la_LDFLAGS = $(AM_LDFLAGS) $(IMPURE_TEXT_LDFLAGS)
 
+if ENABLE_AVFORMAT
+xineplug_decode_ff_la_SOURCES += input_avio.c
+xineplug_decode_ff_la_CFLAGS += $(AVFORMAT_CFLAGS)
+xineplug_decode_ff_la_LIBADD += $(AVFORMAT_LIBS)
+endif
+
 # Generation of ffmpeg->xine codec mapping lists (see xine_*.list).
 
 AV_CPP = $(CPP) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AVUTIL_CFLAGS)

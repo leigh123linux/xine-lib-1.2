@@ -1,4 +1,8 @@
 xine-lib (1.2.5) 201?-??-??
+  * Add avio (libavformat) input plugin:
+    - Support for new protocols (https://, ftp://, sftp://, ...).
+    - Support for seekable http streams (with avio:http:// mrl).
+    - By default native xine input plugins are used. This can be overridden in config or by using avio: mrl prefix.
   * Recognise & use HEVC/H.265. (ffmpeg)
   * Add support for HEVC/H.265 to the mpeg-ts demuxer.
   * Add support for HEVC/H.265 and VP9 to the matroska demuxer.
