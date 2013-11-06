@@ -71,6 +71,7 @@ AC_DEFUN([XINE_LIB_SUMMARY], [
     test x"$have_libflac" = x"yes"   && echo "   - FLAC (with libFLAC)"
     test x"$have_vorbis" = x"yes"    && echo "   - ogg"
     test x"$have_wavpack" = x"yes"   && echo "   - WavPack"
+    test x"$have_avformat" = x"yes"  && echo "   - avformat (with libavformat)"
     echo ""
 
     dnl video decoders

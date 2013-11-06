@@ -63,6 +63,8 @@ const plugin_info_t xine_plugin_info[] EXPORTED = {
   { PLUGIN_AUDIO_DECODER, 16, "ffmpegaudio", XINE_VERSION_CODE, &dec_info_ffmpeg_audio, init_audio_plugin },
 #ifdef HAVE_AVFORMAT
   { PLUGIN_INPUT,         18, INPUT_AVIO_ID,     XINE_VERSION_CODE, &input_info_avio,     init_avio_input_plugin },
+  { PLUGIN_INPUT,         18, DEMUX_AVFORMAT_ID, XINE_VERSION_CODE, &input_info_avformat, init_avformat_input_plugin },
+  { PLUGIN_DEMUX,         27, DEMUX_AVFORMAT_ID, XINE_VERSION_CODE, &demux_info_avformat, init_avformat_demux_plugin },
 #endif
   { PLUGIN_NONE, 0, "", 0, NULL, NULL }
 };
