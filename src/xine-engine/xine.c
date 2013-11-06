@@ -809,6 +809,37 @@ void _x_mrl_unescape(char *mrl) {
   mrl[len] = 0;
 }
 
+char *_x_mrl_remove_auth(const char *mrl_in)
+{
+  char *mrl = strdup(mrl_in);
+  char *auth, *p, *at, *host_end;
+
+  /* parse protocol */
+  if (!(p = strchr(mrl, ':'))) {
+    /* no protocol means plain filename */
+    return mrl;
+  }
+
+  p++; /* skip ':' */
+  if (*p == '/') p++;
+  if (*p == '/') p++;
+
+  /* authorization (user[:pass]@hostname) */
+  auth = p;
+  host_end = strchr(p, '/');
+  while ((at = strchr(p, '@')) && at < host_end) {
+    p = at + 1; /* skip '@' */
+  }
+
+  if (p != auth) {
+    while (p[-1]) {
+      *auth++ = *p++;
+    }
+  }
+
+  return mrl;
+}
+
 void _x_flush_events_queues (xine_stream_t *stream) {
 
   xine_list_iterator_t ite;
