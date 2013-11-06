@@ -289,7 +289,7 @@ static int is_avio_supported_protocol(xine_t *xine, const char *mrl)
 
 static input_plugin_t *input_avio_get_instance (input_class_t *cls_gen, xine_stream_t *stream, const char *mrl) {
   avio_input_plugin_t *this;
-  const int            proto_len = strlen(INPUT_AVIO_ID":");
+  const int            proto_len = strlen(INPUT_AVIO_ID"+");
 
   if (!mrl || !*mrl) {
     return NULL;
@@ -301,8 +301,8 @@ static input_plugin_t *input_avio_get_instance (input_class_t *cls_gen, xine_str
   }
 
   /* always accept own protocol */
-  /* avio:http:// ... --> use avio instead of xine native http plugin */
-  if (!strncasecmp (mrl, INPUT_AVIO_ID":", proto_len)) {
+  /* avio+http:// ... --> use avio instead of xine native http plugin */
+  if (!strncasecmp (mrl, INPUT_AVIO_ID"+", proto_len)) {
     mrl += proto_len;
   }
 
