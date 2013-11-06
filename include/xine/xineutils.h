@@ -146,7 +146,7 @@ void *xine_xcalloc(size_t nmemb, size_t size) XINE_MALLOC XINE_PROTECTED;
  * Free allocated memory and set pointer to NULL
  * @param ptr Pointer to the pointer to the memory block which should be freed.
  */
-static inline void _x_freep(void *ptr) XINE_PROTECTED {
+static inline void _x_freep(void *ptr) {
   void **p = (void **)ptr;
   free (*p);
   *p = NULL;
