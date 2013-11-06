@@ -50,7 +50,8 @@ typedef struct {
 
   xine_stream_t   *stream;
 
-  char            *mrl;
+  char            *mrl;         /* 'public' mrl without authentication credentials */
+  char            *mrl_private; /* 'private' mrl with authentication credentials */
   AVIOContext     *pb;
 
   /* preview support */
@@ -222,14 +223,16 @@ static int input_avio_open (input_plugin_t *this_gen) {
   if (!this->pb) {
 
     /* try to open libavio protocol */
-    if (avio_open2(&this->pb, this->mrl, AVIO_FLAG_READ, NULL, NULL) < 0) {
+    if (avio_open2(&this->pb, this->mrl_private, AVIO_FLAG_READ, NULL, NULL) < 0) {
       xprintf (this->stream->xine, XINE_VERBOSITY_LOG, LOG_MODULE": failed to open avio protocol for '%s'\n", this->mrl);
+      _x_freep (&this->mrl_private);
+
       return 0;
     }
 
     xprintf (this->stream->xine, XINE_VERBOSITY_LOG, LOG_MODULE": opened avio protocol for '%s'\n", this->mrl);
   }
-
+  _x_freep (&this->mrl_private);
 
   while ((toread > 0) && (trycount < 10)) {
     off_t n = avio_read (this->pb, this->preview + this->preview_size, toread);
@@ -247,7 +250,8 @@ static void input_avio_dispose (input_plugin_t *this_gen ) {
   avio_input_plugin_t *this = (avio_input_plugin_t *) this_gen;
 
   avio_close(this->pb);
-  free (this->mrl);
+  _x_freep (&this->mrl);
+  _x_freep (&this->mrl_private);
   free (this_gen);
 }
 
@@ -308,7 +312,8 @@ static input_plugin_t *input_avio_get_instance (input_class_t *cls_gen, xine_str
 
   this = calloc(1, sizeof(avio_input_plugin_t));
   this->stream = stream;
-  this->mrl    = strdup(mrl);
+  this->mrl    = _x_mrl_remove_auth(mrl);
+  this->mrl_private = strdup(mrl);
 
   this->input_plugin.open              = input_avio_open;
   this->input_plugin.get_capabilities  = input_avio_get_capabilities;
@@ -323,6 +328,9 @@ static input_plugin_t *input_avio_get_instance (input_class_t *cls_gen, xine_str
   this->input_plugin.get_optional_data = input_avio_get_optional_data;
   this->input_plugin.dispose           = input_avio_dispose;
   this->input_plugin.input_class       = cls_gen;
+
+  /* do not expose authentication credentials in title (if title is not set, it defaults to mrl in xine-ui) */
+  _x_meta_info_set(stream, XINE_META_INFO_TITLE, this->mrl);
 
   return &this->input_plugin;
 }
