@@ -143,6 +143,16 @@ void *xine_xmalloc(size_t size) XINE_MALLOC XINE_DEPRECATED XINE_PROTECTED;
 void *xine_xcalloc(size_t nmemb, size_t size) XINE_MALLOC XINE_PROTECTED;
 
 /*
+ * Free allocated memory and set pointer to NULL
+ * @param ptr Pointer to the pointer to the memory block which should be freed.
+ */
+static inline void _x_freep(void *ptr) XINE_PROTECTED {
+  void **p = (void **)ptr;
+  free (*p);
+  *p = NULL;
+}
+
+/*
  * Copy blocks of memory.
  */
 void *xine_memdup (const void *src, size_t length) XINE_MALLOC XINE_PROTECTED;
