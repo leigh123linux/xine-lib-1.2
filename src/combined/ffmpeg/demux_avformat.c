@@ -245,10 +245,11 @@ typedef struct {
 
   AVFormatContext *fmt_ctx;
   int              video_stream_idx; /* selected avformat video stream */
-  int              audio_stream_idx; /* selected avformat audio stream */
+  unsigned int     audio_track_count;/* number of xine audio tracks */
+  int             *audio_stream_idx; /* selected avformat audio streams. index: xine audio track #. */
 
-  uint32_t         xine_video_type;
-  uint32_t         xine_audio_type;
+  unsigned int     num_streams;      /* size of xine_buf_type[] array */
+  uint32_t        *xine_buf_type;    /* xine buffer types. index: avformat stream_index */
 
   /* detect discontinuity */
   int64_t               last_pts;
@@ -259,7 +260,6 @@ typedef struct {
 
 /*
  * TODO:
- *  - multiple audio streams
  *  - subtitle streams
  *  - metadata
  */
@@ -315,48 +315,80 @@ static uint32_t audio_codec_lookup(avformat_demux_plugin_t *this, int id) {
 
 static int find_avformat_streams(avformat_demux_plugin_t *this) {
 
+  AVProgram *p = NULL;
+  int i, nb_streams;
+
   /* find avformat streams */
 
   this->video_stream_idx = av_find_best_stream(this->fmt_ctx, AVMEDIA_TYPE_VIDEO, -1, -1, NULL, 0);
-  this->audio_stream_idx = av_find_best_stream(this->fmt_ctx, AVMEDIA_TYPE_AUDIO, -1, -1, NULL, 0);
 
-  if (this->video_stream_idx < 0 && this->audio_stream_idx < 0) {
+  if (this->video_stream_idx < 0 &&
+      av_find_best_stream(this->fmt_ctx, AVMEDIA_TYPE_AUDIO, -1, this->video_stream_idx, NULL, 0) < 0) {
     xprintf (this->stream->xine, XINE_VERBOSITY_LOG,
              LOG_MODULE": Could not find supported audio or video stream in the input\n");
     return 0;
   }
 
-  /* map streams to xine types */
+  this->num_streams = this->fmt_ctx->nb_streams;
+  this->xine_buf_type = calloc(this->num_streams, sizeof(uint32_t));
+  this->audio_stream_idx = calloc(this->num_streams, sizeof(int));
+
+  /* map video stream to xine buffer type */
 
   if (this->video_stream_idx >= 0) {
     AVStream *st = this->fmt_ctx->streams[this->video_stream_idx];
-    this->xine_video_type = video_codec_lookup(this, st->codec->codec_id);
+    uint32_t xine_video_type = video_codec_lookup(this, st->codec->codec_id);
 
-    if (!this->xine_video_type) {
+    if (!xine_video_type) {
       this->video_stream_idx = -1;
       xprintf (this->stream->xine, XINE_VERBOSITY_LOG,
                LOG_MODULE": ffmpeg video codec id %d --> NO xine buffer type\n", st->codec->codec_id);
     } else {
       xprintf (this->stream->xine, XINE_VERBOSITY_LOG,
-               LOG_MODULE": ffmpeg video codec id %d --> xine buffer type 0x%08x\n", st->codec->codec_id, this->xine_video_type);
+               LOG_MODULE": ffmpeg video codec id %d --> xine buffer type 0x%08x\n", st->codec->codec_id, xine_video_type);
+
+      this->xine_buf_type[this->video_stream_idx] = xine_video_type;
     }
   }
 
-  if (this->audio_stream_idx >= 0) {
-    AVStream *st = this->fmt_ctx->streams[this->audio_stream_idx];
+  /* get audio tracks of the program */
 
-    this->xine_audio_type = audio_codec_lookup(this, st->codec->codec_id);
-    if (!this->xine_audio_type) {
-      this->audio_stream_idx = -1;
+  if (this->video_stream_idx >= 0) {
+    p = av_find_program_from_stream(this->fmt_ctx, NULL, this->video_stream_idx);
+  }
+  nb_streams = p ? p->nb_stream_indexes : this->fmt_ctx->nb_streams;
+
+  for (i = 0; i < nb_streams; i++) {
+    int stream_index = p ? p->stream_index[i] : i;
+    AVStream *st = this->fmt_ctx->streams[stream_index];
+
+    if (stream_index >= this->num_streams) {
+      xprintf (this->stream->xine, XINE_VERBOSITY_LOG, LOG_MODULE": Too many streams, ignoring stream #%d\n", i);
+      continue;
+    }
+
+    if (st->codec && st->codec->codec_type == AVMEDIA_TYPE_AUDIO &&
+        st->codec->sample_rate != 0 && st->codec->channels != 0) {
+
+      int xine_audio_type = audio_codec_lookup(this, st->codec->codec_id);
+      if (!xine_audio_type) {
+        xprintf (this->stream->xine, XINE_VERBOSITY_LOG,
+                 LOG_MODULE": ffmpeg audio codec id %d --> NO xine buffer type\n", st->codec->codec_id);
+        continue;
+      }
       xprintf (this->stream->xine, XINE_VERBOSITY_LOG,
-               LOG_MODULE": ffmpeg audio codec id %d --> NO xine buffer type\n", st->codec->codec_id);
-    } else {
-      xprintf (this->stream->xine, XINE_VERBOSITY_LOG,
-               LOG_MODULE": ffmpeg audio codec id %d --> xine buffer type 0x%08x\n", st->codec->codec_id, this->xine_audio_type);
+               LOG_MODULE": ffmpeg audio codec id %d --> xine buffer type 0x%08x\n", st->codec->codec_id, xine_audio_type);
+
+      this->audio_stream_idx[this->audio_track_count] = stream_index;
+
+      this->xine_buf_type[stream_index] = xine_audio_type | this->audio_track_count;
+      this->audio_track_count++;
     }
   }
 
-  if (!this->xine_video_type && !this->xine_audio_type) {
+  /* something to play ? */
+
+  if (this->video_stream_idx < 0 && !this->audio_track_count) {
     xprintf (this->stream->xine, XINE_VERBOSITY_LOG,
              LOG_MODULE": Could not find matching xine buffer types, aborting\n");
     return 0;
@@ -375,7 +407,10 @@ static int find_avformat_streams(avformat_demux_plugin_t *this) {
 
 static void send_headers_audio(avformat_demux_plugin_t *this) {
 
-  AVCodecContext    *ctx = this->fmt_ctx->streams[this->audio_stream_idx]->codec;
+  int ii;
+  for (ii = 0; ii < this->audio_track_count; ii++) {
+
+  AVCodecContext    *ctx = this->fmt_ctx->streams[this->audio_stream_idx[ii]]->codec;
   buf_element_t     *buf = this->stream->audio_fifo->buffer_pool_alloc (this->stream->audio_fifo);
   size_t             extradata_size = ctx->extradata_size;
   xine_waveformatex *fmt = (xine_waveformatex *)buf->content;
@@ -394,7 +429,7 @@ static void send_headers_audio(avformat_demux_plugin_t *this) {
     memcpy(buf->content + sizeof(xine_waveformatex), ctx->extradata, extradata_size);
   }
 
-  buf->type = this->xine_audio_type;
+  buf->type = this->xine_buf_type[this->audio_stream_idx[ii]];
   buf->size = extradata_size + sizeof(xine_waveformatex);
   buf->decoder_info[1] = ctx->sample_rate;
   buf->decoder_info[2] = ctx->bits_per_coded_sample;
@@ -402,6 +437,7 @@ static void send_headers_audio(avformat_demux_plugin_t *this) {
   buf->decoder_flags = BUF_FLAG_HEADER | BUF_FLAG_STDHEADER | BUF_FLAG_FRAME_END;
 
   this->stream->audio_fifo->put (this->stream->audio_fifo, buf);
+  }
 }
 
 static void send_headers_video(avformat_demux_plugin_t *this) {
@@ -426,7 +462,7 @@ static void send_headers_video(avformat_demux_plugin_t *this) {
     memcpy(buf->content + sizeof(xine_bmiheader), ctx->extradata, extradata_size);
   }
 
-  buf->type = this->xine_video_type;
+  buf->type = this->xine_buf_type[this->video_stream_idx];
   buf->size = extradata_size + sizeof(xine_bmiheader);
   buf->decoder_flags = BUF_FLAG_HEADER | BUF_FLAG_STDHEADER | BUF_FLAG_FRAME_END;
 
@@ -451,18 +487,20 @@ static int send_avpacket(avformat_demux_plugin_t *this)
   }
 
   /* map to xine fifo / buffer type */
+  if (pkt.stream_index < this->num_streams) {
+    buffer_type = this->xine_buf_type[pkt.stream_index];
+  } else {
+    // TODO: new streams found
+  }
+
   if (this->video_stream_idx >= 0 && pkt.stream_index == this->video_stream_idx) {
     fifo = this->stream->video_fifo;
-    buffer_type = this->xine_video_type;
-  } else if (this->audio_stream_idx >= 0 && pkt.stream_index == this->audio_stream_idx) {
-    fifo = this->stream->audio_fifo;
-    buffer_type = this->xine_audio_type;
   } else {
-    //fprintf(stderr, "??? PACK\n");
+    fifo = this->stream->audio_fifo;
   }
 
   /* send to decoder */
-  if (fifo) {
+  if (buffer_type && fifo) {
     int64_t  pts = 0;
     float    input_normpos = (stream_length > 0 && stream_pos > 0) ? (int)(65535 * stream_pos / stream_length) : 0;
     int      total_time    = (int)((int64_t)this->fmt_ctx->duration * 1000 / AV_TIME_BASE);
@@ -529,7 +567,7 @@ static void demux_avformat_send_headers (demux_plugin_t *this_gen) {
 
   _x_demux_control_start(this->stream);
 
-  if (this->audio_stream_idx >= 0) {
+  if (this->audio_track_count > 0) {
     _x_stream_info_set(this->stream, XINE_STREAM_INFO_HAS_AUDIO, 1);
     send_headers_audio(this);
   }
@@ -590,6 +628,9 @@ static int demux_avformat_seek (demux_plugin_t *this_gen,
 
 static void demux_avformat_dispose (demux_plugin_t *this_gen) {
   avformat_demux_plugin_t *this = (avformat_demux_plugin_t *) this_gen;
+
+  _x_freep(&this->xine_buf_type);
+  _x_freep(&this->audio_stream_idx);
 
   avformat_close_input(&this->fmt_ctx);
   free (this_gen);
