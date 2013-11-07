@@ -308,6 +308,10 @@ static uint32_t audio_codec_lookup(avformat_demux_plugin_t *this, int id) {
       return BUF_AUDIO_LPCM_LE;
     case AV_CODEC_ID_PCM_S16BE:
       return BUF_AUDIO_LPCM_BE;
+    case AV_CODEC_ID_MP2:
+      return BUF_AUDIO_MPEG;
+    case AV_CODEC_ID_AC3:
+      return BUF_AUDIO_A52;
   }
 
   return 0;
