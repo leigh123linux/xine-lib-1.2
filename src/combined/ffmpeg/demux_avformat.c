@@ -123,7 +123,7 @@ static void input_avformat_dispose (input_plugin_t *this_gen ) {
   avformat_input_plugin_t *this = (avformat_input_plugin_t *) this_gen;
 
   avformat_close_input(&this->fmt_ctx);
-  _x_freep (this->mrl);
+  _x_freep (&this->mrl);
   free (this_gen);
 }
 
@@ -175,7 +175,7 @@ static input_plugin_t *input_avformat_get_instance (input_class_t *cls_gen, xine
     return NULL;
   }
 
-  free(real_mrl);
+  _x_freep(&real_mrl);
 
   /* create xine input plugin */
 
