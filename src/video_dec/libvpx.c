@@ -213,6 +213,17 @@ static void vpx_reset (video_decoder_t *this_gen)
 {
   vpx_decoder_t *this = (vpx_decoder_t *) this_gen;
 
+  if (this->decoder_ok) {
+    const void *iter = NULL;
+    while (1) {
+      struct vpx_image *img = vpx_codec_get_frame(&this->ctx, &iter);
+      if (!img)
+        break;
+      free(img->user_priv);
+      img->user_priv = NULL;
+    }
+  }
+
   this->size = 0;
 }
 
