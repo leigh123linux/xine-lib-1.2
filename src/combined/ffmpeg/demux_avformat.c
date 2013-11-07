@@ -71,7 +71,7 @@ static off_t input_avformat_get_length (input_plugin_t *this_gen) {
 }
 
 static uint32_t input_avformat_get_capabilities (input_plugin_t *this_gen) {
-  return INPUT_CAP_NOCAP;
+  return INPUT_CAP_SEEKABLE;
 }
 
 static uint32_t input_avformat_get_blocksize (input_plugin_t *this_gen) {
@@ -253,6 +253,7 @@ typedef struct {
   /* detect discontinuity */
   int64_t               last_pts;
   int                   send_newpts;
+  int                   seek_flag;
 
 } avformat_demux_plugin_t;
 
@@ -260,7 +261,6 @@ typedef struct {
  * TODO:
  *  - multiple audio streams
  *  - subtitle streams
- *  - seeking
  *  - metadata
  */
 
@@ -269,10 +269,11 @@ typedef struct {
 static void check_newpts(avformat_demux_plugin_t *this, int64_t pts) {
 
   int64_t diff = this->last_pts - pts;
-  if (this->send_newpts || (this->last_pts && abs(diff) > WRAP_THRESHOLD)) {
+  if (this->seek_flag || this->send_newpts || (this->last_pts && abs(diff) > WRAP_THRESHOLD)) {
 
-    _x_demux_control_newpts(this->stream, pts, 0);
+    _x_demux_control_newpts(this->stream, pts, this->seek_flag);
     this->send_newpts = 0;
+    this->seek_flag = 0;
     this->last_pts = pts;
   }
 }
@@ -542,12 +543,47 @@ static void demux_avformat_send_headers (demux_plugin_t *this_gen) {
   this->status      = DEMUX_OK;
 }
 
+static int avformat_seek (avformat_demux_plugin_t *this,
+                          off_t start_pos, int start_time) {
+
+  int64_t pos;
+
+  /* seek to timestamp */
+  if (!start_pos && start_time) {
+    pos = (int)(AV_TIME_BASE * (int64_t)start_time / 1000);
+    if (av_seek_frame(this->fmt_ctx, -1, pos, 0) >= 0) {
+      return 0;
+    }
+  }
+
+  /* seek to byte offset */
+  pos = (int64_t)start_pos * avio_size(this->fmt_ctx->pb) / 65535;
+  if (av_seek_frame(this->fmt_ctx, -1, pos, AVSEEK_FLAG_BYTE) >= 0) {
+    return 0;
+  }
+
+  /* stream does not support seeking to byte offset. Final try with timestamp. */
+  pos = (int64_t)start_pos * this->fmt_ctx->duration / 65535;
+  if (av_seek_frame(this->fmt_ctx, -1, pos, 0) >= 0) {
+    return 0;
+  }
+
+  return -1;
+}
+
 static int demux_avformat_seek (demux_plugin_t *this_gen,
                                 off_t start_pos, int start_time, int playing) {
 
   avformat_demux_plugin_t *this = (avformat_demux_plugin_t *) this_gen;
 
-  /* TODO */
+  if (avformat_seek(this, start_pos, start_time) < 0) {
+    return this->status;
+  }
+
+  if (playing) {
+    this->seek_flag = BUF_FLAG_SEEK;
+    _x_demux_flush_engine(this->stream);
+  }
 
   return this->status;
 }
