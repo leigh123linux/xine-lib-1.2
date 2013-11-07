@@ -57,6 +57,7 @@ typedef struct vpx_decoder_s {
   int               width;       /* the width of a video frame */
   int               height;      /* the height of a video frame */
   double            ratio;       /* the width to height ratio */
+  int               frame_flags; /* color matrix and fullrange */
 
 } vpx_decoder_t;
 
@@ -106,6 +107,11 @@ static void vpx_decode_data (video_decoder_t *this_gen, buf_element_t *buf)
 
   if (buf->decoder_flags & BUF_FLAG_PREVIEW) {
     return;
+  }
+
+  /* optional demux override (matroska/webm) */
+  if (buf->decoder_flags & BUF_FLAG_COLOR_MATRIX) {
+    VO_SET_FLAGS_CM (buf->decoder_info[4], this->frame_flags);
   }
 
   if (buf->decoder_flags & BUF_FLAG_STDHEADER) {
@@ -175,7 +181,8 @@ static void vpx_decode_data (video_decoder_t *this_gen, buf_element_t *buf)
 
   img = this->stream->video_out->get_frame (this->stream->video_out,
                                             this->width, this->height,
-                                            this->ratio, XINE_IMGFMT_YV12, VO_BOTH_FIELDS);
+                                            this->ratio, XINE_IMGFMT_YV12,
+                                            this->frame_flags | VO_BOTH_FIELDS);
 
   yv12_to_yv12(
                /* Y */
@@ -281,6 +288,11 @@ static video_decoder_t *open_plugin (video_decoder_class_t *class_gen, xine_stre
 
   this->decoder_ok    = 0;
   this->buf           = NULL;
+
+  /* VP8/9 seems not to transport color matrix and fullrange info.
+     So lets at least tell video out to do image size based selection. */
+  this->frame_flags   = 0;
+  VO_SET_FLAGS_CM (4, this->frame_flags); /* undefined, mpeg range */
 
   xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG,
           LOG_MODULE "VP%d: using libvpx version %s\n",
