@@ -542,11 +542,43 @@ static int demux_avformat_get_stream_length (demux_plugin_t *this_gen) {
 }
 
 static uint32_t demux_avformat_get_capabilities(demux_plugin_t *this_gen) {
-  return DEMUX_CAP_NOCAP;
+  return DEMUX_CAP_AUDIOLANG;
 }
 
 static int demux_avformat_get_optional_data(demux_plugin_t *this_gen,
                                             void *data, int data_type) {
+  avformat_demux_plugin_t *this = (avformat_demux_plugin_t *) this_gen;
+
+  if (!data || !this || !this->fmt_ctx) {
+    return DEMUX_OPTIONAL_UNSUPPORTED;
+  }
+
+  char *str     = data;
+  int   channel = *((int *)data);
+
+  switch (data_type) {
+    case DEMUX_OPTIONAL_DATA_AUDIOLANG:
+      if (channel >= 0 && channel < this->audio_track_count) {
+
+        AVStream *st = this->fmt_ctx->streams[this->audio_stream_idx[channel]];
+        AVDictionaryEntry *tag = NULL;
+        if ((tag = av_dict_get(st->metadata, "language", tag, AV_DICT_IGNORE_SUFFIX)) && tag->value[0]) {
+          strcpy(str, tag->value);
+          return DEMUX_OPTIONAL_SUCCESS;
+        }
+
+        /* input plugin may know the language */
+        if (this->stream->input_plugin->get_capabilities(this->stream->input_plugin) & INPUT_CAP_AUDIOLANG)
+          return DEMUX_OPTIONAL_UNSUPPORTED;
+        sprintf(str, "%3i", channel);
+        return DEMUX_OPTIONAL_SUCCESS;
+
+      } else {
+        strcpy(str, "none");
+      }
+      return DEMUX_OPTIONAL_UNSUPPORTED;
+  }
+
   return DEMUX_OPTIONAL_UNSUPPORTED;
 }
 
