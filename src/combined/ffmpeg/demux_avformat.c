@@ -168,9 +168,15 @@ static input_plugin_t *input_avformat_get_instance (input_class_t *cls_gen, xine
   /* open input file, and allocate format context */
 
   AVFormatContext *fmt_ctx = NULL;
+  int error;
 
-  if (avformat_open_input(&fmt_ctx, real_mrl ? real_mrl : mrl, NULL, &options) < 0) {
-    xprintf (stream->xine, XINE_VERBOSITY_LOG, LOG_MODULE": Could not open source '%s'\n", mrl);
+  if ((error = avformat_open_input(&fmt_ctx, real_mrl ? real_mrl : mrl, NULL, &options)) < 0) {
+    char buf[80] = "";
+    if (!av_strerror(error, buf, sizeof(buf))) {
+      xprintf (stream->xine, XINE_VERBOSITY_LOG, LOG_MODULE": Could not open source '%s': %s\n", mrl, buf);
+    } else {
+      xprintf (stream->xine, XINE_VERBOSITY_LOG, LOG_MODULE": Could not open source '%s'\n", mrl);
+    }
     free(real_mrl);
     return NULL;
   }
