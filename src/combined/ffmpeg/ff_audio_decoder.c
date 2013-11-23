@@ -177,8 +177,12 @@ static void ff_audio_init_codec(ff_audio_decoder_t *this, unsigned int codec_typ
     return;
   }
 
+#if AVAUDIO < 4
   /* Try to make the following true */
   this->context->request_sample_fmt = AV_SAMPLE_FMT_S16;
+  /* For lavc v54+, we have our channel mixer that wants default float samples to fix
+    oversaturation via audio gain. */
+#endif
 
   /* Current ffmpeg audio decoders usually use 16 bits/sample
    * buf->decoder_info[2] can't be used as it doesn't refer to the output
