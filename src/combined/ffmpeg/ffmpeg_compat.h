@@ -116,9 +116,12 @@
 /* release 0.7.x (libavcodec 52) has deprecated AVCodecContext.palctrl but for backwards compatibility no
    working alternative. */
 #  define AVPALETTE 1
-#else
-/* pass palette as AVPacket side data */
+#elif LIBAVCODEC_VERSION_INT < ((54<<16)|(92<<8)|100)
+/* pass palette as AVPacket side data, free with av_destruct_packet () after NULLing main data pointer */
 #  define AVPALETTE 2
+#else
+/* dito, free with av_free_packet () after NULLing main data pointer */
+#  define AVPALETTE 3
 #endif
 
 #if defined LIBAVUTIL_VERSION_MAJOR && LIBAVUTIL_VERSION_MAJOR >= 52

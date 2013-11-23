@@ -139,7 +139,7 @@ struct ff_video_decoder_s {
 
 #if AVPALETTE == 1
   AVPaletteControl  palette_control;
-#elif AVPALETTE == 2
+#elif AVPALETTE == 2 || AVPALETTE == 3
   uint32_t          palette[256];
   int               palette_changed;
 #endif
@@ -1315,7 +1315,7 @@ static void ff_handle_special_buffer (ff_video_decoder_t *this, buf_element_t *b
     decoder_palette->palette_changed = 1;
     this->context->palctrl = decoder_palette;
 
-#elif AVPALETTE == 2
+#elif AVPALETTE == 2 || AVPALETTE == 3
     lprintf ("BUF_SPECIAL_PALETTE\n");
     for (i = 0; i < buf->decoder_info[2]; i++) {
       this->palette[i] =
@@ -1678,7 +1678,7 @@ static void ff_handle_buffer (ff_video_decoder_t *this, buf_element_t *buf) {
 	avpkt.data = (uint8_t *)&chunk_buf[offset];
 	avpkt.size = this->size;
 	avpkt.flags = AV_PKT_FLAG_KEY;
-# if AVPALETTE == 2
+# if AVPALETTE == 2 || AVPALETTE == 3
 	if (this->palette_changed) {
 	  uint8_t *sd = av_packet_new_side_data (&avpkt, AV_PKT_DATA_PALETTE, 256 * 4);
 	  if (sd)
@@ -1695,15 +1695,20 @@ static void ff_handle_buffer (ff_video_decoder_t *this, buf_element_t *buf) {
 	len = avcodec_decode_video2 (this->context, this->av_frame,
 				     &got_picture, &avpkt);
 	}
-# if AVPALETTE == 2
+# if AVPALETTE == 2 || AVPALETTE == 3
 	if (this->palette_changed) {
+	  /* Prevent freeing our data buffer */
+	  avpkt.data = NULL;
+	  avpkt.size = 0;
+#  if AVPALETTE == 2
 	  /* TJ. Oh dear and sigh.
 	      AVPacket side data handling is broken even in ffmpeg 1.1.1 - see avcodec/avpacket.c
 	      The suggested av_free_packet () would leave a memory leak here, and
 	      ff_packet_free_side_data () is private. */
-	  avpkt.data = NULL;
-	  avpkt.size = 0;
 	  av_destruct_packet (&avpkt);
+#  else /* AVPALETTE == 3 */
+	  av_free_packet (&avpkt);
+#  endif
 	  this->palette_changed = 0;
 	}
 # endif
