@@ -153,4 +153,8 @@
 #  define avcodec_get_edge_width() (16)
 #endif
 
+#if LIBAVCODEC_VERSION_INT >= ((55<<16)|100)
+#  define AV_BUFFER 1
+#endif
+
 #endif /* XINE_AVCODEC_COMPAT_H */

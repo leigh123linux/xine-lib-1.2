@@ -221,12 +221,55 @@ static void set_stream_info(ff_video_decoder_t *this) {
 }
 
 #ifdef ENABLE_DIRECT_RENDERING
+#ifdef AV_BUFFER
+typedef struct {
+  int                 refs;
+  ff_video_decoder_t *this;
+  vo_frame_t         *vo_frame;
+#ifdef ENABLE_VAAPI
+  ff_vaapi_surface_t *va_surface;
+#endif
+} ff_saved_frame_t;
+
+static void release_frame (void *saved_frame, uint8_t *data) {
+  ff_saved_frame_t *ffsf = saved_frame;
+  /* At this point in time, AVFrame may already be reused. So take our saved values instead. */
+  if (ffsf) {
+    if (--(ffsf->refs))
+      return;
+#ifdef ENABLE_VAAPI
+    if (ffsf->va_surface)
+      ffsf->this->accel->release_vaapi_surface (ffsf->this->accel_img, ffsf->va_surface);
+#endif
+    if (ffsf->vo_frame) {
+      xine_list_iterator_t it;
+      ffsf->vo_frame->free (ffsf->vo_frame);
+      it = xine_list_find (ffsf->this->dr1_frames, ffsf->vo_frame);
+      if (it)
+        xine_list_remove (ffsf->this->dr1_frames, it);
+    }
+    free (ffsf);
+  }
+}
+#endif
+
 /* called from ffmpeg to do direct rendering method 1 */
-static int get_buffer(AVCodecContext *context, AVFrame *av_frame){
+#ifdef AV_BUFFER
+static int get_buffer (AVCodecContext *context, AVFrame *av_frame, int flags)
+#else
+static int get_buffer (AVCodecContext *context, AVFrame *av_frame)
+#endif
+  {
   ff_video_decoder_t *this = (ff_video_decoder_t *)context->opaque;
   vo_frame_t *img;
+#ifdef AV_BUFFER
+  ff_saved_frame_t *ffsf;
+  int width  = av_frame->width;
+  int height = av_frame->height;
+#else
   int width  = context->width;
   int height = context->height;
+#endif
   int crop_right = 0, crop_bottom = 0;
   int guarded_render = 0;
 
@@ -254,11 +297,17 @@ static int get_buffer(AVCodecContext *context, AVFrame *av_frame){
     av_frame->data[1] = NULL;
     av_frame->data[2] = NULL;
     av_frame->data[3] = NULL;
-    av_frame->type = FF_BUFFER_TYPE_USER;
 #ifdef AVFRAMEAGE
     av_frame->age = 1;
 #endif
     av_frame->reordered_opaque = context->reordered_opaque;
+
+#ifdef AV_BUFFER
+    ffsf = calloc (1, sizeof (ff_saved_frame_t));
+    if (!ffsf)
+      return AVERROR (ENOMEM);
+    ffsf->this     = this;
+#endif
 
     /* reinitialize vaapi for new image size */
     if (context->width != this->vaapi_width || context->height != this->vaapi_height) {
@@ -298,6 +347,9 @@ static int get_buffer(AVCodecContext *context, AVFrame *av_frame){
         av_frame->data[0] = (void *)va_surface;//(void *)(uintptr_t)va_surface->va_surface_id;
         av_frame->data[3] = (void *)(uintptr_t)va_surface->va_surface_id;
       }
+#ifdef AV_BUFFER
+      ffsf->vo_frame = img;
+#endif
     } else {
       ff_vaapi_surface_t *va_surface = this->accel->get_vaapi_surface(this->accel_img);
 
@@ -305,6 +357,9 @@ static int get_buffer(AVCodecContext *context, AVFrame *av_frame){
         av_frame->data[0] = (void *)va_surface;//(void *)(uintptr_t)va_surface->va_surface_id;
         av_frame->data[3] = (void *)(uintptr_t)va_surface->va_surface_id;
       }
+#ifdef AV_BUFFER
+      ffsf->va_surface = va_surface;
+#endif
     }
 
     lprintf("1: 0x%08x\n", av_frame->data[3]);
@@ -314,6 +369,16 @@ static int get_buffer(AVCodecContext *context, AVFrame *av_frame){
     av_frame->linesize[2] = 0;
     av_frame->linesize[3] = 0;
 
+#ifdef AV_BUFFER
+    /* Does this really work???? */
+    av_frame->buf[0] = av_buffer_create (NULL, 0, release_frame, ffsf, 0);
+    if (av_frame->buf[0])
+      (ffsf->refs)++;
+    av_frame->buf[1] = NULL;
+    av_frame->buf[2] = NULL;
+#else
+    av_frame->type = FF_BUFFER_TYPE_USER;
+#endif
     this->is_direct_rendering_disabled = 1;
 
     return 0;
@@ -346,7 +411,11 @@ static int get_buffer(AVCodecContext *context, AVFrame *av_frame){
     av_frame->data[0]= NULL;
     av_frame->data[1]= NULL;
     av_frame->data[2]= NULL;
+#ifdef AV_BUFFER
+    return avcodec_default_get_buffer2(context, av_frame, flags);
+#else
     return avcodec_default_get_buffer(context, av_frame);
+#endif
   }
 
   if((width != this->bih.biWidth) || (height != this->bih.biHeight)) {
@@ -363,7 +432,11 @@ static int get_buffer(AVCodecContext *context, AVFrame *av_frame){
       av_frame->data[0]= NULL;
       av_frame->data[1]= NULL;
       av_frame->data[2]= NULL;
+#ifdef AV_BUFFER
+      return avcodec_default_get_buffer2(context, av_frame, flags);
+#else
       return avcodec_default_get_buffer(context, av_frame);
+#endif
     }
   }
 
@@ -375,6 +448,38 @@ static int get_buffer(AVCodecContext *context, AVFrame *av_frame){
                                             this->aspect_ratio,
                                             this->output_format,
                                             VO_BOTH_FIELDS|this->frame_flags);
+
+#ifdef AV_BUFFER
+  /* Sigh. Wrap vo image planes into AVBufferRefs. When ff unref's them, they unref our trigger.
+    That one then fires image release. */
+  ffsf = calloc (1, sizeof (ff_saved_frame_t));
+  if (!ffsf) {
+    img->free (img);
+    return AVERROR (ENOMEM);
+  }
+  ffsf->this     = this;
+  ffsf->vo_frame = img;
+
+  av_frame->buf[0] = av_buffer_create (img->base[0], img->height * img->pitches[0],
+    release_frame, ffsf, 0);
+  if (av_frame->buf[0]) {
+    (ffsf->refs)++;
+  } else {
+    img->free (img);
+    free (ffsf);
+    return AVERROR (ENOMEM);
+  }
+  av_frame->buf[1] = av_buffer_create (img->base[1], (img->height + 1) / 2 * img->pitches[1],
+    release_frame, ffsf, 0);
+  if (av_frame->buf[1])
+    (ffsf->refs)++;
+  av_frame->buf[2] = av_buffer_create (img->base[2], (img->height + 1) / 2 * img->pitches[2],
+    release_frame, ffsf, 0);
+  if (av_frame->buf[2])
+    (ffsf->refs)++;
+#else
+  av_frame->type = FF_BUFFER_TYPE_USER;
+#endif
 
   av_frame->opaque = img;
 
@@ -405,8 +510,6 @@ static int get_buffer(AVCodecContext *context, AVFrame *av_frame){
   av_frame->age = 256*256*256*64;
 #endif
 
-  av_frame->type= FF_BUFFER_TYPE_USER;
-
   /* take over pts for this frame to have it reordered */
   av_frame->reordered_opaque = context->reordered_opaque;
 
@@ -415,6 +518,7 @@ static int get_buffer(AVCodecContext *context, AVFrame *av_frame){
   return 0;
 }
 
+#ifndef AV_BUFFER
 static void release_buffer(struct AVCodecContext *context, AVFrame *av_frame){
   ff_video_decoder_t *this = (ff_video_decoder_t *)context->opaque;
 
@@ -431,29 +535,33 @@ static void release_buffer(struct AVCodecContext *context, AVFrame *av_frame){
 #endif
 
   if (av_frame->type == FF_BUFFER_TYPE_USER) {
-    if ( av_frame->opaque ) {
+    if (av_frame->opaque) {
       vo_frame_t *img = (vo_frame_t *)av_frame->opaque;
+      xine_list_iterator_t it;
 
-      img->free(img);
+      img->free (img);
+
+      it = xine_list_find (this->dr1_frames, av_frame->opaque);
+      assert (it);
+      if (it != NULL) {
+        xine_list_remove (this->dr1_frames, it);
+      }
     }
 
-    xine_list_iterator_t it;
+    av_frame->opaque  = NULL;
+    av_frame->data[0] = NULL;
+    av_frame->data[1] = NULL;
+    av_frame->data[2] = NULL;
+    av_frame->linesize[0] = 0;
+    av_frame->linesize[1] = 0;
+    av_frame->linesize[2] = 0;
 
-    it = xine_list_find(this->dr1_frames, av_frame->opaque);
-    assert(it);
-    if( it != NULL ) {
-      xine_list_remove(this->dr1_frames, it);
-    }
   } else {
     avcodec_default_release_buffer(context, av_frame);
   }
-
-  av_frame->opaque = NULL;
-  av_frame->data[0]= NULL;
-  av_frame->data[1]= NULL;
-  av_frame->data[2]= NULL;
 }
-#endif
+#endif /* !AV_BUFFER */
+#endif /* ENABLE_DR1 */
 
 #include "ff_video_list.h"
 
@@ -612,8 +720,12 @@ static void init_video_codec (ff_video_decoder_t *this, unsigned int codec_type)
   this->output_format = XINE_IMGFMT_YV12;
 #ifdef ENABLE_DIRECT_RENDERING
   if( this->codec->capabilities & CODEC_CAP_DR1 && this->class->enable_dri ) {
+#ifdef AV_BUFFER
+    this->context->get_buffer2 = get_buffer;
+#else
     this->context->get_buffer = get_buffer;
     this->context->release_buffer = release_buffer;
+#endif
     xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
 	    _("ffmpeg_video_dec: direct rendering enabled\n"));
   }
@@ -623,9 +735,13 @@ static void init_video_codec (ff_video_decoder_t *this, unsigned int codec_type)
   if( this->class->enable_vaapi ) {
     this->class->enable_dri = 1;
     this->output_format = XINE_IMGFMT_VAAPI;
+#ifdef AV_BUFFER
+    this->context->get_buffer2 = get_buffer;
+#else
     this->context->get_buffer = get_buffer;
     this->context->reget_buffer = get_buffer;
     this->context->release_buffer = release_buffer;
+#endif
     this->context->get_format = get_format;
     xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
 	    _("ffmpeg_video_dec: direct rendering enabled\n"));
@@ -1855,14 +1971,24 @@ static void ff_handle_buffer (ff_video_decoder_t *this, buf_element_t *buf) {
             img->crop_bottom = img->height - this->bih.biHeight;
             free_img = 1;
           }
-
+#ifdef AV_BUFFER
+          {
+            int qstride, qtype;
+            int8_t *qtable = av_frame_get_qp_table (this->av_frame, &qstride, &qtype);
+            
+            pp_postprocess ((const uint8_t **)this->av_frame->data, this->av_frame->linesize,
+              img->base, img->pitches, this->bih.biWidth, this->bih.biHeight,
+              qtable, qstride, this->our_mode, this->our_context,
+              this->av_frame->pict_type | (qtype ? PP_PICT_TYPE_QP2 : 0));
+          }
+#else
           pp_postprocess((const uint8_t **)this->av_frame->data, this->av_frame->linesize,
                         img->base, img->pitches,
                         this->bih.biWidth, this->bih.biHeight,
                         this->av_frame->qscale_table, this->av_frame->qstride,
                         this->our_mode, this->our_context,
                         this->av_frame->pict_type);
-
+#endif
         } else if (!this->av_frame->opaque) {
 	  /* colorspace conversion or copy */
           if( this->context->pix_fmt != PIX_FMT_VAAPI_VLD)
