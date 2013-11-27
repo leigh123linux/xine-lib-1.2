@@ -317,7 +317,7 @@ static void draw_bitmap(xine_osd_t *osd, const BD_OVERLAY * const ov)
 #endif
 
   /* uncompress and draw bitmap */
-  if (ov->img) {
+  if (ov->img && ov->w > 0 && ov->h > 0) {
     const BD_PG_RLE_ELEM *rlep = ov->img;
     uint8_t *img = malloc(ov->w * ov->h);
     unsigned pixels = ov->w * ov->h;
