@@ -1624,27 +1624,27 @@ static int bluray_plugin_open (input_plugin_t *this_gen)
   /* load title list */
 
   if (!this->nav_mode) {
-  this->num_title_idx = bd_get_titles(this->bdh, TITLES_RELEVANT, MIN_TITLE_LENGTH);
-  LOGMSG("%d titles\n", this->num_title_idx);
+    this->num_title_idx = bd_get_titles(this->bdh, TITLES_RELEVANT, MIN_TITLE_LENGTH);
+    LOGMSG("%d titles\n", this->num_title_idx);
 
-  if (this->num_title_idx < 1)
-    return -1;
+    if (this->num_title_idx < 1)
+      return -1;
 
-  /* if title was not in mrl, guess the main title */
-  if (title < 0) {
-    uint64_t duration = 0;
-    int i, playlist = 99999;
-    for (i = 0; i < this->num_title_idx; i++) {
-      BLURAY_TITLE_INFO *info = bd_get_title_info(this->bdh, i, 0);
-      if (info->duration > duration) {
-        title    = i;
-        duration = info->duration;
-        playlist = info->playlist;
+    /* if title was not in mrl, guess the main title */
+    if (title < 0) {
+      uint64_t duration = 0;
+      int i, playlist = 99999;
+      for (i = 0; i < this->num_title_idx; i++) {
+        BLURAY_TITLE_INFO *info = bd_get_title_info(this->bdh, i, 0);
+        if (info->duration > duration) {
+          title    = i;
+          duration = info->duration;
+          playlist = info->playlist;
+        }
+        bd_free_title_info(info);
       }
-      bd_free_title_info(info);
+      LOGMSG("main title: %d (%05d.mpls)\n", title, playlist);
     }
-    LOGMSG("main title: %d (%05d.mpls)\n", title, playlist);
-  }
 
   } else {
     LOGMSG("%d titles\n", this->num_titles);
