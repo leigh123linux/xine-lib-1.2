@@ -539,9 +539,8 @@ static void update_title_name(bluray_input_plugin_t *this)
   } else if (this->current_title == BLURAY_TITLE_FIRST_PLAY) {
     strcpy(title_name, "First Play");
   } else if (this->nav_mode) {
-    snprintf(title_name, sizeof(title_name), "Title %d/%d (PL %d/%d)",
-             this->current_title, this->num_titles,
-             this->current_title_idx + 1, this->num_title_idx);
+    snprintf(title_name, sizeof(title_name), "Title %d/%d",
+             this->current_title, this->num_titles);
   } else {
     snprintf(title_name, sizeof(title_name), "Title %d/%d",
              this->current_title_idx + 1, this->num_title_idx);
@@ -581,13 +580,6 @@ static void update_title_info(bluray_input_plugin_t *this, int playlist_id)
     LOGMSG("bd_get_title_info(%d) failed\n", this->current_title_idx);
     return;
   }
-
-#ifdef LOG
-  int ms = this->title_info->duration / INT64_C(90);
-  lprintf("Opened title %d. Length %"PRId64" bytes / %02d:%02d:%02d.%03d\n",
-          this->current_title_idx, bd_get_title_size(this->bdh),
-          ms / 3600000, (ms % 3600000 / 60000), (ms % 60000) / 1000, ms % 1000);
-#endif
 
   /* calculate and set stream rate */
 
@@ -823,7 +815,9 @@ static void handle_libbluray_event(bluray_input_plugin_t *this, BD_EVENT ev)
 
       case BD_EVENT_PLAYLIST:
         lprintf("BD_EVENT_PLAYLIST %d\n", ev.param);
-        this->current_title_idx = bd_get_current_title(this->bdh);
+        if (!this->nav_mode) {
+          this->current_title_idx = bd_get_current_title(this->bdh);
+        }
         this->current_clip = 0;
         update_title_info(this, ev.param);
         stream_reset(this);
@@ -911,6 +905,13 @@ static int open_title (bluray_input_plugin_t *this, int title_idx)
   this->current_title_idx = title_idx;
 
   update_title_info(this, -1);
+
+#ifdef LOG
+  int ms = this->title_info->duration / INT64_C(90);
+  lprintf("Opened title %d. Length %"PRId64" bytes / %02d:%02d:%02d.%03d\n",
+          this->current_title_idx, bd_get_title_size(this->bdh),
+          ms / 3600000, (ms % 3600000 / 60000), (ms % 60000) / 1000, ms % 1000);
+#endif
 
   return 1;
 }
@@ -1622,13 +1623,12 @@ static int bluray_plugin_open (input_plugin_t *this_gen)
 
   /* load title list */
 
+  if (!this->nav_mode) {
   this->num_title_idx = bd_get_titles(this->bdh, TITLES_RELEVANT, MIN_TITLE_LENGTH);
   LOGMSG("%d titles\n", this->num_title_idx);
 
   if (this->num_title_idx < 1)
     return -1;
-
-  /* select title */
 
   /* if title was not in mrl, guess the main title */
   if (title < 0) {
@@ -1643,7 +1643,11 @@ static int bluray_plugin_open (input_plugin_t *this_gen)
       }
       bd_free_title_info(info);
     }
-    lprintf("main title: %d (%05d.mpls)\n", title, playlist);
+    LOGMSG("main title: %d (%05d.mpls)\n", title, playlist);
+  }
+
+  } else {
+    LOGMSG("%d titles\n", this->num_titles);
   }
 
   /* update player settings */
