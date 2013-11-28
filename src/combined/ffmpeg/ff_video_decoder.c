@@ -1905,9 +1905,11 @@ static void ff_handle_buffer (ff_video_decoder_t *this, buf_element_t *buf) {
 
           /* prepare for colorspace conversion */
 #ifdef ENABLE_VAAPI
-          if (this->context->pix_fmt != PIX_FMT_VAAPI_VLD) {
+          if (this->context->pix_fmt != PIX_FMT_VAAPI_VLD && !this->cs_convert_init)
+#else
+          if (!this->cs_convert_init)
 #endif
-          if (!this->cs_convert_init) {
+          {
             xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG, "ff_video_dec: PIX_FMT %d\n", this->context->pix_fmt);
             switch (this->context->pix_fmt) {
               case PIX_FMT_ARGB:
@@ -1925,9 +1927,6 @@ static void ff_handle_buffer (ff_video_decoder_t *this, buf_element_t *buf) {
             }
             this->cs_convert_init = 1;
           }
-#ifdef ENABLE_VAAPI
-          }
-#endif
 
 	  if (this->aspect_ratio_prio == 0) {
 	    this->aspect_ratio = (double)this->bih.biWidth / (double)this->bih.biHeight;
