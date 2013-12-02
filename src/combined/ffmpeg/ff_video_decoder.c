@@ -273,14 +273,19 @@ static int get_buffer (AVCodecContext *context, AVFrame *av_frame)
   vo_frame_t *img;
 #ifdef AV_BUFFER
   ff_saved_frame_t *ffsf;
-  int width  = av_frame->width;
-  int height = av_frame->height;
-#else
+#endif
+  int buf_width  = av_frame->width;
+  int buf_height = av_frame->height;
+  /* The visible size, may be smaller. */
   int width  = context->width;
   int height = context->height;
-#endif
-  int crop_right = 0, crop_bottom = 0;
   int guarded_render = 0;
+
+  /* A bit of unmotivated paranoia... */
+  if (buf_width < width)
+    buf_width = width;
+  if (buf_height < height)
+    buf_height = height;
 
   ff_check_colorspace (this);
 
@@ -296,7 +301,7 @@ static int get_buffer (AVCodecContext *context, AVFrame *av_frame)
     this->set_stream_info = 1;
   }
 
-  avcodec_align_dimensions(context, &width, &height);
+  avcodec_align_dimensions(context, &buf_width, &buf_height);
 
 #ifdef ENABLE_VAAPI
   if( this->context->pix_fmt == PIX_FMT_VAAPI_VLD) {
@@ -319,13 +324,12 @@ static int get_buffer (AVCodecContext *context, AVFrame *av_frame)
 #endif
 
     /* reinitialize vaapi for new image size */
-    if (context->width != this->vaapi_width || context->height != this->vaapi_height) {
+    if (width != this->vaapi_width || height != this->vaapi_height) {
       VAStatus status;
 
-      this->vaapi_width  = context->width;
-      this->vaapi_height = context->height;
-      status = this->accel->vaapi_init (this->accel_img, this->vaapi_profile,
-        context->width, context->height, 0);
+      this->vaapi_width  = width;
+      this->vaapi_height = height;
+      status = this->accel->vaapi_init (this->accel_img, this->vaapi_profile, width, height, 0);
 
       if (status == VA_STATUS_SUCCESS) {
         ff_vaapi_context_t *va_context = this->accel->get_context (this->accel_img);
@@ -403,10 +407,10 @@ static int get_buffer (AVCodecContext *context, AVFrame *av_frame)
 #endif /* ENABLE_VAAPI */
 
   /* The alignment rhapsody */
-  width  += 2 * this->edge;
-  height += 2 * this->edge;
-  width   = (width + 15) & ~15;
-  height  = (height + 15) & ~15;
+  buf_width  += 2 * this->edge + 15;
+  buf_width  &= ~15;
+  buf_height += 2 * this->edge + 15;
+  buf_height &= ~15;
 
   if ((this->full2mpeg || (this->context->pix_fmt != PIX_FMT_YUV420P &&
 			   this->context->pix_fmt != PIX_FMT_YUVJ420P)) || guarded_render) {
@@ -427,11 +431,8 @@ static int get_buffer (AVCodecContext *context, AVFrame *av_frame)
 #endif
   }
 
-  if((width != this->bih.biWidth) || (height != this->bih.biHeight)) {
-    if(this->stream->video_out->get_capabilities(this->stream->video_out) & VO_CAP_CROP) {
-      crop_right = width - this->bih.biWidth - this->edge;
-      crop_bottom = height - this->bih.biHeight - this->edge;
-    } else {
+  if ((buf_width != width) || (buf_height != height)) {
+    if (!(this->stream->video_out->get_capabilities(this->stream->video_out) & VO_CAP_CROP)) {
       if (!this->is_direct_rendering_disabled) {
         xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
                 _("ffmpeg_video_dec: unsupported frame dimensions, DR1 disabled.\n"));
@@ -452,8 +453,8 @@ static int get_buffer (AVCodecContext *context, AVFrame *av_frame)
   this->is_direct_rendering_disabled = 0;
 
   img = this->stream->video_out->get_frame (this->stream->video_out,
-                                            width,
-                                            height,
+                                            buf_width,
+                                            buf_height,
                                             this->aspect_ratio,
                                             this->output_format,
                                             VO_BOTH_FIELDS|this->frame_flags);
@@ -508,8 +509,8 @@ static int get_buffer (AVCodecContext *context, AVFrame *av_frame)
     av_frame->data[2] += (img->pitches[2] + 1) * this->edge / 2;
     img->crop_left   = this->edge;
     img->crop_top    = this->edge;
-    img->crop_right  = crop_right;
-    img->crop_bottom = crop_bottom;
+    img->crop_right  = buf_width  - width  - this->edge;
+    img->crop_bottom = buf_height - height - this->edge;
   }
 
   /* We should really keep track of the ages of xine frames (see
