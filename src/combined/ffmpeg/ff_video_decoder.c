@@ -175,6 +175,7 @@ struct ff_video_decoder_s {
 };
 
 /* import color matrix names */
+#define CM_HAVE_YCGCO_SUPPORT 1
 #include "../../video_out/color_matrix.c"
 
 static void ff_check_colorspace (ff_video_decoder_t *this) {
@@ -199,7 +200,7 @@ static void ff_check_colorspace (ff_video_decoder_t *this) {
   if (cm != this->color_matrix) {
     this->color_matrix = cm;
     xprintf (this->stream->xine, XINE_VERBOSITY_LOG,
-      "ffmpeg_video_dec: color matrix #%d [%s]\n", cm >> 1, cm_names[cm & 15]);
+      "ffmpeg_video_dec: color matrix #%d [%s]\n", cm >> 1, cm_names[cm & 31]);
 
     caps = this->stream->video_out->get_capabilities (this->stream->video_out);
 
