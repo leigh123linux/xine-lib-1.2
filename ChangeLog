@@ -1,4 +1,6 @@
 xine-lib (1.2.5) 201?-??-??
+  * Add experimental YCgCo colorspace support.
+  * FFmpeg compatibility fixes.
   * Add avformat demux plugin.
     - Support for new formats and protocols.
     - Proper rtsp support (with avformat+rtsp://, rtsp+tcp:// and rtsp+http:// mrls).
