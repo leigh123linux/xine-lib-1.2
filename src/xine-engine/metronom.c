@@ -481,41 +481,62 @@ static void metronom_got_video_frame (metronom_t *this, vo_frame_t *img) {
         this->force_video_jump = 0;
         this->video_vpts       = vpts;
         this->video_drift      = 0;
+        this->video_drift_step = 0;
 
-        xprintf(this->xine, XINE_VERBOSITY_DEBUG, "video jump\n");
+        xprintf(this->xine, XINE_VERBOSITY_DEBUG, "metronom: video jump by %"PRId64" pts\n", diff);
 
       } else {
-
-        this->video_drift = diff;
-        this->video_drift_step = diff / 30;
-        /* this will fix video drift with a constant compensation each
-	 frame for about 1 second of video.  */
-
-        if (diff) lprintf("video drift, drift is %" PRId64 "\n", this->video_drift);
+        /* TJ. Drift into new value over the next 30 frames.
+           Dont fall into the asymptote trap of bringing down step with remaining drift. */
+        int64_t step;
+        if (diff < 0) {
+          step = (diff - 29) / 30;
+          if (this->video_drift_step < step)
+            step = this->video_drift_step < diff ? diff : this->video_drift_step;
+        } else {
+          step = (diff + 29) / 30;
+          if (this->video_drift_step > step)
+            step = this->video_drift_step > diff ? diff : this->video_drift_step;
+        }
+        this->video_drift      = diff;
+        this->video_drift_step = step;
       }
     } else {
       /* VIDEO_PTS_MODE: do not use the predicted value */
-      this->video_vpts = vpts;
+      this->video_drift      = 0;
+      this->video_drift_step = 0;
+      this->video_vpts       = vpts;
     }
   }
 
   img->vpts = this->video_vpts + this->av_offset;
 
+  /* We need to update this->video_vpts is both modes.
+   * this->video_vpts is used as the next frame vpts if next frame pts=0
+   */
+  this->video_vpts += this->img_duration - this->video_drift_step;
+
   if (this->video_mode == VIDEO_PREDICTION_MODE) {
     lprintf("video vpts for %10"PRId64" : %10"PRId64" (duration:%d drift:%" PRId64 " step:%" PRId64 ")\n",
 	  pts, this->video_vpts, img->duration, this->video_drift, this->video_drift_step );
 
-    if (this->video_drift * this->video_drift_step > 0) {
-      img->duration -= this->video_drift_step;
-      this->img_duration = img->duration;
+    /* reset drift compensation if work is done after this frame */
+    if (this->video_drift_step) {
       this->video_drift -= this->video_drift_step;
+      if (this->video_drift_step < 0) {
+        if (this->video_drift >= 0) {
+          this->video_drift      = 0;
+          this->video_drift_step = 0;
+        }
+      } else {
+        if (this->video_drift <= 0) {
+          this->video_drift      = 0;
+          this->video_drift_step = 0;
+        }
+      }
     }
   }
 
-  /* We need to update this->video_vpts is both modes.
-   * this->video_vpts is used as the next frame vpts if next frame pts=0
-   */
-  this->video_vpts += this->img_duration;
 
   if (this->master) {
     this->master->set_option(this->master, METRONOM_LOCK, 0);
