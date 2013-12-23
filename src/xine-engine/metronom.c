@@ -437,7 +437,8 @@ static void metronom_got_video_frame (metronom_t *this, vo_frame_t *img) {
 
   this->img_cpt++;
 
-  if (img->duration) {
+  /* 1000 fps usually means unknown or variable frame rate */
+  if (img->duration > 90) {
     this->video_mode = VIDEO_PREDICTION_MODE;
     this->img_duration = img->duration;
   } else {
