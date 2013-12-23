@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2000-2012 the xine project
+ * Copyright (C) 2000-2013 the xine project
  *
  * This file is part of xine, a free video player.
  *
@@ -365,7 +365,7 @@ static void metronom_handle_discontinuity (metronom_t *this, int type,
     this->vpts_offset = this->video_vpts - disc_off;
     break;
   }
-  
+
   this->last_video_pts = 0;
   this->last_audio_pts = 0;
 }
@@ -544,6 +544,9 @@ static void metronom_got_video_frame (metronom_t *this, vo_frame_t *img) {
   }
 
   pthread_mutex_unlock (&this->lock);
+  if (this->xine->verbosity == XINE_VERBOSITY_DEBUG + 1)
+    xprintf (this->xine, XINE_VERBOSITY_DEBUG + 1, "metronom: video pts: %"PRId64":%04d ->  %"PRId64"\n",
+      img->pts, (int)img->duration, img->vpts);
 }
 
 static void metronom_handle_audio_discontinuity (metronom_t *this, int type,
