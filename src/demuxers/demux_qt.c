@@ -2936,6 +2936,9 @@ static void demux_qt_send_headers(demux_plugin_t *this_gen) {
      * specified by the object type id field in the esds atom */
     if (audio_trak->properties->audio.codec_fourcc == MP4A_FOURCC) {
       switch (audio_trak->object_type_id) {
+        case 221:
+          audio_trak->properties->audio.codec_buftype = BUF_AUDIO_VORBIS;
+          break;
         case 107:
           audio_trak->properties->audio.codec_buftype = BUF_AUDIO_MPEG;
           break;
