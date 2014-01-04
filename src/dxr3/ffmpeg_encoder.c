@@ -24,8 +24,6 @@
 #include "config.h"
 #endif
 
-#define FF_API_CODEC_ID 1
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/ioctl.h>

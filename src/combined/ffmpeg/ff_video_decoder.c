@@ -44,8 +44,6 @@
 #include "ffmpeg_decoder.h"
 #include "ff_mpeg_parser.h"
 
-#define FF_API_CODEC_ID 1
-
 #ifdef HAVE_FFMPEG_AVUTIL_H
 #  include <postprocess.h>
 #else

@@ -143,6 +143,22 @@
 #  define PIX_FMT_RGB565LE  AV_PIX_FMT_RGB565LE
 #  define PIX_FMT_PAL8      AV_PIX_FMT_PAL8
 #  define PixelFormat       AVPixelFormat
+/* video_out/video_out_vaapi */
+#  define PIX_FMT_VAAPI_IDCT AV_PIX_FMT_VAAPI_IDCT
+#  define PIX_FMT_VAAPI_MOCO AV_PIX_FMT_VAAPI_MOCO
+#endif
+
+#if defined LIBAVCODEC_VERSION_INT && LIBAVCODEC_VERSION_INT >= ((54<<16)|(25<<8))
+/* dxr3/ffmpeg_encoder */
+#  define CODEC_ID_MPEG1VIDEO AV_CODEC_ID_MPEG1VIDEO
+/* video_out/video_out_vaapi */
+#  define CODEC_ID_MPEG2VIDEO AV_CODEC_ID_MPEG2VIDEO
+#  define CODEC_ID_MPEG4      AV_CODEC_ID_MPEG4
+#  define CODEC_ID_H263       AV_CODEC_ID_H263
+#  define CODEC_ID_H264       AV_CODEC_ID_H264
+#  define CODEC_ID_WMV3       AV_CODEC_ID_WMV3
+#  define CODEC_ID_VC1        AV_CODEC_ID_VC1
+/* ff_*_decoder is already handled by mkcodeclists.pl */
 #endif
 
 #ifndef AVCODEC_MAX_AUDIO_FRAME_SIZE
