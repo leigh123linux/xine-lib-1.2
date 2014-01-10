@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2001-2013 the xine project
+ * Copyright (C) 2001-2014 the xine project
  *
  * This file is part of xine, a free video player.
  *
@@ -3137,7 +3137,10 @@ static int demux_qt_seek (demux_plugin_t *this_gen,
    * no video trak */
   if (keyframe_pts >= 0) for (i = 0; i < this->qt->audio_trak_count; i++) {
     audio_trak = &this->qt->traks[this->qt->audio_traks[i]];
-    while (audio_trak->current_frame) {
+    if (keyframe_pts > audio_trak->frames[audio_trak->frame_count - 1].pts) {
+      /* whoops, this trak is too short, mark it finished */
+      audio_trak->current_frame = audio_trak->frame_count;
+    } else while (audio_trak->current_frame) {
       if (audio_trak->frames[audio_trak->current_frame].pts <= keyframe_pts) {
         break;
       }
