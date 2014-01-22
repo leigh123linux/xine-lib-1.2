@@ -133,6 +133,16 @@ typedef unsigned int qt_atom;
 #define RMVC_ATOM QT_ATOM('r', 'm', 'v', 'c')
 #define QTIM_ATOM QT_ATOM('q', 't', 'i', 'm')
 
+/* fragment stuff */
+#define MVEX_ATOM QT_ATOM('m', 'v', 'e', 'x')
+#define MEHD_ATOM QT_ATOM('m', 'e', 'h', 'd')
+#define TREX_ATOM QT_ATOM('t', 'r', 'e', 'x')
+#define MOOF_ATOM QT_ATOM('m', 'o', 'o', 'f')
+#define MFHD_ATOM QT_ATOM('m', 'v', 'h', 'd')
+#define TRAF_ATOM QT_ATOM('t', 'r', 'a', 'f')
+#define TFHD_ATOM QT_ATOM('t', 'f', 'h', 'd')
+#define TRUN_ATOM QT_ATOM('t', 'r', 'u', 'n')
+
 /* placeholder for cutting and pasting
 #define _ATOM QT_ATOM('', '', '', '')
 */
@@ -260,6 +270,7 @@ typedef struct {
 
   /* trak description */
   media_type type;
+  int id;
 
   /* one or more properties atoms for this trak */
   properties_t *stsd_atoms;
@@ -323,6 +334,15 @@ typedef struct {
 
   int lang;
 
+  /* fragment defaults */
+  int default_sample_description_index;
+  int default_sample_duration;
+  int default_sample_size;
+  int default_sample_flags;
+  /* fragment seamless dts */
+  int64_t fragment_dts;
+  /* fragment frame array size */
+  int fragment_frames;
 } qt_trak;
 
 typedef struct {
@@ -346,6 +366,9 @@ typedef struct {
   int               video_trak;
   int               audio_trak;
   int seek_flag;  /* this is set to indicate that a seek has just occurred */
+
+  /* fragment mode */
+  int               fragment_count;
 
   char              *artist;
   char              *name;
@@ -920,6 +943,7 @@ static qt_error parse_trak_atom (qt_trak *trak,
   qt_error last_error = QT_OK;
 
   /* initialize trak structure */
+  trak->id = -1;
   trak->edit_list_count = 0;
   trak->edit_list_table = NULL;
   trak->chunk_offset_count = 0;
@@ -974,6 +998,10 @@ static qt_error parse_trak_atom (qt_trak *trak,
 
     switch(current_atom) {
     case TKHD_ATOM:
+      if (_X_BE_16 (trak_atom + i + 4) == 1)
+        trak->id = _X_BE_32 (trak_atom + i + 24);
+      else
+        trak->id = _X_BE_32 (trak_atom + i + 16);
       trak->flags = _X_BE_16(&trak_atom[i + 6]);
       break;
 
@@ -2133,6 +2161,269 @@ static qt_error build_frame_table(qt_trak *trak,
   return QT_OK;
 }
 
+/************************************************************************
+* Fragment stuff                                                        *
+************************************************************************/
+
+static qt_trak *find_trak_by_id (qt_info *info, int id) {
+  int i;
+
+  for (i = 0; i < info->trak_count; i++) {
+    if (info->traks[i].id == id)
+      return &(info->traks[i]);
+  }
+  return NULL;
+}
+
+static int parse_mvex_atom (qt_info *info, unsigned char *mvex_atom, int bufsize) {
+  int i, j, mvex_size;
+  uint32_t traknum = 0, subtype, subsize = 0;
+  qt_trak *trak;
+
+  /* limit to atom size */
+  if (bufsize < 8)
+    return 0;
+  mvex_size = _X_BE_32 (mvex_atom);
+  if (bufsize < mvex_size)
+    mvex_size = bufsize;
+  /* scan subatoms */
+  for (i = 8; i + 8 <= mvex_size; i += subsize) {
+    subsize = _X_BE_32 (&mvex_atom[i]);
+    subtype = _X_BE_32 (&mvex_atom[i + 4]);
+    if (i + subsize > mvex_size)
+      break;
+    switch (subtype) {
+      case MEHD_ATOM:
+        break;
+      case TREX_ATOM:
+        if (subsize < 8 + 24)
+          break;
+        traknum = _X_BE_32 (&mvex_atom[i + 8 + 4]);
+        trak = find_trak_by_id (info, traknum);
+        if (!trak)
+          break;
+        trak->default_sample_description_index = _X_BE_32 (&mvex_atom[i + 8 + 8]);
+        trak->default_sample_duration          = _X_BE_32 (&mvex_atom[i + 8 + 12]);
+        trak->default_sample_size              = _X_BE_32 (&mvex_atom[i + 8 + 16]);
+        trak->default_sample_flags             = _X_BE_32 (&mvex_atom[i + 8 + 20]);
+        j = trak->frame_count;
+        trak->fragment_dts = (j >= 2) ? 2 * trak->frames[j - 1].pts - trak->frames[j - 2].pts : 0;
+        trak->fragment_frames = trak->frame_count;
+        info->fragment_count = -1;
+        break;
+      default: ;
+    }
+  }
+
+  return 1;
+}
+
+static int parse_traf_atom (qt_info *info, unsigned char *traf_atom, int trafsize, off_t moofpos) {
+  int i, n, done = 0, samples;
+  uint32_t subtype, subsize = 0, tfhd_flags, trun_flags;
+  uint32_t sample_description_index;
+  uint32_t default_sample_duration, sample_duration;
+  uint32_t default_sample_size, sample_size;
+  uint32_t default_sample_flags, first_sample_flags, sample_flags;
+  off_t base_data_offset, data_pos;
+  int64_t sample_dts;
+  unsigned char *p;
+  qt_trak *trak = NULL;
+  qt_frame *frame;
+
+  for (i = 8; i + 8 <= trafsize; i += subsize) {
+    subsize = _X_BE_32 (&traf_atom[i]);
+    subtype = _X_BE_32 (&traf_atom[i + 4]);
+    if (i + subsize > trafsize)
+      break;
+    switch (subtype) {
+
+      case TFHD_ATOM:
+        p = traf_atom + i + 8;
+        tfhd_flags = _X_BE_32 (p); p += 4;
+        trak = find_trak_by_id (info, _X_BE_32 (p)); p += 4;
+        if (!trak)
+          break;
+        if (tfhd_flags & 1)
+          base_data_offset = _X_BE_64 (p), p += 8;
+        else
+          base_data_offset = moofpos;
+        data_pos = base_data_offset;
+        if (tfhd_flags & 2)
+          sample_description_index = _X_BE_32 (p), p += 4;
+        else
+          sample_description_index = trak->default_sample_description_index;
+        if (tfhd_flags & 8)
+          default_sample_duration = _X_BE_32 (p), p += 4;
+        else
+          default_sample_duration = trak->default_sample_duration;
+        if (tfhd_flags & 0x10)
+          default_sample_size = _X_BE_32 (p), p += 4;
+        else
+          default_sample_size = trak->default_sample_size;
+        if (tfhd_flags & 0x20)
+          default_sample_flags = _X_BE_32 (p), p += 4;
+        else
+          default_sample_flags = trak->default_sample_flags;
+        break;
+
+      case TRUN_ATOM:
+        /* get head */
+        if (!trak)
+          break;
+        p = traf_atom + i + 8;
+        trun_flags = _X_BE_32 (p); p += 4;
+        samples    = _X_BE_32 (p); p += 4;
+        if (trun_flags & 1) {
+          uint32_t o = _X_BE_32 (p);
+          p += 4;
+          data_pos = base_data_offset + (off_t)((int32_t)o);
+        }
+        if (trun_flags & 4)
+          first_sample_flags = _X_BE_32 (p), p += 4;
+        else
+          first_sample_flags = default_sample_flags;
+        /* truncation paranoia */
+        n = 0;
+        if (trun_flags & 0x100) n += 4;
+        if (trun_flags & 0x200) n += 4;
+        if (trun_flags & 0x400) n += 4;
+        if (trun_flags & 0x800) n += 4;
+        if (n) {
+          n = (i + subsize - (p - traf_atom)) / n;
+          if (samples > n) samples = n;
+        }
+        if (!samples)
+          break;
+        /* enlarge frame table in steps of 64k frames, to avoid a flood of reallocations */
+        frame = trak->frames;
+        n = trak->frame_count + samples;
+        if (n > trak->fragment_frames) {
+          n = (n + 0xffff) & ~0xffff;
+          frame = realloc (trak->frames, n * sizeof (*frame));
+          if (!frame)
+            break;
+          trak->fragment_frames = n;
+          trak->frames = frame;
+        }
+        /* get defaults */
+        frame += trak->frame_count;
+        sample_dts      = trak->fragment_dts;
+        sample_duration = default_sample_duration;
+        sample_size     = default_sample_size;
+        sample_flags    = first_sample_flags;
+        /* add frames */
+        while (samples--) {
+          frame->media_id = trak->id;
+          frame->pts = sample_dts;
+          if (trun_flags & 0x100)
+            sample_duration = _X_BE_32 (p), p += 4;
+          sample_dts += 90000 * sample_duration / trak->timescale;
+          frame->offset = data_pos;
+          if (trun_flags & 0x200)
+            sample_size = _X_BE_32 (p), p += 4;
+          frame->size = sample_size;
+          data_pos += sample_size;
+          if (trun_flags & 0x400)
+            sample_flags = _X_BE_32 (p), p += 4;
+          frame->keyframe = !(sample_flags & 0x10000);
+          sample_flags = default_sample_flags;
+          if (trun_flags & 0x800) {
+            uint32_t o = _X_BE_32 (p);
+            p += 4;
+            frame->ptsoffs = (int32_t)90000 * (int32_t)o / (int32_t)trak->timescale;
+          } else
+            frame->ptsoffs = 0;
+          frame++;
+          (trak->frame_count)++;
+        }
+        trak->fragment_dts = sample_dts;
+        done++;
+        break;
+
+      default: ;
+    }
+  }
+  return done;
+}
+
+static int parse_moof_atom (qt_info *info, unsigned char *moof_atom, int moofsize, off_t moofpos) {
+  int i, subtype, subsize = 0, done = 0;
+
+  for (i = 8; i + 8 <= moofsize; i += subsize) {
+    subsize = _X_BE_32 (&moof_atom[i]);
+    subtype = _X_BE_32 (&moof_atom[i + 4]);
+    if (i + subsize > moofsize)
+      break;
+    switch (subtype) {
+      case MFHD_ATOM:
+        /* TODO: check sequence # here */
+        break;
+      case TRAF_ATOM:
+        if (parse_traf_atom (info, &moof_atom[i], subsize, moofpos))
+          done++;
+        break;
+      default: ;
+    }
+  }
+  return done;
+}
+
+static int fragment_scan (qt_info *info, input_plugin_t *input) {
+  unsigned char *buf;
+  off_t pos, fsize, atomsize = 0, bufsize = 16;
+  int frags = 0, atomtype;
+
+  /* prerequisites */
+  if (info->fragment_count != -1)
+    return 0;
+  if (!INPUT_IS_SEEKABLE (input))
+    return 0;
+  fsize = input->get_length (input);
+  if (fsize <= 0)
+    return 0;
+  buf = malloc (bufsize);
+  if (!buf)
+    return 0;
+
+  for (pos = 0; pos < fsize; pos += atomsize) {
+    input->seek (input, pos, SEEK_SET);
+    if (input->read (input, buf, 16) != 16)
+      break;
+    atomsize = _X_BE_32 (buf);
+    atomtype = _X_BE_32 (&buf[4]);
+    if (atomsize == 1)
+      atomsize = _X_BE_64 (&buf[8]);
+    if (atomtype == MOOF_ATOM) {
+      if (atomsize > (80 << 20))
+        break;
+      if (atomsize > bufsize) {
+        unsigned char *b2;
+        bufsize = atomsize + (atomsize >> 1);
+        b2 = realloc (buf, bufsize);
+        if (b2)
+          buf = b2;
+        else
+          break;
+      }
+      if (atomsize > 16) {
+        if (input->read (input, buf + 16, atomsize - 16) != atomsize - 16)
+          break;
+      }
+      if (parse_moof_atom (info, buf, atomsize, pos))
+        frags++;
+    }
+  }
+
+  info->fragment_count = frags;
+  free (buf);
+  return frags;
+}
+
+/************************************************************************
+* /Fragment stuff                                                       *
+************************************************************************/
+
 /*
  * This function takes a pointer to a qt_info structure and a pointer to
  * a buffer containing an uncompressed moov atom. When the function
@@ -2140,12 +2431,16 @@ static qt_error build_frame_table(qt_trak *trak,
  * ordered by offset.
  */
 static void parse_moov_atom(qt_info *info, unsigned char *moov_atom,
-                            int64_t bandwidth) {
+                            int64_t bandwidth, input_plugin_t *input) {
   int i, j;
   unsigned int moov_atom_size = _X_BE_32(&moov_atom[0]);
   int string_size, error;
   unsigned int max_video_frames = 0;
   unsigned int max_audio_frames = 0;
+
+  /* must parse mvex _after_ building traks */
+  unsigned char *mvex_atom = NULL;
+  int mvex_size = 0;
 
   /* make sure this is actually a moov atom (will also accept 'free' as
    * a special case) */
@@ -2236,6 +2531,11 @@ static void parse_moov_atom(qt_info *info, unsigned char *moov_atom,
       }
       break;
 
+    case MVEX_ATOM:
+      mvex_atom = &moov_atom[i - 4];
+      mvex_size = moov_atom_size - i + 4;
+      break;
+
     default:
       debug_atom_load("  qt: unknown atom into the moov atom (0x%08X)\n", current_atom);
     }
@@ -2254,7 +2554,15 @@ static void parse_moov_atom(qt_info *info, unsigned char *moov_atom,
       info->last_error = error;
       return;
     }
+  }
 
+  if (mvex_atom) {
+    parse_mvex_atom (info, mvex_atom, mvex_size);
+    /* reassemble fragments, if any */
+    fragment_scan (info, input);
+  }
+
+  for (i = 0; i < info->trak_count; i++) {
     /* dump the frame table in debug mode */
     for (j = 0; j < info->traks[i].frame_count; j++)
       debug_frame_table("      %d: %8X bytes @ %"PRIX64", %"PRId64" pts, media id %d%s\n",
@@ -2442,7 +2750,7 @@ static qt_error open_qt_file(qt_info *info, input_plugin_t *input,
   dump_moov_atom(moov_atom, moov_atom_size);
 
   /* take apart the moov atom */
-  parse_moov_atom(info, moov_atom, bandwidth);
+  parse_moov_atom(info, moov_atom, bandwidth, input);
   if (info->last_error != QT_OK) {
     free(moov_atom);
     return info->last_error;
@@ -3309,6 +3617,10 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
     free (this);
     return NULL;
   }
+
+  if (this->qt->fragment_count > 0)
+    xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG,
+      _("demux_qt: added %d fragments\n"), this->qt->fragment_count);
 
   strncpy (this->last_mrl, input->get_mrl (input), 1024);
 
