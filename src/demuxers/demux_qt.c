@@ -20,6 +20,9 @@
  * Quicktime File Demuxer by Mike Melanson (melanson@pcisys.net)
  *  based on a Quicktime parsing experiment entitled 'lazyqt'
  *
+ * Atom finder, trak builder rewrite, multiaudio and ISO fragment
+ *  media file support by Torsten Jager (t.jager@gmx.de)
+ *
  * Ideally, more documentation is forthcoming, but in the meantime:
  * functional flow:
  *  create_qt_info
@@ -207,11 +210,6 @@ typedef struct {
 } sample_to_chunk_table_t;
 
 typedef struct {
-  unsigned int count;
-  unsigned int duration;
-} time_to_sample_table_t;
-
-typedef struct {
   char *url;
   int64_t data_rate;
   int qtim_version;
@@ -308,16 +306,17 @@ typedef struct {
 
   /* chunk offsets */
   unsigned int chunk_offset_count;
-  int64_t *chunk_offset_table;
+  unsigned char *chunk_offset_table32;
+  unsigned char *chunk_offset_table64;
 
   /* sample sizes */
   unsigned int sample_size;
   unsigned int sample_size_count;
-  unsigned int *sample_size_table;
+  unsigned char *sample_size_table;
 
   /* sync samples, a.k.a., keyframes */
   unsigned int sync_sample_count;
-  unsigned int *sync_sample_table;
+  unsigned char *sync_sample_table;
 
   /* sample to chunk table */
   unsigned int sample_to_chunk_count;
@@ -325,11 +324,11 @@ typedef struct {
 
   /* time to sample table */
   unsigned int time_to_sample_count;
-  time_to_sample_table_t *time_to_sample_table;
+  unsigned char *time_to_sample_table;
 
   /* pts to dts timeoffset to sample table */
   unsigned int timeoffs_to_sample_count;
-  time_to_sample_table_t *timeoffs_to_sample_table;
+  unsigned char *timeoffs_to_sample_table;
 
   /* what to add to output buffer type */
   int audio_index;
@@ -690,14 +689,7 @@ static void free_qt_info(qt_info *info) {
       for (i = 0; i < info->trak_count; i++) {
         free(info->traks[i].frames);
         free(info->traks[i].edit_list_table);
-        free(info->traks[i].chunk_offset_table);
-        /* this pointer might have been set to -1 as a special case */
-        if (info->traks[i].sample_size_table != (void *)-1)
-          free(info->traks[i].sample_size_table);
-        free(info->traks[i].sync_sample_table);
         free(info->traks[i].sample_to_chunk_table);
-        free(info->traks[i].time_to_sample_table);
-        free(info->traks[i].timeoffs_to_sample_table);
         free(info->traks[i].decoder_config);
         for (j = 0; j < info->traks[i].stsd_atoms_count; j++) {
           if (info->traks[i].type == MEDIA_AUDIO) {
@@ -949,11 +941,12 @@ static qt_error parse_trak_atom (qt_trak *trak,
   trak->edit_list_count = 0;
   trak->edit_list_table = NULL;
   trak->chunk_offset_count = 0;
-  trak->chunk_offset_table = NULL;
+  trak->chunk_offset_table32 = NULL;
+  trak->chunk_offset_table64 = NULL;
   trak->sample_size = 0;
   trak->sample_size_count = 0;
   trak->sample_size_table = NULL;
-  trak->sync_sample_table = 0;
+  trak->sync_sample_count = 0;
   trak->sync_sample_table = NULL;
   trak->sample_to_chunk_count = 0;
   trak->sample_to_chunk_table = NULL;
@@ -1448,25 +1441,14 @@ static qt_error parse_trak_atom (qt_trak *trak,
   if (atomsize >= 20) {
     trak->sample_size       = _X_BE_32(&atom[12]);
     trak->sample_size_count = _X_BE_32(&atom[16]);
+    if (trak->sample_size_count > (atomsize - 20) / 4)
+      trak->sample_size_count = (atomsize - 20) / 4;
     debug_atom_load ("    qt stsz atom (sample size atom): sample size = %d, %d entries\n",
       trak->sample_size, trak->sample_size_count);
-    /* allocate space and load table only if sample size is 0 */
+    /* load table only if sample size is 0 */
     /* there may be 0 items + moof fragments later */
-    if (trak->sample_size == 0) {
-      trak->sample_size_table = calloc (trak->sample_size_count + 1, sizeof (trak->sample_size_table[0]));
-      if (!trak->sample_size_table) {
-        last_error = QT_NO_MEMORY;
-        goto free_trak;
-      }
-      /* load the sample size table */
-      for (j = 0; j < trak->sample_size_count; j++) {
-        trak->sample_size_table[j] = _X_BE_32(&atom[20 + j * 4]);
-        debug_atom_load ("      sample size %d: %d\n", j, trak->sample_size_table[j]);
-      }
-    } else
-      /* set the pointer to non-NULL to indicate that the atom type has
-       * already been seen for this trak atom */
-      trak->sample_size_table = (void *)-1;
+    if (trak->sample_size == 0)
+      trak->sample_size_table = atom + 20;
   }
 
   atom     = atoms[7]; /* STSS_ATOM */
@@ -1477,17 +1459,7 @@ static qt_error parse_trak_atom (qt_trak *trak,
       trak->sync_sample_count = (atomsize - 16) / 4;
     debug_atom_load ("    qt stss atom (sample sync atom): %d sync samples\n",
       trak->sync_sample_count);
-    trak->sync_sample_table = calloc (trak->sync_sample_count + 1, sizeof (trak->sync_sample_table[0]));
-    if (!trak->sync_sample_table) {
-      last_error = QT_NO_MEMORY;
-      goto free_trak;
-    }
-    /* load the sync sample table */
-    for (j = 0; j < trak->sync_sample_count; j++) {
-      trak->sync_sample_table[j] = _X_BE_32(&atom[16 + j * 4]);
-      debug_atom_load ("      sync sample %d: sample %d (%d) is a keyframe\n",
-        j, trak->sync_sample_table[j], trak->sync_sample_table[j] - 1);
-    }
+    trak->sync_sample_table = atom + 16;
   }
 
   atom     = atoms[8]; /* STCO_ATOM */
@@ -1498,37 +1470,17 @@ static qt_error parse_trak_atom (qt_trak *trak,
       trak->chunk_offset_count);
     if (trak->chunk_offset_count > (atomsize - 16) / 4)
       trak->chunk_offset_count = (atomsize - 16) / 4;
-    trak->chunk_offset_table = calloc (trak->chunk_offset_count + 1, sizeof (trak->chunk_offset_table[0]));
-    if (!trak->chunk_offset_table) {
-      last_error = QT_NO_MEMORY;
-      goto free_trak;
-    }
-    /* load the chunk offset table */
-    for (j = 0; j < trak->chunk_offset_count; j++) {
-      trak->chunk_offset_table[j] = _X_BE_32 (&atom[16 + j * 4]);
-      debug_atom_load("      chunk %d @ 0x%"PRIX64"\n",
-        j, trak->chunk_offset_table[j]);
-    }
+    trak->chunk_offset_table32 = atom + 16;
   } else {
     atom     = atoms[9]; /* CO64_ATOM */
     atomsize = sizes[9];
     if (atomsize >= 16) {
       trak->chunk_offset_count = _X_BE_32 (&atom[12]);
-    if (trak->chunk_offset_count > (atomsize - 16) / 8)
-      trak->chunk_offset_count = (atomsize - 16) / 8;
+      if (trak->chunk_offset_count > (atomsize - 16) / 8)
+        trak->chunk_offset_count = (atomsize - 16) / 8;
       debug_atom_load ("    qt co64 atom (64-bit chunk offset atom): %d chunk offsets\n",
         trak->chunk_offset_count);
-      trak->chunk_offset_table = calloc (trak->chunk_offset_count + 1, sizeof (trak->chunk_offset_table[0]));
-      if (!trak->chunk_offset_table) {
-        last_error = QT_NO_MEMORY;
-        goto free_trak;
-      }
-      /* load the 64-bit chunk offset table */
-      for (j = 0; j < trak->chunk_offset_count; j++) {
-        trak->chunk_offset_table[j] = _X_BE_64 (&atom[16 + j * 8]);
-        debug_atom_load("      chunk %d @ 0x%"PRIX64"\n",
-          j, trak->chunk_offset_table[j]);
-      }
+      trak->chunk_offset_table64 = atom + 16;
     }
   }
 
@@ -1566,20 +1518,7 @@ static qt_error parse_trak_atom (qt_trak *trak,
       trak->time_to_sample_count);
     if (trak->time_to_sample_count > (atomsize - 16) / 8)
       trak->time_to_sample_count = (atomsize - 16) / 8;
-    trak->time_to_sample_table = calloc (trak->time_to_sample_count + 1, sizeof (time_to_sample_table_t));
-    if (!trak->time_to_sample_table) {
-      last_error = QT_NO_MEMORY;
-      goto free_trak;
-    }
-    /* load the time to sample table */
-    for (j = 0; j < trak->time_to_sample_count; j++) {
-      trak->time_to_sample_table[j].count    = _X_BE_32 (&atom[16 + j * 8 + 0]);
-      trak->time_to_sample_table[j].duration = _X_BE_32 (&atom[16 + j * 8 + 4]);
-      debug_atom_load("      %d: count = %d, duration = %d\n",
-        j, trak->time_to_sample_table[j].count,
-        trak->time_to_sample_table[j].duration);
-    }
-    trak->time_to_sample_table[j].count = 0; /* terminate with zero */
+    trak->time_to_sample_table = atom + 16;
   }
 
   atom     = atoms[12]; /* CTTS_ATOM */
@@ -1592,20 +1531,7 @@ static qt_error parse_trak_atom (qt_trak *trak,
       trak->timeoffs_to_sample_count);
     if (trak->timeoffs_to_sample_count > (atomsize - 16) / 8)
       trak->timeoffs_to_sample_count = (atomsize - 16) / 8;
-    trak->timeoffs_to_sample_table = calloc (trak->timeoffs_to_sample_count + 1, sizeof (time_to_sample_table_t));
-    if (!trak->timeoffs_to_sample_table) {
-      last_error = QT_NO_MEMORY;
-      goto free_trak;
-    }
-    /* load the pts to dts time offset to sample table */
-    for (j = 0; j < trak->timeoffs_to_sample_count; j++) {
-      trak->timeoffs_to_sample_table[j].count    = _X_BE_32 (&atom[16 + j * 8 + 0]);
-      trak->timeoffs_to_sample_table[j].duration = _X_BE_32 (&atom[16 + j * 8 + 4]);
-      debug_atom_load("      %d: count = %d, duration = %d\n",
-        j, trak->timeoffs_to_sample_table[j].count,
-        trak->timeoffs_to_sample_table[j].duration);
-    }
-    trak->timeoffs_to_sample_table[j].count = 0; /* terminate with zero */
+    trak->timeoffs_to_sample_table = atom + 16;
   }
 
   return QT_OK;
@@ -1613,14 +1539,7 @@ static qt_error parse_trak_atom (qt_trak *trak,
   /* jump here to make sure everything is free'd and avoid leaking memory */
 free_trak:
   free(trak->edit_list_table);
-  free(trak->chunk_offset_table);
-  /* this pointer might have been set to -1 as a special case */
-  if (trak->sample_size_table != (void *)-1)
-    free(trak->sample_size_table);
-  free(trak->sync_sample_table);
   free(trak->sample_to_chunk_table);
-  free(trak->time_to_sample_table);
-  free(trak->timeoffs_to_sample_table);
   free(trak->decoder_config);
   if (trak->stsd_atoms) {
     for (i = 0; i < trak->stsd_atoms_count; i++)
@@ -1748,16 +1667,17 @@ static void get_next_edit_list_entry(qt_trak *trak,
 static qt_error build_frame_table(qt_trak *trak,
 				  unsigned int global_timescale) {
 
-  int i, j;
-  unsigned int frame_counter;
+  int i, j, n;
+  unsigned char *o, *p, *q, *s;
   unsigned int chunk_start, chunk_end;
   unsigned int samples_per_chunk;
-  uint64_t current_offset;
-  int64_t current_pts;
-  unsigned int pts_index;
-  unsigned int pts_index_countdown;
-  unsigned int ptsoffs_index;
-  unsigned int ptsoffs_index_countdown;
+  unsigned int size_left, size_value;
+  unsigned int offset_left;
+  uint64_t offset_value;
+  int64_t pts_value;
+  unsigned int duration_left, duration_countdown, duration_value;
+  unsigned int ptsoffs_left, ptsoffs_countdown;
+  int ptsoffs_value;
   unsigned int audio_frame_counter = 0;
   unsigned int edit_list_media_time;
   int64_t edit_list_duration;
@@ -1765,6 +1685,7 @@ static qt_error build_frame_table(qt_trak *trak,
   unsigned int edit_list_index;
   unsigned int edit_list_pts_counter;
   int atom_to_use;
+  qt_frame *frame;
 
   /* maintain counters for each of the subtracks within the trak */
   int *media_id_counts = NULL;
@@ -1778,24 +1699,52 @@ static qt_error build_frame_table(qt_trak *trak,
   if ((trak->type == MEDIA_VIDEO) ||
       (trak->properties->audio.vbr)) {
 
-    /* in this case, the total number of frames is equal to the number of
-     * entries in the sample size table */
-    trak->frame_count = trak->sample_size_count;
+    /* figure out # of samples */
+    trak->frame_count = 0;
+    n = trak->chunk_offset_count;
+    if (!n)
+      return QT_OK;
+    for (i = 0; i < trak->sample_to_chunk_count - 1; i++) {
+      j = trak->sample_to_chunk_table[i + 1].first_chunk -
+        trak->sample_to_chunk_table[i].first_chunk;
+      if (j < 0)
+        continue;
+      if (j > n)
+        j = n;
+      trak->frame_count += j * trak->sample_to_chunk_table[i].samples_per_chunk;
+      n -= j;
+    }
+    trak->frame_count += n * trak->sample_to_chunk_table[i].samples_per_chunk;
+    if (!trak->frame_count)
+      return QT_OK;
+
     trak->frames = calloc(trak->frame_count, sizeof(qt_frame));
     if (!trak->frames)
       return QT_NO_MEMORY;
+    frame = trak->frames;
     trak->current_frame = 0;
 
     /* initialize more accounting variables */
-    frame_counter = 0;
-    current_pts = 0;
-    pts_index = 0;
-    pts_index_countdown =
-      trak->time_to_sample_table[pts_index].count;
+    /* file position */
+    offset_left = trak->chunk_offset_count;
+    o = trak->chunk_offset_table32;
+    if (!o)
+      o = trak->chunk_offset_table64;
+    offset_value = 0;
+    /* size */
+    size_left = trak->sample_size_count;
+    s = trak->sample_size_table;
+    size_value = trak->sample_size;
+    /* sample duration */
+    duration_left = trak->time_to_sample_count;
+    p = trak->time_to_sample_table;
+    duration_countdown = 0;
+    duration_value = 1;
+    pts_value = 0;
     /* used by reordered video */
-    ptsoffs_index = 0;
-    ptsoffs_index_countdown = trak->timeoffs_to_sample_count ?
-      trak->timeoffs_to_sample_table[ptsoffs_index].count : 0;
+    ptsoffs_left = trak->timeoffs_to_sample_count;
+    q = trak->timeoffs_to_sample_table;
+    ptsoffs_countdown = ptsoffs_value = 0;
 
     media_id_counts = xine_xcalloc(trak->stsd_atoms_count, sizeof(int));
     if (!media_id_counts)
@@ -1819,7 +1768,12 @@ static qt_error build_frame_table(qt_trak *trak,
 
         samples_per_chunk =
           trak->sample_to_chunk_table[i].samples_per_chunk;
-        current_offset = trak->chunk_offset_table[j];
+
+        if (trak->chunk_offset_table32)
+          offset_value = _X_BE_32 (o), o += 4;
+        else
+          offset_value = _X_BE_64 (o), o += 8;
+
         while (samples_per_chunk > 0) {
 
           /* media id accounting */
@@ -1827,72 +1781,70 @@ static qt_error build_frame_table(qt_trak *trak,
             printf ("QT: help! media ID out of range! (%d > %d)\n",
               trak->sample_to_chunk_table[i].media_id,
               trak->stsd_atoms_count);
-            trak->frames[frame_counter].media_id = 0;
+            frame->media_id = 0;
           } else {
-            trak->frames[frame_counter].media_id =
-              trak->sample_to_chunk_table[i].media_id;
+            frame->media_id = trak->sample_to_chunk_table[i].media_id;
             media_id_counts[trak->sample_to_chunk_table[i].media_id - 1]++;
           }
 
           /* figure out the offset and size */
-          trak->frames[frame_counter].offset = current_offset;
-          if (trak->sample_size) {
-            trak->frames[frame_counter].size =
-              trak->sample_size;
-            current_offset += trak->sample_size;
-          } else {
-            trak->frames[frame_counter].size =
-              trak->sample_size_table[frame_counter];
-            current_offset +=
-              trak->sample_size_table[frame_counter];
+          if (size_left) {
+            size_value = _X_BE_32 (s); s += 4;
+            size_left--;
           }
+          frame->offset = offset_value;
+          frame->size = size_value;
+          offset_value += size_value;
 
           /* if there is no stss (sample sync) table, make all of the frames
            * keyframes; otherwise, clear the keyframe bits for now */
           if (trak->sync_sample_table)
-            trak->frames[frame_counter].keyframe = 0;
+            frame->keyframe = 0;
           else
-            trak->frames[frame_counter].keyframe = 1;
+            frame->keyframe = 1;
 
           /* figure out the pts situation */
-          trak->frames[frame_counter].pts = current_pts;
-          current_pts +=
-            trak->time_to_sample_table[pts_index].duration;
-          pts_index_countdown--;
-          /* time to refresh countdown? */
-          if (!pts_index_countdown) {
-            pts_index++;
-            pts_index_countdown =
-              trak->time_to_sample_table[pts_index].count;
+          if (duration_left && !duration_countdown) {
+            duration_countdown = _X_BE_32 (p); p += 4;
+            duration_value     = _X_BE_32 (p); p += 4;
+            duration_left--;
           }
+          frame->pts = pts_value;
+          pts_value += duration_value;
+          duration_countdown--;
 
           /* offset pts for reordered video */
-          if (ptsoffs_index < trak->timeoffs_to_sample_count) {
+          if (ptsoffs_left && !ptsoffs_countdown) {
+            unsigned int v;
+            ptsoffs_countdown = _X_BE_32 (q); q += 4;
+            v                 = _X_BE_32 (q); q += 4;
             /* TJ. this is 32 bit signed. All casts necessary for my gcc 4.5.0 */
-            int i = trak->timeoffs_to_sample_table[ptsoffs_index].duration;
-            if ((sizeof (int) > 4) && (i & 0x80000000))
-              i |= ~0xffffffffL;
-            trak->frames[frame_counter].ptsoffs = (int)90000 * i / (int)trak->timescale;
-            ptsoffs_index_countdown--;
-            /* time to refresh countdown? */
-            if (!ptsoffs_index_countdown) {
-              ptsoffs_index++;
-              ptsoffs_index_countdown =
-                trak->timeoffs_to_sample_table[ptsoffs_index].count;
-            }
-          } else
-            trak->frames[frame_counter].ptsoffs = 0;
+            ptsoffs_value = v;
+            if ((sizeof (int) > 4) && (ptsoffs_value & 0x80000000))
+              ptsoffs_value |= ~0xffffffffL;
+            ptsoffs_value *= (int)90000;
+            ptsoffs_value /= (int)trak->timescale;
+            ptsoffs_left--;
+          }
+          frame->ptsoffs = ptsoffs_value;
+          ptsoffs_countdown--;
 
           samples_per_chunk--;
-          frame_counter++;
+          frame++;
         }
       }
     }
 
+    /* was the last chunk incomplete? */
+    if (trak->sample_size_count && (trak->sample_size_count < trak->frame_count))
+      trak->frame_count = trak->sample_size_count;
+
     /* fill in the keyframe information */
-    if (trak->sync_sample_table) {
-      for (i = 0; i < trak->sync_sample_count; i++)
-        trak->frames[trak->sync_sample_table[i] - 1].keyframe = 1;
+    p = trak->sync_sample_table;
+    for (i = 0; i < trak->sync_sample_count; i++) {
+      unsigned int fr = _X_BE_32 (p) - 1; p += 4;
+      if (fr < trak->frame_count)
+        trak->frames[fr].keyframe = 1;
     }
 
     /* initialize edit list considerations */
@@ -2008,11 +1960,26 @@ static qt_error build_frame_table(qt_trak *trak,
     }
 
     /* fill in the rest of the information for the audio samples */
-    for (i = 0; i < trak->frame_count; i++) {
-      trak->frames[i].offset = trak->chunk_offset_table[i];
-      trak->frames[i].keyframe = 0;
-      if (trak->type != MEDIA_AUDIO)
-        trak->frames[i].pts = 0;
+    n = trak->frame_count < trak->chunk_offset_count ?
+      trak->frame_count : trak->chunk_offset_count;
+    if (trak->chunk_offset_table32) {
+      p = trak->chunk_offset_table32;
+      for (i = 0; i < n; i++)
+        trak->frames[i].offset = _X_BE_32 (p), p += 4;
+    } else if (trak->chunk_offset_table64) {
+      p = trak->chunk_offset_table64;
+      for (i = 0; i < n; i++)
+        trak->frames[i].offset = _X_BE_64 (p), p += 8;
+    }
+    if (trak->type != MEDIA_AUDIO) {
+      for (i = 0; i < trak->frame_count; i++) {
+        trak->frames[i].pts      = 0;
+        trak->frames[i].ptsoffs  = 0;
+        trak->frames[i].keyframe = 0;
+      }
+    } else {
+      for (i = 0; i < trak->frame_count; i++)
+        trak->frames[i].keyframe = 0;
     }
   }
 
@@ -3537,3 +3504,4 @@ const plugin_info_t xine_plugin_info[] EXPORTED = {
   { PLUGIN_DEMUX, 27, "quicktime", XINE_VERSION_CODE, &demux_info_qt, init_plugin },
   { PLUGIN_NONE, 0, "", 0, NULL, NULL }
 };
+
