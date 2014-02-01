@@ -2190,7 +2190,9 @@ static int parse_mvex_atom (qt_info *info, unsigned char *mvex_atom, int bufsize
   for (i = 8; i + 8 <= mvex_size; i += subsize) {
     subsize = _X_BE_32 (&mvex_atom[i]);
     subtype = _X_BE_32 (&mvex_atom[i + 4]);
-    if (i + subsize > mvex_size)
+    if (subsize == 0)
+      subsize = mvex_size - i;
+    if ((subsize < 8) || (i + subsize > mvex_size))
       break;
     switch (subtype) {
       case MEHD_ATOM:
@@ -2208,6 +2210,8 @@ static int parse_mvex_atom (qt_info *info, unsigned char *mvex_atom, int bufsize
         trak->default_sample_flags             = _X_BE_32 (&mvex_atom[i + 8 + 20]);
         j = trak->frame_count;
         trak->fragment_dts = (j >= 2) ? 2 * trak->frames[j - 1].pts - trak->frames[j - 2].pts : 0;
+        trak->fragment_dts *= trak->timescale;
+        trak->fragment_dts /= 90000;
         trak->fragment_frames = trak->frame_count;
         info->fragment_count = -1;
         break;
@@ -2234,14 +2238,26 @@ static int parse_traf_atom (qt_info *info, unsigned char *traf_atom, int trafsiz
   for (i = 8; i + 8 <= trafsize; i += subsize) {
     subsize = _X_BE_32 (&traf_atom[i]);
     subtype = _X_BE_32 (&traf_atom[i + 4]);
-    if (i + subsize > trafsize)
+    if (subsize == 0)
+      subsize = trafsize - i;
+    if ((subsize < 8) || (i + subsize > trafsize))
       break;
     switch (subtype) {
 
       case TFHD_ATOM:
+        if (subsize < 8 + 8)
+          break;
         p = traf_atom + i + 8;
         tfhd_flags = _X_BE_32 (p); p += 4;
         trak = find_trak_by_id (info, _X_BE_32 (p)); p += 4;
+        n = 8 + 8;
+        if (tfhd_flags & 1) n += 8;
+        if (tfhd_flags & 2) n += 4;
+        if (tfhd_flags & 8) n += 4;
+        if (tfhd_flags & 0x10) n += 4;
+        if (tfhd_flags & 0x20) n += 4;
+        if (subsize < n)
+          trak = NULL;
         if (!trak)
           break;
         if (tfhd_flags & 1)
@@ -2271,9 +2287,16 @@ static int parse_traf_atom (qt_info *info, unsigned char *traf_atom, int trafsiz
         /* get head */
         if (!trak)
           break;
+        if (subsize < 8 + 8)
+          break;
         p = traf_atom + i + 8;
         trun_flags = _X_BE_32 (p); p += 4;
         samples    = _X_BE_32 (p); p += 4;
+        n = 8 + 8;
+        if (trun_flags & 1) n += 4;
+        if (trun_flags & 4) n += 4;
+        if (subsize < n)
+          break;
         if (trun_flags & 1) {
           uint32_t o = _X_BE_32 (p);
           p += 4;
@@ -2315,10 +2338,10 @@ static int parse_traf_atom (qt_info *info, unsigned char *traf_atom, int trafsiz
         /* add frames */
         while (samples--) {
           frame->media_id = trak->id;
-          frame->pts = sample_dts;
+          frame->pts = sample_dts * 90000 / trak->timescale;
           if (trun_flags & 0x100)
             sample_duration = _X_BE_32 (p), p += 4;
-          sample_dts += 90000 * sample_duration / trak->timescale;
+          sample_dts += sample_duration;
           frame->offset = data_pos;
           if (trun_flags & 0x200)
             sample_size = _X_BE_32 (p), p += 4;
@@ -2353,7 +2376,9 @@ static int parse_moof_atom (qt_info *info, unsigned char *moof_atom, int moofsiz
   for (i = 8; i + 8 <= moofsize; i += subsize) {
     subsize = _X_BE_32 (&moof_atom[i]);
     subtype = _X_BE_32 (&moof_atom[i + 4]);
-    if (i + subsize > moofsize)
+    if (subsize == 0)
+      subsize = moofsize - i;
+    if ((subsize < 8) || (i + subsize > moofsize))
       break;
     switch (subtype) {
       case MFHD_ATOM:
@@ -2392,8 +2417,14 @@ static int fragment_scan (qt_info *info, input_plugin_t *input) {
       break;
     atomsize = _X_BE_32 (buf);
     atomtype = _X_BE_32 (&buf[4]);
-    if (atomsize == 1)
+    if (atomsize == 0)
+      atomsize = fsize - pos;
+    else if (atomsize == 1) {
       atomsize = _X_BE_64 (&buf[8]);
+      if (atomsize < 16)
+        break;
+    } else if (atomsize < 8)
+      break;
     if (atomtype == MOOF_ATOM) {
       if (atomsize > (80 << 20))
         break;
