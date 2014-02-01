@@ -929,6 +929,121 @@ static int mp4_read_descr_len(unsigned char *s, uint32_t *length) {
   return numBytes;
 }
 
+#define WRITE_BE_32(v,p) { \
+  unsigned char *wp = (unsigned char *)(p); \
+  uint32_t wv = (v); \
+  wp[0] = wv >> 24; \
+  wp[1] = wv >> 16; \
+  wp[2] = wv >> 8; \
+  wp[3] = wv; \
+}
+
+/* find a sub atom somewhere inside this atom */
+static unsigned char *find_embedded_atom (unsigned char *atom, unsigned int type, unsigned int *size) {
+  unsigned int atomsize, subtype, subsize = 0, i;
+
+  *size = 0;
+  if (!atom)
+    return NULL;
+  atomsize = _X_BE_32 (atom);
+
+  for (i = 8; i + 8 <= atomsize; i++) {
+    subtype = _X_BE_32 (&atom[i + 4]);
+    if (subtype == type) {
+      subsize = _X_BE_32 (&atom[i]);
+      /* zero size means: extend to the end of parent container, */
+      /* or end of file if a top level atom */
+      if (subsize == 0) {
+        subsize = atomsize - i;
+        WRITE_BE_32 (subsize, &atom[i]);
+      }
+      if (i + subsize > atomsize)
+        continue;
+      *size = subsize;
+#if DEBUG_ATOM_LOAD
+      xine_hexdump (atom + i, subsize);
+#endif
+      return atom + i;
+    }
+  }
+
+  return NULL;
+}
+
+static int atom_scan (     /** << return value: # of missing atoms. */
+  unsigned char  *atom,    /** << the atom to parse. */
+  int             depth,   /** << how many levels of hierarchy to examine. */
+  unsigned int   *types,   /** << zero terminated list of interesting atom types. */
+  unsigned char **found,   /** << list of atom pointers to fill in. */
+  unsigned int   *sizes) { /** << list of atom sizes to fill in. */
+  const unsigned char containers[] =
+    /* look into these from "trak". */
+    "edtsmdiaminfdinfstbl"
+    /* look into these from "moov" (intentionally hide "trak"). */
+    "udtametailstiprosinfrmrarmdardrfrmvc";
+  unsigned int atomtype, atomsize, subtype = 0, subsize = 0;
+  unsigned int i = 8, j, n, left;
+
+  if (!atom || !types || !found)
+    return 0;
+  if (depth > 0) {
+    for (n = 0; types[n]; n++) {
+      found[n] = NULL;
+      sizes[n] = 0;
+    }
+    left = n;
+    depth = -depth;
+  } else {
+    for (left = n = 0; types[n]; n++)
+      if (!(found[n]))
+        left++;
+  }
+
+  atomsize = _X_BE_32 (atom);
+  atomtype = _X_BE_32 (&atom[4]);
+  if (atomtype == META_ATOM) {
+    if ((atomsize < 12) || (atom[8] != 0))
+      return left;
+    i = 12;
+  }
+  
+  for (; i + 8 <= atomsize; i += subsize) {
+    subsize = _X_BE_32 (&atom[i]);
+    subtype = _X_BE_32 (&atom[i + 4]);
+    if (subsize == 0) {
+      subsize = atomsize - i;
+      WRITE_BE_32 (subsize, &atom[i]);
+    }
+    if ((subsize < 8) || (i + subsize > atomsize))
+      break;
+    for (n = 0; types[n]; n++) {
+      if (found[n])
+        continue;
+      if (!(subtype ^ types[n])) {
+#if DEBUG_ATOM_LOAD
+        xine_hexdump (atom + i, subsize);
+#endif
+        found[n] = atom + i;
+        sizes[n] = subsize;
+        if (!(--left))
+          return 0;
+        break;
+      }
+    }
+    if (depth > -2)
+      continue;
+    for (j = 0; j < sizeof (containers) - 1; j += 4) {
+      if (!memcmp (atom + i + 4, containers + j, 4)) {
+        if (!(left = atom_scan (atom + i, depth + 1, types, found, sizes)))
+          return 0;
+        break;
+      }
+    }
+  }
+
+  return left;
+}
+
 /*
  * This function traverses through a trak atom searching for the sample
  * table atoms, which it loads into an internal trak structure.
