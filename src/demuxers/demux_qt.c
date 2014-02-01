@@ -132,6 +132,8 @@ typedef unsigned int qt_atom;
 #define RMDR_ATOM QT_ATOM('r', 'm', 'd', 'r')
 #define RMVC_ATOM QT_ATOM('r', 'm', 'v', 'c')
 #define QTIM_ATOM QT_ATOM('q', 't', 'i', 'm')
+#define URL__ATOM QT_ATOM('u', 'r', 'l', ' ')
+#define DATA_ATOM QT_ATOM('d', 'a', 't', 'a')
 
 /* fragment stuff */
 #define MVEX_ATOM QT_ATOM('m', 'v', 'e', 'x')
@@ -776,128 +778,6 @@ static int is_qt_file(input_plugin_t *qt_file) {
         return 0;
     return 1;
   }
-}
-
-static char *parse_data_atom(const uint8_t *data_atom, uint32_t max_size) {
-  uint32_t data_atom_size = _X_BE_32(&data_atom[0]);
-
-  static const int data_atom_max_version = 0;
-  const int data_atom_version = data_atom[8];
-
-  if (data_atom_size > max_size)
-    data_atom_size = max_size;
-
-  if (data_atom_size < 8)
-    return NULL; /* too small */
-
-  const size_t alloc_size = data_atom_size - 8 + 1;
-  char *alloc_str = NULL;
-
-  if ( data_atom_version > data_atom_max_version ) {
-    debug_meta_load("demux_qt: version %d for data atom is higher than the highest supported version (%d)\n",
-		    data_atom_version, data_atom_max_version);
-    return NULL;
-  }
-
-  alloc_str = xine_xmalloc(alloc_size);
-  if (alloc_str) {
-    xine_fast_memcpy(alloc_str, &data_atom[16], alloc_size-1);
-    alloc_str[alloc_size-1] = '\0';
-  }
-
-  debug_meta_load("demux_qt: got a string of size %zd (%s)\n", alloc_size, alloc_str);
-
-  return alloc_str;
-}
-
-/* parse out a meta data atom */
-static void parse_meta_atom(qt_info *info, unsigned char *meta_atom) {
-  static const uint32_t meta_atom_preamble_size = 12;
-
-  const uint32_t meta_atom_size = _X_BE_32(&meta_atom[0]);
-
-  static const int meta_atom_max_version = 0;
-  const int meta_atom_version = meta_atom[8];
-  /* const uint32_t flags = _X_BE_24(&meta_atom[9]); */
-
-  uint32_t i = meta_atom_preamble_size;
-
-  if ( meta_atom_version > meta_atom_max_version ) {
-    debug_meta_load("demux_qt: version %d for meta atom is higher than the highest supported version (%d)\n",
-		    meta_atom_version, meta_atom_max_version);
-    return;
-  }
-
-  while ( i < meta_atom_size ) {
-    const uint8_t *const current_atom = &meta_atom[i];
-    const qt_atom current_atom_code = _X_BE_32(&current_atom[4]);
-    const uint32_t current_atom_size = _X_BE_32(&current_atom[0]);
-    /*uint32_t handler_type = 0;*/
-
-    switch (current_atom_code) {
-    case HDLR_ATOM: {
-      static const int hdlr_atom_max_version = 0;
-      const int hdlr_atom_version = current_atom[8];
-
-      /* const uint32_t hdlr_atom_flags = _X_BE_24(&current_atom[9]); */
-
-      if ( hdlr_atom_version > hdlr_atom_max_version ) {
-	debug_meta_load("demux_qt: version %d for hdlr atom is higher than the highest supported version (%d)\n",
-			hdlr_atom_version, hdlr_atom_max_version);
-	return;
-      }
-
-      /*handler_type = _X_BE_32(&current_atom[12]);*/
-    }
-      break;
-
-    case ILST_ATOM: {
-      uint32_t j = i + 8;
-      while ( j < current_atom_size ) {
-	const uint8_t *const sub_atom = &meta_atom[j];
-	const qt_atom sub_atom_code = _X_BE_32(&sub_atom[4]);
-	const uint32_t sub_atom_size = _X_BE_32(&sub_atom[0]);
-	char *const data_atom = parse_data_atom(&sub_atom[8], current_atom_size - j);
-
-	switch(sub_atom_code) {
-	case ART_ATOM:
-	  info->artist = data_atom;
-	  break;
-	case NAM_ATOM:
-	  info->name = data_atom;
-	  break;
-	case ALB_ATOM:
-	  info->album = data_atom;
-	  break;
-	case GEN_ATOM:
-	  info->genre = data_atom;
-	  break;
-	case CMT_ATOM:
-	  info->comment = data_atom;
-	  break;
-	case WRT_ATOM:
-	  info->composer = data_atom;
-	  break;
-	case DAY_ATOM:
-	  info->year = data_atom;
-	  break;
-	default:
-	  debug_meta_load("unknown atom %08x in ilst\n", sub_atom_code);
-	  free(data_atom);
-	}
-
-	j += sub_atom_size;
-      }
-    }
-      break;
-
-    default:
-      debug_meta_load("unknown atom %08x in meta\n", current_atom_code);
-    }
-
-    i += current_atom_size;
-  }
-
 }
 
 /* fetch interesting information from the movie header atom */
@@ -1751,85 +1631,68 @@ free_trak:
 }
 
 /* Traverse through a reference atom and extract the URL and data rate. */
-static qt_error parse_reference_atom (reference_t *ref,
+static qt_error parse_reference_atom (qt_info *info,
                                       unsigned char *ref_atom,
                                       char *base_mrl) {
 
-  int i, j;
-  const unsigned int ref_atom_size = _X_BE_32(&ref_atom[0]);
-
-  if (ref_atom_size >= 0x80000000)
-    return QT_NOT_A_VALID_FILE;
+  unsigned int sizes[4];
+  reference_t ref;
+  unsigned char *atoms[4];
 
   /* initialize reference atom */
-  ref->url = NULL;
-  ref->data_rate = 0;
-  ref->qtim_version = 0;
+  ref.url = NULL;
+  ref.data_rate = 0;
+  ref.qtim_version = 0;
 
-  /* traverse through the atom looking for the key atoms */
-  for (i = ATOM_PREAMBLE_SIZE; i < ref_atom_size - 4; i++) {
-    const uint32_t current_atom_size = _X_BE_32(&ref_atom[i - 4]);
-    const qt_atom current_atom = _X_BE_32(&ref_atom[i]);
+  atom_scan (ref_atom, 4, (unsigned int []){
+    URL__ATOM, RMDR_ATOM, QTIM_ATOM, 0}, atoms, sizes);
 
-    switch (current_atom) {
-    case RDRF_ATOM: {
-      size_t string_size = _X_BE_32(&ref_atom[i + 12]);
-      size_t url_offset = 0;
-      int http = 0;
+  if (sizes[0] > 12) {
+    size_t string_size = _X_BE_32 (&atoms[0][8]);
+    size_t url_offset = 0;
+    int http = 0;
 
-      if (string_size >= current_atom_size || i + string_size >= ref_atom_size)
-        return QT_NOT_A_VALID_FILE;
+    if (12 + string_size > sizes[0])
+      return QT_NOT_A_VALID_FILE;
 
-      /* if the URL starts with "http://", copy it */
-      if ( memcmp(&ref_atom[i + 16], "http://", 7) &&
-	   memcmp(&ref_atom[i + 16], "rtsp://", 7) &&
-	   base_mrl )
-      {
-	/* We need a "qt" prefix hack for Apple trailers */
-        http = !strncasecmp (base_mrl, "http://", 7);
-	url_offset = strlen(base_mrl) + 2 * http;
-      }
-      if (url_offset >= 0x80000000)
-        return QT_NOT_A_VALID_FILE;
-
-      /* otherwise, append relative URL to base MRL */
-      string_size += url_offset;
-
-      ref->url = xine_xmalloc(string_size + 1);
-
-      if ( url_offset )
-	sprintf (ref->url, "%s%s", http ? "qt" : "", base_mrl);
-
-      memcpy(ref->url + url_offset, &ref_atom[i + 16], _X_BE_32(&ref_atom[i + 12]));
-
-      ref->url[string_size] = '\0';
+    /* if the URL starts with "http://", copy it */
+    if (string_size >= 7 &&
+        memcmp (&atoms[0][12], "http://", 7) &&
+        memcmp (&atoms[0][12], "rtsp://", 7) &&
+        base_mrl) {
+      /* We need a "qt" prefix hack for Apple trailers */
+      http = !strncasecmp (base_mrl, "http://", 7);
+      url_offset = strlen(base_mrl) + 2 * http;
     }
+    if (url_offset >= 0x80000000)
+      return QT_NOT_A_VALID_FILE;
 
-      debug_atom_load("    qt rdrf URL reference:\n      %s\n", ref->url);
-      break;
+    /* otherwise, append relative URL to base MRL */
+    string_size += url_offset;
+    ref.url = xine_xmalloc (string_size + 1);
+    if (url_offset)
+      sprintf (ref.url, "%s%s", http ? "qt" : "", base_mrl);
+    memcpy (ref.url + url_offset, &atoms[0][12], _X_BE_32 (&atoms[0][8]));
+    ref.url[string_size] = '\0';
+    debug_atom_load ("    qt rdrf URL reference:\n      %s\n", ref.url);
+  }
 
-    case RMDR_ATOM:
-      /* load the data rate */
-      ref->data_rate = _X_BE_32(&ref_atom[i + 8]);
-      ref->data_rate *= 10;
+  if (sizes[1] >= 16) {
+    /* load the data rate */
+    ref.data_rate = _X_BE_32 (&atoms[1][12]);
+    ref.data_rate *= 10;
+    debug_atom_load ("    qt rmdr data rate = %"PRId64"\n", ref.data_rate);
+  }
 
-      debug_atom_load("    qt rmdr data rate = %"PRId64"\n", ref->data_rate);
-      break;
+  if (sizes[2] >= 10) {
+    ref.qtim_version = _X_BE_16 (&atoms[2][8]);
+    debug_atom_load ("      qtim version = %04X\n", ref.qtim_version);
+  }
 
-    case RMVC_ATOM:
-      debug_atom_load("    qt rmvc atom\n");
-
-      /* search the rmvc atom for 'qtim'; 2 bytes will follow the qtim
-       * chars so only search to 6 bytes to the end */
-      for (j = 4; j < current_atom_size - 6; j++) {
-
-        if (_X_BE_32(&ref_atom[i + j]) == QTIM_ATOM) {
-
-          ref->qtim_version = _X_BE_16(&ref_atom[i + j + 4]);
-          debug_atom_load("      qtim version = %04X\n", ref->qtim_version);
-        }
-      }
-    }
+  if (ref.url) {
+    info->references = realloc (info->references, (info->reference_count + 1) * sizeof (reference_t));
+    if (info->references)
+      info->references[info->reference_count++] = ref;
   }
 
   return QT_OK;
@@ -2450,6 +2313,33 @@ static int fragment_scan (qt_info *info, input_plugin_t *input) {
 * /Fragment stuff                                                       *
 ************************************************************************/
 
+static void info_string_from_atom (unsigned char *atom, char **target) {
+  uint32_t size, string_size, i;
+
+  if (!atom)
+    return;
+  size = _X_BE_32 (atom);
+  if ((size >= 24) && (_X_BE_32 (&atom[12]) == DATA_ATOM)) {
+    if (_X_BE_32 (&atom[16]) != 1) /* # of portions */
+      return;
+    i = 24;
+    string_size = _X_BE_32 (&atom[20]);
+    if (string_size == 0)
+      string_size = size - i;
+  } else if (size >= 12) {
+    i = 12;
+    string_size = _X_BE_16 (&atom[8]);
+  } else
+    return;
+  if (i + string_size > size)
+    return;
+  *target = realloc (*target, string_size + 1);
+  if (*target == NULL)
+    return;
+  memcpy (*target, &atom[i], string_size);
+  (*target)[string_size] = 0;
+}
+
 /*
  * This function takes a pointer to a qt_info structure and a pointer to
  * a buffer containing an uncompressed moov atom. When the function
@@ -2459,14 +2349,13 @@ static int fragment_scan (qt_info *info, input_plugin_t *input) {
 static void parse_moov_atom(qt_info *info, unsigned char *moov_atom,
                             int64_t bandwidth, input_plugin_t *input) {
   int i, j;
-  unsigned int moov_atom_size = _X_BE_32(&moov_atom[0]);
-  int string_size, error;
+  int error;
+  unsigned int types[20], sizes[20];
+  unsigned char *atoms[20];
   unsigned int max_video_frames = 0;
   unsigned int max_audio_frames = 0;
-
-  /* must parse mvex _after_ building traks */
-  unsigned char *mvex_atom = NULL;
-  int mvex_size = 0;
+  unsigned char *mvex_atom;
+  int mvex_size;
 
   /* make sure this is actually a moov atom (will also accept 'free' as
    * a special case) */
@@ -2477,95 +2366,54 @@ static void parse_moov_atom(qt_info *info, unsigned char *moov_atom,
   }
 
   /* prowl through the moov atom looking for very specific targets */
-  for (i = ATOM_PREAMBLE_SIZE + 4; i < moov_atom_size - 4; i += _X_BE_32(&moov_atom[i - 4])) {
-    const qt_atom current_atom = _X_BE_32(&moov_atom[i]);
+  types[0] = MVHD_ATOM;
+  types[1] = MVEX_ATOM;
+  for (i = 2; i < 19; i++) types[i] = TRAK_ATOM;
+  types[i] = 0;
+  atom_scan (moov_atom, 1, types, atoms, sizes);
 
-    switch (current_atom) {
-    case MVHD_ATOM:
-      parse_mvhd_atom(info, &moov_atom[i - 4]);
-      if (info->last_error != QT_OK)
-        return;
+  if (atoms[0]) {
+    parse_mvhd_atom(info, atoms[0]);
+    if (info->last_error != QT_OK)
+      return;
+  }
 
-      break;
+  mvex_atom = atoms[1];
+  mvex_size = sizes[1];
 
-    case TRAK_ATOM:
-      /* create a new trak structure */
-      info->trak_count++;
-      info->traks = (qt_trak *)realloc(info->traks,
-        info->trak_count * sizeof(qt_trak));
-
-      info->last_error = parse_trak_atom (&info->traks[info->trak_count - 1],
-        &moov_atom[i - 4]);
-      if (info->last_error != QT_OK) {
-        info->trak_count--;
-        return;
-      }
-      break;
-
-    case UDTA_ATOM:
-      parse_meta_atom(info, &moov_atom[i + 4]);
-      if (info->last_error != QT_OK)
-        return;
-      break;
-
-    case META_ATOM:
-      parse_meta_atom(info, &moov_atom[i - 4]);
-      if (info->last_error != QT_OK)
-        return;
-      break;
-
-    case NAM_ATOM:
-      string_size = _X_BE_16(&moov_atom[i + 4]);
-      info->name = realloc (info->name, string_size + 1);
-      memcpy(info->name, &moov_atom[i + 8], string_size);
-      info->name[string_size] = 0;
-      break;
-
-    case CPY_ATOM:
-      string_size = _X_BE_16(&moov_atom[i + 4]);
-      info->copyright = realloc (info->copyright, string_size + 1);
-      memcpy(info->copyright, &moov_atom[i + 8], string_size);
-      info->copyright[string_size] = 0;
-      break;
-
-    case DES_ATOM:
-      string_size = _X_BE_16(&moov_atom[i + 4]);
-      info->description = realloc (info->description, string_size + 1);
-      memcpy(info->description, &moov_atom[i + 8], string_size);
-      info->description[string_size] = 0;
-      break;
-
-    case CMT_ATOM:
-      string_size = _X_BE_16(&moov_atom[i + 4]);
-      info->comment = realloc (info->comment, string_size + 1);
-      memcpy(info->comment, &moov_atom[i + 8], string_size);
-      info->comment[string_size] = 0;
-      break;
-
-    case RMDA_ATOM:
-    case RMRA_ATOM:
-      /* create a new reference structure */
-      info->reference_count++;
-      info->references = (reference_t *)realloc(info->references,
-        info->reference_count * sizeof(reference_t));
-
-      error = parse_reference_atom(&info->references[info->reference_count - 1],
-                                   &moov_atom[i - 4], info->base_mrl);
-      if (error != QT_OK) {
-        info->last_error = error;
-        return;
-      }
-      break;
-
-    case MVEX_ATOM:
-      mvex_atom = &moov_atom[i - 4];
-      mvex_size = moov_atom_size - i + 4;
-      break;
-
-    default:
-      debug_atom_load("  qt: unknown atom into the moov atom (0x%08X)\n", current_atom);
+  for (i = 2; i < 19 && atoms[i]; i++) {
+    /* create a new trak structure */
+    info->trak_count++;
+    info->traks = realloc (info->traks, info->trak_count * sizeof (qt_trak));
+    info->last_error = parse_trak_atom (&info->traks[info->trak_count - 1], atoms[i]);
+    if (info->last_error != QT_OK) {
+      info->trak_count--;
+      return;
     }
   }
+
+  atom_scan (moov_atom, 4, (unsigned int []){
+    NAM_ATOM, CPY_ATOM, DES_ATOM, CMT_ATOM,
+    ART_ATOM, ALB_ATOM, GEN_ATOM, WRT_ATOM,
+    DAY_ATOM, 0}, atoms, sizes);
+
+  info_string_from_atom (atoms[0], &info->name);
+  info_string_from_atom (atoms[1], &info->copyright);
+  info_string_from_atom (atoms[2], &info->description);
+  info_string_from_atom (atoms[3], &info->comment);
+  info_string_from_atom (atoms[4], &info->artist);
+  info_string_from_atom (atoms[5], &info->album);
+  info_string_from_atom (atoms[6], &info->genre);
+  info_string_from_atom (atoms[7], &info->composer);
+  info_string_from_atom (atoms[8], &info->year);
+
+  for (i = 0; i < 8; i++) types[i] = RMDA_ATOM;
+  types[i] = 0;
+  atom_scan (moov_atom, 2, types, atoms, sizes);
+
+  for (i = 0; i < 8 && atoms[i]; i++)
+    parse_reference_atom (info, atoms[i], info->base_mrl);
+
   debug_atom_load("  qt: finished parsing moov atom\n");
 
   /* build frame tables corresponding to each trak */
@@ -2582,6 +2430,7 @@ static void parse_moov_atom(qt_info *info, unsigned char *moov_atom,
     }
   }
 
+  /* must parse mvex _after_ building traks */
   if (mvex_atom) {
     parse_mvex_atom (info, mvex_atom, mvex_size);
     /* reassemble fragments, if any */
