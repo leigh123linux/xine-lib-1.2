@@ -1050,12 +1050,19 @@ static int atom_scan (     /** << return value: # of missing atoms. */
  */
 static qt_error parse_trak_atom (qt_trak *trak,
 				 unsigned char *trak_atom) {
-
+  unsigned char *atom;
   int i, j, k;
-  const unsigned int trak_atom_size = _X_BE_32(&trak_atom[0]);
-  unsigned int atom_pos;
+  unsigned int atomsize, atom_pos;
   unsigned int properties_offset;
   qt_error last_error = QT_OK;
+
+  unsigned int types[] = {
+    VMHD_ATOM, SMHD_ATOM, TKHD_ATOM, ELST_ATOM,
+    MDHD_ATOM, STSD_ATOM, STSZ_ATOM, STSS_ATOM,
+    STCO_ATOM, CO64_ATOM, STSC_ATOM, STTS_ATOM,
+    CTTS_ATOM, 0};
+  unsigned int sizes[13];
+  unsigned char *atoms[13];
 
   /* initialize trak structure */
   trak->id = -1;
@@ -1089,763 +1096,636 @@ static qt_error parse_trak_atom (qt_trak *trak,
   trak->type = MEDIA_OTHER;
 
   /* search for media type atoms */
-  for (i = ATOM_PREAMBLE_SIZE; i < trak_atom_size - 4; i++) {
-    const qt_atom current_atom = _X_BE_32(&trak_atom[i]);
+  atom_scan (trak_atom, 5, types, atoms, sizes);
 
-    switch (current_atom) {
-    case VMHD_ATOM:
-      trak->type = MEDIA_VIDEO;
-      break;
-    case SMHD_ATOM:
-      trak->type = MEDIA_AUDIO;
-      break;
-    }
-  }
+  if (atoms[0]) /* VMHD_ATOM */
+    trak->type = MEDIA_VIDEO;
+  else if (atoms[1]) /* SMHD_ATOM */
+    trak->type = MEDIA_AUDIO;
 
   debug_atom_load("  qt: parsing %s trak atom\n",
     (trak->type == MEDIA_VIDEO) ? "video" :
       (trak->type == MEDIA_AUDIO) ? "audio" : "other");
 
   /* search for the useful atoms */
-  for (i = ATOM_PREAMBLE_SIZE; i < trak_atom_size - 4; i++) {
-    const uint32_t current_atom_size = _X_BE_32(&trak_atom[i - 4]);
-    const qt_atom current_atom = _X_BE_32(&trak_atom[i]);
+  atom     = atoms[2]; /* TKHD_ATOM */
+  atomsize = sizes[2];
+  if (atomsize >= 12) {
+    trak->flags = _X_BE_24(&atom[9]);
+    if (atom[8] == 1) {
+      if (atomsize >= 32)
+        trak->id = _X_BE_32 (&atom[28]);
+    } else {
+      if (atomsize >= 24)
+        trak->id = _X_BE_32 (&atom[20]);
+    }
+  }
 
-    switch(current_atom) {
-    case TKHD_ATOM:
-      if (_X_BE_16 (trak_atom + i + 4) == 1)
-        trak->id = _X_BE_32 (trak_atom + i + 24);
-      else
-        trak->id = _X_BE_32 (trak_atom + i + 16);
-      trak->flags = _X_BE_16(&trak_atom[i + 6]);
-      break;
+  atom     = atoms[3]; /* ELST_ATOM */
+  atomsize = sizes[3];
+  if (atomsize >= 16) {
+    trak->edit_list_count = _X_BE_32 (&atom[12]);
+    if (trak->edit_list_count > (atomsize - 16) / 12)
+      trak->edit_list_count = (atomsize - 16) / 12;
+    debug_atom_load ("    qt elst atom (edit list atom): %d entries\n", trak->edit_list_count);
+    /* dont bail on zero items */
+    trak->edit_list_table = calloc (trak->edit_list_count + 1, sizeof (edit_list_table_t));
+    if (!trak->edit_list_table) {
+      last_error = QT_NO_MEMORY;
+      goto free_trak;
+    }
+    /* load the edit list table */
+    for (j = 0; j < trak->edit_list_count; j++) {
+      trak->edit_list_table[j].track_duration = _X_BE_32 (&atom[16 + j * 12 + 0]);
+      trak->edit_list_table[j].media_time     = _X_BE_32 (&atom[16 + j * 12 + 4]);
+      debug_atom_load ("      %d: track duration = %d, media time = %d\n",
+        j, trak->edit_list_table[j].track_duration, trak->edit_list_table[j].media_time);
+    }
+  }
 
-    case ELST_ATOM:
-      /* there should only be one edit list table */
-      if (trak->edit_list_table) {
+  atom     = atoms[4]; /* MDHD_ATOM */
+  atomsize = sizes[4];
+  if (atomsize >= 12) {
+    const int version = atom[8];
+    debug_atom_load ("demux_qt: mdhd atom\n");
+    if (version == 0) {
+      if (atomsize >= 30) {
+        trak->timescale = _X_BE_32 (&atom[20]);
+        trak->lang      = _X_BE_16 (&atom[28]);
+      }
+    } else if (version == 1) {
+      if (atomsize >= 42) {
+        trak->timescale = _X_BE_32 (&atom[28]);
+        trak->lang      = _X_BE_16 (&atom[40]);
+      }
+    }
+  }
+
+  atom     = atoms[5]; /* STSD_ATOM */
+  atomsize = sizes[5];
+  if (atomsize >= 16) {
+    debug_atom_load ("demux_qt: stsd atom\n");
+    /* allocate space for each of the properties unions */
+    trak->stsd_atoms_count = _X_BE_32 (&atom[12]);
+    if (trak->stsd_atoms_count <= 0) {
+      last_error = QT_HEADER_TROUBLE;
+      goto free_trak;
+    }
+    trak->stsd_atoms = calloc (trak->stsd_atoms_count, sizeof (properties_t));
+    if (!trak->stsd_atoms) {
+      last_error = QT_NO_MEMORY;
+      goto free_trak;
+    }
+
+    atom_pos = 20;
+    properties_offset = 12;
+    for (k = 0; k < trak->stsd_atoms_count; k++) {
+      properties_t *p = trak->stsd_atoms + k;
+      const uint32_t current_stsd_atom_size = _X_BE_32(&atom[atom_pos - 4]);
+      if (current_stsd_atom_size < 4) {
         last_error = QT_HEADER_TROUBLE;
         goto free_trak;
       }
 
-      trak->edit_list_count = _X_BE_32(&trak_atom[i + 8]);
-
-      debug_atom_load("    qt elst atom (edit list atom): %d entries\n",
-        trak->edit_list_count);
-
-      trak->edit_list_table = (edit_list_table_t *)calloc(
-        trak->edit_list_count, sizeof(edit_list_table_t));
-      if (!trak->edit_list_table) {
-        last_error = QT_NO_MEMORY;
-        goto free_trak;
-      }
-
-      /* load the edit list table */
-      for (j = 0; j < trak->edit_list_count; j++) {
-        trak->edit_list_table[j].track_duration =
-          _X_BE_32(&trak_atom[i + 12 + j * 12 + 0]);
-        trak->edit_list_table[j].media_time =
-          _X_BE_32(&trak_atom[i + 12 + j * 12 + 4]);
-        debug_atom_load("      %d: track duration = %d, media time = %d\n",
-          j,
-          trak->edit_list_table[j].track_duration,
-          trak->edit_list_table[j].media_time);
-      }
-      break;
-
-    case MDHD_ATOM:
-      debug_atom_load ("demux_qt: mdhd atom\n");
-      {
-	const int version = trak_atom[i+4];
-	if ( version > 1 ) continue; /* unsupported, undocumented */
-
-	trak->timescale = _X_BE_32(&trak_atom[i + (version == 0 ? 0x10 : 0x18) ]);
-	trak->lang = _X_BE_16 (trak_atom + i + (version == 0 ? 0x18 : 0x24));
-      }
-      break;
-
-    case STSD_ATOM:
-      debug_atom_load ("demux_qt: stsd atom\n");
-#if DEBUG_ATOM_LOAD
-      xine_hexdump (&trak_atom[i], current_atom_size);
-#endif
-
-      /* allocate space for each of the properties unions */
-      trak->stsd_atoms_count = _X_BE_32(&trak_atom[i + 8]);
-      if (trak->stsd_atoms_count <= 0) {
-        last_error = QT_HEADER_TROUBLE;
-        goto free_trak;
-      }
-      trak->stsd_atoms = calloc(trak->stsd_atoms_count, sizeof(properties_t));
-      if (!trak->stsd_atoms) {
-        last_error = QT_NO_MEMORY;
-        goto free_trak;
-      }
-
-      atom_pos = i + 0x10;
-      properties_offset = 0x0C;
-      for (k = 0; k < trak->stsd_atoms_count; k++) {
-
-        const uint32_t current_stsd_atom_size = _X_BE_32(&trak_atom[atom_pos - 4]);
-        if (current_stsd_atom_size < 4) {
-          last_error = QT_HEADER_TROUBLE;
-          goto free_trak;
-        }
-
-        if (trak->type == MEDIA_VIDEO) {
-	  /* for palette traversal */
-	  int color_depth;
-	  int color_flag;
-	  int color_start;
-	  int color_count;
-	  int color_end;
-	  int color_index;
-	  int color_dec;
-	  int color_greyscale;
-	  const unsigned char *color_table;
-
-          trak->stsd_atoms[k].video.media_id = k + 1;
-          trak->stsd_atoms[k].video.properties_offset = properties_offset;
-
-          /* copy the properties atom */
-          trak->stsd_atoms[k].video.properties_atom_size = current_stsd_atom_size - 4;
-          trak->stsd_atoms[k].video.properties_atom =
-            xine_xmalloc(trak->stsd_atoms[k].video.properties_atom_size);
-          if (!trak->stsd_atoms[k].video.properties_atom) {
-            last_error = QT_NO_MEMORY;
-            goto free_trak;
-          }
-          memcpy(trak->stsd_atoms[k].video.properties_atom, &trak_atom[atom_pos],
-            trak->stsd_atoms[k].video.properties_atom_size);
-
-          /* initialize to sane values */
-          trak->stsd_atoms[k].video.width = 0;
-          trak->stsd_atoms[k].video.height = 0;
-          trak->stsd_atoms[k].video.depth = 0;
-
-          /* assume no palette at first */
-          trak->stsd_atoms[k].video.palette_count = 0;
-
-          /* fetch video parameters */
-          if( _X_BE_16(&trak_atom[atom_pos + 0x1C]) &&
-              _X_BE_16(&trak_atom[atom_pos + 0x1E]) ) {
-            trak->stsd_atoms[k].video.width =
-              _X_BE_16(&trak_atom[atom_pos + 0x1C]);
-            trak->stsd_atoms[k].video.height =
-              _X_BE_16(&trak_atom[atom_pos + 0x1E]);
-          }
-          trak->stsd_atoms[k].video.codec_fourcc =
-            _X_ME_32(&trak_atom[atom_pos + 0x00]);
-
-          /* figure out the palette situation */
-          color_depth = trak_atom[atom_pos + 0x4F];
-          trak->stsd_atoms[k].video.depth = color_depth;
-          color_greyscale = color_depth & 0x20;
-          color_depth &= 0x1F;
-
-          /* if the depth is 2, 4, or 8 bpp, file is palettized */
-          if ((color_depth == 2) || (color_depth == 4) || (color_depth == 8)) {
-
-            color_flag = _X_BE_16(&trak_atom[atom_pos + 0x50]);
-
-            if (color_greyscale) {
-
-              trak->stsd_atoms[k].video.palette_count =
-                1 << color_depth;
-
-              /* compute the greyscale palette */
-              color_index = 255;
-              color_dec = 256 /
-                (trak->stsd_atoms[k].video.palette_count - 1);
-              for (j = 0;
-                   j < trak->stsd_atoms[k].video.palette_count;
-                   j++) {
-
-                trak->stsd_atoms[k].video.palette[j].r = color_index;
-                trak->stsd_atoms[k].video.palette[j].g = color_index;
-                trak->stsd_atoms[k].video.palette[j].b = color_index;
-                color_index -= color_dec;
-                if (color_index < 0)
-                  color_index = 0;
-              }
-
-            } else if (color_flag & 0x08) {
-
-              /* if flag bit 3 is set, load the default palette */
-              trak->stsd_atoms[k].video.palette_count =
-                1 << color_depth;
-
-              if (color_depth == 2)
-                color_table = qt_default_palette_4;
-              else if (color_depth == 4)
-                color_table = qt_default_palette_16;
-              else
-                color_table = qt_default_palette_256;
-
-              for (j = 0;
-                j < trak->stsd_atoms[k].video.palette_count;
-                j++) {
-
-                trak->stsd_atoms[k].video.palette[j].r =
-                  color_table[j * 4 + 0];
-                trak->stsd_atoms[k].video.palette[j].g =
-                  color_table[j * 4 + 1];
-                trak->stsd_atoms[k].video.palette[j].b =
-                  color_table[j * 4 + 2];
-
-              }
-
-            } else {
-
-              /* load the palette from the file */
-              color_start = _X_BE_32(&trak_atom[atom_pos + 0x52]);
-              color_count = _X_BE_16(&trak_atom[atom_pos + 0x56]);
-              color_end = _X_BE_16(&trak_atom[atom_pos + 0x58]);
-              trak->stsd_atoms[k].video.palette_count =
-                color_end + 1;
-
-              for (j = color_start; j <= color_end; j++) {
-
-                color_index = _X_BE_16(&trak_atom[atom_pos + 0x5A + j * 8]);
-                if (color_count & 0x8000)
-                  color_index = j;
-                if (color_index <
-                  trak->stsd_atoms[k].video.palette_count) {
-                  trak->stsd_atoms[k].video.palette[color_index].r =
-                    trak_atom[atom_pos + 0x5A + j * 8 + 2];
-                  trak->stsd_atoms[k].video.palette[color_index].g =
-                    trak_atom[atom_pos + 0x5A + j * 8 + 4];
-                  trak->stsd_atoms[k].video.palette[color_index].b =
-                    trak_atom[atom_pos + 0x5A + j * 8 + 6];
-                }
-              }
-            }
-          } else
-            trak->stsd_atoms[k].video.palette_count = 0;
-
-          debug_atom_load("    video properties atom #%d\n", k + 1);
-          debug_atom_load("      %dx%d, video fourcc = '%c%c%c%c' (%02X%02X%02X%02X)\n",
-            trak->stsd_atoms[k].video.width,
-            trak->stsd_atoms[k].video.height,
-            trak_atom[atom_pos + 0x0],
-            trak_atom[atom_pos + 0x1],
-            trak_atom[atom_pos + 0x2],
-            trak_atom[atom_pos + 0x3],
-            trak_atom[atom_pos + 0x0],
-            trak_atom[atom_pos + 0x1],
-            trak_atom[atom_pos + 0x2],
-            trak_atom[atom_pos + 0x3]);
-          debug_atom_load("      %d RGB colours\n",
-            trak->stsd_atoms[k].video.palette_count);
-          for (j = 0; j < trak->stsd_atoms[k].video.palette_count;
-               j++)
-            debug_atom_load("        %d: %3d %3d %3d\n",
-              j,
-              trak->stsd_atoms[k].video.palette[j].r,
-              trak->stsd_atoms[k].video.palette[j].g,
-              trak->stsd_atoms[k].video.palette[j].b);
-
-        } else if (trak->type == MEDIA_AUDIO) {
-
-          trak->stsd_atoms[k].audio.media_id = k + 1;
-          trak->stsd_atoms[k].audio.properties_offset = properties_offset;
-
-          /* copy the properties atom */
-          trak->stsd_atoms[k].audio.properties_atom_size = current_stsd_atom_size - 4;
-          trak->stsd_atoms[k].audio.properties_atom =
-            xine_xmalloc(trak->stsd_atoms[k].audio.properties_atom_size);
-          if (!trak->stsd_atoms[k].audio.properties_atom) {
-            last_error = QT_NO_MEMORY;
-            goto free_trak;
-          }
-          memcpy(trak->stsd_atoms[k].audio.properties_atom, &trak_atom[atom_pos],
-            trak->stsd_atoms[k].audio.properties_atom_size);
-
-          /* fetch audio parameters */
-          trak->stsd_atoms[k].audio.codec_fourcc =
-            _X_ME_32(&trak_atom[atom_pos + 0x0]);
-          trak->stsd_atoms[k].audio.sample_rate =
-            _X_BE_16(&trak_atom[atom_pos + 0x1C]);
-          trak->stsd_atoms[k].audio.channels = trak_atom[atom_pos + 0x15];
-          trak->stsd_atoms[k].audio.bits = trak_atom[atom_pos + 0x17];
-
-          /* 24-bit audio doesn't always declare itself properly, and can be big- or little-endian */
-          if (trak->stsd_atoms[k].audio.codec_fourcc == IN24_FOURCC) {
-            trak->stsd_atoms[k].audio.bits = 24;
-            if (_X_BE_32(&trak_atom[atom_pos + 0x48]) == ENDA_ATOM && trak_atom[atom_pos + 0x4D])
-              trak->stsd_atoms[k].audio.codec_fourcc = NI42_FOURCC;
-          }
-
-          /* assume uncompressed audio parameters */
-          trak->stsd_atoms[k].audio.bytes_per_sample =
-            trak->stsd_atoms[k].audio.bits / 8;
-          trak->stsd_atoms[k].audio.samples_per_frame =
-            trak->stsd_atoms[k].audio.channels;
-          trak->stsd_atoms[k].audio.bytes_per_frame =
-            trak->stsd_atoms[k].audio.bytes_per_sample *
-            trak->stsd_atoms[k].audio.samples_per_frame;
-          trak->stsd_atoms[k].audio.samples_per_packet =
-            trak->stsd_atoms[k].audio.samples_per_frame;
-          trak->stsd_atoms[k].audio.bytes_per_packet =
-            trak->stsd_atoms[k].audio.bytes_per_sample;
-
-          /* special case time: A lot of CBR audio codecs stored in the
-           * early days lacked the extra header; compensate */
-          if (trak->stsd_atoms[k].audio.codec_fourcc == IMA4_FOURCC) {
-            trak->stsd_atoms[k].audio.samples_per_packet = 64;
-            trak->stsd_atoms[k].audio.bytes_per_packet = 34;
-            trak->stsd_atoms[k].audio.bytes_per_frame = 34 *
-              trak->stsd_atoms[k].audio.channels;
-            trak->stsd_atoms[k].audio.bytes_per_sample = 2;
-            trak->stsd_atoms[k].audio.samples_per_frame = 64 *
-              trak->stsd_atoms[k].audio.channels;
-          } else if (trak->stsd_atoms[k].audio.codec_fourcc == MAC3_FOURCC) {
-            trak->stsd_atoms[k].audio.samples_per_packet = 3;
-            trak->stsd_atoms[k].audio.bytes_per_packet = 1;
-            trak->stsd_atoms[k].audio.bytes_per_frame = 1 *
-              trak->stsd_atoms[k].audio.channels;
-            trak->stsd_atoms[k].audio.bytes_per_sample = 1;
-            trak->stsd_atoms[k].audio.samples_per_frame = 3 *
-              trak->stsd_atoms[k].audio.channels;
-          } else if (trak->stsd_atoms[k].audio.codec_fourcc == MAC6_FOURCC) {
-            trak->stsd_atoms[k].audio.samples_per_packet = 6;
-            trak->stsd_atoms[k].audio.bytes_per_packet = 1;
-            trak->stsd_atoms[k].audio.bytes_per_frame = 1 *
-              trak->stsd_atoms[k].audio.channels;
-            trak->stsd_atoms[k].audio.bytes_per_sample = 1;
-            trak->stsd_atoms[k].audio.samples_per_frame = 6 *
-              trak->stsd_atoms[k].audio.channels;
-          } else if (trak->stsd_atoms[k].audio.codec_fourcc == ALAW_FOURCC) {
-            trak->stsd_atoms[k].audio.samples_per_packet = 1;
-            trak->stsd_atoms[k].audio.bytes_per_packet = 1;
-            trak->stsd_atoms[k].audio.bytes_per_frame = 1 *
-              trak->stsd_atoms[k].audio.channels;
-            trak->stsd_atoms[k].audio.bytes_per_sample = 2;
-            trak->stsd_atoms[k].audio.samples_per_frame = 2 *
-              trak->stsd_atoms[k].audio.channels;
-          } else if (trak->stsd_atoms[k].audio.codec_fourcc == ULAW_FOURCC) {
-            trak->stsd_atoms[k].audio.samples_per_packet = 1;
-            trak->stsd_atoms[k].audio.bytes_per_packet = 1;
-            trak->stsd_atoms[k].audio.bytes_per_frame = 1 *
-              trak->stsd_atoms[k].audio.channels;
-            trak->stsd_atoms[k].audio.bytes_per_sample = 2;
-            trak->stsd_atoms[k].audio.samples_per_frame = 2 *
-              trak->stsd_atoms[k].audio.channels;
-          }
-
-          /* it's time to dig a little deeper to determine the real audio
-           * properties; if a the stsd compressor atom has 0x24 bytes, it
-           * appears to be a handler for uncompressed data; if there are an
-           * extra 0x10 bytes, there are some more useful decoding params;
-           * further, do not do load these parameters if the audio is just
-           * PCM ('raw ', 'twos', 'sowt' or 'in24') */
-          if ((current_stsd_atom_size > 0x24) &&
-              (trak->stsd_atoms[k].audio.codec_fourcc != AC_3_FOURCC) &&
-              (trak->stsd_atoms[k].audio.codec_fourcc != EAC3_FOURCC) &&
-              (trak->stsd_atoms[k].audio.codec_fourcc != TWOS_FOURCC) &&
-              (trak->stsd_atoms[k].audio.codec_fourcc != SOWT_FOURCC) &&
-              (trak->stsd_atoms[k].audio.codec_fourcc != RAW_FOURCC)  &&
-              (trak->stsd_atoms[k].audio.codec_fourcc != IN24_FOURCC) &&
-              (trak->stsd_atoms[k].audio.codec_fourcc != NI42_FOURCC)) {
-
-            if (_X_BE_32(&trak_atom[atom_pos + 0x20]))
-              trak->stsd_atoms[k].audio.samples_per_packet =
-                _X_BE_32(&trak_atom[atom_pos + 0x20]);
-            if (_X_BE_32(&trak_atom[atom_pos + 0x24]))
-              trak->stsd_atoms[k].audio.bytes_per_packet =
-                _X_BE_32(&trak_atom[atom_pos + 0x24]);
-            if (_X_BE_32(&trak_atom[atom_pos + 0x28]))
-              trak->stsd_atoms[k].audio.bytes_per_frame =
-                _X_BE_32(&trak_atom[atom_pos + 0x28]);
-            if (_X_BE_32(&trak_atom[atom_pos + 0x2C]))
-              trak->stsd_atoms[k].audio.bytes_per_sample =
-                _X_BE_32(&trak_atom[atom_pos + 0x2C]);
-            if (trak->stsd_atoms[k].audio.bytes_per_packet)
-              trak->stsd_atoms[k].audio.samples_per_frame =
-                (trak->stsd_atoms[k].audio.bytes_per_frame /
-                 trak->stsd_atoms[k].audio.bytes_per_packet) *
-                 trak->stsd_atoms[k].audio.samples_per_packet;
-          }
-
-          /* see if the trak deserves a promotion to VBR */
-          if (_X_BE_16(&trak_atom[atom_pos + 0x18]) == 0xFFFE)
-            trak->stsd_atoms[k].audio.vbr = 1;
-          else
-            trak->stsd_atoms[k].audio.vbr = 0;
-
-          /* if this is MP4 audio, mark the trak as VBR */
-          if (trak->stsd_atoms[k].audio.codec_fourcc == MP4A_FOURCC)
-            trak->stsd_atoms[k].audio.vbr = 1;
-
-          if (trak->stsd_atoms[k].audio.codec_fourcc == SAMR_FOURCC)
-            trak->stsd_atoms[k].audio.vbr = 1;
-
-          if (trak->stsd_atoms[k].audio.codec_fourcc == AC_3_FOURCC)
-            trak->stsd_atoms[k].audio.vbr = 1;
-
-          if (trak->stsd_atoms[k].audio.codec_fourcc == EAC3_FOURCC)
-            trak->stsd_atoms[k].audio.vbr = 1;
-
-          if (trak->stsd_atoms[k].audio.codec_fourcc == ALAC_FOURCC) {
-            trak->stsd_atoms[k].audio.vbr = 1;
-            /* further, FFmpeg's ALAC decoder requires 36 out-of-band bytes */
-            trak->stsd_atoms[k].audio.properties_atom_size = 36;
-            trak->stsd_atoms[k].audio.properties_atom =
-              xine_xmalloc(trak->stsd_atoms[k].audio.properties_atom_size);
-            if (!trak->stsd_atoms[k].audio.properties_atom) {
-              last_error = QT_NO_MEMORY;
-              goto free_trak;
-            }
-            memcpy(trak->stsd_atoms[k].audio.properties_atom,
-              &trak_atom[atom_pos + 0x20],
-              trak->stsd_atoms[k].audio.properties_atom_size);
-          }
-
-          if (trak->stsd_atoms[k].audio.codec_fourcc == DRMS_FOURCC) {
-            last_error = QT_DRM_NOT_SUPPORTED;
-            goto free_trak;
-          }
-
-          /* check for a MS-style WAVE format header */
-          if ((current_atom_size >= 0x4C) &&
-              (_X_BE_32(&trak_atom[atom_pos + 0x34]) == WAVE_ATOM) &&
-              (_X_BE_32(&trak_atom[atom_pos + 0x3C]) == FRMA_ATOM) &&
-              (_X_ME_32(&trak_atom[atom_pos + 0x48]) == trak->stsd_atoms[k].audio.codec_fourcc)) {
-            const int wave_size = _X_BE_32(&trak_atom[atom_pos + 0x44]) - 8;
-
-            if ((wave_size >= sizeof(xine_waveformatex)) &&
-                (current_atom_size >= (0x4C + wave_size))) {
-              trak->stsd_atoms[k].audio.wave_size = wave_size;
-              trak->stsd_atoms[k].audio.wave = xine_xmalloc(wave_size);
-              if (!trak->stsd_atoms[k].audio.wave) {
-                last_error = QT_NO_MEMORY;
-                goto free_trak;
-              }
-              memcpy(trak->stsd_atoms[k].audio.wave, &trak_atom[atom_pos + 0x4C],
-                     wave_size);
-              _x_waveformatex_le2me(trak->stsd_atoms[k].audio.wave);
-            } else {
-              trak->stsd_atoms[k].audio.wave_size = 0;
-              trak->stsd_atoms[k].audio.wave = NULL;
-            }
-          } else {
-            trak->stsd_atoms[k].audio.wave_size = 0;
-            trak->stsd_atoms[k].audio.wave = NULL;
-          }
-
-          debug_atom_load("    audio properties atom #%d\n", k + 1);
-          debug_atom_load("      %d Hz, %d bits, %d channels, %saudio fourcc = '%c%c%c%c' (%02X%02X%02X%02X)\n",
-            trak->stsd_atoms[k].audio.sample_rate,
-            trak->stsd_atoms[k].audio.bits,
-            trak->stsd_atoms[k].audio.channels,
-            (trak->stsd_atoms[k].audio.vbr) ? "vbr, " : "",
-            trak_atom[atom_pos + 0x0],
-            trak_atom[atom_pos + 0x1],
-            trak_atom[atom_pos + 0x2],
-            trak_atom[atom_pos + 0x3],
-            trak_atom[atom_pos + 0x0],
-            trak_atom[atom_pos + 0x1],
-            trak_atom[atom_pos + 0x2],
-            trak_atom[atom_pos + 0x3]);
-          if (current_stsd_atom_size > 0x24) {
-            debug_atom_load("      %d samples/packet, %d bytes/packet, %d bytes/frame\n",
-              trak->stsd_atoms[k].audio.samples_per_packet,
-              trak->stsd_atoms[k].audio.bytes_per_packet,
-              trak->stsd_atoms[k].audio.bytes_per_frame);
-            debug_atom_load("      %d bytes/sample (%d samples/frame)\n",
-              trak->stsd_atoms[k].audio.bytes_per_sample,
-              trak->stsd_atoms[k].audio.samples_per_frame);
-          }
-        }
-
-        /* use first audio properties atom for now */
-        trak->properties = &trak->stsd_atoms[0];
-
-        /* forward to the next atom */
-        atom_pos += current_stsd_atom_size;
-        properties_offset += current_stsd_atom_size;
-      }
-      break;
-
-    case ESDS_ATOM:
-
-      debug_atom_load("    qt/mpeg-4 esds atom\n");
-
-      if ((trak->type == MEDIA_VIDEO) ||
-          (trak->type == MEDIA_AUDIO)) {
-	uint32_t len;
-
-        j = i + 8;
-        if( trak_atom[j++] == 0x03 ) {
-          j += mp4_read_descr_len( &trak_atom[j], &len );
-          j++;
-        }
-        j += 2;
-        if( trak_atom[j++] == 0x04 ) {
-          j += mp4_read_descr_len( &trak_atom[j], &len );
-          trak->object_type_id = trak_atom[j++];
-          debug_atom_load("      object type id is %d\n", trak->object_type_id);
-          j += 12;
-          if( trak_atom[j++] == 0x05 ) {
-            j += mp4_read_descr_len( &trak_atom[j], &len );
-            debug_atom_load("      decoder config is %d (0x%X) bytes long\n",
-              len, len);
-            if (len > current_atom_size - (j - i)) {
-              last_error = QT_NOT_A_VALID_FILE;
-              goto free_trak;
-            }
-            trak->decoder_config = realloc(trak->decoder_config, len);
-            trak->decoder_config_len = len;
-            if (!trak->decoder_config) {
-              last_error = QT_NO_MEMORY;
-              goto free_trak;
-            }
-            memcpy(trak->decoder_config,&trak_atom[j],len);
-          }
-        }
-      }
-      break;
-
-    case AVCC_ATOM:
-      debug_atom_load("    avcC atom\n");
-
-      trak->decoder_config_len = current_atom_size - 8;
-      trak->decoder_config = realloc(trak->decoder_config, trak->decoder_config_len);
-      memcpy(trak->decoder_config, &trak_atom[i + 4], trak->decoder_config_len);
-      break;
-
-    case STSZ_ATOM:
-      /* there should only be one of these atoms */
-      if (trak->sample_size_table) {
-        last_error = QT_HEADER_TROUBLE;
-        goto free_trak;
-      }
-
-      trak->sample_size = _X_BE_32(&trak_atom[i + 8]);
-      trak->sample_size_count = _X_BE_32(&trak_atom[i + 12]);
-
-      debug_atom_load("    qt stsz atom (sample size atom): sample size = %d, %d entries\n",
-        trak->sample_size, trak->sample_size_count);
-
-      /* allocate space and load table only if sample size is 0 */
-      if (trak->sample_size == 0) {
-        trak->sample_size_table = (unsigned int *)calloc(
-          trak->sample_size_count, sizeof(unsigned int));
-        if (!trak->sample_size_table) {
+      if (trak->type == MEDIA_VIDEO) {
+        /* for palette traversal */
+        int color_depth;
+        int color_flag;
+        int color_start;
+        int color_count;
+        int color_end;
+        int color_index;
+        int color_dec;
+        int color_greyscale;
+        const unsigned char *color_table;
+
+        p->video.media_id = k + 1;
+        p->video.properties_offset = properties_offset;
+
+        /* copy the properties atom */
+        p->video.properties_atom_size = current_stsd_atom_size - 4;
+        p->video.properties_atom =
+          xine_xmalloc (p->video.properties_atom_size);
+        if (!p->video.properties_atom) {
           last_error = QT_NO_MEMORY;
           goto free_trak;
         }
-        /* load the sample size table */
-        for (j = 0; j < trak->sample_size_count; j++) {
-          trak->sample_size_table[j] =
-            _X_BE_32(&trak_atom[i + 16 + j * 4]);
-          debug_atom_load("      sample size %d: %d\n",
-            j, trak->sample_size_table[j]);
+        memcpy (p->video.properties_atom, &atom[atom_pos],
+          p->video.properties_atom_size);
+
+        /* initialize to sane values */
+        p->video.width = 0;
+        p->video.height = 0;
+        p->video.depth = 0;
+
+        /* assume no palette at first */
+        p->video.palette_count = 0;
+
+        /* fetch video parameters */
+        if( _X_BE_16(&atom[atom_pos + 0x1C]) &&
+            _X_BE_16(&atom[atom_pos + 0x1E]) ) {
+          p->video.width =
+            _X_BE_16(&atom[atom_pos + 0x1C]);
+          p->video.height =
+            _X_BE_16(&atom[atom_pos + 0x1E]);
         }
-      } else
-        /* set the pointer to non-NULL to indicate that the atom type has
-         * already been seen for this trak atom */
-        trak->sample_size_table = (void *)-1;
-      break;
+        p->video.codec_fourcc =
+          _X_ME_32(&atom[atom_pos + 0x00]);
 
-    case STSS_ATOM:
-      /* there should only be one of these atoms */
-      if (trak->sync_sample_table) {
-        last_error = QT_HEADER_TROUBLE;
-        goto free_trak;
+        /* figure out the palette situation */
+        color_depth = atom[atom_pos + 0x4F];
+        p->video.depth = color_depth;
+        color_greyscale = color_depth & 0x20;
+        color_depth &= 0x1F;
+
+        /* if the depth is 2, 4, or 8 bpp, file is palettized */
+        if ((color_depth == 2) || (color_depth == 4) || (color_depth == 8)) {
+          color_flag = _X_BE_16 (&atom[atom_pos + 0x50]);
+
+          if (color_greyscale) {
+
+            p->video.palette_count = 1 << color_depth;
+
+            /* compute the greyscale palette */
+            color_index = 255;
+            color_dec = 256 / (p->video.palette_count - 1);
+            for (j = 0; j < p->video.palette_count; j++) {
+              p->video.palette[j].r = color_index;
+              p->video.palette[j].g = color_index;
+              p->video.palette[j].b = color_index;
+              color_index -= color_dec;
+              if (color_index < 0)
+                color_index = 0;
+            }
+
+          } else if (color_flag & 0x08) {
+
+            /* if flag bit 3 is set, load the default palette */
+            p->video.palette_count = 1 << color_depth;
+
+            if (color_depth == 2)
+              color_table = qt_default_palette_4;
+            else if (color_depth == 4)
+              color_table = qt_default_palette_16;
+            else
+              color_table = qt_default_palette_256;
+
+            for (j = 0; j < p->video.palette_count; j++) {
+              p->video.palette[j].r = color_table[j * 4 + 0];
+              p->video.palette[j].g = color_table[j * 4 + 1];
+              p->video.palette[j].b = color_table[j * 4 + 2];
+            }
+
+          } else {
+
+            /* load the palette from the file */
+            color_start = _X_BE_32 (&atom[atom_pos + 0x52]);
+            color_count = _X_BE_16 (&atom[atom_pos + 0x56]);
+            color_end   = _X_BE_16 (&atom[atom_pos + 0x58]);
+            p->video.palette_count = color_end + 1;
+
+            for (j = color_start; j <= color_end; j++) {
+
+              color_index = _X_BE_16 (&atom[atom_pos + 0x5A + j * 8]);
+              if (color_count & 0x8000)
+                color_index = j;
+              if (color_index < p->video.palette_count) {
+                p->video.palette[color_index].r =
+                  atom[atom_pos + 0x5A + j * 8 + 2];
+                p->video.palette[color_index].g =
+                  atom[atom_pos + 0x5A + j * 8 + 4];
+                p->video.palette[color_index].b =
+                  atom[atom_pos + 0x5A + j * 8 + 6];
+              }
+            }
+          }
+        } else
+          p->video.palette_count = 0;
+
+        debug_atom_load("    video properties atom #%d\n", k + 1);
+        debug_atom_load("      %dx%d, video fourcc = '%c%c%c%c' (%02X%02X%02X%02X)\n",
+          p->video.width,
+          p->video.height,
+          atom[atom_pos + 0x0],
+          atom[atom_pos + 0x1],
+          atom[atom_pos + 0x2],
+          atom[atom_pos + 0x3],
+          atom[atom_pos + 0x0],
+          atom[atom_pos + 0x1],
+          atom[atom_pos + 0x2],
+          atom[atom_pos + 0x3]);
+        debug_atom_load("      %d RGB colours\n",
+          p->video.palette_count);
+        for (j = 0; j < p->video.palette_count; j++)
+          debug_atom_load("        %d: %3d %3d %3d\n",
+            j,
+            p->video.palette[j].r,
+            p->video.palette[j].g,
+            p->video.palette[j].b);
+
+      } else if (trak->type == MEDIA_AUDIO) {
+
+        p->audio.media_id          = k + 1;
+        p->audio.properties_offset = properties_offset;
+
+        /* copy the properties atom */
+        p->audio.properties_atom_size = current_stsd_atom_size - 4;
+        p->audio.properties_atom      = xine_xmalloc (p->audio.properties_atom_size);
+        if (!p->audio.properties_atom) {
+          last_error = QT_NO_MEMORY;
+          goto free_trak;
+        }
+        memcpy (p->audio.properties_atom, &atom[atom_pos], p->audio.properties_atom_size);
+
+        /* fetch audio parameters */
+        p->audio.codec_fourcc = _X_ME_32 (&atom[atom_pos + 0x0]);
+        p->audio.sample_rate  = _X_BE_16 (&atom[atom_pos + 0x1C]);
+        p->audio.channels     = atom[atom_pos + 0x15];
+        p->audio.bits         = atom[atom_pos + 0x17];
+
+        /* 24-bit audio doesn't always declare itself properly, and can be big- or little-endian */
+        if (p->audio.codec_fourcc == IN24_FOURCC) {
+          p->audio.bits = 24;
+          if (_X_BE_32 (&atom[atom_pos + 0x48]) == ENDA_ATOM && atom[atom_pos + 0x4D])
+            p->audio.codec_fourcc = NI42_FOURCC;
+        }
+
+        /* assume uncompressed audio parameters */
+        p->audio.bytes_per_sample   = p->audio.bits / 8;
+        p->audio.samples_per_frame  = p->audio.channels;
+        p->audio.bytes_per_frame    = p->audio.bytes_per_sample * p->audio.samples_per_frame;
+        p->audio.samples_per_packet = p->audio.samples_per_frame;
+        p->audio.bytes_per_packet   = p->audio.bytes_per_sample;
+
+        /* special case time: A lot of CBR audio codecs stored in the
+         * early days lacked the extra header; compensate */
+        if (p->audio.codec_fourcc == IMA4_FOURCC) {
+          p->audio.samples_per_packet = 64;
+          p->audio.bytes_per_packet   = 34;
+          p->audio.bytes_per_frame    = 34 * p->audio.channels;
+          p->audio.bytes_per_sample   = 2;
+          p->audio.samples_per_frame  = 64 * p->audio.channels;
+        } else if (p->audio.codec_fourcc == MAC3_FOURCC) {
+          p->audio.samples_per_packet = 3;
+          p->audio.bytes_per_packet   = 1;
+          p->audio.bytes_per_frame    = 1 * p->audio.channels;
+          p->audio.bytes_per_sample   = 1;
+          p->audio.samples_per_frame  = 3 * p->audio.channels;
+        } else if (p->audio.codec_fourcc == MAC6_FOURCC) {
+          p->audio.samples_per_packet = 6;
+          p->audio.bytes_per_packet   = 1;
+          p->audio.bytes_per_frame    = 1 * p->audio.channels;
+          p->audio.bytes_per_sample   = 1;
+          p->audio.samples_per_frame  = 6 * p->audio.channels;
+        } else if (p->audio.codec_fourcc == ALAW_FOURCC) {
+          p->audio.samples_per_packet = 1;
+          p->audio.bytes_per_packet   = 1;
+          p->audio.bytes_per_frame    = 1 * p->audio.channels;
+          p->audio.bytes_per_sample   = 2;
+          p->audio.samples_per_frame  = 2 * p->audio.channels;
+        } else if (p->audio.codec_fourcc == ULAW_FOURCC) {
+          p->audio.samples_per_packet = 1;
+          p->audio.bytes_per_packet   = 1;
+          p->audio.bytes_per_frame    = 1 * p->audio.channels;
+          p->audio.bytes_per_sample   = 2;
+          p->audio.samples_per_frame  = 2 * p->audio.channels;
+        }
+
+        /* it's time to dig a little deeper to determine the real audio
+         * properties; if a the stsd compressor atom has 0x24 bytes, it
+         * appears to be a handler for uncompressed data; if there are an
+         * extra 0x10 bytes, there are some more useful decoding params;
+         * further, do not do load these parameters if the audio is just
+         * PCM ('raw ', 'twos', 'sowt' or 'in24') */
+        if ((current_stsd_atom_size > 0x24) &&
+            (p->audio.codec_fourcc != AC_3_FOURCC) &&
+            (p->audio.codec_fourcc != EAC3_FOURCC) &&
+            (p->audio.codec_fourcc != TWOS_FOURCC) &&
+            (p->audio.codec_fourcc != SOWT_FOURCC) &&
+            (p->audio.codec_fourcc != RAW_FOURCC)  &&
+            (p->audio.codec_fourcc != IN24_FOURCC) &&
+            (p->audio.codec_fourcc != NI42_FOURCC)) {
+
+          if (_X_BE_32 (&atom[atom_pos + 0x20]))
+            p->audio.samples_per_packet = _X_BE_32 (&atom[atom_pos + 0x20]);
+          if (_X_BE_32 (&atom[atom_pos + 0x24]))
+            p->audio.bytes_per_packet   = _X_BE_32 (&atom[atom_pos + 0x24]);
+          if (_X_BE_32 (&atom[atom_pos + 0x28]))
+            p->audio.bytes_per_frame    = _X_BE_32 (&atom[atom_pos + 0x28]);
+          if (_X_BE_32 (&atom[atom_pos + 0x2C]))
+            p->audio.bytes_per_sample   = _X_BE_32 (&atom[atom_pos + 0x2C]);
+          if (p->audio.bytes_per_packet)
+            p->audio.samples_per_frame =
+              (p->audio.bytes_per_frame /
+               p->audio.bytes_per_packet) *
+               p->audio.samples_per_packet;
+        }
+
+        /* see if the trak deserves a promotion to VBR */
+        if (_X_BE_16 (&atom[atom_pos + 0x18]) == 0xFFFE)
+          p->audio.vbr = 1;
+        else
+          p->audio.vbr = 0;
+
+        /* if this is MP4 audio, mark the trak as VBR */
+        if (p->audio.codec_fourcc == MP4A_FOURCC)
+          p->audio.vbr = 1;
+
+        if (p->audio.codec_fourcc == SAMR_FOURCC)
+          p->audio.vbr = 1;
+
+        if (p->audio.codec_fourcc == AC_3_FOURCC)
+          p->audio.vbr = 1;
+
+        if (p->audio.codec_fourcc == EAC3_FOURCC)
+          p->audio.vbr = 1;
+
+        if (p->audio.codec_fourcc == ALAC_FOURCC) {
+          p->audio.vbr = 1;
+          /* further, FFmpeg's ALAC decoder requires 36 out-of-band bytes */
+          p->audio.properties_atom_size = 36;
+          p->audio.properties_atom = xine_xmalloc (p->audio.properties_atom_size);
+          if (!p->audio.properties_atom) {
+            last_error = QT_NO_MEMORY;
+            goto free_trak;
+          }
+          memcpy (p->audio.properties_atom, &atom[atom_pos + 0x20], p->audio.properties_atom_size);
+        }
+
+        if (p->audio.codec_fourcc == DRMS_FOURCC) {
+          last_error = QT_DRM_NOT_SUPPORTED;
+          goto free_trak;
+        }
+
+        /* check for a MS-style WAVE format header */
+        if ((atomsize >= 0x4C) &&
+          (_X_BE_32 (&atom[atom_pos + 0x34]) == WAVE_ATOM) &&
+          (_X_BE_32 (&atom[atom_pos + 0x3C]) == FRMA_ATOM) &&
+          (_X_ME_32 (&atom[atom_pos + 0x48]) == p->audio.codec_fourcc)) {
+          const int wave_size = _X_BE_32 (&atom[atom_pos + 0x44]) - 8;
+
+          if ((wave_size >= sizeof(xine_waveformatex)) &&
+              (atomsize >= (0x4C + wave_size))) {
+            p->audio.wave_size = wave_size;
+            p->audio.wave = xine_xmalloc (wave_size);
+            if (!p->audio.wave) {
+              last_error = QT_NO_MEMORY;
+              goto free_trak;
+            }
+            memcpy (p->audio.wave, &atom[atom_pos + 0x4C], wave_size);
+            _x_waveformatex_le2me(p->audio.wave);
+          } else {
+            p->audio.wave_size = 0;
+            p->audio.wave = NULL;
+          }
+        } else {
+          p->audio.wave_size = 0;
+          p->audio.wave = NULL;
+        }
+
+        debug_atom_load("    audio properties atom #%d\n", k + 1);
+        debug_atom_load("      %d Hz, %d bits, %d channels, %saudio fourcc = '%c%c%c%c' (%02X%02X%02X%02X)\n",
+          p->audio.sample_rate,
+          p->audio.bits,
+          p->audio.channels,
+          (p->audio.vbr) ? "vbr, " : "",
+          atom[atom_pos + 0x0],
+          atom[atom_pos + 0x1],
+          atom[atom_pos + 0x2],
+          atom[atom_pos + 0x3],
+          atom[atom_pos + 0x0],
+          atom[atom_pos + 0x1],
+          atom[atom_pos + 0x2],
+          atom[atom_pos + 0x3]);
+        if (current_stsd_atom_size > 0x24) {
+          debug_atom_load("      %d samples/packet, %d bytes/packet, %d bytes/frame\n",
+            p->audio.samples_per_packet,
+            p->audio.bytes_per_packet,
+            p->audio.bytes_per_frame);
+          debug_atom_load("      %d bytes/sample (%d samples/frame)\n",
+            p->audio.bytes_per_sample,
+            p->audio.samples_per_frame);
+        }
       }
+      /* use first audio properties atom for now */
+      trak->properties = &trak->stsd_atoms[0];
 
-      trak->sync_sample_count = _X_BE_32(&trak_atom[i + 8]);
+      /* forward to the next atom */
+      atom_pos += current_stsd_atom_size;
+      properties_offset += current_stsd_atom_size;
+    }
+  }
 
-      debug_atom_load("    qt stss atom (sample sync atom): %d sync samples\n",
-        trak->sync_sample_count);
+  atom = find_embedded_atom (atoms[5], ESDS_ATOM, &atomsize);
+  if (atomsize > 12) {
+    debug_atom_load ("    qt/mpeg-4 esds atom\n");
+    if ((trak->type == MEDIA_VIDEO) || (trak->type == MEDIA_AUDIO)) {
+      uint32_t len;
+      j = 12;
+      if (atom[j++] == 0x03) {
+        j += mp4_read_descr_len (&atom[j], &len);
+        j++;
+      }
+      j += 2;
+      if (atom[j++] == 0x04) {
+        j += mp4_read_descr_len (&atom[j], &len);
+        trak->object_type_id = atom[j++];
+        debug_atom_load ("      object type id is %d\n", trak->object_type_id);
+        j += 12;
+        if (atom[j++] == 0x05) {
+          j += mp4_read_descr_len (&atom[j], &len);
+          debug_atom_load ("      decoder config is %d (0x%X) bytes long\n", len, len);
+          if (len > atomsize - j) {
+            last_error = QT_NOT_A_VALID_FILE;
+            goto free_trak;
+          }
+          trak->decoder_config = realloc (trak->decoder_config, len);
+          trak->decoder_config_len = len;
+          if (!trak->decoder_config) {
+            last_error = QT_NO_MEMORY;
+            goto free_trak;
+          }
+          memcpy(trak->decoder_config,&atom[j],len);
+        }
+      }
+    }
+  }
 
-      trak->sync_sample_table = (unsigned int *)calloc(
-        trak->sync_sample_count, sizeof(unsigned int));
-      if (!trak->sync_sample_table) {
+  atom = find_embedded_atom (atoms[5], AVCC_ATOM, &atomsize);
+  if (atomsize > 8) {
+    debug_atom_load ("    avcC atom\n");
+    trak->decoder_config_len = atomsize - 8;
+    trak->decoder_config = realloc (trak->decoder_config, trak->decoder_config_len);
+    if (!trak->decoder_config) {
+      last_error = QT_NO_MEMORY;
+      goto free_trak;
+    }
+    memcpy (trak->decoder_config, atom + 8, trak->decoder_config_len);
+  }
+
+  atom     = atoms[6]; /* STSZ_ATOM */
+  atomsize = sizes[6];
+  if (atomsize >= 20) {
+    trak->sample_size       = _X_BE_32(&atom[12]);
+    trak->sample_size_count = _X_BE_32(&atom[16]);
+    debug_atom_load ("    qt stsz atom (sample size atom): sample size = %d, %d entries\n",
+      trak->sample_size, trak->sample_size_count);
+    /* allocate space and load table only if sample size is 0 */
+    /* there may be 0 items + moof fragments later */
+    if (trak->sample_size == 0) {
+      trak->sample_size_table = calloc (trak->sample_size_count + 1, sizeof (trak->sample_size_table[0]));
+      if (!trak->sample_size_table) {
         last_error = QT_NO_MEMORY;
         goto free_trak;
       }
-
-      /* load the sync sample table */
-      for (j = 0; j < trak->sync_sample_count; j++) {
-        trak->sync_sample_table[j] =
-          _X_BE_32(&trak_atom[i + 12 + j * 4]);
-        debug_atom_load("      sync sample %d: sample %d (%d) is a keyframe\n",
-          j, trak->sync_sample_table[j],
-          trak->sync_sample_table[j] - 1);
+      /* load the sample size table */
+      for (j = 0; j < trak->sample_size_count; j++) {
+        trak->sample_size_table[j] = _X_BE_32(&atom[20 + j * 4]);
+        debug_atom_load ("      sample size %d: %d\n", j, trak->sample_size_table[j]);
       }
-      break;
+    } else
+      /* set the pointer to non-NULL to indicate that the atom type has
+       * already been seen for this trak atom */
+      trak->sample_size_table = (void *)-1;
+  }
 
-    case STCO_ATOM:
-      /* there should only be one of either stco or co64 */
-      if (trak->chunk_offset_table) {
-        last_error = QT_HEADER_TROUBLE;
-        goto free_trak;
-      }
+  atom     = atoms[7]; /* STSS_ATOM */
+  atomsize = sizes[7];
+  if (atomsize >= 16) {
+    trak->sync_sample_count = _X_BE_32 (&atom[12]);
+    if (trak->sync_sample_count > (atomsize - 16) / 4)
+      trak->sync_sample_count = (atomsize - 16) / 4;
+    debug_atom_load ("    qt stss atom (sample sync atom): %d sync samples\n",
+      trak->sync_sample_count);
+    trak->sync_sample_table = calloc (trak->sync_sample_count + 1, sizeof (trak->sync_sample_table[0]));
+    if (!trak->sync_sample_table) {
+      last_error = QT_NO_MEMORY;
+      goto free_trak;
+    }
+    /* load the sync sample table */
+    for (j = 0; j < trak->sync_sample_count; j++) {
+      trak->sync_sample_table[j] = _X_BE_32(&atom[16 + j * 4]);
+      debug_atom_load ("      sync sample %d: sample %d (%d) is a keyframe\n",
+        j, trak->sync_sample_table[j], trak->sync_sample_table[j] - 1);
+    }
+  }
 
-      trak->chunk_offset_count = _X_BE_32(&trak_atom[i + 8]);
-
-      debug_atom_load("    qt stco atom (32-bit chunk offset atom): %d chunk offsets\n",
+  atom     = atoms[8]; /* STCO_ATOM */
+  atomsize = sizes[8];
+  if (atomsize >= 16) {
+    trak->chunk_offset_count = _X_BE_32 (&atom[12]);
+    debug_atom_load ("    qt stco atom (32-bit chunk offset atom): %d chunk offsets\n",
+      trak->chunk_offset_count);
+    if (trak->chunk_offset_count > (atomsize - 16) / 4)
+      trak->chunk_offset_count = (atomsize - 16) / 4;
+    trak->chunk_offset_table = calloc (trak->chunk_offset_count + 1, sizeof (trak->chunk_offset_table[0]));
+    if (!trak->chunk_offset_table) {
+      last_error = QT_NO_MEMORY;
+      goto free_trak;
+    }
+    /* load the chunk offset table */
+    for (j = 0; j < trak->chunk_offset_count; j++) {
+      trak->chunk_offset_table[j] = _X_BE_32 (&atom[16 + j * 4]);
+      debug_atom_load("      chunk %d @ 0x%"PRIX64"\n",
+        j, trak->chunk_offset_table[j]);
+    }
+  } else {
+    atom     = atoms[9]; /* CO64_ATOM */
+    atomsize = sizes[9];
+    if (atomsize >= 16) {
+      trak->chunk_offset_count = _X_BE_32 (&atom[12]);
+    if (trak->chunk_offset_count > (atomsize - 16) / 8)
+      trak->chunk_offset_count = (atomsize - 16) / 8;
+      debug_atom_load ("    qt co64 atom (64-bit chunk offset atom): %d chunk offsets\n",
         trak->chunk_offset_count);
-
-      trak->chunk_offset_table = calloc(trak->chunk_offset_count, sizeof(int64_t));
+      trak->chunk_offset_table = calloc (trak->chunk_offset_count + 1, sizeof (trak->chunk_offset_table[0]));
       if (!trak->chunk_offset_table) {
         last_error = QT_NO_MEMORY;
         goto free_trak;
       }
-
-      /* load the chunk offset table */
-      for (j = 0; j < trak->chunk_offset_count; j++) {
-        trak->chunk_offset_table[j] =
-          _X_BE_32(&trak_atom[i + 12 + j * 4]);
-        debug_atom_load("      chunk %d @ 0x%"PRIX64"\n",
-          j, trak->chunk_offset_table[j]);
-      }
-      break;
-
-    case CO64_ATOM:
-      /* there should only be one of either stco or co64 */
-      if (trak->chunk_offset_table) {
-        last_error = QT_HEADER_TROUBLE;
-        goto free_trak;
-      }
-
-      trak->chunk_offset_count = _X_BE_32(&trak_atom[i + 8]);
-
-      debug_atom_load("    qt co64 atom (64-bit chunk offset atom): %d chunk offsets\n",
-        trak->chunk_offset_count);
-
-      trak->chunk_offset_table = calloc(trak->chunk_offset_count, sizeof(int64_t));
-      if (!trak->chunk_offset_table) {
-        last_error = QT_NO_MEMORY;
-        goto free_trak;
-      }
-
       /* load the 64-bit chunk offset table */
       for (j = 0; j < trak->chunk_offset_count; j++) {
-        trak->chunk_offset_table[j] =
-          _X_BE_32(&trak_atom[i + 12 + j * 8 + 0]);
-        trak->chunk_offset_table[j] <<= 32;
-        trak->chunk_offset_table[j] |=
-          _X_BE_32(&trak_atom[i + 12 + j * 8 + 4]);
+        trak->chunk_offset_table[j] = _X_BE_64 (&atom[16 + j * 8]);
         debug_atom_load("      chunk %d @ 0x%"PRIX64"\n",
           j, trak->chunk_offset_table[j]);
       }
-      break;
-
-    case STSC_ATOM:
-      /* there should only be one of these atoms */
-      if (trak->sample_to_chunk_table) {
-        last_error = QT_HEADER_TROUBLE;
-        goto free_trak;
-      }
-
-      trak->sample_to_chunk_count = _X_BE_32(&trak_atom[i + 8]);
-
-      debug_atom_load("    qt stsc atom (sample-to-chunk atom): %d entries\n",
-        trak->sample_to_chunk_count);
-
-      trak->sample_to_chunk_table = calloc(trak->sample_to_chunk_count, sizeof(sample_to_chunk_table_t));
-      if (!trak->sample_to_chunk_table) {
-        last_error = QT_NO_MEMORY;
-        goto free_trak;
-      }
-
-      /* load the sample to chunk table */
-      for (j = 0; j < trak->sample_to_chunk_count; j++) {
-        trak->sample_to_chunk_table[j].first_chunk =
-          _X_BE_32(&trak_atom[i + 12 + j * 12 + 0]);
-        trak->sample_to_chunk_table[j].samples_per_chunk =
-          _X_BE_32(&trak_atom[i + 12 + j * 12 + 4]);
-        trak->sample_to_chunk_table[j].media_id =
-          _X_BE_32(&trak_atom[i + 12 + j * 12 + 8]);
-        debug_atom_load("      %d: %d samples/chunk starting at chunk %d (%d) for media id %d\n",
-          j, trak->sample_to_chunk_table[j].samples_per_chunk,
-          trak->sample_to_chunk_table[j].first_chunk,
-          trak->sample_to_chunk_table[j].first_chunk - 1,
-          trak->sample_to_chunk_table[j].media_id);
-      }
-      break;
-
-    case STTS_ATOM:
-      /* there should only be one of these atoms */
-      if (trak->time_to_sample_table
-          || current_atom_size < 12 || current_atom_size >= UINT_MAX) {
-        last_error = QT_HEADER_TROUBLE;
-        goto free_trak;
-      }
-
-      trak->time_to_sample_count = _X_BE_32(&trak_atom[i + 8]);
-
-      debug_atom_load("    qt stts atom (time-to-sample atom): %d entries\n",
-        trak->time_to_sample_count);
-
-      if (trak->time_to_sample_count > (current_atom_size - 12) / 8) {
-        last_error = QT_HEADER_TROUBLE;
-        goto free_trak;
-      }
-
-      trak->time_to_sample_table = calloc(trak->time_to_sample_count+1, sizeof(time_to_sample_table_t));
-      if (!trak->time_to_sample_table) {
-        last_error = QT_NO_MEMORY;
-        goto free_trak;
-      }
-
-      /* load the time to sample table */
-      for (j = 0; j < trak->time_to_sample_count; j++) {
-        trak->time_to_sample_table[j].count =
-          _X_BE_32(&trak_atom[i + 12 + j * 8 + 0]);
-        trak->time_to_sample_table[j].duration =
-          _X_BE_32(&trak_atom[i + 12 + j * 8 + 4]);
-        debug_atom_load("      %d: count = %d, duration = %d\n",
-          j, trak->time_to_sample_table[j].count,
-          trak->time_to_sample_table[j].duration);
-      }
-      trak->time_to_sample_table[j].count = 0; /* terminate with zero */
-
-      break;
-
-    case CTTS_ATOM:
-
-      /* TJ. this has the same format as stts. If present, duration here
-         means (pts - dts), while the corresponding stts defines dts. */
-
-      /* there should only be one of these atoms */
-      if (trak->timeoffs_to_sample_table
-          || current_atom_size < 12 || current_atom_size >= UINT_MAX) {
-        last_error = QT_HEADER_TROUBLE;
-        goto free_trak;
-      }
-
-      trak->timeoffs_to_sample_count = _X_BE_32(&trak_atom[i + 8]);
-
-      debug_atom_load("    qt ctts atom (timeoffset-to-sample atom): %d entries\n",
-        trak->timeoffs_to_sample_count);
-
-      if (trak->timeoffs_to_sample_count > (current_atom_size - 12) / 8) {
-        last_error = QT_HEADER_TROUBLE;
-        goto free_trak;
-      }
-
-      trak->timeoffs_to_sample_table = (time_to_sample_table_t *)calloc(
-        trak->timeoffs_to_sample_count+1, sizeof(time_to_sample_table_t));
-      if (!trak->timeoffs_to_sample_table) {
-        last_error = QT_NO_MEMORY;
-        goto free_trak;
-      }
-
-      /* load the pts to dts time offset to sample table */
-      for (j = 0; j < trak->timeoffs_to_sample_count; j++) {
-        trak->timeoffs_to_sample_table[j].count =
-          _X_BE_32(&trak_atom[i + 12 + j * 8 + 0]);
-        trak->timeoffs_to_sample_table[j].duration =
-          _X_BE_32(&trak_atom[i + 12 + j * 8 + 4]);
-        debug_atom_load("      %d: count = %d, duration = %d\n",
-          j, trak->timeoffs_to_sample_table[j].count,
-          trak->timeoffs_to_sample_table[j].duration);
-      }
-      trak->timeoffs_to_sample_table[j].count = 0; /* terminate with zero */
     }
+  }
+
+  atom     = atoms[10]; /* STSC_ATOM */
+  atomsize = sizes[10];
+  if (atomsize >= 16) {
+    trak->sample_to_chunk_count = _X_BE_32 (&atom[12]);
+    if (trak->sample_to_chunk_count > (atomsize - 16) / 12)
+      trak->sample_to_chunk_count = (atomsize - 16) / 12;
+    debug_atom_load ("    qt stsc atom (sample-to-chunk atom): %d entries\n",
+      trak->sample_to_chunk_count);
+    trak->sample_to_chunk_table = calloc (trak->sample_to_chunk_count + 1, sizeof (sample_to_chunk_table_t));
+    if (!trak->sample_to_chunk_table) {
+      last_error = QT_NO_MEMORY;
+      goto free_trak;
+    }
+    /* load the sample to chunk table */
+    for (j = 0; j < trak->sample_to_chunk_count; j++) {
+      trak->sample_to_chunk_table[j].first_chunk       = _X_BE_32 (&atom[16 + j * 12 + 0]);
+      trak->sample_to_chunk_table[j].samples_per_chunk = _X_BE_32 (&atom[16 + j * 12 + 4]);
+      trak->sample_to_chunk_table[j].media_id          = _X_BE_32 (&atom[16 + j * 12 + 8]);
+      debug_atom_load ("      %d: %d samples/chunk starting at chunk %d (%d) for media id %d\n",
+        j, trak->sample_to_chunk_table[j].samples_per_chunk,
+        trak->sample_to_chunk_table[j].first_chunk,
+        trak->sample_to_chunk_table[j].first_chunk - 1,
+        trak->sample_to_chunk_table[j].media_id);
+    }
+  }
+
+  atom     = atoms[11]; /* STTS_ATOM */
+  atomsize = sizes[11];
+  if (atomsize >= 16) {
+    trak->time_to_sample_count = _X_BE_32 (&atom[12]);
+    debug_atom_load ("    qt stts atom (time-to-sample atom): %d entries\n",
+      trak->time_to_sample_count);
+    if (trak->time_to_sample_count > (atomsize - 16) / 8)
+      trak->time_to_sample_count = (atomsize - 16) / 8;
+    trak->time_to_sample_table = calloc (trak->time_to_sample_count + 1, sizeof (time_to_sample_table_t));
+    if (!trak->time_to_sample_table) {
+      last_error = QT_NO_MEMORY;
+      goto free_trak;
+    }
+    /* load the time to sample table */
+    for (j = 0; j < trak->time_to_sample_count; j++) {
+      trak->time_to_sample_table[j].count    = _X_BE_32 (&atom[16 + j * 8 + 0]);
+      trak->time_to_sample_table[j].duration = _X_BE_32 (&atom[16 + j * 8 + 4]);
+      debug_atom_load("      %d: count = %d, duration = %d\n",
+        j, trak->time_to_sample_table[j].count,
+        trak->time_to_sample_table[j].duration);
+    }
+    trak->time_to_sample_table[j].count = 0; /* terminate with zero */
+  }
+
+  atom     = atoms[12]; /* CTTS_ATOM */
+  atomsize = sizes[12];
+  if (atomsize >= 16) {
+    /* TJ. this has the same format as stts. If present, duration here
+       means (pts - dts), while the corresponding stts defines dts. */
+    trak->timeoffs_to_sample_count = _X_BE_32 (&atom[12]);
+    debug_atom_load ("    qt ctts atom (timeoffset-to-sample atom): %d entries\n",
+      trak->timeoffs_to_sample_count);
+    if (trak->timeoffs_to_sample_count > (atomsize - 16) / 8)
+      trak->timeoffs_to_sample_count = (atomsize - 16) / 8;
+    trak->timeoffs_to_sample_table = calloc (trak->timeoffs_to_sample_count + 1, sizeof (time_to_sample_table_t));
+    if (!trak->timeoffs_to_sample_table) {
+      last_error = QT_NO_MEMORY;
+      goto free_trak;
+    }
+    /* load the pts to dts time offset to sample table */
+    for (j = 0; j < trak->timeoffs_to_sample_count; j++) {
+      trak->timeoffs_to_sample_table[j].count    = _X_BE_32 (&atom[16 + j * 8 + 0]);
+      trak->timeoffs_to_sample_table[j].duration = _X_BE_32 (&atom[16 + j * 8 + 4]);
+      debug_atom_load("      %d: count = %d, duration = %d\n",
+        j, trak->timeoffs_to_sample_table[j].count,
+        trak->timeoffs_to_sample_table[j].duration);
+    }
+    trak->timeoffs_to_sample_table[j].count = 0; /* terminate with zero */
   }
 
   return QT_OK;
