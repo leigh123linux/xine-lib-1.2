@@ -310,6 +310,7 @@ typedef struct {
   unsigned char *chunk_offset_table64;
 
   /* sample sizes */
+  unsigned int samples;
   unsigned int sample_size;
   unsigned int sample_size_count;
   unsigned char *sample_size_table;
@@ -943,6 +944,7 @@ static qt_error parse_trak_atom (qt_trak *trak,
   trak->chunk_offset_count = 0;
   trak->chunk_offset_table32 = NULL;
   trak->chunk_offset_table64 = NULL;
+  trak->samples = 0;
   trak->sample_size = 0;
   trak->sample_size_count = 0;
   trak->sample_size_table = NULL;
@@ -1441,6 +1443,7 @@ static qt_error parse_trak_atom (qt_trak *trak,
   if (atomsize >= 20) {
     trak->sample_size       = _X_BE_32(&atom[12]);
     trak->sample_size_count = _X_BE_32(&atom[16]);
+    trak->samples = trak->sample_size_count;
     if (trak->sample_size_count > (atomsize - 20) / 4)
       trak->sample_size_count = (atomsize - 20) / 4;
     debug_atom_load ("    qt stsz atom (sample size atom): sample size = %d, %d entries\n",
@@ -1836,8 +1839,8 @@ static qt_error build_frame_table(qt_trak *trak,
     }
 
     /* was the last chunk incomplete? */
-    if (trak->sample_size_count && (trak->sample_size_count < trak->frame_count))
-      trak->frame_count = trak->sample_size_count;
+    if (trak->samples && (trak->samples < trak->frame_count))
+      trak->frame_count = trak->samples;
 
     /* fill in the keyframe information */
     p = trak->sync_sample_table;
