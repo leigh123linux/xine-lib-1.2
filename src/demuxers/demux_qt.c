@@ -2786,7 +2786,7 @@ static int demux_qt_send_chunk(demux_plugin_t *this_gen) {
       if (this->input->read(this->input, buf->content, buf->size) !=
         buf->size) {
         buf->free_buffer(buf);
-        this->status = DEMUX_FINISHED;
+        trak->current_frame = trak->frame_count;
         break;
       }
 
@@ -2866,7 +2866,7 @@ static int demux_qt_send_chunk(demux_plugin_t *this_gen) {
       if (this->input->read(this->input, buf->content, buf->size) !=
         buf->size) {
         buf->free_buffer(buf);
-        this->status = DEMUX_FINISHED;
+        trak->current_frame = trak->frame_count;
         break;
       }
 
