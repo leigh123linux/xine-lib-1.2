@@ -113,6 +113,7 @@ typedef unsigned int qt_atom;
 #define AVC1_FOURCC ME_FOURCC('a', 'v', 'c', '1')
 #define AC_3_FOURCC ME_FOURCC('a', 'c', '-', '3')
 #define EAC3_FOURCC ME_FOURCC('e', 'c', '-', '3')
+#define QCLP_FOURCC ME_FOURCC('Q', 'c', 'l', 'p')
 
 #define UDTA_ATOM QT_ATOM('u', 'd', 't', 'a')
 #define META_ATOM QT_ATOM('m', 'e', 't', 'a')
@@ -1327,6 +1328,9 @@ static qt_error parse_trak_atom (qt_trak *trak,
           memcpy (p->audio.properties_atom, &atom[atom_pos + 0x20], p->audio.properties_atom_size);
         }
 
+        if (p->audio.codec_fourcc == QCLP_FOURCC)
+          p->audio.vbr = 1;
+
         if (p->audio.codec_fourcc == DRMS_FOURCC) {
           last_error = QT_DRM_NOT_SUPPORTED;
           goto free_trak;
@@ -1674,6 +1678,7 @@ static qt_error build_frame_table(qt_trak *trak,
   unsigned char *o, *p, *q, *s;
   unsigned int chunk_start, chunk_end;
   unsigned int samples_per_chunk;
+  unsigned int samples_per_frame;
   unsigned int size_left, size_value;
   unsigned int offset_left;
   uint64_t offset_value;
@@ -1702,22 +1707,36 @@ static qt_error build_frame_table(qt_trak *trak,
   if ((trak->type == MEDIA_VIDEO) ||
       (trak->properties->audio.vbr)) {
 
+    /* test for legacy compressed audio */
+    if ((trak->type == MEDIA_AUDIO) &&
+        (trak->properties->audio.samples_per_frame > 1) &&
+        (trak->time_to_sample_count == 1) &&
+        (_X_BE_32 (&trak->time_to_sample_table[4]) == 1))
+      /* Oh dear. Old style. */
+      samples_per_frame = trak->properties->audio.samples_per_frame;
+    else
+      samples_per_frame = 1;
+
     /* figure out # of samples */
     trak->frame_count = 0;
     n = trak->chunk_offset_count;
     if (!n)
       return QT_OK;
     for (i = 0; i < trak->sample_to_chunk_count - 1; i++) {
+      int s = trak->sample_to_chunk_table[i].samples_per_chunk;
+      if ((samples_per_frame != 1) && (s % samples_per_frame))
+        return QT_OK; /* unaligned chunk, should not happen */
       j = trak->sample_to_chunk_table[i + 1].first_chunk -
         trak->sample_to_chunk_table[i].first_chunk;
       if (j < 0)
         continue;
       if (j > n)
         j = n;
-      trak->frame_count += j * trak->sample_to_chunk_table[i].samples_per_chunk;
+      trak->frame_count += j * s;
       n -= j;
     }
     trak->frame_count += n * trak->sample_to_chunk_table[i].samples_per_chunk;
+    trak->frame_count = (trak->frame_count + samples_per_frame - 1) / samples_per_frame;
     if (!trak->frame_count)
       return QT_OK;
 
@@ -1748,6 +1767,18 @@ static qt_error build_frame_table(qt_trak *trak,
     ptsoffs_left = trak->timeoffs_to_sample_count;
     q = trak->timeoffs_to_sample_table;
     ptsoffs_countdown = ptsoffs_value = 0;
+
+    if (samples_per_frame != 1) {
+      /* Old style demuxing. Tweak our frame builder.
+         Treating whole chunks as frames would be faster, but unfortunately
+         some ffmpeg decoders dont like multiple frames in one go. */
+      size_left = 0;
+      size_value = trak->properties->audio.bytes_per_frame;
+      duration_left = 0;
+      duration_value = samples_per_frame;
+      ptsoffs_left = 0;
+      trak->samples = _X_BE_32 (trak->time_to_sample_table) / samples_per_frame;
+    }
 
     media_id_counts = xine_xcalloc(trak->stsd_atoms_count, sizeof(int));
     if (!media_id_counts)
@@ -1832,7 +1863,7 @@ static qt_error build_frame_table(qt_trak *trak,
           frame->ptsoffs = ptsoffs_value;
           ptsoffs_countdown--;
 
-          samples_per_chunk--;
+          samples_per_chunk -= samples_per_frame;
           frame++;
         }
       }
