@@ -2224,7 +2224,7 @@ static int parse_traf_atom (qt_info *info, unsigned char *traf_atom, int trafsiz
         sample_flags    = first_sample_flags;
         /* add frames */
         while (samples--) {
-          frame->media_id = trak->id;
+          frame->media_id = sample_description_index;
           frame->pts = sample_dts * 90000 / trak->timescale;
           if (trun_flags & 0x100)
             sample_duration = _X_BE_32 (p), p += 4;
