@@ -83,6 +83,7 @@ typedef unsigned int qt_atom;
 /* atoms in a sample table */
 #define STSD_ATOM QT_ATOM('s', 't', 's', 'd')
 #define STSZ_ATOM QT_ATOM('s', 't', 's', 'z')
+#define STZ2_ATOM QT_ATOM('s', 't', 'z', '2')
 #define STSC_ATOM QT_ATOM('s', 't', 's', 'c')
 #define STCO_ATOM QT_ATOM('s', 't', 'c', 'o')
 #define STTS_ATOM QT_ATOM('s', 't', 't', 's')
@@ -314,6 +315,7 @@ typedef struct {
   unsigned int samples;
   unsigned int sample_size;
   unsigned int sample_size_count;
+  unsigned int sample_size_bits;
   unsigned char *sample_size_table;
 
   /* sync samples, a.k.a., keyframes */
@@ -934,9 +936,9 @@ static qt_error parse_trak_atom (qt_trak *trak,
     VMHD_ATOM, SMHD_ATOM, TKHD_ATOM, ELST_ATOM,
     MDHD_ATOM, STSD_ATOM, STSZ_ATOM, STSS_ATOM,
     STCO_ATOM, CO64_ATOM, STSC_ATOM, STTS_ATOM,
-    CTTS_ATOM, 0};
-  unsigned int sizes[13];
-  unsigned char *atoms[13];
+    CTTS_ATOM, STZ2_ATOM, 0};
+  unsigned int sizes[14];
+  unsigned char *atoms[14];
 
   /* initialize trak structure */
   trak->id = -1;
@@ -948,6 +950,7 @@ static qt_error parse_trak_atom (qt_trak *trak,
   trak->samples = 0;
   trak->sample_size = 0;
   trak->sample_size_count = 0;
+  trak->sample_size_bits = 0;
   trak->sample_size_table = NULL;
   trak->sync_sample_count = 0;
   trak->sync_sample_table = NULL;
@@ -1456,6 +1459,26 @@ static qt_error parse_trak_atom (qt_trak *trak,
     /* there may be 0 items + moof fragments later */
     if (trak->sample_size == 0)
       trak->sample_size_table = atom + 20;
+    trak->sample_size_bits = 32;
+  } else {
+    atom     = atoms[13]; /* STZ2_ATOM */
+    atomsize = sizes[13];
+    if (atomsize >= 20) {
+      trak->sample_size_count = _X_BE_32 (&atom[16]);
+      trak->sample_size_bits = atom[15];
+      trak->sample_size_table = atom + 20;
+      if (atom[15] == 16) {
+        if (trak->sample_size_count > (atomsize - 20) / 2)
+          trak->sample_size_count = (atomsize - 20) / 2;
+      } else if (atom[15] == 8) {
+        if (trak->sample_size_count > (atomsize - 20))
+          trak->sample_size_count = atomsize - 20;
+      } else {
+        trak->sample_size_count = 0;
+        trak->sample_size_bits = 0;
+        trak->sample_size_table = NULL;
+      }
+    }
   }
 
   atom     = atoms[7]; /* STSS_ATOM */
@@ -1823,7 +1846,12 @@ static qt_error build_frame_table(qt_trak *trak,
 
           /* figure out the offset and size */
           if (size_left) {
-            size_value = _X_BE_32 (s); s += 4;
+            if (trak->sample_size_bits == 32)
+              size_value = _X_BE_32 (s), s += 4;
+            else if (trak->sample_size_bits == 16)
+              size_value = _X_BE_16 (s), s += 2;
+            else
+              size_value = *s++;
             size_left--;
           }
           frame->offset = offset_value;
