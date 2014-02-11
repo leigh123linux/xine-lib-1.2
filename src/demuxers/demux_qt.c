@@ -1703,7 +1703,6 @@ static qt_error build_frame_table(qt_trak *trak,
   unsigned int samples_per_chunk;
   unsigned int samples_per_frame;
   unsigned int size_left, size_value;
-  unsigned int offset_left;
   uint64_t offset_value;
   int64_t pts_value;
   unsigned int duration_left, duration_countdown, duration_value;
@@ -1771,7 +1770,6 @@ static qt_error build_frame_table(qt_trak *trak,
 
     /* initialize more accounting variables */
     /* file position */
-    offset_left = trak->chunk_offset_count;
     o = trak->chunk_offset_table32;
     if (!o)
       o = trak->chunk_offset_table64;
@@ -2112,11 +2110,11 @@ static int parse_mvex_atom (qt_info *info, unsigned char *mvex_atom, int bufsize
 static int parse_traf_atom (qt_info *info, unsigned char *traf_atom, int trafsize, off_t moofpos) {
   int i, n, done = 0, samples;
   uint32_t subtype, subsize = 0, tfhd_flags, trun_flags;
-  uint32_t sample_description_index;
-  uint32_t default_sample_duration, sample_duration;
-  uint32_t default_sample_size, sample_size;
-  uint32_t default_sample_flags, first_sample_flags, sample_flags;
-  off_t base_data_offset, data_pos;
+  uint32_t sample_description_index = 0;
+  uint32_t default_sample_duration = 0, sample_duration;
+  uint32_t default_sample_size = 0, sample_size;
+  uint32_t default_sample_flags = 0, first_sample_flags, sample_flags;
+  off_t base_data_offset = 0, data_pos = 0;
   int64_t sample_dts;
   unsigned char *p;
   qt_trak *trak = NULL;
@@ -2767,7 +2765,7 @@ static int demux_qt_send_chunk(demux_plugin_t *this_gen) {
   if (this->stream->xine->verbosity == XINE_VERBOSITY_DEBUG + 1) {
     xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG + 1,
       "demux_qt: sending trak %d dts %"PRId64" pos %"PRId64"\n",
-      trak - this->qt->traks,
+      (int)(trak - this->qt->traks),
       trak->frames[trak->current_frame].pts,
       trak->frames[trak->current_frame].offset);
   }
