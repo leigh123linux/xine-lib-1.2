@@ -47,11 +47,6 @@
 
 #include "../combined/ffmpeg/ffmpeg_compat.h"
 
-/* buffer size for encoded mpeg1 stream; will hold one intra frame
- * at 640x480 typical sizes are <50 kB. 512 kB should be plenty */
-#define DEFAULT_BUFFER_SIZE 512*1024
-
-
 /* functions required by encoder api */
 static int lavc_on_update_format(dxr3_driver_t *drv, dxr3_frame_t *frame);
 static int lavc_on_display_frame(dxr3_driver_t *drv, dxr3_frame_t *frame);
@@ -62,7 +57,6 @@ typedef struct lavc_data_s {
   encoder_data_t     encoder_data;
   AVCodecContext     *context;         /* handle for encoding */
   int                width, height;    /* width and height of the video frame */
-  uint8_t            *ffmpeg_buffer;   /* lavc buffer */
   AVFrame            *picture;         /* picture to be encoded */
   uint8_t            *out[3];          /* aligned buffer for YV12 data */
   uint8_t            *buf;     /* base address of YV12 buffer */
@@ -223,20 +217,13 @@ static int lavc_on_update_format(dxr3_driver_t *drv, dxr3_frame_t *frame)
   }
   lprintf("dxr3_mpeg_encoder: lavc MPEG1 codec opened.\n");
 
-  if (!this->ffmpeg_buffer)
-    this->ffmpeg_buffer = (unsigned char *)malloc(DEFAULT_BUFFER_SIZE); /* why allocate more than needed ?! */
-  if (!this->ffmpeg_buffer) {
-    xprintf(drv->class->xine, XINE_VERBOSITY_LOG,
-      "dxr3_mpeg_encoder: Couldn't allocate temp buffer for mpeg data\n");
-    return 0;
-  }
-
   return 1;
 }
 
 static int lavc_on_display_frame(dxr3_driver_t *drv, dxr3_frame_t *frame)
 {
-  int size;
+  AVPacket pkt = { 0 };
+  int ret, got_output;
   lavc_data_t* this = (lavc_data_t *)drv->enc;
   ssize_t written;
 
@@ -252,25 +239,28 @@ static int lavc_on_display_frame(dxr3_driver_t *drv, dxr3_frame_t *frame)
   lavc_prepare_frame(this, drv, frame);
 
   /* do the encoding */
-  size = avcodec_encode_video(this->context, this->ffmpeg_buffer, DEFAULT_BUFFER_SIZE, this->picture);
+  ret = avcodec_encode_video2(this->context, &pkt, this->picture, &got_output);
 
   frame->vo_frame.free(&frame->vo_frame);
 
-  if (size < 0) {
+  if (ret < 0) {
       xprintf(drv->class->xine, XINE_VERBOSITY_LOG,
         "dxr3_mpeg_encoder: encoding failed\n");
       return 0;
-  }
+  } else if (!got_output)
+      return 1;
 
-  written = write(drv->fd_video, this->ffmpeg_buffer, size);
+  written = write(drv->fd_video, pkt.data, pkt.size);
   if (written < 0) {
+      av_packet_unref(&pkt);
       xprintf(drv->class->xine, XINE_VERBOSITY_LOG,
         "dxr3_mpeg_encoder: video device write failed (%s)\n", strerror(errno));
       return 0;
     }
-  if (written != size)
+  if (written != pkt.size)
       xprintf(drv->class->xine, XINE_VERBOSITY_LOG,
-        "dxr3_mpeg_encoder: Could only write %zd of %d mpeg bytes.\n", written, size);
+        "dxr3_mpeg_encoder: Could only write %zd of %d mpeg bytes.\n", written, pkt.size);
+  av_packet_unref(&pkt);
   return 1;
 }
 
