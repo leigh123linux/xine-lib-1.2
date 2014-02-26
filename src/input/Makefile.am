@@ -50,8 +50,8 @@ in_smb = xineplug_inp_smb.la
 endif
 
 if WITH_EXTERNAL_DVDNAV
-DVD_CFLAGS  = $(DVDNAV_CFLAGS)
-link_dvdnav = $(DVDNAV_LIBS)
+DVD_CFLAGS  = $(DVDNAV_CFLAGS) $(DVDREAD_CFLAGS)
+link_dvdnav = $(DVDNAV_LIBS) $(DVDREAD_LIBS)
 else
 DVD_CFLAGS  = -I$(top_srcdir)/src/input/libdvdnav
 link_dvdnav = libdvdnav/libdvdnav.la
