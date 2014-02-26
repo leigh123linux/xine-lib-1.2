@@ -55,6 +55,9 @@ link_dvdnav = $(DVDNAV_LIBS) $(DVDREAD_LIBS)
 else
 DVD_CFLAGS  = -I$(top_srcdir)/src/input/libdvdnav
 link_dvdnav = libdvdnav/libdvdnav.la
+
+$(link_dvdnav):
+	$(MAKE) -C libdvdnav libdvdnav.la
 endif
 
 # not ported to native Windows
