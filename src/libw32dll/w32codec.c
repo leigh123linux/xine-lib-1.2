@@ -341,7 +341,7 @@ static int get_vids_codec_n_name(w32v_decoder_t *this, int buf_type)
   return 0;
 }
 
-static char* get_vids_codec_name(w32v_decoder_t *this,
+static const char * get_vids_codec_name(w32v_decoder_t *this,
 				 int buf_type, int n) {
 
   this->yuv_supported=0;
@@ -801,7 +801,7 @@ static void w32v_decode_data (video_decoder_t *this_gen, buf_element_t *buf) {
       int i;
 
       for (i = 1; i <= num_decoders; i++) {
-        win32_codec_name = get_vids_codec_name (this, buf->type, i);
+        win32_codec_name = (char *)get_vids_codec_name (this, buf->type, i);
 
         if( this->driver_type == DRIVER_STD )
           w32v_init_codec (this, buf->type);
@@ -1072,7 +1072,7 @@ static void w32v_dispose (video_decoder_t *this_gen) {
  * audio stuff
  */
 
-static char* get_auds_codec_name(w32a_decoder_t *this, int buf_type) {
+static const char * get_auds_codec_name(w32a_decoder_t *this, int buf_type) {
 
   buf_type = buf_type & 0xFFFF0000;
   this->driver_type = DRIVER_STD;
@@ -1206,7 +1206,7 @@ static int w32a_init_audio (w32a_decoder_t *this,
   wf.cbSize          = 0;
 
   this->ldt_fs = Setup_LDT_Keeper();
-  win32_codec_name = get_auds_codec_name (this, buftype);
+  win32_codec_name = (char *)get_auds_codec_name (this, buftype);
 
   if( this->driver_type == DRIVER_STD ) {
 

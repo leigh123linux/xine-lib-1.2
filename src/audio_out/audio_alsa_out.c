@@ -265,9 +265,10 @@ static long ao_alsa_get_volume_from_percent(int val, long min, long max) {
 /*
  * Error callback, we need to control this,
  * error message should be printed only in DEBUG mode.
+ * XINE_FORMAT_PRINTF(5, 6) is true but useless here,
+ * as alsa delivers "fmt" at runtime only.
  */
-static void XINE_FORMAT_PRINTF(5, 6)
-	    error_callback(const char *file, int line,
+static void error_callback(const char *file, int line,
 			   const char *function, int err, const char *fmt, ...) {
 #ifdef DEBUG
   va_list   args;
