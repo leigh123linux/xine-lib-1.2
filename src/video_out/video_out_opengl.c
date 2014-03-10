@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2000-2012 the xine project
+ * Copyright (C) 2000-2014 the xine project
  *
  * This file is part of xine, a free video player.
  *
@@ -1977,7 +1977,7 @@ static vo_driver_t *opengl_open_plugin (video_driver_class_t *class_gen, const v
     render_fun_names[i] = opengl_rb[i].name;
   render_fun_names[i] = NULL;
   this->render_fun_id = config->register_enum (config, "video.output.opengl_renderer",
-					       0, render_fun_names,
+					       0, (char **)render_fun_names,
 					       _("OpenGL renderer"),
 					       _("The OpenGL plugin provides several render modules:\n\n"
 						 "2D_Tex_Fragprog\n"

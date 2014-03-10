@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2000-2012 the xine project
+ * Copyright (C) 2000-2014 the xine project
  *
  * This file is part of xine, a free video player.
  *
@@ -1886,7 +1886,7 @@ osd_renderer_t *_x_osd_renderer_init( xine_stream_t *stream ) {
 
   this->textpalette = this->stream->xine->config->register_enum (this->stream->xine->config,
                                              "ui.osd.text_palette", 0,
-                                             textpalettes_str,
+                                             (char **)textpalettes_str,
                                              _("palette (foreground-border-background) to use for subtitles and OSD"),
                                              _("The palette for on-screen-display and some subtitle formats that do "
 					       "not specify any colouring themselves. The palettes are listed in the "

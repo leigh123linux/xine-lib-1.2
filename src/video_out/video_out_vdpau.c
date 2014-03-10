@@ -1,6 +1,6 @@
 /*
  * kate: space-indent on; indent-width 2; mixedindent off; indent-mode cstyle; remove-trailing-space on;
- * Copyright (C) 2008-2013 the xine project
+ * Copyright (C) 2008-2014 the xine project
  * Copyright (C) 2008 Christophe Thommeret <hftom@free.fr>
  *
  * This file is part of xine, a free video player.
@@ -3111,12 +3111,12 @@ static vo_driver_t *vdpau_open_plugin (video_driver_class_t *class_gen, const vo
   }
 
   this->deinterlace_method_hd = config->register_enum( config, "video.output.vdpau_hd_deinterlace_method", deint_default,
-         this->deinterlacers_name, _("vdpau: HD deinterlace method"),
+         (char **)this->deinterlacers_name, _("vdpau: HD deinterlace method"),
          deinterlacers_description,
          10, vdpau_update_deinterlace_method_hd, this );
 
   this->deinterlace_method_sd = config->register_enum( config, "video.output.vdpau_sd_deinterlace_method", deint_default,
-         this->deinterlacers_name, _("vdpau: SD deinterlace method"),
+         (char **)this->deinterlacers_name, _("vdpau: SD deinterlace method"),
          deinterlacers_description,
          10, vdpau_update_deinterlace_method_sd, this );
 
@@ -3148,7 +3148,7 @@ static vo_driver_t *vdpau_open_plugin (video_driver_class_t *class_gen, const vo
         10, vdpau_set_background, this );
   }
 
-  this->sd_only_properties = config->register_enum( config, "video.output.vdpau_sd_only_properties", 0, vdpau_sd_only_properties,
+  this->sd_only_properties = config->register_enum( config, "video.output.vdpau_sd_only_properties", 0, (char **)vdpau_sd_only_properties,
         _("vdpau: restrict enabling video properties for SD video only"),
         _("none\n"
           "No restrictions\n\n"

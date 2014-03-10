@@ -366,7 +366,7 @@ static vo_driver_t *dxr3_vo_open_plugin(video_driver_class_t *class_gen, const v
   dxr3_set_property(&this->vo_driver, VO_PROP_SATURATION, 500);
 
   /* overlay or tvout? */
-  confnum = config->register_enum(config, "dxr3.output.mode", 0, videoout_modes,
+  confnum = config->register_enum(config, "dxr3.output.mode", 0, (char **)videoout_modes,
     _("video output mode (TV or overlay)"),
     _("The way the DXR3 outputs the final video can be set here. The individual values are:\n\n"
       "letterboxed tv\n"
@@ -440,7 +440,7 @@ static vo_driver_t *dxr3_vo_open_plugin(video_driver_class_t *class_gen, const v
   }
 
   /* init tvmode */
-  confnum = config->register_enum(config, "dxr3.output.tvmode", 3, tv_modes,
+  confnum = config->register_enum(config, "dxr3.output.tvmode", 3, (char **)tv_modes,
     _("preferred tv mode"), _("Selects the TV mode to be used by the DXR3. The values mean:\n\n"
     "ntsc: NTSC at 60Hz\npal: PAL at 50Hz\npal60: PAL at 60Hz\ndefault: keep the card's setting"),
     0, NULL, NULL);
