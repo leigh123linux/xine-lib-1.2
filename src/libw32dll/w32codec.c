@@ -134,7 +134,7 @@ static GUID wmav_clsid =
  */
 static pthread_mutex_t win32_codec_mutex;
 static pthread_once_t once_control = PTHREAD_ONCE_INIT;
-static char*   win32_codec_name;
+static const char*   win32_codec_name;
 
 #define VIDEOBUFSIZE 128*1024
 
@@ -801,7 +801,7 @@ static void w32v_decode_data (video_decoder_t *this_gen, buf_element_t *buf) {
       int i;
 
       for (i = 1; i <= num_decoders; i++) {
-        win32_codec_name = (char *)get_vids_codec_name (this, buf->type, i);
+        win32_codec_name = get_vids_codec_name (this, buf->type, i);
 
         if( this->driver_type == DRIVER_STD )
           w32v_init_codec (this, buf->type);
@@ -1206,7 +1206,7 @@ static int w32a_init_audio (w32a_decoder_t *this,
   wf.cbSize          = 0;
 
   this->ldt_fs = Setup_LDT_Keeper();
-  win32_codec_name = (char *)get_auds_codec_name (this, buftype);
+  win32_codec_name = get_auds_codec_name (this, buftype);
 
   if( this->driver_type == DRIVER_STD ) {
 

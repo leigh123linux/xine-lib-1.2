@@ -2,10 +2,10 @@
 #include <dirent.h>
 #endif
 
-static char *get_win32_codecs_path(config_values_t *cfg) {
+static const char *get_win32_codecs_path(config_values_t *cfg) {
   DIR                *dir;
-  char               *path, *cfgpath;
-  const char         *listpath[] = { "",
+  const char         *path, *cfgpath;
+  const char * const listpath[] = { "",
                                      "/usr/lib/codecs",
                                      "/usr/local/lib/codecs",
                                      "/usr/lib/win32",
@@ -25,7 +25,7 @@ static char *get_win32_codecs_path(config_values_t *cfg) {
 
   while (listpath[i]) {
     if (i == 0) path = cfgpath;
-    else path = (char *)listpath[i];
+    else path = listpath[i];
 
     if ((dir = opendir(path)) != NULL) {
       closedir(dir);
