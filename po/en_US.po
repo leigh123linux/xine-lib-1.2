@@ -6,14 +6,14 @@ msgid ""
 msgstr ""
 "Project-Id-Version: xine-lib.hg\n"
 "Report-Msgid-Bugs-To: xine-devel@lists.sourceforge.net\n"
-"POT-Creation-Date: 2014-02-24 21:09+0100\n"
+"POT-Creation-Date: 2014-03-11 13:39+0000\n"
 "PO-Revision-Date: 2009-01-15 19:04+0000\n"
 "Last-Translator: Not translated <null@example.com>\n"
 "Language-Team: en_US <none>\n"
+"Language: \n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Language: \n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
 #: lib/hstrerror.c:17
@@ -157,192 +157,192 @@ msgstr ""
 msgid "mpc: musepack audio decoder plugin"
 msgstr ""
 
-#: src/audio_out/audio_alsa_out.c:352
+#: src/audio_out/audio_alsa_out.c:353
 #, c-format
 msgid "audio_alsa_out:Already open...WHY!"
 msgstr ""
 
-#: src/audio_out/audio_alsa_out.c:380
+#: src/audio_out/audio_alsa_out.c:381
 #, c-format
 msgid "audio_alsa_out: snd_pcm_open() of %s failed: %s\n"
 msgstr ""
 
-#: src/audio_out/audio_alsa_out.c:382
+#: src/audio_out/audio_alsa_out.c:383
 #, c-format
 msgid "audio_alsa_out: >>> check if another program already uses PCM <<<\n"
 msgstr ""
 
-#: src/audio_out/audio_alsa_out.c:395
+#: src/audio_out/audio_alsa_out.c:396
 #, c-format
 msgid ""
 "audio_alsa_out: broken configuration for this PCM: no configurations "
 "available: %s\n"
 msgstr ""
 
-#: src/audio_out/audio_alsa_out.c:1331
+#: src/audio_out/audio_alsa_out.c:1332
 msgid "notify changes to the hardware mixer"
 msgstr ""
 
-#: src/audio_out/audio_alsa_out.c:1332
+#: src/audio_out/audio_alsa_out.c:1333
 msgid ""
 "When the hardware mixer changes, your application will receive a "
 "notification so that it can update its graphical representation of the mixer "
 "settings on the fly."
 msgstr ""
 
-#: src/audio_out/audio_alsa_out.c:1382
+#: src/audio_out/audio_alsa_out.c:1383
 #, c-format
 msgid "snd_lib_error_set_handler() failed: %d"
 msgstr ""
 
-#: src/audio_out/audio_alsa_out.c:1389
+#: src/audio_out/audio_alsa_out.c:1390
 msgid "sound card can do mmap"
 msgstr ""
 
-#: src/audio_out/audio_alsa_out.c:1390
+#: src/audio_out/audio_alsa_out.c:1391
 msgid ""
 "Enable this, if your sound card and alsa driver support memory mapped IO.\n"
 "You can try enabling it and check, if everything works. If it does, this "
 "will increase performance."
 msgstr ""
 
-#: src/audio_out/audio_alsa_out.c:1399
+#: src/audio_out/audio_alsa_out.c:1400
 msgid "device used for mono output"
 msgstr ""
 
-#: src/audio_out/audio_alsa_out.c:1400
+#: src/audio_out/audio_alsa_out.c:1401
 msgid ""
 "xine will use this alsa device to output mono sound.\n"
 "See the alsa documentation for information on alsa devices."
 msgstr ""
 
-#: src/audio_out/audio_alsa_out.c:1408
+#: src/audio_out/audio_alsa_out.c:1409
 msgid "device used for stereo output"
 msgstr ""
 
-#: src/audio_out/audio_alsa_out.c:1409
+#: src/audio_out/audio_alsa_out.c:1410
 msgid ""
 "xine will use this alsa device to output stereo sound.\n"
 "See the alsa documentation for information on alsa devices."
 msgstr ""
 
-#: src/audio_out/audio_alsa_out.c:1417
+#: src/audio_out/audio_alsa_out.c:1418
 msgid "device used for 4-channel output"
 msgstr ""
 
-#: src/audio_out/audio_alsa_out.c:1418
+#: src/audio_out/audio_alsa_out.c:1419
 msgid ""
 "xine will use this alsa device to output 4 channel (4.0) surround sound.\n"
 "See the alsa documentation for information on alsa devices."
 msgstr ""
 
-#: src/audio_out/audio_alsa_out.c:1427 src/audio_out/audio_alsa_out.c:1437
+#: src/audio_out/audio_alsa_out.c:1428 src/audio_out/audio_alsa_out.c:1438
 msgid "device used for 5.1-channel output"
 msgstr ""
 
-#: src/audio_out/audio_alsa_out.c:1428
+#: src/audio_out/audio_alsa_out.c:1429
 msgid ""
 "xine will use this alsa device to output 5 channel plus LFE (5.1) surround "
 "sound.\n"
 "See the alsa documentation for information on alsa devices."
 msgstr ""
 
-#: src/audio_out/audio_alsa_out.c:1438
+#: src/audio_out/audio_alsa_out.c:1439
 msgid ""
 "xine will use this alsa device to output undecoded digital surround sound. "
 "This can be used be external surround decoders.\n"
 "See the alsa documentation for information on alsa devices."
 msgstr ""
 
-#: src/audio_out/audio_alsa_out.c:1458
+#: src/audio_out/audio_alsa_out.c:1459
 #, c-format
 msgid "snd_pcm_open() failed:%d:%s\n"
 msgstr ""
 
-#: src/audio_out/audio_alsa_out.c:1460
+#: src/audio_out/audio_alsa_out.c:1461
 #, c-format
 msgid ">>> Check if another program already uses PCM <<<\n"
 msgstr ""
 
-#: src/audio_out/audio_alsa_out.c:1494
+#: src/audio_out/audio_alsa_out.c:1495
 msgid "audio_alsa_out : supported modes are"
 msgstr ""
 
-#: src/audio_out/audio_alsa_out.c:1498
+#: src/audio_out/audio_alsa_out.c:1499
 msgid " 8bit"
 msgstr ""
 
-#: src/audio_out/audio_alsa_out.c:1503
+#: src/audio_out/audio_alsa_out.c:1504
 msgid " 16bit"
 msgstr ""
 
-#: src/audio_out/audio_alsa_out.c:1507
+#: src/audio_out/audio_alsa_out.c:1508
 msgid " 24bit"
 msgstr ""
 
-#: src/audio_out/audio_alsa_out.c:1511
+#: src/audio_out/audio_alsa_out.c:1512
 msgid " 32bit"
 msgstr ""
 
-#: src/audio_out/audio_alsa_out.c:1524 src/audio_out/audio_oss_out.c:921
+#: src/audio_out/audio_alsa_out.c:1525 src/audio_out/audio_oss_out.c:921
 msgid " mono"
 msgstr ""
 
-#: src/audio_out/audio_alsa_out.c:1528 src/audio_out/audio_oss_out.c:927
+#: src/audio_out/audio_alsa_out.c:1529 src/audio_out/audio_oss_out.c:927
 msgid " stereo"
 msgstr ""
 
-#: src/audio_out/audio_alsa_out.c:1533 src/audio_out/audio_oss_out.c:934
+#: src/audio_out/audio_alsa_out.c:1534 src/audio_out/audio_oss_out.c:934
 msgid " 4-channel"
 msgstr ""
 
-#: src/audio_out/audio_alsa_out.c:1536 src/audio_out/audio_oss_out.c:937
+#: src/audio_out/audio_alsa_out.c:1537 src/audio_out/audio_oss_out.c:937
 msgid " (4-channel not enabled in xine config)"
 msgstr ""
 
-#: src/audio_out/audio_alsa_out.c:1541
+#: src/audio_out/audio_alsa_out.c:1542
 msgid " 4.1-channel"
 msgstr ""
 
-#: src/audio_out/audio_alsa_out.c:1544
+#: src/audio_out/audio_alsa_out.c:1545
 msgid " (4.1-channel not enabled in xine config)"
 msgstr ""
 
-#: src/audio_out/audio_alsa_out.c:1549 src/audio_out/audio_oss_out.c:944
+#: src/audio_out/audio_alsa_out.c:1550 src/audio_out/audio_oss_out.c:944
 msgid " 5-channel"
 msgstr ""
 
-#: src/audio_out/audio_alsa_out.c:1552 src/audio_out/audio_oss_out.c:947
+#: src/audio_out/audio_alsa_out.c:1553 src/audio_out/audio_oss_out.c:947
 msgid " (5-channel not enabled in xine config)"
 msgstr ""
 
-#: src/audio_out/audio_alsa_out.c:1557 src/audio_out/audio_oss_out.c:954
+#: src/audio_out/audio_alsa_out.c:1558 src/audio_out/audio_oss_out.c:954
 msgid " 5.1-channel"
 msgstr ""
 
-#: src/audio_out/audio_alsa_out.c:1560 src/audio_out/audio_oss_out.c:957
+#: src/audio_out/audio_alsa_out.c:1561 src/audio_out/audio_oss_out.c:957
 msgid " (5.1-channel not enabled in xine config)"
 msgstr ""
 
-#: src/audio_out/audio_alsa_out.c:1583
+#: src/audio_out/audio_alsa_out.c:1584
 msgid " a/52 and DTS pass-through"
 msgstr ""
 
-#: src/audio_out/audio_alsa_out.c:1586
+#: src/audio_out/audio_alsa_out.c:1587
 msgid " (a/52 and DTS pass-through not enabled in xine config)"
 msgstr ""
 
-#: src/audio_out/audio_alsa_out.c:1596
+#: src/audio_out/audio_alsa_out.c:1597
 msgid "alsa mixer device"
 msgstr ""
 
-#: src/audio_out/audio_alsa_out.c:1597
+#: src/audio_out/audio_alsa_out.c:1598
 msgid ""
 "xine will use this alsa mixer device to change the volume.\n"
 "See the alsa documentation for information on alsa devices."
 msgstr ""
 
-#: src/audio_out/audio_alsa_out.c:1675
+#: src/audio_out/audio_alsa_out.c:1676
 msgid "xine audio output plugin using alsa-compliant audio devices/drivers"
 msgstr ""
 
@@ -1066,26 +1066,26 @@ msgstr ""
 msgid "ASF demux plugin"
 msgstr ""
 
-#: src/demuxers/demux_avi.c:531 src/demuxers/demux_avi.c:645
+#: src/demuxers/demux_avi.c:530 src/demuxers/demux_avi.c:644
 msgid "Restoring index..."
 msgstr ""
 
-#: src/demuxers/demux_avi.c:631 src/demuxers/demux_avi.c:1699
+#: src/demuxers/demux_avi.c:630 src/demuxers/demux_avi.c:1693
 #, c-format
 msgid "demux_avi: invalid avi chunk \"%c%c%c%c\" at pos %<PRIdMAX>\n"
 msgstr ""
 
-#: src/demuxers/demux_avi.c:823
+#: src/demuxers/demux_avi.c:822
 #, c-format
 msgid "demux_avi: avi index is broken\n"
 msgstr ""
 
-#: src/demuxers/demux_avi.c:831
+#: src/demuxers/demux_avi.c:830
 #, c-format
 msgid "demux_avi: failed to seek to the next chunk (pos %<PRIdMAX>)\n"
 msgstr ""
 
-#: src/demuxers/demux_avi.c:2332
+#: src/demuxers/demux_avi.c:2326
 msgid "AVI/RIFF demux plugin"
 msgstr ""
 
@@ -1103,29 +1103,29 @@ msgstr ""
 msgid "FILM (CPK) demux plugin"
 msgstr ""
 
-#: src/demuxers/demux_flv.c:201
+#: src/demuxers/demux_flv.c:198
 #, c-format
 msgid "unsupported FLV version (%d).\n"
 msgstr ""
 
-#: src/demuxers/demux_flv.c:208
+#: src/demuxers/demux_flv.c:205
 #, c-format
 msgid "neither video nor audio stream in this file.\n"
 msgstr ""
 
-#: src/demuxers/demux_flv.c:846
+#: src/demuxers/demux_flv.c:840
 #, c-format
 msgid "demux_flv: Not using broken seek index.\n"
 msgstr ""
 
-#: src/demuxers/demux_flv.c:852
+#: src/demuxers/demux_flv.c:846
 #, c-format
 msgid ""
 "demux_flv: This file is non seekable. A/V lag may occur.\n"
 "           Recommend fixing the file with some flvtool.\n"
 msgstr ""
 
-#: src/demuxers/demux_flv.c:1116
+#: src/demuxers/demux_flv.c:1110
 msgid "Flash Video file demux plugin"
 msgstr ""
 
@@ -4409,17 +4409,17 @@ msgstr ""
 msgid "xine video output plugin using libvidix for linux frame buffer"
 msgstr ""
 
-#: src/video_out/video_out_xcbshm.c:178 src/video_out/video_out_xshm.c:237
+#: src/video_out/video_out_xcbshm.c:173 src/video_out/video_out_xshm.c:232
 #, c-format
 msgid "%s: %s: allocating image\n"
 msgstr ""
 
-#: src/video_out/video_out_xcbshm.c:180 src/video_out/video_out_xcbshm.c:190
-#: src/video_out/video_out_xcbshm.c:202 src/video_out/video_out_xcbxv.c:278
+#: src/video_out/video_out_xcbshm.c:175 src/video_out/video_out_xcbshm.c:185
+#: src/video_out/video_out_xcbshm.c:197 src/video_out/video_out_xcbxv.c:278
 #: src/video_out/video_out_xcbxv.c:288 src/video_out/video_out_xcbxv.c:298
-#: src/video_out/video_out_xcbxv.c:310 src/video_out/video_out_xshm.c:222
-#: src/video_out/video_out_xshm.c:239 src/video_out/video_out_xshm.c:250
-#: src/video_out/video_out_xshm.c:269 src/video_out/video_out_xv.c:306
+#: src/video_out/video_out_xcbxv.c:310 src/video_out/video_out_xshm.c:217
+#: src/video_out/video_out_xshm.c:234 src/video_out/video_out_xshm.c:245
+#: src/video_out/video_out_xshm.c:264 src/video_out/video_out_xv.c:306
 #: src/video_out/video_out_xv.c:333 src/video_out/video_out_xv.c:342
 #: src/video_out/video_out_xv.c:378 src/video_out/video_out_xxmc.c:643
 #: src/video_out/video_out_xxmc.c:654 src/video_out/video_out_xxmc.c:663
@@ -4428,19 +4428,19 @@ msgstr ""
 msgid "%s: => not using MIT Shared Memory extension.\n"
 msgstr ""
 
-#: src/video_out/video_out_xcbshm.c:188 src/video_out/video_out_xshm.c:248
+#: src/video_out/video_out_xcbshm.c:183 src/video_out/video_out_xshm.c:243
 #, c-format
 msgid "%s: shared memory error (address error) when allocating image \n"
 msgstr ""
 
-#: src/video_out/video_out_xcbshm.c:200 src/video_out/video_out_xcbxv.c:308
-#: src/video_out/video_out_xshm.c:267 src/video_out/video_out_xv.c:376
+#: src/video_out/video_out_xcbshm.c:195 src/video_out/video_out_xcbxv.c:308
+#: src/video_out/video_out_xshm.c:262 src/video_out/video_out_xv.c:376
 #: src/video_out/video_out_xxmc.c:697
 #, c-format
 msgid "%s: x11 error during shared memory XImage creation\n"
 msgstr ""
 
-#: src/video_out/video_out_xcbshm.c:1239 src/video_out/video_out_xshm.c:1292
+#: src/video_out/video_out_xcbshm.c:1212 src/video_out/video_out_xshm.c:1267
 #, c-format
 msgid ""
 "\n"
@@ -4450,27 +4450,17 @@ msgid ""
 "\n"
 msgstr ""
 
-#: src/video_out/video_out_xcbshm.c:1252 src/video_out/video_out_xshm.c:1305
+#: src/video_out/video_out_xcbshm.c:1225 src/video_out/video_out_xshm.c:1280
 #, c-format
 msgid "%s: MIT shared memory extension not present on display.\n"
 msgstr ""
 
-#: src/video_out/video_out_xcbshm.c:1351 src/video_out/video_out_xshm.c:1389
+#: src/video_out/video_out_xcbshm.c:1324 src/video_out/video_out_xshm.c:1364
 #, c-format
 msgid "%s: your video mode was not recognized, sorry :-(\n"
 msgstr ""
 
-#: src/video_out/video_out_xcbshm.c:1369 src/video_out/video_out_xshm.c:1409
-msgid "Skip high rate frames"
-msgstr ""
-
-#: src/video_out/video_out_xcbshm.c:1370 src/video_out/video_out_xshm.c:1410
-msgid ""
-"Skip every other frame when there are 40fps or more.\n"
-"You will probably not see a difference, and save CPU power.\n"
-msgstr ""
-
-#: src/video_out/video_out_xcbshm.c:1385 src/video_out/video_out_xshm.c:1442
+#: src/video_out/video_out_xcbshm.c:1350 src/video_out/video_out_xshm.c:1409
 msgid "xine video output plugin using the MIT X shared memory extension"
 msgstr ""
 
@@ -4561,7 +4551,7 @@ msgstr ""
 msgid "%s: this adaptor supports the %s format.\n"
 msgstr ""
 
-#: src/video_out/video_out_xshm.c:220
+#: src/video_out/video_out_xshm.c:215
 #, c-format
 msgid "%s: shared memory error when allocating image\n"
 msgstr ""
@@ -4937,47 +4927,47 @@ msgstr ""
 msgid "%s: unknown audio format tag code %#x \"%s\"\n"
 msgstr ""
 
-#: src/xine-engine/configfile.c:957
+#: src/xine-engine/configfile.c:953
 #, c-format
 msgid "The current config file has been modified by a newer version of xine."
 msgstr ""
 
-#: src/xine-engine/configfile.c:1010
+#: src/xine-engine/configfile.c:1006
 #, c-format
 msgid "Loaded configuration from file '%s'\n"
 msgstr ""
 
-#: src/xine-engine/configfile.c:1015
+#: src/xine-engine/configfile.c:1011
 #, c-format
 msgid "Failed to load configuration from file '%s': %s\n"
 msgstr ""
 
-#: src/xine-engine/configfile.c:1071
+#: src/xine-engine/configfile.c:1067
 #, c-format
 msgid "configfile: WARNING: backing up configfile to %s failed\n"
 msgstr ""
 
-#: src/xine-engine/configfile.c:1072
+#: src/xine-engine/configfile.c:1068
 #, c-format
 msgid "configfile: WARNING: your configuration will not be saved\n"
 msgstr ""
 
-#: src/xine-engine/configfile.c:1172
+#: src/xine-engine/configfile.c:1168
 #, c-format
 msgid "configfile: WARNING: writing configuration to %s failed\n"
 msgstr ""
 
-#: src/xine-engine/configfile.c:1173
+#: src/xine-engine/configfile.c:1169
 #, c-format
 msgid "configfile: WARNING: removing possibly broken config file %s\n"
 msgstr ""
 
-#: src/xine-engine/configfile.c:1174
+#: src/xine-engine/configfile.c:1170
 #, c-format
 msgid "configfile: WARNING: you should check the backup file %s\n"
 msgstr ""
 
-#: src/xine-engine/configfile.c:1636
+#: src/xine-engine/configfile.c:1631
 #, c-format
 msgid "configfile: entry '%s' mustn't be modified from MRL\n"
 msgstr ""
@@ -5250,19 +5240,19 @@ msgstr ""
 msgid "load_plugins: using demuxer '%s'\n"
 msgstr ""
 
-#: src/xine-engine/load_plugins.c:1942 src/xine-engine/load_plugins.c:1989
+#: src/xine-engine/load_plugins.c:1940 src/xine-engine/load_plugins.c:1987
 #, c-format
 msgid "load_plugins: failed to load audio output plugin <%s>\n"
 msgstr ""
 
-#: src/xine-engine/load_plugins.c:1992
+#: src/xine-engine/load_plugins.c:1990
 #, c-format
 msgid ""
 "load_plugins: audio output auto-probing didn't find any usable audio "
 "driver.\n"
 msgstr ""
 
-#: src/xine-engine/load_plugins.c:2302
+#: src/xine-engine/load_plugins.c:2300
 #, c-format
 msgid ""
 "load_plugins: cannot unload plugin lib %s:\n"

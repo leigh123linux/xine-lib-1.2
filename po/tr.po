@@ -10,14 +10,14 @@ msgid ""
 msgstr ""
 "Project-Id-Version: libxine1\n"
 "Report-Msgid-Bugs-To: xine-devel@lists.sourceforge.net\n"
-"POT-Creation-Date: 2014-02-24 21:09+0100\n"
+"POT-Creation-Date: 2014-03-11 13:39+0000\n"
 "PO-Revision-Date: 2008-01-05 18:22+0200\n"
 "Last-Translator: Server Acim <sacim@kde.org.tr>\n"
 "Language-Team: Türkçe <yerellestirme@kde.org.tr>\n"
+"Language: \n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Language: \n"
 "Plural-Forms:  nplurals=1; plural=0;\n"
 "X-Generator: KBabel 1.11.4\n"
 
@@ -174,24 +174,24 @@ msgstr "libmusepack: mpc_decoder_decode başarılamadı: %d\n"
 msgid "mpc: musepack audio decoder plugin"
 msgstr ""
 
-#: src/audio_out/audio_alsa_out.c:352
+#: src/audio_out/audio_alsa_out.c:353
 #, c-format
 msgid "audio_alsa_out:Already open...WHY!"
 msgstr "audio_alsa_out:Zaten açık...NEDEN!"
 
-#: src/audio_out/audio_alsa_out.c:380
+#: src/audio_out/audio_alsa_out.c:381
 #, c-format
 msgid "audio_alsa_out: snd_pcm_open() of %s failed: %s\n"
 msgstr "audio_alsa_out: snd_pcm_open() of %s başarısız oldu: %s\n"
 
-#: src/audio_out/audio_alsa_out.c:382
+#: src/audio_out/audio_alsa_out.c:383
 #, c-format
 msgid "audio_alsa_out: >>> check if another program already uses PCM <<<\n"
 msgstr ""
 "audio_alsa_out: >>>başka bir uygulamanın PCM'yi kullanıp kullanmadığını "
 "kontrol edin<<<\n"
 
-#: src/audio_out/audio_alsa_out.c:395
+#: src/audio_out/audio_alsa_out.c:396
 #, c-format
 msgid ""
 "audio_alsa_out: broken configuration for this PCM: no configurations "
@@ -200,11 +200,11 @@ msgstr ""
 "audio_alsa_out: bu PCM: için bozuk yapılandırma: hiç bir yapılandırma uygun "
 "değil: %s\n"
 
-#: src/audio_out/audio_alsa_out.c:1331
+#: src/audio_out/audio_alsa_out.c:1332
 msgid "notify changes to the hardware mixer"
 msgstr "donanım karıştırıcısına değişiklikleri bildir"
 
-#: src/audio_out/audio_alsa_out.c:1332
+#: src/audio_out/audio_alsa_out.c:1333
 msgid ""
 "When the hardware mixer changes, your application will receive a "
 "notification so that it can update its graphical representation of the mixer "
@@ -213,16 +213,16 @@ msgstr ""
 "Donanım karıştırıcısı değiştiğinde, uygulamanız karıştırıcı ayarlarının "
 "görsel yeniden sunumunun güncelleneceği uyarısını alacaktır."
 
-#: src/audio_out/audio_alsa_out.c:1382
+#: src/audio_out/audio_alsa_out.c:1383
 #, c-format
 msgid "snd_lib_error_set_handler() failed: %d"
 msgstr "snd_lib_error_set_handler() başarısız oldu: %d"
 
-#: src/audio_out/audio_alsa_out.c:1389
+#: src/audio_out/audio_alsa_out.c:1390
 msgid "sound card can do mmap"
 msgstr "ses kartı mmap işlerimi yapamıyor"
 
-#: src/audio_out/audio_alsa_out.c:1390
+#: src/audio_out/audio_alsa_out.c:1391
 msgid ""
 "Enable this, if your sound card and alsa driver support memory mapped IO.\n"
 "You can try enabling it and check, if everything works. If it does, this "
@@ -233,11 +233,11 @@ msgstr ""
 "etkinleştirmeyi ve kontrol etmeyi deneyebilirsiniz. Eğer çalışırsa, bu "
 "başarını arttıracaktır."
 
-#: src/audio_out/audio_alsa_out.c:1399
+#: src/audio_out/audio_alsa_out.c:1400
 msgid "device used for mono output"
 msgstr "mono çıktı için kullanılan aygıt"
 
-#: src/audio_out/audio_alsa_out.c:1400
+#: src/audio_out/audio_alsa_out.c:1401
 msgid ""
 "xine will use this alsa device to output mono sound.\n"
 "See the alsa documentation for information on alsa devices."
@@ -245,11 +245,11 @@ msgstr ""
 "xine mono ses çıkışı için bu alsa aygıtını kullanacaktır.\n"
 "Alsa aygıtları hakkında daha fazla bilgi için alsa belgesine bakınız."
 
-#: src/audio_out/audio_alsa_out.c:1408
+#: src/audio_out/audio_alsa_out.c:1409
 msgid "device used for stereo output"
 msgstr "stereo çıktı için kullanılan aygıt"
 
-#: src/audio_out/audio_alsa_out.c:1409
+#: src/audio_out/audio_alsa_out.c:1410
 msgid ""
 "xine will use this alsa device to output stereo sound.\n"
 "See the alsa documentation for information on alsa devices."
@@ -257,11 +257,11 @@ msgstr ""
 "xine stereo ses çıkışı için bu alsa aygıtını kullanacaktır.\n"
 "Alsa aygıtları hakkında daha fazla bilgi için alsa belgesine bakınız."
 
-#: src/audio_out/audio_alsa_out.c:1417
+#: src/audio_out/audio_alsa_out.c:1418
 msgid "device used for 4-channel output"
 msgstr "4-kanal çıktı için kullanılan aygıt"
 
-#: src/audio_out/audio_alsa_out.c:1418
+#: src/audio_out/audio_alsa_out.c:1419
 msgid ""
 "xine will use this alsa device to output 4 channel (4.0) surround sound.\n"
 "See the alsa documentation for information on alsa devices."
@@ -270,11 +270,11 @@ msgstr ""
 "kullanacaktır.\n"
 "Alsa aygıtları hakkında daha fazla bilgi için alsa belgesine bakınız."
 
-#: src/audio_out/audio_alsa_out.c:1427 src/audio_out/audio_alsa_out.c:1437
+#: src/audio_out/audio_alsa_out.c:1428 src/audio_out/audio_alsa_out.c:1438
 msgid "device used for 5.1-channel output"
 msgstr "5.1-kanal çıktı için kullanılan aygıt"
 
-#: src/audio_out/audio_alsa_out.c:1428
+#: src/audio_out/audio_alsa_out.c:1429
 msgid ""
 "xine will use this alsa device to output 5 channel plus LFE (5.1) surround "
 "sound.\n"
@@ -284,7 +284,7 @@ msgstr ""
 "kullanacaktır.\n"
 "Alsa aygıtları hakkında daha fazla bilgi için alsa belgesine bakınız."
 
-#: src/audio_out/audio_alsa_out.c:1438
+#: src/audio_out/audio_alsa_out.c:1439
 msgid ""
 "xine will use this alsa device to output undecoded digital surround sound. "
 "This can be used be external surround decoders.\n"
@@ -294,90 +294,90 @@ msgstr ""
 "kullanacaktır.\n"
 "Alsa aygıtları hakkında daha fazla bilgi için alsa belgesine bakınız."
 
-#: src/audio_out/audio_alsa_out.c:1458
+#: src/audio_out/audio_alsa_out.c:1459
 #, c-format
 msgid "snd_pcm_open() failed:%d:%s\n"
 msgstr "snd_pcm_open() başarısız oldu:%d:%s\n"
 
-#: src/audio_out/audio_alsa_out.c:1460
+#: src/audio_out/audio_alsa_out.c:1461
 #, c-format
 msgid ">>> Check if another program already uses PCM <<<\n"
 msgstr ""
 ">>>Başka bir uygulamanın PCM'yi kullanıp kullanmadığını kontrol edin<<<\n"
 
-#: src/audio_out/audio_alsa_out.c:1494
+#: src/audio_out/audio_alsa_out.c:1495
 msgid "audio_alsa_out : supported modes are"
 msgstr "audio_alsa_out : desteklenen kipler"
 
-#: src/audio_out/audio_alsa_out.c:1498
+#: src/audio_out/audio_alsa_out.c:1499
 msgid " 8bit"
 msgstr " 8bit"
 
-#: src/audio_out/audio_alsa_out.c:1503
+#: src/audio_out/audio_alsa_out.c:1504
 msgid " 16bit"
 msgstr " 16bit"
 
-#: src/audio_out/audio_alsa_out.c:1507
+#: src/audio_out/audio_alsa_out.c:1508
 msgid " 24bit"
 msgstr " 24bit"
 
-#: src/audio_out/audio_alsa_out.c:1511
+#: src/audio_out/audio_alsa_out.c:1512
 msgid " 32bit"
 msgstr " 32bit"
 
-#: src/audio_out/audio_alsa_out.c:1524 src/audio_out/audio_oss_out.c:921
+#: src/audio_out/audio_alsa_out.c:1525 src/audio_out/audio_oss_out.c:921
 msgid " mono"
 msgstr " mono"
 
-#: src/audio_out/audio_alsa_out.c:1528 src/audio_out/audio_oss_out.c:927
+#: src/audio_out/audio_alsa_out.c:1529 src/audio_out/audio_oss_out.c:927
 msgid " stereo"
 msgstr " stereo"
 
-#: src/audio_out/audio_alsa_out.c:1533 src/audio_out/audio_oss_out.c:934
+#: src/audio_out/audio_alsa_out.c:1534 src/audio_out/audio_oss_out.c:934
 msgid " 4-channel"
 msgstr " 4-kanal"
 
-#: src/audio_out/audio_alsa_out.c:1536 src/audio_out/audio_oss_out.c:937
+#: src/audio_out/audio_alsa_out.c:1537 src/audio_out/audio_oss_out.c:937
 msgid " (4-channel not enabled in xine config)"
 msgstr " (4-kanal xine yapılandırmasında etkinleştirilmemiş)"
 
-#: src/audio_out/audio_alsa_out.c:1541
+#: src/audio_out/audio_alsa_out.c:1542
 msgid " 4.1-channel"
 msgstr " 4.1-kanal"
 
-#: src/audio_out/audio_alsa_out.c:1544
+#: src/audio_out/audio_alsa_out.c:1545
 msgid " (4.1-channel not enabled in xine config)"
 msgstr " (4.1-kanal xine yapılandırmasında etkinleştirilmemiş)"
 
-#: src/audio_out/audio_alsa_out.c:1549 src/audio_out/audio_oss_out.c:944
+#: src/audio_out/audio_alsa_out.c:1550 src/audio_out/audio_oss_out.c:944
 msgid " 5-channel"
 msgstr " 5-kanal"
 
-#: src/audio_out/audio_alsa_out.c:1552 src/audio_out/audio_oss_out.c:947
+#: src/audio_out/audio_alsa_out.c:1553 src/audio_out/audio_oss_out.c:947
 msgid " (5-channel not enabled in xine config)"
 msgstr " (5-kanal xine yapılandırmasında etkinleştirilmemiş)"
 
-#: src/audio_out/audio_alsa_out.c:1557 src/audio_out/audio_oss_out.c:954
+#: src/audio_out/audio_alsa_out.c:1558 src/audio_out/audio_oss_out.c:954
 msgid " 5.1-channel"
 msgstr " 5.1-kanal"
 
-#: src/audio_out/audio_alsa_out.c:1560 src/audio_out/audio_oss_out.c:957
+#: src/audio_out/audio_alsa_out.c:1561 src/audio_out/audio_oss_out.c:957
 msgid " (5.1-channel not enabled in xine config)"
 msgstr " (5.1-kanal xine yapılandırmasında etkinleştirilmemiş)"
 
-#: src/audio_out/audio_alsa_out.c:1583
+#: src/audio_out/audio_alsa_out.c:1584
 msgid " a/52 and DTS pass-through"
 msgstr " a/52 and DTS pass-through"
 
-#: src/audio_out/audio_alsa_out.c:1586
+#: src/audio_out/audio_alsa_out.c:1587
 msgid " (a/52 and DTS pass-through not enabled in xine config)"
 msgstr " (a/52 and DTS pass-through xine yapılandırmasında etkinleştirilmemiş)"
 
-#: src/audio_out/audio_alsa_out.c:1596
+#: src/audio_out/audio_alsa_out.c:1597
 msgid "alsa mixer device"
 msgstr "alsa karıştırıcı aygıtı"
 
-#: src/audio_out/audio_alsa_out.c:1597
+#: src/audio_out/audio_alsa_out.c:1598
 msgid ""
 "xine will use this alsa mixer device to change the volume.\n"
 "See the alsa documentation for information on alsa devices."
@@ -385,7 +385,7 @@ msgstr ""
 "xine ses gürlüğünü değiştirmek bu alsa karıştırıcısını  kullanacaktır.\n"
 "Alsa aygıtları hakkında daha fazla bilgi için alsa belgesine bakınız."
 
-#: src/audio_out/audio_alsa_out.c:1675
+#: src/audio_out/audio_alsa_out.c:1676
 msgid "xine audio output plugin using alsa-compliant audio devices/drivers"
 msgstr "xine ses çıkışı eklentisi alsa uyumlu aygıtları/sürücüleri kullanıyor"
 
@@ -909,8 +909,8 @@ msgstr ""
 #, c-format
 msgid "audio_sun_out: audio ioctl on device %s failed: %s\n"
 msgstr ""
-"audio_sun_out: %s aygıtının ses ioctl (Giriş/Çıkış Denetimi) başarılamadı: %"
-"s\n"
+"audio_sun_out: %s aygıtının ses ioctl (Giriş/Çıkış Denetimi) başarılamadı: "
+"%s\n"
 
 #: src/audio_out/audio_sun_out.c:1023
 msgid "xine audio output plugin using sun-compliant audio devices/drivers"
@@ -1198,26 +1198,26 @@ msgstr "Ortam akışı şifrelidir"
 msgid "ASF demux plugin"
 msgstr ""
 
-#: src/demuxers/demux_avi.c:531 src/demuxers/demux_avi.c:645
+#: src/demuxers/demux_avi.c:530 src/demuxers/demux_avi.c:644
 msgid "Restoring index..."
 msgstr "İndeks Yeniden Yükleniyor..."
 
-#: src/demuxers/demux_avi.c:631 src/demuxers/demux_avi.c:1699
+#: src/demuxers/demux_avi.c:630 src/demuxers/demux_avi.c:1693
 #, c-format
 msgid "demux_avi: invalid avi chunk \"%c%c%c%c\" at pos %<PRIdMAX>\n"
 msgstr "demux_avi: geçersiz avi yığını \"%c%c%c%c\" at pos %<PRIdMAX>\n"
 
-#: src/demuxers/demux_avi.c:823
+#: src/demuxers/demux_avi.c:822
 #, c-format
 msgid "demux_avi: avi index is broken\n"
 msgstr "demux_avi: avi indeksi bozuk\n"
 
-#: src/demuxers/demux_avi.c:831
+#: src/demuxers/demux_avi.c:830
 #, c-format
 msgid "demux_avi: failed to seek to the next chunk (pos %<PRIdMAX>)\n"
 msgstr "demux_avi: sonraki yığın bulunamadı (konum %<PRIdMAX>)\n"
 
-#: src/demuxers/demux_avi.c:2332
+#: src/demuxers/demux_avi.c:2326
 msgid "AVI/RIFF demux plugin"
 msgstr ""
 
@@ -1235,29 +1235,29 @@ msgstr "tanınmayan FILM yığını\n"
 msgid "FILM (CPK) demux plugin"
 msgstr ""
 
-#: src/demuxers/demux_flv.c:201
+#: src/demuxers/demux_flv.c:198
 #, c-format
 msgid "unsupported FLV version (%d).\n"
 msgstr "desteklenmeyen FLV sürümü (%d).\n"
 
-#: src/demuxers/demux_flv.c:208
+#: src/demuxers/demux_flv.c:205
 #, c-format
 msgid "neither video nor audio stream in this file.\n"
 msgstr "bu dosya içerisinde ses ya da görüntü akışı yok.\n"
 
-#: src/demuxers/demux_flv.c:846
+#: src/demuxers/demux_flv.c:840
 #, c-format
 msgid "demux_flv: Not using broken seek index.\n"
 msgstr ""
 
-#: src/demuxers/demux_flv.c:852
+#: src/demuxers/demux_flv.c:846
 #, c-format
 msgid ""
 "demux_flv: This file is non seekable. A/V lag may occur.\n"
 "           Recommend fixing the file with some flvtool.\n"
 msgstr ""
 
-#: src/demuxers/demux_flv.c:1116
+#: src/demuxers/demux_flv.c:1110
 msgid "Flash Video file demux plugin"
 msgstr ""
 
@@ -4584,8 +4584,8 @@ msgid ""
 "video_out_fb: only packed truecolour/directcolour is supported (%d).\n"
 "     Check 'fbset -i' or try 'fbset -depth 16'.\n"
 msgstr ""
-"video_out_fb: sadece paketlenmiş  truecolor/directcolor desteklenmektedir (%"
-"d).\n"
+"video_out_fb: sadece paketlenmiş  truecolor/directcolor desteklenmektedir "
+"(%d).\n"
 "     Şu komutu 'fbset -i' veya 'fbset -depth 16' seçeneğini deneyin.\n"
 
 #: src/video_out/video_out_fb.c:803 src/video_out/video_out_vidix.c:1248
@@ -5167,17 +5167,17 @@ msgstr ""
 "linux çerçeve ara belleği için libvidix kullanan xine görüntü çıkışı "
 "eklentisi"
 
-#: src/video_out/video_out_xcbshm.c:178 src/video_out/video_out_xshm.c:237
+#: src/video_out/video_out_xcbshm.c:173 src/video_out/video_out_xshm.c:232
 #, c-format
 msgid "%s: %s: allocating image\n"
 msgstr ""
 
-#: src/video_out/video_out_xcbshm.c:180 src/video_out/video_out_xcbshm.c:190
-#: src/video_out/video_out_xcbshm.c:202 src/video_out/video_out_xcbxv.c:278
+#: src/video_out/video_out_xcbshm.c:175 src/video_out/video_out_xcbshm.c:185
+#: src/video_out/video_out_xcbshm.c:197 src/video_out/video_out_xcbxv.c:278
 #: src/video_out/video_out_xcbxv.c:288 src/video_out/video_out_xcbxv.c:298
-#: src/video_out/video_out_xcbxv.c:310 src/video_out/video_out_xshm.c:222
-#: src/video_out/video_out_xshm.c:239 src/video_out/video_out_xshm.c:250
-#: src/video_out/video_out_xshm.c:269 src/video_out/video_out_xv.c:306
+#: src/video_out/video_out_xcbxv.c:310 src/video_out/video_out_xshm.c:217
+#: src/video_out/video_out_xshm.c:234 src/video_out/video_out_xshm.c:245
+#: src/video_out/video_out_xshm.c:264 src/video_out/video_out_xv.c:306
 #: src/video_out/video_out_xv.c:333 src/video_out/video_out_xv.c:342
 #: src/video_out/video_out_xv.c:378 src/video_out/video_out_xxmc.c:643
 #: src/video_out/video_out_xxmc.c:654 src/video_out/video_out_xxmc.c:663
@@ -5186,19 +5186,19 @@ msgstr ""
 msgid "%s: => not using MIT Shared Memory extension.\n"
 msgstr ""
 
-#: src/video_out/video_out_xcbshm.c:188 src/video_out/video_out_xshm.c:248
+#: src/video_out/video_out_xcbshm.c:183 src/video_out/video_out_xshm.c:243
 #, c-format
 msgid "%s: shared memory error (address error) when allocating image \n"
 msgstr ""
 
-#: src/video_out/video_out_xcbshm.c:200 src/video_out/video_out_xcbxv.c:308
-#: src/video_out/video_out_xshm.c:267 src/video_out/video_out_xv.c:376
+#: src/video_out/video_out_xcbshm.c:195 src/video_out/video_out_xcbxv.c:308
+#: src/video_out/video_out_xshm.c:262 src/video_out/video_out_xv.c:376
 #: src/video_out/video_out_xxmc.c:697
 #, c-format
 msgid "%s: x11 error during shared memory XImage creation\n"
 msgstr ""
 
-#: src/video_out/video_out_xcbshm.c:1239 src/video_out/video_out_xshm.c:1292
+#: src/video_out/video_out_xcbshm.c:1212 src/video_out/video_out_xshm.c:1267
 #, c-format
 msgid ""
 "\n"
@@ -5213,27 +5213,17 @@ msgstr ""
 "16 bpp derinliği önerilir!\n"
 "\n"
 
-#: src/video_out/video_out_xcbshm.c:1252 src/video_out/video_out_xshm.c:1305
+#: src/video_out/video_out_xcbshm.c:1225 src/video_out/video_out_xshm.c:1280
 #, c-format
 msgid "%s: MIT shared memory extension not present on display.\n"
 msgstr "%s: MIT Paylaşılan Bellek uzantısı şu and ekranda değildir.\n"
 
-#: src/video_out/video_out_xcbshm.c:1351 src/video_out/video_out_xshm.c:1389
+#: src/video_out/video_out_xcbshm.c:1324 src/video_out/video_out_xshm.c:1364
 #, c-format
 msgid "%s: your video mode was not recognized, sorry :-(\n"
 msgstr "%s: görüntü kipiniz algılanamadı, üzgünüm :-(\n"
 
-#: src/video_out/video_out_xcbshm.c:1369 src/video_out/video_out_xshm.c:1409
-msgid "Skip high rate frames"
-msgstr ""
-
-#: src/video_out/video_out_xcbshm.c:1370 src/video_out/video_out_xshm.c:1410
-msgid ""
-"Skip every other frame when there are 40fps or more.\n"
-"You will probably not see a difference, and save CPU power.\n"
-msgstr ""
-
-#: src/video_out/video_out_xcbshm.c:1385 src/video_out/video_out_xshm.c:1442
+#: src/video_out/video_out_xcbshm.c:1350 src/video_out/video_out_xshm.c:1409
 msgid "xine video output plugin using the MIT X shared memory extension"
 msgstr "MIT X paylaşılan bellek uzantısını kullanan xine görüntü eklentisi"
 
@@ -5333,7 +5323,7 @@ msgstr ""
 msgid "%s: this adaptor supports the %s format.\n"
 msgstr ""
 
-#: src/video_out/video_out_xshm.c:220
+#: src/video_out/video_out_xshm.c:215
 #, c-format
 msgid "%s: shared memory error when allocating image\n"
 msgstr ""
@@ -5796,53 +5786,53 @@ msgstr ""
 msgid "%s: unknown audio format tag code %#x \"%s\"\n"
 msgstr ""
 
-#: src/xine-engine/configfile.c:957
+#: src/xine-engine/configfile.c:953
 #, c-format
 msgid "The current config file has been modified by a newer version of xine."
 msgstr ""
 "Şu anki yapılandırma dosyası xine'nin daha yeni bir uygulaması tarafından "
 "değiştirilmiş durumdadır."
 
-#: src/xine-engine/configfile.c:1010
+#: src/xine-engine/configfile.c:1006
 #, c-format
 msgid "Loaded configuration from file '%s'\n"
 msgstr ""
 
-#: src/xine-engine/configfile.c:1015
+#: src/xine-engine/configfile.c:1011
 #, c-format
 msgid "Failed to load configuration from file '%s': %s\n"
 msgstr ""
 
-#: src/xine-engine/configfile.c:1071
+#: src/xine-engine/configfile.c:1067
 #, c-format
 msgid "configfile: WARNING: backing up configfile to %s failed\n"
 msgstr ""
 "configfile: UYARI: configfile dosyasının şuraya  %s yedeklenmesi "
 "başarılamadı\n"
 
-#: src/xine-engine/configfile.c:1072
+#: src/xine-engine/configfile.c:1068
 #, c-format
 msgid "configfile: WARNING: your configuration will not be saved\n"
 msgstr "configfile: UYARI: yapılandırmanız kaydedilmeyecektir\n"
 
-#: src/xine-engine/configfile.c:1172
+#: src/xine-engine/configfile.c:1168
 #, c-format
 msgid "configfile: WARNING: writing configuration to %s failed\n"
 msgstr "configfile: UYARI: yapılandırmanın şuraya  %s yazılması başarılamadı\n"
 
-#: src/xine-engine/configfile.c:1173
+#: src/xine-engine/configfile.c:1169
 #, c-format
 msgid "configfile: WARNING: removing possibly broken config file %s\n"
 msgstr ""
 "configfile: UYARI: büyük ihtimaller bozulmuş olan yapılandırma dosyasını "
 "kaldırıyor %s\n"
 
-#: src/xine-engine/configfile.c:1174
+#: src/xine-engine/configfile.c:1170
 #, c-format
 msgid "configfile: WARNING: you should check the backup file %s\n"
 msgstr "configfile: UYARI: yedekleme dosyasını denetlemelisiniz %s\n"
 
-#: src/xine-engine/configfile.c:1636
+#: src/xine-engine/configfile.c:1631
 #, c-format
 msgid "configfile: entry '%s' mustn't be modified from MRL\n"
 msgstr "configfile: girdi '%s' MRL tarafından değiştirilmiş olmamalı\n"
@@ -6138,12 +6128,12 @@ msgstr "load_plugins: bilinmeyen içerik bulma yöntemi %d\n"
 msgid "load_plugins: using demuxer '%s'\n"
 msgstr "load_plugins: demuxer eklentisini kullanıyor '%s'\n"
 
-#: src/xine-engine/load_plugins.c:1942 src/xine-engine/load_plugins.c:1989
+#: src/xine-engine/load_plugins.c:1940 src/xine-engine/load_plugins.c:1987
 #, c-format
 msgid "load_plugins: failed to load audio output plugin <%s>\n"
 msgstr "load_plugins: ses çıkış eklentisini yüklemede hata <%s>\n"
 
-#: src/xine-engine/load_plugins.c:1992
+#: src/xine-engine/load_plugins.c:1990
 #, c-format
 msgid ""
 "load_plugins: audio output auto-probing didn't find any usable audio "
@@ -6152,7 +6142,7 @@ msgstr ""
 "load_plugins: ses çıktısı otomatik bulma işlemi kullanılabilir bir sürücü "
 "bulamadı.\n"
 
-#: src/xine-engine/load_plugins.c:2302
+#: src/xine-engine/load_plugins.c:2300
 #, c-format
 msgid ""
 "load_plugins: cannot unload plugin lib %s:\n"
@@ -6329,8 +6319,8 @@ msgid ""
 "video_out: throwing away image with pts %<PRId64> because it's too old "
 "(diff : %<PRId64>).\n"
 msgstr ""
-"video_out: resmi pts ile atıyor %<PRId64> çünkü çok eski (diff : %"
-"<PRId64>).\n"
+"video_out: resmi pts ile atıyor %<PRId64> çünkü çok eski (diff : "
+"%<PRId64>).\n"
 
 #: src/xine-engine/video_out.c:1202
 #, c-format
