@@ -1713,7 +1713,6 @@ static void ff_handle_mpeg12_buffer (ff_video_decoder_t *this, buf_element_t *bu
 
 static void ff_postprocess (ff_video_decoder_t *this, vo_frame_t *img)
 {
-#ifdef AV_BUFFER
   int qstride, qtype;
   int8_t *qtable;
 #if LIBAVUTIL_VERSION_MAJOR < 53
@@ -1722,7 +1721,6 @@ static void ff_postprocess (ff_video_decoder_t *this, vo_frame_t *img)
   qtable  = this->av_frame->qscale_table;
   qstride = this->av_frame->qstride;
   qtype   = this->av_frame->qscale_type;
-#endif
 #endif
   pp_postprocess ((const uint8_t **)this->av_frame->data, this->av_frame->linesize,
                   img->base, img->pitches, this->bih.biWidth, this->bih.biHeight,
