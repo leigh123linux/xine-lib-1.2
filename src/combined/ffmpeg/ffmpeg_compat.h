@@ -107,6 +107,13 @@
 #  define AVAUDIO 2
 #endif
 
+/* avcodec_encode_video(), av_packet_unref */
+#if LIBAVCODEC_VERSION_INT >= ((55<<16)|(25<<8)|100)
+#  define AVENCVIDEO 2
+#else
+#  define AVENCVIDEO 1
+#endif
+
 /* AVFrame.age */
 #if LIBAVCODEC_VERSION_INT >= 0x351C01 && LIBAVCODEC_VERSION_INT < 0x360000 // not sure about this - original condition was broken
 #  define AVFRAMEAGE 1
