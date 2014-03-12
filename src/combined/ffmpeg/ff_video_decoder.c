@@ -1711,16 +1711,23 @@ static void ff_handle_mpeg12_buffer (ff_video_decoder_t *this, buf_element_t *bu
   }
 }
 
-static void ff_postprocess (ff_video_decoder_t *this, vo_frame_t *img)
-{
+static void ff_postprocess (ff_video_decoder_t *this, vo_frame_t *img) {
   int qstride, qtype;
   int8_t *qtable;
-#if LIBAVUTIL_VERSION_MAJOR < 53
+#ifdef AV_BUFFER
+# if LIBAVUTIL_VERSION_MAJOR < 53
   qtable = av_frame_get_qp_table (this->av_frame, &qstride, &qtype);
-#else
+# else
+  /* Why should they keep these long deprecated fields, and remove
+    their safe accessor av_frame_get_qp_table () instead?? */
   qtable  = this->av_frame->qscale_table;
   qstride = this->av_frame->qstride;
   qtype   = this->av_frame->qscale_type;
+# endif
+#else
+  qtable  = this->av_frame->qscale_table;
+  qstride = this->av_frame->qstride;
+  qtype   = 0;
 #endif
   pp_postprocess ((const uint8_t **)this->av_frame->data, this->av_frame->linesize,
                   img->base, img->pitches, this->bih.biWidth, this->bih.biHeight,
