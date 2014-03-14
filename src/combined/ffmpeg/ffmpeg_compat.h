@@ -164,14 +164,16 @@
 #  define CODEC_ID_H263       AV_CODEC_ID_H263
 #  define CODEC_ID_H264       AV_CODEC_ID_H264
 #  define CODEC_ID_WMV3       AV_CODEC_ID_WMV3
+/* video_out/video_out_vaapi, ff_video_decoder */
 #  define CODEC_ID_VC1        AV_CODEC_ID_VC1
+/* ff_video_decoder */
 #  define CODEC_ID_SVQ3       AV_CODEC_ID_SVQ3
 #  define CODEC_ID_MSMPEG4V1  AV_CODEC_ID_MSMPEG4V1
 #  define CODEC_ID_MSMPEG4V2  AV_CODEC_ID_MSMPEG4V2
 #  define CODEC_ID_MSMPEG4V3  AV_CODEC_ID_MSMPEG4V3
 #  define CODEC_ID_WMV1       AV_CODEC_ID_WMV1
 #  define CODEC_ID_WMV2       AV_CODEC_ID_WMV2
-/* ff_*_decoder is already handled by mkcodeclists.pl */
+/* ff_*_decoder mapping is already handled by mkcodeclists.pl */
 #endif
 
 #ifndef AVCODEC_MAX_AUDIO_FRAME_SIZE
