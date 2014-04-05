@@ -713,14 +713,15 @@ static void vdpau_overlay_end (vo_driver_t *this_gen, vo_frame_t *frame_gen)
 
     VdpStatus st;
     uint32_t pitch = ovl->width * sizeof(uint32_t);
+    const void * const ppixmap = pixmap;
     if (is_argb) {
       lprintf("overlay[%d] put %s %d,%d:%d,%d\n", i, ovl->use_dirty_rect ? "dirty argb": "argb", put_rect.x0, put_rect.y0, put_rect.x1, put_rect.y1);
-      st = vdp_output_surface_put_bits(ovl->render_surface.surface, &pixmap, &pitch, &put_rect);
+      st = vdp_output_surface_put_bits(ovl->render_surface.surface, &ppixmap, &pitch, &put_rect);
       if ( st != VDP_STATUS_OK )
           fprintf(stderr, "vdpau_overlay_end: vdp_output_surface_put_bits_native failed : %s\n", vdp_get_error_string(st));
     } else {
       lprintf("overlay[%d] put ycbcr %d,%d:%d,%d\n", i, put_rect.x0, put_rect.y0, put_rect.x1, put_rect.y1);
-      st = vdp_output_surface_put_bits_ycbcr(ovl->render_surface.surface, VDP_YCBCR_FORMAT_V8U8Y8A8, &pixmap, &pitch, &put_rect, NULL);
+      st = vdp_output_surface_put_bits_ycbcr(ovl->render_surface.surface, VDP_YCBCR_FORMAT_V8U8Y8A8, &ppixmap, &pitch, &put_rect, NULL);
       if ( st != VDP_STATUS_OK )
         fprintf(stderr, "vdpau_overlay_end: vdp_output_surface_put_bits_ycbcr failed : %s\n", vdp_get_error_string(st));
     }
@@ -976,7 +977,8 @@ static void vdpau_process_overlays (vdpau_driver_t *this)
     }
 
     uint32_t pitch = 0;
-    VdpStatus st = vdp_output_surface_put_bits(this->ovl_layer_surface, &this->ovl_pixmap, &pitch, &this->ovl_src_rect);
+    const void * const prgba = this->ovl_pixmap;
+    VdpStatus st = vdp_output_surface_put_bits(this->ovl_layer_surface, &prgba, &pitch, &this->ovl_src_rect);
     if (st != VDP_STATUS_OK)
       fprintf(stderr, "vdpau_process_overlays: vdp_output_surface_put_bits (clear) failed : %s\n", vdp_get_error_string(st));
   }
@@ -996,7 +998,7 @@ static void vdpau_process_overlays (vdpau_driver_t *this)
       lprintf("overlay[%d] render %d,%d:%d,%d -> %d,%d:%d,%d\n",
                       i, ovl_rects[i].x0, ovl_rects[i].y0, ovl_rects[i].x1, ovl_rects[i].y1, render_rect.x0, render_rect.y0, render_rect.x1, render_rect.y1);
 
-      VdpOutputSurfaceRenderBlendState *bs = (i > first_visible) ? &blend: NULL;
+      const VdpOutputSurfaceRenderBlendState *bs = (i > first_visible) ? &blend: NULL;
       VdpStatus st = vdp_output_surface_render_output_surface(this->ovl_layer_surface, &render_rect, ovl->render_surface.surface, &ovl_src_rects[i], 0, bs, 0 );
       if (st != VDP_STATUS_OK)
         fprintf(stderr, "vdpau_process_overlays: vdp_output_surface_render_output_surface failed : %s\n", vdp_get_error_string(st));
@@ -1168,11 +1170,12 @@ static void vdpau_duplicate_frame_data (vo_frame_t *this_gen, vo_frame_t *origin
     format = VDP_YCBCR_FORMAT_YUYV;
   }
 
-  st = vdp_video_surface_getbits_ycbcr(orig->vdpau_accel_data.surface, format, this->vo_frame.base, this->vo_frame.pitches);
+  void * const ptemp[] = {this->vo_frame.base[0], this->vo_frame.base[1], this->vo_frame.base[2]};
+  st = vdp_video_surface_getbits_ycbcr(orig->vdpau_accel_data.surface, format, ptemp, this->vo_frame.pitches);
   if (st != VDP_STATUS_OK)
     fprintf(stderr, "vo_vdpau: failed to get surface bits !! %s\n", vdp_get_error_string(st));
 
-  st = vdp_video_surface_putbits_ycbcr(this->vdpau_accel_data.surface, format, this->vo_frame.base, this->vo_frame.pitches);
+  st = vdp_video_surface_putbits_ycbcr(this->vdpau_accel_data.surface, format, (const void * const *)ptemp, this->vo_frame.pitches);
   if (st != VDP_STATUS_OK)
     fprintf(stderr, "vo_vdpau: failed to put surface bits !! %s\n", vdp_get_error_string(st));
 
@@ -1290,8 +1293,8 @@ static void vdpau_update_frame_format (vo_driver_t *this_gen, vo_frame_t *frame_
       uint8_t *cb = malloc( frame->width * 2 );
       memset( cb, 127, frame->width * 2 );
       uint32_t pitches[] = { 0 };
-      void* data[] = { cb };
-      VdpStatus st = vdp_video_surface_putbits_ycbcr( frame->vdpau_accel_data.surface, VDP_YCBCR_FORMAT_YUYV, &data, pitches );
+      const void* const data[] = { cb };
+      VdpStatus st = vdp_video_surface_putbits_ycbcr( frame->vdpau_accel_data.surface, VDP_YCBCR_FORMAT_YUYV, data, pitches );
       if ( st!=VDP_STATUS_OK )
         fprintf(stderr, "vo_vdpau: failed to clear surface: %s\n", vdp_get_error_string( st ) );
       free( cb );
@@ -1300,8 +1303,8 @@ static void vdpau_update_frame_format (vo_driver_t *this_gen, vo_frame_t *frame_
       uint8_t *cb = malloc( frame->width );
       memset( cb, 127, frame->width );
       uint32_t pitches[] = { 0, 0, 0 };
-      void* data[] = { cb, cb, cb };
-      VdpStatus st = vdp_video_surface_putbits_ycbcr( frame->vdpau_accel_data.surface, VDP_YCBCR_FORMAT_YV12, &data, pitches );
+      const void* const data[] = { cb, cb, cb };
+      VdpStatus st = vdp_video_surface_putbits_ycbcr( frame->vdpau_accel_data.surface, VDP_YCBCR_FORMAT_YV12, data, pitches );
       if ( st!=VDP_STATUS_OK )
         fprintf(stderr, "vo_vdpau: failed to clear surface: %s\n", vdp_get_error_string( st ) );
       free( cb );
@@ -1825,6 +1828,7 @@ static void vdpau_grab_current_output_surface (vdpau_driver_t *this, int64_t vpt
     }
 
     uint32_t pitches = frame->width * sizeof(uint32_t);
+    void * const prgba = frame->rgba;
     VdpRect src_rect = { frame->grab_frame.crop_left, frame->grab_frame.crop_top, width+frame->grab_frame.crop_left, height+frame->grab_frame.crop_top };
     if (frame->width != width || frame->height != height) {
       st = vdpau_get_output_surface(this, frame->width, frame->height, &frame->render_surface);
@@ -1834,7 +1838,7 @@ static void vdpau_grab_current_output_surface (vdpau_driver_t *this, int64_t vpt
         VdpRect dst_rect = { 0, 0, frame->width, frame->height };
         st = vdp_output_surface_render_output_surface(frame->render_surface.surface, &dst_rect, grab_surface, &src_rect, NULL, NULL, VDP_OUTPUT_SURFACE_RENDER_ROTATE_0);
         if (st == VDP_STATUS_OK) {
-          st = vdp_output_surface_get_bits(frame->render_surface.surface, &dst_rect, &frame->rgba, &pitches);
+          st = vdp_output_surface_get_bits(frame->render_surface.surface, &dst_rect, &prgba, &pitches);
           if (st != VDP_STATUS_OK)
             fprintf(stderr, "vo_vdpau: Can't get output surface bits for raw frame grabbing: %s\n", vdp_get_error_string (st));
         } else
@@ -1843,7 +1847,7 @@ static void vdpau_grab_current_output_surface (vdpau_driver_t *this, int64_t vpt
         vdpau_free_output_surface(this, &frame->render_surface);
       }
     } else {
-      st = vdp_output_surface_get_bits(grab_surface, &src_rect, &frame->rgba, &pitches);
+      st = vdp_output_surface_get_bits(grab_surface, &src_rect, &prgba, &pitches);
       if (st != VDP_STATUS_OK)
         fprintf(stderr, "vo_vdpau: Can't get output surface bits for raw frame grabbing: %s\n", vdp_get_error_string (st));
     }
@@ -1908,14 +1912,14 @@ static void vdpau_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen)
     }
     /* FIXME: have to swap U and V planes to get correct colors !! */
     uint32_t pitches[] = { frame->vo_frame.pitches[0], frame->vo_frame.pitches[2], frame->vo_frame.pitches[1] };
-    void* data[] = { frame->vo_frame.base[0], frame->vo_frame.base[2], frame->vo_frame.base[1] };
+    const void* const data[] = { frame->vo_frame.base[0], frame->vo_frame.base[2], frame->vo_frame.base[1] };
     if ( frame->format==XINE_IMGFMT_YV12 ) {
-      st = vdp_video_surface_putbits_ycbcr( this->soft_surface, VDP_YCBCR_FORMAT_YV12, &data, pitches );
+      st = vdp_video_surface_putbits_ycbcr( this->soft_surface, VDP_YCBCR_FORMAT_YV12, data, pitches );
       if ( st != VDP_STATUS_OK )
         fprintf(stderr, "vo_vdpau: vdp_video_surface_putbits_ycbcr YV12 error : %s\n", vdp_get_error_string( st ) );
     }
     else {
-      st = vdp_video_surface_putbits_ycbcr( this->soft_surface, VDP_YCBCR_FORMAT_YUYV, &data, pitches );
+      st = vdp_video_surface_putbits_ycbcr( this->soft_surface, VDP_YCBCR_FORMAT_YUYV, data, pitches );
       if ( st != VDP_STATUS_OK )
         fprintf(stderr, "vo_vdpau: vdp_video_surface_putbits_ycbcr YUY2 error : %s\n", vdp_get_error_string( st ) );
     }
