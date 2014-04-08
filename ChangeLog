@@ -1,4 +1,4 @@
-xine-lib (1.2.5) 201?-??-??
+xine-lib (1.2.5) 2014-04-08
   * Update german translation.
   * Add bass downmix support to AC3 decoder.
   * Add experimental YCgCo colorspace support.
