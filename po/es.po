@@ -10,7 +10,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: xine-lib.hg\n"
 "Report-Msgid-Bugs-To: xine-devel@lists.sourceforge.net\n"
-"POT-Creation-Date: 2014-03-11 13:39+0000\n"
+"POT-Creation-Date: 2014-04-08 15:25+0100\n"
 "PO-Revision-Date: 2008-04-02 01:05+0200\n"
 "Last-Translator: Carlos E. R. M. <carloser@users.sourceforge.net>\n"
 "Language-Team: Spanish <none>\n"
@@ -1103,31 +1103,31 @@ msgstr ""
 "ffmpeg_video_dec: incrementando el tamaño de la memoria tampón a %d para "
 "evitar el desbordamiento.\n"
 
-#: src/combined/ffmpeg/ff_video_decoder.c:2521
+#: src/combined/ffmpeg/ff_video_decoder.c:2513
 #, c-format
 msgid "ffmpeg_video_dec: vaapi_mpeg_softdec %d\n"
 msgstr ""
 
-#: src/combined/ffmpeg/ff_video_decoder.c:2528
+#: src/combined/ffmpeg/ff_video_decoder.c:2520
 #, c-format
 msgid "ffmpeg_video_dec: VAAPI Enabled in config.\n"
 msgstr ""
 
-#: src/combined/ffmpeg/ff_video_decoder.c:2531
-#: src/combined/ffmpeg/ff_video_decoder.c:2536
+#: src/combined/ffmpeg/ff_video_decoder.c:2523
+#: src/combined/ffmpeg/ff_video_decoder.c:2528
 #, c-format
 msgid "ffmpeg_video_dec: VAAPI Enabled disabled by driver.\n"
 msgstr ""
 
-#: src/combined/ffmpeg/ff_video_decoder.c:2552
+#: src/combined/ffmpeg/ff_video_decoder.c:2544
 msgid "ffmpeg based video decoder plugin"
 msgstr "complemento decodificador de vídeo basado en ffmpeg"
 
-#: src/combined/ffmpeg/ff_video_decoder.c:2564
+#: src/combined/ffmpeg/ff_video_decoder.c:2556
 msgid "MPEG-4 postprocessing quality"
 msgstr "calidad de postprocesado MPEG-4"
 
-#: src/combined/ffmpeg/ff_video_decoder.c:2565
+#: src/combined/ffmpeg/ff_video_decoder.c:2557
 msgid ""
 "You can adjust the amount of post processing applied to MPEG-4 video.\n"
 "Higher values result in better quality, but need more CPU. Lower values may "
@@ -1141,11 +1141,11 @@ msgstr ""
 "bloque. Para contenido de alta calidad, demasiado postprocesado puede de "
 "hecho hacer la imagen peor emborronándola demasiado."
 
-#: src/combined/ffmpeg/ff_video_decoder.c:2573
+#: src/combined/ffmpeg/ff_video_decoder.c:2565
 msgid "FFmpeg video decoding thread count"
 msgstr "Conteo de hilos decodificando vídeo FFmpeg"
 
-#: src/combined/ffmpeg/ff_video_decoder.c:2574
+#: src/combined/ffmpeg/ff_video_decoder.c:2566
 msgid ""
 "You can adjust the number of video decoding threads which FFmpeg may use.\n"
 "Higher values should speed up decoding but it depends on the codec used "
@@ -1159,12 +1159,12 @@ msgstr ""
 "decodificador por cada CPU lógica (típicamente de 1 a 4). Un cambio hará "
 "efecto cuando se reproduzca el siguiente flujo."
 
-#: src/combined/ffmpeg/ff_video_decoder.c:2583
+#: src/combined/ffmpeg/ff_video_decoder.c:2575
 msgid "Skip loop filter"
 msgstr "Saltarse filtro de bucle"
 
 # Cer "saltar" por"skip" suena raro.
-#: src/combined/ffmpeg/ff_video_decoder.c:2584
+#: src/combined/ffmpeg/ff_video_decoder.c:2576
 msgid ""
 "You can control for which frames the loop filter shall be skipped after "
 "decoding.\n"
@@ -1181,11 +1181,11 @@ msgstr ""
 "manos de la implementación.\n"
 "Un cambio de este ajuste tendrá efecto a la reproducción de siguiente flujo."
 
-#: src/combined/ffmpeg/ff_video_decoder.c:2593
+#: src/combined/ffmpeg/ff_video_decoder.c:2585
 msgid "Choose speed over specification compliance"
 msgstr "Elegir velocidad en vez de conformidad con la especificación"
 
-#: src/combined/ffmpeg/ff_video_decoder.c:2594
+#: src/combined/ffmpeg/ff_video_decoder.c:2586
 msgid ""
 "You may want to allow speed cheats which violate codec specification.\n"
 "Cheating may speed up decoding but can also lead to decoding artefacts.\n"
@@ -1197,29 +1197,29 @@ msgstr ""
 "artefactos de decodificación.\n"
 "Un cambio de este ajuste tendrá efecto a la reproducción de siguiente flujo."
 
-#: src/combined/ffmpeg/ff_video_decoder.c:2600
+#: src/combined/ffmpeg/ff_video_decoder.c:2592
 msgid "Enable direct rendering"
 msgstr "activar renderizado directo"
 
-#: src/combined/ffmpeg/ff_video_decoder.c:2601
+#: src/combined/ffmpeg/ff_video_decoder.c:2593
 msgid ""
 "Disable direct rendering if you are experiencing lock-ups with\n"
 "streams with lot of reference frames."
 msgstr ""
 
-#: src/combined/ffmpeg/ff_video_decoder.c:2607
+#: src/combined/ffmpeg/ff_video_decoder.c:2599
 msgid "VAAPI Mpeg2 softdecoding"
 msgstr ""
 
-#: src/combined/ffmpeg/ff_video_decoder.c:2608
+#: src/combined/ffmpeg/ff_video_decoder.c:2600
 msgid "If the machine freezes on mpeg2 decoding use mpeg2 software decoding."
 msgstr ""
 
-#: src/combined/ffmpeg/ff_video_decoder.c:2612
+#: src/combined/ffmpeg/ff_video_decoder.c:2604
 msgid "Enable VAAPI"
 msgstr ""
 
-#: src/combined/ffmpeg/ff_video_decoder.c:2613
+#: src/combined/ffmpeg/ff_video_decoder.c:2605
 msgid "Enable or disable usage of vaapi"
 msgstr ""
 
@@ -1738,11 +1738,11 @@ msgstr ""
 "usará el temporizador del sistema unix. Valores mayores de 5 fuerzan a usar "
 "el reloj interno del DXR3's como fuente de sincronismo."
 
-#: src/dxr3/ffmpeg_encoder.c:173
+#: src/dxr3/ffmpeg_encoder.c:177
 msgid "libavcodec mpeg output bitrate (kbit/s)"
 msgstr "tasa de bits salida mpeg de libavcodec (kbit/s)"
 
-#: src/dxr3/ffmpeg_encoder.c:174
+#: src/dxr3/ffmpeg_encoder.c:178
 msgid ""
 "The bitrate the libavcodec mpeg encoder should use for DXR3's encoding mode. "
 "Higher values will increase quality and CPU usage.\n"
@@ -1754,11 +1754,11 @@ msgstr ""
 "Este ajuste sólo se considera cuando el modo de calidad constante está "
 "desactivado."
 
-#: src/dxr3/ffmpeg_encoder.c:181
+#: src/dxr3/ffmpeg_encoder.c:185
 msgid "constant quality mode"
 msgstr "modo de calidad constante"
 
-#: src/dxr3/ffmpeg_encoder.c:182
+#: src/dxr3/ffmpeg_encoder.c:186
 msgid ""
 "When enabled, libavcodec will use a constant quality mode by dynamically "
 "compressing the images based on their complexity. When disabled, libavcodec "
@@ -1768,20 +1768,20 @@ msgstr ""
 "dinámicamente comprimiendo las imágenes basado en su complejidad. Cuando se "
 "desactiva, libavcodec usará el modo de tasa de bits constante."
 
-#: src/dxr3/ffmpeg_encoder.c:189
+#: src/dxr3/ffmpeg_encoder.c:193
 msgid "minimum compression"
 msgstr "compresión mínima"
 
-#: src/dxr3/ffmpeg_encoder.c:190
+#: src/dxr3/ffmpeg_encoder.c:194
 msgid "The minimum compression to apply to an image in constant quality mode."
 msgstr ""
 "La mínima compresión a aplicar a una imagen en el modo de calidad constante."
 
-#: src/dxr3/ffmpeg_encoder.c:195
+#: src/dxr3/ffmpeg_encoder.c:199
 msgid "maximum quantizer"
 msgstr "cuantificador máximo"
 
-#: src/dxr3/ffmpeg_encoder.c:196
+#: src/dxr3/ffmpeg_encoder.c:200
 msgid "The maximum compression to apply to an image in constant quality mode."
 msgstr ""
 "La máxima compresión a aplicar a una imagen en modo de calidad constante."
@@ -5133,12 +5133,12 @@ msgid "xine video output plugin using the Libstk Surface Set-top Toolkit"
 msgstr ""
 "complemento de vídeo de xine usando el \"Libstk Surface Set-top Toolkit\""
 
-#: src/video_out/video_out_vaapi.c:3824 src/video_out/video_out_vdpau.c:3165
+#: src/video_out/video_out_vaapi.c:3824 src/video_out/video_out_vdpau.c:3169
 #: src/xine-engine/video_out.c:2305
 msgid "default number of video frames"
 msgstr "número por defecto de marcos de vídeo"
 
-#: src/video_out/video_out_vaapi.c:3825 src/video_out/video_out_vdpau.c:3166
+#: src/video_out/video_out_vaapi.c:3825 src/video_out/video_out_vdpau.c:3170
 #: src/xine-engine/video_out.c:2306
 msgid ""
 "The default number of video frames to request from xine video out driver. "
@@ -5192,77 +5192,77 @@ msgstr ""
 msgid "xine video output plugin using the MIT X video extension"
 msgstr "complemento de salida de vídeo usando la extensión MIT X vídeo"
 
-#: src/video_out/video_out_vdpau.c:2964
+#: src/video_out/video_out_vdpau.c:2968
 msgid "maximum number of output surfaces buffered for reuse"
 msgstr ""
 
-#: src/video_out/video_out_vdpau.c:2965
+#: src/video_out/video_out_vdpau.c:2969
 msgid "The maximum number of video output surfaces buffered for reuse"
 msgstr ""
 
-#: src/video_out/video_out_vdpau.c:2980
+#: src/video_out/video_out_vdpau.c:2984
 msgid "default length of display queue"
 msgstr ""
 
-#: src/video_out/video_out_vdpau.c:2981
+#: src/video_out/video_out_vdpau.c:2985
 msgid ""
 "The default number of video output surfaces to create for the display queue"
 msgstr ""
 
-#: src/video_out/video_out_vdpau.c:3108
+#: src/video_out/video_out_vdpau.c:3112
 msgid "vdpau: Scaling Quality"
 msgstr ""
 
-#: src/video_out/video_out_vdpau.c:3109
+#: src/video_out/video_out_vdpau.c:3113
 msgid "Scaling Quality Level"
 msgstr ""
 
-#: src/video_out/video_out_vdpau.c:3114
+#: src/video_out/video_out_vdpau.c:3118
 msgid "vdpau: HD deinterlace method"
 msgstr ""
 
-#: src/video_out/video_out_vdpau.c:3119
+#: src/video_out/video_out_vdpau.c:3123
 msgid "vdpau: SD deinterlace method"
 msgstr ""
 
-#: src/video_out/video_out_vdpau.c:3125
+#: src/video_out/video_out_vdpau.c:3129
 msgid "vdpau: Try to recreate progressive frames from pulldown material"
 msgstr ""
 
-#: src/video_out/video_out_vdpau.c:3126
+#: src/video_out/video_out_vdpau.c:3130
 msgid ""
 "Enable this to detect bad-flagged progressive content to which\n"
 "a 2:2 or 3:2 pulldown was applied.\n"
 "\n"
 msgstr ""
 
-#: src/video_out/video_out_vdpau.c:3132
+#: src/video_out/video_out_vdpau.c:3136
 msgid "vdpau: disable deinterlacing when progressive_frame flag is set"
 msgstr "vdpau: No usar desentrelazado para cuadros progresivos."
 
-#: src/video_out/video_out_vdpau.c:3133
+#: src/video_out/video_out_vdpau.c:3137
 msgid ""
 "Set to true if you want to trust the progressive_frame stream's flag.\n"
 "This flag is not always reliable.\n"
 "\n"
 msgstr ""
 
-#: src/video_out/video_out_vdpau.c:3139
+#: src/video_out/video_out_vdpau.c:3143
 msgid "vdpau: disable advanced deinterlacers chroma filter"
 msgstr ""
 
-#: src/video_out/video_out_vdpau.c:3140
+#: src/video_out/video_out_vdpau.c:3144
 msgid ""
 "Setting to true may help if your video card isn't able to run advanced "
 "deinterlacers.\n"
 "\n"
 msgstr ""
 
-#: src/video_out/video_out_vdpau.c:3146
+#: src/video_out/video_out_vdpau.c:3150
 msgid "vdpau: color of none video area in output window"
 msgstr ""
 
-#: src/video_out/video_out_vdpau.c:3147
+#: src/video_out/video_out_vdpau.c:3151
 msgid ""
 "Displaying 4:3 images on 16:9 plasma TV sets lets the inactive pixels "
 "outside the video age slower than the pixels in the active area. Setting a "
@@ -5272,11 +5272,11 @@ msgid ""
 "\n"
 msgstr ""
 
-#: src/video_out/video_out_vdpau.c:3152
+#: src/video_out/video_out_vdpau.c:3156
 msgid "vdpau: restrict enabling video properties for SD video only"
 msgstr ""
 
-#: src/video_out/video_out_vdpau.c:3153
+#: src/video_out/video_out_vdpau.c:3157
 msgid ""
 "none\n"
 "No restrictions\n"
@@ -5291,7 +5291,7 @@ msgid ""
 "\n"
 msgstr ""
 
-#: src/video_out/video_out_vdpau.c:3261
+#: src/video_out/video_out_vdpau.c:3265
 msgid "xine video output plugin using VDPAU hardware acceleration"
 msgstr "complemento de xine de salida de vídeo usando VDPAU."
 
