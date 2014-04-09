@@ -1224,11 +1224,32 @@ static void vdpau_update_frame_format (vo_driver_t *this_gen, vo_frame_t *frame_
       frame->vo_frame.pitches[1] = 8*((width + 15) / 16);
       frame->vo_frame.pitches[2] = 8*((width + 15) / 16);
       frame->vo_frame.base[0] = av_mallocz (frame->vo_frame.pitches[0] * height);
-      frame->vo_frame.base[1] = av_mallocz (frame->vo_frame.pitches[1] * ((height+1)/2));
-      frame->vo_frame.base[2] = av_mallocz (frame->vo_frame.pitches[2] * ((height+1)/2));
+      frame->vo_frame.base[1] = av_malloc  (frame->vo_frame.pitches[1] * ((height+1)/2));
+      frame->vo_frame.base[2] = av_malloc  (frame->vo_frame.pitches[2] * ((height+1)/2));
+      if (!frame->vo_frame.base[0] || !frame->vo_frame.base[1] || !frame->vo_frame.base[2]) {
+        av_freep (&frame->vo_frame.base[0]);
+        av_freep (&frame->vo_frame.base[1]);
+        av_freep (&frame->vo_frame.base[2]);
+        frame->width = 0;
+        frame->vo_frame.width = 0; /* tell vo_get_frame () to retry later */
+        return;
+      }
+      memset (frame->vo_frame.base[1], 128, frame->vo_frame.pitches[1] * ((height+1)/2));
+      memset (frame->vo_frame.base[2], 128, frame->vo_frame.pitches[2] * ((height+1)/2));
     } else if (format == XINE_IMGFMT_YUY2){
       frame->vo_frame.pitches[0] = 8*((width + 3) / 4);
-      frame->vo_frame.base[0] = av_mallocz (frame->vo_frame.pitches[0] * height);
+      frame->vo_frame.base[0] = av_malloc (frame->vo_frame.pitches[0] * height);
+      if (frame->vo_frame.base[0]) {
+        const union {uint8_t bytes[4]; uint32_t word;} black = {{0, 128, 0, 128}};
+        uint32_t *q = (uint32_t *)frame->vo_frame.base[0];
+        int i;
+        for (i = frame->vo_frame.pitches[0] * height / 4; i > 0; i--)
+          *q++ = black.word;
+      } else {
+        frame->width = 0;
+        frame->vo_frame.width = 0; /* tell vo_get_frame () to retry later */
+        return;
+      }
     }
 
     if ( frame->vdpau_accel_data.vdp_runtime_nr != this->vdp_runtime_nr ) {
