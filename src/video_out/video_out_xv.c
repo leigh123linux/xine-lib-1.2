@@ -413,8 +413,13 @@ static XvImage *create_ximage (xv_driver_t *this, XShmSegmentInfo *shminfo,
       _x_abort();
     }
 
-    image = XvCreateImage (this->display, this->xv_port,
-			   xv_format, data, width, height);
+    if (data) {
+      image = XvCreateImage (this->display, this->xv_port, xv_format, data, width, height);
+      if (!image)
+        free (data);
+    } else
+      image = NULL;
+
     shminfo->shmaddr = 0;
   }
   return image;
@@ -472,10 +477,26 @@ static void xv_update_frame_format (vo_driver_t *this_gen,
     }
 
     frame->image = create_ximage (this, &frame->shminfo, width, height, format);
+    if (!frame->image) {
+      UNLOCK_DISPLAY (this);
+      frame->vo_frame.base[0] = NULL;
+      frame->vo_frame.base[1] = NULL;
+      frame->vo_frame.base[2] = NULL;
+      frame->req_width = 0;
+      frame->vo_frame.width = 0;
+      return;
+    }
 
     if(format == XINE_IMGFMT_YUY2) {
       frame->vo_frame.pitches[0] = frame->image->pitches[0];
       frame->vo_frame.base[0] = frame->image->data + frame->image->offsets[0];
+      {
+        const union {uint8_t bytes[4]; uint32_t word;} black = {{0, 128, 0, 128}};
+        uint32_t *q = (uint32_t *)frame->vo_frame.base[0];
+        int i;
+        for (i = frame->vo_frame.pitches[0] * frame->image->height / 4; i > 0; i--)
+          *q++ = black.word;
+      }
     }
     else {
       frame->vo_frame.pitches[0] = frame->image->pitches[0];
@@ -484,6 +505,9 @@ static void xv_update_frame_format (vo_driver_t *this_gen,
       frame->vo_frame.base[0] = frame->image->data + frame->image->offsets[0];
       frame->vo_frame.base[1] = frame->image->data + frame->image->offsets[2];
       frame->vo_frame.base[2] = frame->image->data + frame->image->offsets[1];
+      memset (frame->vo_frame.base[0], 0, frame->vo_frame.pitches[0] * frame->image->height);
+      memset (frame->vo_frame.base[1], 128, frame->vo_frame.pitches[1] * frame->image->height / 2);
+      memset (frame->vo_frame.base[2], 128, frame->vo_frame.pitches[2] * frame->image->height / 2);
     }
 
     /* allocated frame size may not match requested size */
