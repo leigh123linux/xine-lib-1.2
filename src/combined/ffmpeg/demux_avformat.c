@@ -319,6 +319,24 @@ static uint32_t audio_codec_lookup(avformat_demux_plugin_t *this, int id) {
   return 0;
 }
 
+/* copied from libavformat/utils.c (not available in recent libav API) */
+static AVProgram *_find_program_from_stream(AVFormatContext *ic, AVProgram *last, int s)
+{
+  int i, j;
+
+  for (i = 0; i < ic->nb_programs; i++) {
+    if (ic->programs[i] == last) {
+      last = NULL;
+    } else {
+      if (!last)
+        for (j = 0; j < ic->programs[i]->nb_stream_indexes; j++)
+          if (ic->programs[i]->stream_index[j] == s)
+            return ic->programs[i];
+    }
+  }
+  return NULL;
+}
+
 static int find_avformat_streams(avformat_demux_plugin_t *this) {
 
   AVProgram *p = NULL;
@@ -360,7 +378,7 @@ static int find_avformat_streams(avformat_demux_plugin_t *this) {
   /* get audio tracks of the program */
 
   if (this->video_stream_idx >= 0) {
-    p = av_find_program_from_stream(this->fmt_ctx, NULL, this->video_stream_idx);
+    p = _find_program_from_stream(this->fmt_ctx, NULL, this->video_stream_idx);
   }
   nb_streams = p ? p->nb_stream_indexes : this->fmt_ctx->nb_streams;
 

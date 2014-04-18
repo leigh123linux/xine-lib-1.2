@@ -189,7 +189,7 @@ AC_DEFUN([XINE_INPUT_PLUGINS], [
     dnl libavformat
     XINE_ARG_ENABLE([avformat], [Enable libavformat support])
     if test "x$enable_avformat" != "xno"; then
-        PKG_CHECK_MODULES([AVFORMAT], [libavformat >= 55.19.0], [have_avformat=yes], [have_avformat=no])
+        PKG_CHECK_MODULES([AVFORMAT], [libavformat >= 53.21.1], [have_avformat=yes], [have_avformat=no])
         if test x"$hard_enable_avformat" = x"yes" && test x"$have_avformat" != x"yes"; then
             AC_MSG_ERROR([libavformat support requested, but library not found])
         fi
