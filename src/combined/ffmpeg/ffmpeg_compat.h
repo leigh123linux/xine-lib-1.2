@@ -173,6 +173,11 @@
 #  define CODEC_ID_MSMPEG4V3  AV_CODEC_ID_MSMPEG4V3
 #  define CODEC_ID_WMV1       AV_CODEC_ID_WMV1
 #  define CODEC_ID_WMV2       AV_CODEC_ID_WMV2
+/* demux_avformat */
+#  define CODEC_ID_PCM_S16LE  AV_CODEC_ID_PCM_S16LE
+#  define CODEC_ID_PCM_S16BE  AV_CODEC_ID_PCM_S16BE
+#  define CODEC_ID_MP2        AV_CODEC_ID_MP2
+#  define CODEC_ID_AC3        AV_CODEC_ID_AC3
 /* ff_*_decoder mapping is already handled by mkcodeclists.pl */
 #endif
 

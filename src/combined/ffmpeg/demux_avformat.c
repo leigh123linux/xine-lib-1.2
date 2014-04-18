@@ -46,6 +46,7 @@
 #include "ff_video_list.h"
 #include "ff_audio_list.h"
 
+#include "ffmpeg_compat.h"
 /*
  * avformat dummy input plugin
  */
@@ -305,13 +306,13 @@ static uint32_t audio_codec_lookup(avformat_demux_plugin_t *this, int id) {
   }
 
   switch (id) {
-    case AV_CODEC_ID_PCM_S16LE:
+    case CODEC_ID_PCM_S16LE:
       return BUF_AUDIO_LPCM_LE;
-    case AV_CODEC_ID_PCM_S16BE:
+    case CODEC_ID_PCM_S16BE:
       return BUF_AUDIO_LPCM_BE;
-    case AV_CODEC_ID_MP2:
+    case CODEC_ID_MP2:
       return BUF_AUDIO_MPEG;
-    case AV_CODEC_ID_AC3:
+    case CODEC_ID_AC3:
       return BUF_AUDIO_A52;
   }
 
