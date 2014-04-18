@@ -2619,17 +2619,17 @@ static const uint32_t wmv9_video_types[] = {
   0
 };
 
-decoder_info_t dec_info_ffmpeg_video = {
+const decoder_info_t dec_info_ffmpeg_video = {
   supported_video_types,   /* supported types */
   6                        /* priority        */
 };
 
-decoder_info_t dec_info_ffmpeg_wmv8 = {
+const decoder_info_t dec_info_ffmpeg_wmv8 = {
   wmv8_video_types,        /* supported types */
   0                        /* priority        */
 };
 
-decoder_info_t dec_info_ffmpeg_wmv9 = {
+const decoder_info_t dec_info_ffmpeg_wmv9 = {
   wmv9_video_types,        /* supported types */
   0                        /* priority        */
 };
