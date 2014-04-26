@@ -160,7 +160,7 @@ struct xv_driver_s {
 
   /* color matrix switching */
   int                cm_active, cm_state;
-  Atom               cm_atom;
+  Atom               cm_atom, cm_atom2;
   int                fullrange_mode;
 };
 
@@ -740,13 +740,21 @@ static void xv_new_color (xv_driver_t *this, int cm) {
     XvSetPortAttribute (this->display, this->xv_port, atom, satu);
   UNLOCK_DISPLAY(this);
 
-  /* so far only binary nvidia drivers support this. why not nuveau? */
   if (this->cm_atom != None) {
+    /* 0 = 601 (SD), 1 = 709 (HD) */
+    /* so far only binary nvidia drivers support this. why not nuveau? */
     cm2 = (0xc00c >> cm) & 1;
     LOCK_DISPLAY(this);
     XvSetPortAttribute (this->display, this->xv_port, this->cm_atom, cm2);
     UNLOCK_DISPLAY(this);
     cm2 = cm2 ? 2 : 10;
+  } else if (this->cm_atom2 != None) {
+    /* radeonhd: 0 = size based auto, 1 = 601 (SD), 2 = 709 (HD) */
+    cm2 = ((0xc00c >> cm) & 1) + 1;
+    LOCK_DISPLAY(this);
+    XvSetPortAttribute (this->display, this->xv_port, this->cm_atom2, cm2);
+    UNLOCK_DISPLAY(this);
+    cm2 = cm2 == 2 ? 2 : 10;
   } else {
     cm2 = 10;
   }
@@ -1455,6 +1463,7 @@ static vo_driver_t *open_plugin_2 (video_driver_class_t *class_gen, const void *
   this->xine                    = class->xine;
 
   this->cm_atom                 = None;
+  this->cm_atom2                = None;
 
   LOCK_DISPLAY(this);
   XAllocNamedColor (this->display,
@@ -1542,12 +1551,21 @@ static vo_driver_t *open_plugin_2 (video_driver_class_t *class_gen, const void *
 	  xv_check_capability (this, VO_PROP_GAMMA, attr[k],
 			       adaptor_info[adaptor_num].base_id,
 			       NULL, NULL, NULL);
-	} else if(!strcmp(name, "XV_ITURBT_709")) {
+	} else if(!strcmp(name, "XV_ITURBT_709")) { /* nvidia */
 	  LOCK_DISPLAY(this);
 	  this->cm_atom = XInternAtom (this->display, name, False);
 	  if (this->cm_atom != None) {
 	    XvGetPortAttribute (this->display, this->xv_port, this->cm_atom, &this->cm_active);
 	    this->cm_active = this->cm_active ? 2 : 10;
+	    this->capabilities |= VO_CAP_COLOR_MATRIX;
+	  }
+	  UNLOCK_DISPLAY(this);
+	} else if(!strcmp(name, "XV_COLORSPACE")) { /* radeonhd */
+	  LOCK_DISPLAY(this);
+	  this->cm_atom2 = XInternAtom (this->display, name, False);
+	  if (this->cm_atom2 != None) {
+	    XvGetPortAttribute (this->display, this->xv_port, this->cm_atom2, &this->cm_active);
+	    this->cm_active = this->cm_active == 2 ? 2 : (this->cm_active == 1 ? 10 : 0);
 	    this->capabilities |= VO_CAP_COLOR_MATRIX;
 	  }
 	  UNLOCK_DISPLAY(this);

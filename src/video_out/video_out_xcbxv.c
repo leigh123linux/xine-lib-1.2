@@ -149,7 +149,7 @@ struct xv_driver_s {
 
   /* color matrix switching */
   int                cm_active, cm_state;
-  xcb_atom_t         cm_atom;
+  xcb_atom_t         cm_atom, cm_atom2;
   int                fullrange_mode;
 };
 
@@ -646,13 +646,21 @@ static void xv_new_color (xv_driver_t *this, int cm) {
     xcb_xv_set_port_attribute (this->connection, this->xv_port, atom, satu);
   pthread_mutex_unlock(&this->main_mutex);
 
-  /* so far only binary nvidia drivers support this. why not nuveau? */
   if (this->cm_atom != XCB_NONE) {
+    /* 0 = 601 (SD), 1 = 709 (HD) */
+    /* so far only binary nvidia drivers support this. why not nuveau? */
     cm2 = (0xc00c >> cm) & 1;
     pthread_mutex_lock(&this->main_mutex);
     xcb_xv_set_port_attribute (this->connection, this->xv_port, this->cm_atom, cm2);
     pthread_mutex_unlock(&this->main_mutex);
     cm2 = cm2 ? 2 : 10;
+  } else if (this->cm_atom2 != XCB_NONE) {
+    /* radeonhd: 0 = size based auto, 1 = 601 (SD), 2 = 709 (HD) */
+    cm2 = ((0xc00c >> cm) & 1) + 1;
+    pthread_mutex_lock(&this->main_mutex);
+    xcb_xv_set_port_attribute (this->connection, this->xv_port, this->cm_atom2, cm2);
+    pthread_mutex_unlock(&this->main_mutex);
+    cm2 = cm2 == 2 ? 2 : 10;
   } else {
     cm2 = 10;
   }
@@ -1401,6 +1409,7 @@ static vo_driver_t *open_plugin(video_driver_class_t *class_gen, const void *vis
   this->ovl_changed             = 0;
   this->xine                    = class->xine;
   this->cm_atom                 = XCB_NONE;
+  this->cm_atom2                = XCB_NONE;
 
   this->vo_driver.get_capabilities     = xv_get_capabilities;
   this->vo_driver.alloc_frame          = xv_alloc_frame;
@@ -1483,7 +1492,7 @@ static vo_driver_t *open_plugin(video_driver_class_t *class_gen, const void *vis
 	  xv_check_capability (this, VO_PROP_GAMMA, attribute_it.data,
 			       adaptor_it.data->base_id,
 			       NULL, NULL, NULL);
-	} else if(!strcmp(name, "XV_ITURBT_709")) {
+	} else if(!strcmp(name, "XV_ITURBT_709")) { /* nvidia */
 	  xcb_xv_get_port_attribute_cookie_t get_attribute_cookie;
 	  xcb_xv_get_port_attribute_reply_t *get_attribute_reply;
 	  xcb_intern_atom_cookie_t atom_cookie;
@@ -1502,6 +1511,30 @@ static vo_driver_t *open_plugin(video_driver_class_t *class_gen, const void *vis
 	      get_attribute_cookie, NULL);
 	    if (get_attribute_reply) {
 	      this->cm_active = get_attribute_reply->value ? 2 : 10;
+	      free(get_attribute_reply);
+	      this->capabilities |= VO_CAP_COLOR_MATRIX;
+	    }
+	  }
+	  pthread_mutex_unlock(&this->main_mutex);
+	} else if(!strcmp(name, "XV_COLORSPACE")) { /* radeonhd */
+	  xcb_xv_get_port_attribute_cookie_t get_attribute_cookie;
+	  xcb_xv_get_port_attribute_reply_t *get_attribute_reply;
+	  xcb_intern_atom_cookie_t atom_cookie;
+	  xcb_intern_atom_reply_t *atom_reply;
+	  pthread_mutex_lock(&this->main_mutex);
+	  atom_cookie = xcb_intern_atom (this->connection, 0, 13, name);
+	  atom_reply = xcb_intern_atom_reply (this->connection, atom_cookie, NULL);
+	  if (atom_reply) {
+	    this->cm_atom2 = atom_reply->atom;
+	    free (atom_reply);
+	  }
+	  if (this->cm_atom2 != XCB_NONE) {
+	    get_attribute_cookie = xcb_xv_get_port_attribute (this->connection,
+	      this->xv_port, this->cm_atom2);
+	    get_attribute_reply = xcb_xv_get_port_attribute_reply (this->connection,
+	      get_attribute_cookie, NULL);
+	    if (get_attribute_reply) {
+	      this->cm_active = get_attribute_reply->value == 2 ? 2 : (get_attribute_reply->value == 1 ? 10 : 0);
 	      free(get_attribute_reply);
 	      this->capabilities |= VO_CAP_COLOR_MATRIX;
 	    }
