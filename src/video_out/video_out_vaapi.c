@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2012 Edgar Hucek <gimli|@dark-green.com>
- * Copyright (C) 2012-2013 xine developers
+ * Copyright (C) 2012-2014 xine developers
  *
  * This file is part of xine, a free video player.
  *
@@ -4014,7 +4014,7 @@ static void *vaapi_init_class (xine_t *xine, void *visual_gen) {
 
   this->driver_class.open_plugin     = vaapi_open_plugin;
   this->driver_class.identifier      = "vaapi";
-  this->driver_class.description     = N_("xine video output plugin using the MIT X video extension");
+  this->driver_class.description     = N_("xine video output plugin using VAAPI");
   this->driver_class.dispose         = default_video_driver_class_dispose;
   this->config                       = xine->config;
   this->xine                         = xine;
