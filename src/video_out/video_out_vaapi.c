@@ -268,7 +268,24 @@ struct vaapi_driver_s {
   unsigned int        scaling_level;
   va_property_t       props[VO_NUM_PROPERTIES];
   unsigned int        swap_uv_planes;
+
+  /* color matrix and fullrange emulation */
+  int                 cm_state;
+  int                 color_matrix;
+  int                 vaapi_cm_flags;
+#define CSC_MODE_USER_MATRIX      0
+#define CSC_MODE_FLAGS            1
+#define CSC_MODE_FLAGS_FULLRANGE2 2
+#define CSC_MODE_FLAGS_FULLRANGE3 3
+  int                 csc_mode;
+  int                 have_user_csc_matrix;
+  float               user_csc_matrix[12];
 };
+
+/* import common color matrix stuff */
+#define CM_HAVE_YCGCO_SUPPORT 1
+#define CM_DRIVER_T vaapi_driver_t
+#include "color_matrix.c"
 
 ff_vaapi_surface_t  *va_render_surfaces   = NULL;
 VASurfaceID         *va_surface_ids       = NULL;
@@ -1600,36 +1617,248 @@ error:
   return VA_STATUS_ERROR_UNKNOWN;
 }
 
-static inline int vaapi_get_colorspace_flags(vo_driver_t *this_gen)
+static void vaapi_set_csc_mode(vaapi_driver_t *this, int new_mode)
 {
-  vaapi_driver_t      *this = (vaapi_driver_t *) this_gen;
-  ff_vaapi_context_t  *va_context = this->va_context;
-
-  if(!va_context)
-    return 0;
-
-  int colorspace = 0;
-#if USE_VAAPI_COLORSPACE
-  switch (va_context->va_colorspace) {
-    case 0:
-      colorspace = ((va_context->sw_width >= 1280 || va_context->sw_height > 576) ?
-               VA_SRC_BT709 : VA_SRC_BT601);
-      break;
-    case 1:
-      colorspace = VA_SRC_BT601;
-      break;
-    case 2:
-      colorspace = VA_SRC_BT709;
-      break;
-    case 3:
-      colorspace = VA_SRC_SMPTE_240;
-      break;
-    default:
-      colorspace = VA_SRC_BT601;
-      break;
-  }
+  if (new_mode == CSC_MODE_USER_MATRIX) {
+    this->capabilities |= VO_CAP_BRIGHTNESS | VO_CAP_CONTRAST | VO_CAP_SATURATION | VO_CAP_HUE
+      | VO_CAP_COLOR_MATRIX | VO_CAP_FULLRANGE;
+  } else {
+    this->capabilities &=
+      ~(VO_CAP_BRIGHTNESS | VO_CAP_CONTRAST | VO_CAP_SATURATION | VO_CAP_HUE | VO_CAP_COLOR_MATRIX | VO_CAP_FULLRANGE);
+    if (this->props[VO_PROP_BRIGHTNESS].atom)
+      this->capabilities |= VO_CAP_BRIGHTNESS;
+    if (this->props[VO_PROP_CONTRAST].atom)
+      this->capabilities |= VO_CAP_CONTRAST;
+    if (this->props[VO_PROP_SATURATION].atom)
+      this->capabilities |= VO_CAP_SATURATION;
+    if (this->props[VO_PROP_HUE].atom)
+      this->capabilities |= VO_CAP_HUE;
+#if (defined VA_SRC_BT601) && ((defined VA_SRC_BT709) || (defined VA_SRC_SMPTE_240))
+    this->capabilities |= VO_CAP_COLOR_MATRIX;
 #endif
-    return colorspace;
+    if (new_mode != CSC_MODE_FLAGS) {
+      if ((this->capabilities & (VO_CAP_BRIGHTNESS | VO_CAP_CONTRAST)) == (VO_CAP_BRIGHTNESS | VO_CAP_CONTRAST))
+        this->capabilities |= VO_CAP_FULLRANGE;
+    }
+  }
+
+  this->csc_mode = new_mode;
+  this->color_matrix = 0;
+}
+
+static const char * const vaapi_csc_mode_labels[] = {
+  "user_matrix", "simple", "simple+2", "simple+3", NULL
+};
+
+/* normalize to 0.0 ~ 2.0 */
+static float vaapi_normalized_prop (vaapi_driver_t *this, int prop) {
+  int range = (this->props[prop].max - this->props[prop].min) >> 1;
+
+  if (range)
+    return (float)(this->props[prop].value - this->props[prop].min) / (float)range;
+  return 1.0;
+}
+
+static void vaapi_update_csc (vaapi_driver_t *that, vaapi_frame_t *frame) {
+  int color_matrix;
+  int i;
+
+  color_matrix = cm_from_frame (&frame->vo_frame);
+
+  if (that->color_matrix != color_matrix) {
+
+    /* revert unsupported modes */
+    i = that->csc_mode;
+    if (i == CSC_MODE_USER_MATRIX && !that->have_user_csc_matrix)
+      i = CSC_MODE_FLAGS_FULLRANGE3;
+    if (i == CSC_MODE_FLAGS_FULLRANGE3 && !that->props[VO_PROP_SATURATION].atom)
+      i = CSC_MODE_FLAGS_FULLRANGE2;
+    if (i == CSC_MODE_FLAGS_FULLRANGE2 && !that->props[VO_PROP_BRIGHTNESS].atom)
+      i = CSC_MODE_FLAGS;
+    if (i != that->csc_mode) {
+      xprintf (that->xine, XINE_VERBOSITY_LOG,
+        _("video_out_vaapi: driver does not support \"%s\" colorspace conversion mode\n"),
+        vaapi_csc_mode_labels[that->csc_mode]);
+      vaapi_set_csc_mode (that, i);
+    }
+
+    that->color_matrix = color_matrix;
+
+    if (that->csc_mode == CSC_MODE_USER_MATRIX) {
+      /* WOW - full support */
+      float hue = (vaapi_normalized_prop (that, VO_PROP_HUE) - 1.0) * 3.14159265359;
+      float saturation = vaapi_normalized_prop (that, VO_PROP_SATURATION);
+      float contrast = vaapi_normalized_prop (that, VO_PROP_CONTRAST);
+      float brightness = (vaapi_normalized_prop (that, VO_PROP_BRIGHTNESS) - 1.0) * 128.0;
+      float *matrix = that->user_csc_matrix;
+      float uvcos = saturation * cos( hue );
+      float uvsin = saturation * sin( hue );
+      int i;
+      VADisplayAttribute attr;
+
+      if ((color_matrix >> 1) == 8) {
+        /* YCgCo. This is really quite simple. */
+        uvsin *= contrast;
+        uvcos *= contrast;
+        /* matrix[rgb][yuv1] */
+        matrix[1] = -1.0 * uvcos - 1.0 * uvsin;
+        matrix[2] =  1.0 * uvcos - 1.0 * uvsin;
+        matrix[5] =  1.0 * uvcos;
+        matrix[6] =                1.0 * uvsin;
+        matrix[9] = -1.0 * uvcos + 1.0 * uvsin;
+        matrix[10] = -1.0 * uvcos - 1.0 * uvsin;
+        for (i = 0; i < 12; i += 4) {
+          matrix[i] = contrast;
+          matrix[i + 3] = (brightness * contrast - 128.0 * (matrix[i + 1] + matrix[i + 2])) / 255.0;
+        }
+      } else {
+        /* YCbCr */
+        float kb, kr;
+        float vr, vg, ug, ub;
+        float ygain, yoffset;
+
+        switch (color_matrix >> 1) {
+          case 1:  kb = 0.0722; kr = 0.2126; break; /* ITU-R 709 */
+          case 4:  kb = 0.1100; kr = 0.3000; break; /* FCC */
+          case 7:  kb = 0.0870; kr = 0.2120; break; /* SMPTE 240 */
+          default: kb = 0.1140; kr = 0.2990;        /* ITU-R 601 */
+        }
+        vr = 2.0 * (1.0 - kr);
+        vg = -2.0 * kr * (1.0 - kr) / (1.0 - kb - kr);
+        ug = -2.0 * kb * (1.0 - kb) / (1.0 - kb - kr);
+        ub = 2.0 * (1.0 - kb);
+
+        if (color_matrix & 1) {
+          /* fullrange mode */
+          yoffset = brightness;
+          ygain = contrast;
+          uvcos *= contrast * 255.0 / 254.0;
+          uvsin *= contrast * 255.0 / 254.0;
+        } else {
+          /* mpeg range */
+          yoffset = brightness - 16.0;
+          ygain = contrast * 255.0 / 219.0;
+          uvcos *= contrast * 255.0 / 224.0;
+          uvsin *= contrast * 255.0 / 224.0;
+        }
+
+        /* matrix[rgb][yuv1] */
+        matrix[1] = -uvsin * vr;
+        matrix[2] = uvcos * vr;
+        matrix[5] = uvcos * ug - uvsin * vg;
+        matrix[6] = uvcos * vg + uvsin * ug;
+        matrix[9] = uvcos * ub;
+        matrix[10] = uvsin * ub;
+        for (i = 0; i < 12; i += 4) {
+          matrix[i] = ygain;
+          matrix[i + 3] = (yoffset * ygain - 128.0 * (matrix[i + 1] + matrix[i + 2])) / 255.0;
+        }
+      }
+
+      attr.type   = VADisplayAttribCSCMatrix;
+      /* libva design bug: VADisplayAttribute.value is plain int.
+        On 64bit system, a pointer value put here will overwrite the following "flags" field too. */
+      memcpy (&(attr.value), &matrix, sizeof (float *));
+      vaSetDisplayAttributes (that->va_context->va_display, &attr, 1);
+
+      xprintf (that->xine, XINE_VERBOSITY_LOG,"video_out_vaapi: b %d c %d s %d h %d [%s]\n",
+        that->props[VO_PROP_BRIGHTNESS].value,
+        that->props[VO_PROP_CONTRAST].value,
+        that->props[VO_PROP_SATURATION].value,
+        that->props[VO_PROP_HUE].value,
+        cm_names[color_matrix]);
+
+    } else {
+      /* fall back to old style */
+      int brightness = that->props[VO_PROP_BRIGHTNESS].value;
+      int contrast   = that->props[VO_PROP_CONTRAST].value;
+      int saturation = that->props[VO_PROP_SATURATION].value;
+      int hue        = that->props[VO_PROP_HUE].value;
+      int i;
+      VADisplayAttribute attr[4];
+
+      /* The fallback rhapsody */
+#if defined(VA_SRC_BT601) && (defined(VA_SRC_BT709) || defined(VA_SRC_SMPTE_240))
+      i = color_matrix >> 1;
+      switch (i) {
+        case 1:
+#if defined(VA_SRC_BT709)
+          that->vaapi_cm_flags = VA_SRC_BT709;
+#elif defined(VA_SRC_SMPTE_240)
+          that->vaapi_cm_flags = VA_SRC_SMPTE_240;
+          i = 7;
+#endif
+        break;
+        case 7:
+#if defined(VA_SRC_SMPTE_240)
+          that->vaapi_cm_flags = VA_SRC_SMPTE_240;
+#elif defined(VA_SRC_BT709)
+          that->vaapi_cm_flags = VA_SRC_BT709;
+          i = 1;
+#endif
+        break;
+        default:
+          that->vaapi_cm_flags = VA_SRC_BT601;
+          i = 5;
+      }
+#else
+      that->vaapi_cm_flags = 0;
+      i = 2; /* undefined */
+#endif
+      color_matrix &= 1;
+      color_matrix |= i << 1;
+
+      if ((that->csc_mode != CSC_MODE_FLAGS) && (color_matrix & 1)) {
+        int a, b;
+        /* fullrange mode. XXX assuming TV set style bcs controls 0% - 200% */
+        if (that->csc_mode == CSC_MODE_FLAGS_FULLRANGE3) {
+          saturation -= that->props[VO_PROP_SATURATION].min;
+          saturation  = (saturation * (112 * 255) + (127 * 219 / 2)) / (127 * 219);
+          saturation += that->props[VO_PROP_SATURATION].min;
+          if (saturation > that->props[VO_PROP_SATURATION].max)
+            saturation = that->props[VO_PROP_SATURATION].max;
+        }
+
+        contrast -= that->props[VO_PROP_CONTRAST].min;
+        contrast  = (contrast * 219 + 127) / 255;
+        a         = contrast * (that->props[VO_PROP_BRIGHTNESS].max - that->props[VO_PROP_BRIGHTNESS].min);
+        contrast += that->props[VO_PROP_CONTRAST].min;
+        b         = 256 * (that->props[VO_PROP_CONTRAST].max - that->props[VO_PROP_CONTRAST].min);
+
+        brightness += (16 * a + b / 2) / b;
+        if (brightness > that->props[VO_PROP_BRIGHTNESS].max)
+          brightness = that->props[VO_PROP_BRIGHTNESS].max;
+      }
+
+      i = 0;
+      if (that->props[VO_PROP_BRIGHTNESS].atom) {
+        attr[i].type  = that->props[VO_PROP_BRIGHTNESS].type;
+        attr[i].value = brightness;
+        i++;
+      }
+      if (that->props[VO_PROP_CONTRAST].atom) {
+        attr[i].type  = that->props[VO_PROP_CONTRAST].type;
+        attr[i].value = contrast;
+        i++;
+      }
+      if (that->props[VO_PROP_SATURATION].atom) {
+        attr[i].type  = that->props[VO_PROP_SATURATION].type;
+        attr[i].value = saturation;
+        i++;
+      }
+      if (that->props[VO_PROP_HUE].atom) {
+        attr[i].type  = that->props[VO_PROP_HUE].type;
+        attr[i].value = hue;
+        i++;
+      }
+      if (i)
+        vaSetDisplayAttributes (that->va_context->va_display, attr, i);
+
+      xprintf (that->xine, XINE_VERBOSITY_LOG,"video_out_vaapi: %s b %d c %d s %d h %d [%s]\n",
+        color_matrix & 1 ? "modified" : "",
+        brightness, contrast, saturation, hue, cm_names[color_matrix]);
+    }
+  }
 }
 
 static void vaapi_property_callback (void *property_gen, xine_cfg_entry_t *entry) {
@@ -1737,6 +1966,11 @@ static void vaapi_display_attribs(vo_driver_t *this_gen) {
                                         display_attrs, &num_display_attrs);
     if(vaapi_check_status(this_gen, vaStatus, "vaQueryDisplayAttributes()")) {
       for (i = 0; i < num_display_attrs; i++) {
+        xprintf (this->xine, XINE_VERBOSITY_DEBUG,
+          "video_out_vaapi: display attribute #%d = %d [%d .. %d], flags %d\n",
+          (int)display_attrs[i].type,
+          display_attrs[i].value, display_attrs[i].min_value, display_attrs[i].max_value,
+          display_attrs[i].flags);
         switch (display_attrs[i].type) {
           case VADisplayAttribBrightness:
             if( ( display_attrs[i].flags & VA_DISPLAY_ATTRIB_GETTABLE ) &&
@@ -1766,6 +2000,11 @@ static void vaapi_display_attribs(vo_driver_t *this_gen) {
               vaapi_check_capability(this, VO_PROP_SATURATION, display_attrs[i], "video.output.vaapi_saturation", "Saturation setting", "Saturation setting");
             }
             break;
+          case VADisplayAttribCSCMatrix:
+            if (display_attrs[i].flags & VA_DISPLAY_ATTRIB_SETTABLE) {
+              this->have_user_csc_matrix = 1;
+            }
+            break;
           default:
             break;
         }
@@ -1773,6 +2012,34 @@ static void vaapi_display_attribs(vo_driver_t *this_gen) {
     }
     free(display_attrs);
   }
+
+  if (this->have_user_csc_matrix) {
+    /* make sure video eq is full usable for user matrix mode */
+    if (!this->props[VO_PROP_BRIGHTNESS].atom) {
+      this->props[VO_PROP_BRIGHTNESS].min   = -1000;
+      this->props[VO_PROP_BRIGHTNESS].max   =  1000;
+      this->props[VO_PROP_BRIGHTNESS].value =  0;
+    }
+    if (!this->props[VO_PROP_CONTRAST].atom) {
+      this->props[VO_PROP_CONTRAST].min = this->props[VO_PROP_BRIGHTNESS].min;
+      this->props[VO_PROP_CONTRAST].max = this->props[VO_PROP_BRIGHTNESS].max;
+      this->props[VO_PROP_CONTRAST].value
+        = (this->props[VO_PROP_CONTRAST].max - this->props[VO_PROP_CONTRAST].min) >> 1;
+    }
+    if (!this->props[VO_PROP_SATURATION].atom) {
+      this->props[VO_PROP_SATURATION].min = this->props[VO_PROP_CONTRAST].min;
+      this->props[VO_PROP_SATURATION].max = this->props[VO_PROP_CONTRAST].max;
+      this->props[VO_PROP_SATURATION].value
+        = (this->props[VO_PROP_CONTRAST].max - this->props[VO_PROP_CONTRAST].min) >> 1;
+    }
+    if (!this->props[VO_PROP_HUE].atom) {
+      this->props[VO_PROP_HUE].min = this->props[VO_PROP_BRIGHTNESS].min;
+      this->props[VO_PROP_HUE].min = this->props[VO_PROP_BRIGHTNESS].max;
+      this->props[VO_PROP_HUE].value
+        = (this->props[VO_PROP_BRIGHTNESS].max - this->props[VO_PROP_BRIGHTNESS].min) >> 1;
+    }
+  }
+
   vaapi_show_display_props(this_gen);
 }
 
@@ -2615,6 +2882,9 @@ static int vaapi_redraw_needed (vo_driver_t *this_gen) {
     ret = 1;
   }
 
+  if (this->color_matrix == 0)
+    ret = 1;
+
   return ret;
 }
 
@@ -3229,7 +3499,8 @@ static VAStatus vaapi_hardware_render_frame (vo_driver_t *this_gen, vo_frame_t *
   for(i = 0; i <= !!((deint > 1) && interlaced_frame); i++) {
     unsigned int flags = (deint && (interlaced_frame) ? (((!!(top_field_first)) ^ i) == 0 ? VA_BOTTOM_FIELD : VA_TOP_FIELD) : VA_FRAME_PICTURE);
 
-    //flags |= vaapi_get_colorspace_flags(this_gen);
+    vaapi_update_csc (this, frame);
+    flags |= this->vaapi_cm_flags;
 
     flags |= VA_CLEAR_DRAWABLE;
     flags |= this->scaling_level;
@@ -3524,6 +3795,8 @@ static void vaapi_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen) {
 static int vaapi_get_property (vo_driver_t *this_gen, int property) {
   vaapi_driver_t *this = (vaapi_driver_t *) this_gen;
 
+  if ((property < 0) || (property >= VO_NUM_PROPERTIES)) return 0;
+
   switch (property) {
     case VO_PROP_WINDOW_WIDTH:
       this->props[property].value = this->sc.gui_width;
@@ -3562,6 +3835,20 @@ static int vaapi_set_property (vo_driver_t *this_gen, int property, int value) {
   ff_vaapi_context_t  *va_context = this->va_context;
 
   lprintf("vaapi_set_property property=%d, value=%d\n", property, value );
+
+  if ((property < 0) || (property >= VO_NUM_PROPERTIES)) return 0;
+
+  if ((property == VO_PROP_BRIGHTNESS)
+    || (property == VO_PROP_CONTRAST)
+    || (property == VO_PROP_SATURATION)
+    || (property == VO_PROP_HUE)) {
+    /* defer these to vaapi_update_csc () */
+    if((value < this->props[property].min) || (value > this->props[property].max))
+      value = (this->props[property].min + this->props[property].max) >> 1;
+    this->props[property].value = value;
+    this->color_matrix = 0;
+    return value;
+  }
 
   if(this->props[property].atom) {
     VADisplayAttribute attr;
@@ -3723,6 +4010,8 @@ static void vaapi_dispose_locked (vo_driver_t *this_gen) {
   pthread_mutex_unlock(&this->vaapi_lock);
   pthread_mutex_destroy(&this->vaapi_lock);
 
+  cm_close (this);
+
   free (this);
 }
 
@@ -3788,6 +4077,18 @@ static void vaapi_swap_uv_planes(void *this_gen, xine_cfg_entry_t *entry)
   vaapi_driver_t  *this  = (vaapi_driver_t *) this_gen;
 
   this->swap_uv_planes = entry->num_value;
+}
+
+static void vaapi_csc_mode(void *this_gen, xine_cfg_entry_t *entry) 
+{
+  vaapi_driver_t  *this  = (vaapi_driver_t *) this_gen;
+  int new_mode = entry->num_value;
+
+  /* skip unchanged */
+  if (new_mode == this->csc_mode)
+    return;
+
+  vaapi_set_csc_mode (this, new_mode);
 }
 
 static vo_driver_t *vaapi_open_plugin (video_driver_class_t *class_gen, const void *visual_gen) {
@@ -3981,6 +4282,8 @@ static vo_driver_t *vaapi_open_plugin (video_driver_class_t *class_gen, const vo
     this->props[i].this  = this;
   }
 
+  cm_init (this);
+
   this->sc.user_ratio                        =
     this->props[VO_PROP_ASPECT_RATIO].value  = XINE_VO_ASPECT_AUTO;
   this->props[VO_PROP_ZOOM_X].value          = 100;
@@ -3998,6 +4301,20 @@ static vo_driver_t *vaapi_open_plugin (video_driver_class_t *class_gen, const vo
   this->va_context->driver        = (vo_driver_t *)this;
 
   pthread_mutex_unlock(&this->vaapi_lock);
+
+  this->csc_mode = this->xine->config->register_enum (this->xine->config, "video.output.vaapi_csc_mode", 3,
+    (char **)vaapi_csc_mode_labels,
+    _("VAAPI color conversion method"),
+    _("How to handle color conversion in VAAPI:\n\n"
+      "user_matrix: The best way - if your driver supports it.\n"
+      "simple:      Switch SD/HD colorspaces, and let decoders convert fullrange video.\n"
+      "simple+2:    Switch SD/HD colorspaces, and emulate fullrange color by modifying\n"
+      "             brightness/contrast settings.\n"
+      "simple+3:    Like above, but adjust saturation as well.\n\n"
+      "Hint: play \"test://rgb_levels.bmp\" while trying this.\n"),
+    10,
+    vaapi_csc_mode, this);
+  vaapi_set_csc_mode (this, this->csc_mode);
 
   xprintf(this->xine, XINE_VERBOSITY_LOG, LOG_MODULE " vaapi_open: Deinterlace : %d\n", this->deinterlace);
   xprintf(this->xine, XINE_VERBOSITY_LOG, LOG_MODULE " vaapi_open: Render surfaces : %d\n", RENDER_SURFACES);
