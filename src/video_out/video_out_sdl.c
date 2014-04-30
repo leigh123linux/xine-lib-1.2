@@ -94,13 +94,6 @@ struct sdl_driver_s {
 
   uint32_t           capabilities;
 
-#ifdef HAVE_X11
-   /* X11 / Xv related stuff */
-  Display           *display;
-  int                screen;
-  Drawable           drawable;
-#endif
-
   vo_scale_t         sc;
   xine_t            *xine;
 
@@ -413,7 +406,7 @@ static int sdl_gui_data_exchange (vo_driver_t *this_gen,
   case XINE_GUI_SEND_DRAWABLE_CHANGED:
     lprintf ("XINE_GUI_SEND_DRAWABLE_CHANGED\n");
 
-    this->drawable = (Drawable) data;
+    //this->drawable = (Drawable) data;
     /* OOPS! Is it possible to change SDL window id? */
     /* probably we need to close and reinitialize SDL */
     break;
@@ -496,16 +489,11 @@ static vo_driver_t *open_plugin (video_driver_class_t *class_gen, const void *vi
   xine_setenv("SDL_VIDEO_X11_NODIRECTCOLOR", "1", 1);
 
   this->xine              = class->xine;
-#ifdef HAVE_X11
-  this->display           = visual->display;
-  this->screen            = visual->screen;
-  this->drawable          = visual->d;
 
   _x_vo_scale_init( &this->sc, 0, 0, config);
+#ifdef HAVE_X11
   this->sc.frame_output_cb   = visual->frame_output_cb;
   this->sc.user_data         = visual->user_data;
-#else
-  _x_vo_scale_init( &this->sc, 0, 0, config );
 #endif
 
 #if defined(HAVE_X11) || defined(WIN32)
@@ -544,7 +532,7 @@ static vo_driver_t *open_plugin (video_driver_class_t *class_gen, const void *vi
   this->capabilities      = VO_CAP_YUY2 | VO_CAP_YV12;
 
 #ifdef HAVE_X11
-  XGetWindowAttributes(this->display, this->drawable, &window_attributes);
+  XGetWindowAttributes(visual->display, visual->d, &window_attributes);
   this->sc.gui_width         = window_attributes.width;
   this->sc.gui_height        = window_attributes.height;
 #else
