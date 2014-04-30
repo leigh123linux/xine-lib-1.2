@@ -64,7 +64,6 @@
 #include <xine/xineutils.h>
 #include <xine/vo_scale.h>
 
-#undef HAVE_X11
 #ifdef HAVE_X11
 #include <X11/Xlib.h>
 #endif
@@ -274,32 +273,32 @@ static int sdl_redraw_needed (vo_driver_t *this_gen) {
 
   if (this->sc.frame_output_cb) {
 
-  if( _x_vo_scale_redraw_needed( &this->sc ) ) {
+    if( _x_vo_scale_redraw_needed( &this->sc ) ) {
 
-    sdl_compute_output_size (this);
+      sdl_compute_output_size (this);
 
-    ret = 1;
-  }
+      ret = 1;
+    }
 
-  return ret;
+    return ret;
 
   } else {
 
-  if( this->last_gui_width != this->sc.gui_width ||
-      this->last_gui_height != this->sc.gui_height ||
-      this->sc.force_redraw ) {
+    if( this->last_gui_width != this->sc.gui_width ||
+        this->last_gui_height != this->sc.gui_height ||
+        this->sc.force_redraw ) {
 
-    this->last_gui_width = this->sc.gui_width;
-    this->last_gui_height = this->sc.gui_height;
+      this->last_gui_width = this->sc.gui_width;
+      this->last_gui_height = this->sc.gui_height;
 
-    sdl_compute_output_size (this);
+      sdl_compute_output_size (this);
 
-    ret = 1;
-  }
+      ret = 1;
+    }
 
-  this->sc.force_redraw = 0;
+    this->sc.force_redraw = 0;
 
-  return ret;
+    return ret;
 
   }
 }
@@ -493,14 +492,14 @@ static vo_driver_t *open_plugin (video_driver_class_t *class_gen, const void *vi
   _x_vo_scale_init( &this->sc, 0, 0, config);
 
   if (visual) {
-  this->sc.frame_output_cb   = visual->frame_output_cb;
-  this->sc.user_data         = visual->user_data;
+    this->sc.frame_output_cb   = visual->frame_output_cb;
+    this->sc.user_data         = visual->user_data;
 
-  /* set SDL to use our existing X11/win32 window */
-  if (visual->d){
-    sprintf(SDL_windowhack,"SDL_WINDOWID=0x%x", (uint32_t) visual->d);
-    putenv(SDL_windowhack);
-  }
+    /* set SDL to use our existing X11/win32 window */
+    if (visual->d) {
+      sprintf(SDL_windowhack,"SDL_WINDOWID=0x%x", (uint32_t) visual->d);
+      putenv(SDL_windowhack);
+    }
   }
 
   if ((SDL_Init (SDL_INIT_VIDEO)) < 0) {
