@@ -532,7 +532,9 @@ static vo_driver_t *open_plugin (video_driver_class_t *class_gen, const void *vi
   this->capabilities      = VO_CAP_YUY2 | VO_CAP_YV12;
 
 #ifdef HAVE_X11
+  XLockDisplay(visual->display);
   XGetWindowAttributes(visual->display, visual->d, &window_attributes);
+  XUnlockDisplay(visual->display);
   this->sc.gui_width         = window_attributes.width;
   this->sc.gui_height        = window_attributes.height;
 #else
