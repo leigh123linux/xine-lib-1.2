@@ -98,6 +98,9 @@ struct sdl_driver_s {
   xine_t            *xine;
 
   alphablend_t       alphablend_extra_data;
+
+  int                last_gui_width;  /* used when frontend does not provide frame_output_cb */
+  int                last_gui_height;
 };
 
 typedef struct {
@@ -281,14 +284,12 @@ static int sdl_redraw_needed (vo_driver_t *this_gen) {
 
 #else
 
-  static int last_gui_width, last_gui_height;
-
-  if( last_gui_width != this->sc.gui_width ||
-      last_gui_height != this->sc.gui_height ||
+  if( this->last_gui_width != this->sc.gui_width ||
+      this->last_gui_height != this->sc.gui_height ||
       this->sc.force_redraw ) {
 
-    last_gui_width = this->sc.gui_width;
-    last_gui_height = this->sc.gui_height;
+    this->last_gui_width = this->sc.gui_width;
+    this->last_gui_height = this->sc.gui_height;
 
     sdl_compute_output_size (this);
 
