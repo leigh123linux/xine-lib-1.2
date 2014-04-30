@@ -64,6 +64,7 @@
 #include <xine/xineutils.h>
 #include <xine/vo_scale.h>
 
+#undef HAVE_X11
 #ifdef HAVE_X11
 #include <X11/Xlib.h>
 #endif
@@ -271,7 +272,7 @@ static int sdl_redraw_needed (vo_driver_t *this_gen) {
   sdl_driver_t  *this = (sdl_driver_t *) this_gen;
   int ret = 0;
 
-#ifdef HAVE_X11
+  if (this->sc.frame_output_cb) {
 
   if( _x_vo_scale_redraw_needed( &this->sc ) ) {
 
@@ -282,7 +283,7 @@ static int sdl_redraw_needed (vo_driver_t *this_gen) {
 
   return ret;
 
-#else
+  } else {
 
   if( this->last_gui_width != this->sc.gui_width ||
       this->last_gui_height != this->sc.gui_height ||
@@ -300,7 +301,7 @@ static int sdl_redraw_needed (vo_driver_t *this_gen) {
 
   return ret;
 
-#endif
+  }
 }
 
 
@@ -463,10 +464,8 @@ static vo_driver_t *open_plugin (video_driver_class_t *class_gen, const void *vi
   sdl_driver_t         *this;
 
   const SDL_VideoInfo  *vidInfo;
-#if defined(HAVE_X11) || defined(WIN32)
   static char           SDL_windowhack[32];
   x11_visual_t         *visual = (x11_visual_t *) visual_gen;
-#endif
 #ifdef HAVE_X11
   XWindowAttributes     window_attributes;
 #endif
@@ -492,18 +491,17 @@ static vo_driver_t *open_plugin (video_driver_class_t *class_gen, const void *vi
   this->xine              = class->xine;
 
   _x_vo_scale_init( &this->sc, 0, 0, config);
-#ifdef HAVE_X11
+
+  if (visual) {
   this->sc.frame_output_cb   = visual->frame_output_cb;
   this->sc.user_data         = visual->user_data;
-#endif
 
-#if defined(HAVE_X11) || defined(WIN32)
   /* set SDL to use our existing X11/win32 window */
   if (visual->d){
     sprintf(SDL_windowhack,"SDL_WINDOWID=0x%x", (uint32_t) visual->d);
     putenv(SDL_windowhack);
   }
-#endif
+  }
 
   if ((SDL_Init (SDL_INIT_VIDEO)) < 0) {
     xprintf (this->xine, XINE_VERBOSITY_DEBUG, "video_out_sdl: open_plugin - sdl video initialization failed.\n");
