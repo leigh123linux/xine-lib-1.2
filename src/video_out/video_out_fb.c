@@ -984,7 +984,9 @@ static vo_driver_t *fb_open_plugin(video_driver_class_t *class_gen,
 
   if (!set_fb_palette (this->fd, &this->fb_var)) {
     xprintf(this->xine, XINE_VERBOSITY_LOG, "video_out_fb: set_fb_palette() failed: %s\n", strerror(errno));
-    goto error;
+    if (this->fb_var.bits_per_pixel < 24) {
+      goto error;
+    }
   }
 
   this->xine = class->xine;
