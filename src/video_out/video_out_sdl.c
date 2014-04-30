@@ -496,14 +496,14 @@ static vo_driver_t *open_plugin (video_driver_class_t *class_gen, const void *vi
     if (class->visual_type == XINE_VISUAL_TYPE_X11) {
       x11_visual_t      *visual = (x11_visual_t *) visual_gen;
 
-    this->sc.frame_output_cb   = visual->frame_output_cb;
-    this->sc.user_data         = visual->user_data;
+      this->sc.frame_output_cb   = visual->frame_output_cb;
+      this->sc.user_data         = visual->user_data;
 
-    /* set SDL to use our existing X11/win32 window */
-    if (visual->d) {
-      sprintf(SDL_windowhack,"SDL_WINDOWID=0x%x", (uint32_t) visual->d);
-      putenv(SDL_windowhack);
-    }
+      /* set SDL to use our existing X11/win32 window */
+      if (visual->d) {
+        sprintf(SDL_windowhack,"SDL_WINDOWID=0x%x", (uint32_t) visual->d);
+        putenv(SDL_windowhack);
+      }
 
     } else {
       fb_visual_t *visual = (fb_visual_t *) visual_gen;
