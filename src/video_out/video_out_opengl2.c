@@ -1175,6 +1175,92 @@ static int opengl2_draw_video_bicubic( opengl2_driver_t *that, int guiw, int gui
 
 
 
+static int opengl2_draw_video_cubic_x( opengl2_driver_t *that, int guiw, int guih, GLfloat u, GLfloat v, GLfloat u1, GLfloat v1,
+    GLfloat x, GLfloat y, GLfloat x1, GLfloat y1, GLuint video_texture )
+{
+  if ( !that->bicubic_lut_texture ) {
+    if ( !create_lut_texture( that ) )
+      return 0;
+  }
+
+  if ( !that->bicubic_pass1_program.compiled && !opengl2_build_program( &that->bicubic_pass1_program, &bicubic_pass1_frag, "bicubic_pass1_frag" ) )
+    return 0;
+
+  glViewport( 0, 0, guiw, guih );
+  glMatrixMode( GL_PROJECTION );
+  glLoadIdentity();
+  glOrtho( 0.0, guiw, guih, 0.0, -1.0, 1.0 );
+  glMatrixMode( GL_MODELVIEW );
+  glLoadIdentity();
+
+  glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
+
+  glActiveTexture( GL_TEXTURE0 );
+  glBindTexture( GL_TEXTURE_RECTANGLE_ARB, video_texture );
+  glActiveTexture( GL_TEXTURE1 );
+  glBindTexture( GL_TEXTURE_RECTANGLE_ARB, that->bicubic_lut_texture );
+  glUseProgram( that->bicubic_pass1_program.program );
+  glUniform1i( glGetUniformLocationARB( that->bicubic_pass1_program.program, "tex" ), 0 );
+  glUniform1i( glGetUniformLocationARB( that->bicubic_pass1_program.program, "lut" ), 1 );
+  glUniform1f( glGetUniformLocationARB( that->bicubic_pass1_program.program, "spline" ), CATMULLROM_SPLINE );
+
+  glBegin( GL_QUADS );
+    glTexCoord2f( u, v );     glVertex3f( x, y, 0.);
+    glTexCoord2f( u, v1 );    glVertex3f( x, y1, 0.);
+    glTexCoord2f( u1, v1 );   glVertex3f( x1, y1, 0.);
+    glTexCoord2f( u1, v );    glVertex3f( x1, y, 0.);
+  glEnd();
+
+  glUseProgram( 0 );
+
+  return 1;
+}
+
+
+
+static int opengl2_draw_video_cubic_y( opengl2_driver_t *that, int guiw, int guih, GLfloat u, GLfloat v, GLfloat u1, GLfloat v1,
+    GLfloat x, GLfloat y, GLfloat x1, GLfloat y1, GLuint video_texture )
+{
+  if ( !that->bicubic_lut_texture ) {
+    if ( !create_lut_texture( that ) )
+      return 0;
+  }
+
+  if ( !that->bicubic_pass2_program.compiled && !opengl2_build_program( &that->bicubic_pass2_program, &bicubic_pass2_frag, "bicubic_pass2_frag" ) )
+    return 0;
+
+  glViewport( 0, 0, guiw, guih );
+  glMatrixMode( GL_PROJECTION );
+  glLoadIdentity();
+  glOrtho( 0.0, guiw, guih, 0.0, -1.0, 1.0 );
+  glMatrixMode( GL_MODELVIEW );
+  glLoadIdentity();
+
+  glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
+
+  glActiveTexture( GL_TEXTURE0 );
+  glBindTexture( GL_TEXTURE_RECTANGLE_ARB, video_texture );
+  glActiveTexture( GL_TEXTURE1 );
+  glBindTexture( GL_TEXTURE_RECTANGLE_ARB, that->bicubic_lut_texture );
+  glUseProgram( that->bicubic_pass2_program.program );
+  glUniform1i( glGetUniformLocationARB( that->bicubic_pass2_program.program, "tex" ), 0 );
+  glUniform1i( glGetUniformLocationARB( that->bicubic_pass2_program.program, "lut" ), 1 );
+  glUniform1f( glGetUniformLocationARB( that->bicubic_pass2_program.program, "spline" ), CATMULLROM_SPLINE );
+
+  glBegin( GL_QUADS );
+    glTexCoord2f( u, v );     glVertex3f( x, y, 0.);
+    glTexCoord2f( u, v1 );    glVertex3f( x, y1, 0.);
+    glTexCoord2f( u1, v1 );   glVertex3f( x1, y1, 0.);
+    glTexCoord2f( u1, v );    glVertex3f( x1, y, 0.);
+  glEnd();
+
+  glUseProgram( 0 );
+
+  return 1;
+}
+
+
+
 static void opengl2_draw_video_bilinear( opengl2_driver_t *that, int guiw, int guih, GLfloat u, GLfloat v, GLfloat u1, GLfloat v1,
     GLfloat x, GLfloat y, GLfloat x1, GLfloat y1, GLuint video_texture )
 {
@@ -1304,11 +1390,18 @@ static void opengl2_draw( opengl2_driver_t *that, opengl2_frame_t *frame )
   x1 = that->sc.output_xoffset + that->sc.output_width;
   y1 = that->sc.output_yoffset + that->sc.output_height;
 
+  int res = 0;
+
   if ( that->scale_bicubic ) {
-    if ( !opengl2_draw_video_bicubic( that, that->sc.gui_width, that->sc.gui_height, u, v, u1, v1, x, y, x1, y1, video_texture ) )
-      opengl2_draw_video_bilinear( that, that->sc.gui_width, that->sc.gui_height, u, v, u1, v1, x, y, x1, y1, video_texture );
+    if ( that->sc.displayed_width != that->sc.output_width ) {
+      if ( that->sc.displayed_height != that->sc.output_height )
+        res = opengl2_draw_video_bicubic( that, that->sc.gui_width, that->sc.gui_height, u, v, u1, v1, x, y, x1, y1, video_texture );
+      else
+        res = opengl2_draw_video_cubic_x( that, that->sc.gui_width, that->sc.gui_height, u, v, u1, v1, x, y, x1, y1, video_texture );
+    } else if ( that->sc.displayed_height != that->sc.output_height )
+      res = opengl2_draw_video_cubic_y( that, that->sc.gui_width, that->sc.gui_height, u, v, u1, v1, x, y, x1, y1, video_texture );
   }
-  else
+  if (!res)
     opengl2_draw_video_bilinear( that, that->sc.gui_width, that->sc.gui_height, u, v, u1, v1, x, y, x1, y1, video_texture );
 
   // draw unscaled overlays
