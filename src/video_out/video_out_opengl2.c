@@ -189,15 +189,13 @@ static const char *bicubic_pass1_frag=
 "    vec2 coord = gl_TexCoord[0].xy;\n"
 "    vec2 TexCoord = vec2( floor( coord.x - 0.5 ) + 0.5, coord.y );\n"
 "    vec4 sum = vec4( 0.0 );\n"
-"    float coefsum = 0.0;\n"
 "    mat4 wlut;\n"
 "    wlut[0] = texture2DRect( lut, vec2( abs( coord.x - TexCoord.x ) * 1000.0, spline ) );\n"
 "    for( int x = -1; x <= 2; x++ ) {\n"
 "        vec4 col = texture2DRect( tex, TexCoord + vec2( float( x ), 0.0) );\n"
 "        sum += col * wlut[0][x+1];\n"
-"        coefsum += wlut[0][x+1];\n"
 "    }\n"
-"    gl_FragColor = sum / coefsum;\n"
+"    gl_FragColor = sum;\n"
 "}\n";
 
 
@@ -210,15 +208,13 @@ static const char *bicubic_pass2_frag=
 "    vec2 coord = gl_TexCoord[0].xy;\n"
 "    vec2 TexCoord = vec2( coord.x, floor( coord.y - 0.5 ) + 0.5 );\n"
 "    vec4 sum = vec4( 0.0 );\n"
-"    float coefsum = 0.0;\n"
 "    mat4 wlut;\n"
 "    wlut[0] = texture2DRect( lut, vec2( abs( coord.y - TexCoord.y ) * 1000.0, spline ) );\n"
 "    for( int y = -1; y <= 2; y++ ) {\n"
 "        vec4 col = texture2DRect( tex, TexCoord + vec2( 0.0, float( y ) ) );\n"
 "        sum += col * wlut[0][y+1];\n"
-"        coefsum += wlut[0][y+1];\n"
 "    }\n"
-"    gl_FragColor = sum / coefsum;\n"
+"    gl_FragColor = sum;\n"
 "}\n";
 
 
@@ -251,14 +247,21 @@ static int create_lut_texture( opengl2_driver_t *that )
 {
   int i = 0;
   float *lut = calloc( sizeof(float) * LUTWIDTH * 4 * N_SPLINES, 1 );
-  float t;
+  if ( !lut )
+    return 0;
+
   while ( i < LUTWIDTH ) {
+    float t, v1, v2, v3, v4, coefsum;
     t = (float)i / (float)LUTWIDTH;
 
-    lut[i * 4] = compute_catmullrom_spline( t + 1.0 );
-    lut[(i * 4) + 1] = compute_catmullrom_spline( t );
-    lut[(i * 4) + 2] = compute_catmullrom_spline( t - 1.0 );
-    lut[(i * 4) + 3] = compute_catmullrom_spline( t - 2.0 );
+    v1 = compute_catmullrom_spline( t + 1.0 ); coefsum  = v1;
+    v2 = compute_catmullrom_spline( t );       coefsum += v2;
+    v3 = compute_catmullrom_spline( t - 1.0 ); coefsum += v3;
+    v4 = compute_catmullrom_spline( t - 2.0 ); coefsum += v4;
+    lut[i * 4]       = v1 / coefsum;
+    lut[(i * 4) + 1] = v2 / coefsum;
+    lut[(i * 4) + 2] = v3 / coefsum;
+    lut[(i * 4) + 3] = v4 / coefsum;
 
     lut[(i * 4) + (LUTWIDTH * 4)] = compute_cos_spline( t + 1.0 );
     lut[(i * 4) + (LUTWIDTH * 4) + 1] = compute_cos_spline( t );
@@ -270,8 +273,10 @@ static int create_lut_texture( opengl2_driver_t *that )
 
   that->bicubic_lut_texture = 0;
   glGenTextures( 1, &that->bicubic_lut_texture );
-  if ( !that->bicubic_lut_texture )
+  if ( !that->bicubic_lut_texture ) {
+    free( lut );
     return 0;
+  }
 
   glBindTexture( GL_TEXTURE_RECTANGLE_ARB, that->bicubic_lut_texture );
   glTexParameteri( GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_MAG_FILTER, GL_NEAREST );
