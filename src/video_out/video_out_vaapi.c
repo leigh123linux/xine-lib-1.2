@@ -2451,9 +2451,11 @@ static int vaapi_ovl_associate(vo_driver_t *this_gen, int format, int bShow) {
     unsigned int flags = 0;
     unsigned int output_width = va_context->width;
     unsigned int output_height = va_context->height;
-    void *p_base = NULL;
+    unsigned char *p_base = NULL;
+    uint32_t *p_src;
 
     VAStatus vaStatus;
+    int i;
 
     vaapi_destroy_subpicture(this_gen);
     vaStatus = vaapi_create_subpicture(this_gen, this->overlay_bitmap_width, this->overlay_bitmap_height);
@@ -2464,7 +2466,12 @@ static int vaapi_ovl_associate(vo_driver_t *this_gen, int format, int bShow) {
     if(!vaapi_check_status(this_gen, vaStatus, "vaMapBuffer()"))
       return 0;
 
-    xine_fast_memcpy((uint32_t *)p_base, this->overlay_bitmap, this->overlay_bitmap_width * this->overlay_bitmap_height * sizeof(uint32_t));
+    p_src = this->overlay_bitmap;
+    for (i = 0; i < this->overlay_bitmap_height; i++) {
+        xine_fast_memcpy((uint32_t *)p_base, p_src, this->overlay_bitmap_width * sizeof(uint32_t));
+        p_base += va_context->va_subpic_image.pitches[0];
+        p_src += this->overlay_bitmap_width;
+    }
 
     vaStatus = vaUnmapBuffer(va_context->va_display, va_context->va_subpic_image.buf);
     vaapi_check_status(this_gen, vaStatus, "vaUnmapBuffer()");
