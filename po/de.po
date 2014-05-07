@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: xine-lib 1.2.2\n"
 "Report-Msgid-Bugs-To: xine-devel@lists.sourceforge.net\n"
-"POT-Creation-Date: 2014-04-27 23:23+0200\n"
+"POT-Creation-Date: 2014-05-07 02:03+0200\n"
 "PO-Revision-Date: 2007-04-18 11:00+0200\n"
 "Last-Translator: Torsten Jager <t.jager@gmx.de>\n"
 "Language-Team: German <de@li.org>\n"
@@ -4699,7 +4699,7 @@ msgstr ""
 "WARNUNG: %s: Null-Kopie-Puffer sind DEAKTIVIERT, weil der Kernel-Treiber\n"
 "     kein screen-panning unterstützt (benutzt für Bildwechsel).\n"
 
-#: src/video_out/video_out_fb.c:1006
+#: src/video_out/video_out_fb.c:1015
 #, c-format
 msgid ""
 "WARNING: %s: current display depth is %d. For better performance\n"
@@ -4709,7 +4709,7 @@ msgstr ""
 "WARNUNG: %s: Aktuelle Farbtiefe ist %d. Für bessere Leistung wird eine "
 "Farbtiefe von 16 bpp empfohlen!\n"
 
-#: src/video_out/video_out_fb.c:1037
+#: src/video_out/video_out_fb.c:1049
 msgid "Xine video output plugin using the Linux frame buffer device"
 msgstr "xine Videoausgabe benutzt Linux Framebuffer"
 
@@ -4717,11 +4717,11 @@ msgstr "xine Videoausgabe benutzt Linux Framebuffer"
 msgid "xine video output plugin which displays nothing"
 msgstr "xine Videoausgabe zeigt nichts an"
 
-#: src/video_out/video_out_opengl2.c:1720
+#: src/video_out/video_out_opengl2.c:1851
 msgid "opengl2: use a bicubic algo to scale the video"
 msgstr "opengl2: Skaliere Video bikubisch"
 
-#: src/video_out/video_out_opengl2.c:1721
+#: src/video_out/video_out_opengl2.c:1852
 msgid ""
 "Set to true if you want bicubic scaling.\n"
 "\n"
@@ -4730,7 +4730,7 @@ msgstr ""
 "an Schärfe.\n"
 "Es benötigt aber eine schnelle Grafikkarte.\n"
 
-#: src/video_out/video_out_opengl2.c:1795
+#: src/video_out/video_out_opengl2.c:1926
 msgid "xine video output plugin using opengl 2.0"
 msgstr "Opengl 2.0 Videoausgabe"
 
@@ -4954,11 +4954,11 @@ msgstr "xine Videoausgabe über Sun XVR100/PGX64/PGX24 Bildpuffer"
 msgid "xine video output plugin passing raw data to supplied callback"
 msgstr "xine Videoausgabe als Rohdaten an externes Programm"
 
-#: src/video_out/video_out_sdl.c:490
+#: src/video_out/video_out_sdl.c:483
 msgid "use hardware acceleration if available"
 msgstr "Benutze Hardwarebeschleunigung falls verfügbar"
 
-#: src/video_out/video_out_sdl.c:491
+#: src/video_out/video_out_sdl.c:484
 msgid ""
 "When your system supports it, hardware acceleration provided by your "
 "graphics hardware will be used. This might not work, so you can disable it, "
@@ -4968,17 +4968,17 @@ msgstr ""
 "Grafikhardware benutzt. Falls es nicht funktioniert, können Sie dies "
 "deaktivieren."
 
-#: src/video_out/video_out_sdl.c:537
+#: src/video_out/video_out_sdl.c:534
 #, c-format
 msgid "sdl has to emulate a 16 bit surfaces, that will slow things down.\n"
 msgstr "SDL muß eine 16 Bit Ausgabe emulieren, was alles verlangsamt.\n"
 
-#: src/video_out/video_out_sdl.c:574
+#: src/video_out/video_out_sdl.c:573
 #, c-format
 msgid "video_out_sdl: fullscreen mode is NOT supported\n"
 msgstr "video_out_sdl: Vollbildmodus wird NICHT unterstützt\n"
 
-#: src/video_out/video_out_sdl.c:596
+#: src/video_out/video_out_sdl.c:595
 msgid "xine video output plugin using the Simple Direct Media Layer"
 msgstr "xine Videoausgabe benutzt 'Simple Direct Media Layer'"
 
@@ -6530,11 +6530,11 @@ msgstr ""
 "video_out : Ups, das sollte eigentlich nicht passieren, bitte xine neu "
 "starten.\n"
 
-#: src/xine-engine/vo_scale.c:384
+#: src/xine-engine/vo_scale.c:397
 msgid "horizontal image position in the output window"
 msgstr "Horizontale Bildposition im Ausgabefenster"
 
-#: src/xine-engine/vo_scale.c:385
+#: src/xine-engine/vo_scale.c:398
 msgid ""
 "If the video window's horizontal size is bigger than the actual image to "
 "show, you can adjust the position where the image will be placed.\n"
@@ -6547,11 +6547,11 @@ msgstr ""
 "Die Position wird als Prozentzahl angegeb: Der Wert 50 bedeutet \"in der "
 "Mitte\", während 0 \"ganz links\" und 100 \"ganz rechts\" bedeuten."
 
-#: src/xine-engine/vo_scale.c:392
+#: src/xine-engine/vo_scale.c:405
 msgid "vertical image position in the output window"
 msgstr "Vertikale Bildposition im Ausgabefenster"
 
-#: src/xine-engine/vo_scale.c:393
+#: src/xine-engine/vo_scale.c:406
 msgid ""
 "If the video window's vertical size is bigger than the actual image to show, "
 "you can adjust the position where the image will be placed.\n"
@@ -6564,11 +6564,11 @@ msgstr ""
 "Die Position wird als Prozentzahl angegeb: Der Wert 50 bedeutet \"in der "
 "Mitte\", während 0 \"ganz oben\" und 100 \"ganz unten\" bedeuten."
 
-#: src/xine-engine/vo_scale.c:400
+#: src/xine-engine/vo_scale.c:414
 msgid "disable all video scaling"
 msgstr "Alle Videoskalierungen deaktivieren"
 
-#: src/xine-engine/vo_scale.c:401
+#: src/xine-engine/vo_scale.c:415
 msgid ""
 "If you want the video image to be always shown at its original resolution, "
 "you can disable all image scaling here.\n"
@@ -6585,6 +6585,24 @@ msgstr ""
 "(z.B. amorphe DVDs), verzerrt angezeigt werden. Andererseits profitieren "
 "einige Videoausgabetreiber wie XShm davon, deren Bildskalierung nicht "
 "hardwarebeschleunigt ist, wodurch die CPU-Auslastung drastisch sinkt."
+
+#: src/xine-engine/vo_scale.c:425
+msgid "treat screen pixels as exactly square"
+msgstr "Betrachte Monitor-Bildpunkte als genau quadratisch"
+
+#: src/xine-engine/vo_scale.c:426
+msgid ""
+"Many screens have \"only\" almost square pixels, like 94x93 dpi.\n"
+"This little deviation is important for true size graphics applications.\n"
+"For video, however, it often just means unnecessary black bars and less "
+"sharpness.\n"
+msgstr ""
+"Viele Monitore haben \"nur\" fast quadratische Bildpunkte, wie z.B. 94x93 "
+"dpi.\n"
+"Für Druckgrafik und ähnliche Anwendungen ist diese kleine Abweichung "
+"wichtig.\n"
+"Für Video bedeutet sie hingegen oft nur unnötige schwarze Balken und weniger "
+"Bildschärfe.\n"
 
 #: src/xine-engine/xine.c:894 src/xine-engine/xine.c:1016
 #: src/xine-engine/xine.c:1056 src/xine-engine/xine.c:1092
