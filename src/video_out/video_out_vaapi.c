@@ -2451,8 +2451,9 @@ static int vaapi_ovl_associate(vo_driver_t *this_gen, int format, int bShow) {
     unsigned int flags = 0;
     unsigned int output_width = va_context->width;
     unsigned int output_height = va_context->height;
-    unsigned char *p_base = NULL;
+    unsigned char *p_dest;
     uint32_t *p_src;
+    void *p_base = NULL;
 
     VAStatus vaStatus;
     int i;
@@ -2467,9 +2468,10 @@ static int vaapi_ovl_associate(vo_driver_t *this_gen, int format, int bShow) {
       return 0;
 
     p_src = this->overlay_bitmap;
+    p_dest = p_base;
     for (i = 0; i < this->overlay_bitmap_height; i++) {
-        xine_fast_memcpy((uint32_t *)p_base, p_src, this->overlay_bitmap_width * sizeof(uint32_t));
-        p_base += va_context->va_subpic_image.pitches[0];
+        xine_fast_memcpy(p_dest, p_src, this->overlay_bitmap_width * sizeof(uint32_t));
+        p_dest += va_context->va_subpic_image.pitches[0];
         p_src += this->overlay_bitmap_width;
     }
 
