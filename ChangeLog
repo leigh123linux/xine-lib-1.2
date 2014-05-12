@@ -1,3 +1,5 @@
+  * Add libmmal HW video decoder plugin for Raspberry Pi.
+
 xine-lib (1.2.5) 2014-04-08
   * Update german translation.
   * Add bass downmix support to AC3 decoder.

@@ -85,6 +85,7 @@ AC_DEFUN([XINE_LIB_SUMMARY], [
     test x"$have_theora" = x"yes"      && echo "   - theora"
     test x"$have_w32dll" = x"yes"      && echo "   - w32dll"
     test x"$have_vdpau" = x"yes"       && echo "   - vdpau"
+    test x"$have_mmal" = x"yes"        && echo "   - mmal (Broadcom HW)"
     test x"$have_vpx" = x"yes"         && echo "   - libvpx (VP8/VP9)"
     if test x"$with_external_ffmpeg" != x"no"; then
         echo "   - ffmpeg (external library)"
