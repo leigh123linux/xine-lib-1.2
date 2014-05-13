@@ -61,4 +61,6 @@ typedef struct video_overlay_event_s {
 
 video_overlay_manager_t *_x_video_overlay_new_manager(xine_t *) XINE_MALLOC XINE_PROTECTED;
 
+void _x_overlay_clut_yuv2rgb(vo_overlay_t *overlay) XINE_PROTECTED;
+
 #endif

@@ -2171,3 +2171,33 @@ void _x_alphablend_free(alphablend_t *extra_data)
   extra_data->buffer_size = 0;
 }
 
+#define saturate(n, l, u) ((n) < (l) ? (l) : ((n) > (u) ? (u) : (n)))
+
+void _x_clut_yuv2rgb(uint32_t *clut, int num_items)
+{
+  uint32_t *end = clut + num_items;
+  if (end <= clut) return;
+
+  while (clut < end) {
+    union {
+      uint32_t u32;
+      clut_t   c;
+    } tmp = { *clut };
+
+    int y, u, v, r, g, b;
+    y = saturate(tmp.c.y, 16, 235);
+    u = saturate(tmp.c.cb, 16, 240);
+    v = saturate(tmp.c.cr, 16, 240);
+
+    y = (9 * y) / 8;
+    r = y + (25 * v) / 16 - 218;
+    g = y + (-13 * v) / 16 + (-25 * u) / 64 + 136;
+    b = y + 2 * u - 274;
+
+    tmp.c.cb = saturate(b, 0, 255);
+    tmp.c.cr = saturate(g, 0, 255);
+    tmp.c.y = saturate(r, 0, 255);
+
+    *clut++ = tmp.u32;
+  }
+}

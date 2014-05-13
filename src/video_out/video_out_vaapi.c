@@ -45,7 +45,6 @@
 #include <X11/cursorfont.h>
 #include <time.h>
 #include <unistd.h>
-#include "yuv2rgb.h"
 
 #define LOG_MODULE "video_out_vaapi"
 #define LOG_VERBOSE
@@ -233,9 +232,6 @@ struct vaapi_driver_s {
   uint32_t            overlay_unscaled_width;
   uint32_t            overlay_unscaled_height;
   vaapi_rect_t        overlay_unscaled_dirty_rect;
-
-  yuv2rgb_factory_t  *yuv2rgb_factory;
-  yuv2rgb_t          *ovl_yuv2rgb;
 
   /* all scaling information goes here */
   vo_scale_t          sc;
@@ -2506,30 +2502,6 @@ static int vaapi_ovl_associate(vo_driver_t *this_gen, int format, int bShow) {
   return 0;
 }
 
-static void vaapi_overlay_clut_yuv2rgb(vaapi_driver_t  *this, vo_overlay_t *overlay, vaapi_frame_t *frame)
-{
-  int i;
-  uint32_t *rgb;
-
-  if (!overlay->rgb_clut) {
-    rgb = overlay->color;
-    for (i = sizeof (overlay->color) / sizeof (overlay->color[0]); i > 0; i--) {
-      clut_t *yuv = (clut_t *)rgb;
-      *rgb++ = this->ovl_yuv2rgb->yuv2rgb_single_pixel_fun (this->ovl_yuv2rgb, yuv->y, yuv->cb, yuv->cr);
-    }
-    overlay->rgb_clut++;
-  }
-
-  if (!overlay->hili_rgb_clut) {
-    rgb = overlay->hili_color;
-    for (i = sizeof (overlay->color) / sizeof (overlay->color[0]); i > 0; i--) {
-      clut_t *yuv = (clut_t *)rgb;
-      *rgb++ = this->ovl_yuv2rgb->yuv2rgb_single_pixel_fun (this->ovl_yuv2rgb, yuv->y, yuv->cb, yuv->cr);
-    }
-    overlay->hili_rgb_clut++;
-  }
-}
-
 static void vaapi_overlay_begin (vo_driver_t *this_gen,
 			      vo_frame_t *frame_gen, int changed) {
   vaapi_driver_t      *this       = (vaapi_driver_t *) this_gen;
@@ -2752,7 +2724,7 @@ static void vaapi_overlay_end (vo_driver_t *this_gen, vo_frame_t *frame_gen) {
         continue;
 
       if (!ovl->rgb_clut || !ovl->hili_rgb_clut)
-        vaapi_overlay_clut_yuv2rgb (this, ovl, frame);
+        _x_overlay_clut_yuv2rgb (ovl);
 
       bitmap = rgba = calloc(ovl->width * ovl->height * 4, sizeof(uint32_t));
 
@@ -3995,9 +3967,6 @@ static void vaapi_dispose_locked (vo_driver_t *this_gen) {
 
   DO_LOCKDISPLAY;
 
-  this->ovl_yuv2rgb->dispose(this->ovl_yuv2rgb);
-  this->yuv2rgb_factory->dispose (this->yuv2rgb_factory);
-
   vaapi_close(this_gen);
   free(va_context);
 
@@ -4219,10 +4188,6 @@ static vo_driver_t *vaapi_open_plugin (video_driver_class_t *class_gen, const vo
     XFree(vi);
 
   this->capabilities            = VO_CAP_YV12 | VO_CAP_YUY2 | VO_CAP_CROP | VO_CAP_UNSCALED_OVERLAY | VO_CAP_ARGB_LAYER_OVERLAY | VO_CAP_VAAPI | VO_CAP_CUSTOM_EXTENT_OVERLAY;
-
-  /*  overlay converter */
-  this->yuv2rgb_factory = yuv2rgb_factory_init (MODE_24_BGR, 0, NULL);
-  this->ovl_yuv2rgb = this->yuv2rgb_factory->create_converter( this->yuv2rgb_factory );
 
   this->vo_driver.get_capabilities     = vaapi_get_capabilities;
   this->vo_driver.alloc_frame          = vaapi_alloc_frame;

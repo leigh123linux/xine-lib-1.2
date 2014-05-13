@@ -47,8 +47,6 @@
 #include <xine/xine_internal.h>
 #include <xine/xineutils.h>
 
-#include "yuv2rgb.h"
-
 #ifdef HAVE_FFMPEG_AVUTIL_H
 #  include <mem.h>
 #else
@@ -130,8 +128,6 @@ typedef struct {
   int                ovl_vid_scale;
   int                num_ovls;
   opengl2_overlay_t  overlays[XINE_VORAW_MAX_OVL];
-  yuv2rgb_factory_t *yuv2rgb_factory;
-  yuv2rgb_t         *ovl_yuv2rgb;
 
   opengl2_program_t  sharpness_program;
   float              csc_matrix[3 * 4];
@@ -523,34 +519,6 @@ static int opengl2_check_textures_size( opengl2_driver_t *this_gen, int w, int h
   return 1;
 }
 
-
-
-static void opengl2_overlay_clut_yuv2rgb(opengl2_driver_t  *this, vo_overlay_t *overlay, opengl2_frame_t *frame)
-{
-  //fprintf(stderr, "opengl2_overlay_clut_yuv2rgb\n");
-  int i;
-  uint32_t *rgb;
-
-  if (!overlay->rgb_clut) {
-    rgb = overlay->color;
-    for (i = sizeof (overlay->color) / sizeof (overlay->color[0]); i > 0; i--) {
-      clut_t *yuv = (clut_t *)rgb;
-      *rgb++ = this->ovl_yuv2rgb->yuv2rgb_single_pixel_fun (this->ovl_yuv2rgb, yuv->y, yuv->cb, yuv->cr);
-    }
-    overlay->rgb_clut++;
-  }
-
-  if (!overlay->hili_rgb_clut) {
-    rgb = overlay->hili_color;
-    for (i = sizeof (overlay->color) / sizeof (overlay->color[0]); i > 0; i--) {
-      clut_t *yuv = (clut_t *)rgb;
-      *rgb++ = this->ovl_yuv2rgb->yuv2rgb_single_pixel_fun (this->ovl_yuv2rgb, yuv->y, yuv->cb, yuv->cr);
-    }
-    overlay->hili_rgb_clut++;
-  }
-}
-
-
 static int opengl2_process_ovl( opengl2_driver_t *this_gen, vo_overlay_t *overlay )
 {
   //fprintf(stderr, "opengl2_process_ovl\n");
@@ -664,7 +632,6 @@ static void opengl2_overlay_begin (vo_driver_t *this_gen, vo_frame_t *frame_gen,
 static void opengl2_overlay_blend (vo_driver_t *this_gen, vo_frame_t *frame_gen, vo_overlay_t *overlay)
 {
   opengl2_driver_t  *this = (opengl2_driver_t *) this_gen;
-  opengl2_frame_t *frame = (opengl2_frame_t *) frame_gen;
 
   if ( !this->ovl_changed || this->ovl_changed>XINE_VORAW_MAX_OVL )
     return;
@@ -683,7 +650,7 @@ static void opengl2_overlay_blend (vo_driver_t *this_gen, vo_frame_t *frame_gen,
 
   else if (overlay->rle) {
     if (!overlay->rgb_clut || !overlay->hili_rgb_clut)
-      opengl2_overlay_clut_yuv2rgb(this, overlay, frame);
+      _x_overlay_clut_yuv2rgb(overlay);
     if ( opengl2_process_ovl( this, overlay ) )
       ++this->ovl_changed;
   }
@@ -1712,9 +1679,6 @@ static void opengl2_dispose( vo_driver_t *this_gen )
 
   glXDestroyContext( this->display, this->context );
 
-  this->ovl_yuv2rgb->dispose(this->ovl_yuv2rgb);
-  this->yuv2rgb_factory->dispose (this->yuv2rgb_factory);
-
   free (this);
 }
 
@@ -1842,9 +1806,6 @@ static vo_driver_t *opengl2_open_plugin( video_driver_class_t *class_gen, const 
   }
   this->ovl_changed = 0;
   this->num_ovls = 0;
-
-  this->yuv2rgb_factory = yuv2rgb_factory_init (MODE_24_BGR, 0, NULL);
-  this->ovl_yuv2rgb = this->yuv2rgb_factory->create_converter( this->yuv2rgb_factory );
 
   if ( this->texture_float ) {
     this->scale_bicubic = config->register_bool( config, "video.output.opengl2_bicubic_scaling", 0,

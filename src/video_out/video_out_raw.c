@@ -85,7 +85,6 @@ typedef struct {
 
   int ovl_changed;
   raw_overlay_t overlays[XINE_VORAW_MAX_OVL];
-  yuv2rgb_t *ovl_yuv2rgb;
 
   int doYV12;
   int doYUY2;
@@ -100,32 +99,6 @@ typedef struct {
   video_driver_class_t driver_class;
   xine_t              *xine;
 } raw_class_t;
-
-
-
-static void raw_overlay_clut_yuv2rgb(raw_driver_t  *this, vo_overlay_t *overlay, raw_frame_t *frame)
-{
-  int i;
-  uint32_t *rgb;
-
-  if (!overlay->rgb_clut) {
-    rgb = overlay->color;
-    for (i = sizeof (overlay->color) / sizeof (overlay->color[0]); i > 0; i--) {
-      clut_t *yuv = (clut_t *)rgb;
-      *rgb++ = this->ovl_yuv2rgb->yuv2rgb_single_pixel_fun (frame->yuv2rgb, yuv->y, yuv->cb, yuv->cr);
-    }
-    overlay->rgb_clut++;
-  }
-
-  if (!overlay->hili_rgb_clut) {
-    rgb = overlay->hili_color;
-    for (i = sizeof (overlay->color) / sizeof (overlay->color[0]); i > 0; i--) {
-      clut_t *yuv = (clut_t *)rgb;
-      *rgb++ = this->ovl_yuv2rgb->yuv2rgb_single_pixel_fun (frame->yuv2rgb, yuv->y, yuv->cb, yuv->cr);
-    }
-    overlay->hili_rgb_clut++;
-  }
-}
 
 
 static int raw_process_ovl( raw_driver_t *this_gen, vo_overlay_t *overlay )
@@ -204,14 +177,13 @@ static void raw_overlay_begin (vo_driver_t *this_gen, vo_frame_t *frame_gen, int
 static void raw_overlay_blend (vo_driver_t *this_gen, vo_frame_t *frame_gen, vo_overlay_t *overlay)
 {
   raw_driver_t  *this = (raw_driver_t *) this_gen;
-  raw_frame_t *frame = (raw_frame_t *) frame_gen;
 
   if ( !this->ovl_changed || this->ovl_changed>XINE_VORAW_MAX_OVL )
     return;
 
   if (overlay->rle) {
     if (!overlay->rgb_clut || !overlay->hili_rgb_clut)
-      raw_overlay_clut_yuv2rgb (this, overlay, frame);
+      _x_overlay_clut_yuv2rgb (overlay);
     if ( raw_process_ovl( this, overlay ) )
       ++this->ovl_changed;
   }
@@ -556,12 +528,6 @@ static vo_driver_t *raw_open_plugin (video_driver_class_t *class_gen, const void
     this->overlays[i].ovl_x = this->overlays[i].ovl_y = 0;
   }
   this->ovl_changed = 0;
-
-  /* we have to use a second converter for overlays
-  *  because "MODE_24_BGR, 1 (swap)" breaks overlays conversion */
-  yuv2rgb_factory_t *factory = yuv2rgb_factory_init (MODE_24_BGR, 0, NULL);
-  this->ovl_yuv2rgb = factory->create_converter( factory );
-  factory->dispose( factory );
 
   return &this->vo_driver;
 }
