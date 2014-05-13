@@ -130,11 +130,11 @@ xineplug_LTLIBRARIES = $(xshm_module) $(xv_module) $(xvmc_module) \
                   xineplug_vo_out_none.la
 
 xineplug_vo_out_vdpau_la_SOURCES = video_out_vdpau.c
-xineplug_vo_out_vdpau_la_LIBADD = $(XINE_LIB) $(MLIB_LIBS) $(AVUTIL_LIBS) $(PTHREAD_LIBS) $(X_LIBS) $(LTLIBINTL) $(VDPAU_LIBS) -lm
+xineplug_vo_out_vdpau_la_LIBADD = $(XINE_LIB) $(AVUTIL_LIBS) $(PTHREAD_LIBS) $(X_LIBS) $(LTLIBINTL) $(VDPAU_LIBS) -lm
 xineplug_vo_out_vdpau_la_CFLAGS = $(AM_CFLAGS) $(X_CFLAGS) $(VDPAU_CFLAGS) $(AVUTIL_CFLAGS) -fno-strict-aliasing
 
 xineplug_vo_out_vaapi_la_SOURCES = $(X11OSD) video_out_vaapi.c
-xineplug_vo_out_vaapi_la_LIBADD = $(YUV_LIBS) $(XINE_LIB) $(OPENGL_LIBS) $(FFMPEG_LIBS) $(AVUTIL_LIBS) $(X_LIBS) $(PTHREAD_LIBS) $(LTLIBINTL) -ldl -lGLU -lva-glx -lva-x11 -lva
+xineplug_vo_out_vaapi_la_LIBADD = $(XINE_LIB) $(OPENGL_LIBS) $(FFMPEG_LIBS) $(AVUTIL_LIBS) $(X_LIBS) $(PTHREAD_LIBS) $(LTLIBINTL) -ldl -lGLU -lva-glx -lva-x11 -lva
 xineplug_vo_out_vaapi_la_CFLAGS = $(AM_CFLAGS) $(X_CFLAGS) $(XV_CFLAGS) $(AVUTIL_CFLAGS)
 
 xineplug_vo_out_xcbshm_la_SOURCES = video_out_xcbshm.c $(XCBOSD)
@@ -168,7 +168,7 @@ xineplug_vo_out_opengl_la_LIBADD = $(YUV_LIBS) $(OPENGL_LIBS) $(GLUT_LIBS) \
 xineplug_vo_out_opengl_la_CFLAGS = $(AM_CFLAGS) $(X_CFLAGS) $(AVUTIL_CFLAGS)
 
 xineplug_vo_out_opengl2_la_SOURCES = video_out_opengl2.c
-xineplug_vo_out_opengl2_la_LIBADD = $(YUV_LIBS) $(OPENGL_LIBS) $(X_LIBS) $(PTHREAD_LIBS) $(DYNAMIC_LD_LIBS) $(LTLIBINTL)
+xineplug_vo_out_opengl2_la_LIBADD = $(XINE_LIB) $(AVUTIL_LIBS) $(OPENGL_LIBS) $(X_LIBS) $(PTHREAD_LIBS) $(DYNAMIC_LD_LIBS) $(LTLIBINTL)
 xineplug_vo_out_opengl2_la_CFLAGS = $(AM_CFLAGS) $(X_CFLAGS) $(AVUTIL_CFLAGS)
 
 xineplug_vo_out_pgx64_la_SOURCES = video_out_pgx64.c
