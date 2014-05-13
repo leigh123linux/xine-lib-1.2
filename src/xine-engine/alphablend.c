@@ -1121,7 +1121,7 @@ static uint8_t *(*blend_yuv_grow_extra_data(alphablend_t *extra_data, int osd_wi
 
   if (extra_data->buffer_size < needed_buffer_size) {
 
-    free(extra_data->buffer);
+    _x_freep(&extra_data->buffer);
     header = calloc(1, needed_buffer_size);
     if (!header) {
       extra_data->buffer_size = 0;
@@ -1566,7 +1566,7 @@ static uint8_t *(*blend_yuy2_grow_extra_data(alphablend_t *extra_data, int osd_w
 
   if (extra_data->buffer_size < needed_buffer_size) {
 
-    free(extra_data->buffer);
+    _x_freep(&extra_data->buffer);
     header = calloc(1, needed_buffer_size);
     if (!header) {
       extra_data->buffer_size = 0;
@@ -2163,10 +2163,7 @@ void _x_alphablend_init(alphablend_t *extra_data, xine_t *xine)
 
 void _x_alphablend_free(alphablend_t *extra_data)
 {
-  if (extra_data->buffer) {
-    free(extra_data->buffer);
-    extra_data->buffer = NULL;
-  }
+  _x_freep(&extra_data->buffer);
 
   extra_data->buffer_size = 0;
 }

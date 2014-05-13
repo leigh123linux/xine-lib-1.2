@@ -519,105 +519,6 @@ static int opengl2_check_textures_size( opengl2_driver_t *this_gen, int w, int h
   return 1;
 }
 
-static int opengl2_process_ovl( opengl2_driver_t *this_gen, vo_overlay_t *overlay )
-{
-  //fprintf(stderr, "opengl2_process_ovl\n");
-  opengl2_overlay_t *ovl = &this_gen->overlays[this_gen->ovl_changed-1];
-
-  if ( overlay->width<=0 || overlay->height<=0 )
-    return 0;
-
-  if ( (overlay->width*overlay->height)!=(ovl->ovl_w*ovl->ovl_h) )
-    ovl->ovl_rgba = (uint8_t*)realloc( ovl->ovl_rgba, overlay->width*overlay->height*4 );
-  ovl->ovl_w = overlay->width;
-  ovl->ovl_h = overlay->height;
-  ovl->ovl_x = overlay->x;
-  ovl->ovl_y = overlay->y;
-  ovl->unscaled = overlay->unscaled;
-  ovl->extent_width = overlay->extent_width;
-  ovl->extent_height = overlay->extent_height;
-  if ( overlay->extent_width == -1 )
-    ovl->vid_scale = 1;
-  else
-    ovl->vid_scale = 0;
-  ovl->type = GL_RGBA;
-
-  int num_rle = overlay->num_rle;
-  rle_elem_t *rle = overlay->rle;
-  uint8_t *rgba = ovl->ovl_rgba;
-  clut_t *low_colors = (clut_t*)overlay->color;
-  clut_t *hili_colors = (clut_t*)overlay->hili_color;
-  uint8_t *low_trans = overlay->trans;
-  uint8_t *hili_trans = overlay->hili_trans;
-  clut_t *colors;
-  uint8_t *trans;
-  uint8_t alpha;
-  int rlelen = 0;
-  uint8_t clr = 0;
-  int i, pos=0, x, y;
-
-  while ( num_rle>0 ) {
-    x = pos%ovl->ovl_w;
-    y = pos/ovl->ovl_w;
-    if ( (x>=overlay->hili_left && x<=overlay->hili_right) && (y>=overlay->hili_top && y<=overlay->hili_bottom) ) {
-    colors = hili_colors;
-    trans = hili_trans;
-    }
-    else {
-    colors = low_colors;
-    trans = low_trans;
-    }
-    rlelen = rle->len;
-    clr = rle->color;
-    alpha = trans[clr];
-    for ( i=0; i<rlelen; ++i ) {
-      if ( alpha == 0 ) {
-        rgba[0] = rgba[1] = rgba[2] = rgba[3] = 0;
-      }
-      else {
-        rgba[0] = colors[clr].y;
-        rgba[1] = colors[clr].cr;
-        rgba[2] = colors[clr].cb;
-        rgba[3] = alpha*255/15;
-      }
-      rgba+= 4;
-    ++pos;
-    }
-    ++rle;
-    --num_rle;
-  }
-  return 1;
-}
-
-
-static int opengl2_process_rgba_ovl( opengl2_driver_t *this_gen, vo_overlay_t *overlay )
-{
-  opengl2_overlay_t *ovl = &this_gen->overlays[this_gen->ovl_changed-1];
-
-  if ( overlay->width<=0 || overlay->height<=0 )
-    return 0;
-
-  if ( (overlay->width*overlay->height)!=(ovl->ovl_w*ovl->ovl_h) )
-    ovl->ovl_rgba = (uint8_t*)realloc( ovl->ovl_rgba, overlay->width*overlay->height*4 );
-
-  ovl->ovl_w = overlay->width;
-  ovl->ovl_h = overlay->height;
-  ovl->ovl_x = overlay->x;
-  ovl->ovl_y = overlay->y;
-  ovl->unscaled = overlay->unscaled;
-  ovl->extent_width = overlay->extent_width;
-  ovl->extent_height = overlay->extent_height;
-  if ( overlay->extent_width == -1 )
-    ovl->vid_scale = 1;
-  else
-    ovl->vid_scale = 0;
-  ovl->type = GL_BGRA;
-
-  memcpy(ovl->ovl_rgba, overlay->argb_layer->buffer, overlay->width * overlay->height * 4);
-
-  return 1;
-}
-
 
 static void opengl2_overlay_begin (vo_driver_t *this_gen, vo_frame_t *frame_gen, int changed)
 {
@@ -636,23 +537,44 @@ static void opengl2_overlay_blend (vo_driver_t *this_gen, vo_frame_t *frame_gen,
   if ( !this->ovl_changed || this->ovl_changed>XINE_VORAW_MAX_OVL )
     return;
 
+  if ( overlay->width<=0 || overlay->height<=0 )
+    return;
+
+  opengl2_overlay_t *ovl = &this->overlays[this->ovl_changed-1];
+
+  if ( (overlay->width*overlay->height)!=(ovl->ovl_w*ovl->ovl_h) ) {
+    free(ovl->ovl_rgba);
+    ovl->ovl_rgba = (uint8_t*)malloc( overlay->width*overlay->height*sizeof(uint32_t) );
+  }
+  ovl->ovl_w = overlay->width;
+  ovl->ovl_h = overlay->height;
+  ovl->ovl_x = overlay->x;
+  ovl->ovl_y = overlay->y;
+  ovl->unscaled = overlay->unscaled;
+  ovl->extent_width = overlay->extent_width;
+  ovl->extent_height = overlay->extent_height;
+  if ( overlay->extent_width == -1 )
+    ovl->vid_scale = 1;
+  else
+    ovl->vid_scale = 0;
+  ovl->type = GL_BGRA;
+
   if (overlay->argb_layer && overlay->argb_layer->buffer) {
-
     pthread_mutex_lock(&overlay->argb_layer->mutex); /* buffer can be changed or freed while unlocked */
+    memcpy(ovl->ovl_rgba, overlay->argb_layer->buffer, overlay->width * overlay->height * sizeof(uint32_t));
+    /* TODO: this could be done without this memcpy() ... */
+    pthread_mutex_unlock(&overlay->argb_layer->mutex);
 
-    if (overlay->argb_layer->buffer) {
-      if ( opengl2_process_rgba_ovl( this, overlay ) )
-        ++this->ovl_changed;
+    ++this->ovl_changed;
+
+  } else if (overlay->rle) {
+    if (!overlay->rgb_clut || !overlay->hili_rgb_clut) {
+      _x_overlay_clut_yuv2rgb(overlay);
     }
 
-    pthread_mutex_unlock(&overlay->argb_layer->mutex);
-  }
+    _x_overlay_to_argb32(overlay, (uint32_t*)ovl->ovl_rgba, overlay->width, "BGRA");
 
-  else if (overlay->rle) {
-    if (!overlay->rgb_clut || !overlay->hili_rgb_clut)
-      _x_overlay_clut_yuv2rgb(overlay);
-    if ( opengl2_process_ovl( this, overlay ) )
-      ++this->ovl_changed;
+    ++this->ovl_changed;
   }
 }
 
