@@ -540,52 +540,9 @@ static int opengl2_process_ovl( opengl2_driver_t *this_gen, vo_overlay_t *overla
     ovl->vid_scale = 1;
   else
     ovl->vid_scale = 0;
-  ovl->type = GL_RGBA;
+  ovl->type = GL_BGRA;
 
-  int num_rle = overlay->num_rle;
-  rle_elem_t *rle = overlay->rle;
-  uint8_t *rgba = ovl->ovl_rgba;
-  clut_t *low_colors = (clut_t*)overlay->color;
-  clut_t *hili_colors = (clut_t*)overlay->hili_color;
-  uint8_t *low_trans = overlay->trans;
-  uint8_t *hili_trans = overlay->hili_trans;
-  clut_t *colors;
-  uint8_t *trans;
-  uint8_t alpha;
-  int rlelen = 0;
-  uint8_t clr = 0;
-  int i, pos=0, x, y;
-
-  while ( num_rle>0 ) {
-    x = pos%ovl->ovl_w;
-    y = pos/ovl->ovl_w;
-    if ( (x>=overlay->hili_left && x<=overlay->hili_right) && (y>=overlay->hili_top && y<=overlay->hili_bottom) ) {
-    colors = hili_colors;
-    trans = hili_trans;
-    }
-    else {
-    colors = low_colors;
-    trans = low_trans;
-    }
-    rlelen = rle->len;
-    clr = rle->color;
-    alpha = trans[clr];
-    for ( i=0; i<rlelen; ++i ) {
-      if ( alpha == 0 ) {
-        rgba[0] = rgba[1] = rgba[2] = rgba[3] = 0;
-      }
-      else {
-        rgba[0] = colors[clr].y;
-        rgba[1] = colors[clr].cr;
-        rgba[2] = colors[clr].cb;
-        rgba[3] = alpha*255/15;
-      }
-      rgba+= 4;
-    ++pos;
-    }
-    ++rle;
-    --num_rle;
-  }
+  _x_overlay_to_argb32(overlay, (uint32_t*)ovl->ovl_rgba, overlay->width, "BGRA");
   return 1;
 }
 

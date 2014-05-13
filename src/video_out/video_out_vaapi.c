@@ -2717,7 +2717,6 @@ static void vaapi_overlay_end (vo_driver_t *this_gen, vo_frame_t *frame_gen) {
   for (i = 0; i < novls; ++i) {
     vo_overlay_t *ovl = this->overlays[i];
     uint32_t *bitmap = NULL;
-    uint32_t *rgba = NULL;
 
     if (ovl->rle) {
       if(ovl->width<=0 || ovl->height<=0)
@@ -2726,52 +2725,10 @@ static void vaapi_overlay_end (vo_driver_t *this_gen, vo_frame_t *frame_gen) {
       if (!ovl->rgb_clut || !ovl->hili_rgb_clut)
         _x_overlay_clut_yuv2rgb (ovl);
 
-      bitmap = rgba = calloc(ovl->width * ovl->height * 4, sizeof(uint32_t));
+      bitmap = malloc(ovl->width * ovl->height * sizeof(uint32_t));
 
-      int num_rle = ovl->num_rle;
-      rle_elem_t *rle = ovl->rle;
-      uint32_t red, green, blue, alpha;
-      clut_t *low_colors = (clut_t*)ovl->color;
-      clut_t *hili_colors = (clut_t*)ovl->hili_color;
-      uint8_t *low_trans = ovl->trans;
-      uint8_t *hili_trans = ovl->hili_trans;
-      clut_t *colors;
-      uint8_t *trans;
-      int rlelen = 0;
-      uint8_t clr = 0;
-      int i, pos=0, x, y;
+      _x_overlay_to_argb32(ovl, bitmap, ovl->width, "BGRA");
 
-      while (num_rle > 0) {
-        x = pos % ovl->width;
-        y = pos / ovl->width;
-
-        if ( (x>=ovl->hili_left && x<=ovl->hili_right) && (y>=ovl->hili_top && y<=ovl->hili_bottom) ) {
-          colors = hili_colors;
-          trans = hili_trans;
-        }
-        else {
-          colors = low_colors;
-          trans = low_trans;
-        }
-        rlelen = rle->len;
-        clr = rle->color;
-        for ( i=0; i<rlelen; ++i ) {
-          if ( trans[clr] == 0 ) {
-            alpha = red = green = blue = 0;
-          }
-          else {
-            red = colors[clr].y; // red
-            green = colors[clr].cr; // green
-            blue = colors[clr].cb; // blue
-            alpha = trans[clr]*255/15;
-          }
-          *rgba = (alpha<<24) | (red<<16) | (green<<8) | blue;
-          rgba++;
-          ++pos;
-        }
-        ++rle;
-        --num_rle;
-      }
       lprintf("width %d height %d pos %d %d\n", ovl->width, ovl->height, pos, ovl->width * ovl->height);
     } else {
       pthread_mutex_lock(&ovl->argb_layer->mutex);
