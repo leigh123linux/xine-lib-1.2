@@ -124,10 +124,8 @@ static void remove_events_handle( video_overlay_t *this, int32_t handle, int loc
 
       /* free its overlay */
       if( this->events[this_event].event->object.overlay ) {
-        if( this->events[this_event].event->object.overlay->rle )
-          free( this->events[this_event].event->object.overlay->rle );
-        free(this->events[this_event].event->object.overlay);
-        this->events[this_event].event->object.overlay = NULL;
+        _x_freep( &this->events[this_event].event->object.overlay->rle );
+        _x_freep( &this->events[this_event].event->object.overlay );
       }
 
       /* mark as free */
@@ -176,10 +174,8 @@ static void internal_video_overlay_free_handle(video_overlay_t *this, int32_t ha
   if( this->objects[handle].overlay ) {
     set_argb_layer_ptr(&this->objects[handle].overlay->argb_layer, NULL);
 
-    if( this->objects[handle].overlay->rle )
-      free( this->objects[handle].overlay->rle );
-    free( this->objects[handle].overlay );
-    this->objects[handle].overlay = NULL;
+    _x_freep( &this->objects[handle].overlay->rle );
+    _x_freep( &this->objects[handle].overlay );
   }
   this->objects[handle].handle = -1;
 
@@ -400,10 +396,8 @@ static int video_overlay_event( video_overlay_t *this, int64_t vpts ) {
         if (this->events[this_event].event->object.overlay != NULL) {
           set_argb_layer_ptr(&this->events[this_event].event->object.overlay->argb_layer, NULL);
 
-          if( this->events[this_event].event->object.overlay->rle != NULL )
-            free( this->events[this_event].event->object.overlay->rle );
-          free(this->events[this_event].event->object.overlay);
-          this->events[this_event].event->object.overlay = NULL;
+          _x_freep( &this->events[this_event].event->object.overlay->rle );
+          _x_freep( &this->events[this_event].event->object.overlay );
         }
         remove_showing_handle( this, handle );
         break;
@@ -416,10 +410,8 @@ static int video_overlay_event( video_overlay_t *this, int64_t vpts ) {
         if( this->events[this_event].event->object.overlay != NULL) {
           set_argb_layer_ptr(&this->events[this_event].event->object.overlay->argb_layer, NULL);
 
-          if( this->events[this_event].event->object.overlay->rle != NULL )
-            free( this->events[this_event].event->object.overlay->rle );
-          free(this->events[this_event].event->object.overlay);
-          this->events[this_event].event->object.overlay = NULL;
+          _x_freep( &this->events[this_event].event->object.overlay->rle );
+          _x_freep( &this->events[this_event].event->object.overlay );
         }
         /* this avoid removing this_event from the queue
          * (it will be removed at the end of this loop) */
@@ -480,14 +472,9 @@ static int video_overlay_event( video_overlay_t *this, int64_t vpts ) {
 
         if( this->events[this_event].event->object.overlay->rle ) {
           xprintf (this->xine, XINE_VERBOSITY_DEBUG, "video_overlay: warning EVENT_MENU_BUTTON with rle data\n");
-          free( this->events[this_event].event->object.overlay->rle );
-          this->events[this_event].event->object.overlay->rle = NULL;
+          _x_freep( &this->events[this_event].event->object.overlay->rle );
         }
-
-        if (this->events[this_event].event->object.overlay != NULL) {
-          free (this->events[this_event].event->object.overlay);
-          this->events[this_event].event->object.overlay = NULL;
-        }
+        _x_freep (&this->events[this_event].event->object.overlay);
         break;
 
       default:
@@ -587,11 +574,10 @@ static void video_overlay_dispose(video_overlay_manager_t *this_gen) {
   for (i=0; i < MAX_EVENTS; i++) {
     if (this->events[i].event != NULL) {
       if (this->events[i].event->object.overlay != NULL) {
-        if (this->events[i].event->object.overlay->rle)
-          free (this->events[i].event->object.overlay->rle);
-        free (this->events[i].event->object.overlay);
+        _x_freep (&this->events[i].event->object.overlay->rle);
+        _x_freep (&this->events[i].event->object.overlay);
       }
-      free (this->events[i].event);
+      _x_freep (&this->events[i].event);
     }
   }
 
