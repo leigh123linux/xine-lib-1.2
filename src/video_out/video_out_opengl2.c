@@ -836,6 +836,14 @@ static void opengl2_update_overlays( opengl2_driver_t *that )
       glTexParameteri( GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
       glBindTexture( GL_TEXTURE_RECTANGLE_ARB, 0 );
     }
+
+    /* free unused textures and buffers */
+    for ( ; i < XINE_VORAW_MAX_OVL && that->overlays[i].tex; ++i ) {
+      _x_freep( that->overlays[i].ovl_rgba );
+      that->overlays[i].ovl_w = 0;
+      that->overlays[i].ovl_h = 0;
+      glDeleteTextures( 1, &that->overlays[i].tex );
+    }
   }
 
   if ( that->ovl_changed && vid_scale && !cancel_vid_scale )
