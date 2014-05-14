@@ -79,7 +79,6 @@ typedef struct {
   
   int       unscaled;
   int       vid_scale;
-  int       type; /* GL_RGBA or GL_BGRA */
 
   int       extent_width;
   int       extent_height;
@@ -119,6 +118,7 @@ typedef struct {
   opengl2_program_t  yuv422_program;
   opengl2_yuvtex_t   yuvtex;
   GLuint             videoPBO;
+  GLuint             overlayPBO;
   GLuint             fbo;
   GLuint             videoTex, videoTex2;
   GLXSWAPINTERVALSGI mglXSwapInterval;
@@ -519,7 +519,7 @@ static int opengl2_check_textures_size( opengl2_driver_t *this_gen, int w, int h
 }
 
 
-static void opengl2_upload_overlay(opengl2_driver_t *this, opengl2_overlay_t *o, uint8_t *rgba)
+static void opengl2_upload_overlay(opengl2_driver_t *this, opengl2_overlay_t *o, vo_overlay_t *overlay)
 {
   if ( o->tex && ((o->tex_w != o->ovl_w) || (o->tex_h != o->ovl_h)) ) {
     glDeleteTextures( 1, &o->tex );
@@ -532,8 +532,37 @@ static void opengl2_upload_overlay(opengl2_driver_t *this, opengl2_overlay_t *o,
     o->tex_h = o->ovl_h;
   }
 
+  if ( overlay->rle && !this->overlayPBO ) {
+    glGenBuffers( 1, &this->overlayPBO );
+    if ( !this->overlayPBO ) {
+      fprintf(stderr, "*** overlay PBO failed\n");
+      return;
+    }
+  }
+
+  glActiveTexture( GL_TEXTURE0 );
   glBindTexture( GL_TEXTURE_RECTANGLE_ARB, o->tex );
-  glTexImage2D( GL_TEXTURE_RECTANGLE_ARB, 0, GL_RGBA, o->tex_w, o->tex_h, 0, o->type, GL_UNSIGNED_BYTE, rgba );
+
+  if (overlay->argb_layer) {
+    pthread_mutex_lock(&overlay->argb_layer->mutex); /* buffer can be changed or freed while unlocked */
+
+    glTexImage2D( GL_TEXTURE_RECTANGLE_ARB, 0, GL_RGBA, o->tex_w, o->tex_h, 0, GL_BGRA, GL_UNSIGNED_BYTE,
+                  overlay->argb_layer->buffer );
+
+    pthread_mutex_unlock(&overlay->argb_layer->mutex);
+
+  } else {
+    glBindBuffer( GL_PIXEL_UNPACK_BUFFER_ARB, this->overlayPBO );
+    glBufferData( GL_PIXEL_UNPACK_BUFFER_ARB, o->tex_w * o->tex_h * 4, NULL, GL_STREAM_DRAW );
+
+    void *rgba = glMapBuffer( GL_PIXEL_UNPACK_BUFFER_ARB, GL_WRITE_ONLY );
+    _x_overlay_to_argb32(overlay, rgba, o->tex_w, "RGBA");
+
+    glUnmapBuffer( GL_PIXEL_UNPACK_BUFFER_ARB );
+    glTexImage2D( GL_TEXTURE_RECTANGLE_ARB, 0, GL_RGBA, o->tex_w, o->tex_h, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0 );
+    glBindBuffer( GL_PIXEL_UNPACK_BUFFER_ARB, 0 );
+  }
+
   glTexParameterf( GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
   glTexParameterf( GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );
   glTexParameteri( GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
@@ -580,29 +609,15 @@ static void opengl2_overlay_blend (vo_driver_t *this_gen, vo_frame_t *frame_gen,
     ovl->vid_scale = 1;
   else
     ovl->vid_scale = 0;
-  ovl->type = GL_BGRA;
 
-  if (overlay->argb_layer && overlay->argb_layer->buffer) {
-    pthread_mutex_lock(&overlay->argb_layer->mutex); /* buffer can be changed or freed while unlocked */
-
-    if (overlay->argb_layer->buffer) {
-      opengl2_upload_overlay(this, ovl, overlay->argb_layer->buffer);
-      ++this->ovl_changed;
-    }
-
-    pthread_mutex_unlock(&overlay->argb_layer->mutex);
-
-
-  } else if (overlay->rle) {
+  if (overlay->rle) {
     if (!overlay->rgb_clut || !overlay->hili_rgb_clut) {
       _x_overlay_clut_yuv2rgb(overlay);
     }
+  }
 
-    uint8_t *rgba = (uint8_t*)malloc( overlay->width*overlay->height*sizeof(uint32_t) );
-    _x_overlay_to_argb32(overlay, (uint32_t*)rgba, overlay->width, "BGRA");
-    opengl2_upload_overlay(this, ovl, rgba);
-    free(rgba);
-
+  if (overlay->argb_layer || overlay->rle) {
+    opengl2_upload_overlay(this, ovl, overlay);
     ++this->ovl_changed;
   }
 }
@@ -1612,6 +1627,8 @@ static void opengl2_dispose( vo_driver_t *this_gen )
     glDeleteFramebuffers( 1, &this->fbo );
   if ( this->videoPBO )
     glDeleteBuffers( 1, &this->videoPBO );
+  if (this->overlayPBO)
+    glDeleteBuffers( 1, &this->overlayPBO );
 
   int i;
   for ( i=0; i<XINE_VORAW_MAX_OVL; ++i ) {
