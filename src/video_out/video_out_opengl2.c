@@ -71,7 +71,6 @@ typedef struct {
 
 
 typedef struct {
-  uint8_t  *ovl_rgba;
   int       ovl_w, ovl_h;
   int       ovl_x, ovl_y;
   
@@ -520,13 +519,41 @@ static int opengl2_check_textures_size( opengl2_driver_t *this_gen, int w, int h
 }
 
 
+static void opengl2_upload_overlay(opengl2_driver_t *this, opengl2_overlay_t *o, uint8_t *rgba)
+{
+  if ( o->tex && ((o->tex_w != o->ovl_w) || (o->tex_h != o->ovl_h)) ) {
+    glDeleteTextures( 1, &o->tex );
+    o->tex = 0;
+  }
+
+  if ( !o->tex ) {
+    glGenTextures( 1, &o->tex );
+    o->tex_w = o->ovl_w;
+    o->tex_h = o->ovl_h;
+  }
+
+  glBindTexture( GL_TEXTURE_RECTANGLE_ARB, o->tex );
+  glTexImage2D( GL_TEXTURE_RECTANGLE_ARB, 0, GL_RGBA, o->tex_w, o->tex_h, 0, o->type, GL_UNSIGNED_BYTE, rgba );
+  glTexParameterf( GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
+  glTexParameterf( GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );
+  glTexParameteri( GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
+  glTexParameteri( GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
+  glBindTexture( GL_TEXTURE_RECTANGLE_ARB, 0 );
+}
+
 static void opengl2_overlay_begin (vo_driver_t *this_gen, vo_frame_t *frame_gen, int changed)
 {
   //fprintf(stderr, "opengl2_overlay_begin\n");
   opengl2_driver_t  *this = (opengl2_driver_t *) this_gen;
 
-  if ( changed )
+  if ( changed ) {
     this->ovl_changed = 1;
+
+    if ( !glXMakeCurrent( this->display, this->drawable, this->context ) ) {
+      xprintf( this->xine, XINE_VERBOSITY_LOG, "video_out_opengl2: display unavailable for rendering\n" );
+      return;
+    }
+  }
 }
 
 
@@ -542,10 +569,6 @@ static void opengl2_overlay_blend (vo_driver_t *this_gen, vo_frame_t *frame_gen,
 
   opengl2_overlay_t *ovl = &this->overlays[this->ovl_changed-1];
 
-  if ( (overlay->width*overlay->height)!=(ovl->ovl_w*ovl->ovl_h) ) {
-    free(ovl->ovl_rgba);
-    ovl->ovl_rgba = (uint8_t*)malloc( overlay->width*overlay->height*sizeof(uint32_t) );
-  }
   ovl->ovl_w = overlay->width;
   ovl->ovl_h = overlay->height;
   ovl->ovl_x = overlay->x;
@@ -563,10 +586,10 @@ static void opengl2_overlay_blend (vo_driver_t *this_gen, vo_frame_t *frame_gen,
     pthread_mutex_lock(&overlay->argb_layer->mutex); /* buffer can be changed or freed while unlocked */
 
     if (overlay->argb_layer->buffer) {
-      memcpy(ovl->ovl_rgba, overlay->argb_layer->buffer, overlay->width * overlay->height * sizeof(uint32_t));
+      opengl2_upload_overlay(this, ovl, overlay->argb_layer->buffer);
       ++this->ovl_changed;
     }
-    /* TODO: this could be done without this memcpy() ... */
+
     pthread_mutex_unlock(&overlay->argb_layer->mutex);
 
 
@@ -575,7 +598,10 @@ static void opengl2_overlay_blend (vo_driver_t *this_gen, vo_frame_t *frame_gen,
       _x_overlay_clut_yuv2rgb(overlay);
     }
 
-    _x_overlay_to_argb32(overlay, (uint32_t*)ovl->ovl_rgba, overlay->width, "BGRA");
+    uint8_t *rgba = (uint8_t*)malloc( overlay->width*overlay->height*sizeof(uint32_t) );
+    _x_overlay_to_argb32(overlay, (uint32_t*)rgba, overlay->width, "BGRA");
+    opengl2_upload_overlay(this, ovl, rgba);
+    free(rgba);
 
     ++this->ovl_changed;
   }
@@ -586,11 +612,21 @@ static void opengl2_overlay_end (vo_driver_t *this_gen, vo_frame_t *vo_img)
 {
   //fprintf(stderr, "opengl2_overlay_end\n");
   opengl2_driver_t  *this = (opengl2_driver_t *) this_gen;
+  unsigned i;
 
   if ( !this->ovl_changed )
     return;
 
   this->num_ovls = this->ovl_changed - 1;
+
+  /* free unused textures and buffers */
+  for ( i = this->num_ovls; i < XINE_VORAW_MAX_OVL && this->overlays[i].tex; ++i ) {
+    this->overlays[i].ovl_w = 0;
+    this->overlays[i].ovl_h = 0;
+    glDeleteTextures( 1, &this->overlays[i].tex );
+  }
+
+  glXMakeCurrent( this->display, None, NULL );
 }
 
 
@@ -821,31 +857,6 @@ static void opengl2_update_overlays( opengl2_driver_t *that )
         if ( o->ovl_w > 720 || o->ovl_h > 576 )
           cancel_vid_scale = 1;
       }
-      
-      if ( o->tex && ((o->tex_w != o->ovl_w) || (o->tex_h != o->ovl_h)) ) {
-        glDeleteTextures( 1, &o->tex );
-        o->tex = 0;
-      }
-      if ( !o->tex ) {
-        glGenTextures( 1, &o->tex );
-        o->tex_w = o->ovl_w;
-        o->tex_h = o->ovl_h;
-      }
-      glBindTexture( GL_TEXTURE_RECTANGLE_ARB, o->tex );
-      glTexImage2D( GL_TEXTURE_RECTANGLE_ARB, 0, GL_RGBA, o->tex_w, o->tex_h, 0, o->type, GL_UNSIGNED_BYTE, o->ovl_rgba );
-      glTexParameterf( GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
-      glTexParameterf( GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );
-      glTexParameteri( GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
-      glTexParameteri( GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
-      glBindTexture( GL_TEXTURE_RECTANGLE_ARB, 0 );
-    }
-
-    /* free unused textures and buffers */
-    for ( ; i < XINE_VORAW_MAX_OVL && that->overlays[i].tex; ++i ) {
-      _x_freep( that->overlays[i].ovl_rgba );
-      that->overlays[i].ovl_w = 0;
-      that->overlays[i].ovl_h = 0;
-      glDeleteTextures( 1, &that->overlays[i].tex );
     }
   }
 
@@ -1604,7 +1615,6 @@ static void opengl2_dispose( vo_driver_t *this_gen )
 
   int i;
   for ( i=0; i<XINE_VORAW_MAX_OVL; ++i ) {
-    free( this->overlays[i].ovl_rgba );
     glDeleteTextures( 1, &this->overlays[i].tex );
   }
   
@@ -1731,7 +1741,6 @@ static vo_driver_t *opengl2_open_plugin( video_driver_class_t *class_gen, const 
   int i;
   for ( i=0; i<XINE_VORAW_MAX_OVL; ++i ) {
     this->overlays[i].ovl_w = this->overlays[i].ovl_h = 0;
-    this->overlays[i].ovl_rgba = (uint8_t*)malloc(2*2*4);
     this->overlays[i].ovl_x = this->overlays[i].ovl_y = 0;
     this->overlays[i].unscaled = 0;
     this->overlays[i].tex = 0;
