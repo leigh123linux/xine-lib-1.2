@@ -561,11 +561,14 @@ static void opengl2_overlay_blend (vo_driver_t *this_gen, vo_frame_t *frame_gen,
 
   if (overlay->argb_layer && overlay->argb_layer->buffer) {
     pthread_mutex_lock(&overlay->argb_layer->mutex); /* buffer can be changed or freed while unlocked */
-    memcpy(ovl->ovl_rgba, overlay->argb_layer->buffer, overlay->width * overlay->height * sizeof(uint32_t));
+
+    if (overlay->argb_layer->buffer) {
+      memcpy(ovl->ovl_rgba, overlay->argb_layer->buffer, overlay->width * overlay->height * sizeof(uint32_t));
+      ++this->ovl_changed;
+    }
     /* TODO: this could be done without this memcpy() ... */
     pthread_mutex_unlock(&overlay->argb_layer->mutex);
 
-    ++this->ovl_changed;
 
   } else if (overlay->rle) {
     if (!overlay->rgb_clut || !overlay->hili_rgb_clut) {
