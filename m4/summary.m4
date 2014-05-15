@@ -242,6 +242,7 @@ AC_DEFUN([XINE_LIB_SUMMARY], [
     test x"$have_libstk" = x"yes"       && echo "   - stk (Libstk Set-top Toolkit)"
     test x"$have_macosx_video" = x"yes" && echo "   - Mac OS X OpenGL"
     test x"$have_sdl" = x"yes"          && echo "   - sdl (Simple DirectMedia Layer)"
+    test x"$have_mmal" = x"yes"         && echo "   - mmal (Broadcom MultiMedia Abstraction Layer)"
 
 
     if test x"$have_dxr3" = x"yes"; then

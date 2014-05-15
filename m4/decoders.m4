@@ -551,7 +551,7 @@ AC_DEFUN([XINE_DECODER_PLUGINS], [
 
     dnl Broadcom MMAL (Multi Media Abstraction Layer) decoder plugin for RPi
     AC_ARG_ENABLE([mmal],
-                  [AS_HELP_STRING([--enable-mmal], [Enable libmmal based HW decoder plugin for Raspberry Pi (default: enabled)])],
+                  [AS_HELP_STRING([--enable-mmal], [Enable libmmal HW decoder and video output plugin for Raspberry Pi (default: enabled)])],
                   [test x"$enableval" != x"no" && enable_mmal="yes"])
     if test x"$enable_mmal" != "no"; then
         saved_CPPFLAGS="$CPPFLAGS"

@@ -89,6 +89,10 @@ if ENABLE_SDL
 sdl_module = xineplug_vo_out_sdl.la
 endif
 
+if ENABLE_MMAL
+mmal_module = xineplug_vo_out_mmal.la
+endif
+
 if ENABLE_STK
 stk_module = xineplug_vo_out_stk.la
 endif
@@ -126,6 +130,7 @@ xineplug_LTLIBRARIES = $(xshm_module) $(xv_module) $(xvmc_module) \
 		  $(xcbxv_module) \
 		  $(vdpau_module) \
 		  $(vaapi_module) \
+		  $(mmal_module) \
                   xineplug_vo_out_raw.la \
                   xineplug_vo_out_none.la
 
@@ -212,6 +217,11 @@ xineplug_vo_out_xdirectfb_la_CFLAGS = $(AM_CFLAGS) $(DIRECTFB_CFLAGS) -fno-stric
 xineplug_vo_out_sdl_la_SOURCES = video_out_sdl.c
 xineplug_vo_out_sdl_la_LIBADD = $(XINE_LIB) $(SDL_LIBS) $(X_LIBS) $(PTHREAD_LIBS) $(LTLIBINTL)
 xineplug_vo_out_sdl_la_CFLAGS = $(AM_CFLAGS) $(X_CFLAGS) $(SDL_CFLAGS)
+
+xineplug_vo_out_mmal_la_SOURCES = video_out_mmal.c
+xineplug_vo_out_mmal_la_LIBADD = $(XINE_LIB) $(MMAL_LIBS) $(PTHREAD_LIBS) $(LTLIBINTL)
+xineplug_vo_out_mmal_la_CFLAGS = $(AM_CFLAGS) $(MMAL_CFLAGS)
+xineplug_vo_out_mmal_la_LDFLAGS = $(AM_LDFLAGS) $(MMAL_LDFLAGS)
 
 xineplug_vo_out_stk_la_SOURCES = video_out_stk.c
 xineplug_vo_out_stk_la_LIBADD = $(XINE_LIB) $(LIBSTK_LIBS) $(PTHREAD_LIBS)
