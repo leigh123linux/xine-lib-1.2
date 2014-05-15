@@ -67,6 +67,11 @@ typedef struct {
 } region_t;
 
 typedef struct {
+  clut_t   c;
+  uint32_t u32;
+} clut_union_t;
+
+typedef struct {
 /* dvbsub stuff */
   int			x;
   int			y;
@@ -79,7 +84,7 @@ typedef struct {
   int			compat_depth;
   page_t		page;
   region_t		regions[MAX_REGIONS];
-  clut_t		colours[MAX_REGIONS*256];
+  clut_union_t		colours[MAX_REGIONS*256];
   unsigned char		trans[MAX_REGIONS*256];
   struct {
     unsigned char	  lut24[4], lut28[4], lut48[16];
@@ -473,10 +478,10 @@ static void recalculate_trans (dvb_spu_decoder_t *this)
   _x_spu_get_opacity (this->stream->xine, &opacity);
   for (i = 0; i < MAX_REGIONS * 256; ++i) {
     /* ETSI-300-743 says "full transparency if Y == 0". */
-    if (dvbsub->colours[i].y == 0)
+    if (dvbsub->colours[i].c.y == 0)
       dvbsub->trans[i] = 0;
     else {
-      int v = _x_spu_calculate_opacity (&dvbsub->colours[i], dvbsub->colours[i].foo, &opacity);
+      int v = _x_spu_calculate_opacity (&dvbsub->colours[i].c, dvbsub->colours[i].c.foo, &opacity);
       dvbsub->trans[i] = v * 14 / 255 + 1;
     }
   }
@@ -491,10 +496,10 @@ static void set_clut(dvb_spu_decoder_t *this,int CLUT_id,int CLUT_entry_id,int Y
     return;
   }
 
-  dvbsub->colours[(CLUT_id*256)+CLUT_entry_id].y=Y_value;
-  dvbsub->colours[(CLUT_id*256)+CLUT_entry_id].cr=Cr_value;
-  dvbsub->colours[(CLUT_id*256)+CLUT_entry_id].cb=Cb_value;
-  dvbsub->colours[(CLUT_id*256)+CLUT_entry_id].foo = T_value;
+  dvbsub->colours[(CLUT_id*256)+CLUT_entry_id].c.y   = Y_value;
+  dvbsub->colours[(CLUT_id*256)+CLUT_entry_id].c.cr  = Cr_value;
+  dvbsub->colours[(CLUT_id*256)+CLUT_entry_id].c.cb  = Cb_value;
+  dvbsub->colours[(CLUT_id*256)+CLUT_entry_id].c.foo = T_value;
 }
 
 static void process_CLUT_definition_segment(dvb_spu_decoder_t *this) {
@@ -891,7 +896,9 @@ static void draw_subtitles (dvb_spu_decoder_t * this)
 	  reg = this->dvbsub->regions[r].img;
 	  reg_width = this->dvbsub->regions[r].width;
 	}
-	this->stream->osd_renderer->set_palette( this->dvbsub->regions[r].osd, (uint32_t*)(&this->dvbsub->colours[this->dvbsub->regions[r].CLUT_id*256]), &this->dvbsub->trans[this->dvbsub->regions[r].CLUT_id*256]);
+	this->stream->osd_renderer->set_palette( this->dvbsub->regions[r].osd,
+                                                 &this->dvbsub->colours[this->dvbsub->regions[r].CLUT_id*256].u32,
+                                                 &this->dvbsub->trans[this->dvbsub->regions[r].CLUT_id*256]);
 	this->stream->osd_renderer->draw_bitmap( this->dvbsub->regions[r].osd, reg, 0, 0, reg_width, this->dvbsub->regions[r].height, NULL );
       }
     }
@@ -1165,7 +1172,7 @@ static spu_decoder_t *dvb_spu_class_open_plugin (spu_decoder_class_t * class_gen
     t = _x_spu_calculate_opacity (&black, 0, &opacity);
 
     for (i = 0; i < MAX_REGIONS * 256; i++)
-      this->dvbsub->colours[i].foo = t;
+      this->dvbsub->colours[i].c.foo = t;
   }
 
   pthread_mutex_init(&this->dvbsub_osd_mutex, NULL);
