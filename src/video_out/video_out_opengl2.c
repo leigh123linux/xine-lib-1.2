@@ -639,6 +639,7 @@ static void opengl2_overlay_end (vo_driver_t *this_gen, vo_frame_t *vo_img)
     this->overlays[i].ovl_w = 0;
     this->overlays[i].ovl_h = 0;
     glDeleteTextures( 1, &this->overlays[i].tex );
+    this->overlays[i].tex = 0;
   }
 
   glXMakeCurrent( this->display, None, NULL );
