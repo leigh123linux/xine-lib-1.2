@@ -666,8 +666,6 @@ static void opengl2_frame_dispose( vo_frame_t *vo_img )
   opengl2_frame_t  *frame = (opengl2_frame_t *) vo_img ;
 
   av_free (frame->vo_frame.base[0]);
-  av_free (frame->vo_frame.base[1]);
-  av_free (frame->vo_frame.base[2]);
   free (frame);
 }
 
@@ -711,26 +709,26 @@ static void opengl2_update_frame_format( vo_driver_t *this_gen, vo_frame_t *fram
 
     /* (re-) allocate render space */
     av_freep (&frame->vo_frame.base[0]);
-    av_freep (&frame->vo_frame.base[1]);
-    av_freep (&frame->vo_frame.base[2]);
+    frame->vo_frame.base[1] = NULL;
+    frame->vo_frame.base[2] = NULL;
 
     if (format == XINE_IMGFMT_YV12) {
-      frame->vo_frame.pitches[0] = (width + 15) & ~15;
-      frame->vo_frame.pitches[1] = ((width + 15) & ~15) >> 1;
-      frame->vo_frame.pitches[2] = ((width + 15) & ~15) >> 1;
-      frame->vo_frame.base[0] = av_mallocz (frame->vo_frame.pitches[0] * height);
-      frame->vo_frame.base[1] = av_malloc  (frame->vo_frame.pitches[1] * ((height+1)/2));
-      frame->vo_frame.base[2] = av_malloc  (frame->vo_frame.pitches[2] * ((height+1)/2));
-      if (!frame->vo_frame.base[0] || !frame->vo_frame.base[1] || !frame->vo_frame.base[2]) {
-        av_freep (&frame->vo_frame.base[0]);
-        av_freep (&frame->vo_frame.base[1]);
-        av_freep (&frame->vo_frame.base[2]);
+      int w = (width + 15) & ~15;
+      int ysize = w * height;
+      int uvsize = (w >> 1) * ((height + 1) >> 1);
+      frame->vo_frame.pitches[0] = w;
+      frame->vo_frame.pitches[1] = w >> 1;
+      frame->vo_frame.pitches[2] = w >> 1;
+      frame->vo_frame.base[0] = av_malloc (ysize + 2 * uvsize);
+      if (!frame->vo_frame.base[0]) {
         frame->width = 0;
         frame->vo_frame.width = 0; /* tell vo_get_frame () to retry later */
         return;
       }
-      memset (frame->vo_frame.base[1], 128, frame->vo_frame.pitches[1] * ((height+1)/2));
-      memset (frame->vo_frame.base[2], 128, frame->vo_frame.pitches[2] * ((height+1)/2));
+      memset (frame->vo_frame.base[0], 0, ysize);
+      frame->vo_frame.base[1] = frame->vo_frame.base[0] + ysize;
+      memset (frame->vo_frame.base[1], 128, 2 * uvsize);
+      frame->vo_frame.base[2] = frame->vo_frame.base[1] + uvsize;
     } else if (format == XINE_IMGFMT_YUY2){
       frame->vo_frame.pitches[0] = ((width + 15) & ~15) << 1;
       frame->vo_frame.base[0] = av_malloc (frame->vo_frame.pitches[0] * height);
