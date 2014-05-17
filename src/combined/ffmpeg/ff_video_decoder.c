@@ -278,6 +278,7 @@ static int get_buffer (AVCodecContext *context, AVFrame *av_frame)
   /* The visible size, may be smaller. */
   int width  = context->width;
   int height = context->height;
+  int top_edge;
   int guarded_render = 0;
 
   /* A bit of unmotivated paranoia... */
@@ -410,7 +411,10 @@ static int get_buffer (AVCodecContext *context, AVFrame *av_frame)
   buf_width  += 2 * this->edge + 31;
   buf_width  &= ~31;
   /* 2 extra lines for the edge wrap below plus XINE requirement */
-  buf_height += 2 * this->edge + 2 + 15;
+  top_edge = this->edge;
+  if (top_edge)
+    top_edge += 2;
+  buf_height += top_edge + this->edge + 15;
   buf_height &= ~15;
 
   if ((this->full2mpeg || (this->context->pix_fmt != PIX_FMT_YUV420P &&
@@ -505,16 +509,15 @@ static int get_buffer (AVCodecContext *context, AVFrame *av_frame)
   av_frame->linesize[2] = img->pitches[2];
 
   if (this->output_format == XINE_IMGFMT_YV12) {
-    /* nasty hack: wrap right edge to the left side when needed to get proper
+    /* nasty hack: wrap left edge to the right side to get proper
        SSE2 alignment on all planes. */
-    int left_edge = (this->edge + 31) & ~31;
-    av_frame->data[0] += img->pitches[0] * this->edge + left_edge;
-    av_frame->data[1] += (img->pitches[1] * this->edge + left_edge) / 2;
-    av_frame->data[2] += (img->pitches[2] * this->edge + left_edge) / 2;
-    img->crop_left   = left_edge;
-    img->crop_top    = this->edge;
-    img->crop_right  = buf_width  - width - left_edge;
-    img->crop_bottom = buf_height - height - this->edge;
+    av_frame->data[0] += img->pitches[0] * top_edge;
+    av_frame->data[1] += img->pitches[1] * top_edge / 2;
+    av_frame->data[2] += img->pitches[2] * top_edge / 2;
+    img->crop_left   = 0;
+    img->crop_top    = top_edge;
+    img->crop_right  = buf_width  - width;
+    img->crop_bottom = buf_height - height - top_edge;
   }
 
   /* We should really keep track of the ages of xine frames (see
