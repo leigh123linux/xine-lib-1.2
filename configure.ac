@@ -361,6 +361,10 @@ case "$host_os" in
 esac
 AC_CHECK_HEADERS([sys/dvdio.h sys/cdio.h sys/scsiio.h])
 
+dnl ----------------------------------------------
+dnl Check for NetBSD DTV headers
+dnl ----------------------------------------------
+AC_CHECK_HEADERS([dev/dtv/dtvio.h])
 
 dnl ----------------
 dnl checks for types
