@@ -619,7 +619,7 @@ void _x_blend_rgb16 (uint8_t * img, vo_overlay_t * img_overl,
 
     for (x = x1_scaled = 0; x < src_width;) {
       int rle_bite;
-      clut_t *colors;
+      uint32_t *colors;
       uint8_t *trans;
       uint16_t o;
       int clipped = (y < clip_top);
@@ -639,7 +639,7 @@ void _x_blend_rgb16 (uint8_t * img, vo_overlay_t * img_overl,
 
         rle_bite = rlelen;
         /* choose palette for surrounding area */
-        colors = (clut_t*)img_overl->color;
+        colors = img_overl->color;
         trans = img_overl->trans;
       } else {
         /* treat cases where highlight border is inside rle->len pixels */
@@ -651,14 +651,14 @@ void _x_blend_rgb16 (uint8_t * img, vo_overlay_t * img_overl,
             /* choose the largest "bite" up to palette change */
             rle_bite = hili_left - x;
             /* choose palette for surrounding area */
-            colors = (clut_t*)img_overl->color;
+            colors = img_overl->color;
             trans = img_overl->trans;
           } else {
             /* ends left */
 
             rle_bite = rlelen;
             /* choose palette for surrounding area */
-            colors = (clut_t*)img_overl->color;
+            colors = img_overl->color;
             trans = img_overl->trans;
           }
           if( x < clip_left )
@@ -671,14 +671,14 @@ void _x_blend_rgb16 (uint8_t * img, vo_overlay_t * img_overl,
             /* choose the largest "bite" up to palette change */
             rle_bite = hili_right - x;
             /* we're in the center area so choose highlight palette */
-            colors = (clut_t*)img_overl->hili_color;
+            colors = img_overl->hili_color;
             trans = img_overl->hili_trans;
           } else {
             /* starts right */
 
             rle_bite = rlelen;
             /* choose palette for surrounding area */
-            colors = (clut_t*)img_overl->color;
+            colors = img_overl->color;
             trans = img_overl->trans;
 
             if( x + rle_bite >= clip_right )
@@ -689,7 +689,7 @@ void _x_blend_rgb16 (uint8_t * img, vo_overlay_t * img_overl,
 
           rle_bite = rlelen;
           /* we're in the center area so choose highlight palette */
-          colors = (clut_t*)img_overl->hili_color;
+          colors = img_overl->hili_color;
           trans = img_overl->hili_trans;
         }
       }
@@ -786,7 +786,7 @@ void _x_blend_rgb24 (uint8_t * img, vo_overlay_t * img_overl,
 
     for (x = x1_scaled = 0; x < src_width;) {
       int rle_bite;
-      clut_t *colors;
+      uint32_t *colors;
       uint8_t *trans;
       uint16_t o;
       int clipped = (y < clip_top);
@@ -806,7 +806,7 @@ void _x_blend_rgb24 (uint8_t * img, vo_overlay_t * img_overl,
 
         rle_bite = rlelen;
         /* choose palette for surrounding area */
-        colors = (clut_t*)img_overl->color;
+        colors = img_overl->color;
         trans = img_overl->trans;
       } else {
         /* treat cases where highlight border is inside rle->len pixels */
@@ -818,14 +818,14 @@ void _x_blend_rgb24 (uint8_t * img, vo_overlay_t * img_overl,
             /* choose the largest "bite" up to palette change */
             rle_bite = hili_left - x;
             /* choose palette for surrounding area */
-            colors = (clut_t*)img_overl->color;
+            colors = img_overl->color;
             trans = img_overl->trans;
           } else {
             /* ends left */
 
             rle_bite = rlelen;
             /* choose palette for surrounding area */
-            colors = (clut_t*)img_overl->color;
+            colors = img_overl->color;
             trans = img_overl->trans;
           }
           if( x < clip_left )
@@ -838,14 +838,14 @@ void _x_blend_rgb24 (uint8_t * img, vo_overlay_t * img_overl,
             /* choose the largest "bite" up to palette change */
             rle_bite = hili_right - x;
             /* we're in the center area so choose highlight palette */
-            colors = (clut_t*)img_overl->hili_color;
+            colors = img_overl->hili_color;
             trans = img_overl->hili_trans;
           } else {
             /* starts right */
 
             rle_bite = rlelen;
             /* choose palette for surrounding area */
-            colors = (clut_t*)img_overl->color;
+            colors = img_overl->color;
             trans = img_overl->trans;
 
             if( x + rle_bite >= clip_right )
@@ -856,7 +856,7 @@ void _x_blend_rgb24 (uint8_t * img, vo_overlay_t * img_overl,
 
           rle_bite = rlelen;
           /* we're in the center area so choose highlight palette */
-          colors = (clut_t*)img_overl->hili_color;
+          colors = img_overl->hili_color;
           trans = img_overl->hili_trans;
         }
       }
@@ -865,8 +865,13 @@ void _x_blend_rgb24 (uint8_t * img, vo_overlay_t * img_overl,
 
       o = trans[clr];
       if (o && !clipped) {
+        union {
+          uint32_t u32;
+          clut_t   c;
+        } color = {colors[clr]};
+
         mem_blend24(img_pix + x1_scaled*3,
-                    colors[clr].cb, colors[clr].cr, colors[clr].y,
+                    color.c.cb, color.c.cr, color.c.y,
                     o, x2_scaled-x1_scaled);
       }
 
@@ -953,7 +958,7 @@ void _x_blend_rgb32 (uint8_t * img, vo_overlay_t * img_overl,
 
     for (x = x1_scaled = 0; x < src_width;) {
       int rle_bite;
-      clut_t *colors;
+      uint32_t *colors;
       uint8_t *trans;
       uint16_t o;
       int clipped = (y < clip_top);
@@ -973,7 +978,7 @@ void _x_blend_rgb32 (uint8_t * img, vo_overlay_t * img_overl,
 
         rle_bite = rlelen;
         /* choose palette for surrounding area */
-        colors = (clut_t*)img_overl->color;
+        colors = img_overl->color;
         trans = img_overl->trans;
       } else {
         /* treat cases where highlight border is inside rle->len pixels */
@@ -985,14 +990,14 @@ void _x_blend_rgb32 (uint8_t * img, vo_overlay_t * img_overl,
             /* choose the largest "bite" up to palette change */
             rle_bite = hili_left - x;
             /* choose palette for surrounding area */
-            colors = (clut_t*)img_overl->color;
+            colors = img_overl->color;
             trans = img_overl->trans;
           } else {
             /* ends left */
 
             rle_bite = rlelen;
             /* choose palette for surrounding area */
-            colors = (clut_t*)img_overl->color;
+            colors = img_overl->color;
             trans = img_overl->trans;
           }
           if( x < clip_left )
@@ -1005,14 +1010,14 @@ void _x_blend_rgb32 (uint8_t * img, vo_overlay_t * img_overl,
             /* choose the largest "bite" up to palette change */
             rle_bite = hili_right - x;
             /* we're in the center area so choose highlight palette */
-            colors = (clut_t*)img_overl->hili_color;
+            colors = img_overl->hili_color;
             trans = img_overl->hili_trans;
           } else {
             /* starts right */
 
             rle_bite = rlelen;
             /* choose palette for surrounding area */
-            colors = (clut_t*)img_overl->color;
+            colors = img_overl->color;
             trans = img_overl->trans;
 
             if( x + rle_bite >= clip_right )
@@ -1023,7 +1028,7 @@ void _x_blend_rgb32 (uint8_t * img, vo_overlay_t * img_overl,
 
           rle_bite = rlelen;
           /* we're in the center area so choose highlight palette */
-          colors = (clut_t*)img_overl->hili_color;
+          colors = img_overl->hili_color;
           trans = img_overl->hili_trans;
         }
       }
@@ -1152,7 +1157,7 @@ void _x_blend_yuv (uint8_t *dst_base[3], vo_overlay_t * img_overl,
                 alphablend_t *extra_data)
 {
   int enable_exact_blending = !extra_data->disable_exact_blending;
-  clut_t *my_clut;
+  uint32_t *my_clut;
   uint8_t *my_trans;
 
   int src_width = img_overl->width;
@@ -1183,7 +1188,7 @@ void _x_blend_yuv (uint8_t *dst_base[3], vo_overlay_t * img_overl,
 #ifdef LOG_BLEND_YUV
   printf("overlay_blend started x=%d, y=%d, w=%d h=%d\n",img_overl->x,img_overl->y,img_overl->width,img_overl->height);
 #endif
-  my_clut = (clut_t*) img_overl->hili_color;
+  my_clut = img_overl->hili_color;
   my_trans = img_overl->hili_trans;
 
   /* checks to avoid drawing overlay outside the destination buffer */
@@ -1294,7 +1299,7 @@ void _x_blend_yuv (uint8_t *dst_base[3], vo_overlay_t * img_overl,
             rle_this_bite = (hili_left - x);
             rle_remainder -= rle_this_bite;
             rlelen -= rle_this_bite;
-            my_clut = (clut_t*) img_overl->color;
+            my_clut = img_overl->color;
             my_trans = img_overl->trans;
             xmask = 0;
           } else {
@@ -1305,7 +1310,7 @@ void _x_blend_yuv (uint8_t *dst_base[3], vo_overlay_t * img_overl,
             rle_this_bite = rle_remainder;
             rle_remainder = 0;
             rlelen -= rle_this_bite;
-            my_clut = (clut_t*) img_overl->color;
+            my_clut = img_overl->color;
             my_trans = img_overl->trans;
             xmask = 0;
           }
@@ -1321,7 +1326,7 @@ void _x_blend_yuv (uint8_t *dst_base[3], vo_overlay_t * img_overl,
             rle_this_bite = (hili_right - x);
             rle_remainder -= rle_this_bite;
             rlelen -= rle_this_bite;
-            my_clut = (clut_t*) img_overl->hili_color;
+            my_clut = img_overl->hili_color;
             my_trans = img_overl->hili_trans;
             xmask++;
           } else {
@@ -1332,7 +1337,7 @@ void _x_blend_yuv (uint8_t *dst_base[3], vo_overlay_t * img_overl,
             rle_this_bite = rle_remainder;
             rle_remainder = 0;
             rlelen -= rle_this_bite;
-            my_clut = (clut_t*) img_overl->hili_color;
+            my_clut = img_overl->hili_color;
             my_trans = img_overl->hili_trans;
             xmask++;
           }
@@ -1347,7 +1352,7 @@ void _x_blend_yuv (uint8_t *dst_base[3], vo_overlay_t * img_overl,
             rle_this_bite = (src_width - x );
             rle_remainder -= rle_this_bite;
             rlelen -= rle_this_bite;
-            my_clut = (clut_t*) img_overl->color;
+            my_clut = img_overl->color;
             my_trans = img_overl->trans;
             xmask = 0;
           } else {
@@ -1358,7 +1363,7 @@ void _x_blend_yuv (uint8_t *dst_base[3], vo_overlay_t * img_overl,
             rle_this_bite = rle_remainder;
             rle_remainder = 0;
             rlelen -= rle_this_bite;
-            my_clut = (clut_t*) img_overl->color;
+            my_clut = img_overl->color;
             my_trans = img_overl->trans;
             xmask = 0;
           }
@@ -1371,7 +1376,7 @@ void _x_blend_yuv (uint8_t *dst_base[3], vo_overlay_t * img_overl,
         rle_this_bite = rle_remainder;
         rle_remainder = 0;
         rlelen -= rle_this_bite;
-        my_clut = (clut_t*) img_overl->color;
+        my_clut = img_overl->color;
         my_trans = img_overl->trans;
         xmask = 0;
       }
@@ -1397,29 +1402,34 @@ void _x_blend_yuv (uint8_t *dst_base[3], vo_overlay_t * img_overl,
         }
 
         if (o && !clipped) {
+          union {
+            uint32_t u32;
+            clut_t   c;
+          } color = {my_clut[clr]};
+
           if(o >= 15) {
-            memset(dst_y + x, my_clut[clr].y, rle_this_bite);
+            memset(dst_y + x, color.c.y, rle_this_bite);
             if (!enable_exact_blending) {
               if ((y + y_odd) & 1) {
-                memset(dst_cr + ((x + x_odd) >> 1), my_clut[clr].cr, (rle_this_bite+1) >> 1);
-                memset(dst_cb + ((x + x_odd) >> 1), my_clut[clr].cb, (rle_this_bite+1) >> 1);
+                memset(dst_cr + ((x + x_odd) >> 1), color.c.cr, (rle_this_bite+1) >> 1);
+                memset(dst_cb + ((x + x_odd) >> 1), color.c.cb, (rle_this_bite+1) >> 1);
               }
             }
           } else {
-            mem_blend8(dst_y + x, my_clut[clr].y, o, rle_this_bite);
+            mem_blend8(dst_y + x, color.c.y, o, rle_this_bite);
             if (!enable_exact_blending) {
               if ((y + y_odd) & 1) {
                 /* Blending cr and cb should use a different function, with pre -128 to each sample */
-                mem_blend8(dst_cr + ((x + x_odd) >> 1), my_clut[clr].cr, o, (rle_this_bite+1) >> 1);
-                mem_blend8(dst_cb + ((x + x_odd) >> 1), my_clut[clr].cb, o, (rle_this_bite+1) >> 1);
+                mem_blend8(dst_cr + ((x + x_odd) >> 1), color.c.cr, o, (rle_this_bite+1) >> 1);
+                mem_blend8(dst_cb + ((x + x_odd) >> 1), color.c.cb, o, (rle_this_bite+1) >> 1);
               }
             }
           }
 
           if (enable_exact_blending) {
             /* remember chroma of current line */
-            memset(&(*blend_yuv_data)[ 1 ][ (y + y_odd) & 1 ][ x + x_odd ], my_clut[ clr ].cr, rle_this_bite);
-            memset(&(*blend_yuv_data)[ 2 ][ (y + y_odd) & 1 ][ x + x_odd ], my_clut[ clr ].cb, rle_this_bite);
+            memset(&(*blend_yuv_data)[ 1 ][ (y + y_odd) & 1 ][ x + x_odd ], color.c.cr, rle_this_bite);
+            memset(&(*blend_yuv_data)[ 2 ][ (y + y_odd) & 1 ][ x + x_odd ], color.c.cb, rle_this_bite);
           }
         }
       }
@@ -1594,7 +1604,7 @@ void _x_blend_yuy2 (uint8_t * dst_img, vo_overlay_t * img_overl,
                  alphablend_t *extra_data)
 {
   int enable_exact_blending = !extra_data->disable_exact_blending;
-  clut_t *my_clut;
+  uint32_t *my_clut;
   uint8_t *my_trans;
 
   int src_width = img_overl->width;
@@ -1629,7 +1639,7 @@ void _x_blend_yuy2 (uint8_t * dst_img, vo_overlay_t * img_overl,
   uint8_t *dst_y = dst_img + dst_pitch * y_off + 2 * x_off;
   uint8_t *dst;
 
-  my_clut = (clut_t*) img_overl->hili_color;
+  my_clut = img_overl->hili_color;
   my_trans = img_overl->hili_trans;
 
   /* checks to avoid drawing overlay outside the destination buffer */
@@ -1724,7 +1734,7 @@ void _x_blend_yuy2 (uint8_t * dst_img, vo_overlay_t * img_overl,
             rle_this_bite = (hili_left - x);
             rle_remainder -= rle_this_bite;
             rlelen -= rle_this_bite;
-            my_clut = (clut_t*) img_overl->color;
+            my_clut = img_overl->color;
             my_trans = img_overl->trans;
           } else {
 #ifdef LOG_BLEND_YUV
@@ -1734,7 +1744,7 @@ void _x_blend_yuy2 (uint8_t * dst_img, vo_overlay_t * img_overl,
             rle_this_bite = rle_remainder;
             rle_remainder = 0;
             rlelen -= rle_this_bite;
-            my_clut = (clut_t*) img_overl->color;
+            my_clut = img_overl->color;
             my_trans = img_overl->trans;
           }
           if( x < clip_left )
@@ -1749,7 +1759,7 @@ void _x_blend_yuy2 (uint8_t * dst_img, vo_overlay_t * img_overl,
             rle_this_bite = (hili_right - x);
             rle_remainder -= rle_this_bite;
             rlelen -= rle_this_bite;
-            my_clut = (clut_t*) img_overl->hili_color;
+            my_clut = img_overl->hili_color;
             my_trans = img_overl->hili_trans;
           } else {
 #ifdef LOG_BLEND_YUV
@@ -1759,7 +1769,7 @@ void _x_blend_yuy2 (uint8_t * dst_img, vo_overlay_t * img_overl,
             rle_this_bite = rle_remainder;
             rle_remainder = 0;
             rlelen -= rle_this_bite;
-            my_clut = (clut_t*) img_overl->hili_color;
+            my_clut = img_overl->hili_color;
             my_trans = img_overl->hili_trans;
           }
         } else if (x >= hili_right) {
@@ -1773,7 +1783,7 @@ void _x_blend_yuy2 (uint8_t * dst_img, vo_overlay_t * img_overl,
             rle_this_bite = (src_width - x );
             rle_remainder -= rle_this_bite;
             rlelen -= rle_this_bite;
-            my_clut = (clut_t*) img_overl->color;
+            my_clut = img_overl->color;
             my_trans = img_overl->trans;
           } else {
           /* no cutting needed, starts outside, ends outside */
@@ -1783,7 +1793,7 @@ void _x_blend_yuy2 (uint8_t * dst_img, vo_overlay_t * img_overl,
             rle_this_bite = rle_remainder;
             rle_remainder = 0;
             rlelen -= rle_this_bite;
-            my_clut = (clut_t*) img_overl->color;
+            my_clut = img_overl->color;
             my_trans = img_overl->trans;
           }
           if( x + rle_this_bite >= clip_right )
@@ -1795,7 +1805,7 @@ void _x_blend_yuy2 (uint8_t * dst_img, vo_overlay_t * img_overl,
         rle_this_bite = rle_remainder;
         rle_remainder = 0;
         rlelen -= rle_this_bite;
-        my_clut = (clut_t*) img_overl->color;
+        my_clut = img_overl->color;
         my_trans = img_overl->trans;
       }
       o   = my_trans[clr];
@@ -1817,18 +1827,23 @@ void _x_blend_yuy2 (uint8_t * dst_img, vo_overlay_t * img_overl,
         }
 
         if (o && !clipped) {
+          union {
+            uint32_t u32;
+            clut_t   c;
+          } color = {my_clut[clr]};
+
           if (!enable_exact_blending) {
             l = rle_this_bite>>1;
             if( !((x_odd+x) & 1) ) {
-              yuy2.b[0] = my_clut[clr].y;
-              yuy2.b[1] = my_clut[clr].cb;
-              yuy2.b[2] = my_clut[clr].y;
-              yuy2.b[3] = my_clut[clr].cr;
+              yuy2.b[0] = color.c.y;
+              yuy2.b[1] = color.c.cb;
+              yuy2.b[2] = color.c.y;
+              yuy2.b[3] = color.c.cr;
             } else {
-              yuy2.b[0] = my_clut[clr].y;
-              yuy2.b[1] = my_clut[clr].cr;
-              yuy2.b[2] = my_clut[clr].y;
-              yuy2.b[3] = my_clut[clr].cb;
+              yuy2.b[0] = color.c.y;
+              yuy2.b[1] = color.c.cr;
+              yuy2.b[2] = color.c.y;
+              yuy2.b[3] = color.c.cb;
             }
           }
 	  if (o >= 15) {
@@ -1846,7 +1861,7 @@ void _x_blend_yuy2 (uint8_t * dst_img, vo_overlay_t * img_overl,
             } else {
               l = rle_this_bite;
               while (l--) {
-                *dst = my_clut[clr].y;
+                *dst = color.c.y;
                 dst += 2;
               }
             }
@@ -1866,7 +1881,7 @@ void _x_blend_yuy2 (uint8_t * dst_img, vo_overlay_t * img_overl,
             } else {
               l = rle_this_bite;
               while (l--) {
-                *dst = BLEND_BYTE(*dst, my_clut[clr].y, o);
+                *dst = BLEND_BYTE(*dst, color.c.y, o);
                 dst += 2;
               }
             }
@@ -1874,8 +1889,8 @@ void _x_blend_yuy2 (uint8_t * dst_img, vo_overlay_t * img_overl,
 
           if (enable_exact_blending) {
             /* remember chroma of current line */
-            memset(&(*blend_yuy2_data)[ 1 ][ x + x_odd ], my_clut[ clr ].cr, rle_this_bite);
-            memset(&(*blend_yuy2_data)[ 2 ][ x + x_odd ], my_clut[ clr ].cb, rle_this_bite);
+            memset(&(*blend_yuy2_data)[ 1 ][ x + x_odd ], color.c.cr, rle_this_bite);
+            memset(&(*blend_yuy2_data)[ 2 ][ x + x_odd ], color.c.cb, rle_this_bite);
           }
         } else {
           dst += rle_this_bite*2;
