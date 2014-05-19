@@ -124,15 +124,16 @@ void affine_1d_MMX (eq2_param_t *par, unsigned char *dst, unsigned char *src,
   sstep = sstride - w;
   dstep = dstride - w;
 
+  asm volatile (
+    "movq (%0), %%mm3 \n\t"
+    "movq (%1), %%mm4 \n\t"
+    "pxor %%mm0, %%mm0 \n\t"
+    :
+    : "g" (brvec), "g" (contvec)
+  );
+
   while (h-- > 0) {
     asm volatile (
-      "movq (%0), %%mm3 \n\t"
-      "movq (%1), %%mm4 \n\t"
-      :
-      : "r" (brvec), "r" (contvec)
-    );
-    asm volatile (
-      "pxor %%mm0, %%mm0 \n\t"
       "movl %4, %%eax\n\t"
       ASMALIGN(4)
       "1: \n\t"
