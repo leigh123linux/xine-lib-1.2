@@ -126,8 +126,12 @@ void affine_1d_MMX (eq2_param_t *par, unsigned char *dst, unsigned char *src,
 
   while (h-- > 0) {
     asm volatile (
-      "movq (%5), %%mm3 \n\t"
-      "movq (%6), %%mm4 \n\t"
+      "movq (%0), %%mm3 \n\t"
+      "movq (%1), %%mm4 \n\t"
+      :
+      : "r" (brvec), "r" (contvec)
+    );
+    asm volatile (
       "pxor %%mm0, %%mm0 \n\t"
       "movl %4, %%eax\n\t"
       ASMALIGN(4)
@@ -149,7 +153,7 @@ void affine_1d_MMX (eq2_param_t *par, unsigned char *dst, unsigned char *src,
       "decl %%eax \n\t"
       "jnz 1b \n\t"
       : "=r" (src), "=r" (dst)
-      : "0" (src), "1" (dst), "r" (w >> 3), "r" (brvec), "r" (contvec)
+      : "0" (src), "1" (dst), "r" (w >> 3)
       : "%eax"
     );
 
