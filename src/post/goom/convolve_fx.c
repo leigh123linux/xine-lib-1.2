@@ -152,7 +152,7 @@ static void create_output_with_brightness(VisualFX *_this, Pixel *src, Pixel *de
     yprime += c;
 
 #if defined(HAVE_MMX) && ! defined(ARCH_X86_64)
-/* This code uses 32-bit registers eax,ecx,esi */
+/* This code uses 32-bit registers eax,ecx,esi to store pointers => does not work in 64-bit os. */
     __asm__ __volatile__
       ("\n\t pxor  %%mm7,  %%mm7"  /* mm7 = 0   */
        "\n\t movd %0,  %%mm2"
