@@ -367,6 +367,13 @@ static int ogm_render_line_internal(sputext_decoder_t *this, int x, int y, const
 	  fixme - no teststreams*/
 	i=i+6;
 	continue;
+      } else if (!strncasecmp("<font ", text+i, 6)) {
+        /* TODO: parse and use attributes. seen: <font color="#xxyyzz"> */
+        const char *end = strchr(text + i, '>');
+        if (end) {
+          i += (end - (text + i)) + 1;
+          continue;
+        }
       } else if (!strncasecmp("</font>", text+i, 7)) {
 	/*Do somethink to enable typing
 	  fixme - no teststreams*/
