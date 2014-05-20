@@ -35,7 +35,7 @@
 #include <xine/spu.h>
 #include <xine/osd.h>
 
-#define MAX_REGIONS 7
+#define MAX_REGIONS 16
 
 #define SPU_MAX_WIDTH 1920
 #define SPU_MAX_HEIGHT 1080
@@ -526,6 +526,7 @@ static void process_CLUT_definition_segment(dvb_spu_decoder_t *this) {
   j=dvbsub->i+segment_length;
 
   CLUT_id=dvbsub->buf[dvbsub->i++];
+  lprintf ("process_CLUT_definition_segment: CLUT_id %d\n", CLUT_id);
   /*CLUT_version_number=(dvbsub->buf[dvbsub->i]&0xf0)>>4;*/
   dvbsub->i++;
 
@@ -645,6 +646,8 @@ static void process_page_composition_segment (dvb_spu_decoder_t * this)
     dvbsub->i += 2;
     region_y = (dvbsub->buf[dvbsub->i] << 8) | dvbsub->buf[dvbsub->i + 1];
     dvbsub->i += 2;
+    lprintf ("process_page_composition_segment: page_id %d, region_id %d, x %d, y %d\n",
+      dvbsub->page.page_id, region_id, region_x, region_y);
 
     dvbsub->page.regions[region_id].x = region_x;
     dvbsub->page.regions[region_id].y = region_y;
@@ -688,6 +691,7 @@ static void process_region_composition_segment (dvb_spu_decoder_t * this)
   region_4_bit_pixel_code = (dvbsub->buf[dvbsub->i] & 0xf0) >> 4;
   /*region_2_bit_pixel_code = (dvbsub->buf[dvbsub->i] & 0x0c) >> 2;*/
   dvbsub->i++;
+  lprintf ("process_region_composition_segment: region_id %d (%d x %d)\n", region_id, region_width, region_height);
 
   if(region_id>=MAX_REGIONS)
     return;
