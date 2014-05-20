@@ -455,7 +455,10 @@ static int get_buffer (AVCodecContext *context, AVFrame *av_frame)
     }
   }
 
-  this->is_direct_rendering_disabled = 0;
+  if (this->is_direct_rendering_disabled) {
+    xprintf (this->stream->xine, XINE_VERBOSITY_LOG, _("ffmpeg_video_dec: direct rendering enabled\n"));
+    this->is_direct_rendering_disabled = 0;
+  }
 
   img = this->stream->video_out->get_frame (this->stream->video_out,
                                             buf_width,
