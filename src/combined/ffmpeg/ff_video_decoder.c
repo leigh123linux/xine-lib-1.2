@@ -2291,6 +2291,7 @@ static void ff_free_dr1_frames (ff_video_decoder_t *this, int all) {
      They will only be replaced when new ones arrive, and freed on codec close.
      They also have no AVCodec.flush () callback for manual freeing (that is,
      avcodec_flush_buffers () does nothing).
+     Even worse: multithreading seems to always do it like that...
      So lets tolerate this behaviour on plain stream seek. */
   if (!all) {
     it = NULL;
@@ -2299,7 +2300,7 @@ static void ff_free_dr1_frames (ff_video_decoder_t *this, int all) {
       frames++;
     if (!frames)
       return;
-    if (frames < 5) {
+    if (frames < 12) {
       xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG,
         "ffmpeg_video_dec: tolerating %d held DR1 frames.\n", frames);
       return;
