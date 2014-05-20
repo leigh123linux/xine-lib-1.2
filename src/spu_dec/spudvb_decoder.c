@@ -66,7 +66,7 @@ typedef struct {
   osd_object_t          *osd;
 } region_t;
 
-typedef struct {
+typedef union {
   clut_t   c;
   uint32_t u32;
 } clut_union_t;
