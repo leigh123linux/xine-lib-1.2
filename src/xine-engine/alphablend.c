@@ -2183,7 +2183,7 @@ void _x_alphablend_free(alphablend_t *extra_data)
   extra_data->buffer_size = 0;
 }
 
-#define saturate(n, l, u) ((n) < (l) ? (l) : ((n) > (u) ? (u) : (n)))
+#define saturate(v) if (v & ~255) v = (~((uint32_t)v)) >> 24
 
 void _x_clut_yuv2rgb(uint32_t *clut, int num_items)
 {
@@ -2196,20 +2196,25 @@ void _x_clut_yuv2rgb(uint32_t *clut, int num_items)
       clut_t   c;
     } tmp = { *clut };
 
-    int y, u, v, r, g, b;
-    y = saturate(tmp.c.y, 16, 235);
-    u = saturate(tmp.c.cb, 16, 240);
-    v = saturate(tmp.c.cr, 16, 240);
+    int32_t y, u, v, r, g, b;
 
-    y = (9 * y) / 8;
-    r = y + (25 * v) / 16 - 218;
-    g = y + (-13 * v) / 16 + (-25 * u) / 64 + 136;
-    b = y + 2 * u - 274;
+    y = tmp.c.y;
+    u = tmp.c.cb;
+    v = tmp.c.cr;
 
-    tmp.c.cb = saturate(b, 0, 255);
-    tmp.c.cr = saturate(g, 0, 255);
-    tmp.c.y = saturate(r, 0, 255);
+    /* This is the middle between ITU 601 (SD) and 709 (HD), mpeg range. */
+    y *= 76304;
+    r = (y              + 111028 * v - 15432448) >> 16;
+    saturate (r);
+    g = (y  - 19818 * u  - 44093 * v  + 6959744) >> 16;
+    saturate (g);
+    b = (y + 135306 * u              - 18540032) >> 16;
+    saturate (b);
 
-    *clut++ = tmp.u32;
+    /* see clut_to_argb () */
+    tmp.c.cb = b;
+    tmp.c.cr = g;
+    tmp.c.y  = r;
+    *clut++  = tmp.u32;
   }
 }
