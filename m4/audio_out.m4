@@ -153,7 +153,7 @@ AC_DEFUN([XINE_AUDIO_OUT_PLUGINS], [
     if test x"$enable_oss" != x"no"; then
 
    case "$host" in
-     *-*-netbsd*|*-*-openbsd*)
+     *-*-netbsd*)
        OSS_LIBS="-lossaudio"
        ;;
      *)
