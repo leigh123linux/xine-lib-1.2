@@ -281,6 +281,16 @@ static int get_buffer (AVCodecContext *context, AVFrame *av_frame)
   int top_edge;
   int guarded_render = 0;
 
+  /* multiple threads have individual contexts !! */
+#ifdef AVCODEC_HAS_COLORSPACE
+  if (context != this->context) {
+    if (this->context->colorspace == 2) /* undefined */
+      this->context->colorspace = context->colorspace;
+    if (this->context->color_range == 0)
+      this->context->color_range = context->color_range;
+  }
+#endif
+
   /* A bit of unmotivated paranoia... */
   if (buf_width < width)
     buf_width = width;
@@ -304,7 +314,7 @@ static int get_buffer (AVCodecContext *context, AVFrame *av_frame)
   avcodec_align_dimensions(context, &buf_width, &buf_height);
 
 #ifdef ENABLE_VAAPI
-  if( this->context->pix_fmt == PIX_FMT_VAAPI_VLD) {
+  if( context->pix_fmt == PIX_FMT_VAAPI_VLD ) {
 
     av_frame->opaque  = NULL;
     av_frame->data[0] = NULL;
@@ -417,8 +427,8 @@ static int get_buffer (AVCodecContext *context, AVFrame *av_frame)
   buf_height += top_edge + this->edge + 15;
   buf_height &= ~15;
 
-  if ((this->full2mpeg || (this->context->pix_fmt != PIX_FMT_YUV420P &&
-			   this->context->pix_fmt != PIX_FMT_YUVJ420P)) || guarded_render) {
+  if (this->full2mpeg || guarded_render ||
+    (context->pix_fmt != PIX_FMT_YUV420P && context->pix_fmt != PIX_FMT_YUVJ420P)) {
     if (!this->is_direct_rendering_disabled) {
       xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
               _("ffmpeg_video_dec: unsupported frame format, DR1 disabled.\n"));
