@@ -752,6 +752,7 @@ static void init_video_codec (ff_video_decoder_t *this, unsigned int codec_type)
   if( this->codec->capabilities & CODEC_CAP_DR1 && this->class->enable_dri ) {
 #ifdef AV_BUFFER
     this->context->get_buffer2 = get_buffer;
+    this->context->thread_safe_callbacks = 1;
 #else
     this->context->get_buffer = get_buffer;
     this->context->release_buffer = release_buffer;
