@@ -494,15 +494,15 @@ static int video_overlay_event( video_overlay_t *this, int64_t vpts ) {
   return processed;
 }
 
-void _x_overlay_clut_yuv2rgb(vo_overlay_t *overlay)
+void _x_overlay_clut_yuv2rgb(vo_overlay_t *overlay, int color_matrix)
 {
   if (!overlay->rgb_clut) {
-    _x_clut_yuv2rgb(overlay->color, sizeof(overlay->color) / sizeof (overlay->color[0]));
+    _x_clut_yuv2rgb(overlay->color, sizeof(overlay->color) / sizeof (overlay->color[0]), color_matrix);
     overlay->rgb_clut++;
   }
 
   if (!overlay->hili_rgb_clut) {
-    _x_clut_yuv2rgb(overlay->hili_color, sizeof (overlay->color) / sizeof (overlay->color[0]));
+    _x_clut_yuv2rgb(overlay->hili_color, sizeof (overlay->color) / sizeof (overlay->color[0]), color_matrix);
     overlay->hili_rgb_clut++;
   }
 }

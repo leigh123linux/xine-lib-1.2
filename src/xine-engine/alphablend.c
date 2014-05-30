@@ -2185,36 +2185,89 @@ void _x_alphablend_free(alphablend_t *extra_data)
 
 #define saturate(v) if (v & ~255) v = (~((uint32_t)v)) >> 24
 
-void _x_clut_yuv2rgb(uint32_t *clut, int num_items)
+void _x_clut_yuv2rgb(uint32_t *clut, int num_items, int color_matrix)
 {
   uint32_t *end = clut + num_items;
   if (end <= clut) return;
 
-  while (clut < end) {
-    union {
-      uint32_t u32;
-      clut_t   c;
-    } tmp = { *clut };
+  switch (color_matrix >> 1) {
 
-    int32_t y, u, v, r, g, b;
+    case 8:
+      while (clut < end) {
+        union {
+          uint32_t u32;
+          clut_t   c;
+        } tmp = { *clut };
+        int32_t y, u, v, r, g, b;
+        y = tmp.c.y;
+        u = tmp.c.cb;
+        v = tmp.c.cr;
+        /* Green Orange -- does this ever happen? */
+        r = y - u + v;
+        saturate (r);
+        g = y + u     - 128;
+        saturate (g);
+        b = y - u - v + 256;
+        saturate (b);
+        /* see clut_to_argb () */
+        tmp.c.cb = b;
+        tmp.c.cr = g;
+        tmp.c.y  = r;
+        *clut++  = tmp.u32;
+      }
+      break;
 
-    y = tmp.c.y;
-    u = tmp.c.cb;
-    v = tmp.c.cr;
+    case 1:
+    case 7:
+      while (clut < end) {
+        union {
+          uint32_t u32;
+          clut_t   c;
+        } tmp = { *clut };
+        int32_t y, u, v, r, g, b;
+        y = tmp.c.y;
+        u = tmp.c.cb;
+        v = tmp.c.cr;
+        /* ITU 709 (HD), mpeg range. */
+        y *= 76304;
+        r = (y              + 117473 * v - 16224640) >> 16;
+        saturate (r);
+        g = (y  - 13972 * u  - 34918 * v  + 5069824) >> 16;
+        saturate (g);
+        b = (y + 138425 * u              - 18906496) >> 16;
+        saturate (b);
+        /* see clut_to_argb () */
+        tmp.c.cb = b;
+        tmp.c.cr = g;
+        tmp.c.y  = r;
+        *clut++  = tmp.u32;
+      }
+      break;
 
-    /* This is the middle between ITU 601 (SD) and 709 (HD), mpeg range. */
-    y *= 76304;
-    r = (y              + 111028 * v - 15432448) >> 16;
-    saturate (r);
-    g = (y  - 19818 * u  - 44093 * v  + 6959744) >> 16;
-    saturate (g);
-    b = (y + 135306 * u              - 18540032) >> 16;
-    saturate (b);
-
-    /* see clut_to_argb () */
-    tmp.c.cb = b;
-    tmp.c.cr = g;
-    tmp.c.y  = r;
-    *clut++  = tmp.u32;
+    default:
+      while (clut < end) {
+        union {
+          uint32_t u32;
+          clut_t   c;
+        } tmp = { *clut };
+        int32_t y, u, v, r, g, b;
+        y = tmp.c.y;
+        u = tmp.c.cb;
+        v = tmp.c.cr;
+        /* ITU 601 (SD), mpeg range. */
+        y *= 76304;
+        r = (y              + 104582 * v - 14574592) >> 16;
+        saturate (r);
+        g = (y  - 25664 * u  - 53268 * v  + 8849664) >> 16;
+        saturate (g);
+        b = (y + 132186 * u              - 18107904) >> 16;
+        saturate (b);
+        /* see clut_to_argb () */
+        tmp.c.cb = b;
+        tmp.c.cr = g;
+        tmp.c.y  = r;
+        *clut++  = tmp.u32;
+      }
+      break;
   }
 }

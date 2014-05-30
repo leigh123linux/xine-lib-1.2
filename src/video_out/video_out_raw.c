@@ -140,7 +140,7 @@ static void raw_overlay_blend (vo_driver_t *this_gen, vo_frame_t *frame_gen, vo_
 
   if (overlay->rle) {
     if (!overlay->rgb_clut || !overlay->hili_rgb_clut)
-      _x_overlay_clut_yuv2rgb (overlay);
+      _x_overlay_clut_yuv2rgb (overlay, 0);
     if ( raw_process_ovl( this, overlay ) )
       ++this->ovl_changed;
   }

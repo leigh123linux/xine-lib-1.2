@@ -2723,7 +2723,7 @@ static void vaapi_overlay_end (vo_driver_t *this_gen, vo_frame_t *frame_gen) {
         continue;
 
       if (!ovl->rgb_clut || !ovl->hili_rgb_clut)
-        _x_overlay_clut_yuv2rgb (ovl);
+        _x_overlay_clut_yuv2rgb (ovl, this->color_matrix);
 
       bitmap = malloc(ovl->width * ovl->height * sizeof(uint32_t));
 

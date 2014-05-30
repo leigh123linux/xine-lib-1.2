@@ -612,7 +612,7 @@ static void opengl2_overlay_blend (vo_driver_t *this_gen, vo_frame_t *frame_gen,
 
   if (overlay->rle) {
     if (!overlay->rgb_clut || !overlay->hili_rgb_clut) {
-      _x_overlay_clut_yuv2rgb(overlay);
+      _x_overlay_clut_yuv2rgb(overlay, this->color_standard);
     }
   }
 
