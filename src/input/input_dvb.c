@@ -2574,6 +2574,9 @@ static off_t dvb_plugin_read (input_plugin_t *this_gen,
       if (n > 0){
 	  this->curpos += n;
 	  total += n;
+      } else if (n < 0 && errno == EOVERFLOW) {
+	  xprintf(this->class->xine, XINE_VERBOSITY_LOG,
+		  "input_dvb:  EOVERFLOW returned.  Not reading fast/often enough?  \n");
       } else if (n < 0 && errno!=EAGAIN) {
 	  break;
       }
