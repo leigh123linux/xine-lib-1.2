@@ -39,20 +39,30 @@
 /*
 #define LOG
 */
+#define FRAME_ALLOC  /* allocate buffer based on frame size. if not defined, all buffers are suitable for 1920x1088 YUY2. */
 
 #include "xine.h"
 #include <xine/xine_internal.h>
 #include <xine/video_out.h>
 #include <xine/xineutils.h>
 
+#ifdef FRAME_ALLOC
+#define MAX_VIDEO_WIDTH  (2*1920)
+#define MAX_VIDEO_HEIGHT (2*1088)
+#define MAX_VIDEO_FRAMES 20
+#else
 #define MAX_VIDEO_WIDTH  1920
 #define MAX_VIDEO_HEIGHT 1088
 #define MAX_VIDEO_FRAMES 20
+#endif
 
 
 typedef struct {
     vo_frame_t            vo_frame;
 
+#ifdef FRAME_ALLOC
+    MMAL_PORT_T          *input;
+#endif
     MMAL_BUFFER_HEADER_T *buffer;
     int                   width, height, format;
     double                ratio;
@@ -251,6 +261,14 @@ static int configure_renderer(mmal_driver_t *this, int format, int width, int he
   }
 
   if (!this->pool) {
+#ifdef FRAME_ALLOC
+    this->pool = mmal_pool_create(MAX_VIDEO_FRAMES, 0);
+    if (!this->pool) {
+      xprintf(this->xine, XINE_VERBOSITY_LOG, LOG_MODULE": "
+              "failed to create MMAL pool for %u buffers\n", MAX_VIDEO_FRAMES);
+      return -1;
+    }
+#else
     int buffer_size = MAX_VIDEO_WIDTH * MAX_VIDEO_HEIGHT * 2;
     this->pool = mmal_pool_create_with_allocator(MAX_VIDEO_FRAMES, buffer_size,
                                   input,
@@ -262,6 +280,7 @@ static int configure_renderer(mmal_driver_t *this, int format, int width, int he
               MAX_VIDEO_FRAMES, buffer_size);
       return -1;
     }
+#endif
   }
 
   return 0;
@@ -286,6 +305,13 @@ static void mmal_frame_dispose (vo_frame_t *vo_img) {
   mmal_frame_t  *frame = (mmal_frame_t *) vo_img ;
 
   if (frame->buffer) {
+#ifdef FRAME_ALLOC
+    if (frame->buffer->data) {
+      mmal_port_payload_free(frame->input, frame->buffer->data);
+      frame->buffer->data = NULL;
+      frame->buffer->alloc_size = 0;
+    }
+#endif
     frame->buffer->user_data = NULL;
     mmal_buffer_header_release(frame->buffer);
     frame->buffer = NULL;
@@ -296,6 +322,9 @@ static void mmal_frame_dispose (vo_frame_t *vo_img) {
 
 static vo_frame_t *mmal_alloc_frame (vo_driver_t *this_gen) {
 
+#ifdef FRAME_ALLOC
+  mmal_driver_t    *this = (mmal_driver_t *) this_gen;
+#endif
   mmal_frame_t     *frame;
 
   frame = (mmal_frame_t *) calloc(1, sizeof(mmal_frame_t));
@@ -309,6 +338,10 @@ static vo_frame_t *mmal_alloc_frame (vo_driver_t *this_gen) {
   frame->vo_frame.proc_frame = NULL;
   frame->vo_frame.field      = mmal_frame_field;
   frame->vo_frame.dispose    = mmal_frame_dispose;
+
+#ifdef FRAME_ALLOC
+  frame->input = this->renderer->input[0];
+#endif
 
   return (vo_frame_t *) frame;
 }
@@ -335,6 +368,25 @@ static void mmal_update_frame_format (vo_driver_t *this_gen,
   width  = (width + 31) & ~31;
   height = (height + 15) & ~15;
 
+#ifdef FRAME_ALLOC
+  /* required storage */
+  uint32_t size = width * height;
+  if (format == XINE_IMGFMT_YV12) {
+    size = size * 3 / 2;
+  } else if (format == XINE_IMGFMT_YUY2) {
+    size *= 2;
+  }
+
+  /* free buffer if it is too small */
+  if (frame->buffer && frame->buffer->alloc_size < size) {
+    mmal_port_payload_free(this->renderer->input[0], frame->buffer->data);
+    frame->buffer->data = NULL;
+    frame->buffer->user_data = NULL;
+    mmal_buffer_header_release(frame->buffer);
+    frame->buffer = NULL;
+  }
+#endif
+
   if (!frame->buffer) {
     frame->buffer = mmal_queue_wait(this->pool->queue);
     if (!frame->buffer) {
@@ -343,6 +395,10 @@ static void mmal_update_frame_format (vo_driver_t *this_gen,
       frame->vo_frame.width = frame->vo_frame.height = 0;
       return;
     }
+#ifdef FRAME_ALLOC
+    frame->buffer->data = mmal_port_payload_alloc(this->renderer->input[0], size);
+    frame->buffer->alloc_size = size;
+#endif
     frame->buffer->user_data = frame;
   }
 
