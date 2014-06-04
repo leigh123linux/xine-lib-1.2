@@ -334,7 +334,7 @@ static void mmal_update_frame_format (vo_driver_t *this_gen,
 
   /* alignment */
   width  = (width + 31) & ~31;
-  height = (height + 1) & ~1;
+  height = (height + 15) & ~15;
 
   if (!frame->buffer) {
     frame->buffer = mmal_queue_wait(this->pool->queue);
