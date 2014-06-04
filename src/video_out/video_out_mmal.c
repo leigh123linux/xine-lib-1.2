@@ -517,6 +517,8 @@ static vo_driver_t *open_plugin (video_driver_class_t *class_gen, const void *vi
 
   this->xine          = class->xine;
 
+  _x_alphablend_init(&this->alphablend_extra_data, class->xine);
+
   pthread_mutex_init (&this->mutex, NULL);
   pthread_cond_init (&this->cond, NULL);
 
