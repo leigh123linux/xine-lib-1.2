@@ -360,7 +360,7 @@ static void mmal_update_frame_format (vo_driver_t *this_gen,
     frame->vo_frame.base[1]    = frame->vo_frame.base[0] + width * height;
     frame->vo_frame.base[2]    = frame->vo_frame.base[1] + width/2 * height/2;
   } else if (format == XINE_IMGFMT_YUY2) {
-    frame->vo_frame.pitches[0] = width;
+    frame->vo_frame.pitches[0] = width * 2;
     frame->vo_frame.base[0]    = frame->buffer->data;
   } else {
     xprintf(this->xine, XINE_VERBOSITY_LOG, LOG_MODULE": "
