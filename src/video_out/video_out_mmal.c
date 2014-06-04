@@ -67,7 +67,6 @@ typedef struct {
   /* xine */
   xine_t            *xine;
   alphablend_t       alphablend_extra_data;
-  uint32_t           capabilities;
   int                gui_width, gui_height;
 
   /* mmal */
@@ -274,9 +273,9 @@ static int configure_renderer(mmal_driver_t *this, int format, int width, int he
 
 static uint32_t mmal_get_capabilities (vo_driver_t *this_gen) {
 
-  mmal_driver_t *this = (mmal_driver_t *) this_gen;
-
-  return this->capabilities;
+  return
+    VO_CAP_YUY2 | VO_CAP_YV12 |
+    VO_CAP_CROP;
 }
 
 static void mmal_frame_field (vo_frame_t *vo_img, int which_field) {
@@ -517,7 +516,6 @@ static vo_driver_t *open_plugin (video_driver_class_t *class_gen, const void *vi
     return NULL;
 
   this->xine          = class->xine;
-  this->capabilities  = VO_CAP_YUY2 | VO_CAP_YV12 | VO_CAP_CROP;
 
   pthread_mutex_init (&this->mutex, NULL);
   pthread_cond_init (&this->cond, NULL);
