@@ -1,5 +1,22 @@
+xine-lib (1.2.?) ????-??-??
   * Add libmmal video output plugin for Raspberry Pi.
   * Add libmmal HW video decoder plugin for Raspberry Pi.
+  * Add overlay colormatrix support.
+  * Add "sqare monitor pixels" config option.
+  * Add VAAPI colormatrix and fullrange video support.
+  * Add "radeonhd" XV colormatrix support.
+  * Add Opus audio support.
+  * Update german translation.
+  * Optimize OpenGL2 video out.
+  * Optimize raw RGB video decoder.
+  * Fix multithread ffmpeg video decoding.
+  * Fix/optimize DVB subtitles.
+  * Fix external text subtitles.
+  * BSD build fixes.
+  * Clang build fixes.
+  * Build optimization fixes (aliasing).
+  * AVformat demux build fix.
+  * More safety on memory allocation failure.
 
 xine-lib (1.2.5) 2014-04-08
   * Update german translation.
