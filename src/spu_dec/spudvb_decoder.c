@@ -226,6 +226,7 @@ typedef struct {
   int			i_bits;
   int			in_scanline;
   int			compat_depth;
+  int                   max_regions;
   page_t		page;
   region_t		regions[MAX_REGIONS];
   clut_union_t		colours[MAX_REGIONS*256];
@@ -621,7 +622,7 @@ static void recalculate_trans (dvb_spu_decoder_t *this)
   int i;
 
   _x_spu_get_opacity (this->stream->xine, &opacity);
-  for (i = 0; i < MAX_REGIONS * 256; ++i) {
+  for (i = 0; i < dvbsub->max_regions * 256; ++i) {
     /* ETSI-300-743 says "full transparency if Y == 0". */
     if (dvbsub->colours[i].c.y == 0)
       dvbsub->trans[i] = 0;
@@ -780,7 +781,7 @@ static void process_page_composition_segment (dvb_spu_decoder_t * this)
   dvbsub->i++;
 
   int r;
-  for (r=0; r<MAX_REGIONS; r++) { /* reset */
+  for (r=0; r<dvbsub->max_regions; r++) { /* reset */
     dvbsub->page.regions[r].is_visible = 0;
   }
 
@@ -793,6 +794,10 @@ static void process_page_composition_segment (dvb_spu_decoder_t * this)
     dvbsub->i += 2;
     lprintf ("process_page_composition_segment: page_id %d, region_id %d, x %d, y %d\n",
       dvbsub->page.page_id, region_id, region_x, region_y);
+    if (region_id >= MAX_REGIONS)
+      continue;
+    if (region_id >= dvbsub->max_regions)
+      dvbsub->max_regions = region_id + 1;
 
     dvbsub->page.regions[region_id].x = region_x;
     dvbsub->page.regions[region_id].y = region_y;
@@ -839,6 +844,9 @@ static void process_region_composition_segment (dvb_spu_decoder_t * this)
 
   if(region_id>=MAX_REGIONS)
     return;
+
+  if (region_id >= dvbsub->max_regions)
+    dvbsub->max_regions = region_id + 1;
 
   if ( dvbsub->regions[region_id].version_number == region_version_number )
     return;
@@ -900,7 +908,7 @@ static void process_object_data_segment (dvb_spu_decoder_t * this)
   dvbsub->i++;
 
   old_i = dvbsub->i;
-  for (r = 0; r < MAX_REGIONS; r++) {
+  for (r = 0; r < dvbsub->max_regions; r++) {
 
     /* If this object is in this region... */
     if (dvbsub->regions[r].img) {
@@ -978,7 +986,7 @@ static void* dvbsub_timer_func(void *this_gen)
          Hide the OSD, then wait until we're signalled. */
       if(this && this->stream && this->stream->osd_renderer)
       {
-	for ( i=0; i<MAX_REGIONS; i++ ) {
+	for ( i=0; i<this->dvbsub->max_regions; i++ ) {
 	  if ( this->dvbsub->regions[i].osd ) {
 	    this->stream->osd_renderer->hide( this->dvbsub->regions[i].osd, 0 );
 	    lprintf("thread hiding = %d\n",i);
@@ -1019,14 +1027,14 @@ static void draw_subtitles (dvb_spu_decoder_t * this)
 
   /* render all regions onto the page */
 
-  for ( r=0; r<MAX_REGIONS; r++ ) {
+  for ( r=0; r<this->dvbsub->max_regions; r++ ) {
     if ( this->dvbsub->page.regions[r].is_visible )
       display++;
   }
   if ( !display )
     return;
 
-  for (r = 0; r < MAX_REGIONS; r++) {
+  for (r = 0; r < this->dvbsub->max_regions; r++) {
     if (this->dvbsub->regions[r].img) {
       if (this->dvbsub->page.regions[r].is_visible && !this->dvbsub->regions[r].empty) {
         update_osd( this, r );
@@ -1053,7 +1061,7 @@ static void draw_subtitles (dvb_spu_decoder_t * this)
 
   pthread_mutex_lock(&this->dvbsub_osd_mutex);
   lprintf("this->vpts=%"PRId64"\n",this->vpts);
-  for ( r=0; r<MAX_REGIONS; r++ ) {
+  for ( r=0; r<this->dvbsub->max_regions; r++ ) {
     lprintf("region=%d, visible=%d, osd=%d, empty=%d\n", r, this->dvbsub->page.regions[r].is_visible, this->dvbsub->regions[r].osd?1:0, this->dvbsub->regions[r].empty );
     if ( this->dvbsub->page.regions[r].is_visible && this->dvbsub->regions[r].osd && !this->dvbsub->regions[r].empty ) {
       this->stream->osd_renderer->set_position( this->dvbsub->regions[r].osd, this->dvbsub->page.regions[r].x, this->dvbsub->page.regions[r].y );
@@ -1091,7 +1099,7 @@ static void spudec_decode_data (spu_decoder_t * this_gen, buf_element_t * buf)
       if (buf->decoder_info[2] == 0) {
         /* Hide the osd - note that if the timeout thread times out, it'll rehide, which is harmless */
         pthread_mutex_lock(&this->dvbsub_osd_mutex);
-	for ( i=0; i<MAX_REGIONS; i++ ) {
+	for ( i=0; i<this->dvbsub->max_regions; i++ ) {
 	  if ( this->dvbsub->regions[i].osd )
 	    this->stream->osd_renderer->hide( this->dvbsub->regions[i].osd, 0 );
 	}
