@@ -40,6 +40,151 @@
 #define SPU_MAX_WIDTH 1920
 #define SPU_MAX_HEIGHT 1080
 
+/* sparse_array - handle large arrays efficiently when only a few entries are used */
+
+typedef struct {
+  uint32_t key, value;
+} sparse_array_entry_t;
+
+typedef struct {
+  uint32_t sorted_entries, used_entries, max_entries;
+  sparse_array_entry_t *entries;
+} sparse_array_t;
+
+static void sparse_array_new (sparse_array_t *sa) {
+  sa->sorted_entries =
+  sa->used_entries   =
+  sa->max_entries    = 0;
+  sa->entries        = NULL;
+}
+
+static void sparse_array_delete (sparse_array_t *sa) {
+  sa->sorted_entries =
+  sa->used_entries   =
+  sa->max_entries    = 0;
+  free (sa->entries);
+  sa->entries        = NULL;
+}
+
+static int _sparse_array_find (sparse_array_t *sa, uint32_t key, uint32_t *pos) {
+  uint32_t b = 0, m, e = sa->sorted_entries, l = e, k;
+  while (1) {
+    m = (b + e) >> 1;
+    if (m == l)
+      break;
+    l = m;
+    k = sa->entries[m].key;
+    if (k > key)
+      e = m;
+    else if (k < key)
+      b = m;
+    else {
+      *pos = m;
+      return 1;
+    }
+  }
+  *pos = e;
+  return 0;
+}
+
+static void _sparse_array_sort (sparse_array_t *sa) {
+  uint32_t left = sa->max_entries - sa->used_entries;
+  /* move unsorted part to end of buf */
+  uint32_t i = left + sa->sorted_entries;
+  memmove (sa->entries + i, sa->entries + sa->sorted_entries,
+    (sa->used_entries - sa->sorted_entries) * sizeof (sparse_array_entry_t));
+  /* iterate it */
+  while (i < sa->max_entries) {
+    uint32_t j, pos, startkey, stopkey, lastkey;
+    startkey = sa->entries[i].key;
+    if (_sparse_array_find (sa, startkey, &pos)) {
+      /* eliminate duplicate */
+      sa->entries[pos].value = sa->entries[i].value;
+      i++;
+      continue;
+    }
+    /* find sorted range */
+    stopkey = pos < sa->sorted_entries ? sa->entries[pos].key : 0xffffffff;
+    lastkey = startkey;
+    for (j = i + 1; j < sa->max_entries; j++) {
+      uint32_t thiskey = sa->entries[j].key;
+      if ((thiskey <= lastkey) || (thiskey >= stopkey))
+        break;
+      lastkey = thiskey;
+    }
+    j -= i;
+    if (j > left)
+      j = left;
+    /* insert it */
+    if (pos < sa->sorted_entries)
+      memmove (sa->entries + pos + j, sa->entries + pos,
+        (sa->sorted_entries - pos) * sizeof (sparse_array_entry_t));
+    memcpy (sa->entries + pos, sa->entries + i, j * sizeof (sparse_array_entry_t));
+    sa->sorted_entries += j;
+    i += j;
+  }
+  sa->used_entries = sa->sorted_entries;
+  lprintf ("sparse_array_sort: %u entries\n", (unsigned int)sa->used_entries);
+}
+
+static int sparse_array_set (sparse_array_t *sa, uint32_t key, uint32_t value) {
+  /* give some room for later sorting too */
+  if (!sa->entries || (sa->used_entries + 8 >= sa->max_entries)) {
+    uint32_t n = sa->max_entries + 128;
+    sparse_array_entry_t *se = realloc (sa->entries, n * sizeof (sparse_array_entry_t));
+    if (!se)
+      return 0;
+    sa->max_entries = n;
+    sa->entries = se;
+  }
+  sa->entries[sa->used_entries].key = key;
+  sa->entries[sa->used_entries++].value = value;
+  return 1;
+}
+
+static int sparse_array_get (sparse_array_t *sa, uint32_t key, uint32_t *value) {
+  uint32_t pos;
+  if (sa->sorted_entries != sa->used_entries)
+    _sparse_array_sort (sa);
+  if (!_sparse_array_find (sa, key, &pos))
+    return 0;
+  *value = sa->entries[pos].value;
+  return 1;
+}
+
+static void sparse_array_unset (sparse_array_t *sa, uint32_t key, uint32_t mask) {
+  sparse_array_entry_t *here = sa->entries, *p = NULL, *q = sa->entries;
+  uint32_t i, n = 0;
+  if (sa->sorted_entries != sa->used_entries)
+    _sparse_array_sort (sa);
+  key &= mask;
+  for (i = sa->used_entries; i > 0; i--) {
+    if ((here->key & mask) == key) {
+      if (p) {
+        n = here - p;
+        if (n && (p != q))
+          memmove (q, p, n * sizeof (sparse_array_entry_t));
+        p = NULL;
+        q += n;
+      }
+    } else {
+      if (!p)
+        p = here;
+    }
+    here++;
+  }
+  if (p) {
+    n = here - p;
+    if (n && (p != q))
+      memmove (q, p, n * sizeof (sparse_array_entry_t));
+    q += n;
+  }
+  sa->sorted_entries =
+  sa->used_entries   = q - sa->entries;
+}
+
+/* ! sparse_array */
+
 typedef struct {
   int			x, y;
   unsigned char	is_visible;
@@ -61,7 +206,6 @@ typedef struct {
   int			CLUT_id;
   int			objects_start;
   int			objects_end;
-  unsigned int		object_pos[65536];
   unsigned char	*img;
   osd_object_t          *osd;
 } region_t;
@@ -89,6 +233,7 @@ typedef struct {
   struct {
     unsigned char	  lut24[4], lut28[4], lut48[16];
   }			lut[MAX_REGIONS];
+  sparse_array_t	object_pos;
 } dvbsub_func_t;
 
 typedef struct		dvb_spu_class_s {
@@ -555,7 +700,7 @@ static void process_CLUT_definition_segment(dvb_spu_decoder_t *this) {
   }
 }
 
-static void process_pixel_data_sub_block (dvb_spu_decoder_t * this, int r, int o, int ofs, int n)
+static void process_pixel_data_sub_block (dvb_spu_decoder_t * this, int r, int o, unsigned int pos, int ofs, int n)
 {
   int data_type;
   int j;
@@ -564,8 +709,8 @@ static void process_pixel_data_sub_block (dvb_spu_decoder_t * this, int r, int o
 
   j = dvbsub->i + n;
 
-  dvbsub->x = (dvbsub->regions[r].object_pos[o]) >> 16;
-  dvbsub->y = ((dvbsub->regions[r].object_pos[o]) & 0xffff) + ofs;
+  dvbsub->x = pos >> 16;
+  dvbsub->y = (pos & 0xffff) + ofs;
   while (dvbsub->i < j) {
     data_type = dvbsub->buf[dvbsub->i++];
 
@@ -599,7 +744,7 @@ static void process_pixel_data_sub_block (dvb_spu_decoder_t * this, int r, int o
       break;
     case 0xf0:
       dvbsub->in_scanline = 0;
-      dvbsub->x = (dvbsub->regions[r].object_pos[o]) >> 16;
+      dvbsub->x = pos >> 16;
       dvbsub->y += 2;
       break;
     default:
@@ -665,7 +810,6 @@ static void process_region_composition_segment (dvb_spu_decoder_t * this)
     /*region_8_bit_pixel_code,*/ region_4_bit_pixel_code /*, region_2_bit_pixel_code*/;
   int object_id, object_type, /*object_provider_flag,*/ object_x, object_y /*, foreground_pixel_code, background_pixel_code*/;
   int j;
-  int o;
   dvbsub_func_t *dvbsub = this->dvbsub;
 
   dvbsub->page.page_id = (dvbsub->buf[dvbsub->i] << 8) | dvbsub->buf[dvbsub->i + 1];
@@ -709,9 +853,7 @@ static void process_region_composition_segment (dvb_spu_decoder_t * this)
   dvbsub->regions[region_id].objects_start = dvbsub->i;
   dvbsub->regions[region_id].objects_end = j;
 
-  for (o = 0; o < 65536; o++) {
-    dvbsub->regions[region_id].object_pos[o] = 0xffffffff;
-  }
+  sparse_array_unset (&dvbsub->object_pos, region_id << 16, 0xff0000);
 
   while (dvbsub->i < j) {
     object_id = (dvbsub->buf[dvbsub->i] << 8) | dvbsub->buf[dvbsub->i + 1];
@@ -723,7 +865,7 @@ static void process_region_composition_segment (dvb_spu_decoder_t * this)
     object_y = ((dvbsub->buf[dvbsub->i] & 0x0f) << 8) | dvbsub->buf[dvbsub->i + 1];
     dvbsub->i += 2;
 
-    dvbsub->regions[region_id].object_pos[object_id] = (object_x << 16) | object_y;
+    sparse_array_set (&dvbsub->object_pos, (region_id << 16) | object_id, (object_x << 16) | object_y);
 
     if ((object_type == 0x01) || (object_type == 0x02)) {
       /*foreground_pixel_code = dvbsub->buf[*/dvbsub->i++/*]*/;
@@ -762,7 +904,8 @@ static void process_object_data_segment (dvb_spu_decoder_t * this)
 
     /* If this object is in this region... */
     if (dvbsub->regions[r].img) {
-      if (dvbsub->regions[r].object_pos[object_id] != 0xffffffff) {
+      uint32_t pos;
+      if (sparse_array_get (&dvbsub->object_pos, (r << 16) | object_id, &pos)) {
 	dvbsub->i = old_i;
 	if (object_coding_method == 0) {
 	  top_field_data_block_length = (dvbsub->buf[dvbsub->i] << 8) | dvbsub->buf[dvbsub->i + 1];
@@ -770,7 +913,7 @@ static void process_object_data_segment (dvb_spu_decoder_t * this)
 	  bottom_field_data_block_length = (dvbsub->buf[dvbsub->i] << 8) | dvbsub->buf[dvbsub->i + 1];
 	  dvbsub->i += 2;
 
-	  process_pixel_data_sub_block (this, r, object_id, 0, top_field_data_block_length);
+	  process_pixel_data_sub_block (this, r, object_id, pos, 0, top_field_data_block_length);
 
 	  if (bottom_field_data_block_length == 0)
 	  {
@@ -779,7 +922,7 @@ static void process_object_data_segment (dvb_spu_decoder_t * this)
 	    dvbsub->i =  old_i + 4;
 	  }
 
-	  process_pixel_data_sub_block (this, r, object_id, 1, bottom_field_data_block_length);
+	  process_pixel_data_sub_block (this, r, object_id, pos, 1, bottom_field_data_block_length);
 	}
       }
     }
@@ -1105,8 +1248,10 @@ static void spudec_dispose (spu_decoder_t * this_gen)
   if (this->pes_pkt)
     free (this->pes_pkt);
 
-  if (this->dvbsub)
+  if (this->dvbsub) {
+    sparse_array_delete (&this->dvbsub->object_pos);
     free (this->dvbsub);
+  }
 
   free (this);
 }
@@ -1178,6 +1323,8 @@ static spu_decoder_t *dvb_spu_class_open_plugin (spu_decoder_class_t * class_gen
     for (i = 0; i < MAX_REGIONS * 256; i++)
       this->dvbsub->colours[i].c.foo = t;
   }
+
+  sparse_array_new (&this->dvbsub->object_pos);
 
   pthread_mutex_init(&this->dvbsub_osd_mutex, NULL);
   pthread_cond_init(&this->dvbsub_restart_timeout, NULL);
