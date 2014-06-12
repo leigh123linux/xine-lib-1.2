@@ -59,6 +59,11 @@
 
 #include "ffmpeg_compat.h"
 
+#if (defined(ARCH_X86) || defined(ARCH_X86_64)) && defined(HAVE_MMX)
+#include "xine_mmx.h"
+#define ENABLE_EMMS
+#endif
+
 #define VIDEOBUFSIZE        (128*1024)
 #define SLICE_BUFFER_SIZE   (1194*1024)
 
@@ -170,6 +175,11 @@ struct ff_video_decoder_s {
 #define STATE_FRAME_SENT    3
 #define STATE_FLUSHED       4
   int               state;
+
+#ifdef ENABLE_EMMS
+  /* see get_buffer () */
+  int               emms;
+#endif
 };
 
 /* import color matrix names */
@@ -280,6 +290,14 @@ static int get_buffer (AVCodecContext *context, AVFrame *av_frame)
   int height = context->height;
   int top_edge;
   int guarded_render = 0;
+
+#ifdef ENABLE_EMMS
+  /* some background thread may call this while still in mmx mode.
+    this will trash "double" aspect ratio values, even when only
+    passing them to vo_get_frame () verbatim. */
+  if (this->emms)
+    emms ();
+#endif
 
   /* multiple threads have individual contexts !! */
 #ifdef AVCODEC_HAS_COLORSPACE
@@ -2518,6 +2536,10 @@ static video_decoder_t *ff_video_open_plugin (video_decoder_class_t *class_gen, 
 
   this->pix_fmt           = -1;
   this->rgb2yuy2          = NULL;
+
+#ifdef ENABLE_EMMS
+  this->emms = !!(xine_mm_accel () & (MM_ACCEL_X86_MMX | MM_ACCEL_X86_MMXEXT));
+#endif
 
 #ifdef LOG
   this->debug_fmt = -1;
