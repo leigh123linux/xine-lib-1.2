@@ -916,6 +916,10 @@ static void thread_count_cb(void *user_data, xine_cfg_entry_t *entry) {
   ff_video_class_t   *class = (ff_video_class_t *) user_data;
 
   class->thread_count = entry->num_value;
+  if (class->thread_count < 1)
+    class->thread_count = 1;
+  else if (class->thread_count > 8)
+    class->thread_count = 8;
 }
 
 static void pp_quality_cb(void *user_data, xine_cfg_entry_t *entry) {
@@ -2623,6 +2627,10 @@ void *init_video_plugin (xine_t *xine, void *data) {
       "decoding thread per logical CPU (typically 1 to 4).\n"
       "A change of this setting will take effect with playing the next stream."),
     10, thread_count_cb, this);
+  if (this->thread_count < 1)
+    this->thread_count = 1;
+  else if (this->thread_count > 8)
+    this->thread_count = 8;
 
   this->skip_loop_filter_enum = xine->config->register_enum(config, "video.processing.ffmpeg_skip_loop_filter", 0,
     (char **)skip_loop_filter_enum_names,
