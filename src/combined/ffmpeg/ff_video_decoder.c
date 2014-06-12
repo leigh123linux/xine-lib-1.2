@@ -117,7 +117,9 @@ struct ff_video_decoder_s {
   int               size;
   int               skipframes;
 
+  int              *slice_offset_table;
   int               slice_offset_size;
+  int               slice_offset_pos;
 
   AVFrame          *av_frame;
   AVCodecContext   *context;
@@ -1399,9 +1401,6 @@ static void ff_handle_header_buffer (ff_video_decoder_t *this, buf_element_t *bu
 #ifdef AVCODEC_HAS_SUB_ID
         this->context->sub_id = _X_BE_32(&this->buf[30]);
 #endif
-        this->context->slice_offset = calloc(SLICE_OFFSET_SIZE, sizeof(int));
-        this->slice_offset_size = SLICE_OFFSET_SIZE;
-
         this->context->extradata_size = this->size - 26;
 	if (this->context->extradata_size < 8) {
 	  this->context->extradata_size= 8;
@@ -1492,22 +1491,32 @@ static void ff_handle_special_buffer (ff_video_decoder_t *this, buf_element_t *b
 #endif
   }
   else if (buf->decoder_info[1] == BUF_SPECIAL_RV_CHUNK_TABLE) {
-    int i;
+    /* o dear. Multiple decoding threads use individual contexts.
+      av_decode_video2 () does only copy the _pointer_ to the offsets,
+      not the offsets themselves. So we must not overwrite anything
+      that another thread has not yet read. */
+    int i, l, total;
 
     lprintf("BUF_SPECIAL_RV_CHUNK_TABLE\n");
-    this->context->slice_count = buf->decoder_info[2]+1;
+    l = buf->decoder_info[2] + 1;
 
-    lprintf("slice_count=%d\n", this->context->slice_count);
-
-    if(this->context->slice_count > this->slice_offset_size) {
-      this->context->slice_offset = realloc(this->context->slice_offset,
-                                            sizeof(int)*this->context->slice_count);
-      this->slice_offset_size = this->context->slice_count;
+    total = l * this->class->thread_count;
+    if (total < SLICE_OFFSET_SIZE)
+      total = SLICE_OFFSET_SIZE;
+    if (total > this->slice_offset_size) {
+      this->slice_offset_table = realloc (this->slice_offset_table, total * sizeof (int));
+      this->slice_offset_size = total;
     }
 
-    for(i = 0; i < this->context->slice_count; i++) {
-      this->context->slice_offset[i] =
-        ((uint32_t *) buf->decoder_info_ptr[2])[(2*i)+1];
+    if (this->slice_offset_pos + l > this->slice_offset_size)
+      this->slice_offset_pos = 0;
+    this->context->slice_offset = this->slice_offset_table + this->slice_offset_pos;
+    this->context->slice_count = l;
+
+    lprintf ("slice_count=%d\n", l);
+    for (i = 0; i < l; i++) {
+      this->slice_offset_table[this->slice_offset_pos++] =
+        ((uint32_t *)buf->decoder_info_ptr[2])[(2 * i) + 1];
       lprintf("slice_offset[%d]=%d\n", i, this->context->slice_offset[i]);
     }
   }
@@ -2458,8 +2467,8 @@ static void ff_dispose (video_decoder_t *this_gen) {
     this->decoder_ok = 0;
   }
 
-  if(this->context && this->context->slice_offset)
-    free(this->context->slice_offset);
+  if (this->slice_offset_table)
+    free (this->slice_offset_table);
 
   if(this->context && this->context->extradata)
     free(this->context->extradata);
