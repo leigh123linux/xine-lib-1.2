@@ -34,7 +34,9 @@
 #include <sys/stat.h>
 #include <sys/mman.h>
 #include <sys/time.h>
+#ifdef HAVE_CUCUL
 #include <cucul.h>
+#endif
 #include <caca.h>
 
 #ifdef HAVE_FFMPEG_AVUTIL_H

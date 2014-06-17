@@ -17,6 +17,7 @@ xine-lib (1.2.?) ????-??-??
   * Build optimization fixes (aliasing).
   * AVformat demux build fix.
   * More safety on memory allocation failure.
+  * Fix detection of and compilation with libcaca 0.99 beta 19.
 
 xine-lib (1.2.5) 2014-04-08
   * Update german translation.

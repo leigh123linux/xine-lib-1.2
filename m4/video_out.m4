@@ -77,12 +77,20 @@ AC_DEFUN([XINE_VIDEO_OUT_PLUGINS], [
     dnl Color AsCii Art
     XINE_ARG_WITH([caca], [enable support for CACA])
     if test x"$with_caca" != x"no"; then
-        PKG_CHECK_MODULES([CACA], [caca >= 0.99beta14 cucul >= 0.99beta14], [have_caca="yes"], [have_caca="no"])
+        have_cucul=yes
+        PKG_CHECK_MODULES([CACA], [caca >= 0.99beta19],
+                          [have_caca="yes"
+                           have_cucul="no"],
+                          [PKG_CHECK_MODULES([CACA], [caca >= 0.99beta14 cucul >= 0.99beta14], [have_caca="yes"], [have_caca="no"])])
         if test x"$hard_with_caca" = x"yes" && test x"$have_caca" != x"yes"; then
             AC_MSG_ERROR([CACA support requested, but libcaca 0.99 not found])
         fi
     fi
     AM_CONDITIONAL([ENABLE_CACA], [test x"$have_caca" = x"yes"])
+    if test x"$have_caca$have_cucul" = x"yesyes"; then
+        HAVE_CUCUL=1
+        AC_SUBST([HAVE_CUCUL])
+    fi
 
 
     dnl dha (Linux only)
