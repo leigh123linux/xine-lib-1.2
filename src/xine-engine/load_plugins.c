@@ -2199,7 +2199,13 @@ audio_decoder_t *_x_get_audio_decoder (xine_stream_t *stream, uint8_t stream_typ
 
     ad = ((audio_decoder_class_t *)node->plugin_class)->open_plugin(node->plugin_class, stream);
 
-    if (ad) {
+    if (ad == (audio_decoder_t*)1) {
+      /* HACK: plugin failed to instantiate because required resources are unavailable at that time,
+         but may be available later, so don't remove this plugin from catalog. */
+      xprintf(stream->xine, XINE_VERBOSITY_DEBUG,
+          "load_plugins: plugin %s failed to instantiate, resources temporarily unavailable.\n", node->info->id);
+    }
+    else if (ad) {
       inc_node_ref(node);
       ad->node = node;
       xprintf(stream->xine, XINE_VERBOSITY_DEBUG,
