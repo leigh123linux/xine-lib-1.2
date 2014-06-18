@@ -180,7 +180,7 @@ struct ff_video_decoder_s {
 
 #ifdef ENABLE_EMMS
   /* see get_buffer () */
-  int               emms;
+  int               use_emms;
 #endif
 };
 
@@ -297,7 +297,7 @@ static int get_buffer (AVCodecContext *context, AVFrame *av_frame)
   /* some background thread may call this while still in mmx mode.
     this will trash "double" aspect ratio values, even when only
     passing them to vo_get_frame () verbatim. */
-  if (this->emms)
+  if (this->use_emms)
     emms ();
 #endif
 
@@ -2551,7 +2551,7 @@ static video_decoder_t *ff_video_open_plugin (video_decoder_class_t *class_gen, 
   this->rgb2yuy2          = NULL;
 
 #ifdef ENABLE_EMMS
-  this->emms = !!(xine_mm_accel () & (MM_ACCEL_X86_MMX | MM_ACCEL_X86_MMXEXT));
+  this->use_emms = !!(xine_mm_accel () & (MM_ACCEL_X86_MMX | MM_ACCEL_X86_MMXEXT));
 #endif
 
 #ifdef LOG
