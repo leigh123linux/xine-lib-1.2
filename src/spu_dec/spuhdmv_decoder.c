@@ -374,7 +374,11 @@ static subtitle_clut_t *segbuf_decode_palette(segment_buffer_t *buf)
     uint8_t Cr    = segbuf_get_u8 (buf);
     uint8_t Cb    = segbuf_get_u8 (buf);
     uint8_t alpha = segbuf_get_u8 (buf);
+#ifdef WORDS_BIGENDIAN
+    clut->color[index] = (Y << 8) | (Cr << 16) | (Cb << 24);
+#else
     clut->color[index] = (Y << 16) | (Cr << 8) | Cb;
+#endif
     clut->trans[index] = alpha >> 4;
   }
 
