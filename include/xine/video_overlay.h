@@ -61,7 +61,17 @@ typedef struct video_overlay_event_s {
 
 video_overlay_manager_t *_x_video_overlay_new_manager(xine_t *) XINE_MALLOC XINE_PROTECTED;
 
-void _x_overlay_clut_yuv2rgb(vo_overlay_t *overlay, int color_matrix) XINE_PROTECTED;
+/* Transport color matrix setting inside those unused "foo" fields.
+   Guard against uninitialized values. */
+#define _X_SET_CLUT_CM(clut,color_matrix) { \
+  uint8_t *q = (uint8_t *)clut; \
+  q[3]  = 'X'; \
+  q[7]  = 'C'; \
+  q[11] = 'M'; \
+  q[15] = color_matrix; \
+}
+
+void _x_overlay_clut_yuv2rgb(vo_overlay_t *overlay, int video_color_matrix) XINE_PROTECTED;
 void _x_overlay_to_argb32(const vo_overlay_t *overlay, uint32_t *rgba, int stride, const char *format) XINE_PROTECTED;
 
 #endif

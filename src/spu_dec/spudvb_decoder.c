@@ -1051,6 +1051,8 @@ static void draw_subtitles (dvb_spu_decoder_t * this)
 	  reg = this->dvbsub->regions[r].img;
 	  reg_width = this->dvbsub->regions[r].width;
 	}
+        /* All DVB subs I have seen so far use same color matrix as main video. */
+        _X_SET_CLUT_CM (&this->dvbsub->colours[this->dvbsub->regions[r].CLUT_id*256].u32, 4);
 	this->stream->osd_renderer->set_palette( this->dvbsub->regions[r].osd,
                                                  &this->dvbsub->colours[this->dvbsub->regions[r].CLUT_id*256].u32,
                                                  &this->dvbsub->trans[this->dvbsub->regions[r].CLUT_id*256]);

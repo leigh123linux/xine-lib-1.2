@@ -378,6 +378,9 @@ static subtitle_clut_t *segbuf_decode_palette(segment_buffer_t *buf)
     clut->trans[index] = alpha >> 4;
   }
 
+  /* HDMV subs always use same color matrix as main video. */
+  _X_SET_CLUT_CM (clut->color, 4);
+
   return clut;
 }
 

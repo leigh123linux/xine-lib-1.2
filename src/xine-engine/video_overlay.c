@@ -494,15 +494,23 @@ static int video_overlay_event( video_overlay_t *this, int64_t vpts ) {
   return processed;
 }
 
-void _x_overlay_clut_yuv2rgb(vo_overlay_t *overlay, int color_matrix)
+void _x_overlay_clut_yuv2rgb(vo_overlay_t *overlay, int video_color_matrix)
 {
+  int cm = 10; /* ITU-R 601 (SD) */
+
   if (!overlay->rgb_clut) {
-    _x_clut_yuv2rgb(overlay->color, sizeof(overlay->color) / sizeof (overlay->color[0]), color_matrix);
+    uint8_t *p = (uint8_t *)overlay->color;
+    if ((p[3] == 'X') && (p[7] == 'C') && (p[11] == 'M')) {
+      cm = p[15];
+      if ((cm >> 1) == 2) /* undefined */
+        cm = video_color_matrix;
+    }
+    _x_clut_yuv2rgb(overlay->color, sizeof(overlay->color) / sizeof (overlay->color[0]), cm);
     overlay->rgb_clut++;
   }
 
   if (!overlay->hili_rgb_clut) {
-    _x_clut_yuv2rgb(overlay->hili_color, sizeof (overlay->color) / sizeof (overlay->color[0]), color_matrix);
+    _x_clut_yuv2rgb(overlay->hili_color, sizeof (overlay->color) / sizeof (overlay->color[0]), cm);
     overlay->hili_rgb_clut++;
   }
 }
