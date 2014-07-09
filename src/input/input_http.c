@@ -603,12 +603,12 @@ static void http_plugin_dispose (input_plugin_t *this_gen ) {
     this->nbc = NULL;
   }
 
-  if (this->mrl) free(this->mrl);
-  if (this->proto) free(this->proto);
-  if (this->host) free(this->host);
-  if (this->user) free(this->user);
-  if (this->password) free(this->password);
-  if (this->uri) free(this->uri);
+  _x_freep (&this->mrl);
+  _x_freep (&this->proto);
+  _x_freep (&this->host);
+  _x_freep (&this->user);
+  _x_freep (&this->password);
+  _x_freep (&this->uri);
   free (this);
 }
 
@@ -1040,7 +1040,7 @@ static input_plugin_t *http_class_get_instance (input_class_t *cls_gen, xine_str
 static void http_class_dispose (input_class_t *this_gen) {
   http_input_class_t  *this = (http_input_class_t *) this_gen;
 
-  free(this->proxyhost_env);
+  _x_freep(&this->proxyhost_env);
 
   free (this);
 }

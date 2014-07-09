@@ -208,29 +208,13 @@ int _x_parse_url (char *url, char **proto, char** host, int *port,
   return 1;
 
 error:
-  if (*proto) {
-    free (*proto);
-    *proto = NULL;
-  }
-  if (*user) {
-    free (*user);
-    *user = NULL;
-  }
-  if (*password) {
-    free (*password);
-    *password = NULL;
-  }
-  if (*host) {
-    free (*host);
-    *host = NULL;
-  }
-  if (*port) {
-    *port = 0;
-  }
-  if (*uri) {
-    free (*uri);
-    *uri = NULL;
-  }
+  _x_freep (proto);
+  _x_freep (user);
+  _x_freep (password);
+  _x_freep (host);
+  _x_freep (uri);
+  *port = 0;
+
   return 0;
 }
 

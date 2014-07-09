@@ -329,7 +329,7 @@ static void file_plugin_dispose (input_plugin_t *this_gen ) {
   if (this->fh != -1)
     close(this->fh);
 
-  free (this->mrl);
+  _x_freep (&this->mrl);
 
   free (this);
 }
@@ -376,7 +376,7 @@ static int file_plugin_open (input_plugin_t *this_gen ) {
     return -1;
   }
 
-  free(filename);
+  _x_freep(&filename);
 
 #ifdef HAVE_MMAP
   this->mmap_on = 0;
@@ -915,7 +915,7 @@ static xine_mrl_t **file_class_get_dir (input_class_t *this_gen,
    */
   while(this->mrls_allocated_entries > num_files) {
     MRL_ZERO(this->mrls[this->mrls_allocated_entries - 1]);
-    free(this->mrls[this->mrls_allocated_entries--]);
+    _x_freep(&this->mrls[this->mrls_allocated_entries--]);
   }
 
   /*
@@ -947,9 +947,9 @@ static void file_class_dispose (input_class_t *this_gen) {
 
   while(this->mrls_allocated_entries) {
     MRL_ZERO(this->mrls[this->mrls_allocated_entries - 1]);
-    free(this->mrls[this->mrls_allocated_entries--]);
+    _x_freep(&this->mrls[this->mrls_allocated_entries--]);
   }
-  free (this->mrls);
+  _x_freep (&this->mrls);
 
   free (this);
 }

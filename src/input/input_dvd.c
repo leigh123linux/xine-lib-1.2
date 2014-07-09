@@ -569,8 +569,8 @@ static void dvd_plugin_free_buffer(buf_element_t *buf) {
   if (this->freeing && !this->mem_stack) {
     /* all buffers returned, we can free the plugin now */
     pthread_mutex_destroy(&this->buf_mutex);
-    free(this->mem);
-    free(this->mrl);
+    _x_freep(&this->mem);
+    _x_freep(&this->mrl);
     free(this);
   }
 }
@@ -1726,7 +1726,7 @@ static void dvd_class_dispose(input_class_t *this_gen) {
   config->unregister_callback(config, "media.dvd.seek_behaviour");
   config->unregister_callback(config, "media.dvd.play_single_chapter");
 
-  free(this->eject_device);
+  _x_freep(&this->eject_device);
   free(this);
 }
 
