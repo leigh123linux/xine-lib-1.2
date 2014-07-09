@@ -758,7 +758,7 @@ static void *init_plugin (xine_t *xine, void *data) {
   return this;
 }
 
-static input_info_t input_info_test = {
+static const input_info_t input_info_test = {
   110                       /* priority */
 };
 
