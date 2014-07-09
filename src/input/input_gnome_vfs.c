@@ -379,7 +379,7 @@ static void
 	return (input_class_t *) this;
 }
 
-static input_info_t input_info_gnomevfs = {
+static const input_info_t input_info_gnomevfs = {
 	100                       /* priority */
 };
 
