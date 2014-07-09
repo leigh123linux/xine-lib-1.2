@@ -287,8 +287,7 @@ static int http_plugin_read_metainf (http_input_plugin_t *this) {
 
           lprintf ("http_plugin_read_metainf: songtitle: %s\n", songtitle);
 
-          if (this->shoutcast_songtitle)
-            free(this->shoutcast_songtitle);
+          free(this->shoutcast_songtitle);
           this->shoutcast_songtitle = strdup(songtitle);
 
           _x_meta_info_set(this->stream, XINE_META_INFO_TITLE, songtitle);
