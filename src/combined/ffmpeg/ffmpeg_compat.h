@@ -23,20 +23,29 @@
 #ifndef XINE_AVCODEC_COMPAT_H
 #define XINE_AVCODEC_COMPAT_H
 
-#ifndef LIBAVCODEC_VERSION_MAJOR
-#  ifdef LIBAVCODEC_VERSION_INT
-#    define LIBAVCODEC_VERSION_MAJOR ((LIBAVCODEC_VERSION_INT)>>16)
-#    define LIBAVCODEC_VERSION_MINOR (((LIBAVCODEC_VERSION_INT)>>8) & 0xff)
+#define AV_INT_VERSION(major,minor,micro) ((major<<16)|(minor<<8)|micro)
+
+#ifndef LIBAVCODEC_VERSION_INT
+#  if defined(LIBAVCODEC_VERSION_MAJOR) && defined(LIBAVCODEC_VERSION_MINOR)
+#    define LIBAVCODEC_VERSION_INT AV_INT_VERSION(LIBAVCODEC_VERSION_MAJOR,LIBAVCODEC_VERSION_MINOR,0)
 #  else
 #    error ffmpeg headers must be included first !
 #  endif
 #endif
 
-#if LIBAVCODEC_VERSION_MAJOR > 51
+#ifndef LIBAVUTIL_VERSION_INT
+#  if defined(LIBAVUTIL_VERSION_MAJOR) && defined(LIBAVUTIL_VERSION_MINOR)
+#    define LIBAVUTIL_VERSION_INT AV_INT_VERSION(LIBAVUTIL_VERSION_MAJOR,LIBAVUTIL_VERSION_MINOR,0)
+#  else
+#    error ffmpeg headers must be included first !
+#  endif
+#endif
+
+#if LIBAVCODEC_VERSION_INT >= AV_INT_VERSION(52,0,0)
 #  define bits_per_sample bits_per_coded_sample
 #endif
 
-#if LIBAVCODEC_VERSION_MAJOR >= 53 || (LIBAVCODEC_VERSION_MAJOR == 52 && LIBAVCODEC_VERSION_MINOR >= 32)
+#if LIBAVCODEC_VERSION_INT >= AV_INT_VERSION(52,32,0)
 #else
 #  define pp_context	pp_context_t
 #  define pp_mode	pp_mode_t
@@ -44,27 +53,27 @@
 
 /* reordered_opaque appeared in libavcodec 51.68.0 */
 #define AVCODEC_HAS_REORDERED_OPAQUE
-#if LIBAVCODEC_VERSION_INT < 0x334400
+#if LIBAVCODEC_VERSION_INT < AV_INT_VERSION(51,68,0)
 # undef AVCODEC_HAS_REORDERED_OPAQUE
 #endif
 
 /* colorspace and color_range were added before 52.29.0 */
-#if LIBAVCODEC_VERSION_MAJOR > 52 || (LIBAVCODEC_VERSION_MAJOR == 52 && LIBAVCODEC_VERSION_MINOR >= 29)
+#if LIBAVCODEC_VERSION_INT >= AV_INT_VERSION(52,29,0)
 # define AVCODEC_HAS_COLORSPACE
 #endif
 
 /* "unused" as of v54 */
-#if LIBAVCODEC_VERSION_MAJOR < 54
+#if LIBAVCODEC_VERSION_INT < AV_INT_VERSION(54,0,0)
 # define AVCODEC_HAS_SUB_ID
 #endif
 
 /**/
-#if LIBAVCODEC_VERSION_MAJOR > 53 || (LIBAVCODEC_VERSION_MAJOR == 53 && LIBAVCODEC_VERSION_MINOR >= 8)
+#if LIBAVCODEC_VERSION_INT >= AV_INT_VERSION(53,8,0)
 #  define avcodec_init() do {} while(0)
 #endif
 
 /* avcodec_alloc_context() */
-#if LIBAVCODEC_VERSION_MAJOR >= 54 || (LIBAVCODEC_VERSION_MAJOR == 53 && LIBAVCODEC_VERSION_MINOR >= 6)
+#if LIBAVCODEC_VERSION_INT >= AV_INT_VERSION(53,6,0)
 #  define AVCONTEXT 3
 #  define avcodec_alloc_context() avcodec_alloc_context3(NULL)
 #else
@@ -72,7 +81,7 @@
 #endif
 
 /* avcodec_open() */
-#if LIBAVCODEC_VERSION_MAJOR >= 54 || (LIBAVCODEC_VERSION_MAJOR == 53 && LIBAVCODEC_VERSION_MINOR >= 6)
+#if LIBAVCODEC_VERSION_INT >= AV_INT_VERSION(53,6,0)
 #  define AVOPEN 2
 #  define avcodec_open(ctx,codec) avcodec_open2(ctx, codec, NULL)
 #else
@@ -80,50 +89,50 @@
 #endif
 
 /* avcodec_thread_init() */
-#if LIBAVCODEC_VERSION_MAJOR >= 53 || (LIBAVCODEC_VERSION_MAJOR == 52 && LIBAVCODEC_VERSION_MINOR >= 112)
+#if LIBAVCODEC_VERSION_INT >= AV_INT_VERSION(52,112,0)
 #  define DEPRECATED_AVCODEC_THREAD_INIT 1
 #endif
 
 /* av_parser_parse() */
-#if LIBAVCODEC_VERSION_MAJOR >= 53 || (LIBAVCODEC_VERSION_MAJOR == 52 && LIBAVCODEC_VERSION_MINOR >= 94)
+#if LIBAVCODEC_VERSION_INT >= AV_INT_VERSION(52,94,0)
 #  define AVPARSE 2
 #else
 #  define AVPARSE 1
 #endif
 
 /* avcodec_decode_video() */
-#if LIBAVCODEC_VERSION_MAJOR >= 53 || (LIBAVCODEC_VERSION_MAJOR == 52 && LIBAVCODEC_VERSION_MINOR >= 32)
+#if LIBAVCODEC_VERSION_INT >= AV_INT_VERSION(52,32,0)
 #  define AVVIDEO 2
 #else
 #  define AVVIDEO 1
 #endif
 
 /* avcodec_decode_audio() */
-#if LIBAVCODEC_VERSION_MAJOR >= 54
+#if LIBAVCODEC_VERSION_INT >= AV_INT_VERSION(54,0,0)
 #  define AVAUDIO 4
-#elif LIBAVCODEC_VERSION_MAJOR >= 53 || (LIBAVCODEC_VERSION_MAJOR == 52 && LIBAVCODEC_VERSION_MINOR >= 32)
+#elif LIBAVCODEC_VERSION_INT >= AV_INT_VERSION(52,32,0)
 #  define AVAUDIO 3
 #else
 #  define AVAUDIO 2
 #endif
 
 /* avcodec_encode_video(), av_packet_unref */
-#if LIBAVCODEC_VERSION_INT >= ((55<<16)|(25<<8)|100)
+#if LIBAVCODEC_VERSION_INT >= AV_INT_VERSION(55,25,100)
 #  define AVENCVIDEO 2
 #else
 #  define AVENCVIDEO 1
 #endif
 
 /* AVFrame.age */
-#if LIBAVCODEC_VERSION_INT >= 0x351C01 && LIBAVCODEC_VERSION_INT < 0x360000 // not sure about this - original condition was broken
+#if LIBAVCODEC_VERSION_INT >= AV_INT_VERSION(53,28,1) && LIBAVCODEC_VERSION_INT < AV_INT_VERSION(54,0,0) // not sure about this - original condition was broken
 #  define AVFRAMEAGE 1
 #endif
 
-#if LIBAVCODEC_VERSION_MAJOR < 53
+#if LIBAVCODEC_VERSION_INT < AV_INT_VERSION(53,0,0)
 /* release 0.7.x (libavcodec 52) has deprecated AVCodecContext.palctrl but for backwards compatibility no
    working alternative. */
 #  define AVPALETTE 1
-#elif LIBAVCODEC_VERSION_INT < ((54<<16)|(92<<8)|100)
+#elif LIBAVCODEC_VERSION_INT < AV_INT_VERSION(54,92,100)
 /* pass palette as AVPacket side data, free with av_destruct_packet () after NULLing main data pointer */
 #  define AVPALETTE 2
 #else
@@ -131,7 +140,7 @@
 #  define AVPALETTE 3
 #endif
 
-#if defined LIBAVUTIL_VERSION_MAJOR && LIBAVUTIL_VERSION_MAJOR >= 52
+#if LIBAVUTIL_VERSION_INT >= AV_INT_VERSION(52,0,0)
 #  define PIX_FMT_NONE      AV_PIX_FMT_NONE
 #  define PIX_FMT_YUV420P   AV_PIX_FMT_YUV420P
 #  define PIX_FMT_YUVJ420P  AV_PIX_FMT_YUVJ420P
@@ -155,7 +164,7 @@
 #  define PIX_FMT_VAAPI_MOCO AV_PIX_FMT_VAAPI_MOCO
 #endif
 
-#if defined LIBAVCODEC_VERSION_INT && LIBAVCODEC_VERSION_INT >= ((54<<16)|(25<<8))
+#if LIBAVCODEC_VERSION_INT >= AV_INT_VERSION(54,25,0)
 /* dxr3/ffmpeg_encoder */
 #  define CODEC_ID_MPEG1VIDEO AV_CODEC_ID_MPEG1VIDEO
 /* video_out/video_out_vaapi */
@@ -185,11 +194,11 @@
 #  define AVCODEC_MAX_AUDIO_FRAME_SIZE 192000
 #endif
 
-#if LIBAVCODEC_VERSION_INT < ((52<<16)|(66<<8))
+#if LIBAVCODEC_VERSION_INT < AV_INT_VERSION(52,66,0)
 #  define avcodec_get_edge_width() (16)
 #endif
 
-#if LIBAVCODEC_VERSION_INT >= ((55<<16)|100)
+#if LIBAVCODEC_VERSION_INT >= AV_INT_VERSION(55,0,100)
 #  define AV_BUFFER 1
 #endif
 

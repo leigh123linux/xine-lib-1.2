@@ -1768,7 +1768,7 @@ static void ff_postprocess (ff_video_decoder_t *this, vo_frame_t *img) {
   int qstride, qtype;
   int8_t *qtable;
 #ifdef AV_BUFFER
-# if LIBAVUTIL_VERSION_MAJOR < 53
+# if LIBAVUTIL_VERSION_INT < AV_INT_VERSION(53,0,0)
   qtable = av_frame_get_qp_table (this->av_frame, &qstride, &qtype);
 # else
   /* Why should they keep these long deprecated fields, and remove
