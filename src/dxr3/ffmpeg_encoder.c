@@ -319,7 +319,7 @@ static int lavc_on_unneeded(dxr3_driver_t *drv)
   lprintf("flushing buffers\n");
   if (this->context) {
     avcodec_close(this->context);
-    free(this->context);
+    avcodec_free_context (&this->context);
     free(this->picture);
     this->context = NULL;
     this->picture = NULL;

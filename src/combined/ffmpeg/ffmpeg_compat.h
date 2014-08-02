@@ -205,4 +205,15 @@
 #  define AV_BUFFER 1
 #endif
 
+#if LIBAVCODEC_VERSION_INT < AV_INT_VERSION(55,63,100)
+#  define avcodec_free_context(pp) av_free(*(pp))
+#endif
+
+#if LIBAVCODEC_VERSION_INT < AV_INT_VERSION(54,59,100)
+#  define avcodec_free_frame(pp) av_free(*(pp))
+#elif LIBAVCODEC_VERSION_INT >= AV_INT_VERSION(55,45,101)
+#  define avcodec_alloc_frame() av_frame_alloc()
+#  define avcodec_free_frame(pp) av_frame_free(pp)
+#endif
+
 #endif /* XINE_AVCODEC_COMPAT_H */

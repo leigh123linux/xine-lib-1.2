@@ -2474,14 +2474,14 @@ static void ff_dispose (video_decoder_t *this_gen) {
   if (this->slice_offset_table)
     free (this->slice_offset_table);
 
-  if(this->context && this->context->extradata)
-    free(this->context->extradata);
-
-  if( this->context )
-    av_free( this->context );
+  if (this->context) {
+    _x_freep (&this->context->extradata);
+    this->context->extradata_size = 0;
+    avcodec_free_context (&this->context);
+  }
 
   if( this->av_frame )
-    av_free( this->av_frame );
+    avcodec_free_frame( &this->av_frame );
 
   if (this->buf)
     free(this->buf);

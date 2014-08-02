@@ -1117,11 +1117,11 @@ static void ff_audio_dispose (audio_decoder_t *this_gen) {
   free16 (this->buf);
   free16 (this->decode_buffer);
 
-  if(this->context && this->context->extradata)
-    free(this->context->extradata);
-
-  if(this->context)
-    av_free(this->context);
+  if (this->context) {
+    _x_freep (&this->context->extradata);
+    this->context->extradata_size = 0;
+    avcodec_free_context (&this->context);
+  }
 
   free (this_gen);
 }
