@@ -196,6 +196,9 @@
 
 #if LIBAVCODEC_VERSION_INT < AV_INT_VERSION(52,66,0)
 #  define avcodec_get_edge_width() (16)
+#elif LIBAVCODEC_VERSION_INT >= AV_INT_VERSION(55,48,102)
+/* edges not needed anymore supposedly */
+#  define avcodec_get_edge_width() (0)
 #endif
 
 #if LIBAVCODEC_VERSION_INT >= AV_INT_VERSION(55,0,100)
