@@ -363,8 +363,10 @@ static void
 		return NULL;
 	}
 
+#if !GLIB_CHECK_VERSION(2,32,0)
 	if (!g_thread_supported ())
 		g_thread_init (NULL);
+#endif
 
 	this = g_new0 (gnomevfs_input_class_t, 1);
 	this->xine = xine;
