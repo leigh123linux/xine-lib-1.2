@@ -122,7 +122,7 @@ xineplug_dmx_audio_la_SOURCES = group_audio.c demux_aud.c demux_aiff.c \
 				demux_aac.c demux_flac.c \
 				demux_mpc.c demux_dts.c demux_shn.c \
 				demux_tta.c
-xineplug_dmx_audio_la_LIBADD = $(XINE_LIB)
+xineplug_dmx_audio_la_LIBADD = $(XINE_LIB) $(LTLIBINTL)
 
 xineplug_dmx_modplug_la_SOURCES = demux_mod.c
 xineplug_dmx_modplug_la_LIBADD = $(XINE_LIB) $(LIBMODPLUG_LIBS)

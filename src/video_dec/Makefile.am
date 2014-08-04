@@ -60,7 +60,7 @@ xineplug_decode_gdk_pixbuf_la_LIBADD = $(XINE_LIB) $(DYNAMIC_LD_LIBS) $(GDK_PIXB
 xineplug_decode_gdk_pixbuf_la_CFLAGS = $(AM_CFLAGS) $(GDK_PIXBUF_CFLAGS)
 
 xineplug_decode_libjpeg_la_SOURCES = libjpeg.c
-xineplug_decode_libjpeg_la_LIBADD = $(XINE_LIB) $(JPEG_LIBS)
+xineplug_decode_libjpeg_la_LIBADD = $(XINE_LIB) $(JPEG_LIBS) $(LTLIBINTL)
 xineplug_decode_libjpeg_la_CFLAGS = $(AM_CFLAGS) $(JPEG_CFLAGS)
 
 xineplug_decode_libvpx_la_SOURCES = libvpx.c

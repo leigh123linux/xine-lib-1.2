@@ -100,7 +100,7 @@ xineplug_inp_test_la_CFLAGS = $(VISIBILITY_FLAG) $(AM_CFLAGS)
 xineplug_inp_test_la_LDFLAGS = $(xineplug_ldflags)
 
 xineplug_inp_dvd_la_SOURCES = input_dvd.c media_helper.c
-xineplug_inp_dvd_la_LIBADD = $(XINE_LIB) $(link_dvdnav) $(PTHREAD_LIBS) $(DYNAMIC_LD_LIBS)
+xineplug_inp_dvd_la_LIBADD = $(XINE_LIB) $(link_dvdnav) $(PTHREAD_LIBS) $(DYNAMIC_LD_LIBS) $(LTLIBINTL)
 xineplug_inp_dvd_la_CFLAGS = $(AM_CFLAGS) $(DVD_CFLAGS)
 
 xineplug_inp_net_la_SOURCES = input_net.c net_buf_ctrl.c
