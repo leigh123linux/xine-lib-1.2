@@ -33,6 +33,7 @@
 #include <interface/mmal/mmal.h>
 #include <interface/mmal/util/mmal_util.h>
 #include <interface/mmal/util/mmal_default_components.h>
+#include <interface/vmcs_host/vc_dispmanx.h>
 
 #define LOG_MODULE "video_out_mmal"
 #define LOG_VERBOSE
@@ -40,6 +41,7 @@
 #define LOG
 */
 #define FRAME_ALLOC  /* allocate buffer based on frame size. if not defined, all buffers are suitable for 1920x1088 YUY2. */
+#define HW_OVERLAY   /* draw overlay using HW. if undefined, draw in software. */
 
 #include "xine.h"
 #include <xine/xine_internal.h>
@@ -70,13 +72,28 @@ typedef struct {
     int                   displayed;
 } mmal_frame_t;
 
+typedef struct mmal_overlay_s mmal_overlay_t;
+struct mmal_overlay_s {
+  mmal_overlay_t *next;
+
+  void     *mem; /* temp storage for rle -> argb */
+  int       src_width, src_height, src_pitch;
+  VC_RECT_T src_rect;
+  VC_RECT_T dst_rect;
+
+  DISPMANX_ELEMENT_HANDLE_T  element;
+  DISPMANX_RESOURCE_HANDLE_T resource;
+};
+
 typedef struct {
 
   vo_driver_t        vo_driver;
 
   /* xine */
   xine_t            *xine;
+#ifndef HW_OVERLAY
   alphablend_t       alphablend_extra_data;
+#endif
   int                gui_width, gui_height;
 
   /* mmal */
@@ -84,6 +101,14 @@ typedef struct {
   MMAL_POOL_T       *pool;
   int                frames_in_renderer;
   double             renderer_ratio;
+
+  /* dispmanx */
+  DISPMANX_DISPLAY_HANDLE_T  dispmanx_handle;
+  DISPMANX_UPDATE_HANDLE_T   overlay_update;
+
+  /* overlays */
+  mmal_overlay_t    *overlays;
+  mmal_overlay_t    *old_overlays;
 
   pthread_mutex_t    mutex;
   pthread_cond_t     cond;
@@ -128,6 +153,10 @@ static int update_tv_resolution(mmal_driver_t *this) {
           "display size %dx%d\n", this->gui_width, this->gui_height);
   return 0;
 }
+
+/*
+ *
+ */
 
 static int config_display(mmal_driver_t *this,
                           int src_x, int src_y, int src_w, int src_h) {
@@ -294,7 +323,9 @@ static uint32_t mmal_get_capabilities (vo_driver_t *this_gen) {
 
   return
     VO_CAP_YUY2 | VO_CAP_YV12 |
-    VO_CAP_CROP;
+    VO_CAP_CROP |
+    VO_CAP_UNSCALED_OVERLAY |
+    VO_CAP_CUSTOM_EXTENT_OVERLAY;
 }
 
 static void mmal_frame_field (vo_frame_t *vo_img, int which_field) {
@@ -426,6 +457,110 @@ static void mmal_update_frame_format (vo_driver_t *this_gen,
   frame->displayed = 0;
 }
 
+
+/*
+ * overlay
+ */
+
+static void overlay_free(mmal_overlay_t *ovl, DISPMANX_UPDATE_HANDLE_T update) {
+
+  if (ovl->resource != DISPMANX_NO_HANDLE) {
+    vc_dispmanx_element_remove(update, ovl->element);
+    vc_dispmanx_resource_delete(ovl->resource);
+  }
+  free(ovl->mem);
+  free(ovl);
+}
+
+static void overlay_update(mmal_overlay_t *ovl, DISPMANX_UPDATE_HANDLE_T update, uint32_t *argb) {
+
+  vc_dispmanx_resource_write_data(ovl->resource, VC_IMAGE_RGBA32,
+                                  ovl->src_pitch, argb, &ovl->src_rect);
+  vc_dispmanx_element_change_source(update, ovl->element, ovl->resource);
+}
+
+static mmal_overlay_t *overlay_new(mmal_driver_t *this,
+                                   DISPMANX_UPDATE_HANDLE_T update,
+                                   int src_width, int src_height, int src_pitch,
+                                   int x, int y, int width, int height, int layer,
+				   uint32_t *argb) {
+
+  mmal_overlay_t      *ovl = calloc(1, sizeof(mmal_overlay_t));
+  uint32_t             image_handle;
+  static VC_DISPMANX_ALPHA_T  alpha;
+  VC_RECT_T            src_rect;
+  //src_width &= 31;
+  //dst_width &= 15;
+  ovl->src_pitch = src_pitch;
+  ovl->src_width = src_width;
+  ovl->src_height = src_height;
+
+  vc_dispmanx_rect_set(&src_rect, 0, 0, src_width << 16, src_height << 16);
+  vc_dispmanx_rect_set(&ovl->src_rect, 0, 0, src_width, src_height);
+  vc_dispmanx_rect_set(&ovl->dst_rect, x, y, width, height);
+
+  ovl->resource = vc_dispmanx_resource_create(VC_IMAGE_RGBA32,
+					      src_pitch | (src_pitch<<16), src_height | (src_height<<16),
+					      &image_handle);
+  if (ovl->resource == DISPMANX_NO_HANDLE) {
+    xprintf(this->xine, XINE_VERBOSITY_LOG, LOG_MODULE": "
+	    "failed to create dispmanx resource for overlay\n");
+    overlay_free(ovl, update);
+    return NULL;
+  }
+  if (vc_dispmanx_resource_write_data(ovl->resource, VC_IMAGE_RGBA32,
+				      src_pitch, argb, &ovl->src_rect)) {
+    xprintf(this->xine, XINE_VERBOSITY_LOG, LOG_MODULE": "
+	    "failed to write overlay data to dispmanx resource\n");
+    overlay_free(ovl, update);
+    return NULL;
+  }
+
+  alpha.flags = DISPMANX_FLAGS_ALPHA_FROM_SOURCE /*| DISPMANX_FLAGS_ALPHA_MIX*/;
+  alpha.mask = DISPMANX_NO_HANDLE;
+  ovl->element = vc_dispmanx_element_add(update, this->dispmanx_handle,
+                                         layer, &ovl->dst_rect, ovl->resource,
+                                         &src_rect, DISPMANX_PROTECTION_NONE,
+                                         &alpha, NULL, VC_IMAGE_ROT0);
+
+  if (ovl->element == DISPMANX_NO_HANDLE) {
+    xprintf(this->xine, XINE_VERBOSITY_LOG, LOG_MODULE": "
+	    "vc_dispmanx_element_add() failed\n");
+    overlay_free(ovl, update);
+    return NULL;
+  }
+
+  return ovl;
+}
+
+static void close_overlays(mmal_driver_t *this, mmal_overlay_t *ovls) {
+
+  while (ovls) {
+    mmal_overlay_t *tmp = ovls;
+    ovls = ovls->next;
+    overlay_free(tmp, this->overlay_update);
+  }
+}
+
+/*
+ *
+ */
+
+static void mmal_overlay_begin (vo_driver_t *this_gen,
+                                vo_frame_t *frame_gen, int changed) {
+
+#ifdef HW_OVERLAY
+  mmal_driver_t *this = (mmal_driver_t *)this_gen;
+
+  if (changed) {
+    this->overlay_update = vc_dispmanx_update_start(10);
+    /* re-create active overlay list to maintain blending order */
+    this->old_overlays = this->overlays;
+    this->overlays = NULL;
+  }
+#endif
+}
+
 static void mmal_overlay_blend (vo_driver_t *this_gen, vo_frame_t *frame, vo_overlay_t *overlay) {
 
   mmal_driver_t  *this = (mmal_driver_t *) this_gen;
@@ -433,6 +568,7 @@ static void mmal_overlay_blend (vo_driver_t *this_gen, vo_frame_t *frame, vo_ove
   if (overlay->width <= 0 || overlay->height <= 0 || !overlay->rle)
     return;
 
+#ifndef HW_OVERLAY
   this->alphablend_extra_data.offset_x = frame->overlay_offset_x;
   this->alphablend_extra_data.offset_y = frame->overlay_offset_y;
 
@@ -442,7 +578,124 @@ static void mmal_overlay_blend (vo_driver_t *this_gen, vo_frame_t *frame, vo_ove
     else
       _x_blend_yuy2( frame->base[0], overlay, frame->width, frame->height, frame->pitches[0], &this->alphablend_extra_data);
   }
+#else
+
+  if (!this->overlay_update) {
+    return;
+  }
+
+  int dst_x = overlay->x, dst_y = overlay->y, dst_w = overlay->width, dst_h = overlay->height;
+
+  /* coordinate system */
+  int extent_width  = overlay->extent_width;
+  int extent_height = overlay->extent_height;
+  if (extent_width < 1 || extent_height < 1) {
+    if (overlay->unscaled) {
+      extent_width = this->gui_width;
+      extent_height = this->gui_height;
+    } else {
+      extent_width = frame->width;
+      extent_height = frame->height;
+    }
+  }
+
+  /* scale dst region if needed */
+  if (extent_width != this->gui_width) {
+    dst_x = dst_x * this->gui_width / extent_width;
+    dst_w = dst_w * this->gui_width / extent_width;
+  }
+  if (extent_height != this->gui_height) {
+    dst_y = dst_y * this->gui_height / extent_height;
+    dst_h = dst_h * this->gui_height / extent_height;
+  }
+
+#ifdef LOG
+  fprintf(stderr, "overlay: %d,%d %dx%d unscaled:%d extent: %dx%d argb: %d-> surface %dx%d\n",
+          overlay->x, overlay->y, overlay->width, overlay->height,
+          overlay->unscaled, overlay->extent_width, overlay->extent_height,
+          (overlay->argb_layer && overlay->argb_layer->buffer),
+          extent_width, extent_height);
+#endif
+
+  /* find suitable region, maintain overlay blending order */
+  mmal_overlay_t *ovl = this->old_overlays, *prev = NULL;
+  while (ovl) {
+    /* source, dst coordinates must be same (= size + location + scaling) */
+    if (ovl->src_width == overlay->width && ovl->src_height == overlay->height &&
+        dst_x == ovl->dst_rect.x && dst_y == ovl->dst_rect.y && dst_w == ovl->dst_rect.width && dst_h == ovl->dst_rect.height) {
+      if (prev) {
+        prev->next = ovl->next;
+      } else {
+        this->old_overlays = ovl->next;
+      }
+      ovl->next = NULL;
+      break;
+    }
+    prev = ovl;
+    ovl = ovl->next;
+  }
+
+  /* new overlay */
+  if (!ovl) {
+    if (overlay->rle) {
+      _x_overlay_clut_yuv2rgb(overlay, 0);
+
+      void *mem = NULL;
+      int src_pitch = (sizeof(uint32_t) * overlay->width + 31) & ~31;
+      mem = malloc(src_pitch * overlay->height);
+      _x_overlay_to_argb32(overlay, mem, src_pitch/4, "RGBA");
+      ovl = overlay_new(this, this->overlay_update, overlay->width, overlay->height, src_pitch,
+                        dst_x, dst_y, dst_w, dst_h, 2, mem);
+      if (!ovl)
+	return;
+      ovl->mem = mem;
+    }
+  }
+
+  /* update overlay */
+  else if (overlay->rle) {
+    _x_overlay_clut_yuv2rgb(overlay, 0);
+ 
+    if (!ovl->mem) {
+      int src_pitch = (sizeof(uint32_t) * overlay->width + 31) & ~31;
+      ovl->mem = malloc(src_pitch * overlay->height);
+      ovl->src_pitch = src_pitch;
+    }
+    _x_overlay_to_argb32(overlay, ovl->mem, ovl->src_pitch/4, "RGBA");
+    overlay_update(ovl, this->overlay_update, ovl->mem);
+  }
+
+  /* add to list */
+  mmal_overlay_t **tail = &this->overlays;
+  while (*tail) {
+    tail = &(*tail)->next;
+  }
+  *tail = ovl;
+#endif /* HW_OVERLAY */
 }
+
+static void mmal_overlay_end (vo_driver_t *this_gen, vo_frame_t *frame_gen) {
+
+#ifdef HW_OVERLAY
+  mmal_driver_t *this  = (mmal_driver_t *)this_gen;
+
+  if (!this->overlay_update) {
+    return;
+  }
+
+  /* remove handles not in use */
+  close_overlays(this, this->old_overlays);
+  this->old_overlays = NULL;
+
+  /* commit updates */
+  vc_dispmanx_update_submit_sync(this->overlay_update);
+  this->overlay_update = 0;
+#endif
+}
+
+/*
+ *
+ */
 
 static int mmal_redraw_needed (vo_driver_t *this_gen) {
 
@@ -542,6 +795,20 @@ static void mmal_dispose (vo_driver_t * this_gen) {
 
   mmal_driver_t      *this = (mmal_driver_t*) this_gen;
 
+  if (this->dispmanx_handle) {
+
+    if (this->overlays) {
+      this->overlay_update = vc_dispmanx_update_start(10);
+      close_overlays(this, this->overlays);
+      this->overlays = NULL;
+      vc_dispmanx_update_submit_sync(this->overlay_update);
+      this->overlay_update = 0;
+    }
+
+    vc_dispmanx_display_close(this->dispmanx_handle);
+    this->dispmanx_handle = DISPMANX_NO_HANDLE;
+  }
+
   if (this->renderer) {
     disable_renderer(this);
     mmal_component_release(this->renderer);
@@ -551,7 +818,9 @@ static void mmal_dispose (vo_driver_t * this_gen) {
     mmal_pool_destroy(this->pool);
   }
 
+#ifndef HW_OVERLAY
   _x_alphablend_free(&this->alphablend_extra_data);
+#endif
 
   pthread_cond_destroy(&this->cond);
   pthread_mutex_destroy(&this->mutex);
@@ -573,7 +842,9 @@ static vo_driver_t *open_plugin (video_driver_class_t *class_gen, const void *vi
 
   this->xine          = class->xine;
 
+#ifndef HW_OVERLAY
   _x_alphablend_init(&this->alphablend_extra_data, class->xine);
+#endif
 
   pthread_mutex_init (&this->mutex, NULL);
   pthread_cond_init (&this->cond, NULL);
@@ -594,12 +865,20 @@ static vo_driver_t *open_plugin (video_driver_class_t *class_gen, const void *vi
   update_tv_resolution(this);
   config_display(this, 0, 0, 720, 576);
 
+  this->dispmanx_handle = vc_dispmanx_display_open(0);
+  if (this->dispmanx_handle == DISPMANX_NO_HANDLE) {
+    xprintf(this->xine, XINE_VERBOSITY_LOG, LOG_MODULE": "
+	    "failed to open dispmanx display\n");
+    mmal_dispose(&this->vo_driver);
+    return NULL;
+  }
+
   this->vo_driver.get_capabilities     = mmal_get_capabilities;
   this->vo_driver.alloc_frame          = mmal_alloc_frame;
   this->vo_driver.update_frame_format  = mmal_update_frame_format;
-  this->vo_driver.overlay_begin        = NULL;
+  this->vo_driver.overlay_begin        = mmal_overlay_begin;
   this->vo_driver.overlay_blend        = mmal_overlay_blend;
-  this->vo_driver.overlay_end          = NULL;
+  this->vo_driver.overlay_end          = mmal_overlay_end;
   this->vo_driver.display_frame        = mmal_display_frame;
   this->vo_driver.get_property         = mmal_get_property;
   this->vo_driver.set_property         = mmal_set_property;
