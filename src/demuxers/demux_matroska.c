@@ -364,6 +364,7 @@ static int parse_content_encoding (demux_matroska_t *this, matroska_track_t *tra
         lprintf("ContentCompression\n");
         if (!ebml_read_master (ebml, &elem))
           return 0;
+	track->compress_algo = 0; /* default */
         if ((elem.len > 0) && !parse_content_compression(this, track))
           return 0;
         break;
