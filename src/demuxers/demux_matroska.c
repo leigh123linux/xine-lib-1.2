@@ -991,34 +991,22 @@ static void handle_sub_utf8 (demux_plugin_t *this_gen, matroska_track_t *track,
 }
 
 
-/* Note: This function assumes that the VobSub track is compressed with zlib.
- * This is not necessarily true - or not enough. The Matroska 'content
- * encoding' elements allow for a layer of changes applied to the contents,
- * e.g. compression or encryption. Anyway, only zlib compression is used
- * at the moment, and everyone compresses the VobSubs.
- */
-static void handle_vobsub (demux_plugin_t *this_gen, matroska_track_t *track,
-                           int decoder_flags,
-                           uint8_t *data, size_t data_len,
-                           int64_t data_pts, int data_duration,
-                           int input_normpos, int input_time) {
-  demux_matroska_t *this = (demux_matroska_t *) this_gen;
-  buf_element_t *buf;
-
-  if (track->compress_algo == MATROSKA_COMPRESS_ZLIB ||
-      track->compress_algo == MATROSKA_COMPRESS_UNKNOWN) {
+static int uncompress_zlib(demux_matroska_t *this,
+                           const uint8_t *data, size_t data_len, uint8_t **out_data, size_t *out_data_len)
+{
     z_stream zstream;
     uint8_t *dest;
-    int old_data_len, result;
+    int result;
 
-    old_data_len = data_len;
+    *out_data = NULL;
+
     zstream.zalloc = (alloc_func) 0;
     zstream.zfree = (free_func) 0;
     zstream.opaque = (voidpf) 0;
     if (inflateInit (&zstream) != Z_OK) {
       xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
-              "demux_matroska: VobSub: zlib inflateInit failed.\n");
-      return;
+              "demux_matroska: zlib inflateInit failed.\n");
+      return -1;
     }
     zstream.next_in = (Bytef *)data;
     zstream.avail_in = data_len;
@@ -1032,32 +1020,58 @@ static void handle_vobsub (demux_plugin_t *this_gen, matroska_track_t *track,
       result = inflate (&zstream, Z_NO_FLUSH);
       if ((result != Z_OK) && (result != Z_STREAM_END)) {
         xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
-                "demux_matroska: VobSub: zlib decompression failed for track %d (result = %d).\n",
-                (int)track->track_num, result);
+                "demux_matroska: zlib decompression failed: %d\n", result);
         free(dest);
         inflateEnd(&zstream);
-
-        if (result == Z_DATA_ERROR && track->compress_algo == MATROSKA_COMPRESS_UNKNOWN) {
-          track->compress_algo = MATROSKA_COMPRESS_NONE;
-          data_len = old_data_len;
-          xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
-                  "demux_matroska: VobSub: falling back to uncompressed mode.\n");
-          break;
-        }
-        return;
+	return 0;
       }
       zstream.avail_out += 4000;
     } while ((zstream.avail_out == 4000) &&
             (zstream.avail_in != 0) && (result != Z_STREAM_END));
 
-    if (track->compress_algo != MATROSKA_COMPRESS_NONE) {
-      data_len = zstream.total_out;
-      inflateEnd(&zstream);
+    *out_data = dest;
+    *out_data_len = zstream.total_out;
 
-      data = dest;
+    inflateEnd(&zstream);
+
+    return 1;
+}
+
+/* Note: This function assumes that the VobSub track is compressed with zlib.
+ * This is not necessarily true - or not enough. The Matroska 'content
+ * encoding' elements allow for a layer of changes applied to the contents,
+ * e.g. compression or encryption. Anyway, only zlib compression is used
+ * at the moment, and everyone compresses the VobSubs.
+ */
+static void handle_vobsub (demux_plugin_t *this_gen, matroska_track_t *track,
+                           int decoder_flags,
+                           uint8_t *data, size_t data_len,
+                           int64_t data_pts, int data_duration,
+                           int input_normpos, int input_time) {
+  demux_matroska_t *this = (demux_matroska_t *) this_gen;
+  buf_element_t *buf;
+  uint8_t *new_data = NULL;
+  size_t new_data_len = 0;
+
+  if (track->compress_algo == MATROSKA_COMPRESS_ZLIB ||
+      track->compress_algo == MATROSKA_COMPRESS_UNKNOWN) {
+
+    if (uncompress_zlib(this, data, data_len, &new_data, &new_data_len) < 0) {
+      return;
+    }
+
+    if (!new_data) {
+      if (track->compress_algo == MATROSKA_COMPRESS_UNKNOWN) {
+	track->compress_algo = MATROSKA_COMPRESS_NONE;
+	xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
+		"demux_matroska: VobSub: falling back to uncompressed mode.\n");
+      } else {
+	return;
+      }
+    } else {
       track->compress_algo = MATROSKA_COMPRESS_ZLIB;
-      lprintf("VobSub: decompression for track %d from %d to %d\n",
-              (int)track->track_num, old_data_len, data_len);
+      data = new_data;
+      data_len = new_data_len;
     }
   }
   else
@@ -1089,8 +1103,7 @@ static void handle_vobsub (demux_plugin_t *this_gen, matroska_track_t *track,
     buf->free_buffer(buf);
   }
 
-  if (track->compress_algo == MATROSKA_COMPRESS_ZLIB)
-    free(data);
+  free(new_data);
 }
 
 static void fill_extra_data(matroska_track_t *track, uint32_t fourcc) {
