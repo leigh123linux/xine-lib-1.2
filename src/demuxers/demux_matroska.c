@@ -1106,6 +1106,31 @@ static void handle_vobsub (demux_plugin_t *this_gen, matroska_track_t *track,
   free(new_data);
 }
 
+static void handle_hdmv_pgs (demux_plugin_t *this_gen, matroska_track_t *track,
+                             int decoder_flags,
+                             uint8_t *data, size_t data_len,
+                             int64_t data_pts, int data_duration,
+                             int input_normpos, int input_time) {
+  demux_matroska_t *this = (demux_matroska_t *) this_gen;
+  uint8_t *new_data = NULL;
+  size_t new_data_len = 0;
+
+  if (track->compress_algo == MATROSKA_COMPRESS_ZLIB) {
+    uncompress_zlib(this, data, data_len, &new_data, &new_data_len);
+    if (!new_data)
+      return;
+    data = new_data;
+    data_len = new_data_len;
+  }
+
+  _x_demux_send_data(track->fifo, data, data_len,
+		     data_pts, track->buf_type, decoder_flags,
+		     input_normpos, input_time,
+		     0, 0);
+
+  free(new_data);
+}
+
 static void fill_extra_data(matroska_track_t *track, uint32_t fourcc) {
 
   xine_bmiheader *bih;
@@ -1512,6 +1537,7 @@ static int parse_track_entry(demux_matroska_t *this, matroska_track_t *track) {
     } else if (!strcmp(track->codec_id, MATROSKA_CODEC_ID_S_HDMV_PGS)) {
       lprintf("MATROSKA_CODEC_ID_S_HDMV_PGS\n");
       track->buf_type = BUF_SPU_HDMV;
+      track->handle_content = handle_hdmv_pgs;
       init_codec = init_codec_spu;
     } else {
       xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG, "unknown codec %s\n", track->codec_id);
