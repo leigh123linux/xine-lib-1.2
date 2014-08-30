@@ -1055,6 +1055,51 @@ static void ff_setup_rgb2yuy2 (ff_video_decoder_t *this, int pix_fmt) {
     "ffmpeg_video_dec: converting %s -> %s yuy2\n", fmt, cm_names[cm]);
 }
 
+#if defined(AV_PIX_FMT_YUV420P9) || defined(AV_PIX_FMT_YUV420P10)
+static void ff_get_deep_color (uint8_t *src, int sstride, uint8_t *dest, int dstride,
+  int width, int height, int sbits, uint8_t *tab) {
+  uint16_t *p = (uint16_t *) src;
+  uint8_t  *q = dest;
+  int       spad = sstride / 2 - width;
+  int       dpad = dstride - width;
+  int       i;
+
+  if (sbits == 9) {
+    if (tab) {
+      while (height--) {
+        for (i = width; i; i--)
+          *q++ = tab[(*p++) >> 1];
+        p += spad;
+        q += dpad;
+      }
+    } else {
+      while (height--) {
+        for (i = width; i; i--)
+          *q++ = (*p++) >> 1;
+        p += spad;
+        q += dpad;
+      }
+    }
+  } else if (sbits == 10) {
+    if (tab) {
+      while (height--) {
+        for (i = width; i; i--)
+          *q++ = tab[(*p++) >> 2];
+        p += spad;
+        q += dpad;
+      }
+    } else {
+      while (height--) {
+        for (i = width; i; i--)
+          *q++ = (*p++) >> 2;
+        p += spad;
+        q += dpad;
+      }
+    }
+  }
+}
+#endif
+
 static void ff_convert_frame(ff_video_decoder_t *this, vo_frame_t *img, AVFrame *av_frame) {
   int         y;
   uint8_t    *dy, *du, *dv, *sy, *su, *sv;
@@ -1078,6 +1123,33 @@ static void ff_convert_frame(ff_video_decoder_t *this, vo_frame_t *img, AVFrame 
    */
 
   switch (this->context->pix_fmt) {
+#ifdef AV_PIX_FMT_YUV420P9
+    case AV_PIX_FMT_YUV420P9:
+      /* Y */
+      ff_get_deep_color (av_frame->data[0], av_frame->linesize[0], img->base[0], img->pitches[0],
+        img->width, this->bih.biHeight, 9, this->full2mpeg ? this->ytab : NULL);
+      /* U */
+      ff_get_deep_color (av_frame->data[1], av_frame->linesize[1], img->base[1], img->pitches[1],
+        img->width / 2, this->bih.biHeight / 2, 9, this->full2mpeg ? this->ctab : NULL);
+      /* V */
+      ff_get_deep_color (av_frame->data[2], av_frame->linesize[2], img->base[2], img->pitches[2],
+        img->width / 2, this->bih.biHeight / 2, 9, this->full2mpeg ? this->ctab : NULL);
+    break;
+#endif
+#ifdef AV_PIX_FMT_YUV420P10
+    case AV_PIX_FMT_YUV420P10:
+      /* Y */
+      ff_get_deep_color (av_frame->data[0], av_frame->linesize[0], img->base[0], img->pitches[0],
+        img->width, this->bih.biHeight, 10, this->full2mpeg ? this->ytab : NULL);
+      /* U */
+      ff_get_deep_color (av_frame->data[1], av_frame->linesize[1], img->base[1], img->pitches[1],
+        img->width / 2, this->bih.biHeight / 2, 10, this->full2mpeg ? this->ctab : NULL);
+      /* V */
+      ff_get_deep_color (av_frame->data[2], av_frame->linesize[2], img->base[2], img->pitches[2],
+        img->width / 2, this->bih.biHeight / 2, 10, this->full2mpeg ? this->ctab : NULL);
+    break;
+#endif
+
     case PIX_FMT_YUV410P:
       yuv9_to_yv12(
        /* Y */
