@@ -284,11 +284,11 @@ static void dvbspeed_get (nbc_t *this, fifo_buffer_t * fifo, buf_element_t *b) {
   }
   /* take actions */
   used = fifo->fifo_size;
-  if (((mode >> this->dvbspeed) & 1) || !*fill) return;
+  if ((mode >> this->dvbspeed) & 1) return;
   switch (this->dvbspeed) {
     case 1:
     case 4:
-      if ((*fill < this->dvbs_center - this->dvbs_width) &&
+      if (*fill && (*fill < this->dvbs_center - this->dvbs_width) &&
         (100 * used < 38 * fifo->buffer_pool_capacity)) {
         _x_set_fine_speed (this->stream, XINE_FINE_SPEED_NORMAL * 199 / 200);
         this->dvbspeed += 1;
@@ -298,9 +298,18 @@ static void dvbspeed_get (nbc_t *this, fifo_buffer_t * fifo, buf_element_t *b) {
 #endif
       }
     break;
+    case 2:
+    case 5:
+      if (used <= 1) {
+        this->dvbspeed = 7;
+#ifdef LOG_DVBSPEED
+        printf ("net_buf_ctrl: signal lost\n");
+#endif
+      }
+    break;
     case 3:
     case 6:
-      if ((*fill < this->dvbs_center) && (100 * used < 73 * fifo->buffer_pool_capacity)) {
+      if (*fill && (*fill < this->dvbs_center) && (100 * used < 73 * fifo->buffer_pool_capacity)) {
         _x_set_fine_speed (this->stream, XINE_FINE_SPEED_NORMAL);
         this->dvbspeed -= 2;
 #ifdef LOG_DVBSPEED
