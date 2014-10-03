@@ -872,6 +872,20 @@ static int detect_mpgaudio_file(input_plugin_t *input,
      */
     int tag_size = _X_BE_32_synchsafe(&buf[6]);
     lprintf("try to skip id3v2 tag (%d bytes)\n", tag_size);
+    /* id3v2 tags may be larger than preview size (album artwork JPG or something).
+     * try to skip by seeking.
+     */
+    if (INPUT_IS_SEEKABLE (input)) {
+      input->seek (input, 10 + tag_size, SEEK_SET);
+      preview_len = input->read (input, buf, MAX_PREVIEW_SIZE);
+      if (!sniff_buffer_looks_like_mp3 (buf, preview_len, version, layer)) {
+        lprintf ("sniff_buffer_looks_like_mp3 failed\n");
+        return 0;
+      } else {
+        lprintf ("a valid mp3 frame follows the id3v2 tag\n");
+        return 1;
+      }
+    }
     if ((10 + tag_size) >= preview_len) {
       lprintf("cannot skip id3v2 tag\n");
       return 0;
