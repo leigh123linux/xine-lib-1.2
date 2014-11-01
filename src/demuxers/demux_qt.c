@@ -201,8 +201,8 @@ typedef struct {
 } qt_frame;
 
 typedef struct {
-  unsigned int track_duration;
-  unsigned int media_time;
+  int64_t track_duration;
+  int64_t media_time;
 } edit_list_table_t;
 
 typedef struct {
@@ -1004,21 +1004,39 @@ static qt_error parse_trak_atom (qt_trak *trak,
   atomsize = sizes[3];
   if (atomsize >= 16) {
     trak->edit_list_count = _X_BE_32 (&atom[12]);
-    if (trak->edit_list_count > (atomsize - 16) / 12)
-      trak->edit_list_count = (atomsize - 16) / 12;
     debug_atom_load ("    qt elst atom (edit list atom): %d entries\n", trak->edit_list_count);
-    /* dont bail on zero items */
-    trak->edit_list_table = calloc (trak->edit_list_count + 1, sizeof (edit_list_table_t));
-    if (!trak->edit_list_table) {
-      last_error = QT_NO_MEMORY;
-      goto free_trak;
-    }
-    /* load the edit list table */
-    for (j = 0; j < trak->edit_list_count; j++) {
-      trak->edit_list_table[j].track_duration = _X_BE_32 (&atom[16 + j * 12 + 0]);
-      trak->edit_list_table[j].media_time     = _X_BE_32 (&atom[16 + j * 12 + 4]);
-      debug_atom_load ("      %d: track duration = %d, media time = %d\n",
-        j, trak->edit_list_table[j].track_duration, trak->edit_list_table[j].media_time);
+    if (atom[8] == 1) {
+      if (trak->edit_list_count > (atomsize - 16) / 20)
+        trak->edit_list_count = (atomsize - 16) / 20;
+      trak->edit_list_table = calloc (trak->edit_list_count + 1, sizeof (edit_list_table_t));
+      if (!trak->edit_list_table) {
+        last_error = QT_NO_MEMORY;
+        goto free_trak;
+      }
+      for (j = 0; j < trak->edit_list_count; j++) {
+        trak->edit_list_table[j].track_duration = _X_BE_64 (&atom[16 + j * 20 + 0]);
+        trak->edit_list_table[j].media_time     = _X_BE_64 (&atom[16 + j * 20 + 8]);
+        debug_atom_load ("      %d: track duration = %"PRId64", media time = %"PRId64"\n",
+          j, trak->edit_list_table[j].track_duration, trak->edit_list_table[j].media_time);
+      }
+    } else {
+      if (trak->edit_list_count > (atomsize - 16) / 12)
+        trak->edit_list_count = (atomsize - 16) / 12;
+      /* dont bail on zero items */
+      trak->edit_list_table = calloc (trak->edit_list_count + 1, sizeof (edit_list_table_t));
+      if (!trak->edit_list_table) {
+        last_error = QT_NO_MEMORY;
+        goto free_trak;
+      }
+      /* load the edit list table */
+      for (j = 0; j < trak->edit_list_count; j++) {
+        trak->edit_list_table[j].track_duration = _X_BE_32 (&atom[16 + j * 12 + 0]);
+        trak->edit_list_table[j].media_time     = _X_BE_32 (&atom[16 + j * 12 + 4]);
+        if (trak->edit_list_table[j].media_time == 0xffffffff)
+          trak->edit_list_table[j].media_time = -1ll;
+        debug_atom_load ("      %d: track duration = %"PRId64", media time = %"PRId64"\n",
+          j, trak->edit_list_table[j].track_duration, trak->edit_list_table[j].media_time);
+      }
     }
   }
 
@@ -1647,53 +1665,6 @@ static qt_error parse_reference_atom (qt_info *info,
   return QT_OK;
 }
 
-/* This is a little support function used to process the edit list when
- * building a frame table. */
-#define MAX_DURATION 0x7FFFFFFFFFFFFFFFLL
-static void get_next_edit_list_entry(qt_trak *trak,
-  unsigned int *edit_list_index,
-  unsigned int *edit_list_media_time,
-  int64_t *edit_list_duration,
-  unsigned int global_timescale) {
-
-  *edit_list_media_time = 0;
-  *edit_list_duration = MAX_DURATION;
-
-  /* if there is no edit list, set to max duration and get out */
-  if (!trak->edit_list_table) {
-
-    debug_edit_list("  qt: no edit list table, initial = %d, %"PRId64"\n", *edit_list_media_time, *edit_list_duration);
-    return;
-
-  } else while (*edit_list_index < trak->edit_list_count) {
-
-    /* otherwise, find an edit list entries whose media time != -1 */
-    if (trak->edit_list_table[*edit_list_index].media_time != -1) {
-
-      *edit_list_media_time =
-        trak->edit_list_table[*edit_list_index].media_time;
-      *edit_list_duration =
-        trak->edit_list_table[*edit_list_index].track_duration;
-
-      /* duration is in global timescale units; convert to trak timescale */
-      *edit_list_duration *= trak->timescale;
-      *edit_list_duration /= global_timescale;
-
-      *edit_list_index = *edit_list_index + 1;
-      break;
-    }
-
-    *edit_list_index = *edit_list_index + 1;
-  }
-
-  /* on the way out, check if this is the last edit list entry; if so,
-   * don't let the duration expire (so set it to an absurdly large value)
-   */
-  if (*edit_list_index == trak->edit_list_count)
-    *edit_list_duration = MAX_DURATION;
-  debug_edit_list("  qt: edit list table exists, initial = %d, %"PRId64"\n", *edit_list_media_time, *edit_list_duration);
-}
-
 static qt_error build_frame_table(qt_trak *trak,
 				  unsigned int global_timescale) {
 
@@ -1709,11 +1680,6 @@ static qt_error build_frame_table(qt_trak *trak,
   unsigned int ptsoffs_left, ptsoffs_countdown;
   int ptsoffs_value;
   unsigned int audio_frame_counter = 0;
-  unsigned int edit_list_media_time;
-  int64_t edit_list_duration;
-  int64_t frame_duration = 0;
-  unsigned int edit_list_index;
-  unsigned int edit_list_pts_counter;
   int atom_to_use;
   qt_frame *frame;
 
@@ -1878,12 +1844,10 @@ static qt_error build_frame_table(qt_trak *trak,
             unsigned int v;
             ptsoffs_countdown = _X_BE_32 (q); q += 4;
             v                 = _X_BE_32 (q); q += 4;
-            /* TJ. this is 32 bit signed. All casts necessary for my gcc 4.5.0 */
+            /* TJ. this is 32 bit signed. */
             ptsoffs_value = v;
             if ((sizeof (int) > 4) && (ptsoffs_value & 0x80000000))
               ptsoffs_value |= ~0xffffffffL;
-            ptsoffs_value *= (int)90000;
-            ptsoffs_value /= (int)trak->timescale;
             ptsoffs_left--;
           }
           frame->ptsoffs = ptsoffs_value;
@@ -1907,45 +1871,79 @@ static qt_error build_frame_table(qt_trak *trak,
         trak->frames[fr].keyframe = 1;
     }
 
-    /* initialize edit list considerations */
-    edit_list_index = 0;
-    get_next_edit_list_entry(trak, &edit_list_index,
-      &edit_list_media_time, &edit_list_duration, global_timescale);
-
     /* fix up pts information w.r.t. the edit list table */
-    edit_list_pts_counter = 0;
-    for (i = 0; i < trak->frame_count; i++) {
-
-      debug_edit_list("    %d: (before) pts = %"PRId64"...", i, trak->frames[i].pts);
-
-      if (trak->frames[i].pts < edit_list_media_time)
-        trak->frames[i].pts = edit_list_pts_counter;
-      else {
-        if (i < trak->frame_count - 1)
-          frame_duration =
-            (trak->frames[i + 1].pts - trak->frames[i].pts);
-
-        debug_edit_list("duration = %"PRId64"...", frame_duration);
-        trak->frames[i].pts = edit_list_pts_counter;
-        edit_list_pts_counter += frame_duration;
-        edit_list_duration -= frame_duration;
+    /* supported: initial trak delay, gaps, and skipped intervals. */
+    /* not supported: repeating and reordering intervals. */
+    if (trak->edit_list_table && (trak->edit_list_count > 0)) {
+      int i = j = 0, edit_list_index, key_index, p;
+      int64_t edit_list_pts = 0;
+      for (edit_list_index = 0; edit_list_index < trak->edit_list_count; edit_list_index++) {
+        int64_t edit_list_media_time, edit_list_duration, offs = 0;
+        /* duration is in global timescale units; convert to trak timescale */
+        edit_list_media_time = trak->edit_list_table[edit_list_index].media_time;
+        edit_list_duration = trak->edit_list_table[edit_list_index].track_duration;
+        edit_list_duration *= trak->timescale;
+        edit_list_duration /= global_timescale;
+        /* insert delay */
+        if (trak->edit_list_table[edit_list_index].media_time == -1ll) {
+          edit_list_pts += edit_list_duration;
+          continue;
+        }
+        /* extend last edit to end of trak, why? */
+        if (edit_list_index == trak->edit_list_count - 1)
+          edit_list_duration = 0x7fffffffffffffffll;
+        /* skip interval */
+        key_index = i;
+        for (; i < trak->frame_count; i++) {
+          offs = trak->frames[i].pts;
+          offs += trak->frames[i].ptsoffs;
+          offs -= edit_list_media_time;
+          if (trak->frames[i].keyframe)
+            key_index = i;
+          if (offs >= 0)
+            break;
+        }
+        if (i == trak->frame_count)
+          break;
+        offs -= trak->frames[i].ptsoffs;
+        edit_list_pts += offs;
+        /* insert decoder preroll area */
+        for (p = key_index; p < i; p++) {
+          if (p != j)
+            trak->frames[j] = trak->frames[p];
+          trak->frames[j++].pts = edit_list_pts;
+        }
+        /* insert interval */
+        for (; i < trak->frame_count - 1; i++) {
+          int64_t d = trak->frames[i + 1].pts - trak->frames[i].pts;
+          if (i != j)
+            trak->frames[j] = trak->frames[i];
+          trak->frames[j++].pts = edit_list_pts;
+          edit_list_pts += d;
+          edit_list_duration -= d;
+          if (edit_list_duration <= 0)
+            break;
+        }
+        if ((i == trak->frame_count - 1) && (edit_list_duration > 0)) {
+          if (i != j)
+            trak->frames[j] = trak->frames[i];
+          trak->frames[j++].pts = edit_list_pts;
+          i++;
+        }
+        edit_list_pts -= offs;
+        edit_list_pts += edit_list_duration;
       }
-
-      debug_edit_list("(fixup) pts = %"PRId64"...", trak->frames[i].pts);
-
-      /* reload media time and duration */
-      if (edit_list_duration <= 0) {
-        get_next_edit_list_entry(trak, &edit_list_index,
-          &edit_list_media_time, &edit_list_duration, global_timescale);
-      }
-
-      debug_edit_list("(after) pts = %"PRId64"...\n", trak->frames[i].pts);
+      trak->frame_count = j;
     }
-
+          
     /* compute final pts values */
     for (i = 0; i < trak->frame_count; i++) {
-      trak->frames[i].pts *= 90000;
-      trak->frames[i].pts /= trak->timescale;
+      trak->frames[i].pts *= (int)90000;
+      trak->frames[i].pts /= (int)trak->timescale;
+      if (trak->frames[i].ptsoffs) {
+        trak->frames[i].ptsoffs *= (int)90000;
+        trak->frames[i].ptsoffs /= (int)trak->timescale;
+      }
       debug_edit_list("  final pts for sample %d = %"PRId64"\n", i, trak->frames[i].pts);
     }
 
