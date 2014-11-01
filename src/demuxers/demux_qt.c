@@ -653,7 +653,7 @@ static qt_info *create_qt_info(void) {
 
   info->creation_time = 0;
   info->modification_time = 0;
-  info->timescale = 0;
+  info->timescale = 1;
   info->duration = 0;
 
   info->trak_count = 0;
@@ -783,6 +783,9 @@ static void parse_mvhd_atom(qt_info *info, unsigned char *mvhd_atom) {
   info->modification_time = _X_BE_32(&mvhd_atom[0x10]);
   info->timescale = _X_BE_32(&mvhd_atom[0x14]);
   info->duration = _X_BE_32(&mvhd_atom[0x18]);
+
+  if (info->timescale == 0)
+    info->timescale = 1;
 
   debug_atom_load("  qt: timescale = %d, duration = %d (%d seconds)\n",
     info->timescale, info->duration,
@@ -963,7 +966,7 @@ static qt_error parse_trak_atom (qt_trak *trak,
   trak->frames = NULL;
   trak->frame_count = 0;
   trak->current_frame = 0;
-  trak->timescale = 0;
+  trak->timescale = 1;
   trak->flags = 0;
   trak->object_type_id = 0;
   trak->decoder_config = NULL;
@@ -1057,6 +1060,8 @@ static qt_error parse_trak_atom (qt_trak *trak,
       }
     }
   }
+  if (trak->timescale == 0)
+    trak->timescale = 1;
 
   atom     = atoms[5]; /* STSD_ATOM */
   atomsize = sizes[5];
