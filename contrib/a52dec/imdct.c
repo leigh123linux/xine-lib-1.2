@@ -183,6 +183,7 @@ static void ifft_pass (complex_t * buf, sample_t * weight, int n)
     complex_t * buf1;
     complex_t * buf2;
     complex_t * buf3;
+    sample_t  * wi;
     double tmp1, tmp2, tmp3, tmp4, tmp5, tmp6, tmp7, tmp8;
     int i;
 
@@ -194,14 +195,16 @@ static void ifft_pass (complex_t * buf, sample_t * weight, int n)
     BUTTERFLY_ZERO (buf[-1], buf1[-1], buf2[-1], buf3[-1]);
 
     i = n - 1;
+    wi = weight + n - 2;
 
     do {
-	BUTTERFLY (buf[0], buf1[0], buf2[0], buf3[0], weight[n], weight[2*i]);
+	BUTTERFLY (buf[0], buf1[0], buf2[0], buf3[0], weight[0], wi[0]);
 	buf++;
 	buf1++;
 	buf2++;
 	buf3++;
 	weight++;
+	wi--;
     } while (--i);
 }
 
@@ -210,7 +213,7 @@ static void ifft16 (complex_t * buf)
     ifft8 (buf);
     ifft4 (buf + 8);
     ifft4 (buf + 12);
-    ifft_pass (buf, roots16 - 4, 4);
+    ifft_pass (buf, roots16, 4);
 }
 
 static void ifft32 (complex_t * buf)
@@ -218,7 +221,7 @@ static void ifft32 (complex_t * buf)
     ifft16 (buf);
     ifft8 (buf + 16);
     ifft8 (buf + 24);
-    ifft_pass (buf, roots32 - 8, 8);
+    ifft_pass (buf, roots32, 8);
 }
 
 static void ifft64_c (complex_t * buf)
@@ -226,7 +229,7 @@ static void ifft64_c (complex_t * buf)
     ifft32 (buf);
     ifft16 (buf + 32);
     ifft16 (buf + 48);
-    ifft_pass (buf, roots64 - 16, 16);
+    ifft_pass (buf, roots64, 16);
 }
 
 static void ifft128_c (complex_t * buf)
@@ -234,11 +237,11 @@ static void ifft128_c (complex_t * buf)
     ifft32 (buf);
     ifft16 (buf + 32);
     ifft16 (buf + 48);
-    ifft_pass (buf, roots64 - 16, 16);
+    ifft_pass (buf, roots64, 16);
 
     ifft32 (buf + 64);
     ifft32 (buf + 96);
-    ifft_pass (buf, roots128 - 32, 32);
+    ifft_pass (buf, roots128, 32);
 }
 
 void a52_imdct_512 (sample_t * data, sample_t * delay, sample_t bias)
