@@ -748,38 +748,27 @@ static void vdpau_process_overlays (vdpau_driver_t *this)
 
     if (!ovl->unscaled) {
       double rx, ry;
-      VdpRect clip_rect;
-      if (ovl->extent_width > 0 && ovl->extent_height > 0) {
-        if (zoom) {
+
+      if (zoom) {
+        VdpRect clip_rect;
+        if (ovl->extent_width > 0 && ovl->extent_height > 0) {
           /* compute frame size to extend size scaling factor */
           rx = (double)ovl->extent_width / (double)this->sc.delivered_width;
           ry = (double)ovl->extent_height / (double)this->sc.delivered_height;
-
           /* scale displayed video window coordinates to extend coordinates */
           clip_rect.x0 = vid_src_rect.x0 * rx + 0.5;
           clip_rect.y0 = vid_src_rect.y0 * ry + 0.5;
           clip_rect.x1 = vid_src_rect.x1 * rx + 0.5;
           clip_rect.y1 = vid_src_rect.y1 * ry + 0.5;
-
           /* compute displayed size to output size scaling factor */
           rx = (double)this->sc.output_width / (double)(clip_rect.x1 - clip_rect.x0);
           ry = (double)this->sc.output_height / (double)(clip_rect.y1 - clip_rect.y0);
-
         } else {
-          /* compute extend size to output size scaling factor */
-          rx = (double)this->sc.output_width / (double)ovl->extent_width;
-          ry = (double)this->sc.output_height / (double)ovl->extent_height;
-        }
-      } else {
-        if (zoom)
           clip_rect = vid_src_rect;
-
-        /* compute displayed size to output size scaling factor */
-        rx = (double)this->sc.output_width / (double)this->sc.displayed_width;
-        ry = (double)this->sc.output_height / (double)this->sc.displayed_height;
-      }
-
-      if (zoom) {
+          /* compute displayed size to output size scaling factor */
+          rx = (double)this->sc.output_width / (double)this->sc.displayed_width;
+          ry = (double)this->sc.output_height / (double)this->sc.displayed_height;
+        }
         /* clip overlay window to margins of displayed video window */
         if (ovl_rect.x0 < clip_rect.x0) {
           ovl_src_rect.x0 = clip_rect.x0 - ovl_rect.x0;
@@ -797,26 +786,20 @@ static void vdpau_process_overlays (vdpau_driver_t *this)
           ovl_src_rect.y1 -= (ovl_rect.y1 - clip_rect.y1);
           ovl_rect.y1 = clip_rect.y1;
         }
-
         ovl_rect.x0 -= clip_rect.x0;
         ovl_rect.y0 -= clip_rect.y0;
         ovl_rect.x1 -= clip_rect.x0;
         ovl_rect.y1 -= clip_rect.y0;
-      }
-
-      /* scale overlay window coordinates to output window coordinates */
-      ovl_rect.x0 = (double)ovl_rect.x0 * rx + 0.5;
-      ovl_rect.y0 = (double)ovl_rect.y0 * ry + 0.5;
-      ovl_rect.x1 = (double)ovl_rect.x1 * rx + 0.5;
-      ovl_rect.y1 = (double)ovl_rect.y1 * ry + 0.5;
-
-      ovl_rect.x0 += this->sc.output_xoffset;
-      ovl_rect.y0 += this->sc.output_yoffset;
-      ovl_rect.x1 += this->sc.output_xoffset;
-      ovl_rect.y1 += this->sc.output_yoffset;
-
-      if (ovl->video_window_width > 0 && ovl->video_window_height > 0) {
-        if (zoom) {
+        /* scale overlay window coordinates to output window coordinates */
+        ovl_rect.x0 = (double)ovl_rect.x0 * rx + 0.5;
+        ovl_rect.y0 = (double)ovl_rect.y0 * ry + 0.5;
+        ovl_rect.x1 = (double)ovl_rect.x1 * rx + 0.5;
+        ovl_rect.y1 = (double)ovl_rect.y1 * ry + 0.5;
+        ovl_rect.x0 += this->sc.output_xoffset;
+        ovl_rect.y0 += this->sc.output_yoffset;
+        ovl_rect.x1 += this->sc.output_xoffset;
+        ovl_rect.y1 += this->sc.output_yoffset;
+        if (ovl->video_window_width > 0 && ovl->video_window_height > 0) {
           /* clip osd video window to margins of displayed video window */
           if (vid_rect.x0 < clip_rect.x0)
             vid_rect.x0 = clip_rect.x0;
@@ -826,30 +809,67 @@ static void vdpau_process_overlays (vdpau_driver_t *this)
             vid_rect.x1 = clip_rect.x1;
           if (vid_rect.y1 > clip_rect.y1)
             vid_rect.y1 = clip_rect.y1;
-
           vid_rect.x0 -= clip_rect.x0;
           vid_rect.y0 -= clip_rect.y0;
           vid_rect.x1 -= clip_rect.x0;
           vid_rect.y1 -= clip_rect.y0;
+          /* scale osd video window coordinates to output window coordinates */
+          vid_rect.x0 = (double)vid_rect.x0 * rx + 0.5;
+          vid_rect.y0 = (double)vid_rect.y0 * ry + 0.5;
+          vid_rect.x1 = (double)vid_rect.x1 * rx + 0.5;
+          vid_rect.y1 = (double)vid_rect.y1 * ry + 0.5;
+          vid_rect.x0 += this->sc.output_xoffset;
+          vid_rect.y0 += this->sc.output_yoffset;
+          vid_rect.x1 += this->sc.output_xoffset;
+          vid_rect.y1 += this->sc.output_yoffset;
+          /* take only visible osd video windows into account */
+          if (vid_rect.x0 < vid_rect.x1 && vid_rect.y0 < vid_rect.y1)
+            this->ovl_video_dest_rect = vid_rect;
+        }
+        this->ovl_changed = 1;
+
+      } else { /* no zoom */
+
+        if (ovl->extent_width > 0 && ovl->extent_height > 0) {
+          /* compute extend size to output size scaling factor */
+          rx = (double)this->sc.output_width / (double)ovl->extent_width;
+          ry = (double)this->sc.output_height / (double)ovl->extent_height;
+        } else {
+          /* compute displayed size to output size scaling factor */
+          rx = (double)this->sc.output_width / (double)this->sc.displayed_width;
+          ry = (double)this->sc.output_height / (double)this->sc.displayed_height;
+        }
+        /* scale overlay window coordinates to output window coordinates */
+        ovl_rect.x0 = (double)ovl_rect.x0 * rx + 0.5;
+        ovl_rect.y0 = (double)ovl_rect.y0 * ry + 0.5;
+        ovl_rect.x1 = (double)ovl_rect.x1 * rx + 0.5;
+        ovl_rect.y1 = (double)ovl_rect.y1 * ry + 0.5;
+
+        ovl_rect.x0 += this->sc.output_xoffset;
+        ovl_rect.y0 += this->sc.output_yoffset;
+        ovl_rect.x1 += this->sc.output_xoffset;
+        ovl_rect.y1 += this->sc.output_yoffset;
+
+        if (ovl->video_window_width > 0 && ovl->video_window_height > 0) {
+
+          /* scale osd video window coordinates to output window coordinates */
+          vid_rect.x0 = (double)vid_rect.x0 * rx + 0.5;
+          vid_rect.y0 = (double)vid_rect.y0 * ry + 0.5;
+          vid_rect.x1 = (double)vid_rect.x1 * rx + 0.5;
+          vid_rect.y1 = (double)vid_rect.y1 * ry + 0.5;
+
+          vid_rect.x0 += this->sc.output_xoffset;
+          vid_rect.y0 += this->sc.output_yoffset;
+          vid_rect.x1 += this->sc.output_xoffset;
+          vid_rect.y1 += this->sc.output_yoffset;
+
+          /* take only visible osd video windows into account */
+          if (vid_rect.x0 < vid_rect.x1 && vid_rect.y0 < vid_rect.y1)
+            this->ovl_video_dest_rect = vid_rect;
         }
 
-        /* scale osd video window coordinates to output window coordinates */
-        vid_rect.x0 = (double)vid_rect.x0 * rx + 0.5;
-        vid_rect.y0 = (double)vid_rect.y0 * ry + 0.5;
-        vid_rect.x1 = (double)vid_rect.x1 * rx + 0.5;
-        vid_rect.y1 = (double)vid_rect.y1 * ry + 0.5;
-
-        vid_rect.x0 += this->sc.output_xoffset;
-        vid_rect.y0 += this->sc.output_yoffset;
-        vid_rect.x1 += this->sc.output_xoffset;
-        vid_rect.y1 += this->sc.output_yoffset;
-
-        /* take only visible osd video windows into account */
-        if (vid_rect.x0 < vid_rect.x1 && vid_rect.y0 < vid_rect.y1)
-          this->ovl_video_dest_rect = vid_rect;
+        this->ovl_changed = 1;
       }
-
-      this->ovl_changed = 1;
     }
 
     ovl_rects[i] = ovl_rect;
