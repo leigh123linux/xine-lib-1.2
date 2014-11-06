@@ -73,7 +73,7 @@ extern "C" {
 #define LFE_CHANNEL          (9)
 #define UNKNOWN_CHANNEL      (0)
 
-char* NEAACDECAPI NeAACDecGetErrorMessage(uint8_t errcode);
+const char* NEAACDECAPI NeAACDecGetErrorMessage(uint8_t errcode);
 
 uint32_t NEAACDECAPI NeAACDecGetCapabilities(void);
 
