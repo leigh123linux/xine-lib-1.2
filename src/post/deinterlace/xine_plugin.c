@@ -86,15 +86,15 @@ typedef struct deinterlace_parameters_s {
  * description of params struct
  */
 START_PARAM_DESCR( deinterlace_parameters_t )
-PARAM_ITEM( POST_PARAM_TYPE_INT, method, enum_methods, 0, 0, 0,
+PARAM_ITEM( POST_PARAM_TYPE_INT, method, (char **)enum_methods, 0, 0, 0,
             "deinterlace method" )
 PARAM_ITEM( POST_PARAM_TYPE_BOOL, enabled, NULL, 0, 1, 0,
             "enable/disable" )
-PARAM_ITEM( POST_PARAM_TYPE_INT, pulldown, enum_pulldown, 0, 0, 0,
+PARAM_ITEM( POST_PARAM_TYPE_INT, pulldown, (char **)enum_pulldown, 0, 0, 0,
             "pulldown algorithm" )
 PARAM_ITEM( POST_PARAM_TYPE_INT, pulldown_error_wait, NULL, 0, 0, 0,
             "number of frames of telecine pattern sync required before mode change" )
-PARAM_ITEM( POST_PARAM_TYPE_INT, framerate_mode, enum_framerate, 0, 0, 0,
+PARAM_ITEM( POST_PARAM_TYPE_INT, framerate_mode, (char **)enum_framerate, 0, 0, 0,
             "framerate output mode" )
 PARAM_ITEM( POST_PARAM_TYPE_BOOL, judder_correction, NULL, 0, 1, 0,
             "make frames evenly spaced for film mode (24 fps)" )
