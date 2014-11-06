@@ -944,6 +944,8 @@ XINE_CHECK_MINMAX([
     AC_DEFINE(HAVE_MIN_MACRO, 1, [Define to 1 if you have 'MIN' macro in sys/param.h])
   ],[])
 
+AC_CHECK_HEADERS([limits.h])
+
 AC_LIBSOURCE([timedlock.c])
 ac_save_LIBS="$LIBS" LIBS="$LIBS $PTHREAD_LIBS"
 AC_CHECK_FUNCS([pthread_mutex_timedlock],
