@@ -148,7 +148,7 @@ static int parseblock(char *buf, int *dom, int *tt, int *pg,
     long tmp;
     char *tok;
     char *epos;
-    char *marker[]={"domain", "title", "program", "start", "end"};
+    const char *marker[]={"domain", "title", "program", "start", "end"};
     int st = 0;
     tok = strtok( buf, " ");
     while (st < 5) {

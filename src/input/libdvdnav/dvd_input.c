@@ -295,12 +295,13 @@ static int file_read(dvd_input_t dev, void *buffer, int blocks, int flags)
 {
   size_t len;
   ssize_t ret;
+  char *q = buffer;
   
   len = (size_t)blocks * DVD_VIDEO_LB_LEN;
   
   while(len > 0) {
     
-    ret = read(dev->fd, buffer, len);
+    ret = read(dev->fd, q, len);
     
     if(ret < 0) {
       /* One of the reads failed, too bad.  We won't even bother
@@ -319,7 +320,7 @@ static int file_read(dvd_input_t dev, void *buffer, int blocks, int flags)
       return (int) (bytes / DVD_VIDEO_LB_LEN);
     }
     
-    buffer += ret;
+    q += ret;
     len -= ret;
   }
 
