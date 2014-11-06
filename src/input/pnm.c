@@ -613,7 +613,7 @@ static int pnm_get_stream_chunk(pnm_t *p) {
   /* a server message */
   if (p->buffer[0] == 'X')
   {
-    int size=be2me_16(*(uint16_t*)(&p->buffer[1]));
+    int size=_X_BE_16 (&p->buffer[1]);
 
     _x_io_tcp_read (p->stream, p->s, &p->buffer[8], size-5);
     p->buffer[size+3]=0;
@@ -653,8 +653,8 @@ static int pnm_get_stream_chunk(pnm_t *p) {
   }
 
   /* check offsets */
-  fof1=be2me_16(*(uint16_t*)(&p->buffer[1]));
-  fof2=be2me_16(*(uint16_t*)(&p->buffer[3]));
+  fof1=_X_BE_16 (&p->buffer[1]);
+  fof2=_X_BE_16 (&p->buffer[3]);
   if (fof1 != fof2)
   {
     xprintf(p->stream->xine, XINE_VERBOSITY_DEBUG,
@@ -663,7 +663,7 @@ static int pnm_get_stream_chunk(pnm_t *p) {
   }
 
   /* get first index */
-  p->seq_current[0]=be2me_16(*(uint16_t*)(&p->buffer[5]));
+  p->seq_current[0]=_X_BE_16 (&p->buffer[5]);
 
   /* now read the rest of stream chunk */
   n = _x_io_tcp_read (p->stream, p->s, (char*)&p->recv[5], fof1-5);
@@ -673,7 +673,7 @@ static int pnm_get_stream_chunk(pnm_t *p) {
   p->seq_current[1]=p->recv[5];
 
   /* get timestamp */
-  p->ts_current=be2me_32(*(uint32_t*)(&p->recv[6]));
+  p->ts_current=_X_BE_32 (&p->recv[6]);
 
   /* get stream number */
   stream=pnm_calc_stream(p);
