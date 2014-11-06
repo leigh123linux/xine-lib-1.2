@@ -52,7 +52,6 @@ static uint8_t halfrate[12] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 3};
 a52_state_t * a52_init (uint32_t mm_accel)
 {
     a52_state_t * state;
-    int i;
 
     state = calloc(1, sizeof (a52_state_t));
     if (state == NULL)
