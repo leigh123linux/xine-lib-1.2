@@ -151,7 +151,69 @@ static void create_output_with_brightness(VisualFX *_this, Pixel *src, Pixel *de
     ytex = yprime + yi + CONV_MOTIF_W * 0x10000 / 2;
     yprime += c;
 
-#if defined(HAVE_MMX) && ! defined(ARCH_X86_64) && !defined(__sun)
+#if defined(HAVE_MMX) && !defined(__sun)
+#if defined(ARCH_X86_64)
+    /* 64-bit os version. */
+    __asm__ __volatile__
+      ("\n\t pxor  %%mm7,  %%mm7"  /* mm7 = 0   */
+       "\n\t movd %0,  %%mm2"
+       "\n\t movd %1,  %%mm3"
+       "\n\t punpckldq %%mm3, %%mm2" /* mm2 = [ ytex | xtex ] */
+       "\n\t movd %2,     %%mm4"
+       "\n\t movd %3,     %%mm6"
+       "\n\t pxor  %%mm5,   %%mm5"
+       "\n\t psubd %%mm6,   %%mm5"
+       "\n\t punpckldq %%mm5, %%mm4" /* mm4 = [ -s | c ]      */
+       "\n\t movq %4, %%mm6"   /* mm6 = motif           */
+
+       ::"g"(xtex) ,"g"(ytex)
+        , "g"(c), "g"(s)
+        , "g"(&data->conv_motif[0][0]));
+    
+    for (x=info->screen.width;x--;)
+    {
+      __asm__ __volatile__
+        (
+         "\n\t movd  %1, %%mm0"  /* mm0 = src */
+         "\n\t paddd %%mm4, %%mm2"   /* [ ytex | xtex ] += [ -s | s ] */
+         "\n\t movq  %%rsi, %%mm5"   /* save rsi into mm5 */
+         "\n\t movq  %%mm2, %%mm3"
+         "\n\t psrld  $16,  %%mm3"   /* mm3 = [ (ytex>>16) | (xtex>>16) ] */
+	 "\n\t xorq  %%rax, %%rax"
+         "\n\t movd  %%mm3, %%eax"   /* eax = xtex' */
+
+         "\n\t psrlq $25,   %%mm3"
+         "\n\t movd  %%mm3, %%ecx"   /* ecx = ytex' << 7 */
+
+         "\n\t andl  $127, %%eax"
+         "\n\t andl  $16256, %%ecx"
+         
+         "\n\t addl  %%ecx, %%eax"
+         "\n\t movq  %%mm6, %%rsi"   /* rsi = motif */
+         "\n\t xorq  %%rcx, %%rcx"
+         "\n\t movb  (%%rax,%%rsi), %%cl"
+
+         "\n\t movq  %2, %%rax"
+         "\n\t movq  %%mm5, %%rsi"    /* restore rsi from mm5 */
+         "\n\t movd  (%%rax,%%rcx,4), %%mm1" /* mm1 = [0|0|0|iff2] */
+
+         "\n\t punpcklwd %%mm1, %%mm1"
+         "\n\t punpcklbw %%mm7, %%mm0"
+         "\n\t punpckldq %%mm1, %%mm1"
+         "\n\t psrlw     $1,    %%mm0"
+         "\n\t psrlw     $2,    %%mm1"
+         "\n\t pmullw    %%mm1, %%mm0"
+         "\n\t psrlw     $5,    %%mm0"
+         "\n\t packuswb  %%mm7, %%mm0"
+         "\n\t movd      %%mm0, %0"
+         : "=g" (dest[i].val)
+         : "g"  (src[i].val)
+         , "g"(&ifftab[0])
+         : "rax","rcx");
+
+      i++;
+    }
+#else
 /* This code uses 32-bit registers eax,ecx,esi to store pointers => does not work in 64-bit os. */
     __asm__ __volatile__
       ("\n\t pxor  %%mm7,  %%mm7"  /* mm7 = 0   */
@@ -211,6 +273,7 @@ static void create_output_with_brightness(VisualFX *_this, Pixel *src, Pixel *de
 
       i++;
     }
+#endif
 #else
     for (x=info->screen.width;x--;) {
 
