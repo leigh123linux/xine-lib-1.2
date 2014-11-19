@@ -129,7 +129,7 @@ void affine_1d_MMX (eq2_param_t *par, unsigned char *dst, unsigned char *src,
     "movq (%1), %%mm4 \n\t"
     "pxor %%mm0, %%mm0 \n\t"
     :
-    : "g" (brvec), "g" (contvec)
+    : "r" (brvec), "r" (contvec)
   );
 
   while (h-- > 0) {
