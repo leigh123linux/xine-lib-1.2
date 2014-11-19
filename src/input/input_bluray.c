@@ -292,6 +292,7 @@ static void open_overlay(bluray_input_plugin_t *this, int plane, uint16_t x, uin
   }
 
   this->osd[plane] = xine_osd_new(this->stream, x, y, w, h);
+  xine_osd_set_extent(this->osd[plane], w, h);
   clear_overlay(this->osd[plane]);
 }
 
