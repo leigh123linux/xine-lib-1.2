@@ -76,6 +76,15 @@ typedef struct ff_audio_decoder_s {
   AVFrame          *av_frame;
 #endif
 
+  /* AAC ADTS */
+  uint32_t          buftype;
+#define AAC_MODE_PROBE -8
+#define AAC_MODE_OFF    0
+#define AAC_MODE_RAW    1
+#define AAC_MODE_ADTS   2
+  int               aac_mode;
+
+
   /* decoder settings */
   int               ff_channels;
   int               ff_bits;
@@ -131,6 +140,85 @@ static void *realloc16 (void *m, size_t s) {
 }
 
 
+static void ff_aac_mode_set (ff_audio_decoder_t *this, int reset) {
+  if ((this->buftype == BUF_AUDIO_AAC) || (this->buftype == BUF_AUDIO_AAC_LATM)) {
+    if (reset) {
+      this->aac_mode = AAC_MODE_PROBE;
+      xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG,
+        "ffmpeg_audio_dec: looking for possible AAC ADTS syncwords...\n");
+    }
+    if ((this->aac_mode < 0) || (this->aac_mode == AAC_MODE_ADTS)) {
+      if (this->context && this->context->extradata_size) {
+        xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG,
+          "ffmpeg_audio_dec: AAC raw mode with global header\n");
+        this->aac_mode = AAC_MODE_RAW;
+      }
+    }
+  } else {
+    this->aac_mode = AAC_MODE_OFF;
+  }
+}
+
+static int ff_audio_open_codec (ff_audio_decoder_t *this, unsigned int codec_type);
+
+/* return -1 (need more data), 0 (no parsing done), > 0 (offset + size of found frame) */
+static int ff_aac_mode_parse (ff_audio_decoder_t *this, uint8_t *buf, int size, int *offs) {
+  int i;
+  uint32_t v;
+  *offs = 0;
+  if (this->aac_mode < 0) {
+    /* probe */
+    v = 0;
+    for (i = 0; i < size; i++) {
+      v <<= 8;
+      v |= buf[i];
+      if ((v & 0xfff0) == 0xfff0) {
+        *offs = --i;
+        xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG,
+          "ffmpeg_audio_dec: found AAC ADTS syncword after %d bytes\n", i);
+        if (this->buftype == BUF_AUDIO_AAC_LATM) {
+          xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG,
+            "ffmpeg_audio_dec: stream says LATM but is ADTS -> switching decoders\n");
+          if (this->context && this->decoder_ok) {
+            pthread_mutex_lock (&ffmpeg_lock);
+            avcodec_close (this->context);
+            pthread_mutex_unlock (&ffmpeg_lock);
+            this->decoder_ok = 0;
+          }
+          this->codec = NULL;
+          ff_audio_open_codec (this, BUF_AUDIO_AAC);
+        }
+        this->aac_mode = AAC_MODE_ADTS - 1;
+        break;
+      }
+    }
+    this->aac_mode++;
+  }
+  if (this->aac_mode == AAC_MODE_ADTS) {
+    v = 0;
+    for (i = *offs; i < size; i++) {
+      v <<= 8;
+      v |= buf[i];
+      if ((v & 0xfff0) == 0xfff0) {
+        uint32_t s;
+        /* test header size */
+        if (size - i < 7 - 1)
+          return -1;
+        /* read frame size */
+        s = (_X_BE_32 (buf + i + 2) >> 13) & 0x1fff;
+        if (s < 7)
+          continue;
+        *offs = --i;
+        if (size - i < s)
+          return -1;
+        return i + s;
+      }
+    }
+    return -1;
+  }
+  return 0;
+}
+
 static void ff_audio_ensure_buffer_size(ff_audio_decoder_t *this, int size) {
   if (size > this->bufsize) {
     this->bufsize = size + size / 2;
@@ -151,6 +239,8 @@ static void ff_audio_handle_special_buffer(ff_audio_decoder_t *this, buf_element
     this->context->extradata = malloc (buf->decoder_info[2] + FF_INPUT_BUFFER_PADDING_SIZE);
     memcpy (this->context->extradata, buf->decoder_info_ptr[2], buf->decoder_info[2]);
     memset (this->context->extradata + buf->decoder_info[2], 0, FF_INPUT_BUFFER_PADDING_SIZE);
+
+    ff_aac_mode_set (this, 0);
   }
 }
 
@@ -161,6 +251,8 @@ static void ff_audio_init_codec(ff_audio_decoder_t *this, unsigned int codec_typ
 
   for(i = 0; i < sizeof(ff_audio_lookup)/sizeof(ff_codec_t); i++)
     if(ff_audio_lookup[i].type == codec_type) {
+      this->buftype = codec_type;
+      ff_aac_mode_set (this, 1);
       pthread_mutex_lock (&ffmpeg_lock);
       this->codec = avcodec_find_decoder(ff_audio_lookup[i].id);
       pthread_mutex_unlock (&ffmpeg_lock);
@@ -551,9 +643,20 @@ static void ff_map_channels (ff_audio_decoder_t *this) {
 static int ff_audio_decode (ff_audio_decoder_t *this,
   int16_t *decode_buffer, int *decode_buffer_size, uint8_t *buf, int size) {
   int consumed;
-  int parser_consumed = 0;
+  int parser_consumed;
+  int offs;
+
+  parser_consumed = ff_aac_mode_parse (this, buf, size, &offs);
+  if (parser_consumed < 0) {
+    *decode_buffer_size = 0;
+    return offs;
+  } else if (parser_consumed > 0) {
+    buf += offs;
+    size -= offs;
+  }
 
 #if AVPARSE > 1
+  else
   if (this->parser_context) {
     uint8_t *outbuf;
     int      outsize;
@@ -889,6 +992,7 @@ static void ff_audio_decode_data (audio_decoder_t *this_gen, buf_element_t *buf)
       memset(&this->buf[this->size], 0, FF_INPUT_BUFFER_PADDING_SIZE);
 
       while (this->size>=0) {
+
         decode_buffer_size = AVCODEC_MAX_AUDIO_FRAME_SIZE;
 
         bytes_consumed = ff_audio_decode (this, (int16_t *)this->decode_buffer, &decode_buffer_size,
@@ -1081,6 +1185,7 @@ static void ff_audio_reset (audio_decoder_t *this_gen) {
   }
 
   ff_audio_reset_parser(this);
+  ff_aac_mode_set (this, 1);
 }
 
 static void ff_audio_discontinuity (audio_decoder_t *this_gen) {
@@ -1090,6 +1195,7 @@ static void ff_audio_discontinuity (audio_decoder_t *this_gen) {
   this->size = 0;
 
   ff_audio_reset_parser(this);
+  ff_aac_mode_set (this, 0);
 }
 
 static void ff_audio_dispose (audio_decoder_t *this_gen) {
