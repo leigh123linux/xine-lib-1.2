@@ -415,7 +415,7 @@ static void overlay_proc(void *this_gen, const BD_OVERLAY * const ov)
 
 static void open_argb_overlay(bluray_input_plugin_t *this, int plane, uint16_t x, uint16_t y, uint16_t w, uint16_t h)
 {
-  lprintf("open_argb_overlay(#%d,%d,%d)\n", plane, ov->w, ov->h);
+  lprintf("open_argb_overlay(#%d,%d,%d)\n", plane, w, h);
 
   open_overlay(this, plane, x, y, w, h);
 
