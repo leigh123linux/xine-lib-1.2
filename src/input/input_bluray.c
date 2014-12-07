@@ -176,6 +176,7 @@ typedef struct {
   uint8_t            error : 1;
   uint8_t            menu_open : 1;
   uint8_t            stream_flushed : 1;
+  uint8_t            stream_reset_done : 1;
   uint8_t            demux_action_req : 1;
   uint8_t            end_of_title : 1;
   uint8_t            pg_enable : 1;
@@ -644,7 +645,7 @@ static void fifos_wait(bluray_input_plugin_t *this)
 
 static void stream_flush(bluray_input_plugin_t *this)
 {
-  if (this->stream_flushed || !this->stream)
+  if (!this || this->stream_flushed || !this->stream)
     return;
 
   lprintf("Stream flush\n");
@@ -664,7 +665,7 @@ static void stream_flush(bluray_input_plugin_t *this)
 
 static void stream_reset(bluray_input_plugin_t *this)
 {
-  if (!this || !this->stream)
+  if (!this || this->stream_reset_done || !this->stream)
     return;
 
   lprintf("Stream reset\n");
@@ -683,6 +684,7 @@ static void stream_reset(bluray_input_plugin_t *this)
   xine_event_send (this->stream, &event);
 
   this->demux_action_req = 1;
+  this->stream_reset_done = 1;
 }
 
 static void wait_secs(bluray_input_plugin_t *this, unsigned seconds)
@@ -1165,6 +1167,7 @@ static off_t bluray_plugin_read (input_plugin_t *this_gen, void *buf, off_t len)
 
   if (result > 0) {
     this->stream_flushed = 0;
+    this->stream_reset_done = 0;
   }
 
   return result;
