@@ -643,8 +643,10 @@ static presentation_segment_t *segbuf_decode_presentation_segment(segment_buffer
 
   for (index = 0; index < seg->object_number; index++) {
     composition_object_t *cobj = segbuf_decode_composition_object (buf);
-    cobj->next = seg->comp_objs;
-    seg->comp_objs = cobj;
+    if (cobj) {
+      cobj->next = seg->comp_objs;
+      seg->comp_objs = cobj;
+    }
   }
 
   if (buf->error) {
