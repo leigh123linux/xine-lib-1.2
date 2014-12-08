@@ -339,6 +339,11 @@ int xine_private_pthread_mutex_timedlock(pthread_mutex_t *mutex, const struct ti
 #  define lstat(FILENAME, BUF) stat((FILENAME), (BUF))
 #endif
 
+/* replace llabs */
+#ifndef HAVE_LLABS
+#  define llabs(a) (((a) < 0) ? (-a) : (a))
+#endif
+
 /* replacements of dirent for MSVC platform */
 #ifndef HAVE_OPENDIR
 #define HAVE_OPENDIR

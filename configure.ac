@@ -908,6 +908,7 @@ if test x"$enable_mmap" = x"yes"; then
 fi
 
 AC_CHECK_FUNCS([vsscanf sigaction sigset getpwuid_r nanosleep lstat memset readlink strchr va_copy])
+AC_CHECK_FUNCS([llabs])
 
 AC_CHECK_FUNCS([snprintf _snprintf], [have_required_function="yes"])
                test x"$have_required_function" != x"yes" && AC_MSG_ERROR([required function not found])
