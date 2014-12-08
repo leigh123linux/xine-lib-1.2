@@ -271,7 +271,7 @@ typedef struct {
 static void check_newpts(avformat_demux_plugin_t *this, int64_t pts) {
 
   int64_t diff = this->last_pts - pts;
-  if (this->seek_flag || this->send_newpts || (this->last_pts && abs(diff) > WRAP_THRESHOLD)) {
+  if (this->seek_flag || this->send_newpts || (this->last_pts && llabs(diff) > WRAP_THRESHOLD)) {
 
     _x_demux_control_newpts(this->stream, pts, this->seek_flag);
     this->send_newpts = 0;

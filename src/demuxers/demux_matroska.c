@@ -62,7 +62,7 @@ static void check_newpts (demux_matroska_t *this, int64_t pts,
 
     diff = pts - track->last_pts;
 
-    if (pts && (this->send_newpts || (track->last_pts && abs(diff)>WRAP_THRESHOLD)) ) {
+    if (pts && (this->send_newpts || (track->last_pts && llabs(diff)>WRAP_THRESHOLD)) ) {
       int i;
 
       lprintf ("sending newpts %" PRId64 ", diff %" PRId64 ", track %d\n", pts, diff, track->track_num);

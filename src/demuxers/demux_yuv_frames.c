@@ -76,7 +76,7 @@ static int switch_buf(demux_yuv_frames_t *this , buf_element_t *buf){
   if (this->seek_flag) {
     this->seek_flag = 0;
     _x_demux_control_newpts(this->stream, buf->pts, BUF_FLAG_SEEK);
-  } else if (abs(this->last_pts - buf->pts) > WRAP_THRESHOLD) {
+  } else if (llabs(this->last_pts - buf->pts) > WRAP_THRESHOLD) {
     _x_demux_control_newpts(this->stream, buf->pts, 0);
   }
 

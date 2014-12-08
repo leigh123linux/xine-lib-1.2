@@ -887,7 +887,7 @@ static int resample_rate_adjust(aos_t *this, int64_t gap, audio_buffer_t *buf) {
   double duration;
   int i;
 
-  if (abs(gap) > AO_MAX_GAP) {
+  if (llabs(gap) > AO_MAX_GAP) {
     /* drop buffers or insert 0-frames in audio out loop */
     info->valid = 0;
     return -1;
@@ -912,7 +912,7 @@ static int resample_rate_adjust(aos_t *this, int64_t gap, audio_buffer_t *buf) {
 
   /* gap too big? Change sample rate so that gap converges towards 0. */
 
-  if (abs(avg_gap) > RESAMPLE_REDUCE_GAP_THRESHOLD && !info->reduce_gap) {
+  if (llabs(avg_gap) > RESAMPLE_REDUCE_GAP_THRESHOLD && !info->reduce_gap) {
     info->reduce_gap = 1;
     this->resample_sync_factor = (avg_gap < 0) ? 0.995 : 1.005;
 
@@ -920,7 +920,7 @@ static int resample_rate_adjust(aos_t *this, int64_t gap, audio_buffer_t *buf) {
               "sample rate adjusted to reduce gap: gap=%" PRId64 "\n", avg_gap);
     return 0;
 
-  } else if (info->reduce_gap && abs(avg_gap) < 50) {
+  } else if (info->reduce_gap && llabs(avg_gap) < 50) {
     info->reduce_gap = 0;
     info->valid = 0;
     llprintf (LOG_RESAMPLE_SYNC, "gap successfully reduced\n");
@@ -929,7 +929,7 @@ static int resample_rate_adjust(aos_t *this, int64_t gap, audio_buffer_t *buf) {
   } else if (info->reduce_gap) {
     /* re-check, because the gap might suddenly change its sign,
      * also slow down, when getting close to zero (-300<gap<300) */
-    if (abs(avg_gap) > 300)
+    if (llabs(avg_gap) > 300)
       this->resample_sync_factor = (avg_gap < 0) ? 0.995 : 1.005;
     else
       this->resample_sync_factor = (avg_gap < 0) ? 0.998 : 1.002;
@@ -1209,7 +1209,7 @@ static void *ao_loop (void *this_gen) {
        * feedback them into metronom's vpts_offset (when using
        * metronom feedback for A/V sync)
        */
-    } else if ( abs(gap) < AO_MAX_GAP && abs(gap) > this->gap_tolerance &&
+    } else if ( llabs(gap) < AO_MAX_GAP && abs(gap) > this->gap_tolerance &&
                 cur_time > (last_sync_time + SYNC_TIME_INVERVAL) &&
                 bufs_since_sync >= SYNC_BUF_INTERVAL &&
                 !this->resample_sync_method ) {
