@@ -210,13 +210,13 @@ static void pretty_move (PluginInfo *goomInfo, float cycle, float *dist, float *
 		tmp = cycle - (M_PI*2.0) * floor(cycle/(M_PI*2.0));
 	}
 
-	if (abs(tmp-fx_data->rot) > abs(tmp-(fx_data->rot+2.0*M_PI))) {
+	if (fabsf(tmp-fx_data->rot) > fabs(tmp-(fx_data->rot+2.0*M_PI))) {
 		fx_data->rot = (tmp + 15.0f*(fx_data->rot+2*M_PI)) / 16.0f;
 		if (fx_data->rot>2.0*M_PI)
 			fx_data->rot -= 2.0*M_PI;
 		*rotangle = fx_data->rot;
 	}
-	else if (abs(tmp-fx_data->rot) > abs(tmp-(fx_data->rot-2.0*M_PI))) {
+	else if (fabsf(tmp-fx_data->rot) > fabs(tmp-(fx_data->rot-2.0*M_PI))) {
 		fx_data->rot = (tmp + 15.0f*(fx_data->rot-2.0*M_PI)) / 16.0f;
 		if (fx_data->rot<0.0f)
 			fx_data->rot += 2.0*M_PI;
