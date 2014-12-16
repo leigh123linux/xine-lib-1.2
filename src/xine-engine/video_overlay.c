@@ -597,7 +597,7 @@ void _x_overlay_to_argb32(const vo_overlay_t *overlay, uint32_t *rgba, int strid
   int no_hili = overlay->hili_bottom < 0 || overlay->hili_bottom < overlay->hili_top ||
                 overlay->hili_right  < 0 || overlay->hili_right  < overlay->hili_left;
 
-  if (overlay->num_rle < 1)
+  if (overlay->num_rle < 1 || !rgba)
     return;
 
   if (no_hili) {
