@@ -71,8 +71,8 @@
                   ((uint64_t)(((uint8_t*)(x))[1]) << 8) | \
                   ((uint64_t)((uint8_t*)(x))[0]))
 
-/* Tested with gcc 4.5 */
-#if defined(__GNUC__) && ((__GNUC__ > 4) || (__GNUC__ == 4 && __GNUC_MINOR__ > 4)) || defined(__clang__)
+/* Tested with gcc 4.4 */
+#if defined(__GNUC__) && ((__GNUC__ > 4) || (__GNUC__ == 4 && __GNUC_MINOR__ > 3)) || defined(__clang__)
 # undef _X_BE_32
 # undef _X_BE_64
 # undef _X_LE_32
