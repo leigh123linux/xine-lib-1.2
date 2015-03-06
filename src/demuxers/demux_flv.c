@@ -111,6 +111,17 @@ typedef struct {
    limited clip duration to 4:39:37.215. The backwards compatible solution:
    hand over 1 byte from stream ID. Hence the weird byte order 2-1-0-3 */
 #define gettimestamp(p,o) (((((((uint32_t)p[o+3]<<8)|p[o])<<8)|p[o+1])<<8)|p[o+2])
+#if defined(__GNUC__) && ((__GNUC__ > 4) || (__GNUC__ == 4 && __GNUC_MINOR__ > 3)) || defined(__clang__)
+#if defined(__i386) || defined(__i386__) || defined(__x86_64) || defined(__x86_64__)
+#undef gettimestamp
+#define gettimestamp(p,o) ({ \
+  uint32_t tempi; \
+  __builtin_memcpy (&tempi, (p + o), 4); \
+  __asm__ __volatile__ ("bswapl\t%0\n\trorl\t$8, %0" : "=r" (tempi) : "0" (tempi) : "cc"); \
+  tempi; \
+})
+#endif
+#endif
 
 #define FLV_FLAG_HAS_VIDEO       0x01
 #define FLV_FLAG_HAS_AUDIO       0x04
