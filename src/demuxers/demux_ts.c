@@ -2536,6 +2536,12 @@ static int demux_ts_seek (demux_plugin_t *this_gen,
     this->buf_flag_seek = 1;
     _x_demux_flush_engine(this->stream);
 
+    /* Append sequence end code to video stream. */
+    /* Keep ffmpeg h.264 video decoder from piling up too many DR1 frames, */
+    /* and thus freezing video out. */
+    if (this->videoPid != INVALID_PID && this->stream->video_fifo)
+      post_sequence_end (this->stream->video_fifo, this->media[this->videoMedia].type);
+
   }
 
   demux_ts_tbre_reset (this);
