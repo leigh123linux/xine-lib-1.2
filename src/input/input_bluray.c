@@ -1601,6 +1601,7 @@ static int bluray_plugin_open (input_plugin_t *this_gen)
   bluray_input_plugin_t *this    = (bluray_input_plugin_t *) this_gen;
   int                    title   = -1;
   int                    chapter = 0;
+  int major, minor, micro;
 
   lprintf("bluray_plugin_open '%s'\n",this->mrl);
 
@@ -1614,12 +1615,14 @@ static int bluray_plugin_open (input_plugin_t *this_gen)
   if (!this->disc_root)
     this->disc_root = strdup(this->class->mountpoint);
 
-  /* mount .iso image */
-  if (is_iso_image(this->disc_root)) {
-    _x_message (this->stream, XINE_MSG_GENERAL_WARNING,
-                "Can't play BluRay .iso image",
-                "", NULL);
-    return -1;
+  bd_get_version(&major, &minor, &micro);
+  if (BLURAY_VERSION_CODE(major, minor, micro) < BLURAY_VERSION_CODE(0, 8, 0)) {
+    if (is_iso_image(this->disc_root)) {
+      _x_message (this->stream, XINE_MSG_GENERAL_WARNING,
+                  "Can't play BluRay .iso image. Update libbluray.",
+                  "", NULL);
+      return -1;
+    }
   }
 
   /* open libbluray */
