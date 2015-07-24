@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2000-2010 the xine project
+ * Copyright (C) 2000-2015 the xine project
  *
  * This file is part of xine, a free video player.
  *
@@ -102,6 +102,7 @@ int id3v1_parse_tag (input_plugin_t *input, xine_stream_t *stream) {
       _x_meta_info_n_set(stream, XINE_META_INFO_TITLE, tag.title, 30);
       _x_meta_info_n_set(stream, XINE_META_INFO_ARTIST, tag.artist, 30);
       _x_meta_info_n_set(stream, XINE_META_INFO_ALBUM, tag.album, 30);
+      _x_meta_info_n_set(stream, XINE_META_INFO_YEAR, tag.year, 4);
       _x_meta_info_n_set(stream, XINE_META_INFO_COMMENT, tag.comment, 30);
 
       /* check for a track number: ID3v1.1, which is a clever hack on ID3v1 */
