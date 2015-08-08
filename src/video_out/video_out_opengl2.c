@@ -1,6 +1,6 @@
 /*
  * kate: space-indent on; indent-width 2; mixedindent off; indent-mode cstyle; remove-trailing-space on;
- * Copyright (C) 2012-2014 the xine project
+ * Copyright (C) 2012-2015 the xine project
  * Copyright (C) 2012 Christophe Thommeret <hftom@free.fr>
  *
  * This file is part of xine, a free video player.
@@ -1422,7 +1422,7 @@ static int opengl2_get_property( vo_driver_t *this_gen, int property )
 
   switch (property) {
     case VO_PROP_MAX_NUM_FRAMES:
-      return 15;
+      return 22;
     case VO_PROP_WINDOW_WIDTH:
       return this->sc.gui_width;
     case VO_PROP_WINDOW_HEIGHT:
