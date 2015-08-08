@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2000-2014 the xine project
+ * Copyright (C) 2000-2015 the xine project
  *
  * This file is part of xine, a free video player.
  *
@@ -159,6 +159,11 @@ typedef struct {
   pthread_mutex_t           trigger_drawing_mutex;
   pthread_cond_t            trigger_drawing_cond;
   int                       trigger_drawing;
+
+  /* frames usage stats */
+  int                       frames_total;
+  int                       frames_extref;
+  int                       frames_peak_used;
 } vos_t;
 
 
@@ -334,6 +339,11 @@ static void vo_frame_inc_lock (vo_frame_t *img) {
   pthread_mutex_lock (&img->mutex);
 
   img->lock_counter++;
+  if (img->lock_counter == 2) {
+    vos_t *this = (vos_t *)img->port;
+    if (this->frames_extref < this->frames_total)
+      this->frames_extref++;
+  }
 
   pthread_mutex_unlock (&img->mutex);
 }
@@ -343,6 +353,11 @@ static void vo_frame_dec_lock (vo_frame_t *img) {
   pthread_mutex_lock (&img->mutex);
 
   img->lock_counter--;
+  if (img->lock_counter == 1) {
+    vos_t *this = (vos_t *)img->port;
+    if (this->frames_extref > 0)
+      this->frames_extref--;
+  } else
   if (!img->lock_counter) {
     vos_t *this = (vos_t *) img->port;
     if (img->stream)
@@ -764,6 +779,17 @@ static vo_frame_t *vo_get_frame (xine_video_port_t *this_gen,
       width, height, img->format);
     vo_append_to_img_buf_queue (this->free_img_buf_queue, img);
 
+  }
+
+  /* update frame usage stats. No need to lock queues for that I guess :-) */
+  {
+    int frames_used;
+    frames_used = this->frames_total;
+    frames_used -= this->free_img_buf_queue->num_buffers;
+    frames_used -= this->display_img_buf_queue->num_buffers;
+    frames_used += this->frames_extref;
+    if (frames_used > this->frames_peak_used)
+      this->frames_peak_used = frames_used;
   }
 
   lprintf ("get_frame (%d x %d) done\n", width, height);
@@ -2066,6 +2092,11 @@ static void vo_free_img_buffers (xine_video_port_t *this_gen) {
   vos_t      *this = (vos_t *) this_gen;
   vo_frame_t *img;
 
+  /* print frame usage stats */
+  xprintf (this->xine, XINE_VERBOSITY_LOG,
+    _("video_out: max frames used: %d of %d\n"),
+    this->frames_peak_used, this->frames_total);
+
   while (this->free_img_buf_queue->first) {
     img = vo_remove_from_img_buf_queue (this->free_img_buf_queue);
     img->dispose (img);
@@ -2342,6 +2373,11 @@ xine_video_port_t *_x_vo_new_port (xine_t *xine, vo_driver_t *driver, int grabon
   /* we need at least 5 frames */
   if (num_frame_buffers<5)
     num_frame_buffers = 5;
+
+  /* init frame usage stats */
+  this->frames_total = num_frame_buffers;
+  this->frames_extref = 0;
+  this->frames_peak_used = 0;
 
   /* Choose a frame_drop_limit which matches num_frame_buffers.
    * xxmc for example supplies only 8 buffers. 2 are occupied by
