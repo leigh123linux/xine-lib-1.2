@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2000-2014 the xine project
+ * Copyright (C) 2000-2015 the xine project
  *
  * This file is part of xine, a unix video player.
  *
@@ -65,6 +65,11 @@
 /* "unused" as of v54 */
 #if LIBAVCODEC_VERSION_INT < AV_INT_VERSION(54,0,0)
 # define AVCODEC_HAS_SUB_ID
+#endif
+
+/* not 100% sure about this (between 55.19 and 56.56) */
+#if LIBAVCODEC_VERSION_INT < AV_INT_VERSION(56,0,0)
+#  define AVCODEC_HAS_STREAM_CODEC_TAG
 #endif
 
 /**/

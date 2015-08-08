@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2001-2014 the xine project
+ * Copyright (C) 2001-2015 the xine project
  *
  * This file is part of xine, a free video player.
  *
@@ -792,7 +792,10 @@ static void init_video_codec (ff_video_decoder_t *this, unsigned int codec_type)
 
   this->context->width = this->bih.biWidth;
   this->context->height = this->bih.biHeight;
-  this->context->stream_codec_tag = this->context->codec_tag =
+#ifdef AVCODEC_HAS_STREAM_CODEC_TAG
+  this->context->stream_codec_tag =
+#endif
+  this->context->codec_tag =
     _x_stream_info_get(this->stream, XINE_STREAM_INFO_VIDEO_FOURCC);
 
 
