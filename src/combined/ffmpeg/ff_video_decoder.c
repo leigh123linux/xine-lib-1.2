@@ -122,6 +122,7 @@ struct ff_video_decoder_s {
   int               slice_offset_pos;
 
   AVFrame          *av_frame;
+  AVFrame          *av_frame2;
   AVCodecContext   *context;
   AVCodec          *codec;
 
@@ -846,6 +847,7 @@ static void init_video_codec (ff_video_decoder_t *this, unsigned int codec_type)
 #ifdef AV_BUFFER
     this->context->get_buffer2 = get_buffer;
     this->context->thread_safe_callbacks = 1;
+    this->context->refcounted_frames = 1;
 #else
     this->context->get_buffer = get_buffer;
     this->context->release_buffer = release_buffer;
@@ -1710,6 +1712,9 @@ static void ff_handle_mpeg12_buffer (ff_video_decoder_t *this, buf_element_t *bu
 
     uint8_t *current;
     int next_flush;
+#ifdef AV_BUFFER
+    int need_unref = 0;
+#endif
 
     /* apply valid pts to first frame _starting_ thereafter only */
     if (this->pts && !this->context->reordered_opaque) {
@@ -1752,6 +1757,12 @@ static void ff_handle_mpeg12_buffer (ff_video_decoder_t *this, buf_element_t *bu
     this->context->hurry_up = (this->skipframes > 0);
 #endif
 
+#ifdef AV_BUFFER
+    if (need_unref) {
+      av_frame_unref (this->av_frame);
+      need_unref = 0;
+    }
+#endif
     lprintf("avcodec_decode_video: size=%d\n", this->mpeg_parser->buffer_size);
 #if AVVIDEO > 1
     AVPacket avpkt;
@@ -1781,6 +1792,9 @@ static void ff_handle_mpeg12_buffer (ff_video_decoder_t *this, buf_element_t *bu
                                 &got_picture, this->mpeg_parser->chunk_buffer,
                                 this->mpeg_parser->buffer_size);
     }
+#endif
+#ifdef AV_BUFFER
+    need_unref = 1;
 #endif
     lprintf("avcodec_decode_video: decoded_size=%d, got_picture=%d\n",
             len, got_picture);
@@ -1879,6 +1893,12 @@ static void ff_handle_mpeg12_buffer (ff_video_decoder_t *this, buf_element_t *bu
         img->free(img);
       }
     }
+#ifdef AV_BUFFER
+    if (need_unref) {
+      av_frame_unref (this->av_frame);
+      need_unref = 0;
+    }
+#endif
   }
 }
 
@@ -1972,6 +1992,9 @@ static void ff_handle_buffer (ff_video_decoder_t *this, buf_element_t *buf) {
     int         offset = 0;
     int         codec_type = buf->type & 0xFFFF0000;
     int         video_step_to_use = this->video_step;
+#ifdef AV_BUFFER
+    int         need_unref = 0;
+#endif
 
     /* pad input data */
     /* note: bitstream, alt bitstream reader or something will cause
@@ -1993,6 +2016,12 @@ static void ff_handle_buffer (ff_video_decoder_t *this, buf_element_t *buf) {
         this->context->hurry_up = (this->skipframes > 0);
 #endif
         lprintf("buffer size: %d\n", this->size);
+#ifdef AV_BUFFER
+        if (need_unref) {
+          av_frame_unref (this->av_frame);
+          need_unref = 0;
+        }
+#endif
 #if AVVIDEO > 1
 	AVPacket avpkt;
 	av_init_packet(&avpkt);
@@ -2046,6 +2075,9 @@ static void ff_handle_buffer (ff_video_decoder_t *this, buf_element_t *buf) {
                                     &got_picture, &chunk_buf[offset],
                                     this->size);
 	}
+#endif
+#ifdef AV_BUFFER
+        need_unref = 1;
 #endif
         /* reset consumed pts value */
         this->context->reordered_opaque = ff_tag_pts(this, 0);
@@ -2251,6 +2283,13 @@ static void ff_handle_buffer (ff_video_decoder_t *this, buf_element_t *buf) {
     }
 
     this->assume_bad_field_picture = !got_one_picture;
+
+#ifdef AV_BUFFER
+    if (need_unref) {
+      av_frame_unref (this->av_frame);
+      need_unref = 0;
+    }
+#endif
   }
 }
 
@@ -2331,26 +2370,34 @@ static void ff_flush_internal (ff_video_decoder_t *this, int display) {
 # if ENABLE_VAAPI
     if (this->accel)
       len = this->accel->avcodec_decode_video2 (this->accel_img, this->context,
-        this->av_frame, &got_picture, &avpkt);
+        this->av_frame2, &got_picture, &avpkt);
     else
 # endif
-      len = avcodec_decode_video2 (this->context, this->av_frame, &got_picture, &avpkt);
+      len = avcodec_decode_video2 (this->context, this->av_frame2, &got_picture, &avpkt);
 #else
     got_picture = 0;
 # if ENABLE_VAAPI
     if (this->accel)
       len = this->accel->avcodec_decode_video (this->accel_img, this->context,
-        this->av_frame, &got_picture, NULL, 0);
+        this->av_frame2, &got_picture, NULL, 0);
     else
 # endif
-      len = avcodec_decode_video (this->context, this->av_frame, &got_picture, NULL, 0);
+      len = avcodec_decode_video (this->context, this->av_frame2, &got_picture, NULL, 0);
 #endif
-    if (len < 0 || !got_picture || !this->av_frame->data[0])
+    if (len < 0 || !got_picture || !this->av_frame2->data[0]) {
+#ifdef AV_BUFFER
+      av_frame_unref (this->av_frame2);
+#endif
       break;
+    }
 
     frames++;
-    if (!display)
+    if (!display) {
+#ifdef AV_BUFFER
+      av_frame_unref (this->av_frame2);
+#endif
       continue;
+    }
 
     /* All that jizz just to view the last 2 frames of a stream ;-) */
     video_step_to_use = this->video_step || !this->context->time_base.den ?
@@ -2374,7 +2421,7 @@ static void ff_flush_internal (ff_video_decoder_t *this, int display) {
       this->set_stream_info = 0;
     }
 
-    if (!this->av_frame->opaque) {
+    if (!this->av_frame2->opaque) {
       /* indirect rendering */
       if (this->aspect_ratio_prio == 0) {
         this->aspect_ratio = (double)this->bih.biWidth / (double)this->bih.biHeight;
@@ -2391,7 +2438,7 @@ static void ff_flush_internal (ff_video_decoder_t *this, int display) {
       free_img = 1;
     } else {
       /* DR1 */
-      img = (vo_frame_t*)this->av_frame->opaque;
+      img = (vo_frame_t*)this->av_frame2->opaque;
       free_img = 0;
     }
 
@@ -2399,7 +2446,7 @@ static void ff_flush_internal (ff_video_decoder_t *this, int display) {
     if (this->pp_quality != this->class->pp_quality && this->context->pix_fmt != PIX_FMT_VAAPI_VLD)
       pp_change_quality (this);
     if (this->pp_available && this->pp_quality && this->context->pix_fmt != PIX_FMT_VAAPI_VLD) {
-      if (this->av_frame->opaque) {
+      if (this->av_frame2->opaque) {
         /* DR1: filter into a new frame. Same size to avoid reallcation, just move the
            image to top left corner. */
         img = this->stream->video_out->get_frame (this->stream->video_out, img->width, img->height,
@@ -2409,25 +2456,25 @@ static void ff_flush_internal (ff_video_decoder_t *this, int display) {
         free_img = 1;
       }
       ff_postprocess (this, img);
-    } else if (!this->av_frame->opaque) {
+    } else if (!this->av_frame2->opaque) {
       /* colorspace conversion or copy */
       if (this->context->pix_fmt != PIX_FMT_VAAPI_VLD)
-        ff_convert_frame (this, img, this->av_frame);
+        ff_convert_frame (this, img, this->av_frame2);
     }
 
-    img->pts = ff_untag_pts (this, this->av_frame->reordered_opaque);
-    ff_check_pts_tagging (this, this->av_frame->reordered_opaque);
+    img->pts = ff_untag_pts (this, this->av_frame2->reordered_opaque);
+    ff_check_pts_tagging (this, this->av_frame2->reordered_opaque);
 
     if (video_step_to_use == 750)
       video_step_to_use = 0;
-    img->duration = this->av_frame->repeat_pict ? video_step_to_use * 3 / 2 : video_step_to_use;
-    img->progressive_frame = !this->av_frame->interlaced_frame;
-    img->top_field_first   = this->av_frame->top_field_first;
+    img->duration = this->av_frame2->repeat_pict ? video_step_to_use * 3 / 2 : video_step_to_use;
+    img->progressive_frame = !this->av_frame2->interlaced_frame;
+    img->top_field_first   = this->av_frame2->top_field_first;
 
 #ifdef ENABLE_VAAPI
     if (this->context->pix_fmt == PIX_FMT_VAAPI_VLD) {
       if (this->accel->guarded_render(this->accel_img)) {
-        ff_vaapi_surface_t *va_surface = (ff_vaapi_surface_t *)this->av_frame->data[0];
+        ff_vaapi_surface_t *va_surface = (ff_vaapi_surface_t *)this->av_frame2->data[0];
         this->accel->render_vaapi_surface (img, va_surface);
       }
     }
@@ -2436,6 +2483,10 @@ static void ff_flush_internal (ff_video_decoder_t *this, int display) {
     this->skipframes = img->draw (img, this->stream);
     if (free_img)
       img->free (img);
+
+#ifdef AV_BUFFER
+    av_frame_unref (this->av_frame2);
+#endif
   }
 
   if (frames)
@@ -2600,6 +2651,8 @@ static void ff_dispose (video_decoder_t *this_gen) {
 
   if( this->av_frame )
     avcodec_free_frame( &this->av_frame );
+  if (this->av_frame2)
+    avcodec_free_frame (&this->av_frame2);
 
   if (this->buf)
     free(this->buf);
@@ -2642,6 +2695,7 @@ static video_decoder_t *ff_video_open_plugin (video_decoder_class_t *class_gen, 
   this->class                             = (ff_video_class_t *) class_gen;
 
   this->av_frame          = avcodec_alloc_frame();
+  this->av_frame2         = avcodec_alloc_frame();
   this->context           = avcodec_alloc_context();
   this->context->opaque   = this;
 #if AVPALETTE == 1
