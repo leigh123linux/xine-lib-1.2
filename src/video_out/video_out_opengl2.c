@@ -359,9 +359,9 @@ static void load_csc_matrix( GLuint prog, float *cf )
 
 
 
-static int opengl2_build_program( opengl2_program_t *prog, const char **source, const char *name )
+static int opengl2_build_program( opengl2_driver_t *this, opengl2_program_t *prog, const char **source, const char *name )
 {
-  fprintf(stderr, "vo_opengl2 : compiling shader %s\n", name);
+  xprintf( this->xine, XINE_VERBOSITY_DEBUG, "video_out_opengl2: compiling shader %s\n", name );
   if ( !(prog->shader = glCreateShader( GL_FRAGMENT_SHADER )) )
     return 0;
   if ( !(prog->program = glCreateProgram()) )
@@ -379,8 +379,9 @@ static int opengl2_build_program( opengl2_program_t *prog, const char **source, 
 
   glGetShaderInfoLog( prog->shader, length, &length, log );
   if ( length ) {
-    fprintf( stderr, "Shader %s Compilation Log:\n", name );
-    fprintf( stderr, "%s", log );
+    xprintf( this->xine, XINE_VERBOSITY_DEBUG, "video_out_opengl2: Shader %s Compilation Log:\n", name );
+    if ( this->xine->verbosity >= XINE_VERBOSITY_DEBUG )
+      fwrite( log, 1, length, stdout );
   }
   free( log );
 
@@ -393,8 +394,9 @@ static int opengl2_build_program( opengl2_program_t *prog, const char **source, 
 
   glGetProgramInfoLog( prog->program, length, &length, log );
   if ( length ) {
-    fprintf( stderr, "Linking Log:\n" );
-    fprintf( stderr, "%s", log );
+    xprintf( this->xine, XINE_VERBOSITY_DEBUG, "video_out_opengl2: Shader %s Linking Log:\n", name );
+    if ( this->xine->verbosity >= XINE_VERBOSITY_DEBUG )
+      fwrite( log, 1, length, stdout );
   }
   free( log );
 
@@ -535,7 +537,7 @@ static void opengl2_upload_overlay(opengl2_driver_t *this, opengl2_overlay_t *o,
   if ( overlay->rle && !this->overlayPBO ) {
     glGenBuffers( 1, &this->overlayPBO );
     if ( !this->overlayPBO ) {
-      fprintf(stderr, "*** overlay PBO failed\n");
+      xprintf( this->xine, XINE_VERBOSITY_LOG, "video_out_opengl2: overlay PBO failed\n" );
       return;
     }
   }
@@ -975,7 +977,7 @@ static GLuint opengl2_sharpness( opengl2_driver_t *that, opengl2_frame_t *frame,
   GLuint ret = video_texture;
   
   if ( !that->sharpness_program.compiled ) {
-    if ( !opengl2_build_program( &that->sharpness_program, &blur_sharpen_frag, "blur_sharpen_frag" ) )
+    if ( !opengl2_build_program( that, &that->sharpness_program, &blur_sharpen_frag, "blur_sharpen_frag" ) )
       return ret;
   }
 
@@ -1012,9 +1014,9 @@ static int opengl2_draw_video_bicubic( opengl2_driver_t *that, int guiw, int gui
       return 0;
   }
 
-  if ( !that->bicubic_pass1_program.compiled && !opengl2_build_program( &that->bicubic_pass1_program, &bicubic_pass1_frag, "bicubic_pass1_frag" ) )
+  if ( !that->bicubic_pass1_program.compiled && !opengl2_build_program( that, &that->bicubic_pass1_program, &bicubic_pass1_frag, "bicubic_pass1_frag" ) )
     return 0;
-  if ( !that->bicubic_pass2_program.compiled && !opengl2_build_program( &that->bicubic_pass2_program, &bicubic_pass2_frag, "bicubic_pass2_frag" ) )
+  if ( !that->bicubic_pass2_program.compiled && !opengl2_build_program( that, &that->bicubic_pass2_program, &bicubic_pass2_frag, "bicubic_pass2_frag" ) )
     return 0;
   if ( !that->bicubic_fbo ) {
     glGenFramebuffers( 1, &that->bicubic_fbo );
@@ -1108,7 +1110,7 @@ static int opengl2_draw_video_cubic_x( opengl2_driver_t *that, int guiw, int gui
       return 0;
   }
 
-  if ( !that->bicubic_pass1_program.compiled && !opengl2_build_program( &that->bicubic_pass1_program, &bicubic_pass1_frag, "bicubic_pass1_frag" ) )
+  if ( !that->bicubic_pass1_program.compiled && !opengl2_build_program( that, &that->bicubic_pass1_program, &bicubic_pass1_frag, "bicubic_pass1_frag" ) )
     return 0;
 
   glViewport( 0, 0, guiw, guih );
@@ -1153,7 +1155,7 @@ static int opengl2_draw_video_cubic_y( opengl2_driver_t *that, int guiw, int gui
       return 0;
   }
 
-  if ( !that->bicubic_pass2_program.compiled && !opengl2_build_program( &that->bicubic_pass2_program, &bicubic_pass2_frag, "bicubic_pass2_frag" ) )
+  if ( !that->bicubic_pass2_program.compiled && !opengl2_build_program( that, &that->bicubic_pass2_program, &bicubic_pass2_frag, "bicubic_pass2_frag" ) )
     return 0;
 
   glViewport( 0, 0, guiw, guih );
@@ -1306,7 +1308,7 @@ static void opengl2_draw( opengl2_driver_t *that, opengl2_frame_t *frame )
   }
   else {
     /* unknown format */
-    fprintf(stderr, "vo_opengl2: unknown image format\n" );
+    xprintf( that->xine, XINE_VERBOSITY_LOG, "video_out_opengl2: unknown image format 0x%08x\n", frame->format );
   }
 
   glViewport( 0, 0, frame->width, frame->height );
@@ -1579,7 +1581,7 @@ static void opengl2_set_bicubic( void *this_gen, xine_cfg_entry_t *entry )
   opengl2_driver_t  *this  = (opengl2_driver_t *) this_gen;
 
   this->scale_bicubic = entry->num_value;
-  fprintf(stderr, "vo_opengl2: scale_bicubic=%d\n", this->scale_bicubic );
+  xprintf( this->xine, XINE_VERBOSITY_DEBUG, "video_out_opengl2: scale_bicubic=%d\n", this->scale_bicubic );
 }
 
 
@@ -1722,12 +1724,12 @@ static vo_driver_t *opengl2_open_plugin( video_driver_class_t *class_gen, const 
     return NULL;
   }
 
-  if ( !opengl2_build_program( &this->yuv420_program, &yuv420_frag, "yuv420_frag" ) ) {
+  if ( !opengl2_build_program( this, &this->yuv420_program, &yuv420_frag, "yuv420_frag" ) ) {
     glXMakeCurrent( this->display, None, NULL );
     free( this );
     return NULL;
   }
-  if ( !opengl2_build_program( &this->yuv422_program, &yuv422_frag, "yuv422_frag" ) ) {
+  if ( !opengl2_build_program( this, &this->yuv422_program, &yuv422_frag, "yuv422_frag" ) ) {
     glXMakeCurrent( this->display, None, NULL );
     free( this );
     return NULL;
@@ -1785,7 +1787,7 @@ static vo_driver_t *opengl2_open_plugin( video_driver_class_t *class_gen, const 
   else
     this->scale_bicubic = 0;
 
-  fprintf(stderr, "vo_opengl2: initialized.\n");
+  xprintf( this->xine, XINE_VERBOSITY_DEBUG, "video_out_opengl2: initialized.\n");
 
   return &this->vo_driver;
 }
