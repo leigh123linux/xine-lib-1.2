@@ -1010,7 +1010,7 @@ static int render_setup_fp_yuv (opengl_driver_t *this) {
     return 0;
 
   xprintf (this->xine, XINE_VERBOSITY_LOG,
-    "video_out_open_opengl_fragprog: b %d c %d s %d [%s]\n",
+    "video_out_opengl_fragprog: b %d c %d s %d [%s]\n",
     this->brightness, this->contrast, this->saturation, cm_names[this->cm_fragprog]);
 
   if (this->fprog == (GLuint)-1)
