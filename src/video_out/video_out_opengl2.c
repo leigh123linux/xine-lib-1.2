@@ -705,7 +705,7 @@ static void opengl2_update_frame_format( vo_driver_t *this_gen, vo_frame_t *fram
   opengl2_frame_t *frame = (opengl2_frame_t *) frame_gen;
 
   /* Check frame size and format and reallocate if necessary */
-  if ( (frame->width != width) || (frame->height != height) || (frame->format != format) || (frame->flags  != flags) ) {
+  if ( (frame->width != width) || (frame->height != height) || (frame->format != format) ) {
 
     /* (re-) allocate render space */
     av_freep (&frame->vo_frame.base[0]);
@@ -748,8 +748,9 @@ static void opengl2_update_frame_format( vo_driver_t *this_gen, vo_frame_t *fram
     frame->width = width;
     frame->height = height;
     frame->format = format;
-    frame->flags = flags;
   }
+  /* flags dont matter for buffers yet, so just copy them */
+  frame->flags = flags;
 
   frame->ratio = ratio;
 }
