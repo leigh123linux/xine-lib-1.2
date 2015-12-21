@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2000-2014 the xine project
+ * Copyright (C) 2000-2015 the xine project
  *
  * This file is part of xine, a free video player.
  *
@@ -46,13 +46,12 @@
 
 void _x_vo_scale_compute_ideal_size (vo_scale_t *this) {
 
-  double image_ratio, desired_ratio;
-
   if (this->scaling_disabled & ~1) {
 
-    this->video_pixel_aspect = this->gui_pixel_aspect;
+    this->video_pixel_aspect = (this->scaling_disabled & 1) ? 1.0 : this->gui_pixel_aspect;
 
   } else {
+    double image_ratio, desired_ratio;
 
     /*
      * aspect ratio
@@ -83,9 +82,13 @@ void _x_vo_scale_compute_ideal_size (vo_scale_t *this) {
 
     _x_assert(this->gui_pixel_aspect != 0.0);
 
-    if (fabs (this->video_pixel_aspect / this->gui_pixel_aspect - 1.0)
-	< 0.01) {
-      this->video_pixel_aspect = this->gui_pixel_aspect;
+    /* dont scale just for tiny pixel aspect shift */
+    if (this->scaling_disabled & 1) {
+      if (fabs (this->video_pixel_aspect - 1.0) < 0.01)
+        this->video_pixel_aspect = 1.0;
+    } else {
+      if (fabs (this->video_pixel_aspect / this->gui_pixel_aspect - 1.0) < 0.01)
+        this->video_pixel_aspect = this->gui_pixel_aspect;
     }
 
 #if 0
