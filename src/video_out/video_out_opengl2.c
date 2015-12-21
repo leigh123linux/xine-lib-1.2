@@ -1689,7 +1689,8 @@ static vo_driver_t *opengl2_open_plugin( video_driver_class_t *class_gen, const 
   this->vo_driver.redraw_needed        = opengl2_redraw_needed;
 
   if ( !glXMakeCurrent( this->display, this->drawable, this->context ) ) {
-    fprintf(stderr, "vo_opengl2: MakeCurrent failed\n");
+    xprintf( this->xine, XINE_VERBOSITY_LOG, "video_out_opengl2: display unavailable for initialization\n" );
+    free( this );
     return NULL;
   }
 
@@ -1715,13 +1716,22 @@ static vo_driver_t *opengl2_open_plugin( video_driver_class_t *class_gen, const 
   this->yuvtex.y = this->yuvtex.u = this->yuvtex.v = this->yuvtex.yuv = 0;
   this->yuvtex.width = this->yuvtex.height = 0;
   this->fbo = this->videoPBO = this->videoTex = this->videoTex2 = 0;
-  if ( !opengl2_check_textures_size( this, INITWIDTH, INITHEIGHT ) )
-    return 0;
+  if ( !opengl2_check_textures_size( this, INITWIDTH, INITHEIGHT ) ) {
+    glXMakeCurrent( this->display, None, NULL );
+    free( this );
+    return NULL;
+  }
 
-  if ( !opengl2_build_program( &this->yuv420_program, &yuv420_frag, "yuv420_frag" ) )
+  if ( !opengl2_build_program( &this->yuv420_program, &yuv420_frag, "yuv420_frag" ) ) {
+    glXMakeCurrent( this->display, None, NULL );
+    free( this );
     return NULL;
-  if ( !opengl2_build_program( &this->yuv422_program, &yuv422_frag, "yuv422_frag" ) )
+  }
+  if ( !opengl2_build_program( &this->yuv422_program, &yuv422_frag, "yuv422_frag" ) ) {
+    glXMakeCurrent( this->display, None, NULL );
+    free( this );
     return NULL;
+  }
 
   this->mglXSwapInterval = (GLXSWAPINTERVALSGI)glXGetProcAddressARB( (const GLubyte*)"glXSwapIntervalSGI" );
 
