@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2000-2014 the xine project
+ * Copyright (C) 2000-2015 the xine project
  *
  * This file is part of xine, a free video player.
  *
@@ -1412,6 +1412,7 @@ static void opengl_update_frame_format (vo_driver_t *this_gen,
   opengl_frame_t   *frame = (opengl_frame_t *) frame_gen;
   int     g_width, g_height;
   double  g_pixel_aspect;
+  int     changed = 0;
 
   /* Check output size to signal render thread output size changes */
   this->sc.dest_size_cb (this->sc.user_data, width, height,
@@ -1431,14 +1432,10 @@ static void opengl_update_frame_format (vo_driver_t *this_gen,
   }
 
   /* Check frame size and format and reallocate if necessary */
-  if ((frame->width != width)
-      || (frame->height != height)
-      || (frame->format != format)
-      || (frame->flags  != flags)) {
+  if ((frame->width != width) || (frame->height != height) || (frame->format != format)) {
 /*     lprintf ("updating frame to %d x %d (ratio=%g, format=%08x)\n", width, height, ratio, format); */
 
-    flags &= VO_BOTH_FIELDS;
-
+    /* make sure we dont pull the rug from under the renderer */
     XLockDisplay (this->display);
 
     /* (re-) allocate render space */
@@ -1459,6 +1456,21 @@ static void opengl_update_frame_format (vo_driver_t *this_gen,
       frame->vo_frame.base[0] = av_mallocz(frame->vo_frame.pitches[0] * height);
     }
     frame->rgb = av_mallocz(BYTES_PER_PIXEL*width*height);
+
+    changed = 1;
+
+  } else if ((frame->flags ^ flags) & VO_BOTH_FIELDS) {
+
+    XLockDisplay (this->display);
+    changed = 1;
+
+  }
+
+  frame->flags = flags;
+
+  if (changed) {
+
+    flags &= VO_BOTH_FIELDS;
 
     /* set up colorspace converter */
     switch (flags) {
