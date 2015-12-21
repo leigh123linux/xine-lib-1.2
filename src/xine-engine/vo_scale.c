@@ -112,16 +112,10 @@ void _x_vo_scale_compute_ideal_size (vo_scale_t *this) {
 void _x_vo_scale_compute_output_size (vo_scale_t *this) {
 
   int    cropped_width, cropped_height;
-  double x_factor, y_factor, aspect;
 
   cropped_width  = this->delivered_width - (this->crop_left + this->crop_right);
   cropped_height = this->delivered_height - (this->crop_top + this->crop_bottom);
 
-  aspect   = this->video_pixel_aspect;
-  if ( !( this->scaling_disabled & 1 ) )
-    aspect /= this->gui_pixel_aspect;
-  x_factor = (double) this->gui_width  / (double) (cropped_width * aspect);
-  y_factor = (double) (this->gui_height * aspect) / (double) cropped_height;
 
   if (this->scaling_disabled & ~1) {
 
@@ -131,6 +125,15 @@ void _x_vo_scale_compute_output_size (vo_scale_t *this) {
     this->displayed_height = cropped_height;
 
   } else {
+    int    sw, sh;
+    double aspect;
+
+    aspect = this->video_pixel_aspect;
+    if (!(this->scaling_disabled & 1))
+      aspect /= this->gui_pixel_aspect;
+
+    sw = (double)(cropped_width * this->gui_height) * aspect / (double)cropped_height + 0.5;
+    sh = (double)(cropped_height * this->gui_width) / ((double)cropped_width * aspect) + 0.5;
 
     if ( this->support_zoom ) {
 
@@ -140,27 +143,31 @@ void _x_vo_scale_compute_output_size (vo_scale_t *this) {
        *   black borders to use.
        * - exceding zoom shall be accounted by reducing displayed image.
        */
-      if (((double)this->gui_width - (double)cropped_width * y_factor) < ((double)this->gui_height - (double)cropped_height * x_factor)) {
+      if ((this->gui_width - sw) < (this->gui_height - sh)) {
+        int zh;
         this->output_width = this->gui_width;
         this->displayed_width = (double)cropped_width / this->zoom_factor_x + 0.5;
 
-        this->output_height = (double)cropped_height * x_factor + 0.5;
-        if( this->output_height * this->zoom_factor_y <= this->gui_height ) {
+        this->output_height = sh;
+        zh = (double)this->output_height * this->zoom_factor_y + 0.5;
+        if( zh <= this->gui_height ) {
           this->displayed_height = cropped_height;
-          this->output_height = (double)this->output_height * this->zoom_factor_y + 0.5;
+          this->output_height = zh;
         } else {
           this->displayed_height = (double)cropped_height *
             this->gui_height / this->output_height / this->zoom_factor_y + 0.5;
           this->output_height = this->gui_height;
         }
       } else {
+        int zw;
         this->output_height = this->gui_height;
         this->displayed_height = (double)cropped_height / this->zoom_factor_y + 0.5;
 
-        this->output_width = (double)cropped_width * y_factor + 0.5;
-        if( this->output_width * this->zoom_factor_x <= this->gui_width ) {
+        this->output_width = sw;
+        zw = (double)this->output_width * this->zoom_factor_x + 0.5;
+        if( zw <= this->gui_width ) {
           this->displayed_width = cropped_width;
-          this->output_width = (double)this->output_width * this->zoom_factor_x + 0.5;
+          this->output_width = zw;
         } else {
           this->displayed_width = (double)cropped_width *
             this->gui_width / this->output_width / this->zoom_factor_x + 0.5;
@@ -169,12 +176,12 @@ void _x_vo_scale_compute_output_size (vo_scale_t *this) {
       }
 
     } else {
-      if (((double)this->gui_width - (double)cropped_width * y_factor) < ((double)this->gui_height - (double)cropped_height * x_factor)) {
-        this->output_width   = (double) this->gui_width;
-        this->output_height  = (double) cropped_height * x_factor + 0.5;
+      if ((this->gui_width - sw) < (this->gui_height - sh)) {
+        this->output_width   = this->gui_width;
+        this->output_height  = sh;
       } else {
-        this->output_width   = (double) cropped_width  * y_factor + 0.5;
-        this->output_height  = (double) this->gui_height;
+        this->output_width   = sw;
+        this->output_height  = this->gui_height;
       }
       this->displayed_width = cropped_width;
       this->displayed_height = cropped_height;
@@ -185,13 +192,19 @@ void _x_vo_scale_compute_output_size (vo_scale_t *this) {
    * something outside the delivered image. may happen when zoom < 100%.
    */
   if( this->displayed_width > this->delivered_width ) {
-    this->output_width = (double) this->output_width *
-                         this->delivered_width / this->displayed_width + 0.5;
+    int w;
+    w  = this->output_width * this->delivered_width;
+    w += this->displayed_width >> 1;
+    w /= this->displayed_width;
+    this->output_width = w;
     this->displayed_width = this->delivered_width;
   }
   if( this->displayed_height > this->delivered_height ) {
-    this->output_height = (double) this->output_height *
-                          this->delivered_height / this->displayed_height + 0.5;
+    int h;
+    h  = this->output_height * this->delivered_height;
+    h += this->displayed_height >> 1;
+    h /= this->displayed_height;
+    this->output_height = h;
     this->displayed_height = this->delivered_height;
   }
 
