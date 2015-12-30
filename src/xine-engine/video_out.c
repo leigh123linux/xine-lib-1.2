@@ -110,6 +110,8 @@ typedef struct {
   img_buf_fifo_t           *free_img_buf_queue;
   img_buf_fifo_t           *display_img_buf_queue;
 
+  pthread_cond_t            done_flushing;
+
   vo_frame_t               *img_backup;
 
   vo_frame_t               *last_frame;
@@ -1210,6 +1212,7 @@ static void expire_frames (vos_t *this, int64_t cur_vpts) {
       this->display_img_buf_queue->num_buffers = 1;
     }
     pthread_mutex_unlock (&this->display_img_buf_queue->mutex);
+    pthread_cond_broadcast (&this->done_flushing);
     return;
   }
 
@@ -1621,6 +1624,10 @@ static void paused_loop( vos_t *this, int64_t vpts )
     }
 
     interruptable_sleep(this, 20000);
+
+    /* dont let folks wait forever in vain */
+    if (this->discard_frames)
+      pthread_cond_broadcast (&this->done_flushing);
   }
 
   pthread_mutex_lock (&this->free_img_buf_queue->mutex);
@@ -1786,6 +1793,9 @@ static void *video_out_loop (void *this_gen) {
     img = this->display_img_buf_queue->first;
   }
   pthread_mutex_unlock(&this->display_img_buf_queue->mutex);
+  /* dont let folks wait forever in vain */
+  if (this->discard_frames)
+    pthread_cond_broadcast (&this->done_flushing);
 
   if (this->img_backup) {
     vo_frame_dec_lock( this->img_backup );
@@ -2179,6 +2189,8 @@ static void vo_exit (xine_video_port_t *this_gen) {
   pthread_mutex_destroy(&this->grab_lock);
   pthread_cond_destroy(&this->grab_cond);
 
+  pthread_cond_destroy(&this->done_flushing);
+
   free (this);
 }
 
@@ -2235,24 +2247,12 @@ static void vo_enable_overlay (xine_video_port_t *this_gen, int overlay_enabled)
  */
 static void vo_flush (xine_video_port_t *this_gen) {
   vos_t      *this = (vos_t *) this_gen;
-  vo_frame_t *img;
 
   if( this->video_loop_running ) {
     pthread_mutex_lock(&this->display_img_buf_queue->mutex);
     this->discard_frames++;
-    pthread_mutex_unlock(&this->display_img_buf_queue->mutex);
-
-    /* do not try this in paused mode */
-    while(this->clock->speed != XINE_SPEED_PAUSE) {
-      pthread_mutex_lock(&this->display_img_buf_queue->mutex);
-      img = this->display_img_buf_queue->first;
-      pthread_mutex_unlock(&this->display_img_buf_queue->mutex);
-      if(!img)
-        break;
-      xine_usec_sleep (20000); /* pthread_cond_t could be used here */
-    }
-
-    pthread_mutex_lock(&this->display_img_buf_queue->mutex);
+    while (this->display_img_buf_queue->first)
+      pthread_cond_wait (&this->done_flushing, &this->display_img_buf_queue->mutex);
     this->discard_frames--;
     pthread_mutex_unlock(&this->display_img_buf_queue->mutex);
   }
@@ -2411,6 +2411,8 @@ xine_video_port_t *_x_vo_new_port (xine_t *xine, vo_driver_t *driver, int grabon
   this->frames_total = num_frame_buffers;
   this->frames_extref = 0;
   this->frames_peak_used = 0;
+
+  pthread_cond_init (&this->done_flushing, NULL);
 
   /* Choose a frame_drop_limit which matches num_frame_buffers.
    * xxmc for example supplies only 8 buffers. 2 are occupied by
