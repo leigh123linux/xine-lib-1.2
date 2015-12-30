@@ -1185,6 +1185,34 @@ static void expire_frames (vos_t *this, int64_t cur_vpts) {
   diff = 1000000; /* always enter the while-loop */
   duration = 0;
 
+  /* when flushing, drop everything now, and return latest "first" frame if any */
+  if (this->discard_frames) {
+    vo_frame_t *first_frame = NULL;
+    while (img) {
+      img = vo_remove_from_img_buf_queue_int (this->display_img_buf_queue, 1, 0, 0, 0, 0, 0);
+      if (img->is_first != 0) {
+        if (first_frame)
+          vo_frame_dec_lock (first_frame);
+        first_frame = img;
+      } else {
+        if (!this->img_backup) {
+          this->img_backup = img;
+        } else {
+          vo_frame_dec_lock (img);
+        }
+      }
+      img = this->display_img_buf_queue->first;
+    }
+    if (first_frame) {
+      first_frame->vpts = cur_vpts;
+      this->display_img_buf_queue->first = first_frame;
+      this->display_img_buf_queue->last  = first_frame;
+      this->display_img_buf_queue->num_buffers = 1;
+    }
+    pthread_mutex_unlock (&this->display_img_buf_queue->mutex);
+    return;
+  }
+
   while (img) {
 
     if (img->is_first > 0) {
@@ -1220,14 +1248,13 @@ static void expire_frames (vos_t *this, int64_t cur_vpts) {
     pts = img->vpts;
     diff = cur_vpts - pts;
 
-    if (diff > duration || this->discard_frames) {
+    if (diff > duration) {
 
-      if( !this->discard_frames ) {
-        xine_log(this->xine, XINE_LOG_MSG,
-	         _("video_out: throwing away image with pts %" PRId64 " because it's too old (diff : %" PRId64 ").\n"), pts, diff);
+      xine_log (this->xine, XINE_LOG_MSG,
+        _("video_out: throwing away image with pts %" PRId64 " because it's too old (diff : %" PRId64 ").\n"),
+        pts, diff);
 
-        this->num_frames_discarded++;
-      }
+      this->num_frames_discarded++;
 
       img = vo_remove_from_img_buf_queue_int (this->display_img_buf_queue, 1, 0, 0, 0, 0, 0);
 
@@ -1255,16 +1282,7 @@ static void expire_frames (vos_t *this, int64_t cur_vpts) {
 	}
       }
 
-      /* when flushing frames, keep the first one as backup */
-      if( this->discard_frames ) {
-
-        if (!this->img_backup) {
-	  this->img_backup = img;
-        } else {
-	  vo_frame_dec_lock( img );
-        }
-
-      } else {
+      {
         /*
          * last frame? back it up for
          * still frame creation
@@ -1452,6 +1470,15 @@ static void overlay_and_display_frame (vos_t *this,
     pthread_mutex_unlock(&this->streams_lock);
   }
 
+  /* calling the frontend's frame output hook (via driver->display_frame () here)
+   * while flushing (xine_stop ()) may freeze.
+   */
+  if (this->discard_frames && this->display_img_buf_queue->first) {
+    img->free (img);
+    this->redraw_needed = 0;
+    return;
+  }
+
   if (this->overlay_source) {
     this->overlay_source->multiple_overlay_blend (this->overlay_source,
 						  vpts,
@@ -1472,6 +1499,12 @@ static void check_redraw_needed (vos_t *this, int64_t vpts) {
     if( this->overlay_source->redraw_needed (this->overlay_source, vpts) )
       this->redraw_needed = 1;
   }
+
+  /* calling the frontend's frame output hook (via driver->redraw_needed () here)
+   * while flushing (xine_stop ()) may freeze.
+   */
+  if (this->discard_frames && this->display_img_buf_queue->first)
+    return;
 
   if( this->driver->redraw_needed (this->driver) )
     this->redraw_needed = 1;
