@@ -160,7 +160,72 @@ typedef struct {
   int		            zoom_y;
 
   int                cm_state;
+
+  int                exit_indx;
+  int                exiting;
 } opengl2_driver_t;
+
+/* libGL likes to install its own exit handlers.
+ * Trying to render after one of them will freeze or crash,
+ * so make sure we're last.
+ * HAIR RAISING HACK:
+ * Passing arguments to an exit handler is supported on SunOS,
+ * deprecated in Linux, and impossible anywhere else.
+ */
+
+#define MAX_EXIT_TARGETS 8
+/* These are process local, right? */
+opengl2_driver_t *opengl2_exit_vector[MAX_EXIT_TARGETS] =
+  {NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL};
+
+static void opengl2_exit (void) {
+  int i;
+  for (i = MAX_EXIT_TARGETS - 1; i >= 0; i--) {
+    opengl2_driver_t *this = opengl2_exit_vector[i];
+    if (this) {
+      if (this != (opengl2_driver_t *)1) {
+        this->exiting = 1;
+        /* wait for last render */
+        pthread_mutex_lock (&this->drawable_lock);
+        pthread_mutex_unlock (&this->drawable_lock);
+      }
+      opengl2_exit_vector[i] = NULL;
+    }
+  }
+}
+
+static void opengl2_exit_unregister (opengl2_driver_t *this) {
+  int indx = this->exit_indx;
+  if (indx == 1)
+    opengl2_exit_vector[0] = (opengl2_driver_t *)1;
+  else if ((indx > 1) && (indx <= MAX_EXIT_TARGETS))
+    opengl2_exit_vector[indx - 1] = NULL;
+}
+
+static void opengl2_exit_register (opengl2_driver_t *this) {
+  int i;
+  if (!opengl2_exit_vector[0]) {
+    opengl2_exit_vector[0] = this;
+    this->exit_indx = 1;
+    atexit (opengl2_exit);
+    return;
+  }
+  if (opengl2_exit_vector[0] == (opengl2_driver_t *)1) {
+    opengl2_exit_vector[0] = this;
+    this->exit_indx = 1;
+    return;
+  }
+  for (i = 1; i < MAX_EXIT_TARGETS; i++) {
+    if (!opengl2_exit_vector[i]) {
+      opengl2_exit_vector[i] = this;
+      this->exit_indx = i + 1;
+      return;
+    }
+  }
+  this->exit_indx = MAX_EXIT_TARGETS + 1;
+}
+
+/* !exit_stuff */
 
 /* import common color matrix stuff */
 #define CM_HAVE_YCGCO_SUPPORT 1
@@ -1410,11 +1475,16 @@ static void opengl2_display_frame( vo_driver_t *this_gen, vo_frame_t *frame_gen 
 
   opengl2_redraw_needed( this_gen );
 
-  XLockDisplay (this->display);
-  pthread_mutex_lock(&this->drawable_lock); /* protect drawable from being changed */
-  opengl2_draw( this, frame );
-  pthread_mutex_unlock(&this->drawable_lock); /* allow changing drawable again */
-  XUnlockDisplay (this->display);
+  if( !this->exiting ) {
+    XLockDisplay (this->display);
+    pthread_mutex_lock(&this->drawable_lock); /* protect drawable from being changed */
+    opengl2_draw( this, frame );
+    pthread_mutex_unlock(&this->drawable_lock); /* allow changing drawable again */
+    XUnlockDisplay (this->display);
+  }
+
+  if( !this->exit_indx )
+    opengl2_exit_register( this );
 
   frame->vo_frame.free( &frame->vo_frame );
 }
@@ -1591,6 +1661,8 @@ static void opengl2_set_bicubic( void *this_gen, xine_cfg_entry_t *entry )
 static void opengl2_dispose( vo_driver_t *this_gen )
 {
   opengl2_driver_t *this = (opengl2_driver_t *) this_gen;
+
+  opengl2_exit_unregister( this );
 
   cm_close (this);
 
