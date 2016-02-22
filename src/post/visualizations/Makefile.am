@@ -12,5 +12,5 @@ noinst_HEADERS = fft.h visualizations.h
 xinepost_LTLIBRARIES = xineplug_post_visualizations.la
 
 xineplug_post_visualizations_la_SOURCES = \
-        visualizations.c fft.c fftscope.c oscope.c fftgraph.c
+        visualizations.c fft.c fftscope.c oscope.c fftgraph.c tdaudioanalyzer.c
 xineplug_post_visualizations_la_LIBADD = $(XINE_LIB) $(PTHREAD_LIBS) -lm
