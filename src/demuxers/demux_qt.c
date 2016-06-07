@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2001-2014 the xine project
+ * Copyright (C) 2001-2016 the xine project
  *
  * This file is part of xine, a free video player.
  *
@@ -1946,8 +1946,8 @@ static qt_error build_frame_table(qt_trak *trak,
       trak->frames[i].pts *= (int)90000;
       trak->frames[i].pts /= (int)trak->timescale;
       if (trak->frames[i].ptsoffs) {
-        trak->frames[i].ptsoffs *= (int)90000;
-        trak->frames[i].ptsoffs /= (int)trak->timescale;
+        int64_t t = (int64_t)trak->frames[i].ptsoffs * (int)90000;
+        trak->frames[i].ptsoffs = t / (int)trak->timescale;
       }
       debug_edit_list("  final pts for sample %d = %"PRId64"\n", i, trak->frames[i].pts);
     }
@@ -2242,7 +2242,7 @@ static int parse_traf_atom (qt_info *info, unsigned char *traf_atom, int trafsiz
           if (trun_flags & 0x800) {
             uint32_t o = _X_BE_32 (p);
             p += 4;
-            frame->ptsoffs = (int32_t)90000 * (int32_t)o / (int32_t)trak->timescale;
+            frame->ptsoffs = (int64_t)((int32_t)o) * (int32_t)90000 / (int32_t)trak->timescale;
           } else
             frame->ptsoffs = 0;
           frame++;
