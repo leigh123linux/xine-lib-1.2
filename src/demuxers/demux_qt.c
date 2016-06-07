@@ -2798,8 +2798,12 @@ static int demux_qt_send_chunk(demux_plugin_t *this_gen) {
        * the next video frame */
       frame_duration  = trak->frames[i + 1].pts;
       frame_duration -= trak->frames[i].pts;
+    } else if (i) {
+      /* reuse last frame duration */
+      frame_duration  = trak->frames[i].pts;
+      frame_duration -= trak->frames[i - 1].pts;
     } else {
-      /* give the last frame some fixed duration */
+      /* give the last and only frame some fixed duration */
       frame_duration = 12000;
     }
 
