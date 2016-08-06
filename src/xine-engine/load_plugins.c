@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2000-2014 the xine project
+ * Copyright (C) 2000-2016 the xine project
  *
  * This file is part of xine, a free video player.
  *
@@ -495,10 +495,10 @@ static void _register_plugins_internal(xine_t *this, plugin_file_t *file,
 
     if (file && file->filename)
       xine_log (this, XINE_LOG_PLUGIN,
-		_("load_plugins: plugin %s found\n"), file->filename);
+		_("load_plugins: plugin %s:%s found\n"), file->filename, info->id);
     else
       xine_log (this, XINE_LOG_PLUGIN,
-		_("load_plugins: static plugin found\n"));
+		_("load_plugins: static plugin %s found\n"), info->id);
 
     if (this->plugin_catalog->plugin_count >= PLUGIN_MAX ||
 	(this->plugin_catalog->decoder_count >= DECODER_MAX &&
