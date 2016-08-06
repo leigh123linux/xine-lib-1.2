@@ -154,6 +154,14 @@ AC_DEFUN([XINE_INPUT_PLUGINS], [
         )
         if test "$no_vcd" = 'no'; then
 	    AC_DEFINE([HAVE_VCDNAV], 1, [Define this if you use external libcdio/libvcdinfo])
+	else
+	    dnl Internal libcdio/libvcd have gone officially in 2007.
+	    dnl Just in case someone still or again has them, test for them here.
+	    AC_MSG_CHECKING([for internal libcdio/libvcd])
+	    enable_vcd=no
+	    test -f "contrib/libvcd/files.h" -a -f "contrib/cdio/iso9660.h" && enable_vcd=yes
+	    test -f "src/input/vcd/libvcd/files.h" -a -f "src/input/vcd/cdio/iso9660.h" && enable_vcd=yes
+	    AC_MSG_RESULT([$enable_vcd])
 	fi
     fi
 
