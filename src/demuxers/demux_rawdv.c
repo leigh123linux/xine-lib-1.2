@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2000-2009 the xine project
+ * Copyright (C) 2000-2016 the xine project
  *
  * This file is part of xine, a free video player.
  *
@@ -31,6 +31,9 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <string.h>
+
+#define LOG_MODULE "demux_rawdv"
+#include "group_video.h"
 
 #include <xine/xine_internal.h>
 #include <xine/xineutils.h>
@@ -393,7 +396,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
   return &this->demux_plugin;
 }
 
-static void *init_plugin (xine_t *xine, void *data) {
+void *demux_rawdv_init_class (xine_t *xine, void *data) {
   demux_raw_dv_class_t     *this;
 
   this = calloc(1, sizeof(demux_raw_dv_class_t));
@@ -408,15 +411,3 @@ static void *init_plugin (xine_t *xine, void *data) {
   return this;
 }
 
-/*
- * exported plugin catalog entry
- */
-static const demuxer_info_t demux_info_raw_dv = {
-  1                       /* priority */
-};
-
-const plugin_info_t xine_plugin_info[] EXPORTED = {
-  /* type, API, "name", version, special_info, init_function */
-  { PLUGIN_DEMUX, 27, "rawdv", XINE_VERSION_CODE, &demux_info_raw_dv, init_plugin },
-  { PLUGIN_NONE, 0, "", 0, NULL, NULL }
-};

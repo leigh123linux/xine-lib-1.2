@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2000-2014 the xine project
+ * Copyright (C) 2000-2016 the xine project
  *
  * This file is part of xine, a free video player.
  *
@@ -42,6 +42,8 @@
 /*
 #define LOG
 */
+
+#include "group_video.h"
 
 #include <xine/xine_internal.h>
 #include <xine/xineutils.h>
@@ -3100,7 +3102,7 @@ error:
 /*
  * demux matroska class
  */
-static void *init_class (xine_t *xine, void *data) {
+void *demux_matroska_init_class (xine_t *xine, void *data) {
 
   demux_matroska_class_t     *this;
 
@@ -3120,15 +3122,3 @@ static void *init_class (xine_t *xine, void *data) {
   return this;
 }
 
-/*
- * exported plugin catalog entry
- */
-static const demuxer_info_t demux_info_matroska = {
-  10                       /* priority */
-};
-
-const plugin_info_t xine_plugin_info[] EXPORTED = {
-  /* type, API, "name", version, special_info, init_function */
-  { PLUGIN_DEMUX, 27, "matroska", XINE_VERSION_CODE, &demux_info_matroska, init_class },
-  { PLUGIN_NONE, 0, "", 0, NULL, NULL }
-};

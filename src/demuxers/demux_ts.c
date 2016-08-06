@@ -1,6 +1,6 @@
 
 /*
- * Copyright (C) 2000-2015 the xine project
+ * Copyright (C) 2000-2016 the xine project
  *
  * This file is part of xine, a free video player.
  *
@@ -159,6 +159,9 @@
 /*
 #define LOG
 */
+/* #define LOG_DYNAMIC_PMT */
+
+#include "group_video.h"
 
 #include <xine/xine_internal.h>
 #include <xine/xineutils.h>
@@ -2747,7 +2750,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen,
 /*
  * ts demuxer class
  */
-static void *init_class (xine_t *xine, void *data) {
+void *demux_ts_init_class (xine_t *xine, void *data) {
 
   demux_ts_class_t     *this;
 
@@ -2771,18 +2774,4 @@ static void *init_class (xine_t *xine, void *data) {
 
   return this;
 }
-
-
-/*
- * exported plugin catalog entry
- */
-static const demuxer_info_t demux_info_ts = {
-  10                       /* priority */
-};
-
-const plugin_info_t xine_plugin_info[] EXPORTED = {
-  /* type, API, "name", version, special_info, init_function */
-  { PLUGIN_DEMUX, 27, "mpeg-ts", XINE_VERSION_CODE, &demux_info_ts, init_class },
-  { PLUGIN_NONE, 0, "", 0, NULL, NULL }
-};
 

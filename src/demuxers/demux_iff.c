@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2012 the xine project
+ * Copyright (C) 2004-2016 the xine project
  *
  * This file is part of xine, a free video player.
  *
@@ -46,6 +46,9 @@
 #include <unistd.h>
 #include <string.h>
 #include <stdlib.h>
+
+#define LOG_MODULE "demux_iff"
+#include "group_video.h"
 
 #include <xine/xine_internal.h>
 #include <xine/xineutils.h>
@@ -1214,7 +1217,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
   return &this->demux_plugin;
 }
 
-static void *init_plugin (xine_t *xine, void *data) {
+void *demux_iff_init_class (xine_t *xine, void *data) {
   demux_iff_class_t     *this;
 
   this = calloc(1, sizeof(demux_iff_class_t));
@@ -1236,17 +1239,4 @@ static void *init_plugin (xine_t *xine, void *data) {
 
   return this;
 }
-
-/*
- * exported plugin catalog entry
- */
-static const demuxer_info_t demux_info_iff = {
-  10                       /* priority */
-};
-
-const plugin_info_t xine_plugin_info[] EXPORTED = {
-  /* type, API, "name", version, special_info, init_function */
-  { PLUGIN_DEMUX, 27, "iff", XINE_VERSION_CODE, &demux_info_iff, init_plugin },
-  { PLUGIN_NONE, 0, "", 0, NULL, NULL }
-};
 
