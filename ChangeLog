@@ -3,6 +3,8 @@ xine-lib (1.2.7) ????-??-??
   * Add support for compressed HDMV PGS subtitles in Matroska.
   * Add HW accelerated OSD for Raspberry Pi.
   * Add simple deep color (9/10bit) support via ffmpeg.
+  * Join 15 video demuxers into a single multiplugin lib.
+  * Log individual items when loading multiplugin libs.
   * Improved qt/mp4 edit list handling.
   * Detect mp3 files with large id3v2 tags.
   * Auto recover from temporary DVB signal loss.
@@ -13,8 +15,8 @@ xine-lib (1.2.7) ????-??-??
   * BluRay subtitle fixes.
   * Various small fixes.
   * OpenGL(2) video out fixes and optimizations.
-  * Fix some heavy seeking issues.
-  * Build fixes, including much less warnings.
+  * Fix some issues with heavy stream seeking.
+  * Build fixes, including missing vcd libs and much less warnings.
   * Code simplifications.
 
 xine-lib (1.2.6) 2014-07-06
