@@ -10,7 +10,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: xine-lib.hg\n"
 "Report-Msgid-Bugs-To: xine-devel@lists.sourceforge.net\n"
-"POT-Creation-Date: 2014-04-08 15:25+0100\n"
+"POT-Creation-Date: 2016-07-31 16:43+0200\n"
 "PO-Revision-Date: 2008-04-02 01:05+0200\n"
 "Last-Translator: Carlos E. R. M. <carloser@users.sourceforge.net>\n"
 "Language-Team: Spanish <none>\n"
@@ -6262,13 +6262,13 @@ msgstr ""
 
 #: src/xine-engine/load_plugins.c:498
 #, c-format
-msgid "load_plugins: plugin %s found\n"
-msgstr "load_plugins: encontrado complemento %s\n"
+msgid "load_plugins: plugin %s:%s found\n"
+msgstr "load_plugins: encontrado complemento %s:%s\n"
 
 #: src/xine-engine/load_plugins.c:501
 #, c-format
-msgid "load_plugins: static plugin found\n"
-msgstr "load_plugins: encontrado complemento estático\n"
+msgid "load_plugins: static plugin %s found\n"
+msgstr "load_plugins: encontrado complemento estático %s\n"
 
 #: src/xine-engine/load_plugins.c:508
 #, c-format

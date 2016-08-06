@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: xine-lib 1.0\n"
 "Report-Msgid-Bugs-To: xine-devel@lists.sourceforge.net\n"
-"POT-Creation-Date: 2014-04-08 15:25+0100\n"
+"POT-Creation-Date: 2016-07-31 16:43+0200\n"
 "PO-Revision-Date: 2004-09-15 13:53+0100\n"
 "Last-Translator: \n"
 "Language-Team: Slovak <ski18n@lists.isternet.sk>\n"
@@ -5419,12 +5419,12 @@ msgstr ""
 
 #: src/xine-engine/load_plugins.c:498
 #, c-format
-msgid "load_plugins: plugin %s found\n"
-msgstr "load_plugins: nájdený modul: %s\n"
+msgid "load_plugins: plugin %s:%s found\n"
+msgstr "load_plugins: nájdený modul: %s:%s\n"
 
 #: src/xine-engine/load_plugins.c:501
 #, c-format
-msgid "load_plugins: static plugin found\n"
+msgid "load_plugins: static plugin %s found\n"
 msgstr ""
 
 #: src/xine-engine/load_plugins.c:508
