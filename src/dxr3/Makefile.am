@@ -38,7 +38,7 @@ xineplug_decode_dxr3_spu_la_CFLAGS = $(AM_CFLAGS) $(DVDNAV_CFLAGS) $(DVDREAD_CFL
 else
 xineplug_decode_dxr3_spu_la_SOURCES = dxr3_decode_spu.c nav_read.c
 xineplug_decode_dxr3_spu_la_LIBADD = $(XINE_LIB) $(LTLIBINTL)
-xineplug_decode_dxr3_spu_la_CPPFLAGS = $(AM_CPPFLAGS) -I$(top_srcdir)/src/input/libdvdnav
+xineplug_decode_dxr3_spu_la_CFLAGS = $(AM_CPPFLAGS) -I$(top_srcdir)/src/input/libdvdnav
 endif
 
 xineplug_vo_out_dxr3_la_SOURCES = \
