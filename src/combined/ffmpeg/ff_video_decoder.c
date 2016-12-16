@@ -578,24 +578,34 @@ static int get_buffer (AVCodecContext *context, AVFrame *av_frame)
   }
   ffsf->this     = this;
   ffsf->vo_frame = img;
-
-  av_frame->buf[0] = av_buffer_create (img->base[0], img->height * img->pitches[0],
-    release_frame, ffsf, 0);
-  if (av_frame->buf[0]) {
-    (ffsf->refs)++;
-  } else {
-    img->free (img);
-    free (ffsf);
-    return AVERROR (ENOMEM);
+  /* For single chunk render space like video_out_opengl2, just 1 AVBufferRef is enough. */
+  {
+    size_t s0 = img->height * img->pitches[0];
+    size_t s1 = (img->height + 1) >> 1, s2 = s1;
+    s1 *= img->pitches[1];
+    s2 *= img->pitches[2];
+    if ((img->base[1] == img->base[0] + s0) && (img->base[2] == img->base[1] + s1)) {
+      s0 += s1 + s2;
+      s1 = s2 = 0;
+      av_frame->buf[1] = av_frame->buf[2] = NULL;
+    }
+    av_frame->buf[0] = av_buffer_create (img->base[0], s0, release_frame, ffsf, 0);
+    if (av_frame->buf[0]) {
+      (ffsf->refs)++;
+    } else {
+      img->free (img);
+      free (ffsf);
+      return AVERROR (ENOMEM);
+    }
+    if (s1) {
+      av_frame->buf[1] = av_buffer_create (img->base[1], s1, release_frame, ffsf, 0);
+      if (av_frame->buf[1])
+        (ffsf->refs)++;
+      av_frame->buf[2] = av_buffer_create (img->base[2], s2, release_frame, ffsf, 0);
+      if (av_frame->buf[2])
+        (ffsf->refs)++;
+    }
   }
-  av_frame->buf[1] = av_buffer_create (img->base[1], (img->height + 1) / 2 * img->pitches[1],
-    release_frame, ffsf, 0);
-  if (av_frame->buf[1])
-    (ffsf->refs)++;
-  av_frame->buf[2] = av_buffer_create (img->base[2], (img->height + 1) / 2 * img->pitches[2],
-    release_frame, ffsf, 0);
-  if (av_frame->buf[2])
-    (ffsf->refs)++;
 #else
   av_frame->type = FF_BUFFER_TYPE_USER;
 #endif
