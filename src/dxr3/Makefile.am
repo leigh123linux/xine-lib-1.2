@@ -33,14 +33,20 @@ endif
 xineplug_decode_dxr3_video_la_SOURCES = dxr3_decode_video.c
 xineplug_decode_dxr3_video_la_LIBADD = $(XINE_LIB) $(LTLIBINTL)
 
+# foo_C[PP]FLAGS supersedes AM_C[PP]FLAGS when it is set somewhere.
+# This happens without respect to conditionals.
+# So make sure both alternatives use the same set of vars.
+# Otherwise, inherited flags may get lost in some cases.
 if WITH_EXTERNAL_DVDNAV
 xineplug_decode_dxr3_spu_la_SOURCES = dxr3_decode_spu.c
 xineplug_decode_dxr3_spu_la_LIBADD = $(XINE_LIB) $(LTLIBINTL) $(DVDNAV_LIBS) $(DVDREAD_LIBS)
+xineplug_decode_dxr3_spu_la_CPPFLAGS = $(AM_CPPFLAGS)
 xineplug_decode_dxr3_spu_la_CFLAGS = $(AM_CFLAGS) $(DVDNAV_CFLAGS) $(DVDREAD_CFLAGS)
 else
 xineplug_decode_dxr3_spu_la_SOURCES = dxr3_decode_spu.c nav_read.c
 xineplug_decode_dxr3_spu_la_LIBADD = $(XINE_LIB) $(LTLIBINTL)
-xineplug_decode_dxr3_spu_la_CFLAGS = $(AM_CPPFLAGS) -I$(top_srcdir)/src/input/libdvdnav
+xineplug_decode_dxr3_spu_la_CPPFLAGS = $(AM_CPPFLAGS) -I$(top_srcdir)/src/input/libdvdnav
+xineplug_decode_dxr3_spu_la_CFLAGS = $(AM_CFLAGS)
 endif
 
 xineplug_vo_out_dxr3_la_SOURCES = \
