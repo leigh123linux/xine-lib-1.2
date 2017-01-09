@@ -16,6 +16,10 @@ noinst_HEADERS = speakers.h
 
 EXTRA_DIST = audio_irixal_out.c
 
+if !ENABLE_LIBXINE_BUILTINS
+ao_builtins = xineplug_ao_out_none.la xineplug_ao_out_file.la
+endif
+
 if ENABLE_OSS
 oss_module = xineplug_ao_out_oss.la
 endif
@@ -62,8 +66,7 @@ sndio_module = xineplug_ao_out_sndio.la
 endif
 
 xineplug_LTLIBRARIES =		\
-	xineplug_ao_out_none.la	\
-	xineplug_ao_out_file.la	\
+	$(ao_builtins)		\
 	$(oss_module)		\
 	$(alsa_module)		\
 	$(sun_module)		\

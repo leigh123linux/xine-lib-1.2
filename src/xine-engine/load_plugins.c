@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2000-2016 the xine project
+ * Copyright (C) 2000-2017 the xine project
  *
  * This file is part of xine, a free video player.
  *
@@ -65,6 +65,8 @@
 #include <xine/compat.h>
 
 #include "xine_private.h"
+
+#include "builtins.h"
 
 #define LINE_MAX_LENGTH   (1024 * 32)  /* 32 KiB */
 
@@ -262,12 +264,13 @@ static plugin_node_t *_get_cached_node (xine_t *this,
   list_size = xine_sarray_size (list);
   for (list_id = 0; list_id < list_size; list_id++) {
     plugin_node_t *node = xine_sarray_get (list, list_id);
-    if( !previous_node &&
-	node->file->filesize == filesize &&
-	node->file->filemtime == filemtime &&
-	!strcmp( node->file->filename, filename )) {
-
-      return node;
+    if (!previous_node) {
+      if (node->file) {
+        if (node->file->filesize == filesize &&
+            node->file->filemtime == filemtime &&
+            !strcmp( node->file->filename, filename ))
+          return node;
+      }
     }
 
     /* skip previously returned items */
@@ -298,12 +301,11 @@ static plugin_file_t *_insert_file (xine_t *this,
   return entry;
 }
 
-
 static void _insert_node (xine_t *this,
 			  xine_sarray_t *list,
 			  plugin_file_t *file,
 			  plugin_node_t *node_cache,
-			  plugin_info_t *info,
+			  const plugin_info_t *info,
 			  int api_version){
 
   plugin_catalog_t     *catalog = this->plugin_catalog;
@@ -486,19 +488,35 @@ static plugin_catalog_t *XINE_MALLOC _new_catalog(void){
   return catalog;
 }
 
+static const char *plugin_type_to_string (int type) {
+  type &= PLUGIN_TYPE_MASK;
+  if (type == PLUGIN_INPUT)
+    return "libxine/builtins/input";
+  if (type == PLUGIN_DEMUX)
+    return "libxine/builtins/demux";
+  if (type == PLUGIN_AUDIO_DECODER)
+    return "libxine/builtins/audio_decoder";
+  if (type == PLUGIN_VIDEO_DECODER)
+    return "libxine/builtins/video_decoder";
+  if (type == PLUGIN_SPU_DECODER)
+    return "libxine/builtins/spu_decoder";
+  if (type == PLUGIN_POST)
+    return "libxine/builtins/post";
+  if (type == PLUGIN_AUDIO_OUT)
+    return "libxine/builtins/audio_out";
+  if (type == PLUGIN_VIDEO_OUT)
+    return "libxine/builtins/video_out";
+  return "libxine/builtins";
+};
+
 static void _register_plugins_internal(xine_t *this, plugin_file_t *file,
-                                       plugin_node_t *node_cache, plugin_info_t *info) {
+                                       plugin_node_t *node_cache, const plugin_info_t *info) {
   _x_assert(this);
   _x_assert(info);
 
   while ( info && info->type != PLUGIN_NONE ) {
-
-    if (file && file->filename)
-      xine_log (this, XINE_LOG_PLUGIN,
-		_("load_plugins: plugin %s:%s found\n"), file->filename, info->id);
-    else
-      xine_log (this, XINE_LOG_PLUGIN,
-		_("load_plugins: static plugin %s found\n"), info->id);
+    const char *fn = (file && file->filename) ? file->filename : plugin_type_to_string (info->type);
+    xine_log (this, XINE_LOG_PLUGIN, _("load_plugins: plugin %s:%s found\n"), fn, info->id);
 
     if (this->plugin_catalog->plugin_count >= PLUGIN_MAX ||
 	(this->plugin_catalog->decoder_count >= DECODER_MAX &&
@@ -832,21 +850,25 @@ static void _load_required_plugins(xine_t *this, xine_sarray_t *list) {
     /*
      * preload plugins if not cached
      */
-    if( (node->info->type & PLUGIN_MUST_PRELOAD) && !node->plugin_class &&
-        node->file->lib_handle ) {
+    do {
+      if (!(node->info->type & PLUGIN_MUST_PRELOAD)) /* no preload needed */
+        break;
+      if (node->plugin_class) /* is already loaded */
+        break;
+      if (node->file && !node->file->lib_handle) /* lib unavailable */
+        break;
 
-      lprintf("preload plugin %s from %s\n", node->info->id, node->file->filename);
+      lprintf ("preload plugin %s from %s\n", node->info->id, node->file ? node->file->filename : "libxine/builtins");
 
       if (! _load_plugin_class (this, node, NULL)) {
 	/* in case of failure remove from list */
 
 	xine_sarray_remove(list, list_id);
 	list_size = xine_sarray_size(list);
-
-      } else
-	list_id++;
-    } else
-      list_id++;
+        list_id--;
+      }
+    } while (0);
+    list_id++;
   }
 }
 
@@ -882,9 +904,14 @@ static void save_plugin_list(xine_t *this, FILE *fp, xine_sarray_t *list) {
     node = xine_sarray_get(list, list_id);
 
     file = node->file;
-    fprintf(fp, "[%s]\n", file->filename );
-    fprintf(fp, "size=%" PRId64 "\n", (uint64_t) file->filesize );
-    fprintf(fp, "mtime=%" PRId64 "\n", (uint64_t) file->filemtime );
+    if (file) {
+      fprintf(fp, "[%s]\n", file->filename );
+      fprintf(fp, "size=%" PRId64 "\n", (uint64_t) file->filesize );
+      fprintf(fp, "mtime=%" PRId64 "\n", (uint64_t) file->filemtime );
+    } else {
+      /* dump builtins for debugging */
+      fprintf(fp, "[libxine/builtins]\n");
+    }
     fprintf(fp, "type=%d\n", node->info->type );
     fprintf(fp, "api=%d\n", node->info->API );
     fprintf(fp, "id=%s\n", node->info->id );
@@ -973,6 +1000,7 @@ static void load_plugin_list(xine_t *this, FILE *fp, xine_sarray_t *plugins) {
   char *value;
   size_t line_len;
   int version_ok = 0;
+  int skip = 0;
 
   line = malloc(LINE_MAX_LENGTH);
   if (!line)
@@ -1000,7 +1028,15 @@ static void load_plugin_list(xine_t *this, FILE *fp, xine_sarray_t *plugins) {
 
       if( node ) {
         xine_sarray_add (plugins, node);
+        node = NULL;
       }
+
+      if (!strcmp (line, "[libxine/builtins")) {
+        skip = 1;
+        continue;
+      }
+
+      skip = 0;
       node                = calloc(1, sizeof(plugin_node_t));
       file                = calloc(1, sizeof(plugin_file_t));
       node->file          = file;
@@ -1012,6 +1048,9 @@ static void load_plugin_list(xine_t *this, FILE *fp, xine_sarray_t *plugins) {
       ao_info             = NULL;
       post_info           = NULL;
     }
+
+    if (skip)
+      continue;
 
     if ((value = strchr (line, '='))) {
 
@@ -1028,11 +1067,15 @@ static void load_plugin_list(xine_t *this, FILE *fp, xine_sarray_t *plugins) {
         }
       } else if (node) {
         if( !strcmp("size",line) ) {
-          sscanf(value," %" SCNu64,&llu);
-          file->filesize = (off_t) llu;
+          if (file) {
+            sscanf(value," %" SCNu64,&llu);
+            file->filesize = (off_t) llu;
+          }
         } else if( !strcmp("mtime",line) ) {
-          sscanf(value," %" SCNu64,&llu);
-          file->filemtime = (time_t) llu;
+          if (file) {
+            sscanf(value," %" SCNu64,&llu);
+            file->filemtime = (time_t) llu;
+          }
         } else if( !strcmp("type",line) ) {
           sscanf(value," %d",&i);
           node->info->type = i;
@@ -1282,6 +1325,11 @@ void _x_scan_plugins (xine_t *this) {
   homedir = strdup(xine_get_homedir());
   this->plugin_catalog = _new_catalog();
   XINE_PROFILE(load_cached_catalog (this));
+
+#ifdef XINE_MAKE_BUILTINS
+  lprintf ("collect_plugins in libxine\n");
+  _register_plugins_internal (this, NULL, NULL , xine_builtin_plugin_info);
+#endif
 
   if ((pluginpath = getenv("XINE_PLUGIN_PATH")) != NULL && *pluginpath) {
     char *p = pluginpath;

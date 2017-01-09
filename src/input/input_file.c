@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2000-2014 the xine project
+ * Copyright (C) 2000-2017 the xine project
  *
  * This file is part of xine, a free video player.
  *
@@ -89,7 +89,7 @@ typedef struct {
 } file_input_plugin_t;
 
 
-static uint32_t file_plugin_get_capabilities (input_plugin_t *this_gen) {
+static uint32_t file_input_get_capabilities (input_plugin_t *this_gen) {
 
   struct stat          buf ;
   file_input_plugin_t *this = (file_input_plugin_t *) this_gen;
@@ -120,7 +120,7 @@ static uint32_t file_plugin_get_capabilities (input_plugin_t *this_gen) {
  * @return 1 if the file can still be mmapped, 0 if the file
  *         changed size
  */
-static int check_mmap_file(file_input_plugin_t *this) {
+static int file_input_check_mmap (file_input_plugin_t *this) {
   struct stat          sbuf;
 
   if ( ! this->mmap_on ) return 0;
@@ -142,14 +142,14 @@ static int check_mmap_file(file_input_plugin_t *this) {
 }
 #endif
 
-static off_t file_plugin_read (input_plugin_t *this_gen, void *buf, off_t len) {
+static off_t file_input_read (input_plugin_t *this_gen, void *buf, off_t len) {
   file_input_plugin_t *this = (file_input_plugin_t *) this_gen;
 
   if (len < 0)
     return -1;
 
 #ifdef HAVE_MMAP
-  if ( check_mmap_file(this) ) {
+  if ( file_input_check_mmap(this) ) {
     off_t l = len;
     if ( (this->mmap_curr + len) > (this->mmap_base + this->mmap_len) )
       l = (this->mmap_base + this->mmap_len) - this->mmap_curr;
@@ -164,7 +164,7 @@ static off_t file_plugin_read (input_plugin_t *this_gen, void *buf, off_t len) {
   return read (this->fh, buf, len);
 }
 
-static buf_element_t *file_plugin_read_block (input_plugin_t *this_gen, fifo_buffer_t *fifo, off_t todo) {
+static buf_element_t *file_input_read_block (input_plugin_t *this_gen, fifo_buffer_t *fifo, off_t todo) {
 
   file_input_plugin_t  *this = (file_input_plugin_t *) this_gen;
   buf_element_t        *buf = fifo->buffer_pool_alloc (fifo);
@@ -179,7 +179,7 @@ static buf_element_t *file_plugin_read_block (input_plugin_t *this_gen, fifo_buf
   buf->type = BUF_DEMUX_BLOCK;
 
 #ifdef HAVE_MMAP
-  if ( check_mmap_file(this) ) {
+  if ( file_input_check_mmap(this) ) {
     off_t len = todo;
 
     if ( (this->mmap_curr + len) > (this->mmap_base + this->mmap_len) )
@@ -226,11 +226,11 @@ static buf_element_t *file_plugin_read_block (input_plugin_t *this_gen, fifo_buf
   return buf;
 }
 
-static off_t file_plugin_seek (input_plugin_t *this_gen, off_t offset, int origin) {
+static off_t file_input_seek (input_plugin_t *this_gen, off_t offset, int origin) {
   file_input_plugin_t *this = (file_input_plugin_t *) this_gen;
 
 #ifdef HAVE_MMAP /* Simulate f*() library calls */
-  if ( check_mmap_file(this) ) {
+  if ( file_input_check_mmap(this) ) {
     uint8_t *new_point = this->mmap_curr;
     switch(origin) {
     case SEEK_SET: new_point = this->mmap_base + offset; break;
@@ -253,21 +253,21 @@ static off_t file_plugin_seek (input_plugin_t *this_gen, off_t offset, int origi
   return lseek (this->fh, offset, origin);
 }
 
-static off_t file_plugin_get_current_pos (input_plugin_t *this_gen){
+static off_t file_input_get_current_pos (input_plugin_t *this_gen){
   file_input_plugin_t *this = (file_input_plugin_t *) this_gen;
 
   if (this->fh <0)
     return 0;
 
 #ifdef HAVE_MMAP
-  if ( check_mmap_file(this) )
+  if ( file_input_check_mmap(this) )
     return (this->mmap_curr - this->mmap_base);
 #endif
 
   return lseek (this->fh, 0, SEEK_CUR);
 }
 
-static off_t file_plugin_get_length (input_plugin_t *this_gen) {
+static off_t file_input_get_length (input_plugin_t *this_gen) {
 
   struct stat          buf ;
   file_input_plugin_t *this = (file_input_plugin_t *) this_gen;
@@ -276,7 +276,7 @@ static off_t file_plugin_get_length (input_plugin_t *this_gen) {
     return 0;
 
 #ifdef HAVE_MMAP
-  if ( check_mmap_file(this) )
+  if ( file_input_check_mmap(this) )
     return this->mmap_len;
 #endif
 
@@ -287,14 +287,14 @@ static off_t file_plugin_get_length (input_plugin_t *this_gen) {
   return 0;
 }
 
-static uint32_t file_plugin_get_blocksize (input_plugin_t *this_gen) {
+static uint32_t file_input_get_blocksize (input_plugin_t *this_gen) {
   return 0;
 }
 
 /*
  * Return 1 if filepathname is a directory, otherwise 0
  */
-static int is_a_dir(char *filepathname) {
+static int file_input_is_dir (const char *filepathname) {
   struct stat  pstat;
 
   stat(filepathname, &pstat);
@@ -302,19 +302,18 @@ static int is_a_dir(char *filepathname) {
   return (S_ISDIR(pstat.st_mode));
 }
 
-static const char* file_plugin_get_mrl (input_plugin_t *this_gen) {
+static const char* file_input_get_mrl (input_plugin_t *this_gen) {
   file_input_plugin_t *this = (file_input_plugin_t *) this_gen;
 
   return this->mrl;
 }
 
-static int file_plugin_get_optional_data (input_plugin_t *this_gen,
-					  void *data, int data_type) {
+static int file_input_get_optional_data (input_plugin_t *this_gen, void *data, int data_type) {
 
   return INPUT_OPTIONAL_UNSUPPORTED;
 }
 
-static void file_plugin_dispose (input_plugin_t *this_gen ) {
+static void file_input_dispose (input_plugin_t *this_gen ) {
   file_input_plugin_t *this = (file_input_plugin_t *) this_gen;
 
 #ifdef HAVE_MMAP
@@ -334,27 +333,27 @@ static void file_plugin_dispose (input_plugin_t *this_gen ) {
   free (this);
 }
 
-static char *decode_uri (char *uri) {
+static char *file_input_decode_uri (char *uri) {
   uri = strdup(uri);
   _x_mrl_unescape (uri);
   return uri;
 }
 
-static int file_plugin_open (input_plugin_t *this_gen ) {
+static int file_input_open (input_plugin_t *this_gen ) {
   file_input_plugin_t *this = (file_input_plugin_t *) this_gen;
   char                *filename;
   struct stat          sbuf;
 
-  lprintf("file_plugin_open\n");
+  lprintf("file_input_open\n");
 
   if (strncasecmp (this->mrl, "file:/", 6) == 0)
   {
     if (strncasecmp (this->mrl, "file://localhost/", 16) == 0)
-      filename = decode_uri(&(this->mrl[16]));
+      filename = file_input_decode_uri(&(this->mrl[16]));
     else if (strncasecmp (this->mrl, "file://127.0.0.1/", 16) == 0)
-      filename = decode_uri(&(this->mrl[16]));
+      filename = file_input_decode_uri(&(this->mrl[16]));
     else
-      filename = decode_uri(&(this->mrl[5]));
+      filename = file_input_decode_uri(&(this->mrl[5]));
   }
   else
     filename = strdup(this->mrl); /* NEVER unescape plain file names! */
@@ -405,7 +404,7 @@ static int file_plugin_open (input_plugin_t *this_gen ) {
   }
 #endif
 
-  if (file_plugin_get_length (this_gen) == 0) {
+  if (file_input_get_length (this_gen) == 0) {
       _x_message(this->stream, XINE_MSG_FILE_EMPTY, this->mrl, NULL);
       close (this->fh);
       this->fh = -1;
@@ -417,14 +416,14 @@ static int file_plugin_open (input_plugin_t *this_gen ) {
   return 1;
 }
 
-static input_plugin_t *file_class_get_instance (input_class_t *cls_gen, xine_stream_t *stream,
+static input_plugin_t *file_input_get_instance (input_class_t *cls_gen, xine_stream_t *stream,
 				    const char *data) {
 
   /* file_input_class_t  *cls = (file_input_class_t *) cls_gen; */
   file_input_plugin_t *this;
   char                *mrl = strdup(data);
 
-  lprintf("file_class_get_instance\n");
+  lprintf("file_input_get_instance\n");
 
   if ((strncasecmp (mrl, "file:", 5)) && strstr (mrl, ":/") && (strstr (mrl, ":/") < strchr(mrl, '/'))) {
     free (mrl);
@@ -436,17 +435,17 @@ static input_plugin_t *file_class_get_instance (input_class_t *cls_gen, xine_str
   this->mrl    = mrl;
   this->fh     = -1;
 
-  this->input_plugin.open               = file_plugin_open;
-  this->input_plugin.get_capabilities   = file_plugin_get_capabilities;
-  this->input_plugin.read               = file_plugin_read;
-  this->input_plugin.read_block         = file_plugin_read_block;
-  this->input_plugin.seek               = file_plugin_seek;
-  this->input_plugin.get_current_pos    = file_plugin_get_current_pos;
-  this->input_plugin.get_length         = file_plugin_get_length;
-  this->input_plugin.get_blocksize      = file_plugin_get_blocksize;
-  this->input_plugin.get_mrl            = file_plugin_get_mrl;
-  this->input_plugin.get_optional_data  = file_plugin_get_optional_data;
-  this->input_plugin.dispose            = file_plugin_dispose;
+  this->input_plugin.open               = file_input_open;
+  this->input_plugin.get_capabilities   = file_input_get_capabilities;
+  this->input_plugin.read               = file_input_read;
+  this->input_plugin.read_block         = file_input_read_block;
+  this->input_plugin.seek               = file_input_seek;
+  this->input_plugin.get_current_pos    = file_input_get_current_pos;
+  this->input_plugin.get_length         = file_input_get_length;
+  this->input_plugin.get_blocksize      = file_input_get_blocksize;
+  this->input_plugin.get_mrl            = file_input_get_mrl;
+  this->input_plugin.get_optional_data  = file_input_get_optional_data;
+  this->input_plugin.dispose            = file_input_dispose;
   this->input_plugin.input_class        = cls_gen;
 
   return &this->input_plugin;
@@ -482,12 +481,12 @@ static input_plugin_t *file_class_get_instance (input_class_t *cls_gen, xine_str
 /*
  * Callback for config changes.
  */
-static void hidden_bool_cb(void *data, xine_cfg_entry_t *cfg) {
+static void file_input_hidden_bool_cb (void *data, xine_cfg_entry_t *cfg) {
   file_input_class_t *this = (file_input_class_t *) data;
 
   this->show_hidden_files = cfg->num_value;
 }
-static void origin_change_cb(void *data, xine_cfg_entry_t *cfg) {
+static void file_input_origin_change_cb (void *data, xine_cfg_entry_t *cfg) {
   file_input_class_t *this = (file_input_class_t *) data;
 
   this->origin_path = cfg->str_value;
@@ -503,7 +502,7 @@ static void origin_change_cb(void *data, xine_cfg_entry_t *cfg) {
 #define CMP          2
 #define LEN          3
 #define ISDIGIT(c)   ((unsigned) (c) - '0' <= 9)
-static int _strverscmp(const char *s1, const char *s2) {
+static int file_input_strverscmp (const char *s1, const char *s2) {
   const unsigned char *p1 = (const unsigned char *) s1;
   const unsigned char *p2 = (const unsigned char *) s2;
   unsigned char c1, c2;
@@ -560,16 +559,16 @@ static int _strverscmp(const char *s1, const char *s2) {
 }
 
 /*
- * Wrapper to _strverscmp() for qsort() calls, which sort mrl_t type array.
+ * Wrapper to file_input_strverscmp() for qsort() calls, which sort mrl_t type array.
  */
-static int _sortfiles_default(const xine_mrl_t *s1, const xine_mrl_t *s2) {
-  return(_strverscmp(s1->mrl, s2->mrl));
+static int file_input_sortfiles_default (const xine_mrl_t *s1, const xine_mrl_t *s2) {
+  return(file_input_strverscmp(s1->mrl, s2->mrl));
 }
 
 /*
  * Return the type (OR'ed) of the given file *fully named*
  */
-static uint32_t get_file_type(char *filepathname, char *origin, xine_t *xine) {
+static uint32_t file_input_get_file_type (char *filepathname, char *origin, xine_t *xine) {
   struct stat  pstat;
   int          mode;
   uint32_t     file_type = 0;
@@ -617,7 +616,7 @@ static uint32_t get_file_type(char *filepathname, char *origin, xine_t *xine) {
 /*
  * Return the file size of the given file *fully named*
  */
-static off_t get_file_size(char *filepathname, char *origin) {
+static off_t file_input_get_file_size (const char *filepathname, const char *origin) {
   struct stat  pstat;
   char         buf[XINE_PATH_MAX + XINE_NAME_MAX + 1];
 
@@ -630,8 +629,7 @@ static off_t get_file_size(char *filepathname, char *origin) {
   return pstat.st_size;
 }
 
-static xine_mrl_t **file_class_get_dir (input_class_t *this_gen,
-					const char *filename, int *nFiles) {
+static xine_mrl_t **file_input_class_get_dir (input_class_t *this_gen, const char *filename, int *nFiles) {
 
   /* FIXME: this code needs cleanup badly */
 
@@ -646,7 +644,7 @@ static xine_mrl_t **file_class_get_dir (input_class_t *this_gen,
   int                   num_dir_files   = 0;
   int                   num_norm_files  = 0;
   int                   num_files       = -1;
-  int                 (*func) ()        = _sortfiles_default;
+  int                 (*func) ()        = file_input_sortfiles_default;
   int                   already_tried   = 0;
 
   *nFiles = 0;
@@ -700,7 +698,7 @@ static xine_mrl_t **file_class_get_dir (input_class_t *this_gen,
     memset(fullfilename, 0, sizeof(fullfilename));
     snprintf(fullfilename, sizeof(fullfilename), "%s/%s", current_dir, pdirent->d_name);
 
-    if(is_a_dir(fullfilename)) {
+    if(file_input_is_dir(fullfilename)) {
 
       /* if user don't want to see hidden files, ignore them */
       if(this->show_hidden_files == 0 &&
@@ -713,8 +711,8 @@ static xine_mrl_t **file_class_get_dir (input_class_t *this_gen,
 	dir_files[num_dir_files].origin = strdup(current_dir);
 	dir_files[num_dir_files].mrl    = _x_asprintf("%s%s", current_dir_slashed, pdirent->d_name);
 	dir_files[num_dir_files].link   = NULL;
-	dir_files[num_dir_files].type   = get_file_type(fullfilename, current_dir, this->xine);
-	dir_files[num_dir_files].size   = get_file_size(fullfilename, current_dir);
+	dir_files[num_dir_files].type   = file_input_get_file_type(fullfilename, current_dir, this->xine);
+	dir_files[num_dir_files].size   = file_input_get_file_size(fullfilename, current_dir);
 
 	/* The file is a link, follow it */
 	if(dir_files[num_dir_files].type & mrl_file_symlink) {
@@ -731,7 +729,7 @@ static xine_mrl_t **file_class_get_dir (input_class_t *this_gen,
 	    dir_files[num_dir_files].link =
 	      strndup(linkbuf, linksize);
 
-	    dir_files[num_dir_files].type |= get_file_type(dir_files[num_dir_files].link, current_dir, this->xine);
+	    dir_files[num_dir_files].type |= file_input_get_file_type(dir_files[num_dir_files].link, current_dir, this->xine);
 	  }
 	}
 
@@ -748,8 +746,8 @@ static xine_mrl_t **file_class_get_dir (input_class_t *this_gen,
 	hide_files[num_hide_files].origin = strdup(current_dir);
 	hide_files[num_hide_files].mrl    = _x_asprintf("%s%s", current_dir_slashed, pdirent->d_name);
 	hide_files[num_hide_files].link   = NULL;
-	hide_files[num_hide_files].type   = get_file_type(fullfilename, current_dir, this->xine);
-	hide_files[num_hide_files].size   = get_file_size(fullfilename, current_dir);
+	hide_files[num_hide_files].type   = file_input_get_file_type(fullfilename, current_dir, this->xine);
+	hide_files[num_hide_files].size   = file_input_get_file_size(fullfilename, current_dir);
 
 	/* The file is a link, follow it */
 	if(hide_files[num_hide_files].type & mrl_file_symlink) {
@@ -766,7 +764,7 @@ static xine_mrl_t **file_class_get_dir (input_class_t *this_gen,
 	  else {
 	    hide_files[num_hide_files].link =
 	      strndup(linkbuf, linksize);
-	    hide_files[num_hide_files].type |= get_file_type(hide_files[num_hide_files].link, current_dir, this->xine);
+	    hide_files[num_hide_files].type |= file_input_get_file_type(hide_files[num_hide_files].link, current_dir, this->xine);
 	  }
 	}
 
@@ -779,8 +777,8 @@ static xine_mrl_t **file_class_get_dir (input_class_t *this_gen,
       norm_files[num_norm_files].origin = strdup(current_dir);
       norm_files[num_norm_files].mrl    = _x_asprintf("%s%s", current_dir_slashed, pdirent->d_name);
       norm_files[num_norm_files].link   = NULL;
-      norm_files[num_norm_files].type   = get_file_type(fullfilename, current_dir, this->xine);
-      norm_files[num_norm_files].size   = get_file_size(fullfilename, current_dir);
+      norm_files[num_norm_files].type   = file_input_get_file_type(fullfilename, current_dir, this->xine);
+      norm_files[num_norm_files].size   = file_input_get_file_size(fullfilename, current_dir);
 
       /* The file is a link, follow it */
       if(norm_files[num_norm_files].type & mrl_file_symlink) {
@@ -797,7 +795,7 @@ static xine_mrl_t **file_class_get_dir (input_class_t *this_gen,
 	else {
 	  norm_files[num_norm_files].link =
 	    strndup(linkbuf, linksize);
-	  norm_files[num_norm_files].type |= get_file_type(norm_files[num_norm_files].link, current_dir, this->xine);
+	  norm_files[num_norm_files].type |= file_input_get_file_type(norm_files[num_norm_files].link, current_dir, this->xine);
 	}
       }
 
@@ -939,7 +937,7 @@ static xine_mrl_t **file_class_get_dir (input_class_t *this_gen,
   return this->mrls;
 }
 
-static void file_class_dispose (input_class_t *this_gen) {
+static void file_input_class_dispose (input_class_t *this_gen) {
   file_input_class_t  *this = (file_input_class_t *) this_gen;
   config_values_t     *config = this->xine->config;
 
@@ -954,7 +952,7 @@ static void file_class_dispose (input_class_t *this_gen) {
   free (this);
 }
 
-static void *init_plugin (xine_t *xine, void *data) {
+static void *file_input_init_plugin (xine_t *xine, void *data) {
 
   file_input_class_t  *this;
   config_values_t     *config;
@@ -965,12 +963,12 @@ static void *init_plugin (xine_t *xine, void *data) {
   this->config = xine->config;
   config       = xine->config;
 
-  this->input_class.get_instance       = file_class_get_instance;
+  this->input_class.get_instance       = file_input_get_instance;
   this->input_class.identifier         = "file";
   this->input_class.description        = N_("file input plugin");
-  this->input_class.get_dir            = file_class_get_dir;
+  this->input_class.get_dir            = file_input_class_get_dir;
   this->input_class.get_autoplay_list  = NULL;
-  this->input_class.dispose            = file_class_dispose;
+  this->input_class.dispose            = file_input_class_dispose;
   this->input_class.eject_media        = NULL;
 
   this->mrls = (xine_mrl_t **) calloc(1, sizeof(xine_mrl_t*));
@@ -987,7 +985,7 @@ static void *init_plugin (xine_t *xine, void *data) {
 						_("file browsing start location"),
 						_("The browser to select the file to play will "
 						  "start at this location."),
-						0, origin_change_cb, (void *) this);
+						0, file_input_origin_change_cb, (void *) this);
   }
 
   this->show_hidden_files = config->register_bool(config,
@@ -995,7 +993,7 @@ static void *init_plugin (xine_t *xine, void *data) {
 						  0, _("list hidden files"),
 						  _("If enabled, the browser to select the file to "
 						    "play will also show hidden files."),
-						  10, hidden_bool_cb, (void *) this);
+						  10, file_input_hidden_bool_cb, (void *) this);
 
   return this;
 }
@@ -1004,8 +1002,13 @@ static void *init_plugin (xine_t *xine, void *data) {
  * exported plugin catalog entry
  */
 
+#define INPUT_FILE_CATALOG { PLUGIN_INPUT | PLUGIN_MUST_PRELOAD, 18, "FILE", XINE_VERSION_CODE, NULL, file_input_init_plugin }
+
+#ifndef XINE_MAKE_BUILTINS
 const plugin_info_t xine_plugin_info[] EXPORTED = {
   /* type, API, "name", version, special_info, init_function */
-  { PLUGIN_INPUT | PLUGIN_MUST_PRELOAD, 18, "FILE", XINE_VERSION_CODE, NULL, init_plugin },
+  INPUT_FILE_CATALOG,
   { PLUGIN_NONE, 0, "", 0, NULL, NULL }
 };
+#endif
+

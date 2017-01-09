@@ -1034,6 +1034,15 @@ dnl -------
 dnl Plugins
 dnl -------
 
+dnl build a few basic plugins into libxine itself (optional, enabled by default)
+default_enable_libxine_builtins=yes
+AC_ARG_ENABLE([libxine-builtins],
+    [AS_HELP_STRING([--disable-libxine-builtins], [Disable building a few basic plugins into libxine])])
+if test x"$enable_libxine_builtins" != x"no" ; then
+    AC_DEFINE([XINE_MAKE_BUILTINS], 1, [Define this if you want a few basic plugins built into libxine itself])
+fi
+AM_CONDITIONAL([ENABLE_LIBXINE_BUILTINS], [test x"$enable_libxine_builtins" != x"no"])
+
 XINE_AUDIO_OUT_PLUGINS
 XINE_VIDEO_OUT_PLUGINS
 XINE_INPUT_PLUGINS

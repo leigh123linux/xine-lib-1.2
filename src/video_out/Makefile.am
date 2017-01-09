@@ -16,6 +16,10 @@ EXTRA_DIST = video_out_directx.c video_out_macosx.m color_matrix.c
 
 noinst_HEADERS = yuv2rgb.h x11osd.h xcbosd.h xv_common.h
 
+if !ENABLE_LIBXINE_BUILTINS
+vo_builtins = xineplug_vo_out_none.la
+endif
+
 if HAVE_X11
 X11OSD = x11osd.c
 xshm_module = xineplug_vo_out_xshm.la
@@ -133,8 +137,8 @@ xineplug_LTLIBRARIES = $(xshm_module) $(xv_module) $(xvmc_module) \
 		  $(vdpau_module) \
 		  $(vaapi_module) \
 		  $(mmal_module) \
-                  xineplug_vo_out_raw.la \
-                  xineplug_vo_out_none.la
+		  $(vo_builtins) \
+                  xineplug_vo_out_raw.la
 
 xineplug_vo_out_vdpau_la_SOURCES = video_out_vdpau.c
 xineplug_vo_out_vdpau_la_LIBADD = $(XINE_LIB) $(PTHREAD_LIBS) $(X_LIBS) $(LTLIBINTL) $(VDPAU_LIBS) -lm

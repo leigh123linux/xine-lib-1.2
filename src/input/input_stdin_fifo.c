@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2000-2012 the xine project
+ * Copyright (C) 2000-2017 the xine project
  *
  * This file is part of xine, a free video player.
  *
@@ -352,7 +352,7 @@ static input_plugin_t *stdin_class_get_instance (input_class_t *class_gen,
 /*
  * stdin input plugin class stuff
  */
-static void *init_class (xine_t *xine, void *data) {
+static void *stdin_plugin_init_class (xine_t *xine, void *data) {
 
   stdin_input_class_t  *this;
 
@@ -375,8 +375,13 @@ static void *init_class (xine_t *xine, void *data) {
  * exported plugin catalog entry
  */
 
+#define INPUT_STDIN_CATALOG { PLUGIN_INPUT, 18, "stdin", XINE_VERSION_CODE, NULL, stdin_plugin_init_class }
+
+#ifndef XINE_MAKE_BUILTINS
 const plugin_info_t xine_plugin_info[] EXPORTED = {
   /* type, API, "name", version, special_info, init_function */
-  { PLUGIN_INPUT, 18, "stdin", XINE_VERSION_CODE, NULL, init_class },
+  INPUT_STDIN_CATALOG,
   { PLUGIN_NONE, 0, "", 0, NULL, NULL }
 };
+#endif
+

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2000-2012 the xine project
+ * Copyright (C) 2000-2017 the xine project
  *
  * This file is part of xine, a free video player.
  *
@@ -39,7 +39,7 @@
 
 #define AO_OUT_FILE_IFACE_VERSION 9
 
-#define GAP_TOLERANCE        INT_MAX
+#define AOF_GAP_TOLERANCE        INT_MAX
 
 #ifdef WIN32
 #ifndef S_IWUSR
@@ -55,7 +55,7 @@
 
 /* Taken (hStudlyCapsAndAll) from sox's wavwritehdr */
 
-struct wavhdr {
+struct ao_file_wavhdr {
 	unsigned char bRiffMagic[4];	// 'RIFF'
 	uint32_t wRiffLength ;		// length of file minus the 8 byte riff header
 	unsigned char bWaveMagic[8];	// 'WAVEfmt '
@@ -72,7 +72,7 @@ struct wavhdr {
 	unsigned long dwDataLength;	// length of data chunk minus 8 byte header
 };
 
-typedef struct file_driver_s {
+typedef struct ao_file_driver_s {
 	ao_driver_t    ao_driver;
 
 	xine_t        *xine;
@@ -89,22 +89,22 @@ typedef struct file_driver_s {
 	int            fd;
 	size_t         bytes_written;
 	struct timeval endtime;
-} file_driver_t;
+} ao_file_driver_t;
 
 typedef struct {
 	audio_driver_class_t  driver_class;
 
 	config_values_t      *config;
 	xine_t               *xine;
-} file_class_t;
+} ao_file_class_t;
 
 /*
  * open the audio device for writing to
  */
 static int ao_file_open(ao_driver_t *this_gen, uint32_t bits, uint32_t rate, int mode)
 {
-	file_driver_t *this = (file_driver_t *) this_gen;
-	struct wavhdr w;
+	ao_file_driver_t *this = (ao_file_driver_t *) this_gen;
+	struct ao_file_wavhdr w;
 
 	xprintf (this->xine, XINE_VERBOSITY_LOG,
 		 "audio_file_out: ao_open bits=%d rate=%d, mode=%d\n", bits, rate, mode);
@@ -177,25 +177,25 @@ static int ao_file_open(ao_driver_t *this_gen, uint32_t bits, uint32_t rate, int
 
 static int ao_file_num_channels(ao_driver_t *this_gen)
 {
-	file_driver_t *this = (file_driver_t *) this_gen;
+	ao_file_driver_t *this = (ao_file_driver_t *) this_gen;
 	return this->num_channels;
 }
 
 static int ao_file_bytes_per_frame(ao_driver_t *this_gen)
 {
-	file_driver_t *this = (file_driver_t *) this_gen;
+	ao_file_driver_t *this = (ao_file_driver_t *) this_gen;
 	return this->bytes_per_frame;
 }
 
 static int ao_file_get_gap_tolerance (ao_driver_t *this_gen)
 {
-	return GAP_TOLERANCE;
+	return AOF_GAP_TOLERANCE;
 }
 
 static int ao_file_write(ao_driver_t *this_gen, int16_t *data,
                          uint32_t num_frames)
 {
-	file_driver_t *this = (file_driver_t *) this_gen;
+	ao_file_driver_t *this = (ao_file_driver_t *) this_gen;
 	size_t len = num_frames * this->bytes_per_frame;
 	unsigned long usecs;
 
@@ -239,7 +239,7 @@ static int ao_file_write(ao_driver_t *this_gen, int16_t *data,
 
 static int ao_file_delay (ao_driver_t *this_gen)
 {
-	file_driver_t *this = (file_driver_t *) this_gen;
+	ao_file_driver_t *this = (ao_file_driver_t *) this_gen;
 	struct timeval now;
 	unsigned long tosleep;
 
@@ -266,7 +266,7 @@ static int ao_file_delay (ao_driver_t *this_gen)
 
 static void ao_file_close(ao_driver_t *this_gen)
 {
-	file_driver_t *this = (file_driver_t *) this_gen;
+	ao_file_driver_t *this = (ao_file_driver_t *) this_gen;
 	uint32_t len;
 
 	len = le2me_32(this->bytes_written);
@@ -295,13 +295,13 @@ static void ao_file_close(ao_driver_t *this_gen)
 }
 
 static uint32_t ao_file_get_capabilities (ao_driver_t *this_gen) {
-	file_driver_t *this = (file_driver_t *) this_gen;
+	ao_file_driver_t *this = (ao_file_driver_t *) this_gen;
 	return this->capabilities;
 }
 
 static void ao_file_exit(ao_driver_t *this_gen)
 {
-	file_driver_t *this = (file_driver_t *) this_gen;
+	ao_file_driver_t *this = (ao_file_driver_t *) this_gen;
 
 	if (this->fd != -1)
 		ao_file_close(this_gen);
@@ -337,16 +337,16 @@ static int ao_file_ctrl(ao_driver_t *this_gen, int cmd, ...) {
 	return 0;
 }
 
-static ao_driver_t *open_plugin (audio_driver_class_t *class_gen,
+static ao_driver_t *ao_file_open_plugin (audio_driver_class_t *class_gen,
 				 const void *data) {
 
-	file_class_t     *class = (file_class_t *) class_gen;
+	ao_file_class_t     *class = (ao_file_class_t *) class_gen;
 	/* config_values_t *config = class->config; */
-	file_driver_t    *this;
+	ao_file_driver_t    *this;
 
 	lprintf ("open_plugin called\n");
 
-	this = calloc(1, sizeof (file_driver_t));
+	this = calloc(1, sizeof (ao_file_driver_t));
 	if (!this)
 		return NULL;
 
@@ -376,17 +376,17 @@ static ao_driver_t *open_plugin (audio_driver_class_t *class_gen,
 /*
  * class functions
  */
-static void *init_class (xine_t *xine, void *data) {
+static void *ao_file_init_class (xine_t *xine, void *data) {
 
-	file_class_t        *this;
+	ao_file_class_t        *this;
 
 	lprintf ("init class\n");
 
-	this = calloc(1, sizeof (file_class_t));
+	this = calloc(1, sizeof (ao_file_class_t));
 	if (!this)
 		return NULL;
 
-	this->driver_class.open_plugin     = open_plugin;
+	this->driver_class.open_plugin     = ao_file_open_plugin;
 	this->driver_class.identifier      = "file";
 	this->driver_class.description     = N_("xine file audio output plugin");
 	this->driver_class.dispose         = default_audio_driver_class_dispose;
@@ -405,9 +405,12 @@ static const ao_info_t ao_info_file = {
  * exported plugin catalog entry
  */
 
+#define AO_FILE_CATALOG { PLUGIN_AUDIO_OUT, AO_OUT_FILE_IFACE_VERSION, "file", XINE_VERSION_CODE, &ao_info_file, ao_file_init_class }
+
+#ifndef XINE_MAKE_BUILTINS
 const plugin_info_t xine_plugin_info[] EXPORTED = {
 	/* type, API, "name", version, special_info, init_function */
-	{ PLUGIN_AUDIO_OUT, AO_OUT_FILE_IFACE_VERSION, "file", XINE_VERSION_CODE, &ao_info_file, init_class },
+	AO_FILE_CATALOG,
 	{ PLUGIN_NONE, 0, "", 0, NULL, NULL }
 };
-
+#endif

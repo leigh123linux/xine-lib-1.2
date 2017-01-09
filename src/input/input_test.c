@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012-2014 the xine project
+ * Copyright (C) 2012-2017 the xine project
  *
  * This file is part of xine, a free video player.
  *
@@ -740,7 +740,7 @@ static void test_class_dispose (input_class_t *this_gen) {
   free (this_gen);
 }
 
-static void *init_plugin (xine_t *xine, void *data) {
+static void *test_init_plugin (xine_t *xine, void *data) {
   test_input_class_t *this;
 
   this = (test_input_class_t *) calloc(1, sizeof (test_input_class_t));
@@ -766,8 +766,12 @@ static const input_info_t input_info_test = {
  * exported plugin catalog entry
  */
 
+#define INPUT_TEST_CATALOG  { PLUGIN_INPUT | PLUGIN_MUST_PRELOAD, 18, "TEST", XINE_VERSION_CODE, &input_info_test, test_init_plugin }
+
+#ifndef XINE_MAKE_BUILTINS
 const plugin_info_t xine_plugin_info[] EXPORTED = {
   /* type, API, "name", version, special_info, init_function */
-  { PLUGIN_INPUT | PLUGIN_MUST_PRELOAD, 18, "TEST", XINE_VERSION_CODE, &input_info_test, init_plugin },
+  INPUT_TEST_CATALOG,
   { PLUGIN_NONE, 0, "", 0, NULL, NULL }
 };
+#endif

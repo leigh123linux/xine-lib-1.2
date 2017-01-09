@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2000-2009 the xine project
+ * Copyright (C) 2000-2017 the xine project
  *
  * This file is part of xine, a free video player.
  *
@@ -40,9 +40,9 @@
 #define AUDIO_NUM_FRAGMENTS     15
 #define AUDIO_FRAGMENT_SIZE   8192
 
-#define GAP_TOLERANCE        AO_MAX_GAP
+#define AON_GAP_TOLERANCE        AO_MAX_GAP
 
-typedef struct none_driver_s {
+typedef struct ao_none_driver_s {
 
   ao_driver_t    ao_driver;
 
@@ -58,21 +58,21 @@ typedef struct none_driver_s {
 
   uint32_t       latency;
 
-} none_driver_t;
+} ao_none_driver_t;
 
 typedef struct {
   audio_driver_class_t  driver_class;
 
   config_values_t      *config;
   xine_t               *xine;
-} none_class_t;
+} ao_none_class_t;
 
 /*
  * open the audio device for writing to
  */
 static int ao_none_open(ao_driver_t *this_gen, uint32_t bits, uint32_t rate, int mode)
 {
-  none_driver_t *this = (none_driver_t *) this_gen;
+  ao_none_driver_t *this = (ao_none_driver_t *) this_gen;
 
   xprintf (this->xine, XINE_VERBOSITY_DEBUG,
 	   "audio_none_out: ao_open bits=%d rate=%d, mode=%d\n", bits, rate, mode);
@@ -96,25 +96,25 @@ static int ao_none_open(ao_driver_t *this_gen, uint32_t bits, uint32_t rate, int
 
 static int ao_none_num_channels(ao_driver_t *this_gen)
 {
-  none_driver_t *this = (none_driver_t *) this_gen;
+  ao_none_driver_t *this = (ao_none_driver_t *) this_gen;
     return this->num_channels;
 }
 
 static int ao_none_bytes_per_frame(ao_driver_t *this_gen)
 {
-  none_driver_t *this = (none_driver_t *) this_gen;
+  ao_none_driver_t *this = (ao_none_driver_t *) this_gen;
   return this->bytes_per_frame;
 }
 
 static int ao_none_get_gap_tolerance (ao_driver_t *this_gen)
 {
-  return GAP_TOLERANCE;
+  return AON_GAP_TOLERANCE;
 }
 
 static int ao_none_write(ao_driver_t *this_gen, int16_t *data,
                          uint32_t num_frames)
 {
-  none_driver_t *this = (none_driver_t *) this_gen;
+  ao_none_driver_t *this = (ao_none_driver_t *) this_gen;
 
   /* take some time to pretend we are doing something.
    * avoids burning cpu.
@@ -136,13 +136,13 @@ static void ao_none_close(ao_driver_t *this_gen)
 }
 
 static uint32_t ao_none_get_capabilities (ao_driver_t *this_gen) {
-  none_driver_t *this = (none_driver_t *) this_gen;
+  ao_none_driver_t *this = (ao_none_driver_t *) this_gen;
   return this->capabilities;
 }
 
 static void ao_none_exit(ao_driver_t *this_gen)
 {
-  none_driver_t *this = (none_driver_t *) this_gen;
+  ao_none_driver_t *this = (ao_none_driver_t *) this_gen;
 
   ao_none_close(this_gen);
 
@@ -160,7 +160,7 @@ static int ao_none_set_property (ao_driver_t *this_gen, int property, int value)
 }
 
 static int ao_none_ctrl(ao_driver_t *this_gen, int cmd, ...) {
-  /*none_driver_t *this = (none_driver_t *) this_gen;*/
+  /*ao_none_driver_t *this = (ao_none_driver_t *) this_gen;*/
 
   switch (cmd) {
 
@@ -177,16 +177,16 @@ static int ao_none_ctrl(ao_driver_t *this_gen, int cmd, ...) {
   return 0;
 }
 
-static ao_driver_t *open_plugin (audio_driver_class_t *class_gen,
+static ao_driver_t *ao_none_open_plugin (audio_driver_class_t *class_gen,
 				 const void *data) {
 
-  none_class_t     *class = (none_class_t *) class_gen;
+  ao_none_class_t     *class = (ao_none_class_t *) class_gen;
   /* config_values_t *config = class->config; */
-  none_driver_t    *this;
+  ao_none_driver_t    *this;
 
   lprintf ("open_plugin called\n");
 
-  this = calloc(1, sizeof (none_driver_t));
+  this = calloc(1, sizeof (ao_none_driver_t));
   if (!this)
     return NULL;
 
@@ -214,17 +214,17 @@ static ao_driver_t *open_plugin (audio_driver_class_t *class_gen,
 /*
  * class functions
  */
-static void *init_class (xine_t *xine, void *data) {
+static void *ao_none_init_class (xine_t *xine, void *data) {
 
-  none_class_t        *this;
+  ao_none_class_t        *this;
 
   lprintf ("init class\n");
 
-  this = calloc(1, sizeof (none_class_t));
+  this = calloc(1, sizeof (ao_none_class_t));
   if (!this)
     return NULL;
 
-  this->driver_class.open_plugin     = open_plugin;
+  this->driver_class.open_plugin     = ao_none_open_plugin;
   this->driver_class.identifier      = "none";
   this->driver_class.description     = N_("xine dummy audio output plugin");
   this->driver_class.dispose         = default_audio_driver_class_dispose;
@@ -243,9 +243,12 @@ static const ao_info_t ao_info_none = {
  * exported plugin catalog entry
  */
 
+#define AO_NONE_CATALOG { PLUGIN_AUDIO_OUT, AO_OUT_NONE_IFACE_VERSION, "none", XINE_VERSION_CODE, &ao_info_none, ao_none_init_class }
+
+#ifndef XINE_MAKE_BUILTINS
 const plugin_info_t xine_plugin_info[] EXPORTED = {
   /* type, API, "name", version, special_info, init_function */
-  { PLUGIN_AUDIO_OUT, AO_OUT_NONE_IFACE_VERSION, "none", XINE_VERSION_CODE, &ao_info_none, init_class },
+  AO_NONE_CATALOG,
   { PLUGIN_NONE, 0, "", 0, NULL, NULL }
 };
-
+#endif

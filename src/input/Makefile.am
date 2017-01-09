@@ -23,6 +23,9 @@ endif
 
 noinst_HEADERS = net_buf_ctrl.h mms.h mmsh.h pnm.h media_helper.h http_helper.h
 
+if !ENABLE_LIBXINE_BUILTINS
+in_builtins = xineplug_inp_file.la xineplug_inp_stdin_fifo.la xineplug_inp_test.la
+endif
 
 if ENABLE_DVB
 in_dvb = xineplug_inp_dvb.la
@@ -70,8 +73,7 @@ in_bluray = xineplug_inp_bluray.la
 endif
 
 xineplug_LTLIBRARIES = \
-	xineplug_inp_file.la \
-	xineplug_inp_test.la \
+	$(in_builtins) \
 	xineplug_inp_http.la \
 	xineplug_inp_dvd.la \
 	$(in_vcd) \
@@ -80,7 +82,6 @@ xineplug_LTLIBRARIES = \
 	$(in_gnome_vfs) \
 	$(in_smb) \
 	xineplug_inp_mms.la \
-	xineplug_inp_stdin_fifo.la \
 	xineplug_inp_pnm.la \
 	$(in_rtp) \
 	xineplug_inp_rtsp.la \
@@ -89,7 +90,6 @@ xineplug_LTLIBRARIES = \
 	$(in_dvb) \
 	$(in_bluray) \
 	xineplug_inp_cdda.la
-
 
 xineplug_inp_file_la_SOURCES = input_file.c
 xineplug_inp_file_la_LIBADD = $(XINE_LIB) $(LTLIBINTL)

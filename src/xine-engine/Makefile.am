@@ -20,7 +20,7 @@ else
 DEF_FILE =
 endif
 
-noinst_HEADERS = bswap.h ffmpeg_bswap.h xine_private.h
+noinst_HEADERS = bswap.h ffmpeg_bswap.h xine_private.h builtins.h
 
 lib_LTLIBRARIES = libxine.la
 
@@ -33,7 +33,7 @@ libxine_la_SOURCES = xine.c metronom.c configfile.c buffer.c \
 	video_overlay.c osd.c spu.c scratch.c demux.c vo_scale.c \
 	xine_interface.c post.c broadcaster.c io_helper.c \
 	input_rip.c input_cache.c info_helper.c refcounter.c \
-	alphablend.c \
+	alphablend.c builtins.c \
 	xine_private.h
 
 libxine_la_DEPENDENCIES = $(XINEUTILS_LIB) $(YUV_LIB) $(XDG_BASEDIR_DEPS) \
