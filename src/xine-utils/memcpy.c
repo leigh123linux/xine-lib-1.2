@@ -533,7 +533,8 @@ static int64_t rdtsc(int config_flags)
     __asm__ volatile (".byte 0x0f, 0x31" : "=A" (x));
     return x;
   } else {
-    return times(NULL);
+    struct tms tp;
+    return times(&tp);
   }
 }
 #else
