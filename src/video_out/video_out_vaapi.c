@@ -104,12 +104,14 @@
 #define IMGFMT_VAAPI_CODEC_MPEG4   (0x20)
 #define IMGFMT_VAAPI_CODEC_H264    (0x30)
 #define IMGFMT_VAAPI_CODEC_VC1     (0x40)
+#define IMGFMT_VAAPI_CODEC_HEVC    (0x50)
 #define IMGFMT_VAAPI_MPEG2         (IMGFMT_VAAPI|IMGFMT_VAAPI_CODEC_MPEG2)
 #define IMGFMT_VAAPI_MPEG2_IDCT    (IMGFMT_VAAPI|IMGFMT_VAAPI_CODEC_MPEG2|1)
 #define IMGFMT_VAAPI_MPEG2_MOCO    (IMGFMT_VAAPI|IMGFMT_VAAPI_CODEC_MPEG2|2)
 #define IMGFMT_VAAPI_MPEG4         (IMGFMT_VAAPI|IMGFMT_VAAPI_CODEC_MPEG4)
 #define IMGFMT_VAAPI_H263          (IMGFMT_VAAPI|IMGFMT_VAAPI_CODEC_MPEG4|1)
 #define IMGFMT_VAAPI_H264          (IMGFMT_VAAPI|IMGFMT_VAAPI_CODEC_H264)
+#define IMGFMT_VAAPI_HEVC          (IMGFMT_VAAPI|IMGFMT_VAAPI_CODEC_HEVC)
 #define IMGFMT_VAAPI_VC1           (IMGFMT_VAAPI|IMGFMT_VAAPI_CODEC_VC1)
 #define IMGFMT_VAAPI_WMV3          (IMGFMT_VAAPI|IMGFMT_VAAPI_CODEC_VC1|1)
 
@@ -1172,6 +1174,9 @@ static const struct {
   {IMGFMT_VAAPI_H264,      PIX_FMT_VAAPI_VLD,  CODEC_ID_H264},
   {IMGFMT_VAAPI_WMV3,      PIX_FMT_VAAPI_VLD,  CODEC_ID_WMV3},
   {IMGFMT_VAAPI_VC1,       PIX_FMT_VAAPI_VLD,  CODEC_ID_VC1},
+#ifdef FF_PROFILE_HEVC_MAIN
+  {IMGFMT_VAAPI_HEVC,      PIX_FMT_VAAPI_VLD,  AV_CODEC_ID_HEVC},
+#endif
   {0, PIX_FMT_NONE}
 };
 
@@ -1249,6 +1254,9 @@ static int profile_from_imgfmt(vo_frame_t *frame_gen, enum PixelFormat pix_fmt, 
   static const int mpeg2_profiles[] = { VAProfileMPEG2Main, VAProfileMPEG2Simple, -1 };
   static const int mpeg4_profiles[] = { VAProfileMPEG4Main, VAProfileMPEG4AdvancedSimple, VAProfileMPEG4Simple, -1 };
   static const int h264_profiles[]  = { VAProfileH264High, VAProfileH264Main, VAProfileH264Baseline, -1 };
+#if VA_CHECK_VERSION(0, 37, 0)
+  static const int hevc_profiles[]  = { VAProfileHEVCMain, VAProfileHEVCMain10 };
+#endif
   static const int wmv3_profiles[]  = { VAProfileVC1Main, VAProfileVC1Simple, -1 };
   static const int vc1_profiles[]   = { VAProfileVC1Advanced, -1 };
 
@@ -1266,6 +1274,11 @@ static int profile_from_imgfmt(vo_frame_t *frame_gen, enum PixelFormat pix_fmt, 
     case IMGFMT_VAAPI_CODEC_H264:
       profiles = h264_profiles;
       break;
+#if VA_CHECK_VERSION(0, 37, 0)
+    case IMGFMT_VAAPI_CODEC_HEVC:
+      profiles = hevc_profiles;
+      break;
+#endif
     case IMGFMT_VAAPI_CODEC_VC1:
       switch (format) {
         case IMGFMT_VAAPI_WMV3:
@@ -1316,6 +1329,10 @@ static const char *vaapi_profile_to_string(VAProfile profile)
       PROFILE(VC1Simple);
       PROFILE(VC1Main);
       PROFILE(VC1Advanced);
+#if VA_CHECK_VERSION(0, 37, 0)
+      PROFILE(HEVCMain);
+      PROFILE(HEVCMain10);
+#endif
 #undef PROFILE
     default: break;
   }
