@@ -1023,7 +1023,7 @@ static xine_mrl_t **vcd_class_get_dir (input_class_t *this_gen, const char *file
   return this->mrls;
 }
 
-static char ** vcd_class_get_autoplay_list (input_class_t *this_gen, int *num_files) {
+static const char * const * vcd_class_get_autoplay_list (input_class_t *this_gen, int *num_files) {
 
   vcd_input_class_t  *this = (vcd_input_class_t *) this_gen;
   int i, fd;
