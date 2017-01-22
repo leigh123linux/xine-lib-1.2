@@ -1387,7 +1387,7 @@ static int ff_vc1_find_header(ff_video_decoder_t *this, buf_element_t *buf)
   if (!p[0] && !p[1] && p[2] == 1 && p[3] == 0x0f) {
     int i;
 
-    this->context->extradata = calloc(1, buf->size);
+    this->context->extradata = calloc(1, buf->size + FF_INPUT_BUFFER_PADDING_SIZE);
     this->context->extradata_size = 0;
 
     for (i = 0; i < buf->size && i < 128; i++) {
@@ -1519,6 +1519,7 @@ static void ff_handle_header_buffer (ff_video_decoder_t *this, buf_element_t *bu
                                           FF_INPUT_BUFFER_PADDING_SIZE);
         memcpy(this->context->extradata, this->buf + sizeof(xine_bmiheader),
               this->context->extradata_size);
+        memset(this->context->extradata + this->context->extradata_size, 0, FF_INPUT_BUFFER_PADDING_SIZE);
       }
 
       this->context->bits_per_sample = this->bih.biBitCount;
@@ -1538,7 +1539,7 @@ static void ff_handle_header_buffer (ff_video_decoder_t *this, buf_element_t *bu
         this->context->extradata_size = this->size - 26;
 	if (this->context->extradata_size < 8) {
 	  this->context->extradata_size= 8;
-	  this->context->extradata = malloc(this->context->extradata_size +
+	  this->context->extradata = calloc(1, this->context->extradata_size +
 		                            FF_INPUT_BUFFER_PADDING_SIZE);
           ((uint32_t *)this->context->extradata)[0] = 0;
 	  if (codec_type == BUF_VIDEO_RV10)
@@ -1550,6 +1551,7 @@ static void ff_handle_header_buffer (ff_video_decoder_t *this, buf_element_t *bu
 	                                    FF_INPUT_BUFFER_PADDING_SIZE);
 	  memcpy(this->context->extradata, this->buf + 26,
 	         this->context->extradata_size);
+          memset(this->context->extradata + this->context->extradata_size, 0, FF_INPUT_BUFFER_PADDING_SIZE);
 	}
 
 	xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
@@ -1584,6 +1586,7 @@ static void ff_handle_special_buffer (ff_video_decoder_t *this, buf_element_t *b
 				      FF_INPUT_BUFFER_PADDING_SIZE);
     memcpy(this->context->extradata, buf->decoder_info_ptr[2],
       buf->decoder_info[2]);
+    memset(this->context->extradata + this->context->extradata_size, 0, FF_INPUT_BUFFER_PADDING_SIZE);
 
   } else if (buf->decoder_info[1] == BUF_SPECIAL_DECODER_CONFIG &&
             !this->context->extradata_size) {
@@ -1594,7 +1597,7 @@ static void ff_handle_special_buffer (ff_video_decoder_t *this, buf_element_t *b
 				      FF_INPUT_BUFFER_PADDING_SIZE);
     memcpy(this->context->extradata, buf->decoder_info_ptr[2],
       buf->decoder_info[2]);
-
+    memset(this->context->extradata + this->context->extradata_size, 0, FF_INPUT_BUFFER_PADDING_SIZE);
   }
   else if (buf->decoder_info[1] == BUF_SPECIAL_PALETTE) {
     unsigned int i;
