@@ -1297,8 +1297,7 @@ static int profile_from_imgfmt(vo_frame_t *frame_gen, enum PixelFormat pix_fmt, 
   }
 
 out:
-  if(va_profiles)
-    free(va_profiles);
+  free(va_profiles);
   if(inited) {
     vaStatus = vaTerminate(va_context->va_display);
     vaapi_check_status(this_gen, vaStatus, "vaTerminate()");
@@ -1441,16 +1440,13 @@ static void vaapi_close(vo_driver_t *this_gen) {
   vaapi_check_status(this_gen, vaStatus, "vaTerminate()");
   va_context->va_display = NULL;
 
-  if(va_context->va_image_formats) {
-    free(va_context->va_image_formats);
-    va_context->va_image_formats      = NULL;
-    va_context->va_num_image_formats  = 0;
-  }
-  if(va_context->va_subpic_formats) {
-    free(va_context->va_subpic_formats);
-    va_context->va_subpic_formats     = NULL;
-    va_context->va_num_subpic_formats = 0;
-  }
+  free(va_context->va_image_formats);
+  va_context->va_image_formats      = NULL;
+  va_context->va_num_image_formats  = 0;
+
+  free(va_context->va_subpic_formats);
+  va_context->va_subpic_formats     = NULL;
+  va_context->va_num_subpic_formats = 0;
 
   va_context->valid_context = 0;
 }
@@ -2769,10 +2765,8 @@ static void vaapi_overlay_end (vo_driver_t *this_gen, vo_frame_t *frame_gen) {
     }
 
     if (ovl->rle) {
-      if(bitmap) {
-        free(bitmap);
-        bitmap = NULL;
-      }
+      free(bitmap);
+      bitmap = NULL;
     }
 
     if (!ovl->rle)
@@ -3942,17 +3936,12 @@ static void vaapi_dispose_locked (vo_driver_t *this_gen) {
   vaapi_close(this_gen);
   free(va_context);
 
-  if(this->overlay_bitmap)
-    free(this->overlay_bitmap);
+  free(this->overlay_bitmap);
 
-  if(va_surface_ids)
-    free(va_surface_ids);
-  if(va_soft_surface_ids)
-    free(va_soft_surface_ids);
-  if(va_render_surfaces)
-    free(va_render_surfaces);
-  if(va_soft_images)
-    free(va_soft_images);
+  free(va_surface_ids);
+  free(va_soft_surface_ids);
+  free(va_render_surfaces);
+  free(va_soft_images);
 
   XDestroyWindow(this->display, this->window);
   DO_UNLOCKDISPLAY;
