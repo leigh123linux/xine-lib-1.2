@@ -3938,10 +3938,10 @@ static void vaapi_dispose_locked (vo_driver_t *this_gen) {
 
   free(this->overlay_bitmap);
 
-  free(va_surface_ids);
-  free(va_soft_surface_ids);
-  free(va_render_surfaces);
-  free(va_soft_images);
+  _x_freep(&va_surface_ids);
+  _x_freep(&va_soft_surface_ids);
+  _x_freep(&va_render_surfaces);
+  _x_freep(&va_soft_images);
 
   XDestroyWindow(this->display, this->window);
   DO_UNLOCKDISPLAY;
