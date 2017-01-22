@@ -861,7 +861,7 @@ static int extract_channel_from_string_internal(channel_t * channel,char * str,f
       if(strtoul(field,NULL,0)>0)
         channel->service_id = strtoul(field, NULL, 0);
 
-	return 0;
+    return 0;
 }
 
 static int extract_channel_from_string(channel_t *channel, char *str, fe_type_t fe_type)

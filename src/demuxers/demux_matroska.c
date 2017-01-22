@@ -2270,7 +2270,7 @@ static int parse_block_group(demux_matroska_t *this,
         if (!read_block_data(this, elem.len, this->compress_maxlen))
           return 0;
 
-          has_block = 1;
+        has_block = 1;
         break;
       case MATROSKA_ID_CL_BLOCKDURATION:
         /* should override track duration */
