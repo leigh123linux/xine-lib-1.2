@@ -637,9 +637,9 @@ vcd_flush_buffers(void)
   read nlen bytes, return number of bytes read.
 */
 static off_t
-vcd_plugin_read (input_plugin_t *this_gen, char *buf, const off_t nlen)
+vcd_plugin_read (input_plugin_t *this_gen, void *vbuf, const off_t nlen)
 {
-
+  char *buf = vbuf;
   dbg_print((INPUT_DBG_CALL|INPUT_DBG_EXT),
             "Called with nlen %u\n", (unsigned int) nlen);
 
@@ -1337,7 +1337,7 @@ vcd_get_optional_data (input_plugin_t *this_gen,
    This is called when the SHORT_PLUGIN_NAME button is pressed.
 */
 
-static char **
+static const char * const *
 vcd_class_get_autoplay_list (input_class_t *this_gen, int *num_files)
 {
   vcd_input_class_t *class = (vcd_input_class_t *) this_gen;
@@ -1380,7 +1380,7 @@ vcd_class_get_autoplay_list (input_class_t *this_gen, int *num_files)
       }
     }
     *num_files = i;
-    return filelist;
+    return (const char * const *)filelist;
   }
 }
 
