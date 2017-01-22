@@ -71,12 +71,6 @@
 
 #include "accel_vaapi.h"
 
-#ifdef HAVE_FFMPEG_AVUTIL_H
-#  include <mem.h>
-#else
-#  include <libavutil/mem.h>
-#endif
-
 #ifndef VA_SURFACE_ATTRIB_SETTABLE
 #define vaCreateSurfaces(d, f, w, h, s, ns, a, na) \
     vaCreateSurfaces(d, w, h, f, ns, s)
@@ -2371,9 +2365,9 @@ static void vaapi_frame_dispose (vo_frame_t *vo_img) {
 
   lprintf("vaapi_frame_dispose\n");
 
-  av_free (frame->vo_frame.base[0]);
-  av_free (frame->vo_frame.base[1]);
-  av_free (frame->vo_frame.base[2]);
+  xine_freep_aligned(&frame->vo_frame.base[0]);
+  xine_freep_aligned(&frame->vo_frame.base[0]);
+  xine_freep_aligned(&frame->vo_frame.base[0]);
 
   if(this->guarded_render) {
     ff_vaapi_surface_t *va_surface = &va_render_surfaces[accel->index];
@@ -3125,9 +3119,9 @@ static void vaapi_update_frame_format (vo_driver_t *this_gen,
       || (frame->format != format)) {
 
     // (re-) allocate render space
-    av_freep (&frame->vo_frame.base[0]);
-    av_freep (&frame->vo_frame.base[1]);
-    av_freep (&frame->vo_frame.base[2]);
+    xine_freep_aligned(&frame->vo_frame.base[0]);
+    xine_freep_aligned(&frame->vo_frame.base[0]);
+    xine_freep_aligned(&frame->vo_frame.base[0]);
 
     /* set init_vaapi on frame formats XINE_IMGFMT_YV12/XINE_IMGFMT_YUY2 only.
      * for XINE_IMGFMT_VAAPI the init was already done.
@@ -3136,15 +3130,19 @@ static void vaapi_update_frame_format (vo_driver_t *this_gen,
       frame->vo_frame.pitches[0] = 8*((width + 7) / 8);
       frame->vo_frame.pitches[1] = 8*((width + 15) / 16);
       frame->vo_frame.pitches[2] = 8*((width + 15) / 16);
-      frame->vo_frame.base[0] = av_mallocz (frame->vo_frame.pitches[0] * height + FF_INPUT_BUFFER_PADDING_SIZE);
-      frame->vo_frame.base[1] = av_mallocz (frame->vo_frame.pitches[1] * ((height+1)/2) + FF_INPUT_BUFFER_PADDING_SIZE);
-      frame->vo_frame.base[2] = av_mallocz (frame->vo_frame.pitches[2] * ((height+1)/2) + FF_INPUT_BUFFER_PADDING_SIZE);
+
+      frame->vo_frame.base[0] = xine_mallocz_aligned (frame->vo_frame.pitches[0] * height + FF_INPUT_BUFFER_PADDING_SIZE);
+      frame->vo_frame.base[1] = xine_mallocz_aligned (frame->vo_frame.pitches[1] * ((height+1)/2) + FF_INPUT_BUFFER_PADDING_SIZE);
+      frame->vo_frame.base[2] = xine_mallocz_aligned (frame->vo_frame.pitches[2] * ((height+1)/2) + FF_INPUT_BUFFER_PADDING_SIZE);
+
       frame->vo_frame.proc_duplicate_frame_data = NULL;
       frame->vo_frame.proc_provide_standard_frame_data = NULL;
       lprintf("XINE_IMGFMT_YV12 width %d height %d\n", width, height);
     } else if (format == XINE_IMGFMT_YUY2){
       frame->vo_frame.pitches[0] = 8*((width + 3) / 4);
-      frame->vo_frame.base[0] = av_mallocz (frame->vo_frame.pitches[0] * height + FF_INPUT_BUFFER_PADDING_SIZE);
+
+      frame->vo_frame.base[0] = xine_mallocz_aligned (frame->vo_frame.pitches[0] * height + FF_INPUT_BUFFER_PADDING_SIZE);
+
       frame->vo_frame.proc_duplicate_frame_data = NULL;
       frame->vo_frame.proc_provide_standard_frame_data = NULL;
       lprintf("XINE_IMGFMT_YUY2 width %d height %d\n", width, height);
