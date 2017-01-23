@@ -783,7 +783,7 @@ static void handle_libbluray_event(bluray_input_plugin_t *this, BD_EVENT ev)
 
       case BD_EVENT_STILL:
         lprintf("BD_EVENT_STILL %d\n", ev.param);
-        int paused = _x_get_fine_speed(this->stream) == XINE_SPEED_PAUSE;
+        unsigned int paused = _x_get_fine_speed(this->stream) == XINE_SPEED_PAUSE;
         if (paused != ev.param) {
           _x_set_fine_speed(this->stream, ev.param ? XINE_SPEED_PAUSE : XINE_SPEED_NORMAL);
         }
