@@ -72,13 +72,6 @@
 #include "accel_vaapi.h"
 
 #include <pthread.h>
-#ifdef HAVE_FFMPEG_AVUTIL_H
-#  include <avcodec.h>
-#else
-#  include <libavcodec/avcodec.h>
-#endif
-
-#include "../combined/ffmpeg/ffmpeg_compat.h"
 
 #ifndef VA_SURFACE_ATTRIB_SETTABLE
 #define vaCreateSurfaces(d, f, w, h, s, ns, a, na) \
@@ -97,26 +90,6 @@
 #else
 # define USE_VAAPI_COLORSPACE 0
 #endif
-
-#define IMGFMT_VAAPI               0x56410000 /* 'VA'00 */
-#define IMGFMT_VAAPI_MASK          0xFFFF0000
-#define IMGFMT_IS_VAAPI(fmt)       (((fmt) & IMGFMT_VAAPI_MASK) == IMGFMT_VAAPI)
-#define IMGFMT_VAAPI_CODEC_MASK    0x000000F0
-#define IMGFMT_VAAPI_CODEC(fmt)    ((fmt) & IMGFMT_VAAPI_CODEC_MASK)
-#define IMGFMT_VAAPI_CODEC_MPEG2   (0x10)
-#define IMGFMT_VAAPI_CODEC_MPEG4   (0x20)
-#define IMGFMT_VAAPI_CODEC_H264    (0x30)
-#define IMGFMT_VAAPI_CODEC_VC1     (0x40)
-#define IMGFMT_VAAPI_CODEC_HEVC    (0x50)
-#define IMGFMT_VAAPI_MPEG2         (IMGFMT_VAAPI|IMGFMT_VAAPI_CODEC_MPEG2)
-#define IMGFMT_VAAPI_MPEG2_IDCT    (IMGFMT_VAAPI|IMGFMT_VAAPI_CODEC_MPEG2|1)
-#define IMGFMT_VAAPI_MPEG2_MOCO    (IMGFMT_VAAPI|IMGFMT_VAAPI_CODEC_MPEG2|2)
-#define IMGFMT_VAAPI_MPEG4         (IMGFMT_VAAPI|IMGFMT_VAAPI_CODEC_MPEG4)
-#define IMGFMT_VAAPI_H263          (IMGFMT_VAAPI|IMGFMT_VAAPI_CODEC_MPEG4|1)
-#define IMGFMT_VAAPI_H264          (IMGFMT_VAAPI|IMGFMT_VAAPI_CODEC_H264)
-#define IMGFMT_VAAPI_HEVC          (IMGFMT_VAAPI|IMGFMT_VAAPI_CODEC_HEVC)
-#define IMGFMT_VAAPI_VC1           (IMGFMT_VAAPI|IMGFMT_VAAPI_CODEC_VC1)
-#define IMGFMT_VAAPI_WMV3          (IMGFMT_VAAPI|IMGFMT_VAAPI_CODEC_VC1|1)
 
 #define FOVY     60.0f
 #define ASPECT   1.0f
@@ -1141,41 +1114,6 @@ static uint32_t vaapi_get_capabilities (vo_driver_t *this_gen) {
   return this->capabilities;
 }
 
-static int vaapi_pixfmt2imgfmt(enum PixelFormat pix_fmt, unsigned codec_id)
-{
-  static const struct {
-    unsigned         fmt;
-    enum PixelFormat pix_fmt;
-#if defined LIBAVCODEC_VERSION_INT && LIBAVCODEC_VERSION_INT >= ((54<<16)|(25<<8))
-    enum AVCodecID   codec_id;
-#else
-    enum CodecID     codec_id;
-#endif
-  } conversion_map[] = {
-    {IMGFMT_VAAPI_MPEG2,     PIX_FMT_VAAPI_VLD,  CODEC_ID_MPEG2VIDEO},
-    {IMGFMT_VAAPI_MPEG2_IDCT,PIX_FMT_VAAPI_IDCT, CODEC_ID_MPEG2VIDEO},
-    {IMGFMT_VAAPI_MPEG2_MOCO,PIX_FMT_VAAPI_MOCO, CODEC_ID_MPEG2VIDEO},
-    {IMGFMT_VAAPI_MPEG4,     PIX_FMT_VAAPI_VLD,  CODEC_ID_MPEG4},
-    {IMGFMT_VAAPI_H263,      PIX_FMT_VAAPI_VLD,  CODEC_ID_H263},
-    {IMGFMT_VAAPI_H264,      PIX_FMT_VAAPI_VLD,  CODEC_ID_H264},
-    {IMGFMT_VAAPI_WMV3,      PIX_FMT_VAAPI_VLD,  CODEC_ID_WMV3},
-    {IMGFMT_VAAPI_VC1,       PIX_FMT_VAAPI_VLD,  CODEC_ID_VC1},
-#ifdef FF_PROFILE_HEVC_MAIN
-    {IMGFMT_VAAPI_HEVC,      PIX_FMT_VAAPI_VLD,  AV_CODEC_ID_HEVC},
-#endif
-  };
-
-  unsigned i;
-  for (i = 0; i < sizeof(conversion_map)/sizeof(conversion_map[0]); i++) {
-    if (conversion_map[i].pix_fmt == pix_fmt &&
-        (conversion_map[i].codec_id == 0 ||
-        conversion_map[i].codec_id == codec_id)) {
-      return conversion_map[i].fmt;
-    }
-  }
-  return 0;
-}
-
 static int vaapi_has_profile(VAProfile *va_profiles, int va_num_profiles, VAProfile profile)
 {
   if (va_profiles && va_num_profiles > 0) {
@@ -1188,7 +1126,7 @@ static int vaapi_has_profile(VAProfile *va_profiles, int va_num_profiles, VAProf
   return 0;
 }
 
-static int profile_from_imgfmt(vo_frame_t *frame_gen, unsigned pix_fmt, unsigned codec_id, int vaapi_mpeg_sofdec)
+static int profile_from_imgfmt(vo_frame_t *frame_gen, unsigned format, int vaapi_mpeg_sofdec)
 {
   vo_driver_t         *this_gen   = (vo_driver_t *) frame_gen->driver;
   vaapi_driver_t      *this       = (vaapi_driver_t *) this_gen;
@@ -1201,14 +1139,6 @@ static int profile_from_imgfmt(vo_frame_t *frame_gen, unsigned pix_fmt, unsigned
   int                 max_profiles;
   VAProfile           *va_profiles = NULL;
   int                 inited = 0;
-
-  uint32_t format = vaapi_pixfmt2imgfmt(pix_fmt, codec_id);
-  if (!format) {
-    xprintf(this->xine, XINE_VERBOSITY_LOG,
-            LOG_MODULE " no VAAPI mapping for %u/%u",
-            pix_fmt, codec_id);
-    goto out;
-  }
 
   if(va_context->va_display == NULL) {
     lprintf("profile_from_imgfmt vaInitialize\n");
@@ -3115,9 +3045,9 @@ static void vaapi_update_frame_format (vo_driver_t *this_gen,
       frame->vo_frame.pitches[1] = 8*((width + 15) / 16);
       frame->vo_frame.pitches[2] = 8*((width + 15) / 16);
 
-      frame->vo_frame.base[0] = xine_mallocz_aligned (frame->vo_frame.pitches[0] * height + FF_INPUT_BUFFER_PADDING_SIZE);
-      frame->vo_frame.base[1] = xine_mallocz_aligned (frame->vo_frame.pitches[1] * ((height+1)/2) + FF_INPUT_BUFFER_PADDING_SIZE);
-      frame->vo_frame.base[2] = xine_mallocz_aligned (frame->vo_frame.pitches[2] * ((height+1)/2) + FF_INPUT_BUFFER_PADDING_SIZE);
+      frame->vo_frame.base[0] = xine_mallocz_aligned (frame->vo_frame.pitches[0] * height);
+      frame->vo_frame.base[1] = xine_mallocz_aligned (frame->vo_frame.pitches[1] * ((height+1)/2));
+      frame->vo_frame.base[2] = xine_mallocz_aligned (frame->vo_frame.pitches[2] * ((height+1)/2));
 
       frame->vo_frame.proc_duplicate_frame_data = NULL;
       frame->vo_frame.proc_provide_standard_frame_data = NULL;
@@ -3125,7 +3055,7 @@ static void vaapi_update_frame_format (vo_driver_t *this_gen,
     } else if (format == XINE_IMGFMT_YUY2){
       frame->vo_frame.pitches[0] = 8*((width + 3) / 4);
 
-      frame->vo_frame.base[0] = xine_mallocz_aligned (frame->vo_frame.pitches[0] * height + FF_INPUT_BUFFER_PADDING_SIZE);
+      frame->vo_frame.base[0] = xine_mallocz_aligned (frame->vo_frame.pitches[0] * height);
 
       frame->vo_frame.proc_duplicate_frame_data = NULL;
       frame->vo_frame.proc_provide_standard_frame_data = NULL;

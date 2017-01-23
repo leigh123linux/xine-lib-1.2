@@ -716,6 +716,44 @@ static const int skip_loop_filter_enum_values[] = {
 };
 
 #ifdef ENABLE_VAAPI
+static int vaapi_pixfmt2imgfmt(enum PixelFormat pix_fmt, unsigned codec_id)
+{
+  static const struct {
+    unsigned         fmt;
+    enum PixelFormat pix_fmt;
+#if defined LIBAVCODEC_VERSION_INT && LIBAVCODEC_VERSION_INT >= ((54<<16)|(25<<8))
+    enum AVCodecID   codec_id;
+#else
+    enum CodecID     codec_id;
+#endif
+  } conversion_map[] = {
+    {IMGFMT_VAAPI_MPEG2,     PIX_FMT_VAAPI_VLD,  CODEC_ID_MPEG2VIDEO},
+    {IMGFMT_VAAPI_MPEG2_IDCT,PIX_FMT_VAAPI_IDCT, CODEC_ID_MPEG2VIDEO},
+    {IMGFMT_VAAPI_MPEG2_MOCO,PIX_FMT_VAAPI_MOCO, CODEC_ID_MPEG2VIDEO},
+    {IMGFMT_VAAPI_MPEG4,     PIX_FMT_VAAPI_VLD,  CODEC_ID_MPEG4},
+    {IMGFMT_VAAPI_H263,      PIX_FMT_VAAPI_VLD,  CODEC_ID_H263},
+    {IMGFMT_VAAPI_H264,      PIX_FMT_VAAPI_VLD,  CODEC_ID_H264},
+    {IMGFMT_VAAPI_WMV3,      PIX_FMT_VAAPI_VLD,  CODEC_ID_WMV3},
+    {IMGFMT_VAAPI_VC1,       PIX_FMT_VAAPI_VLD,  CODEC_ID_VC1},
+#ifdef FF_PROFILE_HEVC_MAIN
+    {IMGFMT_VAAPI_HEVC,      PIX_FMT_VAAPI_VLD,  AV_CODEC_ID_HEVC},
+#endif
+  };
+
+  unsigned i;
+  for (i = 0; i < sizeof(conversion_map)/sizeof(conversion_map[0]); i++) {
+    if (conversion_map[i].pix_fmt == pix_fmt &&
+        (conversion_map[i].codec_id == 0 ||
+        conversion_map[i].codec_id == codec_id)) {
+      return conversion_map[i].fmt;
+    }
+  }
+  return 0;
+}
+#endif
+
+
+#ifdef ENABLE_VAAPI
 /* TJ. libavcodec calls this with a list of supported pixel formats and lets us choose 1.
    Returning PIX_FMT_VAAPI_VLD enables VAAPI.
    However, at this point we only got image width and height from container, being unreliable
@@ -735,8 +773,12 @@ static enum PixelFormat get_format(struct AVCodecContext *context, const enum Pi
     if (fmt[i] != PIX_FMT_VAAPI_VLD)
       continue;
 
-    this->vaapi_profile = accel->profile_from_imgfmt (this->accel_img, fmt[i],
-      context->codec_id, this->class->vaapi_mpeg_softdec);
+    uint32_t format = vaapi_pixfmt2imgfmt(fmt[i], context->codec_id);
+    if (!format) {
+      continue;
+    }
+
+    this->vaapi_profile = accel->profile_from_imgfmt (this->accel_img, format, this->class->vaapi_mpeg_softdec);
 
     if (this->vaapi_profile >= 0) {
       int width  = context->width;

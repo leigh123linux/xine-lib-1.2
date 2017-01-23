@@ -94,6 +94,30 @@ struct ff_vaapi_surface_s {
   unsigned int        status;
 };
 
+  /*
+   *
+   */
+
+#define IMGFMT_VAAPI               0x56410000 /* 'VA'00 */
+#define IMGFMT_VAAPI_MASK          0xFFFF0000
+#define IMGFMT_IS_VAAPI(fmt)       (((fmt) & IMGFMT_VAAPI_MASK) == IMGFMT_VAAPI)
+#define IMGFMT_VAAPI_CODEC_MASK    0x000000F0
+#define IMGFMT_VAAPI_CODEC(fmt)    ((fmt) & IMGFMT_VAAPI_CODEC_MASK)
+#define IMGFMT_VAAPI_CODEC_MPEG2   (0x10)
+#define IMGFMT_VAAPI_CODEC_MPEG4   (0x20)
+#define IMGFMT_VAAPI_CODEC_H264    (0x30)
+#define IMGFMT_VAAPI_CODEC_VC1     (0x40)
+#define IMGFMT_VAAPI_CODEC_HEVC    (0x50)
+#define IMGFMT_VAAPI_MPEG2         (IMGFMT_VAAPI|IMGFMT_VAAPI_CODEC_MPEG2)
+#define IMGFMT_VAAPI_MPEG2_IDCT    (IMGFMT_VAAPI|IMGFMT_VAAPI_CODEC_MPEG2|1)
+#define IMGFMT_VAAPI_MPEG2_MOCO    (IMGFMT_VAAPI|IMGFMT_VAAPI_CODEC_MPEG2|2)
+#define IMGFMT_VAAPI_MPEG4         (IMGFMT_VAAPI|IMGFMT_VAAPI_CODEC_MPEG4)
+#define IMGFMT_VAAPI_H263          (IMGFMT_VAAPI|IMGFMT_VAAPI_CODEC_MPEG4|1)
+#define IMGFMT_VAAPI_H264          (IMGFMT_VAAPI|IMGFMT_VAAPI_CODEC_H264)
+#define IMGFMT_VAAPI_HEVC          (IMGFMT_VAAPI|IMGFMT_VAAPI_CODEC_HEVC)
+#define IMGFMT_VAAPI_VC1           (IMGFMT_VAAPI|IMGFMT_VAAPI_CODEC_VC1)
+#define IMGFMT_VAAPI_WMV3          (IMGFMT_VAAPI|IMGFMT_VAAPI_CODEC_VC1|1)
+
 struct vaapi_accel_s {
   unsigned int        index;
   vo_frame_t          *vo_frame;
@@ -102,7 +126,7 @@ struct vaapi_accel_s {
   void (*unlock_vaapi)(vo_frame_t *frame_gen);
 
   VAStatus (*vaapi_init)(vo_frame_t *frame_gen, int va_profile, int width, int height, int softrender);
-  int (*profile_from_imgfmt)(vo_frame_t *frame_gen, unsigned pix_fmt, unsigned codec_id, int vaapi_mpeg_sofdec);
+  int (*profile_from_imgfmt)(vo_frame_t *frame_gen, unsigned img_fmt, int vaapi_mpeg_sofdec);
   ff_vaapi_context_t *(*get_context)(vo_frame_t *frame_gen);
   int (*guarded_render)(vo_frame_t *frame_gen);
   ff_vaapi_surface_t *(*get_vaapi_surface)(vo_frame_t *frame_gen);
