@@ -1227,6 +1227,14 @@ static int profile_from_imgfmt(vo_frame_t *frame_gen, enum PixelFormat pix_fmt, 
   VAProfile           *va_profiles = NULL;
   int                 inited = 0;
 
+  uint32_t format = vaapi_pixfmt2imgfmt(pix_fmt, codec_id);
+  if (!format) {
+    xprintf(this->xine, XINE_VERBOSITY_LOG,
+            LOG_MODULE " no VAAPI mapping for %u/%u",
+            pix_fmt, codec_id);
+    goto out;
+  }
+
   if(va_context->va_display == NULL) {
     lprintf("profile_from_imgfmt vaInitialize\n");
     inited = 1;
@@ -1254,8 +1262,6 @@ static int profile_from_imgfmt(vo_frame_t *frame_gen, enum PixelFormat pix_fmt, 
     printf("%s ", vaapi_profile_to_string(va_profiles[i]));
   }
   printf("\n");
-
-  uint32_t format = vaapi_pixfmt2imgfmt(pix_fmt, codec_id);
 
   static const int mpeg2_profiles[] = { VAProfileMPEG2Main, VAProfileMPEG2Simple, -1 };
   static const int mpeg4_profiles[] = { VAProfileMPEG4Main, VAProfileMPEG4AdvancedSimple, VAProfileMPEG4Simple, -1 };
