@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2000-2016 the xine project
+ * Copyright (C) 2000-2017 the xine project
  *
  * This file is part of xine, a free video player.
  *
@@ -29,6 +29,8 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
+#include "latm.c"
+
 #define LOG_MODULE "libfaad"
 #define LOG_VERBOSE
 /*
@@ -50,10 +52,14 @@
 
 #define FAAD_MIN_STREAMSIZE 768 /* 6144 bits/channel */
 
-typedef struct {
+typedef struct faad_class_s {
   audio_decoder_class_t   decoder_class;
 
   xine_t                 *xine;
+
+  /* provide a single configuration for both "faad" and "faad-latm" */
+  struct faad_class_s    *master;
+  int                     refs;
 
   int                     gain_db;
   /* fixed point scalers (v * gain?_i) >> 32 */
@@ -67,7 +73,7 @@ typedef struct {
 typedef struct faad_decoder_s {
   audio_decoder_t  audio_decoder;
 
-  faad_class_t     *class;
+  faad_class_t     *class, *master;
 
   xine_stream_t    *stream;
 
@@ -76,8 +82,6 @@ typedef struct faad_decoder_s {
   NeAACDecConfigurationPtr faac_cfg;
   NeAACDecFrameInfo        faac_finfo;
   int                     faac_failed;
-
-  int              raw_mode;
 
   unsigned char   *buf;
   int              size;
@@ -100,6 +104,13 @@ typedef struct faad_decoder_s {
 
   int              in_channels, out_channels, out_used;
   int              in_mode, out_mode, out_flags;
+
+  bebf_latm_t      latm;
+  bebf_latm_parser_status_t latm_mode;
+
+  uint32_t         adts_fake;
+  uint8_t          adts_lasthead[2];
+
 } faad_decoder_t;
 
 
@@ -162,6 +173,13 @@ static void faad_reset (audio_decoder_t *this_gen) {
 
   faad_decoder_t *this = (faad_decoder_t *) this_gen;
   this->size = 0;
+#if 0
+  bebf_latm_close (&this->latm);
+  bebf_latm_open (&this->latm);
+  this->latm_mode = BEBF_LATM_NEED_MORE_DATA;
+  memset (&this->adts_lasthead, 0, 2);
+  this->adts_fake = 0;
+#endif
 }
 
 static void faad_meta_info_set ( faad_decoder_t *this ) {
@@ -298,27 +316,157 @@ static int faad_open_output( faad_decoder_t *this ) {
 }
 
 static void faad_decode_audio ( faad_decoder_t *this, int end_frame ) {
-  int used, decoded;
+  int used, decoded, framecount;
   const uint8_t *sample_buffer;
   uint8_t *inbuf;
-  int sample_size = this->size;
 
   if( !this->faac_dec )
     return;
 
+#define ADTS_FAKE_CFG
+
   inbuf = this->buf;
-  while( (!this->raw_mode && end_frame && this->size >= 10) ||
-         (this->raw_mode && this->size >= this->rec_audio_src_size) ) {
+  framecount = 0;
+  while (1) {
 
-    sample_buffer = NeAACDecDecode(this->faac_dec,
-                                  &this->faac_finfo, inbuf, sample_size);
+    if (this->latm_mode == BEBF_LATM_IS_ADTS) {
+      if (framecount == 0) {
+        /* quick and dirty ADTS parser. */
+        /* It is faster than libfaad's own, and it is safe with 0xff padding bytes. */
+        uint8_t *q = inbuf;
+        int n, s;
+        if (this->size <= 0)
+          break;
+        memcpy (q + this->size, "\xf0\xff\xf0\x00", 4); /* overread stop */
+        while (1) {
+          if (q[0] == 0xff) {
+            if ((q[1] & 0xf6) == 0xf0)
+              break;
+          }
+          q++;
+        }
+        n = this->size - (q - inbuf);
+        if (n < 0) { /* no sync */
+          this->size = 0;
+          break;
+        }
+        inbuf = q;
+        this->size = n;
+        if (n < 7) /* incomplete sync */
+          break;
+        s = (((uint32_t)q[3] << 11) | ((uint32_t)q[4] << 3) | (q[5] >> 5)) & 0x1fff;
+        if (n < s) /* incomplete frame */
+          break;
+        framecount = (q[6] & 3) + 1;
+        /* seen this head before? */
+        if (((q[2] ^ this->adts_lasthead[0]) & 0xfd) | ((q[3] ^ this->adts_lasthead[1]) & 0xc0)) {
+          memcpy (this->adts_lasthead, q + 2, 2);
+          /* TJ. A note on that nasty SBR hack below.
+           * SBR (Spectral Band Replication) is a more efficient algorithm for encoding high pitched sound.
+           * It is common to do the base as plain LC (Low Complexity) at half samplerate (eg 22050), then
+           * add treble as SBR at full rate (eg 44100). The actual SBR data hides inside "filler" blocks,
+           * so old decoders can still play in AM radio quality.
+           * SBR need not show up in every frame, and ADTS heads have no room for announcing SBR initially.
+           * So output may open at half rate. If SBR appears later, it cannot play properly, and will be dropped.
+           * This hack now always prepares for SBR when it might be useful. If there is really no SBR used,
+           * we will just upsample.
+           */
+          this->adts_fake = 0;
+#ifdef ADTS_FAKE_CFG
+          do {
+            static const uint8_t double_samplerates[16] = {0, 0, 0, 0, 0, 0, 3, 4, 5, 6, 7, 8, 0, 0, 0, 0};
+            uint32_t sr1, sr2, chancfg, l;
+            int rate;
+            uint8_t chan;
+            if ((q[2] >> 6) != AOT_AAC_LC - 1)
+              break;
+            sr1 = (q[2] >> 2) & 15;
+            sr2 = double_samplerates[sr1];
+            if (!sr2)
+              break;
+            chancfg = ((q[2] << 2) | (q[3] >> 6)) & 7;
+            this->adts_fake  = AOT_SBR    << (32 - 5);
+            this->adts_fake |= sr1        << (32 - 5 - 4);
+            this->adts_fake |= chancfg    << (32 - 5 - 4 - 4);
+            this->adts_fake |= sr2        << (32 - 5 - 4 - 4 - 4);
+            this->adts_fake |= AOT_AAC_LC << (32 - 5 - 4 - 4 - 4 - 5);
+            /* + 3 more 0 bits: frameLength, dependsOnCoreCoder, extensionFlag1 = 25 bits = 4 bytes */
+            this->adts_fake = bebf_ADJ32 (this->adts_fake);
+            xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG, "faad_audio_decoder: trying fake AAC config to enable SBR\n");
+            l = NeAACDecInit2 (this->faac_dec, (uint8_t *)&this->adts_fake, 4, &rate, &chan);
+            if (l < 0) {
+              xprintf (this->stream->xine, XINE_VERBOSITY_LOG, _("libfaad: libfaad NeAACDecInit2 failed.\n"));
+              this->adts_fake = 0;
+              break;
+            }
+          } while (0);
+#endif
+          if (!this->adts_fake) {
+            int rate = 0;
+            uint8_t chan = 0;
+            used = NeAACDecInit (this->faac_dec, inbuf, this->size, &rate, &chan);
+            if (used < 0)
+              xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG, "libfaad: NeAACDecInit () failed\n");
+          }
+        }
+        if (this->adts_fake) {
+          size_t n = (q[1] & 1) ? 7 : 9; /* optional 2 bytes crc */
+          inbuf += n;
+          this->size -= n;
+        } else {
+          framecount = 0;
+        }
+      }
+      if (framecount)
+        framecount--;
+      sample_buffer = NeAACDecDecode (this->faac_dec, &this->faac_finfo, inbuf, this->size);
+      if (!sample_buffer) {
+        xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG, "libfaad: %s\n", NeAACDecGetErrorMessage (this->faac_finfo.error));
+        used = 1;
+      } else {
+        used = this->faac_finfo.bytesconsumed;
+      }
 
-    if( !sample_buffer ) {
-      xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG,
-              "libfaad: %s\n", NeAACDecGetErrorMessage(this->faac_finfo.error));
-      used = 1;
+    } else if (this->latm_mode == BEBF_LATM_IS_LATM) {
+      int l = this->size;
+      int latm_state = bebf_latm_parse (&this->latm, (const uint8_t *)inbuf, &l);
+      if (l <= 0)
+        break;
+      used = l;
+      if (latm_state & BEBF_LATM_GOT_CONF) {
+        int rate = 0;
+        uint8_t chan = 0;
+        xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG, "faad_audio_decoder: got new AAC config from LATM\n");
+        l = NeAACDecInit2 (this->faac_dec, this->latm.config, this->latm.conflen, &rate, &chan);
+        if (l < 0)
+          xprintf (this->stream->xine, XINE_VERBOSITY_LOG, _("libfaad: libfaad NeAACDecInit2 failed.\n"));
+      }
+      sample_buffer = NULL;
+      if (latm_state & BEBF_LATM_GOT_FRAME) {
+        sample_buffer = NeAACDecDecode (this->faac_dec, &this->faac_finfo, this->latm.frame, this->latm.framelen);
+        if (!sample_buffer) {
+          xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG, "libfaad: %s\n", NeAACDecGetErrorMessage (this->faac_finfo.error));
+        }
+      }
+
     } else {
-      used = this->faac_finfo.bytesconsumed;
+      if (this->latm_mode == BEBF_LATM_IS_RAW) {
+        if (!end_frame || this->size < 10)
+          break;
+      } else {
+        if (this->size < this->rec_audio_src_size)
+          break;
+      }
+      sample_buffer = NeAACDecDecode (this->faac_dec, &this->faac_finfo, inbuf, this->size);
+      if (!sample_buffer) {
+        xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG, "libfaad: %s\n", NeAACDecGetErrorMessage (this->faac_finfo.error));
+        used = 1;
+      } else {
+        used = this->faac_finfo.bytesconsumed;
+      }
+    }
+
+    if (sample_buffer) {
 
       /* raw AAC parameters might only be known after decoding the first frame */
       if( !this->dec_config &&
@@ -389,6 +537,8 @@ static void faad_decode_audio ( faad_decoder_t *this, int end_frame ) {
         if ((this->in_channels <= 2) && (this->out_channels > this->in_channels))
           memset (audio_buffer->mem, 0, this->out_channels * done * 2);
 
+        this->master = this->class->master;
+
         if (this->class->caps & FIXED_POINT_CAP) {
           /* hint compiler to use 32 to 64 bit multiply instruction where available. */
           /* also, that shift optimizes to almost nothing at 32bit system.           */
@@ -402,18 +552,18 @@ static void faad_decode_audio ( faad_decoder_t *this, int end_frame ) {
           if (this->in_channels < 6) {
             if (this->in_channels < 2) {
               if (this->out_used <= 1) { /* M -> M */
-                int32_t g1 = this->class->gain_i;
+                int32_t g1 = this->master->gain_i;
                 do { int32_t v; GET1 (0, 0); p++; q++; } while (--n);
               } else { /* M -> M M ... */
-                int32_t g1 = this->class->gain_i;
+                int32_t g1 = this->master->gain_i;
                 do { int32_t v; GET1 (0, 0); q[1] = q[0]; p++; q += this->out_channels; } while (--n);
               }
             } else {
               if (this->out_used < 2) { /* L R -> M */
-                int32_t g1 = this->class->gain6_i;
+                int32_t g1 = this->master->gain6_i;
                 do { int32_t v; GET2 (0, 0); p += 2; q++; } while (--n);
               } else { /* L R -> L R ... */
-                int32_t g1 = this->class->gain_i;
+                int32_t g1 = this->master->gain_i;
                 do { int32_t v; GET1 (0, 0); GET1 (1, 1); p += 2; q += this->out_channels; } while (--n);
               }
             }
@@ -423,15 +573,15 @@ static void faad_decode_audio ( faad_decoder_t *this, int end_frame ) {
                 case 0: /* C L R SL SR B -> M */
                   do {
                     int32_t v;
-                    v = ((int64_t)this->class->gain9_i * (int64_t)(p[1] + p[2])
-                      +  (int64_t)this->class->gain6_i * (int64_t)(p[0] + p[5])
-                      +  (int64_t)this->class->gain12_i * (int64_t)(p[3] + p[4])) >> 32;
+                    v = ((int64_t)this->master->gain9_i * (int64_t)(p[1] + p[2])
+                      +  (int64_t)this->master->gain6_i * (int64_t)(p[0] + p[5])
+                      +  (int64_t)this->master->gain12_i * (int64_t)(p[3] + p[4])) >> 32;
                     *q++ = sat16 (v); p += this->in_channels;
                   } while (--n);
                 break;
                 case 1: { /* C L R SL SR B -> L R */
-                  int32_t g1 = this->class->gain3_i;
-                  int32_t g2 = this->class->gain6_i;
+                  int32_t g1 = this->master->gain3_i;
+                  int32_t g2 = this->master->gain6_i;
                   do {
                     int32_t m = p[0] + p[5];
                     int32_t v;
@@ -440,34 +590,34 @@ static void faad_decode_audio ( faad_decoder_t *this, int end_frame ) {
                   } while (--n);
                 } break;
                 case 2: { /* C L R SL SR B -> L R SL SR */
-                  int32_t g1 = this->class->gain3_i;
+                  int32_t g1 = this->master->gain3_i;
                   do {
-                    int64_t m = (int64_t)this->class->gain6_i * (int64_t)(p[0] + p[5]);
+                    int64_t m = (int64_t)this->master->gain6_i * (int64_t)(p[0] + p[5]);
                     int32_t v;
                     GET1M (1, 0); GET1M (2, 1); GET1 (3, 2); GET1 (4, 3);
                     p += this->in_channels; q += 4;
                   } while (--n);
                 } break;
                 case 3: { /* C L R SL SR B -> L R SL SR 0 B */
-                  int32_t g1 = this->class->gain3_i;
+                  int32_t g1 = this->master->gain3_i;
                   do {
-                    int64_t m = (int64_t)this->class->gain6_i * (int64_t)p[0];
+                    int64_t m = (int64_t)this->master->gain6_i * (int64_t)p[0];
                     int32_t v;
                     GET1M (1, 0); GET1M (2, 1); GET1 (3, 2); GET1 (4, 3); q[4] = 0; GET1 (5, 5);
                     p += this->in_channels; q += 6;
                   } while (--n);
                 } break;
                 case 4: { /* C L R SL SR B -> L R SL SR C 0 */
-                  int32_t g1 = this->class->gain3_i;
+                  int32_t g1 = this->master->gain3_i;
                   do {
-                    int64_t m = (int64_t)this->class->gain6_i * (int64_t)p[5];
+                    int64_t m = (int64_t)this->master->gain6_i * (int64_t)p[5];
                     int32_t v;
                     GET1M (1, 0); GET1M (2, 1); GET1 (3, 2); GET1 (4, 3); GET1 (0, 4); q[5] = 0;
                     p += this->in_channels; q += 6;
                   } while (--n);
                 } break;
                 case 5: { /* C L R SL SR B -> L R SL SR C B */
-                  int32_t g1 = this->class->gain_i;
+                  int32_t g1 = this->master->gain_i;
                   do {
                     int32_t v;
                     GET1 (1, 0); GET1 (2, 1); GET1 (3, 2); GET1 (4, 3); GET1 (0, 4); GET1 (5, 5);
@@ -493,18 +643,18 @@ static void faad_decode_audio ( faad_decoder_t *this, int end_frame ) {
           if (this->in_channels < 6) {
             if (this->in_channels < 2) {
               if (this->out_used <= 1) { /* M -> M */
-                float g1 = this->class->gain_f;
+                float g1 = this->master->gain_f;
                 do { int32_t v; GET1 (0, 0); p++; q++; } while (--n);
               } else { /* M -> M M ... */
-                float g1 = this->class->gain_f;
+                float g1 = this->master->gain_f;
                 do { int32_t v; GET1 (0, 0); q[1] = q[0]; p++; q += this->out_channels; } while (--n);
               }
             } else {
               if (this->out_used < 2) { /* L R -> M */
-                float g1 = this->class->gain6_f;
+                float g1 = this->master->gain6_f;
                 do { int32_t v; GET2 (0, 0); p += 2; q++; } while (--n);
               } else { /* L R -> L R ... */
-                float g1 = this->class->gain_f;
+                float g1 = this->master->gain_f;
                 do { int32_t v; GET1 (0, 0); GET1 (1, 1); p += 2; q += this->out_channels; } while (--n);
               }
             }
@@ -514,15 +664,15 @@ static void faad_decode_audio ( faad_decoder_t *this, int end_frame ) {
                 case 0: /* C L R SL SR B -> M */
                   do {
                     int32_t v;
-                    v = this->class->gain9_f * (p[1] + p[2])
-                      + this->class->gain6_f * (p[0] + p[5])
-                      + this->class->gain12_f * (p[3] + p[4]);
+                    v = this->master->gain9_f * (p[1] + p[2])
+                      + this->master->gain6_f * (p[0] + p[5])
+                      + this->master->gain12_f * (p[3] + p[4]);
                     *q++ = sat16 (v); p += this->in_channels;
                   } while (--n);
                 break;
                 case 1: { /* C L R SL SR B -> L R */
-                  float g1 = this->class->gain3_f;
-                  float g2 = this->class->gain6_f;
+                  float g1 = this->master->gain3_f;
+                  float g2 = this->master->gain6_f;
                   do {
                     float m = p[0] + p[5];
                     int32_t v;
@@ -531,34 +681,34 @@ static void faad_decode_audio ( faad_decoder_t *this, int end_frame ) {
                   } while (--n);
                 } break;
                 case 2: { /* C L R SL SR B -> L R SL SR */
-                  float g1 = this->class->gain3_f;
+                  float g1 = this->master->gain3_f;
                   do {
-                    float m = this->class->gain6_f * (p[0] + p[5]);
+                    float m = this->master->gain6_f * (p[0] + p[5]);
                     int32_t v;
                     GET1M (1, 0); GET1M (2, 1); GET1 (3, 2); GET1 (4, 3);
                     p += this->in_channels; q += 4;
                   } while (--n);
                 } break;
                 case 3: { /* C L R SL SR B -> L R SL SR 0 B */
-                  float g1 = this->class->gain3_f;
+                  float g1 = this->master->gain3_f;
                   do {
-                    float m = this->class->gain6_f * p[0];
+                    float m = this->master->gain6_f * p[0];
                     int32_t v;
                     GET1M (1, 0); GET1M (2, 1); GET1 (3, 2); GET1 (4, 3); q[4] = 0; GET1 (5, 5);
                     p += this->in_channels; q += 6;
                   } while (--n);
                 } break;
                 case 4: { /* C L R SL SR B -> L R SL SR C 0 */
-                  float g1 = this->class->gain3_f;
+                  float g1 = this->master->gain3_f;
                   do {
-                    float m = this->class->gain6_f * p[5];
+                    float m = this->master->gain6_f * p[5];
                     int32_t v;
                     GET1M (1, 0); GET1M (2, 1); GET1 (3, 2); GET1 (4, 3); GET1 (0, 4); q[5] = 0;
                     p += this->in_channels; q += 6;
                   } while (--n);
                 } break;
                 case 5: { /* C L R SL SR B -> L R SL SR C B */
-                  float g1 = this->class->gain_f;
+                  float g1 = this->master->gain_f;
                   do {
                     int32_t v;
                     GET1 (1, 0); GET1 (2, 1); GET1 (3, 2); GET1 (4, 3); GET1 (0, 4); GET1 (5, 5);
@@ -582,15 +732,12 @@ static void faad_decode_audio ( faad_decoder_t *this, int end_frame ) {
       }
     }
 
-    if(used >= this->size){
+    if ((used >= this->size) || (this->latm_mode == BEBF_LATM_IS_RAW)) {
       this->size = 0;
-    } else {
-      this->size -= used;
-      inbuf += used;
+      break;
     }
-
-    if( !this->raw_mode )
-      this->size = 0;
+    this->size -= used;
+    inbuf += used;
   }
 
   if( this->size )
@@ -616,7 +763,7 @@ static void faad_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) {
     if( faad_open_dec(this) )
       return;
 
-    this->raw_mode = 0;
+    this->latm_mode = BEBF_LATM_IS_RAW;
   }
 
   /* get audio parameters from file header
@@ -638,7 +785,7 @@ static void faad_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) {
         if( faad_open_dec(this) )
           return;
 
-        this->raw_mode = 0;
+        this->latm_mode = BEBF_LATM_IS_RAW;
       }
     }
   } else {
@@ -651,13 +798,25 @@ static void faad_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) {
     if( !this->size )
       this->pts = buf->pts;
 
-    if( this->size + buf->size > this->max_audio_src_size ) {
-      this->max_audio_src_size = this->size + 2 * buf->size;
+    if (this->size + buf->size + 8 > this->max_audio_src_size ) {
+      this->max_audio_src_size = this->size + 2 * buf->size + 8;
       this->buf = realloc( this->buf, this->max_audio_src_size );
     }
 
     memcpy (&this->buf[this->size], buf->content, buf->size);
     this->size += buf->size;
+
+    if ((buf->type & (BUF_MAJOR_MASK | BUF_DECODER_MASK)) == BUF_AUDIO_AAC_LATM) {
+      if (this->latm_mode == BEBF_LATM_NEED_MORE_DATA) {
+        this->latm_mode = bebf_latm_test ((const uint8_t *)this->buf, this->size);
+        if (this->latm_mode == BEBF_LATM_NEED_MORE_DATA)
+          return;
+        if (this->latm_mode == BEBF_LATM_IS_ADTS) {
+          xprintf (this->class->xine, XINE_VERBOSITY_DEBUG,
+            "faad_audio_decoder: stream says LATM but is ADTS\n");
+        }
+      }
+    }
 
     if( !this->faac_dec && faad_open_dec(this) )
       return;
@@ -677,6 +836,8 @@ static void faad_discontinuity (audio_decoder_t *this_gen) {
 static void faad_dispose (audio_decoder_t *this_gen) {
 
   faad_decoder_t *this = (faad_decoder_t *) this_gen;
+
+  bebf_latm_close (&this->latm);
 
   if (this->output_open)
     this->stream->audio_out->close (this->stream->audio_out, this->stream);
@@ -719,7 +880,6 @@ static audio_decoder_t *open_plugin (audio_decoder_class_t *class_gen, xine_stre
 
   this->stream             = stream;
   this->output_open        = 0;
-  this->raw_mode           = 1;
   this->faac_dec           = NULL;
   this->faac_failed        = 0;
   this->buf                = NULL;
@@ -731,6 +891,9 @@ static audio_decoder_t *open_plugin (audio_decoder_class_t *class_gen, xine_stre
   this->total_data         = 0;
 
   this->rate               = 0;
+
+  bebf_latm_open (&this->latm);
+  this->latm_mode          = BEBF_LATM_NEED_MORE_DATA;
 
   return &this->audio_decoder;
 }
@@ -785,28 +948,72 @@ static void gain_cb (void *user_data, xine_cfg_entry_t *entry) {
   gain_update (class);
 }
 
-static void *init_plugin (xine_t *xine, void *data) {
+/* class management */
 
-  faad_class_t *this ;
+static void faad_class_ref (faad_class_t *this) {
+  if (this)
+    (this->refs)++;
+}
+
+static void faad_class_unref (audio_decoder_class_t *this_gen) {
+  faad_class_t *this = (faad_class_t *)this_gen, *master;
+  if (!this)
+    return;
+  master = this->master;
+  (this->refs)--;
+  if (!this->refs && (master != this))
+    free (this);
+  if (--(master->refs))
+    return;
+  this->xine->config->unregister_callback (this->xine->config, "audio.processing.faad_gain_dB");
+  free (master);
+}
+
+static void *faad_init_plugin (xine_t *xine, void *data, const char *id) {
+
+  faad_class_t *this, *master;
+  struct cfg_entry_s *entry;
 
   this = calloc(1, sizeof (faad_class_t));
+  if (!this)
+    return NULL;
 
+  faad_class_ref (this);
   this->decoder_class.open_plugin     = open_plugin;
-  this->decoder_class.identifier      = "FAAD";
+  this->decoder_class.identifier      = id;
   this->decoder_class.description     = N_("Freeware Advanced Audio Decoder");
-  this->decoder_class.dispose         = default_audio_decoder_class_dispose;
+  this->decoder_class.dispose         = faad_class_unref;
 
   this->xine = xine;
 
-  this->gain_db = xine->config->register_num (xine->config,
-    "audio.processing.faad_gain_dB", -3,
-    _("FAAD audio gain (dB)"),
-    _("Some AAC tracks are encoded too loud and thus play distorted.\n"
+  master = NULL;
+  entry = xine->config->lookup_entry (xine->config, "audio.processing.faad_gain_dB");
+  if (entry && (entry->callback == gain_cb))
+    master = (faad_class_t *)entry->callback_data;
+  if (master) {
+    faad_class_ref (master);
+    this->master = master;
+  } else {
+    faad_class_ref (this);
+    this->master = this;
+    this->gain_db = xine->config->register_num (xine->config,
+      "audio.processing.faad_gain_dB", -3,
+      _("FAAD audio gain (dB)"),
+      _("Some AAC tracks are encoded too loud and thus play distorted.\n"
       "This cannot be fixed by volume control, but by this setting."),
-    10, gain_cb, this);
-  gain_update (this);
+      10, gain_cb, this);
+    gain_update (this);
+  }
 
   return this;
+}
+
+static void *latm_init_class (xine_t *xine, void *data) {
+  return faad_init_plugin (xine, data, "FAAD-LATM");
+}
+
+static void *faad_init_class (xine_t *xine, void *data) {
+  return faad_init_plugin (xine, data, "FAAD");
 }
 
 static const uint32_t audio_types[] = {
@@ -818,9 +1025,19 @@ static const decoder_info_t dec_info_audio = {
   8                    /* priority        */
 };
 
+static const uint32_t latm_audio_types[] = {
+  BUF_AUDIO_AAC_LATM, 0
+ };
+
+static const decoder_info_t dec_info_latm_audio = {
+  latm_audio_types,    /* supported types */
+  1                    /* priority        */
+};
+
 const plugin_info_t xine_plugin_info[] EXPORTED = {
   /* type, API, "name", version, special_info, init_function */
-  { PLUGIN_AUDIO_DECODER, 16, "faad", XINE_VERSION_CODE, &dec_info_audio, init_plugin },
+  { PLUGIN_AUDIO_DECODER, 16, "faad", XINE_VERSION_CODE, &dec_info_audio, faad_init_class },
+  { PLUGIN_AUDIO_DECODER, 16, "faad-latm", XINE_VERSION_CODE, &dec_info_latm_audio, latm_init_class },
   { PLUGIN_NONE, 0, "", 0, NULL, NULL }
 };
 

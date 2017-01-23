@@ -5,7 +5,7 @@ include $(top_srcdir)/misc/Makefile.common
 AM_CFLAGS  = $(DEFAULT_OCFLAGS) $(VISIBILITY_FLAG)
 AM_LDFLAGS = $(xineplug_ldflags)
 
-EXTRA_DIST = fooaudio.c
+EXTRA_DIST = fooaudio.c latm.c
 noinst_HEADERS = ff_dvdata.h
 
 if ENABLE_MUSEPACK
