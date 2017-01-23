@@ -525,26 +525,6 @@ static VADisplay vaapi_get_display(Display *display, int opengl_render)
 }
 
 typedef struct {
-  void *funcptr;
-  const char *extstr;
-  const char *funcnames[7];
-  void *fallback;
-} extfunc_desc_t;
-
-#define DEF_FUNC_DESC(name) {&mpgl##name, NULL, {"gl"#name, NULL}, gl ##name}
-static const extfunc_desc_t extfuncs[] = {
-  DEF_FUNC_DESC(GenTextures),
-
-  {&mpglBindTexture, NULL, {"glBindTexture", "glBindTextureARB", "glBindTextureEXT", NULL}},
-  {&mpglXBindTexImage, "GLX_EXT_texture_from_pixmap", {"glXBindTexImageEXT", NULL}},
-  {&mpglXReleaseTexImage, "GLX_EXT_texture_from_pixmap", {"glXReleaseTexImageEXT", NULL}},
-  {&mpglXCreatePixmap, "GLX_EXT_texture_from_pixmap", {"glXCreatePixmap", NULL}},
-  {&mpglXDestroyPixmap, "GLX_EXT_texture_from_pixmap", {"glXDestroyPixmap", NULL}},
-  {&mpglGenPrograms, "_program", {"glGenProgramsARB", NULL}},
-  {NULL}
-};
-
-typedef struct {
   video_driver_class_t driver_class;
 
   config_values_t     *config;
@@ -683,10 +663,45 @@ static void *vaapi_getdladdr (const char *s) {
 
 /* Resolve opengl functions. */
 static void vaapi_get_functions(vo_driver_t *this_gen, void *(*getProcAddress)(const GLubyte *),
-                         const char *ext2) {
-  const extfunc_desc_t *dsc;
+                                const char *ext2)
+{
+#define DEF_FUNC_DESC(name) {&mpgl##name, NULL, {"gl"#name, NULL}, gl ##name}
+  static const struct {
+    void       *funcptr;
+    const char *extstr;
+    const char *funcnames[4];
+    void       *fallback;
+  } extfuncs[] = {
+    DEF_FUNC_DESC(GenTextures),
+    { &mpglBindTexture,
+      NULL,
+      { "glBindTexture", "glBindTextureARB", "glBindTextureEXT", NULL },
+      NULL },
+    { &mpglXBindTexImage,
+      "GLX_EXT_texture_from_pixmap",
+      {" glXBindTexImageEXT", NULL },
+      NULL },
+    { &mpglXReleaseTexImage,
+      "GLX_EXT_texture_from_pixmap",
+      { "glXReleaseTexImageEXT", NULL},
+      NULL },
+    { &mpglXCreatePixmap,
+      "GLX_EXT_texture_from_pixmap",
+      { "glXCreatePixmap", NULL },
+      NULL },
+    { &mpglXDestroyPixmap,
+      "GLX_EXT_texture_from_pixmap",
+      { "glXDestroyPixmap", NULL },
+      NULL },
+    { &mpglGenPrograms, "_program",
+      { "glGenProgramsARB", NULL },
+      NULL },
+};
+#undef DEF_FUNC_DESC
+
   const char *extensions;
   char *allexts;
+  size_t ext;
 
   if (!getProcAddress)
     getProcAddress = (void *)vaapi_getdladdr;
@@ -704,16 +719,16 @@ static void vaapi_get_functions(vo_driver_t *this_gen, void *(*getProcAddress)(c
   strcat(allexts, " ");
   strcat(allexts, ext2);
   lprintf("vaapi_get_functions: OpenGL extensions string:\n%s\n", allexts);
-  for (dsc = extfuncs; dsc->funcptr; dsc++) {
+  for (ext = 0; ext < sizeof(extfuncs) / sizeof(extfuncs[0]); ext++) {
     void *ptr = NULL;
     int i;
-    if (!dsc->extstr || strstr(allexts, dsc->extstr)) {
-      for (i = 0; !ptr && dsc->funcnames[i]; i++)
-        ptr = getProcAddress((const GLubyte *)dsc->funcnames[i]);
+    if (!extfuncs[ext].extstr || strstr(allexts, extfuncs[ext].extstr)) {
+      for (i = 0; !ptr && extfuncs[ext].funcnames[i]; i++)
+        ptr = getProcAddress((const GLubyte *)extfuncs[ext].funcnames[i]);
     }
     if (!ptr)
-        ptr = dsc->fallback;
-    *(void **)dsc->funcptr = ptr;
+        ptr = extfuncs[ext].fallback;
+    *(void **)extfuncs[ext].funcptr = ptr;
   }
   lprintf("\n");
   free(allexts);
@@ -1151,42 +1166,39 @@ static uint32_t vaapi_get_capabilities (vo_driver_t *this_gen) {
   return this->capabilities;
 }
 
-static const struct {
-  int fmt;
-  enum PixelFormat pix_fmt;
-#if defined LIBAVCODEC_VERSION_INT && LIBAVCODEC_VERSION_INT >= ((54<<16)|(25<<8))
-  enum AVCodecID codec_id;
-#else
-  enum CodecID codec_id;
-#endif
-} conversion_map[] = {
-  {IMGFMT_VAAPI_MPEG2,     PIX_FMT_VAAPI_VLD,  CODEC_ID_MPEG2VIDEO},
-  {IMGFMT_VAAPI_MPEG2_IDCT,PIX_FMT_VAAPI_IDCT, CODEC_ID_MPEG2VIDEO},
-  {IMGFMT_VAAPI_MPEG2_MOCO,PIX_FMT_VAAPI_MOCO, CODEC_ID_MPEG2VIDEO},
-  {IMGFMT_VAAPI_MPEG4,     PIX_FMT_VAAPI_VLD,  CODEC_ID_MPEG4},
-  {IMGFMT_VAAPI_H263,      PIX_FMT_VAAPI_VLD,  CODEC_ID_H263},
-  {IMGFMT_VAAPI_H264,      PIX_FMT_VAAPI_VLD,  CODEC_ID_H264},
-  {IMGFMT_VAAPI_WMV3,      PIX_FMT_VAAPI_VLD,  CODEC_ID_WMV3},
-  {IMGFMT_VAAPI_VC1,       PIX_FMT_VAAPI_VLD,  CODEC_ID_VC1},
-#ifdef FF_PROFILE_HEVC_MAIN
-  {IMGFMT_VAAPI_HEVC,      PIX_FMT_VAAPI_VLD,  AV_CODEC_ID_HEVC},
-#endif
-  {0, PIX_FMT_NONE}
-};
-
-static int vaapi_pixfmt2imgfmt(enum PixelFormat pix_fmt, int codec_id)
+static int vaapi_pixfmt2imgfmt(enum PixelFormat pix_fmt, unsigned codec_id)
 {
-  int i;
-  int fmt;
-  for (i = 0; conversion_map[i].pix_fmt != PIX_FMT_NONE; i++) {
+  static const struct {
+    unsigned         fmt;
+    enum PixelFormat pix_fmt;
+#if defined LIBAVCODEC_VERSION_INT && LIBAVCODEC_VERSION_INT >= ((54<<16)|(25<<8))
+    enum AVCodecID   codec_id;
+#else
+    enum CodecID     codec_id;
+#endif
+  } conversion_map[] = {
+    {IMGFMT_VAAPI_MPEG2,     PIX_FMT_VAAPI_VLD,  CODEC_ID_MPEG2VIDEO},
+    {IMGFMT_VAAPI_MPEG2_IDCT,PIX_FMT_VAAPI_IDCT, CODEC_ID_MPEG2VIDEO},
+    {IMGFMT_VAAPI_MPEG2_MOCO,PIX_FMT_VAAPI_MOCO, CODEC_ID_MPEG2VIDEO},
+    {IMGFMT_VAAPI_MPEG4,     PIX_FMT_VAAPI_VLD,  CODEC_ID_MPEG4},
+    {IMGFMT_VAAPI_H263,      PIX_FMT_VAAPI_VLD,  CODEC_ID_H263},
+    {IMGFMT_VAAPI_H264,      PIX_FMT_VAAPI_VLD,  CODEC_ID_H264},
+    {IMGFMT_VAAPI_WMV3,      PIX_FMT_VAAPI_VLD,  CODEC_ID_WMV3},
+    {IMGFMT_VAAPI_VC1,       PIX_FMT_VAAPI_VLD,  CODEC_ID_VC1},
+#ifdef FF_PROFILE_HEVC_MAIN
+    {IMGFMT_VAAPI_HEVC,      PIX_FMT_VAAPI_VLD,  AV_CODEC_ID_HEVC},
+#endif
+  };
+
+  unsigned i;
+  for (i = 0; i < sizeof(conversion_map)/sizeof(conversion_map[0]); i++) {
     if (conversion_map[i].pix_fmt == pix_fmt &&
         (conversion_map[i].codec_id == 0 ||
         conversion_map[i].codec_id == codec_id)) {
-      break;
+      return conversion_map[i].fmt;
     }
   }
-  fmt = conversion_map[i].fmt;
-  return fmt;
+  return 0;
 }
 
 static int vaapi_has_profile(VAProfile *va_profiles, int va_num_profiles, VAProfile profile)
