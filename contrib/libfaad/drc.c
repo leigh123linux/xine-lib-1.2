@@ -132,7 +132,7 @@ void drc_decode(drc_info *drc, real_t *spec)
         if (drc->dyn_rng_sgn[bd])  /* compress */
             exp = -drc->ctrl1 * (drc->dyn_rng_ctl[bd] - (DRC_REF_LEVEL - drc->prog_ref_level))/REAL_CONST(24.0);
         else /* boost */
-            exp = drc->ctrl2 * (drc->dyn_rng_ctl[bd] - (DRC_REF_LEVEL - drc->prog_ref_level))/REAL_CONST(24.0);
+            exp = drc->ctrl2 * (drc->dyn_rng_ctl[bd] + (DRC_REF_LEVEL - drc->prog_ref_level))/REAL_CONST(24.0);
         factor = (real_t)pow(2.0, exp);
 
         /* Apply gain factor */
@@ -145,8 +145,8 @@ void drc_decode(drc_info *drc, real_t *spec)
             exp = -1 * (drc->dyn_rng_ctl[bd] - (DRC_REF_LEVEL - drc->prog_ref_level))/ 24;
             frac = -1 * (drc->dyn_rng_ctl[bd] - (DRC_REF_LEVEL - drc->prog_ref_level)) % 24;
         } else { /* boost */
-            exp = (drc->dyn_rng_ctl[bd] - (DRC_REF_LEVEL - drc->prog_ref_level))/ 24;
-            frac = (drc->dyn_rng_ctl[bd] - (DRC_REF_LEVEL - drc->prog_ref_level)) % 24;
+            exp = (drc->dyn_rng_ctl[bd] + (DRC_REF_LEVEL - drc->prog_ref_level))/ 24;
+            frac = (drc->dyn_rng_ctl[bd] + (DRC_REF_LEVEL - drc->prog_ref_level)) % 24;
         }
 
         /* Apply gain factor */
