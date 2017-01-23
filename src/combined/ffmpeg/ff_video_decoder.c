@@ -1705,6 +1705,69 @@ static void ff_check_pts_tagging(ff_video_decoder_t *this, uint64_t pts)
   }
 }
 
+static int decode_video_wrapper(ff_video_decoder_t *this, AVFrame *av_frame, int *got_picture,
+                                void *buf, size_t buf_size)
+{
+  int len;
+#if XFF_VIDEO > 1
+  AVPacket avpkt;
+  av_init_packet(&avpkt);
+  avpkt.data = buf;
+  avpkt.size = buf_size;
+  avpkt.flags = AV_PKT_FLAG_KEY;
+
+# if XFF_PALETTE == 2 || XFF_PALETTE == 3
+  if (buf && this->palette_changed) {
+    uint8_t *sd = av_packet_new_side_data (&avpkt, AV_PKT_DATA_PALETTE, 256 * 4);
+    if (sd)
+      memcpy (sd, this->palette, 256 * 4);
+  }
+# endif /* XFF_PALETTE */
+
+# if ENABLE_VAAPI
+  if (this->accel) {
+    len = this->accel->avcodec_decode_video2 (this->accel_img, this->context, av_frame,
+                                              got_picture, &avpkt);
+  } else
+# endif /* ENABLE_VAAPI */
+  {
+    len = avcodec_decode_video2 (this->context, av_frame,
+                                 got_picture, &avpkt);
+  }
+
+# if XFF_PALETTE == 2 || XFF_PALETTE == 3
+  if (buf && this->palette_changed) {
+    /* Prevent freeing our data buffer */
+    avpkt.data = NULL;
+    avpkt.size = 0;
+#  if XFF_PALETTE == 2
+    /* TJ. Oh dear and sigh.
+       AVPacket side data handling is broken even in ffmpeg 1.1.1 - see avcodec/avpacket.c
+       The suggested av_free_packet () would leave a memory leak here, and
+       ff_packet_free_side_data () is private. */
+    av_destruct_packet (&avpkt);
+#  else /* XFF_PALETTE == 3 */
+    av_free_packet (&avpkt);
+#  endif
+    this->palette_changed = 0;
+  }
+# endif /* XFF_PALETTE */
+
+#else /* XFF_VIDEO */
+# if ENABLE_VAAPI
+  if (this->accel) {
+    len = this->accel->avcodec_decode_video (this->accel_img, this->context, av_frame,
+                                             got_picture, buf, buf_size);
+  } else
+# endif /* ENABLE_VAAPI */
+  {
+    len = avcodec_decode_video (this->context, av_frame,
+                                got_picture, buf, buf_size);
+  }
+#endif /* XFF_VIDEO */
+  return len;
+}
+
 static void ff_handle_mpeg12_buffer (ff_video_decoder_t *this, buf_element_t *buf) {
 
   vo_frame_t *img;
@@ -1777,35 +1840,9 @@ static void ff_handle_mpeg12_buffer (ff_video_decoder_t *this, buf_element_t *bu
     }
 #endif
     lprintf("avcodec_decode_video: size=%d\n", this->mpeg_parser->buffer_size);
-#if XFF_VIDEO > 1
-    AVPacket avpkt;
-    av_init_packet(&avpkt);
-    avpkt.data = (uint8_t *)this->mpeg_parser->chunk_buffer;
-    avpkt.size = this->mpeg_parser->buffer_size;
-    avpkt.flags = AV_PKT_FLAG_KEY;
-# if ENABLE_VAAPI
-    if (this->accel) {
-      len = this->accel->avcodec_decode_video2 ( this->accel_img, this->context, this->av_frame,
-				 &got_picture, &avpkt);
-    } else
-# endif
-    {
-    len = avcodec_decode_video2 (this->context, this->av_frame,
-				 &got_picture, &avpkt);
-    }
-#else
-# if ENABLE_VAAPI
-    if(this->accel) {
-      len = this->accel->avcodec_decode_video ( this->accel_img, this->context, this->av_frame,
-                                &got_picture, this->mpeg_parser->chunk_buffer,
-                                this->mpeg_parser->buffer_size);
-    } else
-# endif
-    len = avcodec_decode_video (this->context, this->av_frame,
-                                &got_picture, this->mpeg_parser->chunk_buffer,
-                                this->mpeg_parser->buffer_size);
-    }
-#endif
+
+    len = decode_video_wrapper(this, this->av_frame, &got_picture,
+                               this->mpeg_parser->chunk_buffer, this->mpeg_parser->buffer_size);
 #ifdef XFF_AV_BUFFER
     need_unref = 1;
 #endif
@@ -2035,60 +2072,10 @@ static void ff_handle_buffer (ff_video_decoder_t *this, buf_element_t *buf) {
           need_unref = 0;
         }
 #endif
-#if XFF_VIDEO > 1
-	AVPacket avpkt;
-	av_init_packet(&avpkt);
-	avpkt.data = (uint8_t *)&chunk_buf[offset];
-	avpkt.size = this->size;
-	avpkt.flags = AV_PKT_FLAG_KEY;
-# if XFF_PALETTE == 2 || XFF_PALETTE == 3
-	if (this->palette_changed) {
-	  uint8_t *sd = av_packet_new_side_data (&avpkt, AV_PKT_DATA_PALETTE, 256 * 4);
-	  if (sd)
-	    memcpy (sd, this->palette, 256 * 4);
-	}
-# endif
-# if ENABLE_VAAPI
-	if(this->accel) {
-	  len = this->accel->avcodec_decode_video2 ( this->accel_img, this->context, this->av_frame,
-						     &got_picture, &avpkt);
-	} else
-# endif
-	{
-	len = avcodec_decode_video2 (this->context, this->av_frame,
-				     &got_picture, &avpkt);
-	}
-# if XFF_PALETTE == 2 || XFF_PALETTE == 3
-	if (this->palette_changed) {
-	  /* Prevent freeing our data buffer */
-	  avpkt.data = NULL;
-	  avpkt.size = 0;
-#  if XFF_PALETTE == 2
-	  /* TJ. Oh dear and sigh.
-	      AVPacket side data handling is broken even in ffmpeg 1.1.1 - see avcodec/avpacket.c
-	      The suggested av_free_packet () would leave a memory leak here, and
-	      ff_packet_free_side_data () is private. */
-	  av_destruct_packet (&avpkt);
-#  else /* XFF_PALETTE == 3 */
-	  av_free_packet (&avpkt);
-#  endif
-	  this->palette_changed = 0;
-	}
-# endif
-#else
-# if ENABLE_VAAPI
-	if(this->accel) {
-	  len = this->accel->avcodec_decode_video ( this->accel_img, this->context, this->av_frame,
-						    &got_picture, &chunk_buf[offset],
-						    this->size);
-	} else
-# endif
-	{
-        len = avcodec_decode_video (this->context, this->av_frame,
-                                    &got_picture, &chunk_buf[offset],
-                                    this->size);
-	}
-#endif
+
+        len = decode_video_wrapper(this, this->av_frame, &got_picture,
+                                   &chunk_buf[offset], this->size);
+
 #ifdef XFF_AV_BUFFER
         need_unref = 1;
 #endif
@@ -2374,29 +2361,8 @@ static void ff_flush_internal (ff_video_decoder_t *this, int display) {
   this->state = STATE_FLUSHED;
 
   while (1) {
-#if XFF_VIDEO > 1
-    AVPacket avpkt;
-    av_init_packet (&avpkt);
-    avpkt.data  = NULL;
-    avpkt.size  = 0;
     got_picture = 0;
-# if ENABLE_VAAPI
-    if (this->accel)
-      len = this->accel->avcodec_decode_video2 (this->accel_img, this->context,
-        this->av_frame2, &got_picture, &avpkt);
-    else
-# endif
-      len = avcodec_decode_video2 (this->context, this->av_frame2, &got_picture, &avpkt);
-#else
-    got_picture = 0;
-# if ENABLE_VAAPI
-    if (this->accel)
-      len = this->accel->avcodec_decode_video (this->accel_img, this->context,
-        this->av_frame2, &got_picture, NULL, 0);
-    else
-# endif
-      len = avcodec_decode_video (this->context, this->av_frame2, &got_picture, NULL, 0);
-#endif
+    len = decode_video_wrapper(this, this->av_frame2, &got_picture, NULL, 0);
     if (len < 0 || !got_picture || !this->av_frame2->data[0]) {
 #ifdef XFF_AV_BUFFER
       av_frame_unref (this->av_frame2);
