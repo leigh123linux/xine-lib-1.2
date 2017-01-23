@@ -1708,6 +1708,13 @@ static void ff_check_pts_tagging(ff_video_decoder_t *this, uint64_t pts)
 static int decode_video_wrapper(ff_video_decoder_t *this, AVFrame *av_frame, int *got_picture,
                                 void *buf, size_t buf_size)
 {
+#if ENABLE_VAAPI
+  int locked = 0;
+  if (this->accel) {
+    locked = this->accel->lock_vaapi(this->accel_img);
+  }
+#endif /* ENABLE_VAAPI */
+
   int len;
 #if XFF_VIDEO > 1
   AVPacket avpkt;
@@ -1724,16 +1731,8 @@ static int decode_video_wrapper(ff_video_decoder_t *this, AVFrame *av_frame, int
   }
 # endif /* XFF_PALETTE */
 
-# if ENABLE_VAAPI
-  if (this->accel) {
-    len = this->accel->avcodec_decode_video2 (this->accel_img, this->context, av_frame,
-                                              got_picture, &avpkt);
-  } else
-# endif /* ENABLE_VAAPI */
-  {
-    len = avcodec_decode_video2 (this->context, av_frame,
-                                 got_picture, &avpkt);
-  }
+  len = avcodec_decode_video2 (this->context, av_frame,
+                               got_picture, &avpkt);
 
 # if XFF_PALETTE == 2 || XFF_PALETTE == 3
   if (buf && this->palette_changed) {
@@ -1754,17 +1753,16 @@ static int decode_video_wrapper(ff_video_decoder_t *this, AVFrame *av_frame, int
 # endif /* XFF_PALETTE */
 
 #else /* XFF_VIDEO */
-# if ENABLE_VAAPI
-  if (this->accel) {
-    len = this->accel->avcodec_decode_video (this->accel_img, this->context, av_frame,
-                                             got_picture, buf, buf_size);
-  } else
-# endif /* ENABLE_VAAPI */
-  {
-    len = avcodec_decode_video (this->context, av_frame,
-                                got_picture, buf, buf_size);
-  }
+  len = avcodec_decode_video (this->context, av_frame,
+                              got_picture, buf, buf_size);
 #endif /* XFF_VIDEO */
+
+#if ENABLE_VAAPI
+  if (locked) {
+    this->accel->unlock_vaapi(this->accel_img);
+  }
+#endif /* ENABLE_VAAPI */
+
   return len;
 }
 

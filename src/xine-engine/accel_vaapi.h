@@ -36,14 +36,6 @@ extern "C" {
 #endif
 
 #include <va/va_x11.h>
-#include <pthread.h>
-#ifdef HAVE_FFMPEG_AVUTIL_H
-#  include <avcodec.h>
-#else
-#  include <libavcodec/avcodec.h>
-#endif
-
-#include "../combined/ffmpeg/ffmpeg_compat.h"
 
 #define NUM_OUTPUT_SURFACES 22
 
@@ -106,15 +98,11 @@ struct vaapi_accel_s {
   unsigned int        index;
   vo_frame_t          *vo_frame;
 
-#if XFF_VIDEO > 1
-  int (*avcodec_decode_video2)(vo_frame_t *frame_gen, AVCodecContext *avctx, AVFrame *picture,
-                               int *got_picture_ptr, AVPacket *avpkt);
-#else
-  int (*avcodec_decode_video)(vo_frame_t *frame_gen, AVCodecContext *avctx, AVFrame *picture,
-                              int *got_picture_ptr, uint8_t *buf, int buf_size);
-#endif
+  int  (*lock_vaapi)(vo_frame_t *frame_gen);
+  void (*unlock_vaapi)(vo_frame_t *frame_gen);
+
   VAStatus (*vaapi_init)(vo_frame_t *frame_gen, int va_profile, int width, int height, int softrender);
-  int (*profile_from_imgfmt)(vo_frame_t *frame_gen, enum PixelFormat pix_fmt, int codec_id, int vaapi_mpeg_sofdec);
+  int (*profile_from_imgfmt)(vo_frame_t *frame_gen, unsigned pix_fmt, unsigned codec_id, int vaapi_mpeg_sofdec);
   ff_vaapi_context_t *(*get_context)(vo_frame_t *frame_gen);
   int (*guarded_render)(vo_frame_t *frame_gen);
   ff_vaapi_surface_t *(*get_vaapi_surface)(vo_frame_t *frame_gen);

@@ -71,6 +71,15 @@
 
 #include "accel_vaapi.h"
 
+#include <pthread.h>
+#ifdef HAVE_FFMPEG_AVUTIL_H
+#  include <avcodec.h>
+#else
+#  include <libavcodec/avcodec.h>
+#endif
+
+#include "../combined/ffmpeg/ffmpeg_compat.h"
+
 #ifndef VA_SURFACE_ATTRIB_SETTABLE
 #define vaCreateSurfaces(d, f, w, h, s, ns, a, na) \
     vaCreateSurfaces(d, w, h, f, ns, s)
@@ -345,60 +354,26 @@ static int vaapi_check_status(vo_driver_t *this_gen, VAStatus vaStatus, const ch
   return 1;
 }
 
-/* Wrapper for ffmpeg avcodec_decode_video2 */
-#if XFF_VIDEO > 1
-static int guarded_avcodec_decode_video2(vo_frame_t *frame_gen, AVCodecContext *avctx, AVFrame *picture,
-                                         int *got_picture_ptr, AVPacket *avpkt) {
-
+static int vaapi_lock_decode(vo_frame_t *frame_gen)
+{
   vaapi_driver_t  *this = (vaapi_driver_t *) frame_gen->driver;
 
-  int len = 0;
-
-
-  if(this->guarded_render) {
-    lprintf("guarded_avcodec_decode_video2 enter\n");
+  if (this->guarded_render) {
     pthread_mutex_lock(&this->vaapi_lock);
     //DO_LOCKDISPLAY;
+    return 1;
   }
-
-  len = avcodec_decode_video2 (avctx, picture, got_picture_ptr, avpkt);
-
-  if(this->guarded_render) {
-    //DO_UNLOCKDISPLAY;
-    pthread_mutex_unlock(&this->vaapi_lock);
-    lprintf("guarded_avcodec_decode_video2 exit\n");
-  }
-
-
-  return len;
+  return 0;
 }
-#else
-static int guarded_avcodec_decode_video(vo_frame_t *frame_gen, AVCodecContext *avctx, AVFrame *picture,
-                                        int *got_picture_ptr, uint8_t *buf, int buf_size) {
 
+static void vaapi_unlock_decode(vo_frame_t *frame_gen)
+{
   vaapi_driver_t  *this = (vaapi_driver_t *) frame_gen->driver;
 
-  int len = 0;
-
-
-  if(this->guarded_render) {
-    lprintf("guarded_avcodec_decode_video enter\n");
-    pthread_mutex_lock(&this->vaapi_lock);
-    //DO_LOCKDISPLAY;
-  }
-
-  len = avcodec_decode_video (avctx, picture, got_picture_ptr, buf, buf_size);
-
-  if(this->guarded_render) {
-    //DO_UNLOCKDISPLAY;
-    pthread_mutex_unlock(&this->vaapi_lock);
-    lprintf("guarded_avcodec_decode_video exit\n");
-  }
-
-
-  return len;
+  /* unconditional unlock - this is called only if lock was acquired */
+  //DO_UNLOCKDISPLAY;
+  pthread_mutex_unlock(&this->vaapi_lock);
 }
-#endif
 
 static int guarded_render(vo_frame_t *frame_gen) {
   vaapi_driver_t  *this = (vaapi_driver_t *) frame_gen->driver;
@@ -1213,7 +1188,7 @@ static int vaapi_has_profile(VAProfile *va_profiles, int va_num_profiles, VAProf
   return 0;
 }
 
-static int profile_from_imgfmt(vo_frame_t *frame_gen, enum PixelFormat pix_fmt, int codec_id, int vaapi_mpeg_sofdec)
+static int profile_from_imgfmt(vo_frame_t *frame_gen, unsigned pix_fmt, unsigned codec_id, int vaapi_mpeg_sofdec)
 {
   vo_driver_t         *this_gen   = (vo_driver_t *) frame_gen->driver;
   vaapi_driver_t      *this       = (vaapi_driver_t *) this_gen;
@@ -2425,11 +2400,8 @@ static vo_frame_t *vaapi_alloc_frame (vo_driver_t *this_gen) {
   frame->vaapi_accel_data.profile_from_imgfmt       = &profile_from_imgfmt;
   frame->vaapi_accel_data.get_context               = &get_context;
 
-#if XFF_VIDEO > 1
-  frame->vaapi_accel_data.avcodec_decode_video2     = &guarded_avcodec_decode_video2;
-#else
-  frame->vaapi_accel_data.avcodec_decode_video      = &guarded_avcodec_decode_video;
-#endif
+  frame->vaapi_accel_data.lock_vaapi                = &vaapi_lock_decode;
+  frame->vaapi_accel_data.unlock_vaapi              = &vaapi_unlock_decode;
 
   frame->vaapi_accel_data.get_vaapi_surface         = &get_vaapi_surface;
   frame->vaapi_accel_data.render_vaapi_surface      = &render_vaapi_surface;
