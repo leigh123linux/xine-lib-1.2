@@ -489,7 +489,7 @@ smb_class_get_instance (input_class_t *class_gen, xine_stream_t *stream,
 
 static void smb_auth(const char *srv, const char *shr, char *wg, int wglen, char *un, int unlen, char *pw, int pwlen)
 {
-	wglen = unlen = pwlen = 0;
+  //wglen = unlen = pwlen = 0;
 }
 
 static void
