@@ -228,4 +228,10 @@
 #  define XFF_FREE_FRAME(pp) av_frame_free(&(pp))
 #endif
 
+#if LIBAVCODEC_VERSION_INT < XFF_INT_VERSION(57,12,100)
+#define XFF_PACKET_UNREF av_free_packet
+#else
+#define XFF_PACKET_UNREF av_packet_unref
+#endif
+
 #endif /* XINE_AVCODEC_COMPAT_H */

@@ -540,7 +540,7 @@ static int send_avpacket(avformat_demux_plugin_t *this)
                        input_normpos, input_time, total_time, 0/*frame_number*/);
   }
 
-  av_free_packet(&pkt);
+  XFF_PACKET_UNREF(&pkt);
 
   return 1;
 }

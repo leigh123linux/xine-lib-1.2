@@ -1788,7 +1788,7 @@ static int decode_video_wrapper(ff_video_decoder_t *this, AVFrame *av_frame, int
        ff_packet_free_side_data () is private. */
     av_destruct_packet (&avpkt);
 #  else /* XFF_PALETTE == 3 */
-    av_free_packet (&avpkt);
+    XFF_PACKET_UNREF (&avpkt);
 #  endif
     this->palette_changed = 0;
   }
