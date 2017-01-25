@@ -242,7 +242,6 @@ static const lang_locale_t lang_locales[] = {
   { "zh_HK",    "big5-hkscs",  "big5-hkscs",  ""         },
   { "zh_TW",    "big-5",       "big-5",       ""         },
   { "zh_TW",    "euc-tw",      "euc-tw",      ""         },
-  { "" }
 };
 
 /**
@@ -551,25 +550,22 @@ void xine_hexdump (const void *buf_gen, int length) {
 
 
 static const lang_locale_t *_get_first_lang_locale(const char *lcal) {
-  const lang_locale_t *llocale;
   size_t lang_len;
+  size_t i;
   char *mod;
 
   if(lcal && *lcal) {
-    llocale = &*lang_locales;
 
     if ((mod = strchr(lcal, '@')))
       lang_len = mod++ - lcal;
     else
       lang_len = strlen(lcal);
 
-    while(*(llocale->language)) {
-      if(!strncmp(lcal, llocale->language, lang_len)) {
-        if ((!mod && !llocale->modifier) || (mod && llocale->modifier && !strcmp(mod, llocale->modifier)))
-	  return llocale;
+    for (i = 0; i < sizeof(lang_locales)/sizeof(lang_locales[0]); i++) {
+      if(!strncmp(lcal, lang_locales[i].language, lang_len)) {
+        if ((!mod && !lang_locales[i].modifier) || (mod && lang_locales[i].modifier && !strcmp(mod, lang_locales[i].modifier)))
+          return &lang_locales[i];
       }
-
-      llocale++;
     }
   }
   return NULL;
