@@ -1317,7 +1317,7 @@ static char* config_get_serialized_entry (config_values_t *this, const char *key
 
     char **cur_value = entry->enum_values;
     if (cur_value) {
-      while (*cur_value && (value_count < (sizeof(value_len) / sizeof(int) ))) {
+      while (*cur_value && ((size_t)value_count < (sizeof(value_len) / sizeof(int) ))) {
         value_len[value_count] = strlen(*cur_value);
         total_len += sizeof(int32_t) + value_len[value_count];
         value_count++;
@@ -1367,7 +1367,7 @@ static char* config_get_serialized_entry (config_values_t *this, const char *key
 
 }
 
-static int get_int(uint8_t *buffer, int buffer_size, int pos, int *value) {
+static size_t get_int(uint8_t *buffer, size_t buffer_size, size_t pos, int *value) {
   int32_t value_int32;
 
   if ((pos + sizeof(int32_t)) > buffer_size)
@@ -1378,9 +1378,9 @@ static int get_int(uint8_t *buffer, int buffer_size, int pos, int *value) {
   return sizeof(int32_t);
 }
 
-static int get_string(uint8_t *buffer, int buffer_size, int pos, char **value) {
+static size_t get_string(uint8_t *buffer, int buffer_size, size_t pos, char **value) {
   int len;
-  int bytes = get_int(buffer, buffer_size, pos, &len);
+  size_t bytes = get_int(buffer, buffer_size, pos, &len);
   *value = NULL;
 
   if (!bytes || (len < 0) || (len > 1024*64))
@@ -1423,7 +1423,7 @@ static char* config_register_serialized_entry (config_values_t *this, const char
   char **enum_values = NULL;
 
   int    bytes;
-  int    pos;
+  size_t pos;
   void  *output = NULL;
   size_t output_len;
   int    value_count = 0;
