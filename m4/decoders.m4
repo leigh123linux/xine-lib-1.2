@@ -570,6 +570,28 @@ AC_DEFUN([XINE_DECODER_PLUGINS], [
     fi
     AM_CONDITIONAL([ENABLE_VPX], [test x"$have_vpx" = x"yes"])
 
+    dnl libOpenHevc decoder plugin
+    AC_ARG_WITH([openhevc],
+                [AS_HELP_STRING([--with-openhevc], [Enable libOpenHevc HEVC decoder support (default: enabled)])],
+                [test x"$enableval" != x"no" && enable_openhevc="yes"])
+    if test x"$enable_openhevc" != x"no"; then
+
+        AC_CHECK_LIB([LibOpenHevcWrapper], [libOpenHevcInit], [have_openhevc=yes], [have_openhevc=no])
+        if test x"$enable_openhevc" = x"yes" && test x"$have_openhevc" != x"yes"; then
+            AC_MSG_ERROR([Cannot find LibOpenHevcWrapper])
+        else
+            AC_CHECK_HEADERS([openHevcWrapper.h], [have_openhevc=yes], [have_openhevc=no])
+            if test x"$enable_openhevc" = x"yes" && test x"$have_openhevc" != x"yes"; then
+                AC_MSG_ERROR([Cannot find openHevcWrapper.h])
+            fi
+            OPENHEVC_CFLAGS=''
+            OPENHEVC_LIBS='-lLibOpenHevcWrapper'
+            AC_SUBST(OPENHEVC_CFLAGS)
+            AC_SUBST(OPENHEVC_LIBS)
+        fi
+    fi
+    AM_CONDITIONAL([ENABLE_OPENHEVC], [test x"$have_openhevc" = x"yes"])
+
     dnl Broadcom MMAL (Multi Media Abstraction Layer) decoder plugin for RPi
     AC_ARG_ENABLE([mmal],
                   [AS_HELP_STRING([--enable-mmal], [Enable libmmal HW decoder and video output plugin for Raspberry Pi (default: enabled)])],
