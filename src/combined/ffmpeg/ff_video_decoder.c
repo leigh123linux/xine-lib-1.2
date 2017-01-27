@@ -767,6 +767,10 @@ static enum PixelFormat get_format(struct AVCodecContext *context, const enum Pi
   if(!this->class->enable_vaapi || !this->accel_img)
     return PIX_FMT_YUV420P;
 
+  if (context->codec_id == CODEC_ID_MPEG2VIDEO && this->class->vaapi_mpeg_softdec) {
+    return PIX_FMT_YUV420P;
+  }
+
   vaapi_accel_t *accel = (vaapi_accel_t*)this->accel_img->accel_data;
 
   for (i = 0; fmt[i] != PIX_FMT_NONE; i++) {
@@ -778,7 +782,7 @@ static enum PixelFormat get_format(struct AVCodecContext *context, const enum Pi
       continue;
     }
 
-    this->vaapi_profile = accel->profile_from_imgfmt (this->accel_img, format, this->class->vaapi_mpeg_softdec);
+    this->vaapi_profile = accel->profile_from_imgfmt (this->accel_img, format);
 
     if (this->vaapi_profile >= 0) {
       int width  = context->width;

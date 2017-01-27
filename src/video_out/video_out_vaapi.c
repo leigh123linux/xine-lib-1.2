@@ -1126,7 +1126,7 @@ static int vaapi_has_profile(VAProfile *va_profiles, int va_num_profiles, VAProf
   return 0;
 }
 
-static int profile_from_imgfmt(vo_frame_t *frame_gen, unsigned format, int vaapi_mpeg_sofdec)
+static int profile_from_imgfmt(vo_frame_t *frame_gen, unsigned format)
 {
   vo_driver_t         *this_gen   = (vo_driver_t *) frame_gen->driver;
   vaapi_driver_t      *this       = (vaapi_driver_t *) this_gen;
@@ -1181,9 +1181,7 @@ static int profile_from_imgfmt(vo_frame_t *frame_gen, unsigned format, int vaapi
   switch (IMGFMT_VAAPI_CODEC(format)) 
   {
     case IMGFMT_VAAPI_CODEC_MPEG2:
-      if(!vaapi_mpeg_sofdec) {
-        profiles = mpeg2_profiles;
-      }
+      profiles = mpeg2_profiles;
       break;
     case IMGFMT_VAAPI_CODEC_MPEG4:
       profiles = mpeg4_profiles;
