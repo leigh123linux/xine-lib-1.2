@@ -51,9 +51,7 @@ vdpau_module = xineplug_vo_out_vdpau.la
 endif
 
 if ENABLE_VAAPI
-if ENABLE_FFMPEG
 vaapi_module = xineplug_vo_out_vaapi.la
-endif
 endif
 
 if ENABLE_XCB
