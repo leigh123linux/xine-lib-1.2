@@ -89,7 +89,6 @@ typedef struct vaapi_accel_s vaapi_accel_t;
 
 struct ff_vaapi_surface_s {
   unsigned int        index;
-  vaapi_accel_t       *accel;
   VASurfaceID         va_surface_id;
   unsigned int        status;
 };
