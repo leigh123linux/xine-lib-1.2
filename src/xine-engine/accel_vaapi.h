@@ -62,8 +62,6 @@ struct ff_vaapi_context_s {
   int               height;
   int               sw_width;
   int               sw_height;
-  int               va_profile;
-  unsigned int      va_colorspace;
   VAImage           va_subpic_image;
   VASubpictureID    va_subpic_id;
   int               va_subpic_width;
@@ -76,7 +74,6 @@ struct ff_vaapi_context_s {
   unsigned int      va_soft_head;
   vo_driver_t       *driver;
   unsigned int      last_sub_image_fmt;
-  VASurfaceID       last_sub_surface_id;
   struct vaapi_equalizer va_equalizer;
   VAImageFormat     *va_image_formats;
   int               va_num_image_formats;
@@ -99,7 +96,6 @@ struct ff_vaapi_surface_s {
 
 #define IMGFMT_VAAPI               0x56410000 /* 'VA'00 */
 #define IMGFMT_VAAPI_MASK          0xFFFF0000
-#define IMGFMT_IS_VAAPI(fmt)       (((fmt) & IMGFMT_VAAPI_MASK) == IMGFMT_VAAPI)
 #define IMGFMT_VAAPI_CODEC_MASK    0x000000F0
 #define IMGFMT_VAAPI_CODEC(fmt)    ((fmt) & IMGFMT_VAAPI_CODEC_MASK)
 #define IMGFMT_VAAPI_CODEC_MPEG2   (0x10)
