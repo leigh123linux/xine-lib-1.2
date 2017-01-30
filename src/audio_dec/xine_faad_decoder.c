@@ -97,6 +97,7 @@ typedef struct faad_decoder_s {
   unsigned char    num_channels;
   int              sbr;
 
+  /* 1 (OK), 0 (closed), < 0 (# failed attempts) */
   int              output_open;
 
   unsigned long    total_time;
@@ -214,60 +215,10 @@ static void faad_meta_info_set ( faad_decoder_t *this ) {
   }
 }
 
-static int faad_open_dec( faad_decoder_t *this ) {
-  int used;
-
-  this->faac_dec = NeAACDecOpen();
-  if( !this->faac_dec ) {
-    xprintf( this->stream->xine, XINE_VERBOSITY_LOG,
-             _("libfaad: libfaad NeAACDecOpen() failed.\n"));
-    this->faac_failed++;
-  } else {
-    this->class->caps = NeAACDecGetCapabilities ();
-
-    if( this->dec_config ) {
-      used = NeAACDecInit2(this->faac_dec, this->dec_config, this->dec_config_size,
-                          &this->rate, &this->num_channels);
-
-      if( used < 0 ) {
-        xprintf( this->stream->xine, XINE_VERBOSITY_LOG,
-                _("libfaad: libfaad NeAACDecInit2 failed.\n"));
-        this->faac_failed++;
-      } else
-        lprintf( "NeAACDecInit2 returned rate=%"PRId32" channels=%d\n",
-                 this->rate, this->num_channels );
-    } else {
-      used = NeAACDecInit(this->faac_dec, this->buf, this->size,
-                        &this->rate, &this->num_channels);
-
-      if( used < 0 ) {
-        xprintf ( this->stream->xine, XINE_VERBOSITY_LOG,
-                  _("libfaad: libfaad NeAACDecInit failed.\n"));
-        this->faac_failed++;
-      } else {
-        lprintf( "NeAACDecInit() returned rate=%"PRId32" channels=%d (used=%d)\n",
-                 this->rate, this->num_channels, used);
-
-        this->size -= used;
-        memmove( this->buf, &this->buf[used], this->size );
-      }
-    }
-  }
-
-  if( !this->bits_per_sample )
-    this->bits_per_sample = 16;
-
-  if( this->faac_failed ) {
-    if( this->faac_dec ) {
-      NeAACDecClose( this->faac_dec );
-      this->faac_dec = NULL;
-    }
-    _x_stream_info_set(this->stream, XINE_STREAM_INFO_AUDIO_HANDLED, 0);
-  } else {
-    faad_meta_info_set(this);
-  }
-
-  return this->faac_failed;
+static void faad_close_output (faad_decoder_t *this) {
+  if (this->output_open > 0)
+    this->stream->audio_out->close (this->stream->audio_out, this->stream);
+  this->output_open = 0;
 }
 
 static int faad_open_output( faad_decoder_t *this ) {
@@ -306,13 +257,111 @@ static int faad_open_output( faad_decoder_t *this ) {
   if (!faad_map_channels (this))
     return 0;
 
-  this->output_open = (this->stream->audio_out->open) (this->stream->audio_out,
-                                             this->stream,
-                                             this->bits_per_sample,
-                                             this->rate,
-                                             this->out_flags) ;
+  {
+    int ret = this->stream->audio_out->open (
+      this->stream->audio_out, this->stream, this->bits_per_sample, this->rate, this->out_flags);
+    this->output_open = ret ? 1 : (this->output_open - 1);
+    return ret;
+  }
+}
 
-  return this->output_open;
+static int faad_apply_conf (faad_decoder_t *this, uint8_t *conf, int len) {
+  int rate = 0;
+  uint8_t num_channels = 0;
+  int res = NeAACDecInit2 (this->faac_dec, conf, len, &rate, &num_channels);
+  /* HACK: At least internal libfaad does not understand
+   *  AOT_PS / n Hz / Mono / n*2 Hz / AOT_AAC_LC.
+   * But it does understand (and find that PS in)
+   *  AOT_SBR / n Hz / Mono / n*2 Hz / AOT_AAC_LC.
+   */
+  if (res < 0) do {
+    static const uint8_t double_samplerates[16] = {~0, ~0, ~0, ~0, ~0, ~0, 3, 4, 5, 6, 7, 8, ~0, ~0, ~0, ~0};
+    uint32_t bits;
+    uint8_t save = conf[0];
+    if (len < 3)
+      break;
+    memcpy (&bits, conf, 4);
+    bits = bebf_ADJ32 (bits);
+    if ((bits & 0xf8787c00) != ((AOT_PS << (32 - 5)) | (1 << (32 - 5 - 4 - 4)) | (AOT_AAC_LC << (32 - 5 - 4 - 4 - 4 - 5))))
+      break;
+    if (double_samplerates[(bits >> (32 - 5 - 4)) & 15] != ((bits >> (32 - 5 - 4 - 4 - 4)) & 15))
+      break;
+    conf[0] = (conf[0] & 7) | (AOT_SBR << 3);
+    xprintf (this->class->xine, XINE_VERBOSITY_DEBUG, "faad_audio_decoder: using AOT_PS -> AOT_SBR hack\n");
+    res = NeAACDecInit2 (this->faac_dec, conf, len, &rate, &num_channels);
+    conf[0] = save;
+  } while (0);
+  /* more HACK s here */
+  /* are we fine? */
+  if (res >= 0) {
+    if ((rate != this->rate) || (num_channels != this->num_channels)) {
+      this->rate = rate;
+      this->num_channels = num_channels;
+      faad_close_output (this);
+    }
+    if (this->output_open <= 0)
+      faad_open_output (this);
+    return res;
+  }
+  /* no, its not working */
+  xprintf (this->stream->xine, XINE_VERBOSITY_LOG, _("libfaad: libfaad NeAACDecInit2 failed.\n"));
+  return res;
+}
+
+static int faad_open_dec( faad_decoder_t *this ) {
+
+  if (!this->bits_per_sample)
+    this->bits_per_sample = 16;
+
+  if (!this->faac_dec)
+    this->faac_dec = NeAACDecOpen ();
+
+  if (!this->faac_dec) {
+
+    xprintf (this->stream->xine, XINE_VERBOSITY_LOG, _("libfaad: libfaad NeAACDecOpen() failed.\n"));
+    this->faac_failed++;
+
+  } else {
+
+    this->class->caps = NeAACDecGetCapabilities ();
+    this->faac_cfg = NeAACDecGetCurrentConfiguration (this->faac_dec);
+    this->faac_cfg->outputFormat = FAAD_FMT_FLOAT;
+    NeAACDecSetConfiguration (this->faac_dec, this->faac_cfg);
+
+    if (this->dec_config) {
+
+      if (faad_apply_conf (this, this->dec_config, this->dec_config_size) < 0)
+        this->faac_failed++;
+
+    } else {
+
+      int used = NeAACDecInit (this->faac_dec, this->buf, this->size, &this->rate, &this->num_channels);
+
+      if( used < 0 ) {
+        xprintf ( this->stream->xine, XINE_VERBOSITY_LOG,
+                  _("libfaad: libfaad NeAACDecInit failed.\n"));
+        this->faac_failed++;
+      } else {
+        lprintf( "NeAACDecInit() returned rate=%"PRId32" channels=%d (used=%d)\n",
+                 this->rate, this->num_channels, used);
+
+        this->size -= used;
+        memmove( this->buf, &this->buf[used], this->size );
+      }
+    }
+  }
+
+  if( this->faac_failed ) {
+    if( this->faac_dec ) {
+      NeAACDecClose( this->faac_dec );
+      this->faac_dec = NULL;
+    }
+    _x_stream_info_set(this->stream, XINE_STREAM_INFO_AUDIO_HANDLED, 0);
+  } else {
+    faad_meta_info_set(this);
+  }
+
+  return this->faac_failed;
 }
 
 static void faad_decode_audio ( faad_decoder_t *this, int end_frame ) {
@@ -375,9 +424,7 @@ static void faad_decode_audio ( faad_decoder_t *this, int end_frame ) {
 #ifdef ADTS_FAKE_CFG
           do {
             static const uint8_t double_samplerates[16] = {0, 0, 0, 0, 0, 0, 3, 4, 5, 6, 7, 8, 0, 0, 0, 0};
-            uint32_t sr1, sr2, chancfg, l;
-            int rate;
-            uint8_t chan;
+            uint32_t sr1, sr2, chancfg;
             if ((q[2] >> 6) != AOT_AAC_LC - 1)
               break;
             sr1 = (q[2] >> 2) & 15;
@@ -393,12 +440,9 @@ static void faad_decode_audio ( faad_decoder_t *this, int end_frame ) {
             /* + 3 more 0 bits: frameLength, dependsOnCoreCoder, extensionFlag1 = 25 bits = 4 bytes */
             this->adts_fake = bebf_ADJ32 (this->adts_fake);
             xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG, "faad_audio_decoder: trying fake AAC config to enable SBR\n");
-            l = NeAACDecInit2 (this->faac_dec, (uint8_t *)&this->adts_fake, 4, &rate, &chan);
-            if (l < 0) {
-              xprintf (this->stream->xine, XINE_VERBOSITY_LOG, _("libfaad: libfaad NeAACDecInit2 failed.\n"));
-              this->adts_fake = 0;
+            if (faad_apply_conf (this, (uint8_t *)&this->adts_fake, 4) >= 0)
               break;
-            }
+            this->adts_fake = 0;
           } while (0);
 #endif
           if (!this->adts_fake) {
@@ -434,12 +478,8 @@ static void faad_decode_audio ( faad_decoder_t *this, int end_frame ) {
         break;
       used = l;
       if (latm_state & BEBF_LATM_GOT_CONF) {
-        int rate = 0;
-        uint8_t chan = 0;
         xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG, "faad_audio_decoder: got new AAC config from LATM\n");
-        l = NeAACDecInit2 (this->faac_dec, this->latm.config, this->latm.conflen, &rate, &chan);
-        if (l < 0)
-          xprintf (this->stream->xine, XINE_VERBOSITY_LOG, _("libfaad: libfaad NeAACDecInit2 failed.\n"));
+        faad_apply_conf (this, this->latm.config, this->latm.conflen);
       }
       sample_buffer = NULL;
       if (latm_state & BEBF_LATM_GOT_FRAME) {
@@ -468,10 +508,8 @@ static void faad_decode_audio ( faad_decoder_t *this, int end_frame ) {
 
     if (sample_buffer) {
 
-      /* raw AAC parameters might only be known after decoding the first frame */
-      if( !this->dec_config &&
-          (this->num_channels != this->faac_finfo.channels ||
-           this->rate != this->faac_finfo.samplerate) ) {
+      /* need a different output? */
+      if ((this->num_channels != this->faac_finfo.channels) || (this->rate != this->faac_finfo.samplerate)) {
 
         this->num_channels = this->faac_finfo.channels;
         this->rate = this->faac_finfo.samplerate;
@@ -479,12 +517,18 @@ static void faad_decode_audio ( faad_decoder_t *this, int end_frame ) {
         lprintf("NeAACDecDecode() returned rate=%"PRId32" channels=%d used=%d\n",
                 this->rate, this->num_channels, used);
 
-        if (this->output_open) {
-          this->stream->audio_out->close (this->stream->audio_out, this->stream);
-          this->output_open = 0;
-        }
-        faad_open_output( this );
+        faad_close_output (this);
+      }
 
+      if (this->output_open <= 0) {
+        if (this->output_open <= -5) { /* too many fails for same settings */
+          this->size = 0;
+          break;
+        }
+        if (!faad_open_output (this)) {
+          this->size = 0;
+          break;
+        }
         faad_meta_info_set( this );
       }
 
@@ -821,11 +865,6 @@ static void faad_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) {
     if( !this->faac_dec && faad_open_dec(this) )
       return;
 
-    /* open audio device as needed */
-    if (!this->output_open) {
-      faad_open_output( this );
-    }
-
     faad_decode_audio(this, buf->decoder_flags & BUF_FLAG_FRAME_END );
   }
 }
@@ -839,9 +878,7 @@ static void faad_dispose (audio_decoder_t *this_gen) {
 
   bebf_latm_close (&this->latm);
 
-  if (this->output_open)
-    this->stream->audio_out->close (this->stream->audio_out, this->stream);
-  this->output_open = 0;
+  faad_close_output (this);
 
   if( this->buf )
     free(this->buf);
