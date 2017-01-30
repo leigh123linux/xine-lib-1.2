@@ -1926,6 +1926,11 @@ static void ff_handle_mpeg12_buffer (ff_video_decoder_t *this, buf_element_t *bu
                                                   this->aspect_ratio,
                                                   this->output_format,
                                                   VO_BOTH_FIELDS|this->frame_flags);
+
+        if( this->context->pix_fmt != PIX_FMT_VAAPI_VLD) {
+          ff_convert_frame(this, img, this->av_frame);
+        }
+
         free_img = 1;
       } else {
         /* DR1 */
