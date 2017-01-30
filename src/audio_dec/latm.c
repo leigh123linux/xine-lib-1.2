@@ -587,12 +587,13 @@ static int bebf_UNUSED bebf_latm_configure (bebf_latm_t *latm, uint32_t nbits) {
       int front, side, back, lfe, data, coupling, n;
       /* program config element */
       bebf_skip (&latm->bebf, 10); /* elementInstanceTag, objectType, Freq */
-      front    = bebf_get (&latm->bebf, 4);
-      side     = bebf_get (&latm->bebf, 4);
-      back     = bebf_get (&latm->bebf, 4);
-      lfe      = bebf_get (&latm->bebf, 2);
-      data     = bebf_get (&latm->bebf, 3);
-      coupling = bebf_get (&latm->bebf, 4);
+      n        = bebf_get (&latm->bebf, 4 + 4 + 4 + 2 + 3 + 4);
+      front    =  n >> (4 + 4 + 2 + 3 + 4);
+      side     = (n >> (    4 + 2 + 3 + 4)) & 15;
+      back     = (n >> (        2 + 3 + 4)) & 15;
+      lfe      = (n >> (            3 + 4)) &  3;
+      data     = (n >>                  4 ) &  7;
+      coupling =  n                         & 15;
       latm->numchannels = front + side + back + lfe;
       if (bebf_get (&latm->bebf, 1))
         bebf_skip (&latm->bebf, 4); /* mono downmix */
@@ -882,3 +883,5 @@ static int bebf_UNUSED bebf_latm_parse (bebf_latm_t *latm, const uint8_t *in, in
   return bebf_latm_demux (latm, p, size);
 }
 #undef LOG_MODULE
+
+
