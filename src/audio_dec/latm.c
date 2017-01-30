@@ -524,7 +524,7 @@ static int bebf_UNUSED bebf_latm_configure (bebf_latm_t *latm, uint32_t nbits) {
   if (latm->object_type == AOT_SBR) {
     n = 1;
   } else if (latm->object_type == AOT_PS) {
-    if (!(bebf_sniff (&latm->bebf, 9) & 0x0ff)) {
+    if ((latm->channel_conf == 1) && (bebf_sniff (&latm->bebf, 9) & 0x0ff)) {
       latm->ps = 1;
       n = 1;
     }
