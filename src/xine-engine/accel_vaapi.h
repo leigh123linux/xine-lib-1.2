@@ -60,25 +60,12 @@ struct ff_vaapi_context_s {
   VAConfigID        va_config_id;
   int               width;
   int               height;
-  int               sw_width;
-  int               sw_height;
-  VAImage           va_subpic_image;
-  VASubpictureID    va_subpic_id;
-  int               va_subpic_width;
-  int               va_subpic_height;
-  int               is_bound;
-  void              *gl_surface;
-  unsigned int      soft_head;
   unsigned int      valid_context;
   unsigned int      va_head;
-  unsigned int      va_soft_head;
   vo_driver_t       *driver;
-  unsigned int      last_sub_image_fmt;
   struct vaapi_equalizer va_equalizer;
   VAImageFormat     *va_image_formats;
   int               va_num_image_formats;
-  VAImageFormat     *va_subpic_formats;
-  int               va_num_subpic_formats;
 };
 
 typedef struct ff_vaapi_surface_s ff_vaapi_surface_t;

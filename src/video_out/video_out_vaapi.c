@@ -230,6 +230,22 @@ struct vaapi_driver_s {
   Pixmap              gl_image_pixmap;
 
   ff_vaapi_context_t  *va_context;
+  /* soft surfaces */
+  int                 sw_width;
+  int                 sw_height;
+  unsigned int        va_soft_head;
+  int                 is_bound;
+  /* subpicture */
+  VAImageFormat       *va_subpic_formats;
+  int                 va_num_subpic_formats;
+  VAImage             va_subpic_image;
+  VASubpictureID      va_subpic_id;
+  int                 va_subpic_width;
+  int                 va_subpic_height;
+  unsigned int        last_sub_image_fmt;
+  /* OpenGL surface */
+  void                *gl_surface;
+  /* */
 
   int                  num_frame_buffers;
   vaapi_frame_t       *frames[RENDER_SURFACES];
@@ -820,10 +836,10 @@ static void destroy_glx(vo_driver_t *this_gen)
   //if (gl_finish)
   //  glFinish();
 
-  if(va_context->gl_surface) {
-    VAStatus vaStatus = vaDestroySurfaceGLX(va_context->va_display, va_context->gl_surface);
+  if (this->gl_surface) {
+    VAStatus vaStatus = vaDestroySurfaceGLX(va_context->va_display, this->gl_surface);
     vaapi_check_status(this_gen, vaStatus, "vaDestroySurfaceGLX()");
-    va_context->gl_surface = NULL;
+    this->gl_surface = NULL;
   }
 
   if(this->gl_context)
@@ -1088,13 +1104,13 @@ static int vaapi_glx_config_glx(vo_driver_t *this_gen, unsigned int width, unsig
   }
 
   if(!this->opengl_use_tfp) {
-    VAStatus vaStatus = vaCreateSurfaceGLX(va_context->va_display, GL_TEXTURE_2D, this->gl_texture, &va_context->gl_surface);
+    VAStatus vaStatus = vaCreateSurfaceGLX(va_context->va_display, GL_TEXTURE_2D, this->gl_texture, &this->gl_surface);
     if(!vaapi_check_status(this_gen, vaStatus, "vaCreateSurfaceGLX()")) {
-      va_context->gl_surface = NULL;
+      this->gl_surface = NULL;
       goto error;
     }
   } else {
-    va_context->gl_surface = NULL;
+    this->gl_surface = NULL;
   }
 
   lprintf("vaapi_glx_config_glx : GL setup done\n");
@@ -1273,12 +1289,11 @@ static const char *vaapi_entrypoint_to_string(VAEntrypoint entrypoint)
 /* Init subpicture */
 static void vaapi_init_subpicture(vaapi_driver_t *this_gen) {
   vaapi_driver_t        *this = (vaapi_driver_t *) this_gen;
-  ff_vaapi_context_t    *va_context = this->va_context;
 
-  va_context->va_subpic_width               = 0;
-  va_context->va_subpic_height              = 0;
-  va_context->va_subpic_id                  = VA_INVALID_ID;
-  va_context->va_subpic_image.image_id      = VA_INVALID_ID;
+  this->va_subpic_width               = 0;
+  this->va_subpic_height              = 0;
+  this->va_subpic_id                  = VA_INVALID_ID;
+  this->va_subpic_image.image_id      = VA_INVALID_ID;
 
   this->overlay_output_width = this->overlay_output_height = 0;
   this->overlay_unscaled_width = this->overlay_unscaled_height = 0;
@@ -1287,22 +1302,18 @@ static void vaapi_init_subpicture(vaapi_driver_t *this_gen) {
   this->overlay_bitmap = NULL;
   this->overlay_bitmap_size = 0;
 
+  this->va_subpic_formats     = NULL;
+  this->va_num_subpic_formats = 0;
 }
 
 /* Init vaapi context */
-static void vaapi_init_va_context(vaapi_driver_t *this_gen) {
-  vaapi_driver_t        *this = (vaapi_driver_t *) this_gen;
-  ff_vaapi_context_t    *va_context = this->va_context;
+static void vaapi_init_va_context(ff_vaapi_context_t *va_context) {
   int i;
 
   va_context->va_config_id              = VA_INVALID_ID;
   va_context->va_context_id             = VA_INVALID_ID;
-  va_context->is_bound                  = 0;
-  va_context->gl_surface                = NULL;
-  va_context->soft_head                 = 0;
   va_context->valid_context             = 0;
   va_context->va_head                   = 0;
-  va_context->va_soft_head              = 0;
 
   for(i = 0; i < RENDER_SURFACES; i++) {
     ff_vaapi_surface_t *va_surface      = &va_render_surfaces[i];
@@ -1321,9 +1332,6 @@ static void vaapi_init_va_context(vaapi_driver_t *this_gen) {
 
   va_context->va_image_formats      = NULL;
   va_context->va_num_image_formats  = 0;
-
-  va_context->va_subpic_formats     = NULL;
-  va_context->va_num_subpic_formats = 0;
 }
 
 /* Close vaapi  */
@@ -1363,9 +1371,8 @@ static void vaapi_close(vo_driver_t *this_gen) {
   va_context->va_image_formats      = NULL;
   va_context->va_num_image_formats  = 0;
 
-  free(va_context->va_subpic_formats);
-  va_context->va_subpic_formats     = NULL;
-  va_context->va_num_subpic_formats = 0;
+  _x_freep(&this->va_subpic_formats);
+  this->va_num_subpic_formats = 0;
 
   va_context->valid_context = 0;
 }
@@ -1404,16 +1411,16 @@ static VAStatus vaapi_create_image(vo_driver_t *this_gen, VASurfaceID va_surface
   if(!va_context->valid_context || va_context->va_image_formats == NULL || va_context->va_num_image_formats == 0)
     return VA_STATUS_ERROR_UNKNOWN;
 
-  va_context->is_bound = 0;
+  this->is_bound = 0;
 
   vaStatus = vaDeriveImage(va_context->va_display, va_surface_id, va_image);
   if(vaStatus == VA_STATUS_SUCCESS) {
     if (va_image->image_id != VA_INVALID_ID && va_image->buf != VA_INVALID_ID) {
-      va_context->is_bound = 1;
+      this->is_bound = 1;
     }
   }
 
-  if(!va_context->is_bound) {
+  if (!this->is_bound) {
     for (i = 0; i < va_context->va_num_image_formats; i++) {
       if (va_context->va_image_formats[i].fourcc == VA_FOURCC( 'Y', 'V', '1', '2' ) ||
           va_context->va_image_formats[i].fourcc == VA_FOURCC( 'I', '4', '2', '0' ) /*||
@@ -1464,16 +1471,16 @@ static void vaapi_destroy_subpicture(vo_driver_t *this_gen) {
   ff_vaapi_context_t    *va_context = this->va_context;
   VAStatus              vaStatus;
 
-  lprintf("destroy sub 0x%08x 0x%08x 0x%08x\n", va_context->va_subpic_id, 
-      va_context->va_subpic_image.image_id, va_context->va_subpic_image.buf);
+  lprintf("destroy sub 0x%08x 0x%08x 0x%08x\n", this->va_subpic_id,
+      this->va_subpic_image.image_id, this->va_subpic_image.buf);
 
-  if(va_context->va_subpic_id != VA_INVALID_ID) {
-    vaStatus = vaDestroySubpicture(va_context->va_display, va_context->va_subpic_id);
+  if (this->va_subpic_id != VA_INVALID_ID) {
+    vaStatus = vaDestroySubpicture(va_context->va_display, this->va_subpic_id);
     vaapi_check_status(this_gen, vaStatus, "vaDeassociateSubpicture()");
   }
-  va_context->va_subpic_id = VA_INVALID_ID;
+  this->va_subpic_id = VA_INVALID_ID;
 
-  vaapi_destroy_image(this_gen, &va_context->va_subpic_image);
+  vaapi_destroy_image(this_gen, &this->va_subpic_image);
 
 }
 
@@ -1485,53 +1492,53 @@ static VAStatus vaapi_create_subpicture(vo_driver_t *this_gen, int width, int he
 
   int i = 0;
 
-  if(!va_context->valid_context || !va_context->va_subpic_formats || va_context->va_num_subpic_formats == 0)
+  if(!va_context->valid_context || !this->va_subpic_formats || this->va_num_subpic_formats == 0)
     return VA_STATUS_ERROR_UNKNOWN;
 
-  for (i = 0; i < va_context->va_num_subpic_formats; i++) {
-    if ( va_context->va_subpic_formats[i].fourcc == VA_FOURCC('B','G','R','A')) {
+  for (i = 0; i < this->va_num_subpic_formats; i++) {
+    if ( this->va_subpic_formats[i].fourcc == VA_FOURCC('B','G','R','A')) {
 
-      vaStatus = vaCreateImage( va_context->va_display, &va_context->va_subpic_formats[i], width, height, &va_context->va_subpic_image );
+      vaStatus = vaCreateImage( va_context->va_display, &this->va_subpic_formats[i], width, height, &this->va_subpic_image );
       if(!vaapi_check_status(this_gen, vaStatus, "vaCreateImage()"))
         goto error;
 
-      vaStatus = vaCreateSubpicture(va_context->va_display, va_context->va_subpic_image.image_id, &va_context->va_subpic_id );
+      vaStatus = vaCreateSubpicture(va_context->va_display, this->va_subpic_image.image_id, &this->va_subpic_id );
       if(!vaapi_check_status(this_gen, vaStatus, "vaCreateSubpicture()"))
         goto error;
     }
   }
 
-  if(va_context->va_subpic_image.image_id == VA_INVALID_ID || va_context->va_subpic_id == VA_INVALID_ID)
+  if (this->va_subpic_image.image_id == VA_INVALID_ID || this->va_subpic_id == VA_INVALID_ID)
     goto error;
 
   void *p_base = NULL;
 
-  lprintf("create sub 0x%08x 0x%08x 0x%08x\n", va_context->va_subpic_id, 
-      va_context->va_subpic_image.image_id, va_context->va_subpic_image.buf);
+  lprintf("create sub 0x%08x 0x%08x 0x%08x\n", this->va_subpic_id,
+      this->va_subpic_image.image_id, this->va_subpic_image.buf);
 
-  vaStatus = vaMapBuffer(va_context->va_display, va_context->va_subpic_image.buf, &p_base);
+  vaStatus = vaMapBuffer(va_context->va_display, this->va_subpic_image.buf, &p_base);
   if(!vaapi_check_status(this_gen, vaStatus, "vaMapBuffer()"))
     goto error;
 
-  memset((uint32_t *)p_base, 0x0, va_context->va_subpic_image.data_size);
-  vaStatus = vaUnmapBuffer(va_context->va_display, va_context->va_subpic_image.buf);
+  memset((uint32_t *)p_base, 0x0, this->va_subpic_image.data_size);
+  vaStatus = vaUnmapBuffer(va_context->va_display, this->va_subpic_image.buf);
   vaapi_check_status(this_gen, vaStatus, "vaUnmapBuffer()");
 
   this->overlay_output_width  = width;
   this->overlay_output_height = height;
 
-  lprintf("vaapi_create_subpicture 0x%08x format %s\n", va_context->va_subpic_image.image_id, 
-      string_of_VAImageFormat(&va_context->va_subpic_image.format));
+  lprintf("vaapi_create_subpicture 0x%08x format %s\n", this->va_subpic_image.image_id,
+      string_of_VAImageFormat(&this->va_subpic_image.format));
 
   return VA_STATUS_SUCCESS;
 
 error:
   /* house keeping */
-  if(va_context->va_subpic_id != VA_INVALID_ID)
+  if(this->va_subpic_id != VA_INVALID_ID)
     vaapi_destroy_subpicture(this_gen);
-  va_context->va_subpic_id = VA_INVALID_ID;
+  this->va_subpic_id = VA_INVALID_ID;
 
-  vaapi_destroy_image(this_gen, &va_context->va_subpic_image);
+  vaapi_destroy_image(this_gen, &this->va_subpic_image);
 
   this->overlay_output_width  = 0;
   this->overlay_output_height = 0;
@@ -2031,8 +2038,9 @@ static VAStatus vaapi_destroy_soft_surfaces(vo_driver_t *this_gen) {
     }
   }
 
-  va_context->sw_width  = 0;
-  va_context->sw_height = 0;
+  this->sw_width  = 0;
+  this->sw_height = 0;
+
   return VA_STATUS_SUCCESS;
 }
 
@@ -2060,7 +2068,7 @@ static VAStatus vaapi_init_soft_surfaces(vo_driver_t *this_gen, int width, int h
 
     va_surface->index = i;
 
-    if(!va_context->is_bound) {
+    if (!this->is_bound) {
       vaStatus = vaPutImage(va_context->va_display, va_soft_surface_ids[i], va_soft_images[i].image_id,
                0, 0, va_soft_images[i].width, va_soft_images[i].height,
                0, 0, va_soft_images[i].width, va_soft_images[i].height);
@@ -2071,13 +2079,14 @@ static VAStatus vaapi_init_soft_surfaces(vo_driver_t *this_gen, int width, int h
 #endif
   }
 
-  va_context->sw_width  = width;
-  va_context->sw_height = height;
+  this->sw_width  = width;
+  this->sw_height = height;
+  this->va_soft_head = 0;
   return VA_STATUS_SUCCESS;
 
 error:
-  va_context->sw_width  = 0;
-  va_context->sw_height = 0;
+  this->sw_width  = 0;
+  this->sw_height = 0;
   vaapi_destroy_soft_surfaces(this_gen);
   return VA_STATUS_ERROR_UNKNOWN;
 }
@@ -2090,7 +2099,7 @@ static VAStatus vaapi_init_internal(vo_driver_t *this_gen, int va_profile, int w
   VAStatus            vaStatus;
 
   vaapi_close(this_gen);
-  vaapi_init_va_context(this);
+  vaapi_init_va_context(this->va_context);
 
   this->va_context->va_display = vaapi_get_display(this->display, this->opengl_render);
 
@@ -2114,9 +2123,9 @@ static VAStatus vaapi_init_internal(vo_driver_t *this_gen, int va_profile, int w
     goto error;
 
   fmt_count = vaMaxNumSubpictureFormats( va_context->va_display );
-  va_context->va_subpic_formats = calloc( fmt_count, sizeof(*va_context->va_subpic_formats) );
+  this->va_subpic_formats = calloc( fmt_count, sizeof(*this->va_subpic_formats) );
 
-  vaStatus = vaQuerySubpictureFormats( va_context->va_display , va_context->va_subpic_formats, 0, &va_context->va_num_subpic_formats );
+  vaStatus = vaQuerySubpictureFormats( va_context->va_display, this->va_subpic_formats, 0, &this->va_num_subpic_formats );
   if(!vaapi_check_status(this_gen, vaStatus, "vaQuerySubpictureFormats()"))
     goto error;
   
@@ -2188,7 +2197,7 @@ static VAStatus vaapi_init_internal(vo_driver_t *this_gen, int va_profile, int w
 
       VAImage va_image;
       vaStatus = vaapi_create_image(va_context->driver, va_surface_ids[i], &va_image, width, height, 1);
-      if(vaapi_check_status(va_context->driver, vaStatus, "vaapi_create_image()") && !va_context->is_bound) {
+      if(vaapi_check_status(va_context->driver, vaStatus, "vaapi_create_image()") && !this->is_bound) {
         vaStatus = vaPutImage(va_context->va_display, va_surface_ids[i], va_image.image_id,
                               0, 0, va_image.width, va_image.height,
                               0, 0, va_image.width, va_image.height);
@@ -2209,7 +2218,7 @@ static VAStatus vaapi_init_internal(vo_driver_t *this_gen, int va_profile, int w
   xprintf(this->xine, XINE_VERBOSITY_LOG, LOG_MODULE " vaapi_init : guarded render : %d\n", this->guarded_render);
   xprintf(this->xine, XINE_VERBOSITY_LOG, LOG_MODULE " vaapi_init : glxrender      : %d\n", this->opengl_render);
   xprintf(this->xine, XINE_VERBOSITY_LOG, LOG_MODULE " vaapi_init : glxrender tfp  : %d\n", this->opengl_use_tfp);
-  xprintf(this->xine, XINE_VERBOSITY_LOG, LOG_MODULE " vaapi_init : is_bound       : %d\n", va_context->is_bound);
+  xprintf(this->xine, XINE_VERBOSITY_LOG, LOG_MODULE " vaapi_init : is_bound       : %d\n", this->is_bound);
   xprintf(this->xine, XINE_VERBOSITY_LOG, LOG_MODULE " vaapi_init : scaling level  : name %s value 0x%08x\n", scaling_level_enum_names[this->scaling_level_enum], this->scaling_level);
 
   this->init_opengl_render = 1;
@@ -2218,7 +2227,7 @@ static VAStatus vaapi_init_internal(vo_driver_t *this_gen, int va_profile, int w
 
 error:
   vaapi_close(this_gen);
-  vaapi_init_va_context(this);
+  vaapi_init_va_context(this->va_context);
   va_context->valid_context = 0;
   xprintf(this->xine, XINE_VERBOSITY_LOG, LOG_MODULE " vaapi_init : error init vaapi\n");
 
@@ -2236,11 +2245,10 @@ static VAStatus vaapi_init(vo_frame_t *frame_gen, int va_profile, int width, int
 
   vo_driver_t         *this_gen   = (vo_driver_t *) frame_gen->driver;
   vaapi_driver_t      *this       = (vaapi_driver_t *) this_gen;
-  ff_vaapi_context_t  *va_context = this->va_context;
 
   VAStatus vaStatus;
 
-  unsigned int last_sub_img_fmt = va_context->last_sub_image_fmt;
+  unsigned int last_sub_img_fmt = this->last_sub_image_fmt;
 
   if(last_sub_img_fmt)
     vaapi_ovl_associate(this_gen, frame_gen->format, 0);
@@ -2348,24 +2356,24 @@ static int vaapi_ovl_associate(vo_driver_t *this_gen, int format, int bShow) {
   if(!va_context->valid_context)
     return 0;
 
-  if(va_context->last_sub_image_fmt && !bShow) {
-    if(va_context->va_subpic_id != VA_INVALID_ID) {
-      if(va_context->last_sub_image_fmt == XINE_IMGFMT_VAAPI) {
-        vaStatus = vaDeassociateSubpicture(va_context->va_display, va_context->va_subpic_id,
+  if (this->last_sub_image_fmt && !bShow) {
+    if (this->va_subpic_id != VA_INVALID_ID) {
+      if (this->last_sub_image_fmt == XINE_IMGFMT_VAAPI) {
+        vaStatus = vaDeassociateSubpicture(va_context->va_display, this->va_subpic_id,
                                 va_surface_ids, RENDER_SURFACES);
         vaapi_check_status(this_gen, vaStatus, "vaDeassociateSubpicture()");
-      } else if(va_context->last_sub_image_fmt == XINE_IMGFMT_YV12 ||
-                va_context->last_sub_image_fmt == XINE_IMGFMT_YUY2) {
-        vaStatus = vaDeassociateSubpicture(va_context->va_display, va_context->va_subpic_id,
+      } else if (this->last_sub_image_fmt == XINE_IMGFMT_YV12 ||
+                 this->last_sub_image_fmt == XINE_IMGFMT_YUY2) {
+        vaStatus = vaDeassociateSubpicture(va_context->va_display, this->va_subpic_id,
                                 va_soft_surface_ids, SOFT_SURFACES);
         vaapi_check_status(this_gen, vaStatus, "vaDeassociateSubpicture()");
       }
     }
-    va_context->last_sub_image_fmt = 0;
+    this->last_sub_image_fmt = 0;
     return 1;
   }
   
-  if(!va_context->last_sub_image_fmt && bShow) {
+  if (!this->last_sub_image_fmt && bShow) {
     unsigned int flags = 0;
     unsigned int output_width = va_context->width;
     unsigned int output_height = va_context->height;
@@ -2381,7 +2389,7 @@ static int vaapi_ovl_associate(vo_driver_t *this_gen, int format, int bShow) {
     if(!vaapi_check_status(this_gen, vaStatus, "vaapi_create_subpicture()"))
       return 0;
 
-    vaStatus = vaMapBuffer(va_context->va_display, va_context->va_subpic_image.buf, &p_base);
+    vaStatus = vaMapBuffer(va_context->va_display, this->va_subpic_image.buf, &p_base);
     if(!vaapi_check_status(this_gen, vaStatus, "vaMapBuffer()"))
       return 0;
 
@@ -2389,35 +2397,35 @@ static int vaapi_ovl_associate(vo_driver_t *this_gen, int format, int bShow) {
     p_dest = p_base;
     for (i = 0; i < this->overlay_bitmap_height; i++) {
         xine_fast_memcpy(p_dest, p_src, this->overlay_bitmap_width * sizeof(uint32_t));
-        p_dest += va_context->va_subpic_image.pitches[0];
+        p_dest += this->va_subpic_image.pitches[0];
         p_src += this->overlay_bitmap_width;
     }
 
-    vaStatus = vaUnmapBuffer(va_context->va_display, va_context->va_subpic_image.buf);
+    vaStatus = vaUnmapBuffer(va_context->va_display, this->va_subpic_image.buf);
     vaapi_check_status(this_gen, vaStatus, "vaUnmapBuffer()");
 
     lprintf( "vaapi_ovl_associate: overlay_width=%d overlay_height=%d unscaled %d va_subpic_id 0x%08x ovl_changed %d has_overlay %d bShow %d overlay_bitmap_width %d overlay_bitmap_height %d va_context->width %d va_context->height %d\n", 
            this->overlay_output_width, this->overlay_output_height, this->has_overlay, 
-           va_context->va_subpic_id, this->ovl_changed, this->has_overlay, bShow,
+           this->va_subpic_id, this->ovl_changed, this->has_overlay, bShow,
            this->overlay_bitmap_width, this->overlay_bitmap_height,
            va_context->width, va_context->height);
 
     if(format == XINE_IMGFMT_VAAPI) {
       lprintf("vaapi_ovl_associate hw\n");
-      vaStatus = vaAssociateSubpicture(va_context->va_display, va_context->va_subpic_id,
+      vaStatus = vaAssociateSubpicture(va_context->va_display, this->va_subpic_id,
                               va_surface_ids, RENDER_SURFACES,
-                              0, 0, va_context->va_subpic_image.width, va_context->va_subpic_image.height,
+                              0, 0, this->va_subpic_image.width, this->va_subpic_image.height,
                               0, 0, output_width, output_height, flags);
     } else {
       lprintf("vaapi_ovl_associate sw\n");
-      vaStatus = vaAssociateSubpicture(va_context->va_display, va_context->va_subpic_id,
+      vaStatus = vaAssociateSubpicture(va_context->va_display, this->va_subpic_id,
                               va_soft_surface_ids, SOFT_SURFACES,
-                              0, 0, va_context->va_subpic_image.width, va_context->va_subpic_image.height,
+                              0, 0, this->va_subpic_image.width, this->va_subpic_image.height,
                               0, 0, va_soft_images[0].width, va_soft_images[0].height, flags);
     }
 
     if(vaapi_check_status(this_gen, vaStatus, "vaAssociateSubpicture()")) {
-      va_context->last_sub_image_fmt = format;
+      this->last_sub_image_fmt = format;
       return 1;
     }
   }
@@ -2822,7 +2830,7 @@ static void vaapi_provide_standard_frame_data (vo_frame_t *orig, xine_current_fr
     if(va_image.image_id == VA_INVALID_ID)
       goto error;
 
-    if(!va_context->is_bound) {
+    if (!driver->is_bound) {
       vaStatus = vaGetImage(va_context->va_display, va_surface->va_surface_id, 0, 0,
                           va_image.width, va_image.height, va_image.image_id);
     } else {
@@ -2956,7 +2964,7 @@ static void vaapi_duplicate_frame_data (vo_frame_t *this_gen, vo_frame_t *origin
        va_image_orig.image_id, va_image_orig.width, va_image_orig.height, this->width, this->height, va_image_orig.data_size, 
        va_image_orig.pitches[0], va_image_orig.pitches[1], va_image_orig.pitches[2]);
 
-  if(!va_context->is_bound) {
+  if (!driver->is_bound) {
     vaStatus = vaGetImage(va_context->va_display, va_surface_orig->va_surface_id, 0, 0,
                           va_image_orig.width, va_image_orig.height, va_image_orig.image_id);
   } else {
@@ -2965,7 +2973,7 @@ static void vaapi_duplicate_frame_data (vo_frame_t *this_gen, vo_frame_t *origin
 
   if(vaapi_check_status(va_context->driver, vaStatus, "vaGetImage()")) {
     
-    if(!va_context->is_bound) {
+    if (!driver->is_bound) {
       vaStatus = vaPutImage(va_context->va_display, va_surface_this->va_surface_id, va_image_orig.image_id,
                             0, 0, va_image_orig.width, va_image_orig.height,
                             0, 0, va_image_this.width, va_image_this.height);
@@ -3235,7 +3243,7 @@ static VAStatus vaapi_software_render_frame(vo_driver_t *this_gen, vo_frame_t *f
 
   lprintf("vaapi_software_render_frame : va_surface_id 0x%08x va_image.image_id 0x%08x width %d height %d f_width %d f_height %d sw_width %d sw_height %d\n", 
       va_surface_id, va_image->image_id, va_image->width, va_image->height, frame->width, frame->height,
-      va_context->sw_width, va_context->sw_height);
+      this->sw_width, this->sw_height);
 
   if(frame->width != va_image->width || frame->height != va_image->height)
     return VA_STATUS_SUCCESS;
@@ -3320,7 +3328,7 @@ static VAStatus vaapi_software_render_frame(vo_driver_t *this_gen, vo_frame_t *f
   if(!vaapi_check_status(this_gen, vaStatus, "vaUnmapBuffer()"))
     return vaStatus;
 
-  if(!va_context->is_bound) {
+  if (!this->is_bound) {
     vaStatus = vaPutImage(va_context->va_display, va_surface_id, va_image->image_id,
                         0, 0, va_image->width, va_image->height,
                         0, 0, va_image->width, va_image->height);
@@ -3346,8 +3354,8 @@ static VAStatus vaapi_hardware_render_frame (vo_driver_t *this_gen, vo_frame_t *
     width  = va_context->width;
     height = va_context->height;
   } else {
-    width  = (frame->width > va_context->sw_width) ? va_context->sw_width : frame->width;
-    height = (frame->height > va_context->sw_height) ? va_context->sw_height : frame->height;
+    width  = (frame->width > this->sw_width) ? this->sw_width : frame->width;
+    height = (frame->height > this->sw_height) ? this->sw_height : frame->height;
   }
 
   if(!va_context->valid_context || va_surface_id == VA_INVALID_SURFACE)
@@ -3384,7 +3392,7 @@ static VAStatus vaapi_hardware_render_frame (vo_driver_t *this_gen, vo_frame_t *
           return vaStatus;
       } else {
         lprintf("opengl render\n");
-        vaStatus = vaCopySurfaceGLX(va_context->va_display, va_context->gl_surface, va_surface_id, flags);
+        vaStatus = vaCopySurfaceGLX(va_context->va_display, this->gl_surface, va_surface_id, flags);
         if(!vaapi_check_status(this_gen, vaStatus, "vaCopySurfaceGLX()"))
           return vaStatus;
       }
@@ -3476,16 +3484,16 @@ static void vaapi_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen) {
 
   lprintf("vaapi_display_frame %s frame->width %d frame->height %d va_context->sw_width %d va_context->sw_height %d valid_context %d\n",
         (frame->format == XINE_IMGFMT_VAAPI) ? "XINE_IMGFMT_VAAPI" : ((frame->format == XINE_IMGFMT_YV12) ? "XINE_IMGFMT_YV12" : "XINE_IMGFMT_YUY2") ,
-        frame->width, frame->height, va_context->sw_width, va_context->sw_height, va_context->valid_context);
+        frame->width, frame->height, this->sw_width, this->sw_height, va_context->valid_context);
 
   if( ((frame->format == XINE_IMGFMT_YV12) || (frame->format == XINE_IMGFMT_YUY2)) 
-      && ((frame->width != va_context->sw_width) ||(frame->height != va_context->sw_height )) ) {
+      && ((frame->width != this->sw_width) ||(frame->height != this->sw_height )) ) {
 
     lprintf("vaapi_display_frame %s frame->width %d frame->height %d\n", 
         (frame->format == XINE_IMGFMT_VAAPI) ? "XINE_IMGFMT_VAAPI" : ((frame->format == XINE_IMGFMT_YV12) ? "XINE_IMGFMT_YV12" : "XINE_IMGFMT_YUY2") ,
         frame->width, frame->height);
 
-    unsigned int last_sub_img_fmt = va_context->last_sub_image_fmt;
+    unsigned int last_sub_img_fmt = this->last_sub_image_fmt;
 
     if(last_sub_img_fmt)
       vaapi_ovl_associate(this_gen, frame_gen->format, 0);
@@ -3519,7 +3527,7 @@ static void vaapi_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen) {
 
   /* initialize opengl rendering */
   if(this->opengl_render && this->init_opengl_render &&  va_context->valid_context) {
-    unsigned int last_sub_img_fmt = va_context->last_sub_image_fmt;
+    unsigned int last_sub_img_fmt = this->last_sub_image_fmt;
 
     if(last_sub_img_fmt)
       vaapi_ovl_associate(this_gen, frame_gen->format, 0);
@@ -3549,9 +3557,9 @@ static void vaapi_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen) {
   if(va_context->valid_context && ( (frame->format == XINE_IMGFMT_VAAPI) || (frame->format == XINE_IMGFMT_YV12) || (frame->format == XINE_IMGFMT_YUY2) )) {
 
     if((frame->format == XINE_IMGFMT_YUY2) || (frame->format == XINE_IMGFMT_YV12)) {
-      va_surface_id = va_soft_surface_ids[va_context->va_soft_head];
-      va_image = &va_soft_images[va_context->va_soft_head];
-      va_context->va_soft_head = (va_context->va_soft_head + 1) % (SOFT_SURFACES);
+      va_surface_id = va_soft_surface_ids[this->va_soft_head];
+      va_image = &va_soft_images[this->va_soft_head];
+      this->va_soft_head = (this->va_soft_head + 1) % (SOFT_SURFACES);
     }
 
     if(this->guarded_render) {
@@ -3958,6 +3966,7 @@ static vo_driver_t *vaapi_open_plugin (video_driver_class_t *class_gen, const vo
   XVisualInfo             visualInfo;
   XVisualInfo             *vi;
   int                     depth;
+  int                     i;
   const int               x11_event_mask = ExposureMask | 
                                            StructureNotifyMask;
 
@@ -4022,7 +4031,7 @@ static vo_driver_t *vaapi_open_plugin (video_driver_class_t *class_gen, const vo
   va_soft_surface_ids                   = calloc(SOFT_SURFACES + 1, sizeof(VASurfaceID));
   va_soft_images                        = calloc(SOFT_SURFACES + 1, sizeof(VAImage));
 
-  vaapi_init_va_context(this);
+  vaapi_init_va_context(this->va_context);
   vaapi_init_subpicture(this);
 
   _x_vo_scale_init (&this->sc, 1, 0, config );
@@ -4122,7 +4131,6 @@ static vo_driver_t *vaapi_open_plugin (video_driver_class_t *class_gen, const vo
 
   pthread_mutex_lock(&this->vaapi_lock);
 
-  int i;
   for (i = 0; i < VO_NUM_PROPERTIES; i++) {
     this->props[i].value = 0;
     this->props[i].min   = 0;
@@ -4139,7 +4147,7 @@ static vo_driver_t *vaapi_open_plugin (video_driver_class_t *class_gen, const vo
   this->props[VO_PROP_ZOOM_X].value          = 100;
   this->props[VO_PROP_ZOOM_Y].value          = 100;
 
-  this->va_context->last_sub_image_fmt       = 0;
+  this->last_sub_image_fmt                   = 0;
 
   if(vaapi_init_internal((vo_driver_t *)this, SW_CONTEXT_INIT_FORMAT, SW_WIDTH, SW_HEIGHT) != VA_STATUS_SUCCESS) {
     vaapi_dispose_locked((vo_driver_t *)this);
