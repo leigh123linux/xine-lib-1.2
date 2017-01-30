@@ -120,7 +120,7 @@ struct vaapi_accel_s {
   int  (*lock_vaapi)(vo_frame_t *frame_gen);
   void (*unlock_vaapi)(vo_frame_t *frame_gen);
 
-  VAStatus (*vaapi_init)(vo_frame_t *frame_gen, int va_profile, int width, int height, int softrender);
+  VAStatus (*vaapi_init)(vo_frame_t *frame_gen, int va_profile, int width, int height);
   int (*profile_from_imgfmt)(vo_frame_t *frame_gen, unsigned img_fmt);
   ff_vaapi_context_t *(*get_context)(vo_frame_t *frame_gen);
   int (*guarded_render)(vo_frame_t *frame_gen);

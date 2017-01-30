@@ -430,7 +430,7 @@ static int get_buffer (AVCodecContext *context, AVFrame *av_frame)
 
       this->vaapi_width  = width;
       this->vaapi_height = height;
-      status = this->accel->vaapi_init (this->accel_img, this->vaapi_profile, width, height, 0);
+      status = this->accel->vaapi_init (this->accel_img, this->vaapi_profile, width, height);
 
       if (status == VA_STATUS_SUCCESS) {
         ff_vaapi_context_t *va_context = this->accel->get_context (this->accel_img);
@@ -795,7 +795,7 @@ static enum PixelFormat get_format(struct AVCodecContext *context, const enum Pi
       }
       this->vaapi_width  = width;
       this->vaapi_height = height;
-      status = accel->vaapi_init (this->accel_img, this->vaapi_profile, width, height, 0);
+      status = accel->vaapi_init (this->accel_img, this->vaapi_profile, width, height);
 
       if( status == VA_STATUS_SUCCESS ) {
         ff_vaapi_context_t *va_context = accel->get_context(this->accel_img);

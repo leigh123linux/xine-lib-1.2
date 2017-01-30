@@ -2082,7 +2082,7 @@ error:
   return VA_STATUS_ERROR_UNKNOWN;
 }
 
-static VAStatus vaapi_init_internal(vo_driver_t *this_gen, int va_profile, int width, int height, int softrender) {
+static VAStatus vaapi_init_internal(vo_driver_t *this_gen, int va_profile, int width, int height) {
   vaapi_driver_t      *this = (vaapi_driver_t *)this_gen;
   ff_vaapi_context_t  *va_context = this->va_context;
   VAConfigAttrib      va_attrib;
@@ -2148,7 +2148,7 @@ static VAStatus vaapi_init_internal(vo_driver_t *this_gen, int va_profile, int w
     goto error;
 
   /* hardware decoding needs more setup */
-  if(!softrender && va_profile >= 0) {
+  if (va_profile >= 0) {
     xprintf(this->xine, XINE_VERBOSITY_LOG, LOG_MODULE " vaapi_init : Profile: %d (%s) Entrypoint %d (%s) Surfaces %d\n", va_profile, vaapi_profile_to_string(va_profile), VAEntrypointVLD, vaapi_entrypoint_to_string(VAEntrypointVLD), RENDER_SURFACES);
 
     memset( &va_attrib, 0, sizeof(va_attrib) );
@@ -2230,7 +2230,7 @@ error:
  * When the decoder uses software decoding vaapi_init is not called.
  * Therefore we do it in vaapi_display_frame to get a valid VAAPI context
  */ 
-static VAStatus vaapi_init(vo_frame_t *frame_gen, int va_profile, int width, int height, int softrender) {
+static VAStatus vaapi_init(vo_frame_t *frame_gen, int va_profile, int width, int height) {
   if(!frame_gen)
     return VA_STATUS_ERROR_UNKNOWN;
 
@@ -2250,7 +2250,7 @@ static VAStatus vaapi_init(vo_frame_t *frame_gen, int va_profile, int width, int
     DO_LOCKDISPLAY;
   }
 
-  vaStatus = vaapi_init_internal(this_gen, va_profile, width, height, softrender);
+  vaStatus = vaapi_init_internal(this_gen, va_profile, width, height);
 
   if(!this->guarded_render) {
     DO_UNLOCKDISPLAY;
@@ -3492,7 +3492,7 @@ static void vaapi_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen) {
 
     if(!va_context->valid_context) {
       lprintf("vaapi_display_frame init full context\n");
-      vaapi_init_internal(frame_gen->driver, SW_CONTEXT_INIT_FORMAT, frame->width, frame->height, 0);
+      vaapi_init_internal(frame_gen->driver, SW_CONTEXT_INIT_FORMAT, frame->width, frame->height);
     } else {
       lprintf("vaapi_display_frame init soft surfaces\n");
       vaapi_init_soft_surfaces(frame_gen->driver, frame->width, frame->height);
@@ -4141,7 +4141,7 @@ static vo_driver_t *vaapi_open_plugin (video_driver_class_t *class_gen, const vo
 
   this->va_context->last_sub_image_fmt       = 0;
 
-  if(vaapi_init_internal((vo_driver_t *)this, SW_CONTEXT_INIT_FORMAT, SW_WIDTH, SW_HEIGHT, 0) != VA_STATUS_SUCCESS) {
+  if(vaapi_init_internal((vo_driver_t *)this, SW_CONTEXT_INIT_FORMAT, SW_WIDTH, SW_HEIGHT) != VA_STATUS_SUCCESS) {
     vaapi_dispose_locked((vo_driver_t *)this);
     return NULL;
   }
