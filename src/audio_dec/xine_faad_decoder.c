@@ -383,9 +383,7 @@ static void faad_decode_audio ( faad_decoder_t *this, int end_frame ) {
         /* quick and dirty ADTS parser. */
         /* It is faster than libfaad's own, and it is safe with 0xff padding bytes. */
         uint8_t *q = inbuf;
-        int n, s;
-        if (this->size <= 0)
-          break;
+        int headsize, s;
         memcpy (q + this->size, "\xf0\xff\xf0\x00", 4); /* overread stop */
         while (1) {
           if (q[0] == 0xff) {
@@ -394,17 +392,22 @@ static void faad_decode_audio ( faad_decoder_t *this, int end_frame ) {
           }
           q++;
         }
-        n = this->size - (q - inbuf);
-        if (n < 0) { /* no sync */
+        this->size -= q - inbuf;
+        if (this->size < 0) { /* no sync */
           this->size = 0;
           break;
         }
         inbuf = q;
-        this->size = n;
-        if (n < 7) /* incomplete sync */
+        headsize = (q[1] & 1) ? 7 : 9; /* optional 2 bytes crc */
+        if (this->size < headsize) /* incomplete head */
           break;
         s = (((uint32_t)q[3] << 11) | ((uint32_t)q[4] << 3) | (q[5] >> 5)) & 0x1fff;
-        if (n < s) /* incomplete frame */
+        if (s < headsize) { /* invalid head */
+          inbuf++;
+          this->size--;
+          continue;
+        }
+        if (this->size < s) /* incomplete frame */
           break;
         framecount = (q[6] & 3) + 1;
         /* seen this head before? */
@@ -454,9 +457,8 @@ static void faad_decode_audio ( faad_decoder_t *this, int end_frame ) {
           }
         }
         if (this->adts_fake) {
-          size_t n = (q[1] & 1) ? 7 : 9; /* optional 2 bytes crc */
-          inbuf += n;
-          this->size -= n;
+          inbuf += headsize;
+          this->size -= headsize;
         } else {
           framecount = 0;
         }
