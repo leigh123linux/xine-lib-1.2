@@ -280,9 +280,9 @@ static void check_newpts(avformat_demux_plugin_t *this, int64_t pts) {
   }
 }
 
-static uint32_t video_codec_lookup(avformat_demux_plugin_t *this, int id) {
+static uint32_t video_codec_lookup(avformat_demux_plugin_t *this, unsigned id) {
 
-  int i;
+  size_t i;
   for (i = 0; i < sizeof(ff_video_lookup)/sizeof(ff_codec_t); i++) {
     if (ff_video_lookup[i].id == id) {
       xprintf (this->stream->xine, XINE_VERBOSITY_LOG,
@@ -294,9 +294,9 @@ static uint32_t video_codec_lookup(avformat_demux_plugin_t *this, int id) {
   return 0;
 }
 
-static uint32_t audio_codec_lookup(avformat_demux_plugin_t *this, int id) {
+static uint32_t audio_codec_lookup(avformat_demux_plugin_t *this, unsigned id) {
 
-  int i;
+  size_t i;
   for (i = 0; i < sizeof(ff_audio_lookup)/sizeof(ff_codec_t); i++) {
     if (ff_audio_lookup[i].id == id) {
       xprintf (this->stream->xine, XINE_VERBOSITY_LOG,
@@ -322,7 +322,7 @@ static uint32_t audio_codec_lookup(avformat_demux_plugin_t *this, int id) {
 /* copied from libavformat/utils.c (not available in recent libav API) */
 static AVProgram *_find_program_from_stream(AVFormatContext *ic, AVProgram *last, int s)
 {
-  int i, j;
+  unsigned i, j;
 
   for (i = 0; i < ic->nb_programs; i++) {
     if (ic->programs[i] == last) {
@@ -394,7 +394,7 @@ static int find_avformat_streams(avformat_demux_plugin_t *this) {
     if (st->codec && st->codec->codec_type == AVMEDIA_TYPE_AUDIO &&
         st->codec->sample_rate != 0 && st->codec->channels != 0) {
 
-      int xine_audio_type = audio_codec_lookup(this, st->codec->codec_id);
+      uint32_t xine_audio_type = audio_codec_lookup(this, st->codec->codec_id);
       if (!xine_audio_type) {
         xprintf (this->stream->xine, XINE_VERBOSITY_LOG,
                  LOG_MODULE": ffmpeg audio codec id %d --> NO xine buffer type\n", st->codec->codec_id);
@@ -431,7 +431,7 @@ static int find_avformat_streams(avformat_demux_plugin_t *this) {
 
 static void send_headers_audio(avformat_demux_plugin_t *this) {
 
-  int ii;
+  unsigned ii;
   for (ii = 0; ii < this->audio_track_count; ii++) {
 
   AVCodecContext    *ctx = this->fmt_ctx->streams[this->audio_stream_idx[ii]]->codec;
@@ -439,7 +439,7 @@ static void send_headers_audio(avformat_demux_plugin_t *this) {
   size_t             extradata_size = ctx->extradata_size;
   xine_waveformatex *fmt = (xine_waveformatex *)buf->content;
 
-  if (!ctx->extradata || extradata_size + sizeof(xine_waveformatex) > buf->max_size) {
+  if (!ctx->extradata || extradata_size + sizeof(xine_waveformatex) > (size_t)buf->max_size) {
     extradata_size = 0;
   }
 
@@ -471,7 +471,7 @@ static void send_headers_video(avformat_demux_plugin_t *this) {
   size_t          extradata_size = ctx->extradata_size;
   xine_bmiheader *bih = (xine_bmiheader *)buf->content;
 
-  if (!ctx->extradata || extradata_size + sizeof(xine_bmiheader) > buf->max_size) {
+  if (!ctx->extradata || extradata_size + sizeof(xine_bmiheader) > (size_t)buf->max_size) {
     extradata_size = 0;
   }
 
@@ -511,7 +511,7 @@ static int send_avpacket(avformat_demux_plugin_t *this)
   }
 
   /* map to xine fifo / buffer type */
-  if (pkt.stream_index < this->num_streams) {
+  if (pkt.stream_index >= 0 && (unsigned)pkt.stream_index < this->num_streams) {
     buffer_type = this->xine_buf_type[pkt.stream_index];
   } else {
     // TODO: new streams found
@@ -582,7 +582,7 @@ static int demux_avformat_get_optional_data(demux_plugin_t *this_gen,
 
   switch (data_type) {
     case DEMUX_OPTIONAL_DATA_AUDIOLANG:
-      if (channel >= 0 && channel < this->audio_track_count) {
+      if (channel >= 0 && (unsigned)channel < this->audio_track_count) {
 
         AVStream *st = this->fmt_ctx->streams[this->audio_stream_idx[channel]];
         AVDictionaryEntry *tag = NULL;
