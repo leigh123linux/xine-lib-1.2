@@ -577,7 +577,7 @@ void xine_probe_fast_memcpy(xine_t *xine)
 {
   uint64_t          t;
   char             *buf1, *buf2;
-  int               i, j, best;
+  unsigned int      i, j, best;
   int               config_flags = -1;
   static const char *const memcpy_methods[] = {
     "probe", "libc",
