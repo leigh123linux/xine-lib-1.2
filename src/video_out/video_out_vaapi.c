@@ -719,18 +719,18 @@ static int vaapi_opengl_verify_direct (x11_visual_t *vis) {
   xattr.event_mask = StructureNotifyMask | ExposureMask;
 
   if ( (win = XCreateWindow (vis->display, root, 0, 0, 1, 1, 0, visinfo->depth,
-			                       InputOutput, visinfo->visual,
-			                       CWBackPixel | CWBorderPixel | CWColormap | CWEventMask,
-			                       &xattr))) {
+                             InputOutput, visinfo->visual,
+                             CWBackPixel | CWBorderPixel | CWColormap | CWEventMask,
+                             &xattr))) {
     if (glXMakeCurrent (vis->display, win, ctx)) {
-	    const char *renderer = (const char *) glGetString(GL_RENDERER);
-	    if (glXIsDirect (vis->display, ctx) &&
-	                ! strstr (renderer, "Software") &&
-	                ! strstr (renderer, "Indirect"))
-	      ret = 1;
-	      glXMakeCurrent (vis->display, None, NULL);
-      }
-      XDestroyWindow (vis->display, win);
+      const char *renderer = (const char *) glGetString(GL_RENDERER);
+      if (glXIsDirect (vis->display, ctx) &&
+          ! strstr (renderer, "Software") &&
+          ! strstr (renderer, "Indirect"))
+        ret = 1;
+      glXMakeCurrent (vis->display, None, NULL);
+    }
+    XDestroyWindow (vis->display, win);
   }
   glXDestroyContext (vis->display, ctx);
   XFreeColormap     (vis->display, xattr.colormap);
@@ -2425,7 +2425,7 @@ static int vaapi_ovl_associate(vo_driver_t *this_gen, int format, int bShow) {
 }
 
 static void vaapi_overlay_begin (vo_driver_t *this_gen,
-			      vo_frame_t *frame_gen, int changed) {
+                              vo_frame_t *frame_gen, int changed) {
   vaapi_driver_t      *this       = (vaapi_driver_t *) this_gen;
   ff_vaapi_context_t  *va_context = this->va_context;
 
@@ -2450,7 +2450,7 @@ static void vaapi_overlay_begin (vo_driver_t *this_gen,
 }
 
 static void vaapi_overlay_blend (vo_driver_t *this_gen,
-			      vo_frame_t *frame_gen, vo_overlay_t *overlay) {
+                                 vo_frame_t *frame_gen, vo_overlay_t *overlay) {
   vaapi_driver_t  *this = (vaapi_driver_t *) this_gen;
 
   int i = this->ovl_changed;
@@ -3003,9 +3003,9 @@ error:
 }
 
 static void vaapi_update_frame_format (vo_driver_t *this_gen,
-				    vo_frame_t *frame_gen,
-				    uint32_t width, uint32_t height,
-				    double ratio, int format, int flags) {
+                                       vo_frame_t *frame_gen,
+                                       uint32_t width, uint32_t height,
+                                       double ratio, int format, int flags) {
   vaapi_driver_t      *this       = (vaapi_driver_t *) this_gen;
   vaapi_frame_t       *frame      = (vaapi_frame_t*)frame_gen;
   vaapi_accel_t       *accel      = &frame->vaapi_accel_data;
@@ -3738,7 +3738,7 @@ static int vaapi_set_property (vo_driver_t *this_gen, int property, int value) {
 
       case VO_PROP_ASPECT_RATIO:
         if (value>=XINE_VO_ASPECT_NUM_RATIOS)
-  	      value = XINE_VO_ASPECT_AUTO;
+              value = XINE_VO_ASPECT_AUTO;
         this->props[property].value = value;
         this->sc.user_ratio = value;
         _x_vo_scale_compute_ideal_size (&this->sc);
@@ -3748,7 +3748,7 @@ static int vaapi_set_property (vo_driver_t *this_gen, int property, int value) {
       case VO_PROP_ZOOM_X:
         if ((value >= XINE_VO_ZOOM_MIN) && (value <= XINE_VO_ZOOM_MAX)) {
           this->props[property].value = value;
-  	      this->sc.zoom_factor_x = (double)value / (double)XINE_VO_ZOOM_STEP;
+          this->sc.zoom_factor_x = (double)value / (double)XINE_VO_ZOOM_STEP;
           _x_vo_scale_compute_ideal_size (&this->sc);
           this->sc.force_redraw = 1;
         }
@@ -3758,8 +3758,8 @@ static int vaapi_set_property (vo_driver_t *this_gen, int property, int value) {
         if ((value >= XINE_VO_ZOOM_MIN) && (value <= XINE_VO_ZOOM_MAX)) {
           this->props[property].value = value;
           this->sc.zoom_factor_y = (double)value / (double)XINE_VO_ZOOM_STEP;
-  	      _x_vo_scale_compute_ideal_size (&this->sc);
-  	      this->sc.force_redraw = 1;
+          _x_vo_scale_compute_ideal_size (&this->sc);
+          this->sc.force_redraw = 1;
         }
         break;
     }
@@ -3768,7 +3768,7 @@ static int vaapi_set_property (vo_driver_t *this_gen, int property, int value) {
 }
 
 static void vaapi_get_property_min_max (vo_driver_t *this_gen,
-				     int property, int *min, int *max) {
+                                        int property, int *min, int *max) {
   vaapi_driver_t *this = (vaapi_driver_t *) this_gen;
 
   *min = this->props[property].min;
@@ -3776,7 +3776,7 @@ static void vaapi_get_property_min_max (vo_driver_t *this_gen,
 }
 
 static int vaapi_gui_data_exchange (vo_driver_t *this_gen,
-				 int data_type, void *data) {
+                                    int data_type, void *data) {
   vaapi_driver_t     *this       = (vaapi_driver_t *) this_gen;
 
   lprintf("vaapi_gui_data_exchange %d\n", data_type);
