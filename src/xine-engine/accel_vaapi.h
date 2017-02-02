@@ -53,6 +53,7 @@ struct vaapi_equalizer {
 };
 
 typedef struct ff_vaapi_context_s ff_vaapi_context_t;
+typedef struct ff_vaapi_surface_s ff_vaapi_surface_t;
 
 struct ff_vaapi_context_s {
   VADisplay         va_display;
@@ -61,14 +62,18 @@ struct ff_vaapi_context_s {
   int               width;
   int               height;
   unsigned int      valid_context;
+
+  /* decoding surfaces */
+  VASurfaceID        *va_surface_ids;
+  ff_vaapi_surface_t *va_render_surfaces;
   unsigned int      va_head;
+
   vo_driver_t       *driver;
   struct vaapi_equalizer va_equalizer;
   VAImageFormat     *va_image_formats;
   int               va_num_image_formats;
 };
 
-typedef struct ff_vaapi_surface_s ff_vaapi_surface_t;
 typedef struct vaapi_accel_s vaapi_accel_t;
 
 struct ff_vaapi_surface_s {
