@@ -1030,6 +1030,27 @@ test x"$ac_cv_sys_largefile_source" != x"no" && CPPFLAGS="-D_LARGEFILE_SOURCE $C
 test x"$ac_cv_sys_large_files" != x"" && test x"$ac_cv_sys_large_files" != x"no" && CPPFLAGS="-D_LARGE_FILES $CPPFLAGS"
 
 
+dnl ---------------------------
+dnl User defined linker options
+dnl ---------------------------
+
+dnl Bind everything possible within the current shared object, for more efficient linking.
+dnl For now, xine tries to give all exported symbols the "protected" visibility.
+dnl Plugin description catalogs are the only "default" exceptions but they are not used by
+dnl the plugins themselves so potential overrides have no effect there anyway.
+dnl However, at least with gcc 4.x, this seems to only affect the defining .o not the entire .so,
+dnl which looks somewhat inconsistent.
+CC_CHECK_LDFLAGS([-Wl,-Bsymbolic], [symbolic_ldflags="-Wl,-Bsymbolic"])
+default_enable_symbolic=yes
+AC_ARG_ENABLE([symbolic], [AS_HELP_STRING(
+    [--disable-symbolic],
+    [Allow applictions to override some xine linker symbols,
+     and break build with gcc < 5.0 / GNU ld >= 2.26 on 64 bit platforms.])])
+if test x"$enable_symbolic" = x"no" ; then
+    symbolic_ldflags=""
+fi
+LDFLAGS="$symbolic_ldflags $LDFLAGS"
+
 dnl -------
 dnl Plugins
 dnl -------
