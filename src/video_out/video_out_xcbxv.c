@@ -1320,10 +1320,6 @@ static vo_driver_t *open_plugin(video_driver_class_t *class_gen, const void *vis
   if (!this)
     return NULL;
 
-  pthread_mutex_init(&this->main_mutex, NULL);
-
-  _x_alphablend_init(&this->alphablend_extra_data, class->xine);
-
   this->connection        = visual->connection;
   this->screen            = visual->screen;
   this->window            = visual->window;
@@ -1336,6 +1332,7 @@ static vo_driver_t *open_plugin(video_driver_class_t *class_gen, const void *vis
   query_extension_reply = xcb_get_extension_data(this->connection, &xcb_xv_id);
   if (!query_extension_reply || !query_extension_reply->present) {
     xprintf (class->xine, XINE_VERBOSITY_LOG, _("%s: Xv extension not present.\n"), LOG_MODULE);
+    free(this);
     return NULL;
   }
 
@@ -1348,6 +1345,7 @@ static vo_driver_t *open_plugin(video_driver_class_t *class_gen, const void *vis
 
   if (!query_adaptors_reply) {
     xprintf(class->xine, XINE_VERBOSITY_DEBUG, LOG_MODULE ": XvQueryAdaptors failed.\n");
+    free(this);
     return NULL;
   }
 
@@ -1391,6 +1389,7 @@ static vo_driver_t *open_plugin(video_driver_class_t *class_gen, const void *vis
 	    LOG_MODULE);
 
     /* XvFreeAdaptorInfo (adaptor_info); this crashed on me (gb)*/
+    free(this);
     return NULL;
   }
   else
@@ -1400,6 +1399,10 @@ static vo_driver_t *open_plugin(video_driver_class_t *class_gen, const void *vis
             xcb_xv_adaptor_info_name(adaptor_it.data));
 
   this->xv_port           = xv_port;
+
+  pthread_mutex_init(&this->main_mutex, NULL);
+
+  _x_alphablend_init(&this->alphablend_extra_data, class->xine);
 
   _x_vo_scale_init (&this->sc, 1, 0, config );
   this->sc.frame_output_cb   = visual->frame_output_cb;
