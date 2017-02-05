@@ -286,6 +286,11 @@ static XvImage *create_ximage (xv_driver_t *this, XShmSegmentInfo *shminfo,
     _x_abort();
   }
 
+  if (xv_format == 0) {
+    xprintf (this->xine, XINE_VERBOSITY_DEBUG, "create_ximage: unsupported format %08x\n",format);
+    return NULL;
+  }
+
   if (this->use_shm) {
 
     /*
