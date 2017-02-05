@@ -240,6 +240,11 @@ static void create_ximage(xv_driver_t *this, xv_frame_t *frame, int width, int h
     _x_abort();
   }
 
+  if (frame->xv_format == 0) {
+    xprintf (this->xine, XINE_VERBOSITY_DEBUG, "create_ximage: unsupported format %08x\n", format);
+    return;
+  }
+
   query_attributes_cookie = xcb_xv_query_image_attributes(this->connection, this->xv_port, frame->xv_format, width, height);
   query_attributes_reply = xcb_xv_query_image_attributes_reply(this->connection, query_attributes_cookie, NULL);
 
