@@ -393,6 +393,7 @@ static void xv_update_frame_format (vo_driver_t *this_gen,
 
     create_ximage(this, frame, width, height, format);
     if (!frame->image) {
+      pthread_mutex_unlock(&this->main_mutex);
       frame->vo_frame.base[0] = NULL;
       frame->vo_frame.base[1] = NULL;
       frame->vo_frame.base[2] = NULL;
