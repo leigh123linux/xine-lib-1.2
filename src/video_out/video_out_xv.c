@@ -1709,7 +1709,8 @@ static vo_driver_t *open_plugin_2 (video_driver_class_t *class_gen, const void *
   LOCK_DISPLAY(this);
   myimage = create_ximage (this, &myshminfo, 100, 100,
 			   (this->xv_format_yv12 != 0) ? XINE_IMGFMT_YV12 : XINE_IMGFMT_YUY2);
-  dispose_ximage (this, &myshminfo, myimage);
+  if (myimage)
+    dispose_ximage (this, &myshminfo, myimage);
   UNLOCK_DISPLAY(this);
 
   this->use_pitch_alignment =
