@@ -1359,8 +1359,6 @@ static vo_driver_t *open_plugin_2 (video_driver_class_t *class_gen, const void *
   if (!this)
     return NULL;
 
-  _x_alphablend_init(&this->alphablend_extra_data, class->xine);
-
   this->display           = visual->display;
   this->screen            = visual->screen;
   this->config            = config;
@@ -1378,6 +1376,7 @@ static vo_driver_t *open_plugin_2 (video_driver_class_t *class_gen, const void *
   if (Success != XvQueryExtension(this->display, &ver,&rel, &req, &ev,&err)) {
     xprintf (class->xine, XINE_VERBOSITY_LOG, _("%s: Xv extension not present.\n"), LOG_MODULE);
     UNLOCK_DISPLAY(this);
+    free(this);
     return NULL;
   }
 
@@ -1388,6 +1387,7 @@ static vo_driver_t *open_plugin_2 (video_driver_class_t *class_gen, const void *
   if (Success != XvQueryAdaptors(this->display,DefaultRootWindow(this->display), &adaptors, &adaptor_info))  {
     xprintf(class->xine, XINE_VERBOSITY_DEBUG, LOG_MODULE ": XvQueryAdaptors failed.\n");
     UNLOCK_DISPLAY(this);
+    free(this);
     return NULL;
   }
 
@@ -1426,6 +1426,7 @@ static vo_driver_t *open_plugin_2 (video_driver_class_t *class_gen, const void *
 
     /* XvFreeAdaptorInfo (adaptor_info); this crashed on me (gb)*/
     UNLOCK_DISPLAY(this);
+    free(this);
     return NULL;
   }
   else
@@ -1435,6 +1436,8 @@ static vo_driver_t *open_plugin_2 (video_driver_class_t *class_gen, const void *
             adaptor_info[adaptor_num].name);
 
   UNLOCK_DISPLAY(this);
+
+  _x_alphablend_init(&this->alphablend_extra_data, class->xine);
 
   this->xv_port           = xv_port;
 
