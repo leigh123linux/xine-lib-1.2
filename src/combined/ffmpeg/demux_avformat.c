@@ -654,13 +654,16 @@ static int avformat_seek (avformat_demux_plugin_t *this,
     if (av_seek_frame(this->fmt_ctx, -1, pos, 0) >= 0) {
       return 0;
     }
+    return -1;
   }
 
+#if 0
   /* seek to byte offset */
   pos = (int64_t)start_pos * avio_size(this->fmt_ctx->pb) / 65535;
   if (av_seek_frame(this->fmt_ctx, -1, pos, AVSEEK_FLAG_BYTE) >= 0) {
     return 0;
   }
+#endif
 
   /* stream does not support seeking to byte offset. Final try with timestamp. */
   pos = (int64_t)start_pos * this->fmt_ctx->duration / 65535;
