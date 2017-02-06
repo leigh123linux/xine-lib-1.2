@@ -440,6 +440,9 @@ static void send_headers_audio(avformat_demux_plugin_t *this) {
   xine_waveformatex *fmt = (xine_waveformatex *)buf->content;
 
   if (!ctx->extradata || extradata_size + sizeof(xine_waveformatex) > (size_t)buf->max_size) {
+    if (extradata_size) {
+      xprintf (this->stream->xine, XINE_VERBOSITY_LOG, LOG_MODULE": ignoring large audio extradata (%zd bytes)\n", extradata_size);
+    }
     extradata_size = 0;
   }
 
@@ -472,6 +475,9 @@ static void send_headers_video(avformat_demux_plugin_t *this) {
   xine_bmiheader *bih = (xine_bmiheader *)buf->content;
 
   if (!ctx->extradata || extradata_size + sizeof(xine_bmiheader) > (size_t)buf->max_size) {
+    if (extradata_size) {
+      xprintf (this->stream->xine, XINE_VERBOSITY_LOG, LOG_MODULE": ignoring large video extradata (%zd bytes)\n", extradata_size);
+    }
     extradata_size = 0;
   }
 
