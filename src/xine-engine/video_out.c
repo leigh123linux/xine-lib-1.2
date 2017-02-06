@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2000-2015 the xine project
+ * Copyright (C) 2000-2017 the xine project
  *
  * This file is part of xine, a free video player.
  *
@@ -305,6 +305,22 @@ static vo_frame_t *vo_remove_from_img_buf_queue_int (img_buf_fifo_t *queue, int 
     } else {
       queue->num_buffers--;
     }
+  }
+
+  return img;
+}
+
+static vo_frame_t *vo_pop_from_img_buf_queue_int (img_buf_fifo_t *queue) {
+  vo_frame_t *img;
+
+  img = queue->first;
+  queue->first = img->next;
+  img->next = NULL;
+  if (!queue->first) {
+    queue->last = NULL;
+    queue->num_buffers = 0;
+  } else {
+    queue->num_buffers--;
   }
 
   return img;
@@ -1169,7 +1185,7 @@ static vo_frame_t * duplicate_frame( vos_t *this, vo_frame_t *img ) {
 }
 
 
-static void expire_frames (vos_t *this, int64_t cur_vpts) {
+static vo_frame_t *next_frame (vos_t *this, int64_t *vpts) {
 
   int64_t       pts;
   int64_t       diff;
@@ -1180,47 +1196,48 @@ static void expire_frames (vos_t *this, int64_t cur_vpts) {
 
   img = this->display_img_buf_queue->first;
 
-  /*
-   * throw away expired frames
-   */
-
-  diff = 1000000; /* always enter the while-loop */
-  duration = 0;
-
   /* when flushing, drop everything now, and return latest "first" frame if any */
   if (this->discard_frames) {
-    vo_frame_t *first_frame = NULL;
+    vo_frame_t *first_frame = NULL, *last_frame = NULL;
     while (img) {
-      img = vo_remove_from_img_buf_queue_int (this->display_img_buf_queue, 1, 0, 0, 0, 0, 0);
+      img = vo_pop_from_img_buf_queue_int (this->display_img_buf_queue);
       if (img->is_first != 0) {
         if (first_frame)
           vo_frame_dec_lock (first_frame);
         first_frame = img;
       } else {
-        if (!this->img_backup) {
-          this->img_backup = img;
-        } else {
-          vo_frame_dec_lock (img);
-        }
+        if (last_frame)
+          vo_frame_dec_lock (last_frame);
+        last_frame = img;
       }
       img = this->display_img_buf_queue->first;
     }
-    if (first_frame) {
-      first_frame->vpts = cur_vpts;
-      this->display_img_buf_queue->first = first_frame;
-      this->display_img_buf_queue->last  = first_frame;
-      this->display_img_buf_queue->num_buffers = 1;
-    }
     pthread_mutex_unlock (&this->display_img_buf_queue->mutex);
     pthread_cond_broadcast (&this->done_flushing);
-    return;
+    if (first_frame) {
+      first_frame->vpts = *vpts;
+      first_frame->future_frame = NULL;
+      if (last_frame)
+        vo_frame_dec_lock (last_frame);
+      if (this->img_backup)
+        vo_frame_dec_lock (this->img_backup);
+      vo_frame_inc_lock (first_frame);
+      this->img_backup = first_frame;
+      return first_frame;
+    }
+    if (last_frame) {
+      if (this->img_backup)
+        vo_frame_dec_lock (this->img_backup);
+      this->img_backup = last_frame;
+    }
+    *vpts = 0;
+    return NULL;
   }
 
   while (img) {
 
     if (img->is_first > 0) {
       lprintf("expire_frames: first_frame !\n");
-
       /*
        * before displaying the first frame without
        * "metronom prebuffering" we should make sure it's
@@ -1228,15 +1245,16 @@ static void expire_frames (vos_t *this, int64_t cur_vpts) {
        */
       if( img->lock_counter == 1 ) {
         /* display it immediately */
-        img->vpts = cur_vpts;
+        img->vpts = *vpts;
       } else {
         /* poll */
-        lprintf("frame still referenced %d times, is_first=%d\n", img->lock_counter, img->is_first);
-        img->vpts = cur_vpts + FIRST_FRAME_POLL_DELAY;
+        lprintf ("frame still referenced %d times, is_first=%d\n", img->lock_counter, img->is_first);
+        img->vpts = *vpts + FIRST_FRAME_POLL_DELAY;
       }
       img->is_first--;
       /* make sure to wake up xine_play even if this first frame gets discarded */
-      if (img->is_first == 0) img->is_first = -1;
+      if (img->is_first == 0)
+        img->is_first = -1;
       break;
     }
 
@@ -1249,185 +1267,103 @@ static void expire_frames (vos_t *this, int64_t cur_vpts) {
       duration = img->duration;
 
     pts = img->vpts;
-    diff = cur_vpts - pts;
+    diff = *vpts - pts;
 
-    if (diff > duration) {
-
-      xine_log (this->xine, XINE_LOG_MSG,
-        _("video_out: throwing away image with pts %" PRId64 " because it's too old (diff : %" PRId64 ").\n"),
-        pts, diff);
-
-      this->num_frames_discarded++;
-
-      img = vo_remove_from_img_buf_queue_int (this->display_img_buf_queue, 1, 0, 0, 0, 0, 0);
-
-      if (img->stream) {
-	pthread_mutex_lock( &img->stream->current_extra_info_lock );
-	_x_extra_info_merge( img->stream->current_extra_info, img->extra_info );
-	pthread_mutex_unlock( &img->stream->current_extra_info_lock );
-	/* wake up xine_play now if we just discarded first frame */
-	if (img->is_first != 0) {
-	  xine_list_iterator_t ite;
-	  pthread_mutex_lock (&this->streams_lock);
-	  for (ite = xine_list_front(this->streams); ite;
-	    ite = xine_list_next(this->streams, ite)) {
-	    xine_stream_t *stream = xine_list_get_value (this->streams, ite);
-	    if (stream == XINE_ANON_STREAM) continue;
-	    pthread_mutex_lock (&stream->first_frame_lock);
-	    if (stream->first_frame_flag) {
-	      stream->first_frame_flag = 0;
-	      pthread_cond_broadcast (&stream->first_frame_reached);
-	    }
-	    pthread_mutex_unlock (&stream->first_frame_lock);
-	  }
-	  pthread_mutex_unlock(&this->streams_lock);
-	  xine_log (this->xine, XINE_LOG_MSG, _("video_out: just discarded first frame after seek\n"));
-	}
-      }
-
-      {
-        /*
-         * last frame? back it up for
-         * still frame creation
-         */
-
-        if (!this->display_img_buf_queue->first) {
-
-	  if (this->img_backup) {
-	    lprintf("overwriting frame backup\n");
-
-	    vo_frame_dec_lock( this->img_backup );
-	  }
-
-	  lprintf("possible still frame (old)\n");
-
-	  this->img_backup = img;
-
-	  /* wait 4 frames before drawing this one.
-	     this allow slower systems to recover. */
-	  this->redraw_needed = 4;
-        } else {
-	  vo_frame_dec_lock( img );
-        }
-      }
-      img = this->display_img_buf_queue->first;
-
-    } else
+    if (diff <= duration)
       break;
+
+    xine_log (this->xine, XINE_LOG_MSG,
+      _("video_out: throwing away image with pts %" PRId64 " because it's too old (diff : %" PRId64 ").\n"),
+      pts, diff);
+
+    this->num_frames_discarded++;
+
+    img = vo_pop_from_img_buf_queue_int (this->display_img_buf_queue);
+
+    if (img->stream) {
+      pthread_mutex_lock (&img->stream->current_extra_info_lock);
+      _x_extra_info_merge (img->stream->current_extra_info, img->extra_info);
+      pthread_mutex_unlock (&img->stream->current_extra_info_lock);
+      /* wake up xine_play now if we just discarded first frame */
+      if (img->is_first != 0) {
+        xine_list_iterator_t ite;
+        pthread_mutex_lock (&this->streams_lock);
+        for (ite = xine_list_front(this->streams); ite;
+          ite = xine_list_next(this->streams, ite)) {
+          xine_stream_t *stream = xine_list_get_value (this->streams, ite);
+          if (stream == XINE_ANON_STREAM)
+            continue;
+          pthread_mutex_lock (&stream->first_frame_lock);
+          if (stream->first_frame_flag) {
+            stream->first_frame_flag = 0;
+            pthread_cond_broadcast (&stream->first_frame_reached);
+          }
+          pthread_mutex_unlock (&stream->first_frame_lock);
+        }
+        pthread_mutex_unlock (&this->streams_lock);
+        xine_log (this->xine, XINE_LOG_MSG, _("video_out: just discarded first frame after seek\n"));
+      }
+    }
+
+    /* last frame? back it up for still frame creation */
+    if (!this->display_img_buf_queue->first) {
+      if (this->img_backup) {
+        lprintf ("overwriting frame backup\n");
+        vo_frame_dec_lock (this->img_backup);
+      }
+      lprintf ("possible still frame (old)\n");
+      this->img_backup = img;
+      /* wait 4 frames before drawing this one. this allow slower systems to recover. */
+      this->redraw_needed = 4;
+    } else {
+      vo_frame_dec_lock (img);
+    }
+
+    img = this->display_img_buf_queue->first;
   }
 
-  pthread_mutex_unlock(&this->display_img_buf_queue->mutex);
-}
-
-/* If it's not the time to display the next frame,
- * the vpts of the next frame (if any) is returned, 0 otherwise.
- */
-static vo_frame_t *get_next_frame (vos_t *this, int64_t cur_vpts,
-                                   int64_t *next_frame_vpts) {
-
-  vo_frame_t   *img;
-
-  pthread_mutex_lock(&this->display_img_buf_queue->mutex);
-
-  img = this->display_img_buf_queue->first;
-
-  *next_frame_vpts = 0;
-
-  /*
-   * still frame detection:
-   */
-
-  /* no frame? => still frame detection */
-
-  if (!img) {
-
-    pthread_mutex_unlock(&this->display_img_buf_queue->mutex);
-
-    lprintf ("no frame\n");
-
-    if (this->img_backup && (this->redraw_needed==1)) {
-
-      lprintf("generating still frame (cur_vpts = %" PRId64 ") \n", cur_vpts);
-
-      /* keep playing still frames */
-      pthread_mutex_lock( &this->free_img_buf_queue->mutex );
-      img = duplicate_frame (this, this->img_backup );
-      pthread_mutex_unlock( &this->free_img_buf_queue->mutex );
-      if( img ) {
-        img->vpts = cur_vpts;
-        /* extra info of the backup is thrown away, because it is not up to date */
-        _x_extra_info_reset(img->extra_info);
-        img->future_frame = NULL;
-      }
-      return img;
-
-    } else {
-
-      if( this->redraw_needed )
-        this->redraw_needed--;
-
-      lprintf ("no frame, but no backup frame\n");
-
-      return NULL;
-    }
-  } else {
-
-    int64_t diff;
-
-    diff = cur_vpts - img->vpts;
-
-    /*
-     * time to display frame "img" ?
-     */
-
+  if (img) {
+    diff = *vpts - img->vpts;
+    /* time to display frame "img" ? */
     lprintf ("diff %" PRId64 "\n", diff);
-
     if (diff < 0) {
-      *next_frame_vpts = img->vpts;
-      pthread_mutex_unlock(&this->display_img_buf_queue->mutex);
+      *vpts = img->vpts;
+      pthread_mutex_unlock (&this->display_img_buf_queue->mutex);
       return NULL;
     }
-
-    if (this->img_backup) {
-      lprintf("freeing frame backup\n");
-
-      vo_frame_dec_lock( this->img_backup );
-      this->img_backup = NULL;
-    }
-
-    /*
-     * last frame? make backup for possible still image
-     */
-    pthread_mutex_lock( &this->free_img_buf_queue->mutex );
-    if (img && !img->next) {
-
-      if (!img->stream ||
-          _x_stream_info_get(img->stream, XINE_STREAM_INFO_VIDEO_HAS_STILL) ||
-          !img->stream->video_fifo ||
-          img->stream->video_fifo->size(img->stream->video_fifo) < 10) {
-
-        lprintf ("possible still frame\n");
-
-        this->img_backup = duplicate_frame (this, img);
-      }
-    }
-    pthread_mutex_unlock( &this->free_img_buf_queue->mutex );
-
-    /*
-     * remove frame from display queue and show it
-     */
-
-    if ( img ) {
-      if ( img->next )
-        img->future_frame = img->next;
-      else
-        img->future_frame = NULL;
-    }
-    
-    img = vo_remove_from_img_buf_queue_int (this->display_img_buf_queue, 1, 0, 0, 0, 0, 0);
-    pthread_mutex_unlock(&this->display_img_buf_queue->mutex);
-
+    /* remove frame from display queue and show it */
+    img->future_frame = img->next;
+    img = vo_pop_from_img_buf_queue_int (this->display_img_buf_queue);
+    pthread_mutex_unlock (&this->display_img_buf_queue->mutex);
+    /* reuse as still frame */
+    vo_frame_inc_lock (img);
+    if (this->img_backup)
+      vo_frame_dec_lock (this->img_backup);
+    this->img_backup = img;
     return img;
+  }
+    
+  pthread_mutex_unlock (&this->display_img_buf_queue->mutex);
+  lprintf ("no frame\n");
+  if (this->img_backup && (this->redraw_needed == 1)) {
+    lprintf ("generating still frame (vpts = %" PRId64 ") \n", *vpts);
+    /* keep playing still frames */
+    pthread_mutex_lock (&this->free_img_buf_queue->mutex);
+    img = duplicate_frame (this, this->img_backup);
+    pthread_mutex_unlock (&this->free_img_buf_queue->mutex);
+    if (img) {
+      img->vpts = *vpts;
+      /* extra info of the backup is thrown away, because it is not up to date */
+      _x_extra_info_reset (img->extra_info);
+      img->future_frame = NULL;
+    }
+    return img;
+  } else {
+    if (this->redraw_needed)
+      this->redraw_needed--;
+    lprintf ("no frame, but no backup frame\n");
+    *vpts = 0;
+    return NULL;
   }
 }
 
@@ -1608,8 +1544,13 @@ static void paused_loop( vos_t *this, int64_t vpts )
 
     /* set img_backup to play the same frame several times */
     if (!this->img_backup) {
-      this->img_backup = force_duplicate_frame (this, this->display_img_buf_queue->first);
-      this->redraw_needed = 1;
+      vo_frame_t *f;
+      f = this->display_img_buf_queue->first;
+      if (f) {
+        vo_frame_inc_lock (f);
+        this->img_backup = f;
+        this->redraw_needed = 1;
+      }
     }
 
     check_redraw_needed( this, vpts );
@@ -1678,13 +1619,11 @@ static void *video_out_loop (void *this_gen) {
      * get current time and find frame to display
      */
 
-    vpts = this->clock->get_current_time (this->clock);
+    vpts = next_frame_vpts = this->clock->get_current_time (this->clock);
 
     lprintf ("loop iteration at %" PRId64 "\n", vpts);
 
-    expire_frames (this, vpts);
-
-    img = get_next_frame (this, vpts, &next_frame_vpts);
+    img = next_frame (this, &next_frame_vpts);
 
     /*
      * if we have found a frame, display it
@@ -1752,7 +1691,7 @@ static void *video_out_loop (void *this_gen) {
         usec_to_sleep = (next_frame_vpts - vpts) * 100 * XINE_FINE_SPEED_NORMAL / (9 * this->clock->speed);
       } else {
         /* we don't know when the next frame is due, only wait a little */
-        usec_to_sleep = 1000;
+        usec_to_sleep = 20000;
         next_frame_vpts = vpts; /* wait only once */
       }
 
@@ -1787,7 +1726,7 @@ static void *video_out_loop (void *this_gen) {
   img = this->display_img_buf_queue->first;
   while (img) {
 
-    img = vo_remove_from_img_buf_queue_int (this->display_img_buf_queue, 1, 0, 0, 0, 0, 0);
+    img = vo_pop_from_img_buf_queue_int (this->display_img_buf_queue);
     vo_frame_dec_lock( img );
 
     img = this->display_img_buf_queue->first;
@@ -2033,7 +1972,7 @@ static int vo_set_property (xine_video_port_t *this_gen, int property, int value
 
         lprintf ("flushing out frame\n");
 
-        img = vo_remove_from_img_buf_queue_int (this->display_img_buf_queue, 1, 0, 0, 0, 0, 0);
+        img = vo_pop_from_img_buf_queue_int (this->display_img_buf_queue);
 
         vo_frame_dec_lock (img);
       }
