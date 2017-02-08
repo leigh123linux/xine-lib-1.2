@@ -50,8 +50,10 @@ static void XINE_FORMAT_PRINTF(2, 0)
 
   if ( ! this->lines[this->cur] )
     this->lines[this->cur] = malloc(SCRATCH_LINE_LEN_MAX+1);
-  if ( ! this->lines[this->cur] )
+  if ( ! this->lines[this->cur] ) {
+    pthread_mutex_unlock (&this->lock);
     return;
+  }
 
   l = strftime (this->lines[this->cur], SCRATCH_LINE_LEN_MAX, "%X: ", &tm);
   vsnprintf (this->lines[this->cur] + l, SCRATCH_LINE_LEN_MAX - l, format, argp);

@@ -1327,7 +1327,10 @@ static char* config_get_serialized_entry (config_values_t *this, const char *key
 
     /* Now we have the length needed to serialize the entry and the length of each string */
     uint8_t *buffer = malloc (total_len + 4);
-    if (!buffer) return NULL;
+    if (!buffer) {
+      pthread_mutex_unlock(&this->config_lock);
+      return NULL;
+    }
 
     /* Let's go */
 
