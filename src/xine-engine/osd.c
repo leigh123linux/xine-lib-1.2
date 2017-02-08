@@ -1656,6 +1656,7 @@ static void osd_preload_fonts (osd_renderer_t *this, char *path) {
           font = calloc(1, sizeof(osd_font_t) );
 
           strncpy(font->name, s, sizeof(font->name));
+          font->name[sizeof(font->name) - 1] = 0;
           font->size = atoi(p);
 
           lprintf("font '%s' size %d is preloaded\n",
