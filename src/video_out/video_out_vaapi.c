@@ -1955,7 +1955,7 @@ static void vaapi_display_attribs(vo_driver_t *this_gen) {
     }
     if (!this->props[VO_PROP_HUE].atom) {
       this->props[VO_PROP_HUE].min = this->props[VO_PROP_BRIGHTNESS].min;
-      this->props[VO_PROP_HUE].min = this->props[VO_PROP_BRIGHTNESS].max;
+      this->props[VO_PROP_HUE].max = this->props[VO_PROP_BRIGHTNESS].max;
       this->props[VO_PROP_HUE].value
         = (this->props[VO_PROP_BRIGHTNESS].max - this->props[VO_PROP_BRIGHTNESS].min) >> 1;
     }
