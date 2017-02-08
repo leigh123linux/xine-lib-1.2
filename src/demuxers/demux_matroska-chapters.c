@@ -285,11 +285,15 @@ static int parse_edition_entry(demux_matroska_t *this, matroska_edition_t *ed) {
             return 0;
 
           lprintf("ChapterAtom\n");
-          if (!ebml_read_master(ebml, &elem))
+          if (!ebml_read_master(ebml, &elem)) {
+            free_chapter(this, chapter);
             return 0;
+          }
 
-          if (!parse_chapter_atom(this, chapter, next_level))
+          if (!parse_chapter_atom(this, chapter, next_level)) {
+            free_chapter(this, chapter);
             return 0;
+          }
 
           /* resize chapters array if necessary */
           if (ed->num_chapters >= ed->cap_chapters) {
@@ -300,6 +304,7 @@ static int parse_edition_entry(demux_matroska_t *this, matroska_edition_t *ed) {
             if (NULL == ed->chapters) {
               ed->chapters = old_chapters;
               ed->cap_chapters -= 10;
+              free_chapter(this, chapter);
               return 0;
             }
           }
@@ -368,11 +373,15 @@ int matroska_parse_chapters(demux_matroska_t *this) {
             return 0;
 
           lprintf("EditionEntry\n");
-          if (!ebml_read_master(ebml, &elem))
+          if (!ebml_read_master(ebml, &elem)) {
+            free_edition(this, edition);
             return 0;
+          }
 
-          if (!parse_edition_entry(this, edition))
+          if (!parse_edition_entry(this, edition)) {
+            free_edition(this, edition);
             return 0;
+          }
 
           /* resize editions array if necessary */
           if (this->num_editions >= this->cap_editions) {
@@ -383,6 +392,7 @@ int matroska_parse_chapters(demux_matroska_t *this) {
             if (NULL == this->editions) {
               this->editions = old_editions;
               this->cap_editions -= 10;
+              free_edition(this, edition);
               return 0;
             }
           }
