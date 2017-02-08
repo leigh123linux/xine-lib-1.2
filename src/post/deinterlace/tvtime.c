@@ -412,7 +412,7 @@ tvtime_t *tvtime_new_context(void)
 {
   tvtime_t *tvtime;
 
-  tvtime = malloc(sizeof(tvtime_t));
+  tvtime = calloc(1, sizeof(tvtime_t));
 
   tvtime->pulldown_alg = PULLDOWN_NONE;
 
