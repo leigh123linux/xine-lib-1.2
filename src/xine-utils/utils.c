@@ -563,7 +563,7 @@ static const lang_locale_t *_get_first_lang_locale(const char *lcal) {
 
     for (i = 0; i < sizeof(lang_locales)/sizeof(lang_locales[0]); i++) {
       if(!strncmp(lcal, lang_locales[i].language, lang_len)) {
-        if ((!mod && !lang_locales[i].modifier) || (mod && lang_locales[i].modifier && !strcmp(mod, lang_locales[i].modifier)))
+        if ((!mod && !lang_locales[i].modifier[0]) || (mod && lang_locales[i].modifier[0] && !strcmp(mod, lang_locales[i].modifier)))
           return &lang_locales[i];
       }
     }
