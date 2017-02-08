@@ -996,15 +996,17 @@ static void faad_class_ref (faad_class_t *this) {
 
 static void faad_class_unref (audio_decoder_class_t *this_gen) {
   faad_class_t *this = (faad_class_t *)this_gen, *master;
+  xine_t *xine;
   if (!this)
     return;
+  xine = this->xine;
   master = this->master;
   (this->refs)--;
   if (!this->refs && (master != this))
     free (this);
   if (--(master->refs))
     return;
-  this->xine->config->unregister_callback (this->xine->config, "audio.processing.faad_gain_dB");
+  xine->config->unregister_callback (xine->config, "audio.processing.faad_gain_dB");
   free (master);
 }
 
