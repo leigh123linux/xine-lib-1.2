@@ -424,7 +424,6 @@ typedef struct {
 
   int64_t              bandwidth;
 
-  char                 last_mrl[1024];
 } demux_qt_t;
 
 typedef struct {
@@ -3533,8 +3532,6 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
   if (this->qt->fragment_count > 0)
     xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG,
       _("demux_qt: added %d fragments\n"), this->qt->fragment_count);
-
-  strncpy (this->last_mrl, input->get_mrl (input), 1024);
 
   return &this->demux_plugin;
 }
