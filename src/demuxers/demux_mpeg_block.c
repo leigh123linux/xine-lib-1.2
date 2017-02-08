@@ -1334,7 +1334,8 @@ static void demux_mpeg_block_accept_input (demux_mpeg_block_t *this,
 
     this->rate = 0;
 
-    strncpy (this->cur_mrl, input->get_mrl(input), 256);
+    strncpy (this->cur_mrl, input->get_mrl(input), sizeof(this->cur_mrl));
+    this->cur_mrl[sizeof(this->cur_mrl) - 1] = 0;
 
     lprintf ("mrl %s is new\n", this->cur_mrl);
 
