@@ -201,12 +201,14 @@ static int _x_use_proxy(http_input_class_t *this, const char *host) {
       /* special-case domain beginning with '=' -> is a host name */
       if (domain[0] == '=' && strcmp(target, domain + 1) == 0) {
 	lprintf("host '%s' is in no-proxy domain '%s'\n", target, domain);
+        free(no_proxy);
 	return 0;
       }
       noprox_len = strlen(domain);
       /* special-case host==domain, avoiding dot checks */
       if (host_len == noprox_len && strcmp(target, domain) == 0) {
 	lprintf("host '%s' is in no-proxy domain '%s'\n", target, domain);
+        free(no_proxy);
 	return 0;
       }
       /* check for host in domain, and require that (if matched) the domain
@@ -217,6 +219,7 @@ static int _x_use_proxy(http_input_class_t *this, const char *host) {
 	  && (domain[0] == '.' || target[host_len - noprox_len - 1] == '.')
 	  && strcmp(target + host_len - noprox_len, domain) == 0) {
 	lprintf("host '%s' is in no-proxy domain '%s'\n", target, domain);
+        free(no_proxy);
 	return 0;
       }
       lprintf("host '%s' isn't in no-proxy domain '%s'\n", target, domain);
