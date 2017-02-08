@@ -235,7 +235,8 @@ static int host_connect_attempt(struct in_addr ia, int port,
      */
 
     if (interface != NULL) {
-      strncpy(ifreq.ifr_name, interface, IFNAMSIZ);
+      memset(&ifreq, 0, sizeof(ifreq));
+      strncpy(ifreq.ifr_name, interface, IFNAMSIZ - 1);
       if (ioctl(s, SIOCGIFADDR, &ifreq) < 0) {
 	LOG_MSG(xine, _("Can't find address for iface %s:%s\n"),
 		interface, strerror(errno));
