@@ -1191,7 +1191,7 @@ static void handle_hdmv_textst (demux_plugin_t *this_gen, matroska_track_t *trac
     ptr += 2;
 
     end = ptr + length;
-    while (ptr < end) {
+    while (ptr < end && dest_pos < dest_len - 2) {
       int marker;
       int type;
       int length;
@@ -1205,7 +1205,7 @@ static void handle_hdmv_textst (demux_plugin_t *this_gen, matroska_track_t *trac
 
       if (type == 0x01) {
         int k;
-        for (k = 0; k < length; ++k)
+        for (k = 0; k < length && dest_pos < dest_len - 1; ++k)
           dest[dest_pos++] = ptr[k];
       } else if (type == 0x0A) {
         dest[dest_pos++] = '\n';
