@@ -1615,10 +1615,6 @@ static int _cdda_load_cached_cddb_infos(cdda_input_plugin_t *this) {
   DIR  *dir;
 
   const char *const xdg_cache_home = xdgCacheHome(&this->stream->xine->basedir_handle);
-
-  if(this == NULL)
-    return 0;
-
   const size_t cdir_size = strlen(xdg_cache_home) + sizeof("/"PACKAGE"/cddb") + 10 + 1;
   char *const cdir = alloca(cdir_size);
   sprintf(cdir, "%s/" PACKAGE "/cddb", xdg_cache_home);
@@ -1678,7 +1674,7 @@ static void _cdda_save_cached_cddb_infos(cdda_input_plugin_t *this, char *fileco
 
   const char *const xdg_cache_home = xdgCacheHome(&this->stream->xine->basedir_handle);
 
-  if((this == NULL) || (filecontent == NULL))
+  if (filecontent == NULL)
     return;
 
   /* the filename is always 8 characters */
