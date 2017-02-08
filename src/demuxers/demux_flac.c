@@ -353,6 +353,8 @@ static void demux_flac_send_headers(demux_plugin_t *this_gen) {
   xine_waveformatex wave;
   int bits;
 
+  memset(&wave, 0, sizeof(wave));
+
   this->audio_fifo  = this->stream->audio_fifo;
 
   /* send start buffers */
