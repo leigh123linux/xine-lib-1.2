@@ -200,6 +200,7 @@ static int host_connect_attempt(struct in_addr ia, int port,
   if ((setsockopt(s, SOL_SOCKET, SO_RCVBUF,
 		  &optval, sizeof(optval))) < 0) {
     LOG_MSG(xine, _("setsockopt(SO_RCVBUF): %s.\n"), strerror(errno));
+    close(s);
     return -1;
   }
 
@@ -208,6 +209,7 @@ static int host_connect_attempt(struct in_addr ia, int port,
     if ((setsockopt(s, SOL_SOCKET, SO_REUSEADDR,
 		    &saddr.in, sizeof(saddr.in))) < 0) {
       LOG_MSG(xine, _("setsockopt(SO_REUSEADDR): %s.\n"), strerror(errno));
+      close(s);
       return -1;
     }
   }
@@ -215,6 +217,7 @@ static int host_connect_attempt(struct in_addr ia, int port,
   /* datagram socket */
   if (bind(s, &saddr.sa, sizeof(saddr.in))) {
     LOG_MSG(xine, _("bind(): %s.\n"), strerror(errno));
+    close(s);
     return -1;
   }
 
@@ -254,6 +257,7 @@ static int host_connect_attempt(struct in_addr ia, int port,
     if (setsockopt(s, IPPROTO_IP, IP_ADD_MEMBERSHIP, &mreq, sizeof(mreq))) {
       LOG_MSG(xine, _("setsockopt(IP_ADD_MEMBERSHIP) failed (multicast kernel?): %s.\n"),
 	      strerror(errno));
+      close(s);
       return -1;
     }
   }
