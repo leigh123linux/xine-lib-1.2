@@ -2295,8 +2295,8 @@ static void demux_ts_parse_packet (demux_ts_t*this) {
 
   /* PMT */
   program_count=0;
-  while ((this->program_number[program_count] != INVALID_PROGRAM) &&
-         (program_count < MAX_PMTS)) {
+  while (program_count < MAX_PMTS &&
+          (this->program_number[program_count] != INVALID_PROGRAM)) {
     if (pid == this->pmt_pid[program_count]) {
 
 #ifdef TS_LOG
