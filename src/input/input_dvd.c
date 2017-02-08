@@ -366,9 +366,6 @@ static int update_title_display(dvd_input_plugin_t *this) {
   int tt=-1, pr=-1;
   int num_tt = 0;
 
-  if(!this || !(this->stream))
-   return 0;
-
   /* Set title/chapter display */
 
   dvdnav_current_title_info(this->dvdnav, &tt, &pr);
