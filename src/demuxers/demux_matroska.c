@@ -2125,7 +2125,7 @@ static int parse_block (demux_matroska_t *this, size_t block_size,
         for (i = 0; i < lace_num; i++) {
           frame[i] = frame_size;
         }
-        frame[lace_num] = block_size_left - (lace_num * frame_size);
+        frame[lace_num] = block_size_left - ((size_t)lace_num * frame_size);
         block_size_left = 0;
       }
       break;
