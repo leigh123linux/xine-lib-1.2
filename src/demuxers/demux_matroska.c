@@ -2117,7 +2117,7 @@ static int parse_block (demux_matroska_t *this, size_t block_size,
       break;
 
       case MATROSKA_FIXED_SIZE_LACING: {
-        int frame_size;
+        size_t frame_size;
 
         lprintf("fixed size lacing\n");
 
