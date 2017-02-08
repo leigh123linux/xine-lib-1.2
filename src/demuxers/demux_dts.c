@@ -208,7 +208,7 @@ static int open_dts_file(demux_dts_t *this) {
 
     }
 
-    if ((sfreq > sizeof(dts_sample_rates)/sizeof(int)) ||
+    if ((sfreq >= sizeof(dts_sample_rates)/sizeof(int)) ||
         (dts_sample_rates[sfreq] == 0))
       return 0;
 
