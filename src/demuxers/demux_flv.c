@@ -461,7 +461,7 @@ static int parse_amf (demux_flv_t *this, unsigned char *buf, int size) {
         tstruct = gmtime (&tsecs);
         if (tstruct) {
           char ts[200];
-          if (strftime (ts, 200, "%x %X", tstruct) >= 0)
+          if (strftime (ts, 200, "%x %X", tstruct) > 0)
             xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG, "%s\n", ts);
         }
       break;
