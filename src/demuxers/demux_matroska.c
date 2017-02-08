@@ -3166,8 +3166,8 @@ error:
 
   if (this != NULL && this->event_queue != NULL) {
     xine_event_dispose_queue(this->event_queue);
-    free(this);
   }
+  free(this);
 
   return NULL;
 }
