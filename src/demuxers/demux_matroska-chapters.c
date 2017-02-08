@@ -230,7 +230,7 @@ static int parse_chapter_atom(demux_matroska_t *this, matroska_chapter_t *chap, 
   return 1;
 }
 
-static void free_chapter(demux_matroska_t *this, matroska_chapter_t *chap) {
+static void free_chapter(matroska_chapter_t *chap) {
   free(chap->title);
   free(chap->language);
   free(chap->country);
@@ -286,12 +286,12 @@ static int parse_edition_entry(demux_matroska_t *this, matroska_edition_t *ed) {
 
           lprintf("ChapterAtom\n");
           if (!ebml_read_master(ebml, &elem)) {
-            free_chapter(this, chapter);
+            free_chapter(chapter);
             return 0;
           }
 
           if (!parse_chapter_atom(this, chapter, next_level)) {
-            free_chapter(this, chapter);
+            free_chapter(chapter);
             return 0;
           }
 
@@ -304,7 +304,7 @@ static int parse_edition_entry(demux_matroska_t *this, matroska_edition_t *ed) {
             if (NULL == ed->chapters) {
               ed->chapters = old_chapters;
               ed->cap_chapters -= 10;
-              free_chapter(this, chapter);
+              free_chapter(chapter);
               return 0;
             }
           }
@@ -345,11 +345,11 @@ static int parse_edition_entry(demux_matroska_t *this, matroska_edition_t *ed) {
   return 1;
 }
 
-static void free_edition(demux_matroska_t *this, matroska_edition_t *ed) {
+static void free_edition(matroska_edition_t *ed) {
   int i;
 
   for(i=0; i<ed->num_chapters; ++i) {
-    free_chapter(this, ed->chapters[i]);
+    free_chapter(ed->chapters[i]);
   }
   free(ed->chapters);
   free(ed);
@@ -374,12 +374,12 @@ int matroska_parse_chapters(demux_matroska_t *this) {
 
           lprintf("EditionEntry\n");
           if (!ebml_read_master(ebml, &elem)) {
-            free_edition(this, edition);
+            free_edition(edition);
             return 0;
           }
 
           if (!parse_edition_entry(this, edition)) {
-            free_edition(this, edition);
+            free_edition(edition);
             return 0;
           }
 
@@ -392,7 +392,7 @@ int matroska_parse_chapters(demux_matroska_t *this) {
             if (NULL == this->editions) {
               this->editions = old_editions;
               this->cap_editions -= 10;
-              free_edition(this, edition);
+              free_edition(edition);
               return 0;
             }
           }
@@ -419,7 +419,7 @@ void matroska_free_editions(demux_matroska_t *this) {
   int i;
 
   for(i=0; i<this->num_editions; ++i) {
-    free_edition(this, this->editions[i]);
+    free_edition(this->editions[i]);
   }
   free(this->editions);
   this->num_editions = 0;
