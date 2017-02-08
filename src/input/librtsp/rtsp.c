@@ -139,6 +139,7 @@ static void rtsp_put(rtsp_t *s, const char *string) {
 
   _x_io_tcp_write(s->stream, s->s, buf, len+2);
 
+  free(buf);
   lprintf("done.\n");
 }
 
