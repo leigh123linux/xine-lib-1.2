@@ -299,7 +299,7 @@ static void open_overlay(bluray_input_plugin_t *this, int plane, uint16_t x, uin
 
 static void draw_bitmap(xine_osd_t *osd, const BD_OVERLAY * const ov)
 {
-  unsigned i;
+  size_t i;
 
   /* convert and set palette */
   if (ov->palette) {
@@ -321,8 +321,8 @@ static void draw_bitmap(xine_osd_t *osd, const BD_OVERLAY * const ov)
   /* uncompress and draw bitmap */
   if (ov->img && ov->w > 0 && ov->h > 0) {
     const BD_PG_RLE_ELEM *rlep = ov->img;
-    uint8_t *img = malloc(ov->w * ov->h);
-    unsigned pixels = ov->w * ov->h;
+    size_t pixels = (size_t)ov->w * ov->h;
+    uint8_t *img = malloc(pixels);
 
     for (i = 0; i < pixels; i += rlep->len, rlep++) {
       memset(img + i, rlep->color, rlep->len);
@@ -423,7 +423,7 @@ static void open_argb_overlay(bluray_input_plugin_t *this, int plane, uint16_t x
   if (xine_osd_get_capabilities(this->osd[plane]) & XINE_OSD_CAP_ARGB_LAYER) {
     this->osd_buf.buf.width = w;
     this->osd_buf.buf.height = h;
-    this->osd_buf.buf.buf[plane] = calloc(sizeof(uint32_t), w * h);
+    this->osd_buf.buf.buf[plane] = calloc(sizeof(uint32_t), (size_t)w * h);
   } else {
     LOGMSG("open_argb_overlay() failed: video driver does not support ARGB overlays.\n");
   }
