@@ -530,8 +530,10 @@ static void update_title_name(bluray_input_plugin_t *this)
     for (i = 0; i < this->meta_dl->toc_count; i++)
       if (this->meta_dl->toc_entries[i].title_number == (unsigned)this->current_title)
         if (this->meta_dl->toc_entries[i].title_name)
-          if (strlen(this->meta_dl->toc_entries[i].title_name) > 2)
+          if (strlen(this->meta_dl->toc_entries[i].title_name) > 2) {
             strncpy(title_name, this->meta_dl->toc_entries[i].title_name, sizeof(title_name));
+            title_name[sizeof(title_name) - 1] = 0;
+          }
   }
 
   /* title name */
