@@ -618,7 +618,7 @@ char *xine_get_system_encoding(void) {
       else {
         const lang_locale_t *llocale = _get_first_lang_locale(lg);
 
-        if(llocale && llocale->encoding)
+        if(llocale)
           codeset = strdup(llocale->encoding);
       }
 
@@ -646,7 +646,7 @@ const char *xine_guess_spu_encoding(void) {
     if ((enc = strchr(lg, '.'))) *enc = '\0';
     llocale = _get_first_lang_locale(lg);
     free(lg);
-    if (llocale && llocale->spu_encoding) return llocale->spu_encoding;
+    if (llocale) return llocale->spu_encoding;
   }
 
   return "iso-8859-1";
