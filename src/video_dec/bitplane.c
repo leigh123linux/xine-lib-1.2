@@ -1482,7 +1482,6 @@ static void bitplane_dispose (video_decoder_t *this_gen) {
   free (this->buf_uk_hist);
   free (this->index_buf);
   free (this->index_buf_hist);
-  free (this->index_buf);
 
   if (this->decoder_ok) {
     this->decoder_ok                    = 0;
