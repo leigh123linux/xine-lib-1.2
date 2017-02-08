@@ -72,8 +72,6 @@ typedef struct demux_mpeg_pes_s {
 
   int                   rate;
 
-  char                  cur_mrl[256];
-
   uint8_t              *scratch;
 
   int64_t               nav_last_end_pts;
@@ -1594,27 +1592,6 @@ static int demux_mpeg_pes_seek (demux_plugin_t *this_gen,
 }
 
 
-static void demux_mpeg_pes_accept_input (demux_mpeg_pes_t *this,
-					   input_plugin_t *input) {
-
-  this->input = input;
-
-  if (strcmp (this->cur_mrl, input->get_mrl(input))) {
-
-    this->rate = 0;
-
-    strncpy (this->cur_mrl, input->get_mrl(input), sizeof(this->cur_mrl));
-    this->cur_mrl[sizeof(this->cur_mrl) - 1] = 0;
-
-    lprintf ("mrl %s is new\n", this->cur_mrl);
-
-  }
-  else {
-    lprintf ("mrl %s is known, bitrate: %d\n",
-             this->cur_mrl, this->rate * 50 * 8);
-  }
-}
-
 static int demux_mpeg_pes_get_stream_length (demux_plugin_t *this_gen) {
 
   demux_mpeg_pes_t *this = (demux_mpeg_pes_t *) this_gen;
@@ -1709,7 +1686,6 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
           return NULL;
         }
 
-        demux_mpeg_pes_accept_input (this, input);
         lprintf("open_plugin:Accepting detection_method XINE_DEMUX_CONTENT_STRATEGY (preview_data)\n");
 
         break;
@@ -1744,7 +1720,6 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
 
         input->seek(input, 0, SEEK_SET);
 
-        demux_mpeg_pes_accept_input (this, input);
         lprintf("open_plugin:Accepting detection_method XINE_DEMUX_CONTENT_STRATEGY \n");
 
         break;
@@ -1760,11 +1735,8 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
   case METHOD_BY_MRL:
     break;
 
-  case METHOD_EXPLICIT: {
-
-    demux_mpeg_pes_accept_input (this, input);
-  }
-  break;
+  case METHOD_EXPLICIT:
+    break;
 
   default:
     xine_free_aligned (this->scratch);

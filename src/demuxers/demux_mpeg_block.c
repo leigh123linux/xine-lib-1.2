@@ -69,8 +69,6 @@ typedef struct demux_mpeg_block_s {
   int                   blocksize;
   int                   rate;
 
-  char                  cur_mrl[256];
-
   int64_t               nav_last_end_pts;
   int64_t               nav_last_start_pts;
   int64_t               last_pts[2];
@@ -1325,27 +1323,6 @@ static int demux_mpeg_block_seek (demux_plugin_t *this_gen,
 }
 
 
-static void demux_mpeg_block_accept_input (demux_mpeg_block_t *this,
-					   input_plugin_t *input) {
-
-  this->input = input;
-
-  if (strcmp (this->cur_mrl, input->get_mrl(input))) {
-
-    this->rate = 0;
-
-    strncpy (this->cur_mrl, input->get_mrl(input), sizeof(this->cur_mrl));
-    this->cur_mrl[sizeof(this->cur_mrl) - 1] = 0;
-
-    lprintf ("mrl %s is new\n", this->cur_mrl);
-
-  }
-  else {
-    lprintf ("mrl %s is known, bitrate: %d\n",
-	     this->cur_mrl, this->rate * 50 * 8);
-  }
-}
-
 static int demux_mpeg_block_get_stream_length (demux_plugin_t *this_gen) {
 
   demux_mpeg_block_t *this = (demux_mpeg_block_t *) this_gen;
@@ -1440,7 +1417,6 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
 
         input->seek(input, 0, SEEK_SET);
 
-        demux_mpeg_block_accept_input (this, input);
         lprintf("open_plugin:Accepting detection_method XINE_DEMUX_CONTENT_STRATEGY blocksize=%d\n",
                 this->blocksize);
 
@@ -1466,8 +1442,6 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
       free (this);
       return NULL;
     }
-
-    demux_mpeg_block_accept_input (this, input);
   }
   break;
 
