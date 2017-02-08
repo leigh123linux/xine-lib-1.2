@@ -688,6 +688,7 @@ static void draw_subtitle(sputext_decoder_t *this, int64_t sub_start, int64_t su
       /* copy current line */
       if (best_cut != NULL) *best_cut = 0;
       strncpy(this->text[this->lines], stream, SUB_BUFSIZE);
+      this->text[this->lines][SUB_BUFSIZE - 1] = 0;
       this->lines = this->lines + 1;
 
       stream = best_cut + 1;
