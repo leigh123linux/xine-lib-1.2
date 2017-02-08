@@ -2927,7 +2927,7 @@ static void vaapi_duplicate_frame_data (vo_frame_t *this_gen, vo_frame_t *origin
   void      *p_base_orig = NULL;
   void      *p_base_this = NULL;
 
-  va_image_orig.image_id = VA_INVALID_ID;
+  va_image_this.image_id = VA_INVALID_ID;
   va_image_orig.image_id = VA_INVALID_ID;
 
   vaStatus = vaSyncSurface(va_context->va_display, va_surface_orig->va_surface_id);
