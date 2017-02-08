@@ -2619,7 +2619,6 @@ xine_post_t *xine_post_init(xine_t *xine, const char *name, int inputs,
 	i = 0;
 	ite = xine_list_front(post->input);
 	while (ite) {
-	  input = xine_list_get_value (post->input, ite);
 	  i++;
 	  ite = xine_list_next (post->input, ite);
 	}
@@ -2636,7 +2635,6 @@ xine_post_t *xine_post_init(xine_t *xine, const char *name, int inputs,
 	i = 0;
 	ite = xine_list_front (post->output);
 	while (ite) {
-	  output = xine_list_get_value (post->output, ite);
 	  i++;
 	  ite = xine_list_next (post->output, ite);
 	}
