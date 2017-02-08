@@ -1062,8 +1062,10 @@ static void load_plugin_list(xine_t *this, FILE *fp, xine_sarray_t *plugins) {
           sscanf(value," %d",&i);
           if( i == CACHE_CATALOG_VERSION )
             version_ok = 1;
-          else
+          else {
+            free(line);
             return;
+          }
         }
       } else if (node) {
         if( !strcmp("size",line) ) {
