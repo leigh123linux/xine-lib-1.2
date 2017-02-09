@@ -1608,8 +1608,10 @@ int _x_config_change_opt(config_values_t *config, const char *opt) {
     /* someone messed with the config entry */
     return -1;
 
+  if ( *opt == '\0' ) return 0;
+
   key = strdup(opt);
-  if ( !key || *key == '\0' ) return 0;
+  if ( !key ) return 0;
 
   value = strrchr(key, ':');
   if ( !value || *value == '\0' ) {
