@@ -62,31 +62,31 @@ static int _x_io_tcp_connect_ipv4(xine_stream_t *stream, const char *host, int p
 
   for (i = 0; h->h_addr_list[i]; i++) {
 
-  int s = xine_socket_cloexec(PF_INET, SOCK_STREAM, IPPROTO_TCP);
-  if (s == -1) {
-    _x_message(stream, XINE_MSG_CONNECTION_REFUSED, "failed to create socket", strerror(errno), NULL);
-    return -1;
-  }
+    int s = xine_socket_cloexec(PF_INET, SOCK_STREAM, IPPROTO_TCP);
+    if (s == -1) {
+      _x_message(stream, XINE_MSG_CONNECTION_REFUSED, "failed to create socket", strerror(errno), NULL);
+      return -1;
+    }
 
 #ifndef WIN32
-  if (fcntl (s, F_SETFL, fcntl (s, F_GETFL) | O_NONBLOCK) == -1) {
-    _x_message(stream, XINE_MSG_CONNECTION_REFUSED, "can't put socket in non-blocking mode", strerror(errno), NULL);
-    close(s);
-    return -1;
-  }
-#else
-  {
-	unsigned long non_block = 1;
-	int rc;
-
-    rc = ioctlsocket(s, FIONBIO, &non_block);
-
-    if (rc == SOCKET_ERROR) {
+    if (fcntl (s, F_SETFL, fcntl (s, F_GETFL) | O_NONBLOCK) == -1) {
       _x_message(stream, XINE_MSG_CONNECTION_REFUSED, "can't put socket in non-blocking mode", strerror(errno), NULL);
       close(s);
       return -1;
     }
-  }
+#else
+    {
+      unsigned long non_block = 1;
+      int rc;
+
+      rc = ioctlsocket(s, FIONBIO, &non_block);
+
+      if (rc == SOCKET_ERROR) {
+        _x_message(stream, XINE_MSG_CONNECTION_REFUSED, "can't put socket in non-blocking mode", strerror(errno), NULL);
+        close(s);
+        return -1;
+      }
+    }
 #endif
 
     struct in_addr ia;
@@ -114,6 +114,7 @@ static int _x_io_tcp_connect_ipv4(xine_stream_t *stream, const char *host, int p
 
     return s;
   }
+
   return -1;
 }
 #endif
