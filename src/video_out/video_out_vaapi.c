@@ -2187,6 +2187,8 @@ static VAStatus vaapi_init_internal(vo_driver_t *this_gen, int va_profile, int w
       vaapi_frame_t *frame                  = this->frames[i];
       frame->vaapi_accel_data.index         = i;
 
+#if 0
+      /* this seems to break decoding to the surface ? */
       VAImage va_image;
       vaStatus = vaapi_create_image(va_context->driver, va_context->va_surface_ids[i], &va_image, width, height, 1);
       if(vaapi_check_status(va_context->driver, vaStatus, "vaapi_create_image()") && !this->is_bound) {
@@ -2195,6 +2197,7 @@ static VAStatus vaapi_init_internal(vo_driver_t *this_gen, int va_profile, int w
                               0, 0, va_image.width, va_image.height);
         vaapi_destroy_image(va_context->driver, &va_image);
       }
+#endif
     }
 #ifdef DEBUG_SURFACE
     printf("vaapi_init_internal 0x%08x\n", va_context->va_surface_ids[i]);
