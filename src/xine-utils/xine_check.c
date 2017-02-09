@@ -264,6 +264,7 @@ static xine_health_check_t* _x_health_check_dma (xine_health_check_t* hc) {
   if (!is_scsi_dev) {
 
     if(ioctl (fd, HDIO_GET_DMA, &param)) {
+      close (fd);
       set_hc_result(hc, XINE_HEALTH_CHECK_FAIL,
 		    "FAILED -  HDIO_GET_DMA failed. Ensure the permissions for %s are 0664.\n",
 		    hc->dvd_dev);
@@ -271,6 +272,7 @@ static xine_health_check_t* _x_health_check_dma (xine_health_check_t* hc) {
     }
 
     if (param != 1) {
+      close (fd);
       set_hc_result(hc, XINE_HEALTH_CHECK_FAIL,
 		    "FAILED - DMA not turned on for %s.",
 		    hc->dvd_dev);
