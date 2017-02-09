@@ -234,6 +234,7 @@ static void meta_info_set_unlocked_encoding(xine_stream_t *stream, int info, con
        * is badly reported */
       if (meta_info_validate_utf8(value)) {
         meta_info_set_unlocked_utf8(stream, info, value);
+        free(system_enc);
 	return;
       }
       cd = iconv_open("UTF-8", enc);
@@ -267,6 +268,7 @@ static void meta_info_set_unlocked_encoding(xine_stream_t *stream, int info, con
 
         free(utf8_value);
         iconv_close(cd);
+        free(system_enc);
         return;
       }
     }
