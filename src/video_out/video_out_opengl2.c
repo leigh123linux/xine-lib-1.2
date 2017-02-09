@@ -1920,8 +1920,10 @@ static void *opengl2_init_class( xine_t *xine, void *visual_gen )
 {
   opengl2_class_t *this = (opengl2_class_t *) calloc(1, sizeof(opengl2_class_t));
 
-  if ( !opengl2_check_platform( this, (x11_visual_t *)visual_gen ) )
+  if ( !opengl2_check_platform( this, (x11_visual_t *)visual_gen ) ) {
+    free(this);
     return NULL;
+  }
 
   this->driver_class.open_plugin     = opengl2_open_plugin;
   this->driver_class.identifier      = "opengl2";
