@@ -452,7 +452,7 @@ static int get_buffer (AVCodecContext *context, AVFrame *av_frame)
                                             VO_BOTH_FIELDS|this->frame_flags);
 
       av_frame->opaque = img;
-      xine_list_push_back(this->dr1_frames, av_frame);
+      xine_list_push_back(this->dr1_frames, img);
 
       vaapi_accel_t *accel = (vaapi_accel_t*)img->accel_data;
       ff_vaapi_surface_t *va_surface = accel->get_vaapi_surface(img);
