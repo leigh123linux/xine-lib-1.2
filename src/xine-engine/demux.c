@@ -766,7 +766,7 @@ void _x_demux_send_mrl_reference (xine_stream_t *stream, int alternative,
   data.e->start_time = start_time;
   data.e->duration = duration;
   strcpy((char *)data.e->mrl, mrl);
-  strcpy((char *)data.e->mrl + mrl_len + 1, title ? title : "");
+  strcpy((char *)data.e->mrl + mrl_len + 1, title);
 
   event.type = XINE_EVENT_MRL_REFERENCE_EXT;
   xine_event_send (stream, &event);
