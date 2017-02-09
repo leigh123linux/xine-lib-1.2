@@ -324,6 +324,7 @@ broadcaster_t *_x_init_broadcaster(xine_stream_t *stream, int port)
   if(bind(msock, &servAddr.sa, sizeof(servAddr.in))<0)
   {
     xprintf(stream->xine, XINE_VERBOSITY_DEBUG, "broadcaster: error binding to port %d\n", port);
+    close(msock);
     return NULL;
   }
 
