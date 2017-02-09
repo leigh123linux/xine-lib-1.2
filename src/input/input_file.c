@@ -297,7 +297,8 @@ static uint32_t file_input_get_blocksize (input_plugin_t *this_gen) {
 static int file_input_is_dir (const char *filepathname) {
   struct stat  pstat;
 
-  stat(filepathname, &pstat);
+  if (stat(filepathname, &pstat) < 0)
+    return 0;
 
   return (S_ISDIR(pstat.st_mode));
 }
