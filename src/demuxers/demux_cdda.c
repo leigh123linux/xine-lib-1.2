@@ -187,6 +187,16 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
 
   demux_cdda_t   *this;
 
+  switch (stream->content_detection_method) {
+    case METHOD_BY_MRL:
+    case METHOD_EXPLICIT:
+      break;
+
+    case METHOD_BY_CONTENT:
+    default:
+      return NULL;
+  }
+
   this         = calloc(1, sizeof(demux_cdda_t));
   this->stream = stream;
   this->input  = input;
@@ -202,19 +212,6 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
   this->demux_plugin.demux_class       = class_gen;
 
   this->status = DEMUX_FINISHED;
-
-  switch (stream->content_detection_method) {
-
-  case METHOD_BY_CONTENT:
-    return NULL;
-  case METHOD_BY_MRL:
-  case METHOD_EXPLICIT:
-  break;
-
-  default:
-    free (this);
-    return NULL;
-  }
 
   return &this->demux_plugin;
 }
