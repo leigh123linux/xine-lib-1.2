@@ -515,6 +515,7 @@ static int send_avpacket(avformat_demux_plugin_t *this)
 
   /* read frame from the file */
   if (av_read_frame(this->fmt_ctx, &pkt) < 0) {
+    xprintf (this->stream->xine, XINE_VERBOSITY_LOG, LOG_MODULE": av_read_frame() failed\n");
     return -1;
   }
 
