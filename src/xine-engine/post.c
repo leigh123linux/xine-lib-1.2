@@ -296,6 +296,8 @@ static void post_frame_free(vo_frame_t *vo_img) {
     vo_img->next->free(vo_img->next);
     _x_post_frame_copy_up(vo_img, vo_img->next);
     if (port->frame_lock) pthread_mutex_unlock(port->frame_lock);
+  } else {
+    if (port->frame_lock) pthread_mutex_unlock(port->frame_lock);
   }
 }
 
