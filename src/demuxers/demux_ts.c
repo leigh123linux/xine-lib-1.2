@@ -1322,7 +1322,7 @@ static void demux_ts_buffer_pes(demux_ts_t*this, unsigned char *ts,
       m->buf->free_buffer(m->buf);
       m->buf = NULL;
 
-      m->corrupted_pes++;
+      m->corrupted_pes = 1;
       xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG,
               "demux_ts: PID 0x%.4x: corrupted pes encountered\n", m->pid);
     } else {
