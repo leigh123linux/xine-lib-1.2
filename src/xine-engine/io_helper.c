@@ -52,7 +52,7 @@
 static int _x_io_tcp_connect_ipv4(xine_stream_t *stream, const char *host, int port) {
 
   struct hostent *h;
-  int             i, s;
+  int             i;
 
   h = gethostbyname(host);
   if (h == NULL) {
@@ -60,7 +60,9 @@ static int _x_io_tcp_connect_ipv4(xine_stream_t *stream, const char *host, int p
     return -1;
   }
 
-  s = xine_socket_cloexec(PF_INET, SOCK_STREAM, IPPROTO_TCP);
+  for (i = 0; h->h_addr_list[i]; i++) {
+
+  int s = xine_socket_cloexec(PF_INET, SOCK_STREAM, IPPROTO_TCP);
   if (s == -1) {
     _x_message(stream, XINE_MSG_CONNECTION_REFUSED, "failed to create socket", strerror(errno), NULL);
     return -1;
@@ -87,7 +89,6 @@ static int _x_io_tcp_connect_ipv4(xine_stream_t *stream, const char *host, int p
   }
 #endif
 
-  for (i = 0; h->h_addr_list[i]; i++) {
     struct in_addr ia;
     union {
       struct sockaddr    sa;
