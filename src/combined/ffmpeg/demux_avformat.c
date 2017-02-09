@@ -161,7 +161,7 @@ static input_plugin_t *input_avformat_get_instance (input_class_t *cls_gen, xine
     real_mrl = strdup(mrl);
     memmove(real_mrl + 4, real_mrl + 8, strlen(real_mrl) - 8 + 1);
   }
-  if (!strncmp(mrl, "rtsp+http", 9)) {
+  else if (!strncmp(mrl, "rtsp+http", 9)) {
     av_dict_set(&options, "rtsp_transport", "http", 0);
     real_mrl = strdup(mrl);
     memmove(real_mrl + 4, real_mrl + 9, strlen(real_mrl) - 9 + 1);
