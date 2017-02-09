@@ -98,6 +98,7 @@ typedef unsigned int qt_atom;
 #define WAVE_ATOM QT_ATOM('w', 'a', 'v', 'e')
 #define FRMA_ATOM QT_ATOM('f', 'r', 'm', 'a')
 #define AVCC_ATOM QT_ATOM('a', 'v', 'c', 'C')
+#define HVCC_ATOM QT_ATOM('h', 'v', 'c', 'C')
 #define ENDA_ATOM QT_ATOM('e', 'n', 'd', 'a')
 
 #define IMA4_FOURCC ME_FOURCC('i', 'm', 'a', '4')
@@ -115,6 +116,7 @@ typedef unsigned int qt_atom;
 #define IN24_FOURCC ME_FOURCC('i', 'n', '2', '4')
 #define NI42_FOURCC ME_FOURCC('4', '2', 'n', 'i')
 #define AVC1_FOURCC ME_FOURCC('a', 'v', 'c', '1')
+#define HVC1_FOURCC ME_FOURCC('h', 'v', 'c', '1')
 #define AC_3_FOURCC ME_FOURCC('a', 'c', '-', '3')
 #define EAC3_FOURCC ME_FOURCC('e', 'c', '-', '3')
 #define QCLP_FOURCC ME_FOURCC('Q', 'c', 'l', 'p')
@@ -1461,6 +1463,18 @@ static qt_error parse_trak_atom (qt_trak *trak,
   atom = find_embedded_atom (atoms[5], AVCC_ATOM, &atomsize);
   if (atomsize > 8) {
     debug_atom_load ("    avcC atom\n");
+    trak->decoder_config_len = atomsize - 8;
+    trak->decoder_config = realloc (trak->decoder_config, trak->decoder_config_len);
+    if (!trak->decoder_config) {
+      last_error = QT_NO_MEMORY;
+      goto free_trak;
+    }
+    memcpy (trak->decoder_config, atom + 8, trak->decoder_config_len);
+  }
+
+  atom = find_embedded_atom (atoms[5], HVCC_ATOM, &atomsize);
+  if (atomsize > 8) {
+    debug_atom_load ("    hvcC atom\n");
     trak->decoder_config_len = atomsize - 8;
     trak->decoder_config = realloc (trak->decoder_config, trak->decoder_config_len);
     if (!trak->decoder_config) {
@@ -3108,7 +3122,8 @@ static void demux_qt_send_headers(demux_plugin_t *this_gen) {
       buf = this->video_fifo->buffer_pool_alloc (this->video_fifo);
       buf->type = video_trak->properties->video.codec_buftype;
 
-      if (video_trak->properties->video.codec_fourcc == AVC1_FOURCC) {
+      if (video_trak->properties->video.codec_fourcc == AVC1_FOURCC ||
+          video_trak->properties->video.codec_fourcc == HVC1_FOURCC) {
         buf->size = 0;
         buf->decoder_flags = BUF_FLAG_SPECIAL|BUF_FLAG_HEADER;
         buf->decoder_info[1] = BUF_SPECIAL_DECODER_CONFIG;
