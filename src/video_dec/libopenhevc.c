@@ -126,7 +126,9 @@ static void hevc_decode_data (video_decoder_t *this_gen, buf_element_t *buf)
     if (!img || img->width < info->nWidth || img->height < info->nHeight) {
       xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
               LOG_MODULE": get_frame(%dx%d) failed\n", info->nWidth, info->nHeight);
-      img->free(img);
+      if (img) {
+        img->free(img);
+      }
       return;
     }
 
