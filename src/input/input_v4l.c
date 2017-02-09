@@ -1303,6 +1303,7 @@ static buf_element_t *v4l_plugin_read_block (input_plugin_t *this_gen, fifo_buff
 
     lprintf("sending video header");
 
+    memset(&bih, 0, sizeof(bih));
     bih.biSize   = sizeof(xine_bmiheader);
     bih.biWidth  = this->resolution->width;
     bih.biHeight = this->resolution->height;
