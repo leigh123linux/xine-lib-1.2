@@ -448,6 +448,7 @@ static void send_headers_audio(avformat_demux_plugin_t *this) {
 
   _x_stream_info_set(this->stream, XINE_STREAM_INFO_AUDIO_FOURCC, ctx->codec_tag);
 
+  memset(fmt, 0, sizeof(*fmt));
   fmt->cbSize          = extradata_size;
   fmt->nBlockAlign     = ctx->block_align;
   fmt->nAvgBytesPerSec = ctx->bit_rate / 8;
@@ -483,6 +484,7 @@ static void send_headers_video(avformat_demux_plugin_t *this) {
 
   _x_stream_info_set(this->stream, XINE_STREAM_INFO_VIDEO_FOURCC, ctx->codec_tag);
 
+  memset(bih, 0, sizeof(*bih));
   bih->biSize     = sizeof(xine_bmiheader) + extradata_size;
   bih->biBitCount = ctx->bits_per_coded_sample;
   bih->biWidth    = ctx->width;
