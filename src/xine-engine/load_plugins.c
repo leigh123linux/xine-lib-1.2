@@ -1661,17 +1661,18 @@ demux_plugin_t *_x_find_demux_plugin_last_probe(xine_stream_t *stream, const cha
 
   stream->content_detection_method = METHOD_BY_CONTENT;
 
-  if (!last_demux->plugin_class && !_load_plugin_class(xine, last_demux, NULL))
-    return NULL;
+  pthread_mutex_lock (&catalog->lock);
+  if (last_demux->plugin_class || _load_plugin_class(xine, last_demux, NULL)) {
 
   if ((plugin = ((demux_class_t *)last_demux->plugin_class)->open_plugin(last_demux->plugin_class, stream, input))) {
     xprintf (stream->xine, XINE_VERBOSITY_LOG, _("load_plugins: using demuxer '%s'\n"), last_demux_name);
     inc_node_ref(last_demux);
     plugin->node = last_demux;
-    return plugin;
   }
+  }
+  pthread_mutex_unlock (&catalog->lock);
 
-  return NULL;
+  return plugin;
 }
 
 
