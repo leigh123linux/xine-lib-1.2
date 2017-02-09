@@ -69,6 +69,7 @@ static int _x_io_tcp_connect_ipv4(xine_stream_t *stream, const char *host, int p
 #ifndef WIN32
   if (fcntl (s, F_SETFL, fcntl (s, F_GETFL) | O_NONBLOCK) == -1) {
     _x_message(stream, XINE_MSG_CONNECTION_REFUSED, "can't put socket in non-blocking mode", strerror(errno), NULL);
+    close(s);
     return -1;
   }
 #else
@@ -80,7 +81,8 @@ static int _x_io_tcp_connect_ipv4(xine_stream_t *stream, const char *host, int p
 
     if (rc == SOCKET_ERROR) {
       _x_message(stream, XINE_MSG_CONNECTION_REFUSED, "can't put socket in non-blocking mode", strerror(errno), NULL);
-	  return -1;
+      close(s);
+      return -1;
     }
   }
 #endif
