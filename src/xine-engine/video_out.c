@@ -52,7 +52,8 @@
 #include <yuv2rgb.h>
 
 #define NUM_FRAME_BUFFERS          15
-#define MAX_USEC_TO_SLEEP       20000
+/* 24/25/30 fps are most common, do these in a single wait */
+#define MAX_USEC_TO_SLEEP       42000
 #define DEFAULT_FRAME_DURATION   3000    /* 30 frames per second */
 
 /* wait this delay if the first frame is still referenced */
@@ -1614,15 +1615,17 @@ static void *video_out_loop (void *this_gen) {
   lprintf ("loop starting...\n");
 
   while ( this->video_loop_running ) {
-
-    /*
-     * get current time and find frame to display
+    struct timeval now;
+    /* record current time as both speed dependent virtual presentation timestamp (vpts)
+     * and absolute system time, and hope these are halfway in sync.
      */
-
     vpts = next_frame_vpts = this->clock->get_current_time (this->clock);
-
+    gettimeofday (&now, NULL);
     lprintf ("loop iteration at %" PRId64 "\n", vpts);
 
+    /*
+     * find frame to display
+     */
     img = next_frame (this, &next_frame_vpts);
 
     /*
@@ -1677,45 +1680,62 @@ static void *video_out_loop (void *this_gen) {
     if (img) {
       next_frame_vpts = img->vpts + img->duration;
     }
-    /* else next_frame_vpts is returned by get_next_frame */
+    /* else next_frame_vpts is returned by next_frame */
 
     lprintf ("next_frame_vpts is %" PRId64 "\n", next_frame_vpts);
+    if ((next_frame_vpts - vpts) > 2 * 90000)
+      xprintf (this->xine, XINE_VERBOSITY_DEBUG,
+      "video_out: vpts/clock error, next_vpts=%" PRId64 " cur_vpts=%" PRId64 "\n", next_frame_vpts, vpts);
 
-    do {
-      vpts = this->clock->get_current_time (this->clock);
+    /* get diff time for next iteration */
+    if (next_frame_vpts && this->clock->speed > 0)
+      usec_to_sleep = (next_frame_vpts - vpts) * 100 * XINE_FINE_SPEED_NORMAL / (9 * this->clock->speed);
+    else
+      /* we don't know when the next frame is due, only wait a little */
+      usec_to_sleep = 20000;
 
-      if (this->clock->speed == XINE_SPEED_PAUSE)
-        paused_loop (this, vpts);
-
-      if (next_frame_vpts && this->clock->speed > 0) {
-        usec_to_sleep = (next_frame_vpts - vpts) * 100 * XINE_FINE_SPEED_NORMAL / (9 * this->clock->speed);
-      } else {
-        /* we don't know when the next frame is due, only wait a little */
-        usec_to_sleep = 20000;
-        next_frame_vpts = vpts; /* wait only once */
-      }
-
-      /* limit usec_to_sleep to maintain responsiveness */
-      if (usec_to_sleep > MAX_USEC_TO_SLEEP)
-        usec_to_sleep = MAX_USEC_TO_SLEEP;
-
-      lprintf ("%" PRId64 " usec to sleep at master vpts %" PRId64 "\n", usec_to_sleep, vpts);
-
-      if ( (next_frame_vpts - vpts) > 2*90000 )
-        xprintf(this->xine, XINE_VERBOSITY_DEBUG,
-		"video_out: vpts/clock error, next_vpts=%" PRId64 " cur_vpts=%" PRId64 "\n", next_frame_vpts,vpts);
-
-      if (usec_to_sleep > 0)
-      {
-        /* honor trigger update only when a backup img is available */
-        if (0 == interruptable_sleep(this, usec_to_sleep) && this->img_backup)
-          break;
-      }
+    while (this->video_loop_running) {
+      int timedout, wait;
 
       if (this->discard_frames)
         break;
 
-    } while ( (usec_to_sleep > 0) && this->video_loop_running);
+      if (this->clock->speed == XINE_SPEED_PAUSE) {
+        paused_loop (this, vpts);
+        break;
+      }
+
+      /* limit usec_to_sleep to maintain responsiveness */
+      wait = usec_to_sleep;
+      if (wait <= 0)
+        break;
+      if (wait > MAX_USEC_TO_SLEEP)
+        wait = MAX_USEC_TO_SLEEP;
+
+      lprintf ("%d usec to sleep at master vpts %" PRId64 "\n", wait, vpts);
+
+      /* next stop absolute time */
+      now.tv_usec += wait;
+      if (now.tv_usec >= 1000000) {
+        now.tv_sec++;
+        now.tv_usec -= 1000000;
+      }
+      usec_to_sleep -= wait;
+
+      timedout = 0;
+      pthread_mutex_lock (&this->trigger_drawing_mutex);
+      if (!this->trigger_drawing) {
+        struct timespec abstime;
+        abstime.tv_sec = now.tv_sec;
+        abstime.tv_nsec = now.tv_usec * 1000;
+        timedout = pthread_cond_timedwait (&this->trigger_drawing_cond, &this->trigger_drawing_mutex, &abstime);
+      }
+      this->trigger_drawing = 0;
+      pthread_mutex_unlock (&this->trigger_drawing_mutex);
+      /* honor trigger update only when a backup img is available */
+      if (!timedout && this->img_backup)
+        break;
+    }
   }
 
   /*
@@ -2190,6 +2210,12 @@ static void vo_flush (xine_video_port_t *this_gen) {
   if( this->video_loop_running ) {
     pthread_mutex_lock(&this->display_img_buf_queue->mutex);
     this->discard_frames++;
+    /* wake up render thread */
+    pthread_mutex_lock (&this->trigger_drawing_mutex);
+    this->trigger_drawing = 1;
+    pthread_cond_signal (&this->trigger_drawing_cond);
+    pthread_mutex_unlock (&this->trigger_drawing_mutex);
+
     while (this->display_img_buf_queue->first)
       pthread_cond_wait (&this->done_flushing, &this->display_img_buf_queue->mutex);
     this->discard_frames--;
@@ -2453,3 +2479,5 @@ xine_video_port_t *_x_vo_new_port (xine_t *xine, vo_driver_t *driver, int grabon
 
   return &this->vo;
 }
+
+
