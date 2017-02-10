@@ -46,7 +46,6 @@
 #else
 #include "common.h"
 #include "structs.h"
-#include "decoder.h"
 #include "syntax.h"
 #endif
 
