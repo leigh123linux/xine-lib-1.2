@@ -253,7 +253,7 @@ guint32 *goom_update (PluginInfo *goomInfo, gint16 data[2][512],
                     goomInfo->update.zoomFilterData.waveEffect = (goom_irand(goomInfo->gRandom,3) == 0);
                     if (goom_irand(goomInfo->gRandom,2))
                         goomInfo->update.zoomFilterData.vitesse = (goomInfo->update.zoomFilterData.vitesse + 127) >> 1;
-                        break;
+                    break;
                 case 1:
                 case 11:
                     goomInfo->update.zoomFilterData.mode = CRYSTAL_BALL_MODE;

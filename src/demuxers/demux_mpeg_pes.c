@@ -315,114 +315,114 @@ static void demux_mpeg_pes_parse_pack (demux_mpeg_pes_t *this, int preview_mode)
     buf->extra_info->input_normpos = (int)( (double) this->input->get_current_pos (this->input) *
                                      65535 / this->input->get_length (this->input) );
 
-    this->stream_id  = p[3];
-    if (this->stream_id == 0xBA) {
-      this->wait_for_program_stream_pack_header=0;
-      /* This just fills this->scr, this->rate and this->mpeg1 */
-      result = parse_program_stream_pack_header(this, p, buf);
-      return;
-    } else if (this->stream_id == 0xB9) {
-      /* End of stream marker */
-      buf->free_buffer (buf);
-      return;
-    } else if (this->stream_id < 0xB9) {
-      /* FIXME: This should only be tested for after a seek. */
-      buf->free_buffer (buf);
-      return;
-    }
+  this->stream_id  = p[3];
+  if (this->stream_id == 0xBA) {
+    this->wait_for_program_stream_pack_header=0;
+    /* This just fills this->scr, this->rate and this->mpeg1 */
+    result = parse_program_stream_pack_header(this, p, buf);
+    return;
+  } else if (this->stream_id == 0xB9) {
+    /* End of stream marker */
+    buf->free_buffer (buf);
+    return;
+  } else if (this->stream_id < 0xB9) {
+    /* FIXME: This should only be tested for after a seek. */
+    buf->free_buffer (buf);
+    return;
+  }
 #if 0
-    /* FIXME: #if 0 while trying to detect mpeg1 in parse_pes_for_pts() */
-    if (this->wait_for_program_stream_pack_header==1) {
-      /* Wait until this->mpeg1 has been initialised. */
-      buf->free_buffer (buf);
-      return;
-    }
+  /* FIXME: #if 0 while trying to detect mpeg1 in parse_pes_for_pts() */
+  if (this->wait_for_program_stream_pack_header==1) {
+    /* Wait until this->mpeg1 has been initialised. */
+    buf->free_buffer (buf);
+    return;
+  }
 #endif
 
-    this->packet_len = p[4] << 8 | p[5];
-    lprintf("stream_id=0x%x, packet_len=%d\n",this->stream_id, this->packet_len);
+  this->packet_len = p[4] << 8 | p[5];
+  lprintf("stream_id=0x%x, packet_len=%d\n",this->stream_id, this->packet_len);
 
-    if (this->packet_len <= (buf->max_size - 6)) {
-      i = read_data(this, buf->mem+6, (off_t) this->packet_len);
-      if (i != this->packet_len) {
-        buf->free_buffer (buf);
-        this->status = DEMUX_FINISHED;
-        return;
-      }
-      buf->size = this->packet_len + 6;
-    } else {
-      lprintf("Jumbo PES packet length=%d, stream_id=0x%x\n",this->packet_len, this->stream_id);
-
-      i = read_data(this, buf->mem+6, (off_t) (buf->max_size - 6));
-      if (i != ( buf->max_size - 6)) {
-        buf->free_buffer (buf);
-        this->status = DEMUX_FINISHED;
-        return;
-      }
-      buf->size = buf->max_size;
-    }
-
-    if (this->stream_id == 0xBB) {
-      result = parse_program_stream_system_header(this, p, buf);
-    } else if (this->stream_id == 0xBC) {
-      result = parse_program_stream_map(this, p, buf);
-    } else if (this->stream_id == 0xBD) {
-      result = parse_private_stream_1(this, p, buf);
-    } else if (this->stream_id == 0xBE) {
-      result = parse_padding_stream(this, p, buf);
-    } else if (this->stream_id == 0xBF) {
+  if (this->packet_len <= (buf->max_size - 6)) {
+    i = read_data(this, buf->mem+6, (off_t) this->packet_len);
+    if (i != this->packet_len) {
       buf->free_buffer (buf);
+      this->status = DEMUX_FINISHED;
       return;
-      result = parse_private_stream_2(this, p, buf);
-    } else if ((this->stream_id >= 0xC0)
-            && (this->stream_id <= 0xDF)) {
-      result = parse_audio_stream(this, p, buf);
-    } else if ((this->stream_id >= 0xE0)
-            && (this->stream_id <= 0xEF)) {
-      result = parse_video_stream(this, p, buf);
-    } else if (this->stream_id == 0xF0) {
-      result = parse_ecm_stream(this, p, buf);
-    } else if (this->stream_id == 0xF1) {
-      result = parse_emm_stream(this, p, buf);
-    } else if (this->stream_id == 0xF2) {
-      result = parse_dsmcc_stream(this, p, buf);
-    } else if (this->stream_id == 0xF3) {
-      result = parse_iec_13522_stream(this, p, buf);
-    } else if (this->stream_id == 0xF4) {
-      result = parse_h222_typeA_stream(this, p, buf);
-    } else if (this->stream_id == 0xF5) {
-      result = parse_h222_typeB_stream(this, p, buf);
-    } else if (this->stream_id == 0xF6) {
-      result = parse_h222_typeC_stream(this, p, buf);
-    } else if (this->stream_id == 0xF7) {
-      result = parse_h222_typeD_stream(this, p, buf);
-    } else if (this->stream_id == 0xF8) {
-      result = parse_h222_typeE_stream(this, p, buf);
-    } else if (this->stream_id == 0xF9) {
-      result = parse_ancillary_stream(this, p, buf);
-    } else if (this->stream_id == 0xFA) {
-      result = parse_IEC14496_SL_packetized_stream(this, p, buf);
-    } else if (this->stream_id == 0xFB) {
-      result = parse_IEC14496_FlexMux_stream(this, p, buf);
+    }
+    buf->size = this->packet_len + 6;
+  } else {
+    lprintf("Jumbo PES packet length=%d, stream_id=0x%x\n",this->packet_len, this->stream_id);
+
+    i = read_data(this, buf->mem+6, (off_t) (buf->max_size - 6));
+    if (i != ( buf->max_size - 6)) {
+      buf->free_buffer (buf);
+      this->status = DEMUX_FINISHED;
+      return;
+    }
+    buf->size = buf->max_size;
+  }
+
+  if (this->stream_id == 0xBB) {
+    result = parse_program_stream_system_header(this, p, buf);
+  } else if (this->stream_id == 0xBC) {
+    result = parse_program_stream_map(this, p, buf);
+  } else if (this->stream_id == 0xBD) {
+    result = parse_private_stream_1(this, p, buf);
+  } else if (this->stream_id == 0xBE) {
+    result = parse_padding_stream(this, p, buf);
+  } else if (this->stream_id == 0xBF) {
+    buf->free_buffer (buf);
+    return;
+    result = parse_private_stream_2(this, p, buf);
+  } else if ((this->stream_id >= 0xC0)
+             && (this->stream_id <= 0xDF)) {
+    result = parse_audio_stream(this, p, buf);
+  } else if ((this->stream_id >= 0xE0)
+             && (this->stream_id <= 0xEF)) {
+    result = parse_video_stream(this, p, buf);
+  } else if (this->stream_id == 0xF0) {
+    result = parse_ecm_stream(this, p, buf);
+  } else if (this->stream_id == 0xF1) {
+    result = parse_emm_stream(this, p, buf);
+  } else if (this->stream_id == 0xF2) {
+    result = parse_dsmcc_stream(this, p, buf);
+  } else if (this->stream_id == 0xF3) {
+    result = parse_iec_13522_stream(this, p, buf);
+  } else if (this->stream_id == 0xF4) {
+    result = parse_h222_typeA_stream(this, p, buf);
+  } else if (this->stream_id == 0xF5) {
+    result = parse_h222_typeB_stream(this, p, buf);
+  } else if (this->stream_id == 0xF6) {
+    result = parse_h222_typeC_stream(this, p, buf);
+  } else if (this->stream_id == 0xF7) {
+    result = parse_h222_typeD_stream(this, p, buf);
+  } else if (this->stream_id == 0xF8) {
+    result = parse_h222_typeE_stream(this, p, buf);
+  } else if (this->stream_id == 0xF9) {
+    result = parse_ancillary_stream(this, p, buf);
+  } else if (this->stream_id == 0xFA) {
+    result = parse_IEC14496_SL_packetized_stream(this, p, buf);
+  } else if (this->stream_id == 0xFB) {
+    result = parse_IEC14496_FlexMux_stream(this, p, buf);
     /* 0xFC, 0xFD, 0xFE reserved */
-    } else if (this->stream_id == 0xFF) {
-      result = parse_program_stream_directory(this, p, buf);
-    } else {
-      xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
-	      _("xine-lib:demux_mpeg_pes: Unrecognised stream_id 0x%02x. "
-		"Please report this to xine developers.\n"), this->stream_id);
-      xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG,
-	      "xine-lib:demux_mpeg_pes: packet_len=%d\n", this->packet_len);
-      buf->free_buffer (buf);
-      return;
-    }
-    if (result < 0) {
-      xine_log (this->stream->xine, XINE_LOG_MSG,
-		_("demux_mpeg_pes: warning: PACK stream id=0x%x decode failed.\n"), this->stream_id);
-      /* What to do here? */
-      return;
-    }
-  return ;
+  } else if (this->stream_id == 0xFF) {
+    result = parse_program_stream_directory(this, p, buf);
+  } else {
+    xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
+            _("xine-lib:demux_mpeg_pes: Unrecognised stream_id 0x%02x. "
+              "Please report this to xine developers.\n"), this->stream_id);
+    xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG,
+            "xine-lib:demux_mpeg_pes: packet_len=%d\n", this->packet_len);
+    buf->free_buffer (buf);
+    return;
+  }
+  if (result < 0) {
+    xine_log (this->stream->xine, XINE_LOG_MSG,
+              _("demux_mpeg_pes: warning: PACK stream id=0x%x decode failed.\n"), this->stream_id);
+    /* What to do here? */
+    return;
+  }
+  return;
 }
 
 static int32_t parse_padding_stream(demux_mpeg_pes_t *this, uint8_t *p, buf_element_t *buf) {
@@ -456,98 +456,98 @@ static int32_t parse_padding_stream(demux_mpeg_pes_t *this, uint8_t *p, buf_elem
 static int32_t parse_program_stream_map(demux_mpeg_pes_t *this, uint8_t *p, buf_element_t *buf) {
   /* FIXME: Implement */
   xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG,
-	  "xine-lib:demux_mpeg_pes: Unhandled stream_id 0x%02x.\n", this->stream_id);
+          "xine-lib:demux_mpeg_pes: Unhandled stream_id 0x%02x.\n", this->stream_id);
   buf->free_buffer (buf);
   return -1;
 }
 static int32_t parse_ecm_stream(demux_mpeg_pes_t *this, uint8_t *p, buf_element_t *buf) {
   /* FIXME: Implement */
   xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG,
-	  "xine-lib:demux_mpeg_pes: Unhandled stream_id 0x%02x\n", this->stream_id);
+          "xine-lib:demux_mpeg_pes: Unhandled stream_id 0x%02x\n", this->stream_id);
   buf->free_buffer (buf);
   return -1;
 }
 static int32_t parse_emm_stream(demux_mpeg_pes_t *this, uint8_t *p, buf_element_t *buf) {
   /* FIXME: Implement */
   xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG,
-	  "xine-lib:demux_mpeg_pes: Unhandled stream_id 0x%02x\n", this->stream_id);
+          "xine-lib:demux_mpeg_pes: Unhandled stream_id 0x%02x\n", this->stream_id);
   buf->free_buffer (buf);
   return -1;
 }
 static int32_t parse_dsmcc_stream(demux_mpeg_pes_t *this, uint8_t *p, buf_element_t *buf) {
   /* FIXME: Implement */
   xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG,
-	  "xine-lib:demux_mpeg_pes: Unhandled stream_id 0x%02x\n", this->stream_id);
+          "xine-lib:demux_mpeg_pes: Unhandled stream_id 0x%02x\n", this->stream_id);
   buf->free_buffer (buf);
   return -1;
 }
 static int32_t parse_iec_13522_stream(demux_mpeg_pes_t *this, uint8_t *p, buf_element_t *buf) {
   /* FIXME: Implement */
   xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG,
-	  "xine-lib:demux_mpeg_pes: Unhandled stream_id 0x%02x\n", this->stream_id);
+          "xine-lib:demux_mpeg_pes: Unhandled stream_id 0x%02x\n", this->stream_id);
   buf->free_buffer (buf);
   return -1;
 }
 static int32_t parse_h222_typeA_stream(demux_mpeg_pes_t *this, uint8_t *p, buf_element_t *buf) {
   /* FIXME: Implement */
   xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG,
-	  "xine-lib:demux_mpeg_pes: Unhandled stream_id 0x%02x\n", this->stream_id);
+          "xine-lib:demux_mpeg_pes: Unhandled stream_id 0x%02x\n", this->stream_id);
   buf->free_buffer (buf);
   return -1;
 }
 static int32_t parse_h222_typeB_stream(demux_mpeg_pes_t *this, uint8_t *p, buf_element_t *buf) {
   /* FIXME: Implement */
   xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG,
-	  "xine-lib:demux_mpeg_pes: Unhandled stream_id 0x%02x\n", this->stream_id);
+          "xine-lib:demux_mpeg_pes: Unhandled stream_id 0x%02x\n", this->stream_id);
   buf->free_buffer (buf);
   return -1;
 }
 static int32_t parse_h222_typeC_stream(demux_mpeg_pes_t *this, uint8_t *p, buf_element_t *buf) {
   /* FIXME: Implement */
   xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG,
-	  "xine-lib:demux_mpeg_pes: Unhandled stream_id 0x%02x\n", this->stream_id);
+          "xine-lib:demux_mpeg_pes: Unhandled stream_id 0x%02x\n", this->stream_id);
   buf->free_buffer (buf);
   return -1;
 }
 static int32_t parse_h222_typeD_stream(demux_mpeg_pes_t *this, uint8_t *p, buf_element_t *buf) {
   /* FIXME: Implement */
   xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG,
-	  "xine-lib:demux_mpeg_pes: Unhandled stream_id 0x%02x\n", this->stream_id);
+          "xine-lib:demux_mpeg_pes: Unhandled stream_id 0x%02x\n", this->stream_id);
   buf->free_buffer (buf);
   return -1;
 }
 static int32_t parse_h222_typeE_stream(demux_mpeg_pes_t *this, uint8_t *p, buf_element_t *buf) {
   /* FIXME: Implement */
   xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG,
-	  "xine-lib:demux_mpeg_pes: Unhandled stream_id 0x%02x\n", this->stream_id);
+          "xine-lib:demux_mpeg_pes: Unhandled stream_id 0x%02x\n", this->stream_id);
   buf->free_buffer (buf);
   return -1;
 }
 static int32_t parse_IEC14496_SL_packetized_stream(demux_mpeg_pes_t *this, uint8_t *p, buf_element_t *buf) {
   /* FIXME: Implement */
   xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG,
-	  "xine-lib:demux_mpeg_pes: Unhandled stream_id 0x%02x\n", this->stream_id);
+          "xine-lib:demux_mpeg_pes: Unhandled stream_id 0x%02x\n", this->stream_id);
   buf->free_buffer (buf);
   return -1;
 }
 static int32_t parse_IEC14496_FlexMux_stream(demux_mpeg_pes_t *this, uint8_t *p, buf_element_t *buf) {
   /* FIXME: Implement */
   xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG,
-	  "xine-lib:demux_mpeg_pes: Unhandled stream_id 0x%02x\n", this->stream_id);
+          "xine-lib:demux_mpeg_pes: Unhandled stream_id 0x%02x\n", this->stream_id);
   buf->free_buffer (buf);
   return -1;
 }
 static int32_t parse_program_stream_directory(demux_mpeg_pes_t *this, uint8_t *p, buf_element_t *buf) {
   /* FIXME: Implement */
   xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG,
-	  "xine-lib:demux_mpeg_pes: Unhandled stream_id 0x%02x\n", this->stream_id);
+          "xine-lib:demux_mpeg_pes: Unhandled stream_id 0x%02x\n", this->stream_id);
   buf->free_buffer (buf);
   return -1;
 }
 static int32_t parse_ancillary_stream(demux_mpeg_pes_t *this, uint8_t *p, buf_element_t *buf) {
   /* FIXME: Implement */
   xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG,
-	  "xine-lib:demux_mpeg_pes: Unhandled stream_id 0x%02x\n", this->stream_id);
+          "xine-lib:demux_mpeg_pes: Unhandled stream_id 0x%02x\n", this->stream_id);
   buf->free_buffer (buf);
   return -1;
 }
@@ -800,7 +800,7 @@ static int32_t parse_pes_for_pts(demux_mpeg_pes_t *this, uint8_t *p, buf_element
 
     if ((p[6] & 0xC0) != 0x80) {
       xine_log (this->stream->xine, XINE_LOG_MSG,
-		_("demux_mpeg_pes: warning: PES header reserved 10 bits not found\n"));
+                _("demux_mpeg_pes: warning: PES header reserved 10 bits not found\n"));
       buf->free_buffer(buf);
       return -1;
     }
@@ -810,8 +810,8 @@ static int32_t parse_pes_for_pts(demux_mpeg_pes_t *this, uint8_t *p, buf_element
 
     if ((p[6] & 0x30) != 0) {
       xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
-	      _("demux_mpeg_pes: warning: PES header indicates that "
-		"this stream may be encrypted (encryption mode %d)\n"), (p[6] & 0x30) >> 4);
+              _("demux_mpeg_pes: warning: PES header indicates that "
+                "this stream may be encrypted (encryption mode %d)\n"), (p[6] & 0x30) >> 4);
       _x_message (this->stream, XINE_MSG_ENCRYPTED_SOURCE,
                       "Media stream scrambled/encrypted", NULL);
       this->status = DEMUX_FINISHED;
@@ -935,11 +935,11 @@ static int32_t parse_private_stream_1(demux_mpeg_pes_t *this, uint8_t *p, buf_el
         check_newpts( this, this->pts, PTS_AUDIO );
 
       if(this->audio_fifo) {
-	this->audio_fifo->put (this->audio_fifo, buf);
+        this->audio_fifo->put (this->audio_fifo, buf);
         lprintf ("A52 PACK put on fifo\n");
 
       } else {
-	buf->free_buffer(buf);
+        buf->free_buffer(buf);
       }
       return this->packet_len + result;
 
@@ -1012,9 +1012,9 @@ static int32_t parse_private_stream_1(demux_mpeg_pes_t *this, uint8_t *p, buf_el
       switch ((p[5]>>6) & 3) {
       case 3: /* illegal, use 16-bits? */
       default:
-	xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG,
-		 "illegal lpcm sample format (%d), assume 16-bit samples\n",
-		(p[5]>>6) & 3 );
+        xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG,
+                 "illegal lpcm sample format (%d), assume 16-bit samples\n",
+                 (p[5]>>6) & 3 );
       case 0: bits_per_sample = 16; break;
       case 1: bits_per_sample = 20; break;
       case 2: bits_per_sample = 24; break;
@@ -1037,11 +1037,11 @@ static int32_t parse_private_stream_1(demux_mpeg_pes_t *this, uint8_t *p, buf_el
         check_newpts( this, this->pts, PTS_AUDIO );
 
       if(this->audio_fifo) {
-	this->audio_fifo->put (this->audio_fifo, buf);
+        this->audio_fifo->put (this->audio_fifo, buf);
         lprintf ("LPCM PACK put on fifo\n");
 
       } else {
-	buf->free_buffer(buf);
+        buf->free_buffer(buf);
       }
       return this->packet_len + result;
 
@@ -1099,10 +1099,10 @@ static int32_t parse_private_stream_1(demux_mpeg_pes_t *this, uint8_t *p, buf_el
         buf->pts       = 0;
 
         if(this->audio_fifo) {
-	  this->audio_fifo->put (this->audio_fifo, buf);
+          this->audio_fifo->put (this->audio_fifo, buf);
           lprintf ("A52 PACK put on fifo\n");
         } else {
-	  buf->free_buffer(buf);
+          buf->free_buffer(buf);
         }
       }
 
@@ -1115,7 +1115,7 @@ static int32_t parse_private_stream_1(demux_mpeg_pes_t *this, uint8_t *p, buf_el
        1) DVD+RW disc recorded with a Philips DVD recorder: -  new unknown sub-stream id of 0xff
      */
     xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
-	    _("demux_mpeg_pes:Unrecognised private stream 1 0x%02x. Please report this to xine developers.\n"), p[0]);
+            _("demux_mpeg_pes:Unrecognised private stream 1 0x%02x. Please report this to xine developers.\n"), p[0]);
     buf->free_buffer(buf);
     return this->packet_len + result;
 }
@@ -1355,7 +1355,7 @@ static int demux_mpeg_pes_estimate_rate (demux_mpeg_pes_t *this) {
   this->input->seek (this->input, pos, SEEK_SET);
 
   while ( (buf = this->input->read_block (this->input, this->video_fifo, 2048))
-	  && count < MAX_SAMPLES && reads++ < MAX_READS ) {
+          && count < MAX_SAMPLES && reads++ < MAX_READS ) {
 
     p = buf->content; /* len = this->mnBlocksize; */
 
@@ -1364,9 +1364,9 @@ static int demux_mpeg_pes_estimate_rate (demux_mpeg_pes_t *this) {
       is_mpeg1 = (p[4] & 0x40) == 0;
 
       if (is_mpeg1)
-	p   += 12;
+        p   += 12;
       else
-	p += 14 + (p[0xD] & 0x07);
+        p += 14 + (p[0xD] & 0x07);
     }
 
     if (p[3] == 0xbb)  /* program stream system header */
@@ -1376,7 +1376,7 @@ static int demux_mpeg_pes_estimate_rate (demux_mpeg_pes_t *this) {
 
     if (p[0] || p[1] || (p[2] != 1)) {
       xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG,
-	       "demux_mpeg_pes: error %02x %02x %02x (should be 0x000001) \n", p[0], p[1], p[2]);
+               "demux_mpeg_pes: error %02x %02x %02x (should be 0x000001) \n", p[0], p[1], p[2]);
       buf->free_buffer (buf);
       return rate;
     }
@@ -1394,55 +1394,55 @@ static int demux_mpeg_pes_estimate_rate (demux_mpeg_pes_t *this) {
 
       if (p[3] != 0xBF) { /* stream_id */
 
-	p += 6; /* packet_len -= 6; */
+        p += 6; /* packet_len -= 6; */
 
-	while ((p[0] & 0x80) == 0x80) {
-	  p++; /* stuffing */
-	}
+        while ((p[0] & 0x80) == 0x80) {
+          p++; /* stuffing */
+        }
 
-	if ((p[0] & 0xc0) == 0x40) {
-	  /* STD_buffer_scale, STD_buffer_size */
-	  p += 2;
-	}
+        if ((p[0] & 0xc0) == 0x40) {
+          /* STD_buffer_scale, STD_buffer_size */
+          p += 2;
+        }
 
-	if ( ((p[0] & 0xf0) == 0x20) || ((p[0] & 0xf0) == 0x30) ) {
-	  pts  = (int64_t)(p[ 0] & 0x0E) << 29 ;
-	  pts |=  p[ 1]         << 22 ;
-	  pts |= (p[ 2] & 0xFE) << 14 ;
-	  pts |=  p[ 3]         <<  7 ;
-	  pts |= (p[ 4] & 0xFE) >>  1 ;
-	}
+        if ( ((p[0] & 0xf0) == 0x20) || ((p[0] & 0xf0) == 0x30) ) {
+          pts  = (int64_t)(p[ 0] & 0x0E) << 29 ;
+          pts |=  p[ 1]         << 22 ;
+          pts |= (p[ 2] & 0xFE) << 14 ;
+          pts |=  p[ 3]         <<  7 ;
+          pts |= (p[ 4] & 0xFE) >>  1 ;
+        }
       }
     } else { /* mpeg 2 */
 
       if (p[7] & 0x80) { /* pts avail */
 
-	pts  = (int64_t)(p[ 9] & 0x0E) << 29 ;
-	pts |=  p[10]         << 22 ;
-	pts |= (p[11] & 0xFE) << 14 ;
-	pts |=  p[12]         <<  7 ;
-	pts |= (p[13] & 0xFE) >>  1 ;
+        pts  = (int64_t)(p[ 9] & 0x0E) << 29 ;
+        pts |=  p[10]         << 22 ;
+        pts |= (p[11] & 0xFE) << 14 ;
+        pts |=  p[12]         <<  7 ;
+        pts |= (p[13] & 0xFE) >>  1 ;
 
       } else
-	pts = 0;
+        pts = 0;
     }
 
     if (pts) {
 
 
       if ( (pos>last_pos) && (pts>last_pts) ) {
-	int cur_rate;
+        int cur_rate;
 
-	cur_rate = ((pos - last_pos)*90000) / ((pts - last_pts) * 50);
+        cur_rate = ((pos - last_pos)*90000) / ((pts - last_pts) * 50);
 
-	rate = (count * rate + cur_rate) / (count+1);
+        rate = (count * rate + cur_rate) / (count+1);
 
-	count ++;
+        count ++;
 
-	/*
-	printf ("demux_mpeg_pes: stream_id %02x, pos: %"PRId64", pts: %d, cur_rate = %d, overall rate : %d\n",
-		stream_id, pos, pts, cur_rate, rate);
-	*/
+        /*
+        printf ("demux_mpeg_pes: stream_id %02x, pos: %"PRId64", pts: %d, cur_rate = %d, overall rate : %d\n",
+                stream_id, pos, pts, cur_rate, rate);
+        */
       }
 
       last_pos = pos;
@@ -1534,7 +1534,7 @@ static void demux_mpeg_pes_send_headers (demux_plugin_t *this_gen) {
 
 
 static int demux_mpeg_pes_seek (demux_plugin_t *this_gen,
-				   off_t start_pos, int start_time, int playing) {
+                                   off_t start_pos, int start_time, int playing) {
 
   demux_mpeg_pes_t *this = (demux_mpeg_pes_t *) this_gen;
   start_time /= 1000;
@@ -1611,7 +1611,7 @@ static uint32_t demux_mpeg_pes_get_capabilities(demux_plugin_t *this_gen) {
 }
 
 static int demux_mpeg_pes_get_optional_data(demux_plugin_t *this_gen,
-					void *data, int data_type) {
+                                        void *data, int data_type) {
   return DEMUX_OPTIONAL_UNSUPPORTED;
 }
 
@@ -1646,7 +1646,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
   this->preview_size = 0;
 
   lprintf ("open_plugin:detection_method=%d\n",
-	   stream->content_detection_method);
+           stream->content_detection_method);
 
   switch (stream->content_detection_method) {
 
@@ -1664,11 +1664,11 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
       int preview_size = input->get_optional_data(input, &this->preview_data, INPUT_OPTIONAL_DATA_PREVIEW);
 
       if (preview_size >= 6) {
-	lprintf("open_plugin:get_optional_data worked\n");
+        lprintf("open_plugin:get_optional_data worked\n");
 
         if (this->preview_data[0] || this->preview_data[1]
             || (this->preview_data[2] != 0x01) ) {
-	  lprintf("open_plugin:preview_data failed\n");
+          lprintf("open_plugin:preview_data failed\n");
 
           xine_free_aligned (this->scratch);
           free (this);
@@ -1696,11 +1696,11 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
 
       input->seek(input, 0, SEEK_SET);
       if (input->read(input, (char *)this->scratch, 6) == 6) {
-	lprintf("open_plugin:read worked\n");
+        lprintf("open_plugin:read worked\n");
 
         if (this->scratch[0] || this->scratch[1]
             || (this->scratch[2] != 0x01) ) {
-	  lprintf("open_plugin:scratch failed\n");
+          lprintf("open_plugin:scratch failed\n");
 
           xine_free_aligned (this->scratch);
           free (this);

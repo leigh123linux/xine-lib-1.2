@@ -341,8 +341,8 @@ static int demux_fourxm_send_chunk(demux_plugin_t *this_gen) {
 
       if (!remaining_bytes)
         buf->decoder_flags |= BUF_FLAG_FRAME_END;
-        this->audio_fifo->put(this->audio_fifo, buf);
-      }
+      this->audio_fifo->put(this->audio_fifo, buf);
+    }
     break;
 
   case LIST_TAG:
