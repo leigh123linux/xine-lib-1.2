@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2000-2016 the xine project
+ * Copyright (C) 2000-2017 the xine project
  *
  * This file is part of xine, a free video player.
  *
@@ -670,50 +670,49 @@ void xine_xprintf(xine_t *xine, int verbose, const char *fmt, ...) {
 int xine_monotonic_clock(struct timeval *tv, struct timezone *tz)
 {
 #if _POSIX_TIMERS > 0 && defined(_POSIX_MONOTONIC_CLOCK) && defined(HAVE_POSIX_TIMERS)
-  static int initialized = 0;
-  static int use_clock_monotonic = 0;
+  static int xmc_mode = 0;
 
-  struct timespec tp;
+  do {
+    struct timespec ts;
 
-  if( !initialized ) {
-    struct timespec res;
-    int ret;
-
-    ret = clock_getres(CLOCK_MONOTONIC, &res);
-
-    if( ret != 0 ) {
-      lprintf("get resolution of monotonic clock failed\n");
-    } else {
-      /* require at least milisecond resolution */
-      if( res.tv_sec > 0 ||
-          res.tv_nsec > 1000000 ) {
-        lprintf("monotonic clock resolution (%d:%d) too bad\n",
-                 (int)res.tv_sec, (int)res.tv_nsec);
-      } else {
-        if( clock_gettime(CLOCK_MONOTONIC, &tp) != 0 ) {
-          lprintf("get monotonic clock failed\n");
-        } else {
-          lprintf("using monotonic clock\n");
-          use_clock_monotonic = 1;
-        }
-      }
+    if (xmc_mode > 1) {
+      if (clock_gettime (CLOCK_MONOTONIC, &ts))
+        break;
+      tv->tv_sec = ts.tv_sec;
+      tv->tv_usec = ts.tv_nsec / 1000;
+      return 0;
     }
-    initialized = 1;
-  }
 
-  if(use_clock_monotonic && !clock_gettime(CLOCK_MONOTONIC, &tp)) {
-    tv->tv_sec = tp.tv_sec;
-    tv->tv_usec = tp.tv_nsec / 1000;
+    if (xmc_mode == 1)
+      break;
+
+    xmc_mode = 1;
+
+    if (clock_getres (CLOCK_MONOTONIC, &ts)) {
+      lprintf ("get resolution of monotonic clock failed\n");
+      break;
+    }
+
+    /* require at least milisecond resolution */
+    if ((ts.tv_sec > 0) || (ts.tv_nsec > 1000000)) {
+      lprintf ("monotonic clock resolution (%d:%d) too bad\n", (int)ts.tv_sec, (int)ts.tv_nsec);
+      break;
+    }
+
+    if (clock_gettime (CLOCK_MONOTONIC, &ts)) {
+      lprintf ("get monotonic clock failed\n");
+      break;
+    }
+
+    lprintf ("using monotonic clock\n");
+    xmc_mode = 2;
+    tv->tv_sec = ts.tv_sec;
+    tv->tv_usec = ts.tv_nsec / 1000;
     return 0;
-  } else {
-    return gettimeofday(tv, tz);
-  }
-
-#else
-
-  return gettimeofday(tv, tz);
-
+  } while (0);
 #endif
+
+  return gettimeofday (tv, tz);
 }
 
 char *xine_strcat_realloc (char **dest, char *append)
