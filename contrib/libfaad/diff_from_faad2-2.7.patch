@@ -1,0 +1,349 @@
+diff -r 5336b582f060 contrib/libfaad/bits.h
+--- a/contrib/libfaad/bits.h	Fri Feb 10 12:12:52 2017 +0200
++++ b/contrib/libfaad/bits.h	Fri Feb 10 12:36:28 2017 +0200
+@@ -35,6 +35,8 @@
+ extern "C" {
+ #endif
+ 
++#include "xine/attributes.h"
++
+ #include "analysis.h"
+ #ifdef ANALYSIS
+ #include <stdio.h>
+@@ -108,7 +110,7 @@
+ }
+ 
+ /* reads only n bytes from the stream instead of the standard 4 */
+-static /*INLINE*/ uint32_t getdword_n(void *mem, int n)
++static /*INLINE*/ __attr_unused uint32_t getdword_n(void *mem, int n)
+ {
+     uint32_t tmp = 0;
+ #ifndef ARCH_IS_BIG_ENDIAN
+@@ -266,7 +268,7 @@
+     }
+ }
+ 
+-static /*INLINE*/ uint32_t faad_getbits_rev(bitfile *ld, uint32_t n
++static /*INLINE*/ __attr_unused uint32_t faad_getbits_rev(bitfile *ld, uint32_t n
+                                         DEBUGDEC)
+ {
+     uint32_t ret;
+diff -r 5336b582f060 contrib/libfaad/cfft.c
+--- a/contrib/libfaad/cfft.c	Fri Feb 10 12:12:52 2017 +0200
++++ b/contrib/libfaad/cfft.c	Fri Feb 10 12:36:28 2017 +0200
+@@ -698,7 +698,7 @@
+ {
+     uint16_t i;
+     uint16_t k1, l1, l2;
+-    uint16_t na, nf, ip, iw, ix2, ix3, ix4, ido, idl1;
++    uint16_t na, nf, ip, iw, ix2, ix3, ix4, ido /*, idl1 */;
+ 
+     nf = ifac[1];
+     na = 0;
+@@ -710,7 +710,7 @@
+         ip = ifac[k1];
+         l2 = ip*l1;
+         ido = n / l2;
+-        idl1 = ido*l1;
++     /* idl1 = ido*l1; */
+ 
+         switch (ip)
+         {
+@@ -777,7 +777,7 @@
+ {
+     uint16_t i;
+     uint16_t k1, l1, l2;
+-    uint16_t na, nf, ip, iw, ix2, ix3, ix4, ido, idl1;
++    uint16_t na, nf, ip, iw, ix2, ix3, ix4, ido /*, idl1 */;
+ 
+     nf = ifac[1];
+     na = 0;
+@@ -789,7 +789,7 @@
+         ip = ifac[k1];
+         l2 = ip*l1;
+         ido = n / l2;
+-        idl1 = ido*l1;
++     /* idl1 = ido*l1; */
+ 
+         switch (ip)
+         {
+diff -r 5336b582f060 contrib/libfaad/common.c
+--- a/contrib/libfaad/common.c	Fri Feb 10 12:12:52 2017 +0200
++++ b/contrib/libfaad/common.c	Fri Feb 10 12:36:28 2017 +0200
+@@ -202,9 +202,10 @@
+     1,0,0,1,0,1,1,0,0,1,1,0,1,0,0,1,0,1,1,0,1,0,0,1,1,0,0,1,0,1,1,0
+ };
+ 
++/* TJ. these are now part of NeAACDecHandle
+ static uint32_t  __r1 = 1;
+ static uint32_t  __r2 = 1;
+-
++*/
+ 
+ /*
+  *  This is a simple random number generator with good quality for audio purposes.
+diff -r 5336b582f060 contrib/libfaad/common.h
+--- a/contrib/libfaad/common.h	Fri Feb 10 12:12:52 2017 +0200
++++ b/contrib/libfaad/common.h	Fri Feb 10 12:36:28 2017 +0200
+@@ -36,7 +36,7 @@
+ #endif
+ 
+ #ifdef HAVE_CONFIG_H
+-#  include "../config.h"
++#  include "config.h"
+ #endif
+ 
+ #include "neaacdec.h"
+diff -r 5336b582f060 contrib/libfaad/decoder.c
+--- a/contrib/libfaad/decoder.c	Fri Feb 10 12:12:52 2017 +0200
++++ b/contrib/libfaad/decoder.c	Fri Feb 10 12:36:28 2017 +0200
+@@ -64,7 +64,7 @@
+                                   NeAACDecFrameInfo *hInfo);
+ 
+ 
+-char* NEAACDECAPI NeAACDecGetErrorMessage(unsigned char errcode)
++const char* NEAACDECAPI NeAACDecGetErrorMessage(unsigned char errcode)
+ {
+     if (errcode >= NUM_ERROR_MESSAGES)
+         return NULL;
+diff -r 5336b582f060 contrib/libfaad/drc.c
+--- a/contrib/libfaad/drc.c	Fri Feb 10 12:12:52 2017 +0200
++++ b/contrib/libfaad/drc.c	Fri Feb 10 12:36:28 2017 +0200
+@@ -132,7 +132,7 @@
+         if (drc->dyn_rng_sgn[bd])  /* compress */
+             exp = -drc->ctrl1 * (drc->dyn_rng_ctl[bd] - (DRC_REF_LEVEL - drc->prog_ref_level))/REAL_CONST(24.0);
+         else /* boost */
+-            exp = drc->ctrl2 * (drc->dyn_rng_ctl[bd] - (DRC_REF_LEVEL - drc->prog_ref_level))/REAL_CONST(24.0);
++            exp = drc->ctrl2 * (drc->dyn_rng_ctl[bd] + (DRC_REF_LEVEL - drc->prog_ref_level))/REAL_CONST(24.0);
+         factor = (real_t)pow(2.0, exp);
+ 
+         /* Apply gain factor */
+@@ -145,8 +145,8 @@
+             exp = -1 * (drc->dyn_rng_ctl[bd] - (DRC_REF_LEVEL - drc->prog_ref_level))/ 24;
+             frac = -1 * (drc->dyn_rng_ctl[bd] - (DRC_REF_LEVEL - drc->prog_ref_level)) % 24;
+         } else { /* boost */
+-            exp = (drc->dyn_rng_ctl[bd] - (DRC_REF_LEVEL - drc->prog_ref_level))/ 24;
+-            frac = (drc->dyn_rng_ctl[bd] - (DRC_REF_LEVEL - drc->prog_ref_level)) % 24;
++            exp = (drc->dyn_rng_ctl[bd] + (DRC_REF_LEVEL - drc->prog_ref_level))/ 24;
++            frac = (drc->dyn_rng_ctl[bd] + (DRC_REF_LEVEL - drc->prog_ref_level)) % 24;
+         }
+ 
+         /* Apply gain factor */
+diff -r 5336b582f060 contrib/libfaad/error.c
+--- a/contrib/libfaad/error.c	Fri Feb 10 12:12:52 2017 +0200
++++ b/contrib/libfaad/error.c	Fri Feb 10 12:36:28 2017 +0200
+@@ -31,7 +31,7 @@
+ #include "common.h"
+ #include "error.h"
+ 
+-char *err_msg[] = {
++const char *err_msg[] = {
+     "No error",
+     "Gain control not yet implemented",
+     "Pulse coding not allowed in short blocks",
+diff -r 5336b582f060 contrib/libfaad/error.h
+--- a/contrib/libfaad/error.h	Fri Feb 10 12:12:52 2017 +0200
++++ b/contrib/libfaad/error.h	Fri Feb 10 12:36:28 2017 +0200
+@@ -36,7 +36,7 @@
+ #endif
+ 
+ #define NUM_ERROR_MESSAGES 34
+-extern char *err_msg[];
++extern const char *err_msg[];
+ 
+ #ifdef __cplusplus
+ }
+diff -r 5336b582f060 contrib/libfaad/hcr.c
+--- a/contrib/libfaad/hcr.c	Fri Feb 10 12:12:52 2017 +0200
++++ b/contrib/libfaad/hcr.c	Fri Feb 10 12:36:28 2017 +0200
+@@ -225,7 +225,9 @@
+ 
+     uint16_t sp_offset[8];
+     uint16_t g, i, sortloop, set, bitsread;
++#ifdef HCR_CWCOUNT
+     uint16_t bitsleft, codewordsleft;
++#endif
+     uint8_t w_idx, sfb, this_CB, last_CB, this_sec_CB; 
+     
+     const uint16_t nshort = hDecoder->frameLength/8;
+@@ -408,7 +410,7 @@
+             rewrev_bits(&segment[i]);
+     }
+ 
+-#if 0 // Seems to give false errors
++#ifdef HCR_CWCOUNT // Seems to give false errors
+     bitsleft = 0;    
+         
+     for (i = 0; i < numberOfSegments && !bitsleft; i++)
+diff -r 5336b582f060 contrib/libfaad/ic_predict.c
+--- a/contrib/libfaad/ic_predict.c	Fri Feb 10 12:12:52 2017 +0200
++++ b/contrib/libfaad/ic_predict.c	Fri Feb 10 12:36:28 2017 +0200
+@@ -41,43 +41,43 @@
+ static void flt_round(float32_t *pf)
+ {
+     int32_t flg;
+-    uint32_t tmp, tmp1, tmp2;
++    union {float32_t f; uint32_t i;} tmp, tmp1, tmp2;
+ 
+-    tmp = *(uint32_t*)pf;
+-    flg = tmp & (uint32_t)0x00008000;
+-    tmp &= (uint32_t)0xffff0000;
+-    tmp1 = tmp;
++    tmp.f = *pf;
++    flg   = tmp.i & (uint32_t)0x00008000;
++    tmp.i &= (uint32_t)0xffff0000;
+     /* round 1/2 lsb toward infinity */
+     if (flg)
+     {
+-        tmp &= (uint32_t)0xff800000;       /* extract exponent and sign */
+-        tmp |= (uint32_t)0x00010000;       /* insert 1 lsb */
+-        tmp2 = tmp;                             /* add 1 lsb and elided one */
+-        tmp &= (uint32_t)0xff800000;       /* extract exponent and sign */
++        tmp1   = tmp;
++        tmp.i &= (uint32_t)0xff800000; /* extract exponent and sign */
++        tmp.i |= (uint32_t)0x00010000; /* insert 1 lsb */
++        tmp2   = tmp;                  /* add 1 lsb and elided one */
++        tmp.i &= (uint32_t)0xff800000; /* extract exponent and sign */
+         
+-        *pf = *(float32_t*)&tmp1 + *(float32_t*)&tmp2 - *(float32_t*)&tmp;
++        *pf = tmp1.f + tmp2.f - tmp.f;
+     } else {
+-        *pf = *(float32_t*)&tmp;
++        *pf = tmp.f;
+     }
+ }
+ 
+ static int16_t quant_pred(float32_t x)
+ {
+     int16_t q;
+-    uint32_t *tmp = (uint32_t*)&x;
++    union {float32_t f; uint32_t i;} tmp;
++    tmp.f = x;
+ 
+-    q = (int16_t)(*tmp>>16);
++    q = (int16_t)(tmp.i>>16);
+ 
+     return q;
+ }
+ 
+ static float32_t inv_quant_pred(int16_t q)
+ {
+-    float32_t x;
+-    uint32_t *tmp = (uint32_t*)&x;
+-    *tmp = ((uint32_t)q)<<16;
++    union {float32_t f; uint32_t i;} tmp;
++    tmp.i = ((uint32_t)q)<<16;
+ 
+-    return x;
++    return tmp.f;
+ }
+ 
+ static void ic_predict(pred_state *state, real_t input, real_t *output, uint8_t pred)
+diff -r 5336b582f060 contrib/libfaad/neaacdec.h
+--- a/contrib/libfaad/neaacdec.h	Fri Feb 10 12:12:52 2017 +0200
++++ b/contrib/libfaad/neaacdec.h	Fri Feb 10 12:36:28 2017 +0200
+@@ -198,7 +198,7 @@
+     unsigned char ps;
+ } NeAACDecFrameInfo;
+ 
+-char* NEAACDECAPI NeAACDecGetErrorMessage(unsigned char errcode);
++const char* NEAACDECAPI NeAACDecGetErrorMessage(unsigned char errcode);
+ 
+ unsigned long NEAACDECAPI NeAACDecGetCapabilities(void);
+ 
+diff -r 5336b582f060 contrib/libfaad/ps_dec.c
+--- a/contrib/libfaad/ps_dec.c	Fri Feb 10 12:12:52 2017 +0200
++++ b/contrib/libfaad/ps_dec.c	Fri Feb 10 12:36:28 2017 +0200
+@@ -1034,7 +1034,7 @@
+                            qmf_t X_hybrid_left[32][32], qmf_t X_hybrid_right[32][32])
+ {
+     uint8_t gr, n, m, bk;
+-    uint8_t temp_delay;
++    uint8_t temp_delay = 0;
+     uint8_t sb, maxsb;
+     const complex_t *Phi_Fract_SubQmf;
+     uint8_t temp_delay_ser[NO_ALLPASS_LINKS];
+@@ -1043,6 +1043,8 @@
+     real_t G_TransientRatio[32][34] = {{0}};
+     complex_t inputLeft;
+ 
++    /* calm down gcc */
++    memset (temp_delay_ser, 0, sizeof (temp_delay_ser));
+ 
+     /* chose hybrid filterbank: 20 or 34 band case */
+     if (ps->use34hybrid_bands)
+@@ -1454,9 +1456,10 @@
+     uint8_t sb, maxsb;
+     uint8_t env;
+     uint8_t nr_ipdopd_par;
+-    complex_t h11, h12, h21, h22;
+-    complex_t H11, H12, H21, H22;
+-    complex_t deltaH11, deltaH12, deltaH21, deltaH22;
++    /* calm down gcc */
++    complex_t h11 = {0, 0}, h12 = {0, 0}, h21 = {0, 0}, h22 = {0, 0};
++    complex_t H11 = {0, 0}, H12 = {0, 0}, H21 = {0, 0}, H22 = {0, 0};
++    complex_t deltaH11 = {0, 0}, deltaH12 = {0, 0}, deltaH21 = {0, 0}, deltaH22 = {0, 0};
+     complex_t tempLeft;
+     complex_t tempRight;
+     complex_t phaseLeft;
+@@ -1963,8 +1966,13 @@
+ /* main Parametric Stereo decoding function */
+ uint8_t ps_decode(ps_info *ps, qmf_t X_left[38][64], qmf_t X_right[38][64])
+ {
+-    qmf_t X_hybrid_left[32][32] = {{0}};
+-    qmf_t X_hybrid_right[32][32] = {{0}};
++#ifndef SBR_LOW_POWER
++#  define QMF_ZERO {0,0}
++#else
++#  define QMF_ZERO 0
++#endif
++    qmf_t X_hybrid_left[32][32] = {{QMF_ZERO}};
++    qmf_t X_hybrid_right[32][32] = {{QMF_ZERO}};
+ 
+     /* delta decoding of the bitstream data */
+     ps_data_decode(ps);
+diff -r 5336b582f060 contrib/libfaad/sbr_dec.c
+--- a/contrib/libfaad/sbr_dec.c	Fri Feb 10 12:12:52 2017 +0200
++++ b/contrib/libfaad/sbr_dec.c	Fri Feb 10 12:36:28 2017 +0200
+@@ -602,8 +602,13 @@
+     uint8_t l, k;
+     uint8_t dont_process = 0;
+     uint8_t ret = 0;
+-    ALIGN qmf_t X_left[38][64] = {{0}};
+-    ALIGN qmf_t X_right[38][64] = {{0}}; /* must set this to 0 */
++#ifndef SBR_LOW_POWER
++#  define QMF_ZERO {0,0}
++#else
++#  define QMF_ZERO 0
++#endif
++    ALIGN qmf_t X_left[38][64] = {{QMF_ZERO}};
++    ALIGN qmf_t X_right[38][64] = {{QMF_ZERO}}; /* must set this to 0 */
+ 
+     if (sbr == NULL)
+         return 20;
+diff -r 5336b582f060 contrib/libfaad/sbr_hfadj.c
+--- a/contrib/libfaad/sbr_hfadj.c	Fri Feb 10 12:12:52 2017 +0200
++++ b/contrib/libfaad/sbr_hfadj.c	Fri Feb 10 12:36:28 2017 +0200
+@@ -1186,8 +1186,9 @@
+             real_t den = 0;
+             real_t acc1 = 0;
+             real_t acc2 = 0;
++#if 0
+             uint8_t current_res_band_size = 0;
+-
++#endif
+             uint8_t ml1, ml2;
+ 
+             ml1 = sbr->f_table_lim[sbr->bs_limiter_bands][k];
+diff -r 5336b582f060 contrib/libfaad/specrec.c
+--- a/contrib/libfaad/specrec.c	Fri Feb 10 12:12:52 2017 +0200
++++ b/contrib/libfaad/specrec.c	Fri Feb 10 12:36:28 2017 +0200
+@@ -425,7 +425,7 @@
+     }
+ }
+ 
+-/* iquant() *
++/* iquant() */
+ /* output = sign(input)*abs(input)^(4/3) */
+ /**/
+ static INLINE real_t iquant(int16_t q, const real_t *tab, uint8_t *error)
