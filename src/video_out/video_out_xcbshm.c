@@ -707,12 +707,13 @@ static void clean_output_area (xshm_driver_t *this, xshm_frame_t *frame) {
   pthread_mutex_lock(&this->main_mutex);
 
   for( i = 0; i < 4; i++ ) {
-    if( this->sc.border[i].w && this->sc.border[i].h )
+    if( this->sc.border[i].w && this->sc.border[i].h ) {
       rects[rects_count].x = this->sc.border[i].x;
       rects[rects_count].y = this->sc.border[i].y;
       rects[rects_count].width = this->sc.border[i].w;
       rects[rects_count].height = this->sc.border[i].h;
       rects_count++;
+    }
   }
 
   if (rects_count > 0)
@@ -969,12 +970,13 @@ static int xshm_gui_data_exchange (vo_driver_t *this_gen,
 			this->cur_frame->image);
 
 	for( i = 0; i < 4; i++ ) {
-	  if( this->sc.border[i].w && this->sc.border[i].h )
+	  if( this->sc.border[i].w && this->sc.border[i].h ) {
 	    rects[rects_count].x = this->sc.border[i].x;
 	    rects[rects_count].y = this->sc.border[i].y;
 	    rects[rects_count].width = this->sc.border[i].w;
 	    rects[rects_count].height = this->sc.border[i].h;
 	    rects_count++;
+          }
 	}
 
 	if (rects_count > 0)
