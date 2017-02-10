@@ -91,7 +91,7 @@ typedef struct faad_decoder_s {
   unsigned char   *dec_config;
   int              dec_config_size;
 
-  uint32_t         rate;
+  unsigned long    rate;
   int              bits_per_sample;
   unsigned char    num_channels;
   int              sbr;
@@ -265,7 +265,7 @@ static int faad_open_output( faad_decoder_t *this ) {
 }
 
 static int faad_apply_conf (faad_decoder_t *this, uint8_t *conf, int len) {
-  int rate = 0;
+  unsigned long rate = 0;
   uint8_t num_channels = 0;
   int res = NeAACDecInit2 (this->faac_dec, conf, len, &rate, &num_channels);
   /* HACK: At least internal libfaad does not understand
@@ -341,7 +341,7 @@ static int faad_open_dec( faad_decoder_t *this ) {
                   _("libfaad: libfaad NeAACDecInit failed.\n"));
         this->faac_failed++;
       } else {
-        lprintf( "NeAACDecInit() returned rate=%"PRId32" channels=%d (used=%d)\n",
+        lprintf( "NeAACDecInit() returned rate=%lu channels=%d (used=%d)\n",
                  this->rate, this->num_channels, used);
 
         this->size -= used;
@@ -448,7 +448,7 @@ static void faad_decode_audio ( faad_decoder_t *this, int end_frame ) {
           } while (0);
 #endif
           if (!this->adts_fake) {
-            int rate = 0;
+            unsigned long rate = 0;
             uint8_t chan = 0;
             used = NeAACDecInit (this->faac_dec, inbuf, this->size, &rate, &chan);
             if (used < 0)
@@ -515,7 +515,7 @@ static void faad_decode_audio ( faad_decoder_t *this, int end_frame ) {
         this->num_channels = this->faac_finfo.channels;
         this->rate = this->faac_finfo.samplerate;
 
-        lprintf("NeAACDecDecode() returned rate=%"PRId32" channels=%d used=%d\n",
+        lprintf("NeAACDecDecode() returned rate=%lu channels=%d used=%d\n",
                 this->rate, this->num_channels, used);
 
         faad_close_output (this);
