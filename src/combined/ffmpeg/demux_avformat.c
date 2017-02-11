@@ -47,6 +47,20 @@
 #include "ff_audio_list.h"
 
 #include "ffmpeg_compat.h"
+
+#ifndef LIBAVFORMAT_VERSION_INT
+#  if defined(LIBAVFORMAT_VERSION_MAJOR) && defined(LIBAVFORMAT_VERSION_MINOR)
+#    define LIBAVFORMAT_VERSION_INT XFF_INT_VERSION(LIBAVFORMAT_VERSION_MAJOR,LIBAVFORMAT_VERSION_MINOR,0)
+#  endif
+#endif
+
+#if LIBAVFORMAT_VERSION_INT < XFF_INT_VERSION(57,62,0)
+#define CODEC_ID(st)   ((st)->codec->codec_id)
+#else
+#define CODEC_ID(st)   ((st)->codecpar->codec_id)
+#define XFF_CODECPAR 1
+#endif
+
 /*
  * avformat dummy input plugin
  */
@@ -361,15 +375,15 @@ static int find_avformat_streams(avformat_demux_plugin_t *this) {
 
   if (this->video_stream_idx >= 0) {
     AVStream *st = this->fmt_ctx->streams[this->video_stream_idx];
-    uint32_t xine_video_type = video_codec_lookup(this, st->codec->codec_id);
+    uint32_t xine_video_type = video_codec_lookup(this, CODEC_ID(st));
 
     if (!xine_video_type) {
       this->video_stream_idx = -1;
       xprintf (this->stream->xine, XINE_VERBOSITY_LOG,
-               LOG_MODULE": ffmpeg video codec id %d --> NO xine buffer type\n", st->codec->codec_id);
+               LOG_MODULE": ffmpeg video codec id %d --> NO xine buffer type\n", CODEC_ID(st));
     } else {
       xprintf (this->stream->xine, XINE_VERBOSITY_LOG,
-               LOG_MODULE": ffmpeg video codec id %d --> xine buffer type 0x%08x\n", st->codec->codec_id, xine_video_type);
+               LOG_MODULE": ffmpeg video codec id %d --> xine buffer type 0x%08x\n", CODEC_ID(st), xine_video_type);
 
       this->xine_buf_type[this->video_stream_idx] = xine_video_type;
     }
@@ -391,17 +405,22 @@ static int find_avformat_streams(avformat_demux_plugin_t *this) {
       continue;
     }
 
+#ifdef XFF_CODECPAR
+    if (st->codecpar && st->codecpar->codec_type == AVMEDIA_TYPE_AUDIO &&
+        st->codecpar->sample_rate != 0 && st->codecpar->channels != 0) {
+#else
     if (st->codec && st->codec->codec_type == AVMEDIA_TYPE_AUDIO &&
         st->codec->sample_rate != 0 && st->codec->channels != 0) {
+#endif
 
-      uint32_t xine_audio_type = audio_codec_lookup(this, st->codec->codec_id);
+      uint32_t xine_audio_type = audio_codec_lookup(this, CODEC_ID(st));
       if (!xine_audio_type) {
         xprintf (this->stream->xine, XINE_VERBOSITY_LOG,
-                 LOG_MODULE": ffmpeg audio codec id %d --> NO xine buffer type\n", st->codec->codec_id);
+                 LOG_MODULE": ffmpeg audio codec id %d --> NO xine buffer type\n", CODEC_ID(st));
         continue;
       }
       xprintf (this->stream->xine, XINE_VERBOSITY_LOG,
-               LOG_MODULE": ffmpeg audio codec id %d --> xine buffer type 0x%08x\n", st->codec->codec_id, xine_audio_type);
+               LOG_MODULE": ffmpeg audio codec id %d --> xine buffer type 0x%08x\n", CODEC_ID(st), xine_audio_type);
 
       this->audio_stream_idx[this->audio_track_count] = stream_index;
 
@@ -434,7 +453,11 @@ static void send_headers_audio(avformat_demux_plugin_t *this) {
   unsigned ii;
   for (ii = 0; ii < this->audio_track_count; ii++) {
 
+#ifdef XFF_CODECPAR
+  AVCodecParameters *ctx = this->fmt_ctx->streams[this->audio_stream_idx[ii]]->codecpar;
+#else
   AVCodecContext    *ctx = this->fmt_ctx->streams[this->audio_stream_idx[ii]]->codec;
+#endif
   buf_element_t     *buf = this->stream->audio_fifo->buffer_pool_alloc (this->stream->audio_fifo);
   size_t             extradata_size = ctx->extradata_size;
   xine_waveformatex *fmt = (xine_waveformatex *)buf->content;
@@ -470,7 +493,11 @@ static void send_headers_audio(avformat_demux_plugin_t *this) {
 
 static void send_headers_video(avformat_demux_plugin_t *this) {
 
+#ifdef XFF_CODECPAR
+  AVCodecParameters *ctx = this->fmt_ctx->streams[this->video_stream_idx]->codecpar;
+#else
   AVCodecContext *ctx = this->fmt_ctx->streams[this->video_stream_idx]->codec;
+#endif
   buf_element_t  *buf = this->stream->video_fifo->buffer_pool_alloc (this->stream->video_fifo);
   size_t          extradata_size = ctx->extradata_size;
   xine_bmiheader *bih = (xine_bmiheader *)buf->content;
