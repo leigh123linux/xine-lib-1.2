@@ -1213,6 +1213,16 @@ static void ff_convert_frame(ff_video_decoder_t *this, vo_frame_t *img, AVFrame 
     printf ("frame format == %08x\n", this->debug_fmt = this->context->pix_fmt);
 #endif
 
+#ifdef ENABLE_VAAPI
+  if (this->context->pix_fmt == PIX_FMT_VAAPI_VLD) {
+    if (this->accel->guarded_render(this->accel_img)) {
+      ff_vaapi_surface_t *va_surface = (ff_vaapi_surface_t *)av_frame->data[0];
+      this->accel->render_vaapi_surface (img, va_surface);
+    }
+    return;
+  }
+#endif /* ENABLE_VAAPI */
+
   ff_check_colorspace (this);
 
   dy = img->base[0];
@@ -1927,9 +1937,7 @@ static void ff_handle_mpeg12_buffer (ff_video_decoder_t *this, buf_element_t *bu
                                                   this->output_format,
                                                   VO_BOTH_FIELDS|this->frame_flags);
 
-        if( this->context->pix_fmt != PIX_FMT_VAAPI_VLD) {
-          ff_convert_frame(this, img, this->av_frame);
-        }
+        ff_convert_frame(this, img, this->av_frame);
 
         free_img = 1;
       } else {
@@ -1952,16 +1960,6 @@ static void ff_handle_mpeg12_buffer (ff_video_decoder_t *this, buf_element_t *bu
         img->duration = this->video_step * 3 / 2;
       else
         img->duration = this->video_step;
-
-#ifdef ENABLE_VAAPI
-      if( this->context->pix_fmt == PIX_FMT_VAAPI_VLD) {
-        if(this->accel->guarded_render(this->accel_img)) {
-          ff_vaapi_surface_t *va_surface = (ff_vaapi_surface_t *)this->av_frame->data[0];
-          this->accel->render_vaapi_surface(img, va_surface);
-          lprintf("handle_mpeg12_buffer: render_vaapi_surface va_surface_id 0x%08x\n", this->av_frame->data[0]);
-        }
-      }
-#endif /* ENABLE_VAAPi */
 
       this->skipframes = img->draw(img, this->stream);
       this->state = STATE_FRAME_SENT;
@@ -2258,9 +2256,8 @@ static void ff_handle_buffer (ff_video_decoder_t *this, buf_element_t *buf) {
           }
           ff_postprocess (this, img);
         } else if (!this->av_frame->opaque) {
-	  /* colorspace conversion or copy */
-          if( this->context->pix_fmt != PIX_FMT_VAAPI_VLD)
-            ff_convert_frame(this, img, this->av_frame);
+          /* colorspace conversion or copy */
+          ff_convert_frame(this, img, this->av_frame);
         }
 
         img->pts  = ff_untag_pts(this, this->av_frame->reordered_opaque);
@@ -2284,17 +2281,6 @@ static void ff_handle_buffer (ff_video_decoder_t *this, buf_element_t *buf) {
         /* transfer some more frame settings for deinterlacing */
         img->progressive_frame = !this->av_frame->interlaced_frame;
         img->top_field_first   = this->av_frame->top_field_first;
-
-#ifdef ENABLE_VAAPI
-        if( this->context->pix_fmt == PIX_FMT_VAAPI_VLD) {
-          if(this->accel->guarded_render(this->accel_img)) {
-            ff_vaapi_surface_t *va_surface = (ff_vaapi_surface_t *)this->av_frame->data[0];
-            this->accel->render_vaapi_surface(img, va_surface);
-            if(va_surface)
-              lprintf("handle_buffer: render_vaapi_surface va_surface_id 0x%08x\n", this->av_frame->data[0]);
-          }
-        }
-#endif /* ENABLE_VAAPI */
 
         this->skipframes = img->draw(img, this->stream);
         this->state = STATE_FRAME_SENT;
@@ -2486,8 +2472,7 @@ static void ff_flush_internal (ff_video_decoder_t *this, int display) {
       ff_postprocess (this, img);
     } else if (!this->av_frame2->opaque) {
       /* colorspace conversion or copy */
-      if (this->context->pix_fmt != PIX_FMT_VAAPI_VLD)
-        ff_convert_frame (this, img, this->av_frame2);
+      ff_convert_frame (this, img, this->av_frame2);
     }
 
     img->pts = ff_untag_pts (this, this->av_frame2->reordered_opaque);
@@ -2498,15 +2483,6 @@ static void ff_flush_internal (ff_video_decoder_t *this, int display) {
     img->duration = this->av_frame2->repeat_pict ? video_step_to_use * 3 / 2 : video_step_to_use;
     img->progressive_frame = !this->av_frame2->interlaced_frame;
     img->top_field_first   = this->av_frame2->top_field_first;
-
-#ifdef ENABLE_VAAPI
-    if (this->context->pix_fmt == PIX_FMT_VAAPI_VLD) {
-      if (this->accel->guarded_render(this->accel_img)) {
-        ff_vaapi_surface_t *va_surface = (ff_vaapi_surface_t *)this->av_frame2->data[0];
-        this->accel->render_vaapi_surface (img, va_surface);
-      }
-    }
-#endif /* ENABLE_VAAPI */
 
     this->skipframes = img->draw (img, this->stream);
     if (free_img)
