@@ -716,7 +716,7 @@ static const int skip_loop_filter_enum_values[] = {
 };
 
 #ifdef ENABLE_VAAPI
-static int vaapi_pixfmt2imgfmt(enum PixelFormat pix_fmt, unsigned codec_id)
+static int vaapi_pixfmt2imgfmt(enum PixelFormat pix_fmt, unsigned codec_id, int profile)
 {
   static const struct {
     unsigned         fmt;
@@ -726,25 +726,29 @@ static int vaapi_pixfmt2imgfmt(enum PixelFormat pix_fmt, unsigned codec_id)
 #else
     enum CodecID     codec_id;
 #endif
+    int              profile;
   } conversion_map[] = {
-    {IMGFMT_VAAPI_MPEG2,     PIX_FMT_VAAPI_VLD,  CODEC_ID_MPEG2VIDEO},
-    {IMGFMT_VAAPI_MPEG2_IDCT,PIX_FMT_VAAPI_IDCT, CODEC_ID_MPEG2VIDEO},
-    {IMGFMT_VAAPI_MPEG2_MOCO,PIX_FMT_VAAPI_MOCO, CODEC_ID_MPEG2VIDEO},
-    {IMGFMT_VAAPI_MPEG4,     PIX_FMT_VAAPI_VLD,  CODEC_ID_MPEG4},
-    {IMGFMT_VAAPI_H263,      PIX_FMT_VAAPI_VLD,  CODEC_ID_H263},
-    {IMGFMT_VAAPI_H264,      PIX_FMT_VAAPI_VLD,  CODEC_ID_H264},
-    {IMGFMT_VAAPI_WMV3,      PIX_FMT_VAAPI_VLD,  CODEC_ID_WMV3},
-    {IMGFMT_VAAPI_VC1,       PIX_FMT_VAAPI_VLD,  CODEC_ID_VC1},
+    {IMGFMT_VAAPI_MPEG2,     PIX_FMT_VAAPI_VLD,  CODEC_ID_MPEG2VIDEO, -1},
+    {IMGFMT_VAAPI_MPEG2_IDCT,PIX_FMT_VAAPI_IDCT, CODEC_ID_MPEG2VIDEO, -1},
+    {IMGFMT_VAAPI_MPEG2_MOCO,PIX_FMT_VAAPI_MOCO, CODEC_ID_MPEG2VIDEO, -1},
+    {IMGFMT_VAAPI_MPEG4,     PIX_FMT_VAAPI_VLD,  CODEC_ID_MPEG4,      -1},
+    {IMGFMT_VAAPI_H263,      PIX_FMT_VAAPI_VLD,  CODEC_ID_H263,       -1},
+    {IMGFMT_VAAPI_H264,      PIX_FMT_VAAPI_VLD,  CODEC_ID_H264,       -1},
+    {IMGFMT_VAAPI_WMV3,      PIX_FMT_VAAPI_VLD,  CODEC_ID_WMV3,       -1},
+    {IMGFMT_VAAPI_VC1,       PIX_FMT_VAAPI_VLD,  CODEC_ID_VC1,        -1},
+#ifdef FF_PROFILE_HEVC_MAIN10
+    {IMGFMT_VAAPI_HEVC_MAIN10, PIX_FMT_VAAPI_VLD,  AV_CODEC_ID_HEVC,  FF_PROFILE_HEVC_MAIN10},
+#endif
 #ifdef FF_PROFILE_HEVC_MAIN
-    {IMGFMT_VAAPI_HEVC,      PIX_FMT_VAAPI_VLD,  AV_CODEC_ID_HEVC},
+    {IMGFMT_VAAPI_HEVC,      PIX_FMT_VAAPI_VLD,  AV_CODEC_ID_HEVC,    -1},
 #endif
   };
 
   unsigned i;
   for (i = 0; i < sizeof(conversion_map)/sizeof(conversion_map[0]); i++) {
     if (conversion_map[i].pix_fmt == pix_fmt &&
-        (conversion_map[i].codec_id == 0 ||
-        conversion_map[i].codec_id == codec_id)) {
+        (conversion_map[i].codec_id ==  0 || conversion_map[i].codec_id == codec_id) &&
+        (conversion_map[i].profile  == -1 || conversion_map[i].profile  == profile)) {
       return conversion_map[i].fmt;
     }
   }
@@ -777,7 +781,7 @@ static enum PixelFormat get_format(struct AVCodecContext *context, const enum Pi
     if (fmt[i] != PIX_FMT_VAAPI_VLD)
       continue;
 
-    uint32_t format = vaapi_pixfmt2imgfmt(fmt[i], context->codec_id);
+    uint32_t format = vaapi_pixfmt2imgfmt(fmt[i], context->codec_id, context->profile);
     if (!format) {
       continue;
     }

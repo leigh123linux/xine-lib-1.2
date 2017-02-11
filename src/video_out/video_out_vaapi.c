@@ -1185,7 +1185,8 @@ static int profile_from_imgfmt(vo_frame_t *frame_gen, unsigned format)
   static const int mpeg4_profiles[] = { VAProfileMPEG4Main, VAProfileMPEG4AdvancedSimple, VAProfileMPEG4Simple, -1 };
   static const int h264_profiles[]  = { VAProfileH264High, VAProfileH264Main, VAProfileH264Baseline, -1 };
 #if VA_CHECK_VERSION(0, 37, 0)
-  static const int hevc_profiles[]  = { VAProfileHEVCMain, VAProfileHEVCMain10 };
+  static const int hevc_profiles[]  = { VAProfileHEVCMain, VAProfileHEVCMain10, -1 };
+  static const int hevc_profiles10[]  = { VAProfileHEVCMain10, -1 };
 #endif
   static const int wmv3_profiles[]  = { VAProfileVC1Main, VAProfileVC1Simple, -1 };
   static const int vc1_profiles[]   = { VAProfileVC1Advanced, -1 };
@@ -1204,7 +1205,15 @@ static int profile_from_imgfmt(vo_frame_t *frame_gen, unsigned format)
       break;
 #if VA_CHECK_VERSION(0, 37, 0)
     case IMGFMT_VAAPI_CODEC_HEVC:
-      profiles = hevc_profiles;
+      switch (format) {
+        case IMGFMT_VAAPI_HEVC_MAIN10:
+          profiles = hevc_profiles10;
+          break;
+        case IMGFMT_VAAPI_HEVC:
+        default:
+          profiles = hevc_profiles;
+          break;
+      }
       break;
 #endif
     case IMGFMT_VAAPI_CODEC_VC1:
