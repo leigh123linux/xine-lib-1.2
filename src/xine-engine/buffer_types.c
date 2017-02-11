@@ -811,6 +811,7 @@ static const video_db_t video_db[] = {
 {
   {
     ME_FOURCC('h','e','v','c'),
+    ME_FOURCC('h','v','c','1'),
     0
   },
   BUF_VIDEO_HEVC,
