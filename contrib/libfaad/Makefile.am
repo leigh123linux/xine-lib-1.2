@@ -55,7 +55,6 @@ libfaad_la_SOURCES = \
 	cfft.h \
 	cfft_tab.h \
 	common.h \
-	decoder.h \
 	drc.h \
 	drm_dec.h \
 	error.h \
