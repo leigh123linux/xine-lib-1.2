@@ -769,10 +769,10 @@ static enum PixelFormat get_format(struct AVCodecContext *context, const enum Pi
   ff_video_decoder_t *this = (ff_video_decoder_t *)context->opaque;
 
   if(!this->class->enable_vaapi || !this->accel_img)
-    return PIX_FMT_YUV420P;
+    return avcodec_default_get_format(context, fmt);
 
   if (context->codec_id == CODEC_ID_MPEG2VIDEO && this->class->vaapi_mpeg_softdec) {
-    return PIX_FMT_YUV420P;
+    return avcodec_default_get_format(context, fmt);
   }
 
   vaapi_accel_t *accel = (vaapi_accel_t*)this->accel_img->accel_data;
@@ -805,7 +805,7 @@ static enum PixelFormat get_format(struct AVCodecContext *context, const enum Pi
         ff_vaapi_context_t *va_context = accel->get_context(this->accel_img);
 
         if(!va_context)
-          return PIX_FMT_YUV420P;
+          break;
 
         context->draw_horiz_band = NULL;
         context->slice_flags = SLICE_FLAG_CODED_ORDER | SLICE_FLAG_ALLOW_FIELD;
@@ -821,7 +821,11 @@ static enum PixelFormat get_format(struct AVCodecContext *context, const enum Pi
       }
     }
   }
-  return PIX_FMT_YUV420P;
+
+  xprintf (this->stream->xine, XINE_VERBOSITY_LOG,
+           _("ffmpeg_video_dec: no suitable format for HW decoding\n"));
+
+  return avcodec_default_get_format(context, fmt);
 }
 #endif
 
