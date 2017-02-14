@@ -395,6 +395,7 @@ static XvImage *create_ximage (xv_driver_t *this, XShmSegmentInfo *shminfo,
     shminfo->shmid = -1;
 
   finishShmTesting:
+    XSync(this->display, False);
     x11_DeInstallXErrorHandler(this);
   }
 
