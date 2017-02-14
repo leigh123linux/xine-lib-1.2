@@ -662,8 +662,7 @@ static void collect_plugins(xine_t *this, char *path){
 
 	      xine_log (this, XINE_LOG_PLUGIN,
 			_("load_plugins: can't get plugin info from %s:\n%s\n"), str, error);
-              if (lib != NULL)
-                dlclose(lib);
+              dlclose(lib);
 	    }
 	  }
 	  break;
