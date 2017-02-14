@@ -1112,6 +1112,7 @@ static void xv_restore_port_attributes(xv_driver_t *this) {
   UNLOCK_DISPLAY(this);
 
   xine_list_delete( this->port_attributes );
+  this->port_attributes = NULL;
 }
 
 static void xv_dispose (vo_driver_t *this_gen) {
@@ -1119,13 +1120,19 @@ static void xv_dispose (vo_driver_t *this_gen) {
   int          i;
 
   /* restore port attributes to their initial values */
-  xv_restore_port_attributes(this);
+  if (this->port_attributes) {
+    xv_restore_port_attributes(this);
+  }
 
   LOCK_DISPLAY(this);
-  if(XvUngrabPort (this->display, this->xv_port, CurrentTime) != Success) {
-    xprintf (this->xine, XINE_VERBOSITY_DEBUG, LOG_MODULE ": xv_exit: XvUngrabPort() failed.\n");
+  if (this->xv_port) {
+    if (XvUngrabPort (this->display, this->xv_port, CurrentTime) != Success) {
+      xprintf (this->xine, XINE_VERBOSITY_DEBUG, LOG_MODULE ": xv_exit: XvUngrabPort() failed.\n");
+    }
   }
-  XFreeGC(this->display, this->gc);
+  if (this->gc) {
+    XFreeGC(this->display, this->gc);
+  }
   UNLOCK_DISPLAY(this);
 
   for( i=0; i < VO_NUM_RECENT_FRAMES; i++ ) {
@@ -1684,6 +1691,19 @@ static vo_driver_t *open_plugin_2 (video_driver_class_t *class_gen, const void *
     LOCK_DISPLAY(this);
     XFree(fo);
     UNLOCK_DISPLAY(this);
+  }
+
+  // XXX
+  // Bail out if both YV12 and YUY2 are not supported.
+  // Proper fix would be implementing format conversions.
+  //  - decoder should check video output CAP_ flags
+  //  - video out could insert automatic conversion filter
+  //  - ...
+  if (!this->xv_format_yuy2 || !this->xv_format_yv12) {
+    xprintf(this->xine, XINE_VERBOSITY_LOG,
+            LOG_MODULE ": this adaptor does not support YV12 and YUY2 formats.\n");
+    xv_dispose(&this->vo_driver);
+    return NULL;
   }
 
   /*

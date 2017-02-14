@@ -1045,6 +1045,7 @@ static void xv_restore_port_attributes(xv_driver_t *this) {
   pthread_mutex_unlock(&this->main_mutex);
 
   xine_list_delete( this->port_attributes );
+  this->port_attributes = NULL;
 }
 
 static void xv_dispose (vo_driver_t *this_gen) {
@@ -1052,11 +1053,17 @@ static void xv_dispose (vo_driver_t *this_gen) {
   int          i;
 
   /* restore port attributes to their initial values */
-  xv_restore_port_attributes(this);
+  if (this->port_attributes) {
+    xv_restore_port_attributes(this);
+  }
 
   pthread_mutex_lock(&this->main_mutex);
-  xcb_xv_ungrab_port(this->connection, this->xv_port, XCB_CURRENT_TIME);
-  xcb_free_gc(this->connection, this->gc);
+  if (this->xv_port) {
+    xcb_xv_ungrab_port(this->connection, this->xv_port, XCB_CURRENT_TIME);
+  }
+  if (this->gc) {
+    xcb_free_gc(this->connection, this->gc);
+  }
   pthread_mutex_unlock(&this->main_mutex);
 
   for( i=0; i < VO_NUM_RECENT_FRAMES; i++ ) {
@@ -1667,6 +1674,20 @@ static vo_driver_t *open_plugin(video_driver_class_t *class_gen, const void *vis
   }
 
   free(list_formats_reply);
+
+  // XXX
+  // Bail out if both YV12 and YUY2 are not supported.
+  // Proper fix would be implementing format conversions.
+  //  - decoder should check video output CAP_ flags
+  //  - video out could insert automatic conversion filter
+  //  - ...
+  if (!this->xv_format_yuy2 || !this->xv_format_yv12) {
+    xprintf(this->xine, XINE_VERBOSITY_LOG,
+            LOG_MODULE ": this adaptor does not support YV12 and YUY2 formats.\n");
+    xv_dispose(&this->vo_driver);
+    return NULL;
+  }
+
 
   this->use_pitch_alignment =
     config->register_bool (config, "video.device.xv_pitch_alignment", 0,
