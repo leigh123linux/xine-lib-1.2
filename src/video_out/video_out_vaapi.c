@@ -2154,7 +2154,13 @@ static VAStatus vaapi_init_internal(vo_driver_t *this_gen, int va_profile, int w
   xprintf(this->xine, XINE_VERBOSITY_LOG, LOG_MODULE " vaapi_init : Context width %d height %d\n", va_context->width, va_context->height);
 
   /* allocate decoding surfaces */
-  vaStatus = vaCreateSurfaces(va_context->va_display, VA_RT_FORMAT_YUV420, va_context->width, va_context->height, va_context->va_surface_ids, RENDER_SURFACES, NULL, 0);
+  unsigned rt_format = VA_RT_FORMAT_YUV420;
+#if VA_CHECK_VERSION(0, 37, 0) && defined (VA_RT_FORMAT_YUV420_10BPP)
+  if (va_profile == VAProfileHEVCMain10) {
+    rt_format = VA_RT_FORMAT_YUV420_10BPP;
+  }
+#endif
+  vaStatus = vaCreateSurfaces(va_context->va_display, rt_format, va_context->width, va_context->height, va_context->va_surface_ids, RENDER_SURFACES, NULL, 0);
   if(!vaapi_check_status(this_gen, vaStatus, "vaCreateSurfaces()"))
     goto error;
 
