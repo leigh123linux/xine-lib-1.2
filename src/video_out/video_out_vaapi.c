@@ -1244,6 +1244,7 @@ out:
   if(inited) {
     vaStatus = vaTerminate(va_context->va_display);
     vaapi_check_status(this_gen, vaStatus, "vaTerminate()");
+    va_context->va_display = NULL;
   }
   return profile;
 }
