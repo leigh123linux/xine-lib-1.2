@@ -831,6 +831,7 @@ static enum PixelFormat get_format(struct AVCodecContext *context, const enum Pi
 
 static void init_video_codec (ff_video_decoder_t *this, unsigned int codec_type) {
   int thread_count = this->class->thread_count;
+  int use_vaapi = 0;
   size_t i;
 
   /* find the decoder */
@@ -890,9 +891,23 @@ static void init_video_codec (ff_video_decoder_t *this, unsigned int codec_type)
 
   this->context->skip_loop_filter = skip_loop_filter_enum_values[this->class->skip_loop_filter_enum];
 
+  /* disable threads for SVQ3 */
   if (this->codec->id == CODEC_ID_SVQ3) {
     thread_count = 1;
   }
+
+  /* Check for VAAPI HWDEC capability */
+#ifdef ENABLE_VAAPI
+  if( this->class->enable_vaapi ) {
+    uint32_t format = vaapi_pixfmt2imgfmt(PIX_FMT_VAAPI_VLD, this->codec->id, -1);
+    if (format && this->accel->profile_from_imgfmt (this->accel_img, format) >= 0) {
+      use_vaapi = 1;
+    } else {
+      xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
+              "ffmpeg_video_dec: VAAPI decoding of 0x%08x not supported by hardware\n", codec_type);
+    }
+  }
+#endif
 
   /* enable direct rendering by default */
   this->output_format = XINE_IMGFMT_YV12;
@@ -912,7 +927,7 @@ static void init_video_codec (ff_video_decoder_t *this, unsigned int codec_type)
 #endif
 
 #ifdef ENABLE_VAAPI
-  if( this->class->enable_vaapi ) {
+  if( use_vaapi ) {
     this->context->skip_loop_filter = AVDISCARD_DEFAULT;
     xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
             _("ffmpeg_video_dec: force AVDISCARD_DEFAULT for VAAPI\n"));
@@ -1000,7 +1015,7 @@ static void init_video_codec (ff_video_decoder_t *this, unsigned int codec_type)
   this->frame_flags = 0;
   /* FIXME: which codecs can be interlaced?
       FIXME: check interlaced DCT and other codec specific info. */
-  if(!this->class->enable_vaapi) {
+  if (!use_vaapi) {
   switch( codec_type ) {
     case BUF_VIDEO_DV:
       this->frame_flags |= VO_INTERLACED_FLAG;
