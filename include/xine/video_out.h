@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2000-2013 the xine project
+ * Copyright (C) 2000-2017 the xine project
  *
  * This file is part of xine, a free video player.
  *
@@ -452,7 +452,7 @@ struct video_driver_class_s {
   void (*dispose) (video_driver_class_t *self);
 };
 
-#define default_video_driver_class_dispose (void (*) (video_driver_class_t *this))free
+#define default_video_driver_class_dispose (void (*) (video_driver_class_t *this_gen))free
 
 typedef struct rle_elem_s {
   uint16_t len;

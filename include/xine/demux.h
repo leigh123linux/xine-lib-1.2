@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2000-2009 the xine project
+ * Copyright (C) 2000-2017 the xine project
  *
  * This file is part of xine, a free video player.
  *
@@ -49,7 +49,7 @@ struct demux_class_s {
   /*
    * open a new instance of this plugin class
    */
-  demux_plugin_t* (*open_plugin) (demux_class_t *this, xine_stream_t *stream, input_plugin_t *input);
+  demux_plugin_t* (*open_plugin) (demux_class_t *this_gen, xine_stream_t *stream, input_plugin_t *input);
 
   /**
    * @brief short human readable identifier for this plugin class
@@ -85,10 +85,10 @@ struct demux_class_s {
   /*
    * close down, free all resources
    */
-  void (*dispose) (demux_class_t *this);
+  void (*dispose) (demux_class_t *this_gen);
 };
 
-#define default_demux_class_dispose (void (*) (demux_class_t *this))free
+#define default_demux_class_dispose (void (*) (demux_class_t *this_gen))free
 
 /*
  * any demux plugin must implement these functions
@@ -101,7 +101,7 @@ struct demux_plugin_s {
    * fifos, then return. do not start demux thread (yet)
    */
 
-  void (*send_headers) (demux_plugin_t *this);
+  void (*send_headers) (demux_plugin_t *this_gen);
 
   /*
    * ask demux to seek
@@ -122,7 +122,7 @@ struct demux_plugin_s {
    *                           starting the demuxer)
    */
 
-  int (*seek) (demux_plugin_t *this,
+  int (*seek) (demux_plugin_t *this_gen,
 	       off_t start_pos, int start_time, int playing );
 
   /*
@@ -135,37 +135,37 @@ struct demux_plugin_s {
    * the demux current status
    */
 
-  int (*send_chunk) (demux_plugin_t *this);
+  int (*send_chunk) (demux_plugin_t *this_gen);
 
   /*
    * free resources
    */
 
-  void (*dispose) (demux_plugin_t *this) ;
+  void (*dispose) (demux_plugin_t *this_gen) ;
 
   /*
    * returns DEMUX_OK or  DEMUX_FINISHED
    */
 
-  int (*get_status) (demux_plugin_t *this) ;
+  int (*get_status) (demux_plugin_t *this_gen) ;
 
   /*
    * gets stream length in miliseconds (might be estimated)
    * may return 0 for non-seekable streams
    */
 
-  int (*get_stream_length) (demux_plugin_t *this);
+  int (*get_stream_length) (demux_plugin_t *this_gen);
 
   /*
    * return capabilities of demuxed stream
    */
 
-  uint32_t (*get_capabilities) (demux_plugin_t *this);
+  uint32_t (*get_capabilities) (demux_plugin_t *this_gen);
 
   /*
    * request optional data from input plugin.
    */
-  int (*get_optional_data) (demux_plugin_t *this, void *data, int data_type);
+  int (*get_optional_data) (demux_plugin_t *this_gen, void *data, int data_type);
 
   /*
    * "backwards" link to plugin class
@@ -186,7 +186,7 @@ struct demux_plugin_s {
 #endif
 } ;
 
-#define default_demux_plugin_dispose (void (*) (demux_plugin_t *this))free
+#define default_demux_plugin_dispose (void (*) (demux_plugin_t *this_gen))free
 
 /*
  * possible capabilites a demux plugin can have:

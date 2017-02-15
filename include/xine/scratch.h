@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2000-2009 the xine project
+ * Copyright (C) 2000-2017 the xine project
  *
  * This file is part of xine, a free video player.
  *
@@ -33,11 +33,11 @@ typedef struct scratch_buffer_s scratch_buffer_t;
 struct scratch_buffer_s {
 
   void         XINE_FORMAT_PRINTF(2, 0)
-               (*scratch_printf) (scratch_buffer_t *this, const char *format, va_list ap);
+               (*scratch_printf) (scratch_buffer_t *this_gen, const char *format, va_list ap);
 
-  char       **(*get_content) (scratch_buffer_t *this);
+  char       **(*get_content) (scratch_buffer_t *this_gen);
 
-  void         (*dispose) (scratch_buffer_t *this);
+  void         (*dispose) (scratch_buffer_t *this_gen);
 
   char         **lines;
   char         **ordered;

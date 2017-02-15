@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2000-2013 the xine project
+ * Copyright (C) 2000-2017 the xine project
  *
  * This file is part of xine, a free video player.
  *
@@ -43,7 +43,7 @@ struct input_class_s {
    * create a new instance of this plugin class
    * return NULL if the plugin does'nt handle the given mrl
    */
-  input_plugin_t* (*get_instance) (input_class_t *this, xine_stream_t *stream, const char *mrl);
+  input_plugin_t* (*get_instance) (input_class_t *this_gen, xine_stream_t *stream, const char *mrl);
 
   /**
    * @brief short human readable identifier for this plugin class
@@ -66,28 +66,28 @@ struct input_class_s {
    * ls function, optional: may be NULL
    * return value: NULL => filename is a file, **char=> filename is a dir
    */
-  xine_mrl_t ** (*get_dir) (input_class_t *this, const char *filename, int *nFiles);
+  xine_mrl_t ** (*get_dir) (input_class_t *this_gen, const char *filename, int *nFiles);
 
   /*
    * generate autoplay list, optional: may be NULL
    * return value: list of MRLs
    */
-  const char * const * (*get_autoplay_list) (input_class_t *this, int *num_files);
+  const char * const * (*get_autoplay_list) (input_class_t *this_gen, int *num_files);
 
   /*
    * close down, free all resources
    */
-  void (*dispose) (input_class_t *this);
+  void (*dispose) (input_class_t *this_gen);
 
   /*
    * eject/load the media (if possible), optional: may be NULL
    *
    * returns 0 for temporary failures
    */
-  int (*eject_media) (input_class_t *this);
+  int (*eject_media) (input_class_t *this_gen);
 };
 
-#define default_input_class_dispose (void (*) (input_class_t *this))free
+#define default_input_class_dispose (void (*) (input_class_t *this_gen))free
 
 struct input_plugin_s {
 
@@ -95,7 +95,7 @@ struct input_plugin_s {
    * open the stream
    * return 0 if an error occured
    */
-  int (*open) (input_plugin_t *this);
+  int (*open) (input_plugin_t *this_gen);
 
   /*
    * return capabilities of the current playable entity. See
@@ -113,14 +113,14 @@ struct input_plugin_s {
    * make a best-effort attempt to seek, e.g. at least
    * relative forward seeking should work.
    */
-  uint32_t (*get_capabilities) (input_plugin_t *this);
+  uint32_t (*get_capabilities) (input_plugin_t *this_gen);
 
   /*
    * read nlen bytes, return number of bytes read
    * Should block until some bytes available for read;
    * a return value of 0 indicates no data available
    */
-  off_t (*read) (input_plugin_t *this, void *buf, off_t nlen);
+  off_t (*read) (input_plugin_t *this_gen, void *buf, off_t nlen);
 
 
   /*
@@ -128,7 +128,7 @@ struct input_plugin_s {
    * for blocked input sources len must be == blocksize
    * the fifo parameter is only used to get access to the buffer_pool_alloc function
    */
-  buf_element_t *(*read_block)(input_plugin_t *this, fifo_buffer_t *fifo, off_t len);
+  buf_element_t *(*read_block)(input_plugin_t *this_gen, fifo_buffer_t *fifo, off_t len);
 
 
   /*
@@ -136,7 +136,7 @@ struct input_plugin_s {
    *
    * if seeking failed, -1 is returned
    */
-  off_t (*seek) (input_plugin_t *this, off_t offset, int origin);
+  off_t (*seek) (input_plugin_t *this_gen, off_t offset, int origin);
 
 
   /*
@@ -148,14 +148,14 @@ struct input_plugin_s {
    * note: only SEEK_SET (0) is currently supported as origin
    * note: may be NULL is not supported
    */
-  off_t (*seek_time) (input_plugin_t *this, int time_offset, int origin);
+  off_t (*seek_time) (input_plugin_t *this_gen, int time_offset, int origin);
 
 
   /*
    * get current position in stream.
    *
    */
-  off_t (*get_current_pos) (input_plugin_t *this);
+  off_t (*get_current_pos) (input_plugin_t *this_gen);
 
 
   /*
@@ -163,7 +163,7 @@ struct input_plugin_s {
    *
    * note: may be NULL is not supported
    */
-  int (*get_current_time) (input_plugin_t *this);
+  int (*get_current_time) (input_plugin_t *this_gen);
 
 
   /*
@@ -183,7 +183,7 @@ struct input_plugin_s {
    * absolute or relative play position or possibly calculating the
    * bit rate.
    */
-  off_t (*get_length) (input_plugin_t *this);
+  off_t (*get_length) (input_plugin_t *this_gen);
 
 
   /*
@@ -199,25 +199,25 @@ struct input_plugin_s {
    * make this function simply return 0 if unsure.
    */
 
-  uint32_t (*get_blocksize) (input_plugin_t *this);
+  uint32_t (*get_blocksize) (input_plugin_t *this_gen);
 
 
   /*
    * return current MRL
    */
-  const char * (*get_mrl) (input_plugin_t *this);
+  const char * (*get_mrl) (input_plugin_t *this_gen);
 
 
   /*
    * request optional data from input plugin.
    */
-  int (*get_optional_data) (input_plugin_t *this, void *data, int data_type);
+  int (*get_optional_data) (input_plugin_t *this_gen, void *data, int data_type);
 
 
   /*
    * close stream, free instance resources
    */
-  void (*dispose) (input_plugin_t *this);
+  void (*dispose) (input_plugin_t *this_gen);
 
   /*
    * "backward" link to input plugin class struct

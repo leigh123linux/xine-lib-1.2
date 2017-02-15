@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2000-2013 the xine project
+ * Copyright (C) 2000-2017 the xine project
  *
  * This file is part of xine, a free video player.
  *
@@ -46,7 +46,7 @@ struct post_class_s {
   /*
    * open a new instance of this plugin class
    */
-  post_plugin_t* (*open_plugin) (post_class_t *this, int inputs,
+  post_plugin_t* (*open_plugin) (post_class_t *this_gen, int inputs,
 				 xine_audio_port_t **audio_target,
 				 xine_video_port_t **video_target);
 
@@ -71,10 +71,10 @@ struct post_class_s {
    * free all class-related resources
    */
 
-  void (*dispose) (post_class_t *this);
+  void (*dispose) (post_class_t *this_gen);
 };
 
-#define default_post_class_dispose (void (*) (post_class_t *this))free
+#define default_post_class_dispose (void (*) (post_class_t *this_gen))free
 
 struct post_plugin_s {
 
@@ -91,7 +91,7 @@ struct post_plugin_s {
   /*
    * close down, free all resources
    */
-  void (*dispose) (post_plugin_t *this);
+  void (*dispose) (post_plugin_t *this_gen);
 
   /* plugins don't have to init the stuff below */
 

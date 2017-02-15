@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2000-2013 the xine project
+ * Copyright (C) 2000-2017 the xine project
  * May 2003 - Miguel Freitas
  * This feature was sponsored by 1Control
  *
@@ -356,36 +356,36 @@ broadcaster_t *_x_init_broadcaster(xine_stream_t *stream, int port)
   return this;
 }
 
-void _x_close_broadcaster(broadcaster_t *this)
+void _x_close_broadcaster(broadcaster_t *this_gen)
 {
-  this->running = 0;
-  pthread_cancel(this->manager_thread);
-  pthread_join(this->manager_thread,NULL);
-  close(this->msock);
+  this_gen->running = 0;
+  pthread_cancel(this_gen->manager_thread);
+  pthread_join(this_gen->manager_thread,NULL);
+  close(this_gen->msock);
 
-  if (this->stream->video_fifo)
-    this->stream->video_fifo->unregister_put_cb(this->stream->video_fifo, video_put_cb);
+  if (this_gen->stream->video_fifo)
+    this_gen->stream->video_fifo->unregister_put_cb(this_gen->stream->video_fifo, video_put_cb);
 
-  if(this->stream->audio_fifo)
-    this->stream->audio_fifo->unregister_put_cb(this->stream->audio_fifo, audio_put_cb);
+  if(this_gen->stream->audio_fifo)
+    this_gen->stream->audio_fifo->unregister_put_cb(this_gen->stream->audio_fifo, audio_put_cb);
 
   xine_list_iterator_t ite;
 
-  while ( (ite = xine_list_front(this->connections)) ) {
-    int *psock = xine_list_get_value(this->connections, ite);
-    xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG, "broadcaster: closing socket %d\n", *psock);
+  while ( (ite = xine_list_front(this_gen->connections)) ) {
+    int *psock = xine_list_get_value(this_gen->connections, ite);
+    xprintf(this_gen->stream->xine, XINE_VERBOSITY_DEBUG, "broadcaster: closing socket %d\n", *psock);
     close(*psock);
     free(psock);
-    xine_list_remove (this->connections, ite);
+    xine_list_remove (this_gen->connections, ite);
   }
-  xine_list_delete(this->connections);
+  xine_list_delete(this_gen->connections);
 
-  pthread_mutex_destroy( &this->lock );
+  pthread_mutex_destroy( &this_gen->lock );
 
-  free(this);
+  free(this_gen);
 }
 
-int _x_get_broadcaster_port(broadcaster_t *this)
+int _x_get_broadcaster_port(broadcaster_t *this_gen)
 {
-  return this->port;
+  return this_gen->port;
 }

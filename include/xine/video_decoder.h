@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2000-2009 the xine project
+ * Copyright (C) 2000-2017 the xine project
  *
  * This file is part of xine, a free video player.
  *
@@ -45,7 +45,7 @@ struct video_decoder_class_s {
   /*
    * open a new instance of this plugin class
    */
-  video_decoder_t* (*open_plugin) (video_decoder_class_t *this, xine_stream_t *stream);
+  video_decoder_t* (*open_plugin) (video_decoder_class_t *this_gen, xine_stream_t *stream);
 
   /**
    * @brief short human readable identifier for this plugin class
@@ -67,10 +67,10 @@ struct video_decoder_class_s {
   /*
    * free all class-related resources
    */
-  void (*dispose) (video_decoder_class_t *this);
+  void (*dispose) (video_decoder_class_t *this_gen);
 };
 
-#define default_video_decoder_class_dispose (void (*) (video_decoder_class_t *this))free
+#define default_video_decoder_class_dispose (void (*) (video_decoder_class_t *this_gen))free
 
 struct video_decoder_s {
 
@@ -78,29 +78,29 @@ struct video_decoder_s {
    * decode data from buf and feed decoded frames to
    * video output
    */
-  void (*decode_data) (video_decoder_t *this, buf_element_t *buf);
+  void (*decode_data) (video_decoder_t *this_gen, buf_element_t *buf);
 
   /*
    * reset decoder after engine flush (prepare for new
    * video data not related to recently decoded data)
    */
-  void (*reset) (video_decoder_t *this);
+  void (*reset) (video_decoder_t *this_gen);
 
   /*
    * inform decoder that a time reference discontinuity has happened.
    * that is, it must forget any currently held pts value
    */
-  void (*discontinuity) (video_decoder_t *this);
+  void (*discontinuity) (video_decoder_t *this_gen);
 
   /*
    * flush out any frames that are still stored in the decoder
    */
-  void (*flush) (video_decoder_t *this);
+  void (*flush) (video_decoder_t *this_gen);
 
   /*
    * close down, free all resources
    */
-  void (*dispose) (video_decoder_t *this);
+  void (*dispose) (video_decoder_t *this_gen);
 
   /**
    * @brief Pointer to the loaded plugin node.

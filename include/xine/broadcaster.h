@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2000-2009 the xine project
+ * Copyright (C) 2000-2017 the xine project
  *
  * This file is part of xine, a free video player.
  *
@@ -30,8 +30,8 @@ extern "C" {
 typedef struct broadcaster_s broadcaster_t;
 
 broadcaster_t *_x_init_broadcaster(xine_stream_t *stream, int port) XINE_MALLOC XINE_PROTECTED;
-void _x_close_broadcaster(broadcaster_t *this) XINE_PROTECTED;
-int _x_get_broadcaster_port(broadcaster_t *this) XINE_PROTECTED;
+void _x_close_broadcaster(broadcaster_t *this_gen) XINE_PROTECTED;
+int _x_get_broadcaster_port(broadcaster_t *this_gen) XINE_PROTECTED;
 
 
 #ifdef __cplusplus

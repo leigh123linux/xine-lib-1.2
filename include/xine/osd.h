@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2000-2011 the xine project
+ * Copyright (C) 2000-2017 the xine project
  *
  * This file is part of xine, a free video player.
  *
@@ -91,7 +91,7 @@ struct osd_renderer_s {
    * A default palette is initialized (i sugest keeping color 0 as transparent
    * for the sake of simplicity)
    */
-  osd_object_t* (*new_object) (osd_renderer_t *this, int width, int height);
+  osd_object_t* (*new_object) (osd_renderer_t *this_gen, int width, int height);
 
   /*
    * free osd object
@@ -194,7 +194,7 @@ struct osd_renderer_s {
    * loaded fonts are unloaded
    * osd objects are closed
    */
-  void (*close) (osd_renderer_t *this);
+  void (*close) (osd_renderer_t *this_gen);
 
   /*
    * clear an osd object (empty drawing area)

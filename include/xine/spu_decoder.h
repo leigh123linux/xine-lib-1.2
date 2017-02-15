@@ -45,7 +45,7 @@ struct spu_decoder_class_s {
   /*
    * open a new instance of this plugin class
    */
-  spu_decoder_t* (*open_plugin) (spu_decoder_class_t *this, xine_stream_t *stream);
+  spu_decoder_t* (*open_plugin) (spu_decoder_class_t *this_gen, xine_stream_t *stream);
 
   /**
    * @brief short human readable identifier for this plugin class
@@ -67,34 +67,34 @@ struct spu_decoder_class_s {
   /*
    * free all class-related resources
    */
-  void (*dispose) (spu_decoder_class_t *this);
+  void (*dispose) (spu_decoder_class_t *this_gen);
 };
 
-#define default_spu_decoder_class_dispose (void (*) (spu_decoder_class_t *this))free
+#define default_spu_decoder_class_dispose (void (*) (spu_decoder_class_t *this_gen))free
 
 struct spu_decoder_s {
 
   /*
    * decode data from buf and feed the overlay to overlay manager
    */
-  void (*decode_data) (spu_decoder_t *this, buf_element_t *buf);
+  void (*decode_data) (spu_decoder_t *this_gen, buf_element_t *buf);
 
   /*
    * reset decoder after engine flush (prepare for new
    * SPU data not related to recently decoded data)
    */
-  void (*reset) (spu_decoder_t *this);
+  void (*reset) (spu_decoder_t *this_gen);
 
   /*
    * inform decoder that a time reference discontinuity has happened.
    * that is, it must forget any currently held pts value
    */
-  void (*discontinuity) (spu_decoder_t *this);
+  void (*discontinuity) (spu_decoder_t *this_gen);
 
   /*
    * close down, free all resources
    */
-  void (*dispose) (spu_decoder_t *this);
+  void (*dispose) (spu_decoder_t *this_gen);
 
   /*
    * When the SPU decoder also handles data used in user interaction,
@@ -106,7 +106,7 @@ struct spu_decoder_s {
    * This function pointer may be NULL, if the plugin does not have
    * such functionality.
    */
-  int  (*get_interact_info) (spu_decoder_t *this, void *data);
+  int  (*get_interact_info) (spu_decoder_t *this_gen, void *data);
 
   /*
    * When the SPU decoder also handles menu overlays for user inter-

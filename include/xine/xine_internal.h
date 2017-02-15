@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2000-2016 the xine project
+ * Copyright (C) 2000-2017 the xine project
  *
  * This file is part of xine, a free video player.
  *
@@ -491,7 +491,7 @@ int              _x_decoder_available  (xine_t *xine, uint32_t buftype) XINE_PRO
  * load a specific video output plugin
  */
 
-vo_driver_t *_x_load_video_output_plugin(xine_t *this,
+vo_driver_t *_x_load_video_output_plugin(xine_t *this_gen,
 					 char *id, int visual_type, void *visual) XINE_PROTECTED;
 
 /*

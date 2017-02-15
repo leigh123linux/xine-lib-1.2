@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2000-2012 the xine project
+ * Copyright (C) 2000-2017 the xine project
  *
  * This file is part of xine, a free video player.
  *
@@ -267,7 +267,7 @@ struct audio_driver_class_s {
   void (*dispose) (audio_driver_class_t *);
 };
 
-#define default_audio_driver_class_dispose (void (*) (audio_driver_class_t *this))free
+#define default_audio_driver_class_dispose (void (*) (audio_driver_class_t *this_gen))free
 
 /**
  * @brief Initialise the audio_out sync routines

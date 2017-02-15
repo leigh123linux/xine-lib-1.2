@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2000-2009 the xine project
+ * Copyright (C) 2000-2017 the xine project
  *
  * This file is part of xine, a free video player.
  *
@@ -44,7 +44,7 @@ struct audio_decoder_class_s {
   /*
    * open a new instance of this plugin class
    */
-  audio_decoder_t* (*open_plugin) (audio_decoder_class_t *this, xine_stream_t *stream);
+  audio_decoder_t* (*open_plugin) (audio_decoder_class_t *this_gen, xine_stream_t *stream);
 
   /**
    * @brief short human readable identifier for this plugin class
@@ -67,10 +67,10 @@ struct audio_decoder_class_s {
    * free all class-related resources
    */
 
-  void (*dispose) (audio_decoder_class_t *this);
+  void (*dispose) (audio_decoder_class_t *this_gen);
 };
 
-#define default_audio_decoder_class_dispose (void (*) (audio_decoder_class_t *this))free
+#define default_audio_decoder_class_dispose (void (*) (audio_decoder_class_t *this_gen))free
 
 struct audio_decoder_s {
 
@@ -78,24 +78,24 @@ struct audio_decoder_s {
    * decode data from buf and feed decoded samples to
    * audio output
    */
-  void (*decode_data) (audio_decoder_t *this, buf_element_t *buf);
+  void (*decode_data) (audio_decoder_t *this_gen, buf_element_t *buf);
 
   /*
    * reset decoder after engine flush (prepare for new
    * audio data not related to recently decoded data)
    */
-  void (*reset) (audio_decoder_t *this);
+  void (*reset) (audio_decoder_t *this_gen);
 
   /*
    * inform decoder that a time reference discontinuity has happened.
    * that is, it must forget any currently held pts value
    */
-  void (*discontinuity) (audio_decoder_t *this);
+  void (*discontinuity) (audio_decoder_t *this_gen);
 
   /*
    * close down, free all resources
    */
-  void (*dispose) (audio_decoder_t *this);
+  void (*dispose) (audio_decoder_t *this_gen);
 
   /**
    * @brief Pointer to the loaded plugin node.
