@@ -488,34 +488,51 @@ static plugin_catalog_t *XINE_MALLOC _new_catalog(void){
   return catalog;
 }
 
-static const char *plugin_type_to_string (int type) {
-  type &= PLUGIN_TYPE_MASK;
-  if (type == PLUGIN_INPUT)
-    return "libxine/builtins/input";
-  if (type == PLUGIN_DEMUX)
-    return "libxine/builtins/demux";
-  if (type == PLUGIN_AUDIO_DECODER)
-    return "libxine/builtins/audio_decoder";
-  if (type == PLUGIN_VIDEO_DECODER)
-    return "libxine/builtins/video_decoder";
-  if (type == PLUGIN_SPU_DECODER)
-    return "libxine/builtins/spu_decoder";
-  if (type == PLUGIN_POST)
-    return "libxine/builtins/post";
-  if (type == PLUGIN_AUDIO_OUT)
-    return "libxine/builtins/audio_out";
-  if (type == PLUGIN_VIDEO_OUT)
-    return "libxine/builtins/video_out";
-  return "libxine/builtins";
-};
-
 static void _register_plugins_internal(xine_t *this, plugin_file_t *file,
                                        plugin_node_t *node_cache, const plugin_info_t *info) {
+  /* user supplied xine_register_plugins () */
+  static const char * const st_names[10] = {
+    "user/none",
+    "user/input",
+    "user/demux",
+    "user/audio_decoder",
+    "user/video_decoder",
+    "user/spu_decoder",
+    "user/audio_out",
+    "user/video_out",
+    "user/post",
+    "user"
+  };
+  const char * const *names = st_names;
+#ifdef XINE_MAKE_BUILTINS
+  static const char * const builtin_names[10] = {
+    "libxine/builtins/none",
+    "libxine/builtins/input",
+    "libxine/builtins/demux",
+    "libxine/builtins/audio_decoder",
+    "libxine/builtins/video_decoder",
+    "libxine/builtins/spu_decoder",
+    "libxine/builtins/audio_out",
+    "libxine/builtins/video_out",
+    "libxine/builtins/post",
+    "libxine/builtins"
+  };
+  if (info == xine_builtin_plugin_info)
+    names = builtin_names;
+#endif
   _x_assert(this);
   _x_assert(info);
 
   while ( info && info->type != PLUGIN_NONE ) {
-    const char *fn = (file && file->filename) ? file->filename : plugin_type_to_string (info->type);
+    const char *fn;
+    if (file && file->filename) {
+      fn = file->filename;
+    } else {
+      int n = info->type & PLUGIN_TYPE_MASK;
+      if (n > 9)
+        n = 9;
+      fn = names[n];
+    }
     xine_log (this, XINE_LOG_PLUGIN, _("load_plugins: plugin %s:%s found\n"), fn, info->id);
 
     if (this->plugin_catalog->plugin_count >= PLUGIN_MAX ||
