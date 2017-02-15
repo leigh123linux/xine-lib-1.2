@@ -256,6 +256,7 @@ static uint32_t ones32(uint32_t x)
     return (x & 0x0000003f);
 }
 
+#ifdef FIXED_POINT
 static uint32_t floor_log2(uint32_t x)
 {
 #if 1
@@ -275,6 +276,7 @@ static uint32_t floor_log2(uint32_t x)
     return count;
 #endif
 }
+#endif
 
 /* returns position of first bit that is not 0 from msb,
  * starting count at lsb */

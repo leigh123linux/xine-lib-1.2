@@ -28,6 +28,10 @@
 ** $Id: decoder.c,v 1.117 2009/02/05 00:51:03 menno Exp $
 **/
 
+/* xine does this by itself
+#define USE_LATM
+*/
+
 #include "common.h"
 #include "structs.h"
 
@@ -209,7 +213,7 @@ unsigned char NEAACDECAPI NeAACDecSetConfiguration(NeAACDecHandle hpDecoder,
     return 0;
 }
 
-
+#ifdef USE_LATM
 static int latmCheck(latm_header *latm, bitfile *ld)
 {
     uint32_t good=0, bad=0, bits, m;
@@ -233,7 +237,7 @@ static int latmCheck(latm_header *latm, bitfile *ld)
 
     return (good>0);
 }
-
+#endif
 
 long NEAACDECAPI NeAACDecInit(NeAACDecHandle hpDecoder,
                               unsigned char *buffer,
@@ -258,14 +262,14 @@ long NEAACDECAPI NeAACDecInit(NeAACDecHandle hpDecoder,
 
     if (buffer != NULL)
     {
-#if 0
+#ifdef USE_LATM
         int is_latm;
         latm_header *l = &hDecoder->latm_config;
 #endif
 
         faad_initbits(&ld, buffer, buffer_size);
  
-#if 0
+#ifdef USE_LATM
         memset(l, 0, sizeof(latm_header));
         is_latm = latmCheck(l, &ld);
         l->inited = 0;
@@ -839,7 +843,9 @@ static void* aac_frame_decode(NeAACDecStruct *hDecoder,
     uint32_t bitsconsumed;
     uint16_t frame_len;
     void *sample_buffer;
+#ifdef USE_LATM
     uint32_t startbit=0, endbit=0, payload_bits=0;
+#endif
 
 #ifdef PROFILE
     int64_t count = faad_get_ts();
@@ -909,7 +915,7 @@ static void* aac_frame_decode(NeAACDecStruct *hDecoder,
     }
 #endif
 
-#if 0
+#ifdef USE_LATM
     if(hDecoder->latm_header_present)
     {
         payload_bits = faad_latm_frame(&hDecoder->latm_config, &ld);
@@ -967,7 +973,7 @@ static void* aac_frame_decode(NeAACDecStruct *hDecoder,
     }
 #endif
 
-#if 0
+#ifdef USE_LATM
     if(hDecoder->latm_header_present)
     {
         endbit = faad_get_processed_bits(&ld);
@@ -1005,7 +1011,7 @@ static void* aac_frame_decode(NeAACDecStruct *hDecoder,
 
 
     if (!hDecoder->adts_header_present && !hDecoder->adif_header_present
-#if 0
+#ifdef USE_LATM
         && !hDecoder->latm_header_present
 #endif
         )
@@ -1057,7 +1063,7 @@ static void* aac_frame_decode(NeAACDecStruct *hDecoder,
         hInfo->header_type = ADIF;
     if (hDecoder->adts_header_present)
         hInfo->header_type = ADTS;
-#if 0
+#ifdef USE_LATM
     if (hDecoder->latm_header_present)
         hInfo->header_type = LATM;
 #endif

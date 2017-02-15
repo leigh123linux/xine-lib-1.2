@@ -2608,9 +2608,9 @@ static uint32_t latmAudioMuxElement(latm_header *latm, bitfile *ld)
 uint32_t faad_latm_frame(latm_header *latm, bitfile *ld)
 {
     uint16_t len;
-    uint32_t initpos, endpos, firstpos, ret;
+    uint32_t initpos, endpos, /* firstpos, */ ret;
 
-    firstpos = faad_get_processed_bits(ld);
+/*  firstpos = faad_get_processed_bits(ld); */
     while (ld->bytes_left)
     {
         faad_byte_align(ld);
