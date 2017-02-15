@@ -830,6 +830,7 @@ static enum PixelFormat get_format(struct AVCodecContext *context, const enum Pi
 #endif
 
 static void init_video_codec (ff_video_decoder_t *this, unsigned int codec_type) {
+  int thread_count = this->class->thread_count;
   size_t i;
 
   /* find the decoder */
@@ -887,15 +888,12 @@ static void init_video_codec (ff_video_decoder_t *this, unsigned int codec_type)
   if (this->class->choose_speed_over_accuracy)
     this->context->flags2 |= CODEC_FLAG2_FAST;
 
-#ifdef DEPRECATED_AVCODEC_THREAD_INIT
-  if (this->class->thread_count > 1) {
-    if (this->codec->id != CODEC_ID_SVQ3)
-      this->context->thread_count = this->class->thread_count;
+  if (this->codec->id == CODEC_ID_SVQ3) {
+    thread_count = 1;
   }
-#endif
 
   if(this->class->enable_vaapi) {
-    this->class->thread_count = this->context->thread_count = 1;
+    thread_count = 1;
 
     this->context->skip_loop_filter = AVDISCARD_DEFAULT;
     xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
@@ -903,6 +901,12 @@ static void init_video_codec (ff_video_decoder_t *this, unsigned int codec_type)
   } else {
     this->context->skip_loop_filter = skip_loop_filter_enum_values[this->class->skip_loop_filter_enum];
   }
+
+#ifdef DEPRECATED_AVCODEC_THREAD_INIT
+  if (thread_count > 1) {
+    this->context->thread_count = thread_count;
+  }
+#endif
 
   /* enable direct rendering by default */
   this->output_format = XINE_IMGFMT_YV12;
@@ -968,10 +972,9 @@ static void init_video_codec (ff_video_decoder_t *this, unsigned int codec_type)
   }
 
 #ifndef DEPRECATED_AVCODEC_THREAD_INIT
-  if (this->class->thread_count > 1) {
-    if (this->codec->id != CODEC_ID_SVQ3
-	&& avcodec_thread_init(this->context, this->class->thread_count) != -1)
-      this->context->thread_count = this->class->thread_count;
+  if (thread_count > 1) {
+    if (avcodec_thread_init(this->context, thread_count) != -1)
+      this->context->thread_count = thread_count;
   }
 #endif
 
