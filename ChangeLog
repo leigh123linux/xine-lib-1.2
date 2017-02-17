@@ -1,7 +1,25 @@
+xine-lib (1.2.8) 2017-??-??
+  * Add HEVC to QT demuxer.
+  * Add libOpenHEVC decoder.
+  * Add h.265/HEVC decoding to VAAPI.
+  * Detach VAAPI video out from ffmpeg.
+  * VAAPI fixes.
+  * Improved Matroska compatibility (TrueHD and PCM sound, HDMV/Text subtitles).
+  * Add faad LATM support.
+  * Add faad preamp gain control and channel mixer.
+  * Update/fix internal libfaad.
+  * Integrate 6 basic plugins into libxine.
+  * ffmpeg fixes and optimizations.
   * Use external libdvdnav by default.
+  * Optimize video out.
+  * AVFormat demuxer fixes.
+  * (XCB)XV video out fixes.
+  * Lots of small fixes and optimizations.
+  * Build fixes (newer automake, xcb, libdvdcss, dxr3, make dist,
+    32+64bit dual install, gcc 4.x with GNU ld 2.26 ...).
+  * Better C++ compatibility.
 
 xine-lib (1.2.7) 2016-10-25
-  * Add faad preamp gain control and channel mixer.
   * Add "Time Domain Audio Analyzer" Visualization Post Plugin.
   * Add support for compressed HDMV PGS subtitles in Matroska.
   * Add HW accelerated OSD for Raspberry Pi.
