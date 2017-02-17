@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2000-2015 the xine project
+ * Copyright (C) 2000-2017 the xine project
  * Copyright (C) 2009-2011 Petri Hintukainen <phintuka@users.sourceforge.net>
  *
  * This file is part of xine, a free video player.
