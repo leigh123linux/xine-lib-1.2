@@ -1894,6 +1894,16 @@ static void demux_avi_send_headers (demux_plugin_t *this_gen) {
   for(i=0; i < this->avi->n_audio; i++) {
     this->avi->audio[i]->audio_type = _x_formattag_to_buf_audio (this->avi->audio[i]->wavex->wFormatTag);
 
+    if ((uint16_t)this->avi->audio[i]->wavex->wFormatTag == 0xfffe /*WAVE_FORMAT_EXTENSIBLE */ &&
+        this->avi->audio[i]->wavex_len >= 18 + 6 + 4 ) {
+
+      /* extended header */
+      char *p = (char *)this->avi->audio[i]->wavex + 18 /*sizeof(this->avi->audio[i]->wavex*/;
+      uint32_t fourcc = _X_LE_32(p + 6);
+
+      this->avi->audio[i]->audio_type = _x_formattag_to_buf_audio (fourcc);
+    }
+
     /* special case time: An AVI file encoded with Xan video will have Xan
      * DPCM audio marked as PCM; hack around this */
     if (this->avi->video_type == BUF_VIDEO_XXAN) {
