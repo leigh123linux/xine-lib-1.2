@@ -1,4 +1,4 @@
-xine-lib (1.2.8) 2017-??-??
+xine-lib (1.2.8) 2017-02-21
   * Add HEVC to QT demuxer.
   * Add libOpenHEVC decoder.
   * Add h.265/HEVC decoding to VAAPI.
@@ -18,6 +18,7 @@ xine-lib (1.2.8) 2017-??-??
   * Build fixes (newer automake, xcb, libdvdcss, dxr3, make dist,
     32+64bit dual install, gcc 4.x with GNU ld 2.26 ...).
   * Better C++ compatibility.
+  * Add support for avi WAVE_FORMAT_EXTENSIBLE.
 
 xine-lib (1.2.7) 2016-10-25
   * Add "Time Domain Audio Analyzer" Visualization Post Plugin.
