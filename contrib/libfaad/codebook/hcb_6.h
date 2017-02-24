@@ -36,7 +36,7 @@
  *
  * Used to find offset into 2nd step table and number of extra bits to get
  */
-static hcb hcb6_1[] = {
+static const hcb hcb6_1[] = {
     /* 4 bit codewords */
     { /* 00000 */ 0, 0 },
     { /*       */ 0, 0 },
@@ -86,7 +86,7 @@ static hcb hcb6_1[] = {
  *
  * Gives size of codeword and actual data (x,y,v,w)
  */
-static hcb_2_pair hcb6_2[] = {
+static const hcb_2_pair hcb6_2[] = {
     /* 4 bit codewords */
     { 4,  0,  0 },
     { 4,  1,  0 },

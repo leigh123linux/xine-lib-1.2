@@ -31,7 +31,7 @@
 /* Binary search huffman table HCB_SF */
 
 
-static uint8_t hcb_sf[][2] = {
+static const uint8_t hcb_sf[][2] = {
     { /*  0 */  1, 2 },
     { /*  1 */  60, 0 },
     { /*  2 */  1, 2 },

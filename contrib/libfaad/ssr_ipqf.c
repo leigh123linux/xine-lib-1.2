@@ -42,7 +42,7 @@ static real_t **pp_q0, **pp_t0, **pp_t1;
 void gc_set_protopqf(real_t *p_proto)
 {
     int	j;
-    static real_t a_half[48] =
+    static const real_t a_half[48] =
     {
         1.2206911375946939E-05,  1.7261986723798209E-05,  1.2300093657077942E-05,
         -1.0833943097791965E-05, -5.7772498639901686E-05, -1.2764767618947719E-04,

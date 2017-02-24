@@ -31,7 +31,7 @@
 /* Binary search huffman table HCB_9 */
 
 
-static hcb_bin_pair hcb9[] = {
+static const hcb_bin_pair hcb9[] = {
     { /*  0 */ 0, { 1, 2 } },
     { /*  1 */ 1, { 0, 0 } },
     { /*  2 */ 0, { 1, 2 } },

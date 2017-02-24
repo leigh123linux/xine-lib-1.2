@@ -439,7 +439,7 @@ static real_t find_log2_Qplus1(sbr_info *sbr, uint8_t k, uint8_t l, uint8_t ch)
 static void calculate_gain(sbr_info *sbr, sbr_hfadj_info *adj, uint8_t ch)
 {
     /* log2 values of limiter gains */
-    static real_t limGain[] = {
+    static const real_t limGain[] = {
         REAL_CONST(-1.0), REAL_CONST(0.0), REAL_CONST(1.0), REAL_CONST(33.219)
     };
     uint8_t m, l, k;
@@ -905,7 +905,7 @@ static real_t find_log2_Qplus1(sbr_info *sbr, uint8_t k, uint8_t l, uint8_t ch)
 static void calculate_gain(sbr_info *sbr, sbr_hfadj_info *adj, uint8_t ch)
 {
     /* log2 values of limiter gains */
-    static real_t limGain[] = { -1.0, 0.0, 1.0, 33.219 };
+    static const real_t limGain[] = { -1.0, 0.0, 1.0, 33.219 };
     uint8_t m, l, k;
 
     uint8_t current_t_noise_band = 0;
@@ -1153,7 +1153,7 @@ static void calculate_gain(sbr_info *sbr, sbr_hfadj_info *adj, uint8_t ch)
 
 static void calculate_gain(sbr_info *sbr, sbr_hfadj_info *adj, uint8_t ch)
 {
-    static real_t limGain[] = { 0.5, 1.0, 2.0, 1e10 };
+    static const real_t limGain[] = { 0.5, 1.0, 2.0, 1e10 };
     uint8_t m, l, k;
 
     uint8_t current_t_noise_band = 0;
@@ -1516,13 +1516,13 @@ static void aliasing_reduction(sbr_info *sbr, sbr_hfadj_info *adj, real_t *deg, 
 static void hf_assembly(sbr_info *sbr, sbr_hfadj_info *adj,
                         qmf_t Xsbr[MAX_NTSRHFG][64], uint8_t ch)
 {
-    static real_t h_smooth[] = {
+    static const real_t h_smooth[] = {
         FRAC_CONST(0.03183050093751), FRAC_CONST(0.11516383427084),
         FRAC_CONST(0.21816949906249), FRAC_CONST(0.30150283239582),
         FRAC_CONST(0.33333333333333)
     };
-    static int8_t phi_re[] = { 1, 0, -1, 0 };
-    static int8_t phi_im[] = { 0, 1, 0, -1 };
+    static const int8_t phi_re[] = { 1, 0, -1, 0 };
+    static const int8_t phi_im[] = { 0, 1, 0, -1 };
 
     uint8_t m, l, i, n;
     uint16_t fIndexNoise = 0;

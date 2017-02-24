@@ -94,10 +94,10 @@ void ssr_ifilter_bank(fb_info *fb, uint8_t window_sequence, uint8_t window_shape
     int16_t i;
     real_t *transf_buf;
 
-    real_t *window_long;
-    real_t *window_long_prev;
-    real_t *window_short;
-    real_t *window_short_prev;
+    const real_t *window_long;
+    const real_t *window_long_prev;
+    const real_t *window_short;
+    const real_t *window_short_prev;
 
     uint16_t nlong = frame_len;
     uint16_t nshort = frame_len/8;

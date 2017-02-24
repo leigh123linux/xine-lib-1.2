@@ -360,7 +360,7 @@ static uint8_t rvlc_decode_sf_reverse(ic_stream *ics, bitfile *ld_sf, bitfile *l
 #endif
 
 /* index == 99 means not allowed codeword */
-static rvlc_huff_table book_rvlc[] = {
+static const rvlc_huff_table book_rvlc[] = {
     /*index  length  codeword */
     {  0, 1,   0 }, /*         0 */
     { -1, 3,   5 }, /*       101 */
@@ -388,7 +388,7 @@ static rvlc_huff_table book_rvlc[] = {
     { 99, 10,  0 } /* Shouldn't come this far */
 };
 
-static rvlc_huff_table book_escape[] = {
+static const rvlc_huff_table book_escape[] = {
     /*index  length  codeword */
     { 1, 2, 0 },
     { 0, 2, 2 },
@@ -453,7 +453,7 @@ static int8_t rvlc_huffman_sf(bitfile *ld_sf, bitfile *ld_esc,
     uint8_t i, j;
     int8_t index;
     uint32_t cw;
-    rvlc_huff_table *h = book_rvlc;
+    const rvlc_huff_table *h = book_rvlc;
     
     i = h->len;
     if (direction > 0)
@@ -505,7 +505,7 @@ static int8_t rvlc_huffman_esc(bitfile *ld,
 {
     uint8_t i, j;
     uint32_t cw;
-    rvlc_huff_table *h = book_escape;
+    const rvlc_huff_table *h = book_escape;
 
     i = h->len;
     if (direction > 0)
