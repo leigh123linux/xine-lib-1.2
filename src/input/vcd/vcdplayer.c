@@ -53,10 +53,12 @@ void vcdinfo_get_seg_resolution(const vcdinfo_obj_t *p_vcdinfo, segnum_t i_seg,
                                 /*out*/ uint16_t *max_x, /*out*/ uint16_t *max_y);
 
 #define LOG_ERR(p_vcdplayer, s, args...) \
-       if (p_vcdplayer != NULL && p_vcdplayer->log_err != NULL) \
-          p_vcdplayer->log_err("%s:  "s, __func__ , ##args)
+  if (p_vcdplayer->log_err) \
+    p_vcdplayer->log_err (p_vcdplayer->user_data, ~0, "input_vcd: %s:  "s, __func__ , ##args)
 
-unsigned long int vcdplayer_debug = 0;
+#define dbg_print(p_vcdplayer, mask, s, args...) \
+  if (p_vcdplayer->log_msg) \
+    p_vcdplayer->log_msg (p_vcdplayer->user_data, mask, "input_vcd: %s:  "s, __func__ , ##args)
 
 static void  _vcdplayer_set_origin(vcdplayer_t *p_vcdplayer);
 
@@ -286,7 +288,7 @@ _vcdplayer_update_entry(vcdinfo_obj_t *p_vcdinfo, uint16_t ofs,
     vcdinfo_offset_t *off = vcdinfo_get_offset_t(p_vcdinfo, ofs);
     if (off != NULL) {
       *entry = off->lid;
-      dbg_print(INPUT_DBG_PBC, "%s: LID %d\n", label, off->lid);
+      /* dbg_print (p_vcdplayer, INPUT_DBG_PBC, "%s: LID %d\n", label, off->lid); */
     } else
       *entry = VCDINFO_INVALID_ENTRY;
   }
@@ -358,7 +360,7 @@ vcdplayer_update_nav(vcdplayer_t *p_vcdplayer)
     }
 
     if (p_vcdplayer->update_title)
-      p_vcdplayer->update_title();
+      p_vcdplayer->update_title(p_vcdplayer->user_data);
     return;
   }
 
@@ -416,7 +418,7 @@ vcdplayer_update_nav(vcdplayer_t *p_vcdplayer)
     }
   default: ;
   }
-  p_vcdplayer->update_title();
+  p_vcdplayer->update_title(p_vcdplayer->user_data);
 }
 
 /*!
@@ -441,7 +443,7 @@ _vcdplayer_set_track(vcdplayer_t *p_vcdplayer, unsigned int i_track)
 
     _vcdplayer_set_origin(p_vcdplayer);
 
-    dbg_print(INPUT_DBG_LSN, "LSN: %u\n", p_vcdplayer->i_lsn);
+    dbg_print (p_vcdplayer, INPUT_DBG_LSN, "LSN: %u\n", p_vcdplayer->i_lsn);
   }
 }
 
@@ -473,7 +475,7 @@ _vcdplayer_set_entry(vcdplayer_t *p_vcdplayer, unsigned int num)
 
     _vcdplayer_set_origin(p_vcdplayer);
 
-    dbg_print((INPUT_DBG_LSN|INPUT_DBG_PBC), "LSN: %u, track_end LSN: %u\n",
+    dbg_print (p_vcdplayer, (INPUT_DBG_LSN|INPUT_DBG_PBC), "LSN: %u, track_end LSN: %u\n",
               p_vcdplayer->i_lsn, p_vcdplayer->track_end_lsn);
   }
 }
@@ -508,7 +510,7 @@ _vcdplayer_set_segment(vcdplayer_t *p_vcdplayer, unsigned int num)
 
     _vcdplayer_set_origin(p_vcdplayer);
 
-    dbg_print(INPUT_DBG_LSN, "LSN: %u\n", p_vcdplayer->i_lsn);
+    dbg_print (p_vcdplayer, INPUT_DBG_LSN, "LSN: %u\n", p_vcdplayer->i_lsn);
   }
 }
 
@@ -519,7 +521,7 @@ vcdplayer_play_single_item(vcdplayer_t *p_vcdplayer, vcdinfo_itemid_t itemid)
 {
   vcdinfo_obj_t *p_vcdinfo = p_vcdplayer->vcd;
 
-  dbg_print(INPUT_DBG_CALL, "called itemid.num: %d, itemid.type: %d\n",
+  dbg_print (p_vcdplayer, INPUT_DBG_CALL, "called itemid.num: %d, itemid.type: %d\n",
             itemid.num, itemid.type);
 
   p_vcdplayer->i_still = 0;
@@ -531,7 +533,7 @@ vcdplayer_play_single_item(vcdplayer_t *p_vcdplayer, vcdinfo_itemid_t itemid)
         = vcdinfo_get_video_type(p_vcdinfo, itemid.num);
       segnum_t i_segs = vcdinfo_get_num_segments(p_vcdinfo);
 
-      dbg_print(INPUT_DBG_PBC, "%s (%d), itemid.num: %d\n",
+      dbg_print (p_vcdplayer, INPUT_DBG_PBC, "%s (%d), itemid.num: %d\n",
                 vcdinfo_video_type2str(p_vcdinfo, itemid.num),
                 (int) segtype, itemid.num);
 
@@ -560,7 +562,7 @@ vcdplayer_play_single_item(vcdplayer_t *p_vcdplayer, vcdinfo_itemid_t itemid)
         case VCD_TYPE_VCD2:
           /* aspect ratio for VCD's is known to be 4:3 for any
              type of VCD's */
-          p_vcdplayer->set_aspect_ratio(1);
+          p_vcdplayer->set_aspect_ratio(p_vcdplayer->user_data, 1);
           break;
         default: ;
         }
@@ -571,7 +573,7 @@ vcdplayer_play_single_item(vcdplayer_t *p_vcdplayer, vcdinfo_itemid_t itemid)
     }
 
   case VCDINFO_ITEM_TYPE_TRACK:
-    dbg_print(INPUT_DBG_PBC, "track %d\n", itemid.num);
+    dbg_print (p_vcdplayer, INPUT_DBG_PBC, "track %d\n", itemid.num);
     if (itemid.num < 1 || itemid.num > p_vcdplayer->i_tracks) return;
     _vcdplayer_set_track(p_vcdplayer, itemid.num);
     break;
@@ -579,7 +581,7 @@ vcdplayer_play_single_item(vcdplayer_t *p_vcdplayer, vcdinfo_itemid_t itemid)
   case VCDINFO_ITEM_TYPE_ENTRY:
     {
       unsigned int i_entries = vcdinfo_get_num_entries(p_vcdinfo);
-      dbg_print(INPUT_DBG_PBC, "entry %d\n", itemid.num);
+      dbg_print (p_vcdplayer, INPUT_DBG_PBC, "entry %d\n", itemid.num);
       if (itemid.num >= i_entries) return;
       _vcdplayer_set_entry(p_vcdplayer, itemid.num);
       break;
@@ -590,7 +592,7 @@ vcdplayer_play_single_item(vcdplayer_t *p_vcdplayer, vcdinfo_itemid_t itemid)
     break;
 
   case VCDINFO_ITEM_TYPE_NOTFOUND:
-    dbg_print(INPUT_DBG_PBC, "play nothing\n");
+    dbg_print (p_vcdplayer, INPUT_DBG_PBC, "play nothing\n");
     p_vcdplayer->i_lsn = p_vcdplayer->end_lsn;
     return;
 
@@ -606,7 +608,7 @@ vcdplayer_play_single_item(vcdplayer_t *p_vcdplayer, vcdinfo_itemid_t itemid)
   /* Some players like xine, have a fifo queue of audio and video buffers
      that need to be flushed when playing a new selection. */
   /*  if (p_vcdplayer->flush_buffers)
-      p_vcdplayer->flush_buffers(); */
+      p_vcdplayer->flush_buffers(p_vcdplayer->user_data); */
 
 }
 
@@ -621,7 +623,7 @@ _vcdplayer_inc_play_item(vcdplayer_t *p_vcdplayer)
 {
   int noi;
 
-  dbg_print(INPUT_DBG_CALL, "called pli: %d\n", p_vcdplayer->pdi);
+  dbg_print (p_vcdplayer, INPUT_DBG_CALL, "called pli: %d\n", p_vcdplayer->pdi);
 
   if ( NULL == p_vcdplayer || NULL == p_vcdplayer->pxd.pld  ) return false;
 
@@ -643,7 +645,7 @@ _vcdplayer_inc_play_item(vcdplayer_t *p_vcdplayer)
     if (VCDINFO_INVALID_ITEMID == trans_itemid_num) return false;
 
     vcdinfo_classify_itemid(trans_itemid_num, &trans_itemid);
-    dbg_print(INPUT_DBG_PBC, "  play-item[%d]: %s\n",
+    dbg_print (p_vcdplayer, INPUT_DBG_PBC, "  play-item[%d]: %s\n",
               p_vcdplayer->pdi, vcdinfo_pin2str (trans_itemid_num));
     vcdplayer_play_single_item(p_vcdplayer, trans_itemid);
     return true;
@@ -653,7 +655,7 @@ _vcdplayer_inc_play_item(vcdplayer_t *p_vcdplayer)
 void
 vcdplayer_play(vcdplayer_t *p_vcdplayer, vcdinfo_itemid_t itemid)
 {
-  dbg_print(INPUT_DBG_CALL, "called itemid.num: %d itemid.type: %d\n",
+  dbg_print (p_vcdplayer, INPUT_DBG_CALL, "called itemid.num: %d itemid.type: %d\n",
             itemid.num, itemid.type);
 
   if  (!vcdplayer_pbc_is_on(p_vcdplayer)) {
@@ -713,7 +715,7 @@ _vcdplayer_set_origin(vcdplayer_t *p_vcdplayer)
   p_vcdplayer->end_lsn    = p_vcdplayer->i_lsn + size;
   p_vcdplayer->origin_lsn = p_vcdplayer->i_lsn;
 
-  dbg_print((INPUT_DBG_CALL|INPUT_DBG_LSN), "end LSN: %u\n",
+  dbg_print (p_vcdplayer, (INPUT_DBG_CALL|INPUT_DBG_LSN), "end LSN: %u\n",
             p_vcdplayer->end_lsn);
 }
 
@@ -737,10 +739,10 @@ vcdplayer_pbc_nav (vcdplayer_t *p_vcdplayer, uint8_t *p_buf)
        (p_vcdplayer->i_lsn < p_vcdplayer->track_end_lsn) ) {
     /* Set up to just continue to the next entry */
     p_vcdplayer->play_item.num++;
-    dbg_print( (INPUT_DBG_LSN|INPUT_DBG_PBC),
+    dbg_print (p_vcdplayer, (INPUT_DBG_LSN|INPUT_DBG_PBC),
                "continuing into next entry: %u\n", p_vcdplayer->play_item.num);
     vcdplayer_play_single_item(p_vcdplayer, p_vcdplayer->play_item);
-    p_vcdplayer->update_title();
+    p_vcdplayer->update_title(p_vcdplayer->user_data);
     return READ_BLOCK;
   }
 
@@ -751,7 +753,7 @@ vcdplayer_pbc_nav (vcdplayer_t *p_vcdplayer, uint8_t *p_buf)
   case PSD_TYPE_PLAY_LIST: {
     int wait_time = vcdinf_get_wait_time(p_vcdplayer->pxd.pld);
 
-    dbg_print(INPUT_DBG_PBC, "playlist wait_time: %d\n", wait_time);
+    dbg_print (p_vcdplayer, INPUT_DBG_PBC, "playlist wait_time: %d\n", wait_time);
 
     if (_vcdplayer_inc_play_item(p_vcdplayer))
       return READ_BLOCK;
@@ -776,7 +778,7 @@ vcdplayer_pbc_nav (vcdplayer_t *p_vcdplayer, uint8_t *p_buf)
       vcdinfo_offset_t *offset_timeout_LID =
         vcdinfo_get_offset_t(p_vcdplayer->vcd, timeout_offs);
 
-      dbg_print(INPUT_DBG_PBC, "wait_time: %d, looped: %d, max_loop %d\n",
+      dbg_print (p_vcdplayer, INPUT_DBG_PBC, "wait_time: %d, looped: %d, max_loop %d\n",
                 wait_time, p_vcdplayer->i_loop, max_loop);
 
       /* Set caller to handle wait time given. */
@@ -790,7 +792,7 @@ vcdplayer_pbc_nav (vcdplayer_t *p_vcdplayer, uint8_t *p_buf)
         p_vcdplayer->i_loop++;
         if (p_vcdplayer->i_loop == 0x7f) p_vcdplayer->i_loop = 0;
         vcdplayer_play_single_item(p_vcdplayer, p_vcdplayer->loop_item);
-        if (p_vcdplayer->i_still) p_vcdplayer->force_redisplay();
+        if (p_vcdplayer->i_still) p_vcdplayer->force_redisplay(p_vcdplayer->user_data);
         return READ_BLOCK;
       }
 
@@ -801,7 +803,7 @@ vcdplayer_pbc_nav (vcdplayer_t *p_vcdplayer, uint8_t *p_buf)
         /* Handle timeout_LID */
         itemid.num  = offset_timeout_LID->lid;
         itemid.type = VCDINFO_ITEM_TYPE_LID;
-        dbg_print(INPUT_DBG_PBC, "timeout to: %d\n", itemid.num);
+        dbg_print (p_vcdplayer, INPUT_DBG_PBC, "timeout to: %d\n", itemid.num);
         vcdplayer_play(p_vcdplayer, itemid);
         return READ_BLOCK;
       } else {
@@ -816,7 +818,7 @@ vcdplayer_pbc_nav (vcdplayer_t *p_vcdplayer, uint8_t *p_buf)
                                                    rand_selection);
           itemid.num = rand_lid;
           itemid.type = VCDINFO_ITEM_TYPE_LID;
-          dbg_print(INPUT_DBG_PBC, "random selection %d, lid: %d\n",
+          dbg_print (p_vcdplayer, INPUT_DBG_PBC, "random selection %d, lid: %d\n",
                     rand_selection - bsn, rand_lid);
           vcdplayer_play(p_vcdplayer, itemid);
           return READ_BLOCK;
@@ -903,7 +905,7 @@ vcdplayer_read (vcdplayer_t *p_vcdplayer, uint8_t *p_buf,
     vcdplayer_read_status_t read_status;
 
     /* We've run off of the end of this entry. Do we continue or stop? */
-    dbg_print( (INPUT_DBG_LSN|INPUT_DBG_PBC),
+    dbg_print (p_vcdplayer, (INPUT_DBG_LSN|INPUT_DBG_PBC),
               "end reached, cur: %u, end: %u\n",
                p_vcdplayer->i_lsn, p_vcdplayer->end_lsn);
 
@@ -940,7 +942,7 @@ vcdplayer_read (vcdplayer_t *p_vcdplayer, uint8_t *p_buf,
     do {
       if (cdio_read_mode2_sector(p_img, &vcd_sector,
 				 p_vcdplayer->i_lsn, true)!=0) {
-        dbg_print(INPUT_DBG_LSN, "read error\n");
+        dbg_print (p_vcdplayer, INPUT_DBG_LSN, "read error\n");
 	p_vcdplayer->i_lsn++;
         return READ_ERROR;
       }
@@ -948,7 +950,7 @@ vcdplayer_read (vcdplayer_t *p_vcdplayer, uint8_t *p_buf,
 
       if ( p_vcdplayer->i_lsn >= p_vcdplayer->end_lsn ) {
         /* We've run off of the end of this entry. Do we continue or stop? */
-        dbg_print( (INPUT_DBG_LSN|INPUT_DBG_PBC),
+        dbg_print (p_vcdplayer, (INPUT_DBG_LSN|INPUT_DBG_PBC),
                    "end reached in reading, cur: %u, end: %u\n",
                    p_vcdplayer->i_lsn, p_vcdplayer->end_lsn);
         break;
@@ -973,7 +975,7 @@ vcdplayer_read (vcdplayer_t *p_vcdplayer, uint8_t *p_buf,
 void
 vcdplayer_send_button_update(vcdplayer_t *p_vcdplayer, const int mode)
 {
-  /* dbg_print(INPUT_DBG_CALL, "Called\n"); */
+  /* dbg_print (p_vcdplayer, INPUT_DBG_CALL, "Called\n"); */
   return;
 }
 

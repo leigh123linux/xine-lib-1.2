@@ -58,8 +58,12 @@
 #include "vcdio.h"
 
 #define LOG_ERR(p_vcdplayer, s, args...) \
-       if (p_vcdplayer != NULL && p_vcdplayer->log_err != NULL) \
-          p_vcdplayer->log_err("%s:  "s, __func__ , ##args)
+  if (p_vcdplayer->log_err) \
+    p_vcdplayer->log_err (p_vcdplayer->user_data, ~0, "%s:  "s, __func__ , ##args)
+
+#define dbg_print(p_vcdplayer, mask, s, args...) \
+  if (p_vcdplayer->log_msg) \
+    p_vcdplayer->log_msg (p_vcdplayer->user_data, mask, "%s:  "s, __func__ , ##args)
 
 #define FREE_AND_NULL(ptr) if (NULL != ptr) free(ptr); ptr = NULL;
 
@@ -91,7 +95,7 @@ vcdio_open(vcdplayer_t *p_vcdplayer, char *intended_vcd_device)
   vcdinfo_obj_t *p_vcdinfo = p_vcdplayer->vcd;
   unsigned int i;
 
-  dbg_print(INPUT_DBG_CALL, "called with %s\n", intended_vcd_device);
+  dbg_print(p_vcdplayer, INPUT_DBG_CALL, "called with %s\n", intended_vcd_device);
 
   if ( p_vcdplayer->b_opened ) {
     if ( strcmp(intended_vcd_device, p_vcdplayer->psz_source)==0 ) {
@@ -199,7 +203,7 @@ vcdio_seek (vcdplayer_t *p_vcdplayer, off_t offset, int origin)
       lsn_t old_lsn = p_vcdplayer->i_lsn;
       p_vcdplayer->i_lsn = p_vcdplayer->origin_lsn + (offset / M2F2_SECTOR_SIZE);
 
-      dbg_print(INPUT_DBG_SEEK_SET, "seek_set to %ld => %u (start is %u)\n",
+      dbg_print (p_vcdplayer, INPUT_DBG_SEEK_SET, "seek_set to %ld => %u (start is %u)\n",
 		(long int) offset, p_vcdplayer->i_lsn, p_vcdplayer->origin_lsn);
 
       /* Seek was successful. Invalidate entry location by setting
@@ -208,7 +212,7 @@ vcdio_seek (vcdplayer_t *p_vcdplayer, off_t offset, int origin)
       if ( !vcdplayer_pbc_is_on(p_vcdplayer)
            && p_vcdplayer->play_item.type != VCDINFO_ITEM_TYPE_TRACK
            && p_vcdplayer->i_lsn < old_lsn) {
-        dbg_print(INPUT_DBG_SEEK_SET, "seek_set entry backwards\n");
+        dbg_print (p_vcdplayer, INPUT_DBG_SEEK_SET, "seek_set entry backwards\n");
         p_vcdplayer->next_entry = 1;
       }
       break;
@@ -226,18 +230,18 @@ vcdio_seek (vcdplayer_t *p_vcdplayer, off_t offset, int origin)
 
       if (p_vcdplayer->slider_length == VCDPLAYER_SLIDER_LENGTH_TRACK) {
         diff = p_vcdplayer->i_lsn - p_vcdplayer->track_lsn;
-        dbg_print(INPUT_DBG_SEEK_CUR,
+        dbg_print (p_vcdplayer, INPUT_DBG_SEEK_CUR,
                   "current pos: %u, track diff %ld\n",
                   p_vcdplayer->i_lsn, (long int) diff);
       } else {
         diff = p_vcdplayer->i_lsn - p_vcdplayer->origin_lsn;
-        dbg_print(INPUT_DBG_SEEK_CUR,
+        dbg_print (p_vcdplayer, INPUT_DBG_SEEK_CUR,
                   "current pos: %u, entry diff %ld\n",
                   p_vcdplayer->i_lsn, (long int) diff);
       }
 
       if (diff < 0) {
-        dbg_print(INPUT_DBG_SEEK_CUR, "Error: diff < 0\n");
+        dbg_print (p_vcdplayer, INPUT_DBG_SEEK_CUR, "Error: diff < 0\n");
         return (off_t) 0;
       } else {
         return (off_t)diff * M2F2_SECTOR_SIZE;

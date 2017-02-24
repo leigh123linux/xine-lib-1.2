@@ -62,17 +62,6 @@
 #define INPUT_DBG_STILL    1024 /* Still-frame */
 #define INPUT_DBG_VCDINFO  2048 /* Debugging from VCDINFO */
 
-/* Current debugging setting use above masks to interpret meaning of value. */
-extern unsigned long int vcdplayer_debug;
-
-#if INPUT_DEBUG
-#define dbg_print(mask, s, args...) \
-   if (vcdplayer_debug & mask) \
-     fprintf(stderr, "%s: "s, __func__ , ##args)
-#else
-#define dbg_print(mask, s, args...)
-#endif
-
 /*------------------------------------------------------------------
   General definitions and structures.
 ---------------------------------------------------------------------*/
@@ -98,7 +87,7 @@ typedef struct {
   size_t size;      /* size in sector units of play item. */
 } vcdplayer_play_item_info_t;
 
-typedef int (*generic_fn)();
+typedef int (*debug_fn) (void *user_data, unsigned int mask, const char *fmt, ...);
 
 /* The maximim wait time that can be encoded in a VCD still frame is
    2,000 seconds (33.33 minutes).  We'll use a number larger than this
@@ -125,21 +114,21 @@ typedef struct vcdplayer_s {
     code.
   ---------------------------------------------------------------------*/
 
-  generic_fn        log_msg;     /* function to log a message in the player */
-  generic_fn        log_err;     /* function to log an error in the player */
+  debug_fn          log_msg;     /* function to log a message in the player */
+  debug_fn          log_err;     /* function to log an error in the player */
 
 
   /* Function to flush any audio or  video buffers */
-  void (*flush_buffers) (void);
+  void (*flush_buffers) (void *user_data);
 
   /* Function to force a redisplay. */
-  void (*force_redisplay) (void);
+  void (*force_redisplay) (void *user_data);
 
   /* Function to set aspect ratio. */
-  void (*set_aspect_ratio) (int);
+  void (*set_aspect_ratio) (void *user_data, int ratio);
 
   /* Function to update title of selection. */
-  void (*update_title) ();
+  void (*update_title) (void *user_data);
 
   /*-------------------------------------------------------------
      Playback control fields

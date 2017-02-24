@@ -54,8 +54,7 @@
 /* Xine includes */
 #include <xine/xineutils.h>
 #include <xine/input_plugin.h>
-
-#include "xine-extra.h"
+#include <xine/xine_internal.h>
 
 #ifdef HAVE_VCDNAV
 #include <cdio/logging.h>
@@ -100,13 +99,15 @@ typedef struct vcd_config_s
   char         *comment_format;      /* Format string of stream comment meta */
 } vcd_config_t;
 
-typedef struct vcd_input_plugin_tag vcd_input_plugin_t;
+typedef struct vcd_input_plugin_s vcd_input_plugin_t;
 
 typedef struct vcd_input_class_s {
   input_class_t        input_class;
   xine_t              *xine;
   config_values_t     *config;     /* Pointer to XineRC config file. */
+
   vcd_input_plugin_t  *ip;
+  int                  inuse;
 
   vcd_config_t         v_config;  /* config stuff passed to child */
   xine_mrl_t           **mrls;    /* list of mrl entries for medium */
@@ -124,12 +125,22 @@ typedef struct vcd_input_class_s {
   int        mrl_play_offset;     /* i_tracks for entries starting with 0 */
   int        mrl_segment_offset;  /* i_tracks + i_entries if segs start 1*/
 
+  /* What type to use on autoplay */
+  vcdplayer_autoplay_t default_autoplay;
+  /* When hitting end of entry or track do we advance automatically
+     to next entry/track or stop? Only valid if PBC is off. */
+  bool                 autoadvance;
+  /* Do next/prev wrap around? Only valid if PBC is off. */
+  bool		       wrap_next_prev;
+  /* Show and be able to select rejected LIDs? */
+  bool		       show_rejected;
+  /* Whether GUI slider is track size or entry size. */
+  vcdplayer_slider_length_t slider_length;
 
+  unsigned int         vcdplayer_debug;
 } vcd_input_class_t;
 
-vcd_input_class_t *vcd_class;
-
-struct vcd_input_plugin_tag {
+struct vcd_input_plugin_s {
   input_plugin_t    input_plugin; /* input plugin interface as defined by
                                      by player. For xine it contains a
                                      structure of functions that need
@@ -160,17 +171,65 @@ struct vcd_input_plugin_tag {
 
   vcdplayer_t         player ;
   char               *player_device;
+
 };
 
-vcd_input_plugin_t  my_vcd;
-
 /* Prototype definitions */
-static bool vcd_handle_events (void);
+static bool vcd_handle_events (vcd_input_plugin_t *this);
 static void vcd_close(vcd_input_class_t *class);
 #if LIBVCD_VERSION_NUM >= 23
 static void send_mouse_enter_leave_event(vcd_input_plugin_t *p_this,
                                          bool b_mouse_in);
 #endif
+
+#define msg_print(class, fmt, args...) {\
+  xprintf ((class)->xine, XINE_VERBOSITY_LOG, "input_vcd: %s: "fmt"\n", __func__, ##args);\
+}
+#define dbg_print(class, mask, fmt, args...) {\
+  if ((class)->vcdplayer_debug & mask) {\
+    xprintf ((class)->xine, XINE_VERBOSITY_DEBUG, "input_vcd: %s: "fmt"\n", __func__, ##args);\
+  }\
+}
+#define error_print(class, fmt, args...) {\
+  xprintf ((class)->xine, XINE_VERBOSITY_LOG, "input_vcd: %s error: "fmt"\n", __func__, ##args);\
+}
+
+static int XINE_FORMAT_PRINTF (3, 4) vcd_log_msg (void *user_data, unsigned int mask, const char *fmt, ...) {
+  vcd_input_plugin_t *this = (vcd_input_plugin_t *)user_data;
+  va_list args;
+  if (!(this->player.i_debug & mask))
+    return 0;
+  va_start (args, fmt);
+  xine_vlog (this->class->xine, XINE_VERBOSITY_DEBUG, fmt, args);
+  va_end (args);
+  return 0;
+}
+
+static int XINE_FORMAT_PRINTF (3, 4) vcd_log_err (void *user_data, unsigned int mask, const char *fmt, ...) {
+  vcd_input_plugin_t *this = (vcd_input_plugin_t *)user_data;
+  va_list args;
+  if (!(this->player.i_debug & mask))
+    return 0;
+  va_start (args, fmt);
+  xine_vlog (this->class->xine, XINE_VERBOSITY_LOG, fmt, args);
+  va_end (args);
+  return 0;
+}
+
+static void vcd_free_mrls (vcd_input_class_t *class) {
+  if (class->mrls) {
+    int i;
+    for (i = 0; i < class->num_mrls; i++) {
+      if (class->mrls[i]) {
+        free (class->mrls[i]->mrl);
+        free (class->mrls[i]);
+      }
+    }
+    free (class->mrls);
+    class->mrls = NULL;
+  }
+  class->num_mrls = 0;
+}
 
 /*
    If class->vcd_device is NULL or the empty string,
@@ -179,7 +238,7 @@ static void send_mouse_enter_leave_event(vcd_input_plugin_t *p_this,
 static bool
 vcd_get_default_device(vcd_input_class_t *class, bool log_msg_if_fail)
 {
-  dbg_print(INPUT_DBG_CALL, "Called with %s\n",
+  dbg_print (class, INPUT_DBG_CALL, "Called with %s\n",
             log_msg_if_fail ? "True" : "False");
 
   if (NULL == class->vcd_device || strlen(class->vcd_device)==0) {
@@ -188,7 +247,7 @@ vcd_get_default_device(vcd_input_class_t *class, bool log_msg_if_fail)
 (CDIO_FS_ANAL_SVCD|CDIO_FS_ANAL_CVD|CDIO_FS_ANAL_VIDEOCD|CDIO_FS_UNKNOWN),
 					true);
     if (NULL == cd_drives || NULL == cd_drives[0]) {
-      LOG_MSG("%s", _("failed to find a device with a VCD"));
+      msg_print (class, "%s", _("failed to find a device with a VCD"));
       return false;
     }
     class->vcd_device = strdup(cd_drives[0]);
@@ -202,10 +261,9 @@ vcd_get_default_device(vcd_input_class_t *class, bool log_msg_if_fail)
 
 
 static void
-meta_info_assign(int field, xine_stream_t *stream, const char * info)
-{
+meta_info_assign (vcd_input_plugin_t *this, int field, xine_stream_t *stream, const char * info) {
   if (NULL != info) {
-    dbg_print(INPUT_DBG_META, "meta[%d]: %s\n", field, info);
+    dbg_print (this->class, INPUT_DBG_META, "meta[%d]: %s\n", field, info);
     _x_meta_info_set(stream, field, info);
   }
 }
@@ -214,67 +272,62 @@ meta_info_assign(int field, xine_stream_t *stream, const char * info)
   _x_stream_info_set(stream, field, info);
 
 /* Set stream information. */
-static void
-vcd_set_meta_info (vcd_input_plugin_t *xine_vcd)
-{
-  vcdinfo_obj_t *p_vcdinfo= xine_vcd->player.vcd;
-  meta_info_assign(XINE_META_INFO_ALBUM, xine_vcd->stream,
-                   vcdinfo_get_album_id(p_vcdinfo));
-  meta_info_assign(XINE_META_INFO_ARTIST,  xine_vcd->stream,
-                   vcdinfo_get_preparer_id(p_vcdinfo));
-  meta_info_assign(XINE_META_INFO_COMMENT, xine_vcd->stream,
-                   vcdplayer_format_str(&xine_vcd->player,
-                                   xine_vcd->v_config.comment_format));
-  meta_info_assign(XINE_META_INFO_GENRE, xine_vcd->stream,
-                   vcdinfo_get_format_version_str(p_vcdinfo));
+static void vcd_set_meta_info (vcd_input_plugin_t *this) {
+  vcdinfo_obj_t *p_vcdinfo= this->player.vcd;
+  meta_info_assign (this, XINE_META_INFO_ALBUM, this->stream, vcdinfo_get_album_id(p_vcdinfo));
+  meta_info_assign (this, XINE_META_INFO_ARTIST, this->stream, vcdinfo_get_preparer_id (p_vcdinfo));
+  meta_info_assign (this, XINE_META_INFO_COMMENT, this->stream,
+    vcdplayer_format_str (&this->player, this->v_config.comment_format));
+  meta_info_assign (this, XINE_META_INFO_GENRE, this->stream, vcdinfo_get_format_version_str (p_vcdinfo));
 }
 
-static void
-vcd_force_redisplay (void)
-{
+static void vcd_force_redisplay (void *user_data) {
+  vcd_input_plugin_t *this = (vcd_input_plugin_t *)user_data;
+  if (!this->stream)
+    return;
 #if 1
-    my_vcd.stream->xine->clock->adjust_clock(my_vcd.stream->xine->clock,
-    my_vcd.stream->xine->clock->get_current_time(my_vcd.stream->xine->clock)
-     + 30 * 90000 );
+    this->stream->xine->clock->adjust_clock (this->stream->xine->clock,
+      this->stream->xine->clock->get_current_time (this->stream->xine->clock) + 30 * 90000);
 #else
     /* Alternate method that causes too much disruption... */
-    xine_set_param(my_vcd.stream, XINE_PARAM_VO_ASPECT_RATIO,
-		 (xine_get_param(my_vcd.stream, XINE_PARAM_VO_ASPECT_RATIO)));
+    xine_set_param (this->stream, XINE_PARAM_VO_ASPECT_RATIO,
+      xine_get_param (this->stream, XINE_PARAM_VO_ASPECT_RATIO));
 #endif
 }
 
-static void
-vcd_set_aspect_ratio (int i_aspect_ratio)
-{
+static void vcd_set_aspect_ratio (void *user_data, int i_aspect_ratio) {
+  vcd_input_plugin_t *this = (vcd_input_plugin_t *)user_data;
+  if (!this->stream)
+    return;
   /* Alternate method that causes too much disruption... */
-  xine_set_param(my_vcd.stream, XINE_PARAM_VO_ASPECT_RATIO, i_aspect_ratio);
+  xine_set_param (this->stream, XINE_PARAM_VO_ASPECT_RATIO, i_aspect_ratio);
 }
 
-/*! Add another MRL to the MRL list inside "this" to be displayed.
+/*! Add another MRL to the MRL list inside "class" to be displayed.
    mrl is the string name to add; size is the size of the entry in bytes.
    The number of mrls in "this" is incremented.
 */
 static void
-vcd_add_mrl_slot(vcd_input_class_t *this, const char *mrl, off_t size,
+vcd_add_mrl_slot(vcd_input_class_t *class, const char *mrl, off_t size,
                  unsigned int *i)
 {
-  dbg_print(INPUT_DBG_MRL, "called to add slot %d: %s, size %u\n",
+  dbg_print (class, INPUT_DBG_MRL, "called to add slot %d: %s, size %u\n",
               *i, mrl, (unsigned int) size);
 
-  this->mrls[*i] = malloc(sizeof(xine_mrl_t));
-  if (NULL==this->mrls[*i]) {
-    LOG_ERR("Can't malloc %zu bytes for MRL slot %u (%s)",
+  class->mrls[*i] = malloc(sizeof(xine_mrl_t));
+  if (NULL==class->mrls[*i]) {
+    error_print (class, "Can't malloc %zu bytes for MRL slot %u (%s)",
             sizeof(xine_mrl_t), *i, mrl);
     return;
   }
-  this->mrls[*i]->link   = NULL;
-  this->mrls[*i]->origin = NULL;
-  this->mrls[*i]->type   = mrl_vcd;
-  this->mrls[*i]->size   = size * M2F2_SECTOR_SIZE;
+  class->mrls[*i]->link   = NULL;
+  class->mrls[*i]->origin = NULL;
+  class->mrls[*i]->type   = mrl_vcd;
+  class->mrls[*i]->size   = size * M2F2_SECTOR_SIZE;
 
-  this->mrls[*i]->mrl = strdup(mrl);
-  if (NULL==this->mrls[*i]->mrl) {
-    LOG_ERR("Can't strndup %zu bytes for MRL name %s", strlen(mrl), mrl);
+  class->mrls[*i]->mrl = strdup(mrl);
+  if (NULL==class->mrls[*i]->mrl) {
+    error_print (class, "Can't strndup %zu bytes for MRL name %s", strlen(mrl), mrl);
   }
   (*i)++;
 }
@@ -323,11 +376,11 @@ vcd_build_mrl_list(vcd_input_class_t *class, char *vcd_device)
   int was_open;
 
   if (NULL == class) {
-    LOG_MSG("%s", _("was passed a null class parameter"));
+    printf ("vcd_build_mrl_list %s\n", _("was passed a null class parameter"));
     return false;
   }
 
-  vcdplayer = &(my_vcd.player);
+  vcdplayer = &(class->ip->player);
 
   /* If VCD already open, we gotta close and stop it. */
   if ((was_open = vcdplayer->b_opened)) {
@@ -347,13 +400,13 @@ vcd_build_mrl_list(vcd_input_class_t *class, char *vcd_device)
     return false;
   }
 
-  free (my_vcd.player_device);
-  my_vcd.player_device    = strdup (vcd_device);
+  free (class->ip->player_device);
+  class->ip->player_device = strdup (vcd_device);
   p_vcdinfo               = vcdplayer->vcd;
   i_entries               = vcdplayer->i_entries;
   class->mrl_track_offset = -1;
 
-  xine_free_mrls(&(class->num_mrls), class->mrls);
+  vcd_free_mrls (class);
 
   /* Figure out number of MRLs. Calculation would be real simple if
      didn't have to possibly remove rejected LIDs from list done in the
@@ -373,7 +426,7 @@ vcd_build_mrl_list(vcd_input_class_t *class, char *vcd_device)
 
   class->mrls = calloc(class->num_mrls, sizeof(xine_mrl_t *));
   if (NULL == class->mrls) {
-    LOG_ERR("Can't calloc %d MRL entries", class->num_mrls);
+    error_print (class, "Can't calloc %d MRL entries", class->num_mrls);
     class->num_mrls = 0;
     if (!was_open)
       vcdio_close(vcdplayer);
@@ -443,7 +496,7 @@ vcd_build_mrl_list(vcd_input_class_t *class, char *vcd_device)
     }
   }
 
-  dbg_print(INPUT_DBG_MRL,
+  dbg_print (class, INPUT_DBG_MRL,
             "offsets are track: %d, entry: %d, play: %d seg: %d\n",
             class->mrl_track_offset, class->mrl_entry_offset,
             class->mrl_play_offset,  class->mrl_segment_offset);
@@ -483,17 +536,18 @@ parameters:
 
  */
 static bool
-vcd_parse_mrl(/*in*/ const char *default_vcd_device, /*in*/ char *mrl,
+vcd_parse_mrl(/*in*/ vcd_input_class_t *class,
+              /*in*/ const char *default_vcd_device, /*in*/ const char *mrl,
               /*out*/ char *device_str, /*out*/ vcdinfo_itemid_t *itemid,
               /*in */ vcdplayer_autoplay_t auto_type,
               /*out*/ bool *used_default)
 {
   char type_str[2];
   int count;
-  char *p;
+  const char *p;
   unsigned int num = 0;
 
-  dbg_print(INPUT_DBG_CALL, "called mrl %s\n", mrl);
+  dbg_print (class, INPUT_DBG_CALL, "called mrl %s\n", mrl);
 
   type_str[0]   ='\0';
   itemid->type  = (vcdinfo_item_enum_t) auto_type;
@@ -604,15 +658,16 @@ vcd_parse_mrl(/*in*/ const char *default_vcd_device, /*in*/ char *mrl,
 static uint32_t
 vcd_plugin_get_capabilities (input_plugin_t *this_gen)
 {
+  vcd_input_plugin_t *this = (vcd_input_plugin_t *)this_gen;
 
   uint32_t ret =
     INPUT_CAP_AUDIOLANG | INPUT_CAP_BLOCK     |
     INPUT_CAP_CHAPTERS  | INPUT_CAP_PREVIEW   |
-    (my_vcd.player.i_still ? 0: INPUT_CAP_SEEKABLE) |
+    (this->player.i_still ? 0: INPUT_CAP_SEEKABLE) |
     INPUT_CAP_SPULANG;
 
-  dbg_print((INPUT_DBG_CALL|INPUT_DBG_EXT), "returning %d\n", ret);
-  vcd_handle_events();
+  dbg_print (this->class, (INPUT_DBG_CALL|INPUT_DBG_EXT), "returning %d\n", ret);
+  vcd_handle_events (this);
   return ret;
 }
 
@@ -625,10 +680,11 @@ vcd_read_ahead_cb(void *this_gen, xine_cfg_entry_t *entry)
 }
 #endif
 
-static void
-vcd_flush_buffers(void)
-{
-  _x_demux_flush_engine(my_vcd.stream);
+static void vcd_flush_buffers (void *user_data) {
+  vcd_input_plugin_t *this = (vcd_input_plugin_t *)user_data;
+  if (!this->stream)
+    return;
+  _x_demux_flush_engine (this->stream);
 }
 
 /*!
@@ -639,8 +695,9 @@ vcd_flush_buffers(void)
 static off_t
 vcd_plugin_read (input_plugin_t *this_gen, void *vbuf, const off_t nlen)
 {
+  vcd_input_plugin_t *this = (vcd_input_plugin_t *)this_gen;
   char *buf = vbuf;
-  dbg_print((INPUT_DBG_CALL|INPUT_DBG_EXT),
+  dbg_print (this->class, (INPUT_DBG_CALL|INPUT_DBG_EXT),
             "Called with nlen %u\n", (unsigned int) nlen);
 
   /* FIXME: Tricking the demux_mpeg_block plugin */
@@ -665,7 +722,7 @@ vcd_plugin_read (input_plugin_t *this_gen, void *vbuf, const off_t nlen)
  */
 #define SLEEP_AND_HANDLE_EVENTS                          \
   xine_usec_sleep(50000);                                \
-  if (vcd_handle_events()) goto read_block;              \
+  if (vcd_handle_events (this)) goto read_block;         \
   RETURN_NOOP_BUF
 
 /*!
@@ -680,38 +737,38 @@ static buf_element_t *
 vcd_plugin_read_block (input_plugin_t *this_gen, fifo_buffer_t *fifo,
                        const off_t i_len)
 {
-  vcd_input_plugin_t *vcd_input_plugin= (vcd_input_plugin_t *) this_gen;
-  vcdplayer_t   *p_vcdplayer = &my_vcd.player;
+  vcd_input_plugin_t *this = (vcd_input_plugin_t *)this_gen;
+  vcdplayer_t   *p_vcdplayer = &this->player;
   buf_element_t *p_buf;
   uint8_t        data[M2F2_SECTOR_SIZE] = {0};
 
   if (fifo == NULL) {
-    dbg_print(INPUT_DBG_CALL, "NULL fifo");
+    dbg_print (this->class, INPUT_DBG_CALL, "NULL fifo");
     return NULL;
   }
 
-  dbg_print(INPUT_DBG_CALL, "Called with i_len %u\n", (unsigned int) i_len);
+  dbg_print (this->class, INPUT_DBG_CALL, "Called with i_len %u\n", (unsigned int) i_len);
 
   /* Should we change this to <= instead of !=? */
   if (i_len != M2F2_SECTOR_SIZE) return NULL;
 
   /* If VCD isn't open, we need to open it now. */
   if (!p_vcdplayer->b_opened) {
-    if (!vcdio_open(p_vcdplayer, my_vcd.player_device)) {
+    if (!vcdio_open(p_vcdplayer, this->player_device)) {
       return NULL;
     }
   }
 
-  if (vcd_handle_events()) goto read_block;
+  if (vcd_handle_events (this)) goto read_block;
 
   if (p_vcdplayer->i_still > 0) {
-    if ( time(NULL) >= vcd_input_plugin->pause_end_time ) {
+    if ( time(NULL) >= this->pause_end_time ) {
       if (STILL_INDEFINITE_WAIT == p_vcdplayer->i_still) {
-        dbg_print(INPUT_DBG_STILL, "Continuing still indefinite wait time\n");
-        vcd_input_plugin->pause_end_time = time(NULL) + p_vcdplayer->i_still;
+        dbg_print (this->class, INPUT_DBG_STILL, "Continuing still indefinite wait time\n");
+        this->pause_end_time = time(NULL) + p_vcdplayer->i_still;
         SLEEP_AND_HANDLE_EVENTS;
       } else {
-        dbg_print(INPUT_DBG_STILL, "Still time ended\n");
+        dbg_print (this->class, INPUT_DBG_STILL, "Still time ended\n");
         p_vcdplayer->i_still = 0;
       }
     } else {
@@ -730,9 +787,9 @@ vcd_plugin_read_block (input_plugin_t *this_gen, fifo_buffer_t *fifo,
     return NULL;
   case READ_STILL_FRAME:
     {
-      dbg_print(INPUT_DBG_STILL, "Handled still event wait time %u\n",
+      dbg_print (this->class, INPUT_DBG_STILL, "Handled still event wait time %u\n",
                 p_vcdplayer->i_still);
-      vcd_input_plugin->pause_end_time = time(NULL) + p_vcdplayer->i_still;
+      this->pause_end_time = time(NULL) + p_vcdplayer->i_still;
       RETURN_NOOP_BUF;
     }
 
@@ -745,19 +802,17 @@ vcd_plugin_read_block (input_plugin_t *this_gen, fifo_buffer_t *fifo,
 
   p_buf->content = p_buf->mem;
 
-  if (STILL_READING == p_vcdplayer->i_still && 0 == my_vcd.i_old_still) {
-    my_vcd.i_old_deinterlace = xine_get_param(my_vcd.stream,
-                                              XINE_PARAM_VO_DEINTERLACE);
-    xine_set_param(my_vcd.stream, XINE_PARAM_VO_DEINTERLACE, 0);
-    dbg_print(INPUT_DBG_STILL, "going into still, saving deinterlace %d\n",
-              my_vcd.i_old_deinterlace);
-  } else if (0 == p_vcdplayer->i_still && 0 != my_vcd.i_old_still) {
-    dbg_print(INPUT_DBG_STILL,
+  if (STILL_READING == p_vcdplayer->i_still && 0 == this->i_old_still) {
+    this->i_old_deinterlace = xine_get_param (this->stream, XINE_PARAM_VO_DEINTERLACE);
+    xine_set_param (this->stream, XINE_PARAM_VO_DEINTERLACE, 0);
+    dbg_print (this->class, INPUT_DBG_STILL, "going into still, saving deinterlace %d\n",
+              this->i_old_deinterlace);
+  } else if (0 == p_vcdplayer->i_still && 0 != this->i_old_still) {
+    dbg_print (this->class, INPUT_DBG_STILL,
               "going out of still, restoring deinterlace\n");
-    xine_set_param(my_vcd.stream, XINE_PARAM_VO_DEINTERLACE,
-                   my_vcd.i_old_deinterlace);
+    xine_set_param (this->stream, XINE_PARAM_VO_DEINTERLACE, this->i_old_deinterlace);
   }
-  my_vcd.i_old_still = p_vcdplayer->i_still;
+  this->i_old_still = p_vcdplayer->i_still;
 
   /* Ideally this should probably be i_len.  */
   memcpy (p_buf->mem, data, M2F2_SECTOR_SIZE);
@@ -775,7 +830,8 @@ vcd_plugin_read_block (input_plugin_t *this_gen, fifo_buffer_t *fifo,
 static off_t
 vcd_plugin_seek (input_plugin_t *this_gen, off_t offset, int origin)
 {
-  return vcdio_seek (&my_vcd.player, offset, origin);
+  vcd_input_plugin_t *this = (vcd_input_plugin_t *)this_gen;
+  return vcdio_seek (&this->player, offset, origin);
 }
 
 
@@ -795,8 +851,8 @@ static vcdplayer_slider_length_t old_slider_length;
 static off_t
 vcd_plugin_get_length (input_plugin_t *this_gen) {
 
-  vcd_input_plugin_t *ip= (vcd_input_plugin_t *) this_gen;
-  vcdplayer_t        *vcdplayer = &(ip->player);
+  vcd_input_plugin_t *this = (vcd_input_plugin_t *) this_gen;
+  vcdplayer_t        *vcdplayer = &(this->player);
 
   int n = vcdplayer->play_item.num;
 
@@ -813,10 +869,10 @@ vcd_plugin_get_length (input_plugin_t *this_gen) {
     switch (vcdplayer->slider_length) {
     case VCDPLAYER_SLIDER_LENGTH_AUTO:
     case VCDPLAYER_SLIDER_LENGTH_ENTRY:
-      n += ip->class->mrl_entry_offset;
+      n += this->class->mrl_entry_offset;
       break;
     case VCDPLAYER_SLIDER_LENGTH_TRACK:
-      n = vcdinfo_get_track(vcdplayer->vcd, n) + ip->class->mrl_track_offset;
+      n = vcdinfo_get_track(vcdplayer->vcd, n) + this->class->mrl_track_offset;
       break;
     default:
       /* FIXME? */
@@ -824,10 +880,10 @@ vcd_plugin_get_length (input_plugin_t *this_gen) {
     }
     break;
   case VCDINFO_ITEM_TYPE_TRACK:
-    n += ip->class->mrl_track_offset;
+    n += this->class->mrl_track_offset;
     break;
   case VCDINFO_ITEM_TYPE_SEGMENT:
-    n += ip->class->mrl_segment_offset;
+    n += this->class->mrl_segment_offset;
     break;
   case VCDINFO_ITEM_TYPE_LID:
     /* This is the only situation where the size of the current play item
@@ -844,9 +900,9 @@ vcd_plugin_get_length (input_plugin_t *this_gen) {
     return -1;
   }
 
-  if (n >= 0 && n < ip->class->num_mrls) {
-    old_get_length = ip->class->mrls[n]->size;
-    dbg_print(INPUT_DBG_MRL, "item: %u, slot %u, size %ld\n",
+  if (n >= 0 && n < this->class->num_mrls) {
+    old_get_length = this->class->mrls[n]->size;
+    dbg_print (this->class, INPUT_DBG_MRL, "item: %u, slot %u, size %ld\n",
               vcdplayer->play_item.num,
               (unsigned int) n,  (long int) old_get_length);
   }
@@ -871,7 +927,8 @@ vcd_plugin_get_current_pos (input_plugin_t *this_gen){
  */
 static uint32_t
 vcd_plugin_get_blocksize (input_plugin_t *this_gen) {
-  dbg_print((INPUT_DBG_CALL|INPUT_DBG_EXT), "called\n");
+  vcd_input_plugin_t *this = (vcd_input_plugin_t *)this_gen;
+  dbg_print (this->class, (INPUT_DBG_CALL|INPUT_DBG_EXT), "called\n");
 
   return M2F2_SECTOR_SIZE;
 }
@@ -892,12 +949,21 @@ vcd_class_get_dir (input_class_t *this_gen, const char *filename,
   vcdinfo_itemid_t itemid;
 
   vcd_input_class_t *class = (vcd_input_class_t *) this_gen;
-  vcdplayer_t       *vcdplayer= &my_vcd.player;
+  vcdplayer_t  *vcdplayer;
 
   bool used_default;
 
+  if (!class->ip) {
+    if (!this_gen->get_instance (this_gen, NULL, MRL_PREFIX)) {
+      *num_files = 0;
+      return NULL;
+    }
+  }
+
+  vcdplayer = &class->ip->player;
+
   if (filename == NULL) {
-    dbg_print((INPUT_DBG_CALL|INPUT_DBG_EXT),
+    dbg_print (class, (INPUT_DBG_CALL|INPUT_DBG_EXT),
               "called with NULL\n");
     if ( class->mrls != NULL && NULL != class->mrls[0] ) goto have_mrls;
 
@@ -906,10 +972,10 @@ vcd_class_get_dir (input_class_t *this_gen, const char *filename,
     }
   } else {
     char *mrl = strdup(filename);
-    dbg_print((INPUT_DBG_CALL|INPUT_DBG_EXT),
+    dbg_print (class, (INPUT_DBG_CALL|INPUT_DBG_EXT),
               "called with %s\n", filename);
     if (!vcd_get_default_device(class, true)) goto no_mrls;
-    if (!vcd_parse_mrl(class->vcd_device, mrl,
+    if (!vcd_parse_mrl(class, class->vcd_device, mrl,
                        intended_vcd_device, &itemid,
                        vcdplayer->default_autoplay, &used_default)) {
       free (mrl);
@@ -932,10 +998,12 @@ vcd_class_get_dir (input_class_t *this_gen, const char *filename,
 static void
 vcd_close(vcd_input_class_t *class)
 {
-  xine_free_mrls(&(class->num_mrls), class->mrls);
-  FREE_AND_NULL(my_vcd.mrl);
-  if (my_vcd.player.b_opened)
-    vcdio_close(&my_vcd.player);
+  vcd_free_mrls (class);
+  if (class->ip) {
+    FREE_AND_NULL (class->ip->mrl);
+    if (class->ip->player.b_opened)
+      vcdio_close (&class->ip->player);
+  }
 }
 
 
@@ -948,16 +1016,25 @@ vcd_close(vcd_input_class_t *class)
 static int
 vcd_class_eject_media (input_class_t *this_gen)
 {
+  vcd_input_class_t *class = (vcd_input_class_t *)this_gen;
   int ret;
-  CdIo_t *cdio=vcdinfo_get_cd_image(my_vcd.player.vcd);
+  CdIo_t *cdio;
 
-  dbg_print((INPUT_DBG_CALL|INPUT_DBG_EXT), "called\n");
+  if (!class->ip) {
+    this_gen->get_instance (this_gen, NULL, MRL_PREFIX);
+    if (!class->ip)
+      return 0;
+  }
+
+  cdio = vcdinfo_get_cd_image (class->ip->player.vcd);
+
+  dbg_print (class, (INPUT_DBG_CALL|INPUT_DBG_EXT), "called\n");
   if (NULL == cdio) return 0;
 
   ret = cdio_eject_media(&cdio);
   if ((ret == 0) || (ret == 2)) {
-     if (my_vcd.player.b_opened)
-       vcdio_close(&my_vcd.player);
+     if (class->ip->player.b_opened)
+       vcdio_close(&class->ip->player);
     return 1;
   } else return 0;
 }
@@ -969,31 +1046,31 @@ vcd_class_eject_media (input_class_t *this_gen)
 static const char *
 vcd_plugin_get_mrl (input_plugin_t *this_gen)
 {
-  vcd_input_plugin_t *t         = (vcd_input_plugin_t *) this_gen;
-  vcdplayer_t        *vcdplayer = &my_vcd.player;
+  vcd_input_plugin_t *this      = (vcd_input_plugin_t *)this_gen;
+  vcdplayer_t        *vcdplayer = &this->player;
   int n;
   int size; /* need something to feed get_mrl_type_offset */
   int offset;
 
   if (vcdplayer_pbc_is_on(vcdplayer)) {
     n = vcdplayer->i_lid;
-    offset = vcd_get_mrl_type_offset(t, VCDINFO_ITEM_TYPE_LID, &size);
+    offset = vcd_get_mrl_type_offset(this, VCDINFO_ITEM_TYPE_LID, &size);
   } else {
     n = vcdplayer->play_item.num;
-    offset = vcd_get_mrl_type_offset(t, vcdplayer->play_item.type, &size);
+    offset = vcd_get_mrl_type_offset(this, vcdplayer->play_item.type, &size);
   }
 
   if (-2 == offset) {
     /* Bad type. */
-    LOG_ERR("%s %d", _("Invalid current entry type"),
+    error_print (this->class, "%s %d", _("Invalid current entry type"),
                   vcdplayer->play_item.type);
     return "";
   } else {
     n += offset;
-    if (n < t->class->num_mrls) {
-      dbg_print(INPUT_DBG_CALL, "Called, returning %s\n",
-                t->class->mrls[n]->mrl);
-      return t->class->mrls[n]->mrl;
+    if (n < this->class->num_mrls) {
+      dbg_print (this->class, INPUT_DBG_CALL, "Called, returning %s\n",
+                this->class->mrls[n]->mrl);
+      return this->class->mrls[n]->mrl;
     } else {
       return "";
     }
@@ -1004,10 +1081,8 @@ vcd_plugin_get_mrl (input_plugin_t *this_gen)
    Handle all queued keyboard/mouse events. Return TRUE if this causes
    a change in the play item.
 */
-static bool
-vcd_handle_events (void)
-{
-  vcdplayer_t  *p_vcdplayer = &my_vcd.player;
+static bool vcd_handle_events (vcd_input_plugin_t *this) {
+  vcdplayer_t  *p_vcdplayer = &this->player;
   xine_event_t *p_event;
   int digit_entered=0;
 
@@ -1015,16 +1090,16 @@ vcd_handle_events (void)
      the 10_ADD keypresses */
   static unsigned int number_addend = 0;
 
-  while ((p_event = xine_event_get(my_vcd.event_queue))) {
+  while ((p_event = xine_event_get (this->event_queue))) {
 
-    dbg_print( (INPUT_DBG_CALL), "processing %d\n", p_event->type );
+    dbg_print (this->class,  (INPUT_DBG_CALL), "processing %d\n", p_event->type );
     digit_entered=0;
 
     switch(p_event->type) {
 
     case XINE_EVENT_INPUT_NUMBER_10_ADD:
       number_addend += 10;
-      dbg_print(INPUT_DBG_EVENT, "10 added to number. Is now: %d\n",
+      dbg_print (this->class, INPUT_DBG_EVENT, "10 added to number. Is now: %d\n",
                 number_addend);
       break;
 
@@ -1054,13 +1129,13 @@ vcd_handle_events (void)
       {
         number_addend *= 10;
         number_addend += digit_entered;
-        dbg_print(INPUT_DBG_EVENT,
+        dbg_print (this->class, INPUT_DBG_EVENT,
                   "digit added number is now: %d\n", number_addend);
         break;
       }
     case XINE_EVENT_INPUT_MENU3:
-      dbg_print(INPUT_DBG_EVENT, "menu3 setting debug: %d\n", number_addend);
-      vcdplayer_debug = number_addend;
+      dbg_print (this->class, INPUT_DBG_EVENT, "menu3 setting debug: %d\n", number_addend);
+      this->class->vcdplayer_debug = this->player.i_debug = number_addend;
       number_addend = 0;
       break;
     case XINE_EVENT_INPUT_MENU1:
@@ -1076,7 +1151,7 @@ vcd_handle_events (void)
         /* If no number was given it's really the same as 1, not 0. */
         if (num == 0) num++;
 
-        dbg_print(INPUT_DBG_EVENT,
+        dbg_print (this->class, INPUT_DBG_EVENT,
                   "RETURN/NEXT/PREV/DEFAULT (%d) iteration count %d\n",
                   p_event->type, num);
 
@@ -1085,11 +1160,11 @@ vcd_handle_events (void)
           switch (p_event->type) {
           case XINE_EVENT_INPUT_MENU1:
             if (p_vcdplayer->return_entry == VCDINFO_INVALID_ENTRY) {
-              LOG_MSG("%s\n", _("selection has no RETURN entry"));
+              msg_print (this->class, "%s\n", _("selection has no RETURN entry"));
               return false;
             }
             itemid.num = p_vcdplayer->return_entry;
-            dbg_print((INPUT_DBG_PBC|INPUT_DBG_EVENT),
+            dbg_print (this->class, (INPUT_DBG_PBC|INPUT_DBG_EVENT),
                       "RETURN to %d\n", itemid.num);
             /* Don't loop around -- doesn't make sense to loop a return*/
             num = 0;
@@ -1101,10 +1176,10 @@ vcd_handle_events (void)
                                                       p_vcdplayer->i_lsn);
               if (VCDINFO_INVALID_LID != lid) {
                 itemid.num = lid;
-                dbg_print((INPUT_DBG_PBC|INPUT_DBG_EVENT),
+                dbg_print (this->class, (INPUT_DBG_PBC|INPUT_DBG_EVENT),
                           "DEFAULT to %d\n", itemid.num);
               } else {
-                dbg_print((INPUT_DBG_PBC|INPUT_DBG_EVENT),
+                dbg_print (this->class, (INPUT_DBG_PBC|INPUT_DBG_EVENT),
                           "no DEFAULT for LID %d\n",
                           p_vcdplayer->i_lid);
               }
@@ -1114,29 +1189,29 @@ vcd_handle_events (void)
             } else {
               /* PBC is not on. "default" selection beginning of current
                  selection . Alternative: */
-              LOG_MSG("%s\n", _("DEFAULT selected, but PBC is not on."));
+              msg_print (this->class, "%s\n", _("DEFAULT selected, but PBC is not on."));
             }
             break;
           case XINE_EVENT_INPUT_NEXT:
             if (p_vcdplayer->next_entry == VCDINFO_INVALID_ENTRY) {
-              LOG_MSG("%s\n", _("selection has no NEXT entry"));
+              msg_print (this->class, "%s\n", _("selection has no NEXT entry"));
               return false;
             }
             itemid.num = p_vcdplayer->next_entry;
-            dbg_print(INPUT_DBG_PBC, "NEXT to %d\n", itemid.num);
+            dbg_print (this->class, INPUT_DBG_PBC, "NEXT to %d\n", itemid.num);
             break;
           case XINE_EVENT_INPUT_PREVIOUS:
             if (p_vcdplayer->prev_entry == VCDINFO_INVALID_ENTRY) {
-              LOG_MSG("%s\n", _("selection has no PREVIOUS entry"));
+              msg_print (this->class, "%s\n", _("selection has no PREVIOUS entry"));
               return false;
             }
             itemid.num = p_vcdplayer->prev_entry;
-            dbg_print(INPUT_DBG_PBC, "PREVIOUS to %d\n", itemid.num);
+            dbg_print (this->class, INPUT_DBG_PBC, "PREVIOUS to %d\n", itemid.num);
             break;
           default:
-            LOG_MSG("%s %d\n", _("Unknown event type: "), p_event->type);
+            msg_print (this->class, "%s %d\n", _("Unknown event type: "), p_event->type);
           }
-          _x_demux_flush_engine(my_vcd.stream);
+          _x_demux_flush_engine (this->stream);
           vcdplayer_play(p_vcdplayer, itemid);
           return true;
         }
@@ -1157,7 +1232,7 @@ vcd_handle_events (void)
                                                  itemid.num);
           if (VCDINFO_INVALID_LID != i_next) {
             itemid.num = i_next;
-            _x_demux_flush_engine(my_vcd.stream);
+            _x_demux_flush_engine (this->stream);
             vcdplayer_play(p_vcdplayer, itemid);
             return true;
           }
@@ -1165,7 +1240,7 @@ vcd_handle_events (void)
         break;
       }
     case XINE_EVENT_INPUT_MOUSE_BUTTON:
-      if (my_vcd.stream)
+      if (this->stream)
       {
         xine_input_data_t *p_input = p_event->data;
         if (p_input->button == 1)
@@ -1174,7 +1249,7 @@ vcd_handle_events (void)
           int i_selection;
 #endif
 
-          dbg_print(INPUT_DBG_EVENT,
+          dbg_print (this->class, INPUT_DBG_EVENT,
                     "Button to x: %d, y: %d, scaled x: %d, scaled y %d\n",
                     p_input->x, p_input->y,
                     p_input->x * 255 / p_vcdplayer->max_x,
@@ -1183,8 +1258,8 @@ vcd_handle_events (void)
 #if LIBVCD_VERSION_NUM >= 23
           /* xine_dvd_send_button_update(this, 1); */
 
-          if (my_vcd.b_mouse_in)
-            send_mouse_enter_leave_event(&my_vcd, false);
+          if (this->b_mouse_in)
+            send_mouse_enter_leave_event (this, false);
 
           i_selection = vcdinfo_get_area_selection(p_vcdplayer->vcd,
                                                    p_vcdplayer->i_lid,
@@ -1192,7 +1267,7 @@ vcd_handle_events (void)
                                                    p_input->y,
                                                    p_vcdplayer->max_x,
                                                    p_vcdplayer->max_y);
-          dbg_print(INPUT_DBG_EVENT, "Selection is: %d\n", i_selection);
+          dbg_print (this->class, INPUT_DBG_EVENT, "Selection is: %d\n", i_selection);
 
           if (vcdplayer_pbc_is_on(p_vcdplayer)) {
             vcdinfo_itemid_t itemid = p_vcdplayer->play_item;
@@ -1201,7 +1276,7 @@ vcd_handle_events (void)
                                                    i_selection);
             if (VCDINFO_INVALID_LID != i_next) {
               itemid.num = i_next;
-              _x_demux_flush_engine(my_vcd.stream);
+              _x_demux_flush_engine (this->stream);
               vcdplayer_play(p_vcdplayer, itemid);
               return true;
             }
@@ -1213,7 +1288,7 @@ vcd_handle_events (void)
     case XINE_EVENT_INPUT_BUTTON_FORCE:
       break;
     case XINE_EVENT_INPUT_MOUSE_MOVE:
-      if (my_vcd.stream)
+      if (this->stream)
       {
         xine_input_data_t *p_input = p_event->data;
 #if LIBVCD_VERSION_NUM >= 23
@@ -1223,38 +1298,38 @@ vcd_handle_events (void)
                                                          p_input->y,
                                                          p_vcdplayer->max_x,
                                                          p_vcdplayer->max_y);
-        dbg_print(INPUT_DBG_EVENT, "Move to x: %d, y: %d\n",
+        dbg_print (this->class, INPUT_DBG_EVENT, "Move to x: %d, y: %d\n",
                   p_input->x, p_input->y);
 
-        if (my_vcd.i_mouse_button != i_selection) {
-          dbg_print(INPUT_DBG_EVENT, "Old selection: %d, selection: %d\n",
-                    my_vcd.i_mouse_button, i_selection);
-          my_vcd.i_mouse_button = i_selection;
+        if (this->i_mouse_button != i_selection) {
+          dbg_print (this->class, INPUT_DBG_EVENT, "Old selection: %d, selection: %d\n",
+                    this->i_mouse_button, i_selection);
+          this->i_mouse_button = i_selection;
           if (i_selection < 0)
-            send_mouse_enter_leave_event(&my_vcd, false);
+            send_mouse_enter_leave_event (this, false);
           else
-            send_mouse_enter_leave_event(&my_vcd, true);
+            send_mouse_enter_leave_event (this, true);
         }
 #else
-      dbg_print(INPUT_DBG_EVENT, "Move to x: %d, y: %d\n",
+      dbg_print (this->class, INPUT_DBG_EVENT, "Move to x: %d, y: %d\n",
                 p_input->x, p_input->y);
 #endif
       }
       break;
     case XINE_EVENT_INPUT_UP:
-      dbg_print(INPUT_DBG_EVENT, "Called with up\n");
+      dbg_print (this->class, INPUT_DBG_EVENT, "Called with up\n");
       vcdplayer_send_button_update(p_vcdplayer, 0);
       break;
     case XINE_EVENT_INPUT_DOWN:
-      dbg_print(INPUT_DBG_EVENT, "Called with down\n");
+      dbg_print (this->class, INPUT_DBG_EVENT, "Called with down\n");
       vcdplayer_send_button_update(p_vcdplayer, 0);
       break;
     case XINE_EVENT_INPUT_LEFT:
-      dbg_print(INPUT_DBG_EVENT, "Called with left\n");
+      dbg_print (this->class, INPUT_DBG_EVENT, "Called with left\n");
       vcdplayer_send_button_update(p_vcdplayer, 0);
       break;
     case XINE_EVENT_INPUT_RIGHT:
-      dbg_print(INPUT_DBG_EVENT, "Called with right\n");
+      dbg_print (this->class, INPUT_DBG_EVENT, "Called with right\n");
       vcdplayer_send_button_update(p_vcdplayer, 0);
       break;
     }
@@ -1270,11 +1345,12 @@ vcd_handle_events (void)
 static int
 vcd_get_optional_data (input_plugin_t *this_gen,
                         void *data, int data_type) {
+  vcd_input_plugin_t *this = (vcd_input_plugin_t *)this_gen;
 
-  dbg_print( (INPUT_DBG_CALL|INPUT_DBG_EXT),
+  dbg_print (this->class,  (INPUT_DBG_CALL|INPUT_DBG_EXT),
              "called with %d\n", data_type);
 
-  if (NULL == my_vcd.stream) return INPUT_OPTIONAL_UNSUPPORTED;
+  if (NULL == this->stream) return INPUT_OPTIONAL_UNSUPPORTED;
 
   /* Fill this out more fully... */
   switch(data_type) {
@@ -1282,16 +1358,16 @@ vcd_get_optional_data (input_plugin_t *this_gen,
   case INPUT_OPTIONAL_DATA_AUDIOLANG:
     {
       uint8_t   channel;
-      channel = _x_get_audio_channel(my_vcd.stream);
+      channel = _x_get_audio_channel(this->stream);
 
-      dbg_print(INPUT_DBG_EXT, "AUDIO CHANNEL = %d\n", channel);
+      dbg_print (this->class, INPUT_DBG_EXT, "AUDIO CHANNEL = %d\n", channel);
       if (channel == (uint8_t)-1) {
         strcpy(data, "auto");
       } else {
-        const vcdinfo_obj_t *p_vcdinfo= my_vcd.player.vcd;
+        const vcdinfo_obj_t *p_vcdinfo= this->player.vcd;
         unsigned int audio_type;
         unsigned int num_channels;
-        unsigned int track_num = my_vcd.player.i_track;
+        unsigned int track_num = this->player.i_track;
         audio_type = vcdinfo_get_track_audio_type(p_vcdinfo, track_num);
         num_channels = vcdinfo_audio_type_num_channels(p_vcdinfo, audio_type);
 
@@ -1308,8 +1384,8 @@ vcd_get_optional_data (input_plugin_t *this_gen,
     {
       /*uint16_t lang;*/
       int8_t   channel;
-      channel = (int8_t) _x_get_spu_channel(my_vcd.stream);
-      dbg_print(INPUT_DBG_EXT, "SPU CHANNEL = %d\n", channel);
+      channel = (int8_t) _x_get_spu_channel(this->stream);
+      dbg_print (this->class, INPUT_DBG_EXT, "SPU CHANNEL = %d\n", channel);
       if (-1 == channel) {
         strcpy(data, "auto");
       } else {
@@ -1343,25 +1419,32 @@ vcd_class_get_autoplay_list (input_class_t *this_gen, int *num_files)
   vcd_input_class_t *class = (vcd_input_class_t *) this_gen;
   static char *filelist[MAX_DIR_ENTRIES];
 
-  dbg_print((INPUT_DBG_CALL|INPUT_DBG_EXT), "called\n");
+  dbg_print (class, (INPUT_DBG_CALL|INPUT_DBG_EXT), "called\n");
 
-  if ( !vcd_build_mrl_list(class, my_vcd.player.psz_source) ) {
+  if (!class->ip) {
+    if (!this_gen->get_instance (this_gen, NULL, MRL_PREFIX)) {
+      *num_files = 0;
+      return NULL;
+    }
+  }
+
+  if ( !vcd_build_mrl_list(class, class->ip->player.psz_source) ) {
     *num_files = 0;
     return NULL;
   } else {
     int i;
     int size = 0;
     vcdinfo_item_enum_t itemtype =
-      autoplay2itemtype[my_vcd.player.default_autoplay];
+      autoplay2itemtype[class->ip->player.default_autoplay];
 
-    int offset = vcd_get_mrl_type_offset(&my_vcd, itemtype, &size);
+    int offset = vcd_get_mrl_type_offset(class->ip, itemtype, &size);
 
     /* A VCD is not required to have PBC or LID's, default to entry if
        this is the case...
      */
     if (VCDINFO_ITEM_TYPE_LID == itemtype && size==0) {
       itemtype=VCDINFO_ITEM_TYPE_ENTRY;
-      offset = vcd_get_mrl_type_offset(&my_vcd, itemtype, &size);
+      offset = vcd_get_mrl_type_offset(class->ip, itemtype, &size);
     }
 
     /* This is because entries start at 0 while other playable units
@@ -1373,12 +1456,13 @@ vcd_class_get_autoplay_list (input_class_t *this_gen, int *num_files)
     for (i=0; i<size; i++) {
       if (class->mrls[offset+i] != NULL) {
         filelist[i] = class->mrls[offset+i]->mrl;
-        dbg_print((INPUT_DBG_MRL), "filelist[%d]: %s\n", i, filelist[i]);
+        dbg_print (class, (INPUT_DBG_MRL), "filelist[%d]: %s\n", i, filelist[i]);
       } else {
         filelist[i] = NULL;
-        dbg_print((INPUT_DBG_MRL), "filelist[%d]: NULL\n", i);
+        dbg_print (class, (INPUT_DBG_MRL), "filelist[%d]: NULL\n", i);
       }
     }
+
     *num_files = i;
     return (const char * const *)filelist;
   }
@@ -1387,20 +1471,20 @@ vcd_class_get_autoplay_list (input_class_t *this_gen, int *num_files)
 /*!
   Things that need to be done when a stream is closed.
 */
-static void
-vcd_plugin_dispose(input_plugin_t *this_gen)
-{
+static void vcd_plugin_dispose (input_plugin_t *this_gen) {
+  vcd_input_plugin_t *this = (vcd_input_plugin_t *)this_gen;
 
-  /* Not sure there's much more to do here...
-     In open_plugin we are given a stream which
-     we save...
-  */
-  dbg_print((INPUT_DBG_CALL|INPUT_DBG_EXT), "called\n");
+  dbg_print (this->class, (INPUT_DBG_CALL|INPUT_DBG_EXT), "called\n");
 
-  my_vcd.stream = NULL;
+  this->stream = NULL;
 
-  if (my_vcd.player.b_opened)
-    vcdio_close(&my_vcd.player);
+  if (this->player.b_opened)
+    vcdio_close(&this->player);
+
+  free (this->player_device);
+  this->player_device = NULL;
+
+  this->class->inuse = 0;
 }
 
 /* Pointer to vcdimager default log handler. Set by init_input_plugin
@@ -1411,77 +1495,50 @@ static cdio_log_handler_t gl_default_cdio_log_handler = NULL;
 /*! This routine is called by libvcd routines on error.
    Setup is done by init_input_plugin.
 */
-static void
-vcd_log_handler (vcd_log_level_t level, const char message[])
-{
+static void vcd_log_handler (vcd_log_level_t level, const char message[]) {
+  const char *kind;
   switch (level) {
-  case VCD_LOG_DEBUG:
-  case VCD_LOG_INFO:
-    if (!(vcdplayer_debug & INPUT_DBG_VCDINFO))
-      return;
-    /* Fall through if to warn case */
-  case VCD_LOG_WARN:
-    LOG_MSG("%s", message);
-    break;
-  case VCD_LOG_ERROR:
-  case VCD_LOG_ASSERT:
-    LOG_ERR("%s", message);
-    break;
-  default:
-    LOG_ERR("%s\n%s %d",
-            message,
-            _("The above message had unknown vcdimager log level"),
-            level);
+    case VCD_LOG_DEBUG:  kind = "debug";   break;
+    case VCD_LOG_INFO:   kind = "info";    break;
+    case VCD_LOG_WARN:   kind = "warning"; break;
+    case VCD_LOG_ERROR:  kind = "error";   break;
+    case VCD_LOG_ASSERT: kind = "assert";  break;
+    default:             kind = "(unknown level)";
   }
-
-  /* gl_default_vcd_log_handler (level, message); */
+  printf ("input_vcd: vcd_log_handler: %s: %s\n", kind, message);
 }
 
 /*! This routine is called by libcdio routines on error.
    Setup is done by init_input_plugin.
 */
 static void
-cdio_log_handler (cdio_log_level_t level, const char message[])
-{
+cdio_log_handler (cdio_log_level_t level, const char message[]) {
+  const char *kind;
   switch (level) {
-  case CDIO_LOG_DEBUG:
-  case CDIO_LOG_INFO:
-    if (!(vcdplayer_debug & INPUT_DBG_CDIO)) return;
-    /* Fall through if to warn case */
-  default:
-    vcd_log_handler (level, message);
+    case VCD_LOG_DEBUG:  kind = "debug";   break;
+    case VCD_LOG_INFO:   kind = "info";    break;
+    case VCD_LOG_WARN:   kind = "warning"; break;
+    case VCD_LOG_ERROR:  kind = "error";   break;
+    case VCD_LOG_ASSERT: kind = "assert";  break;
+    default:             kind = "(unknown level)";
   }
+  printf ("input_vcd: cdio_log_handler: %s: %s\n", kind, message);
 }
 
 /*! This routine is when xine is not around.
    Setup is done by vcd_class_dispose.
 */
-static void
-uninit_log_handler (vcd_log_level_t level, const char message[])
-{
+static void uninit_log_handler (vcd_log_level_t level, const char message[]) {
+  const char *kind;
   switch (level) {
-  case VCD_LOG_DEBUG:
-  case VCD_LOG_INFO:
-    if (!(vcdplayer_debug & (INPUT_DBG_VCDINFO|INPUT_DBG_CDIO)))
-      return;
-    /* Fall through if to warn case */
-  case VCD_LOG_WARN:
-    fprintf(stderr, "WARN: %s\n", message);
-    break;
-  case VCD_LOG_ERROR:
-    fprintf(stderr, "ERROR: %s\n", message);
-    break;
-  case VCD_LOG_ASSERT:
-    fprintf(stderr, "ASSERT ERROR: %s\n", message);
-    break;
-  default:
-    fprintf(stderr, "UNKNOWN ERROR: %s\n%s %d",
-            message,
-            _("The above message had unknown vcdimager log level"),
-            level);
+    case VCD_LOG_DEBUG:  kind = "debug";   break;
+    case VCD_LOG_INFO:   kind = "info";    break;
+    case VCD_LOG_WARN:   kind = "warning"; break;
+    case VCD_LOG_ERROR:  kind = "error";   break;
+    case VCD_LOG_ASSERT: kind = "assert";  break;
+    default:             kind = "(unknown level)";
   }
-
-  /* gl_default_vcd_log_handler (level, message); */
+  printf ("input_vcd: uninit_log_handler: %s: %s\n", kind, message);
 }
 
 /*!
@@ -1497,46 +1554,54 @@ vcd_class_dispose (input_class_t *this_gen) {
   gl_default_cdio_log_handler =
     cdio_log_set_handler ((cdio_log_handler_t) uninit_log_handler);
 
-  dbg_print((INPUT_DBG_CALL|INPUT_DBG_EXT), "called\n");
+  dbg_print (class, (INPUT_DBG_CALL|INPUT_DBG_EXT), "called\n");
 
   vcd_close(class);
+
+  if (class->ip) {
+    vcd_input_plugin_t *this = class->ip;
+    this->stream = NULL;
+    free (this->player_device);
+    class->ip = NULL;
+    free (this);
+  }
+  class->inuse = 0;
+
   free(class->vcd_device);
-  free(my_vcd.v_config.title_format);
-  free(my_vcd.v_config.comment_format);
+  free(class->v_config.title_format);
+  free(class->v_config.comment_format);
   free(class);
 }
 
 /* Update the xine player title text. */
-static void
-vcd_update_title_display(void)
-{
+static void vcd_update_title_display (void *user_data) {
+  vcd_input_plugin_t *this = (vcd_input_plugin_t *)user_data;
   xine_event_t uevent;
   xine_ui_data_t data;
 
   char *title_str;
+  if (!this->stream)
+    return;
 
-  title_str = vcdplayer_format_str(&my_vcd.player,
-                                   my_vcd.v_config.title_format);
+  title_str = vcdplayer_format_str (&this->player, this->v_config.title_format);
 
-  meta_info_assign(XINE_META_INFO_TITLE, my_vcd.stream, title_str);
-  meta_info_assign(XINE_META_INFO_COMMENT, my_vcd.stream,
-                   vcdplayer_format_str(&my_vcd.player,
-                                        my_vcd.v_config.comment_format));
-  stream_info_assign(XINE_STREAM_INFO_VIDEO_HAS_STILL, my_vcd.stream,
-                     my_vcd.player.i_still);
+  meta_info_assign (this, XINE_META_INFO_TITLE, this->stream, title_str);
+  meta_info_assign (this, XINE_META_INFO_COMMENT, this->stream,
+    vcdplayer_format_str (&this->player, this->class->v_config.comment_format));
+  stream_info_assign (XINE_STREAM_INFO_VIDEO_HAS_STILL, this->stream, this->player.i_still);
 
   /* Set_str title/chapter display */
-  dbg_print((INPUT_DBG_MRL|INPUT_DBG_CALL),
+  dbg_print (this->class, (INPUT_DBG_MRL|INPUT_DBG_CALL),
             "Changing title to read '%s'\n", title_str);
   uevent.type        = XINE_EVENT_UI_SET_TITLE;
-  uevent.stream      = my_vcd.stream;
+  uevent.stream      = this->stream;
   uevent.data        = &data;
   uevent.data_length = sizeof(data);
 
   memcpy(data.str, title_str, strlen(title_str) + 1);
   data.str_len = strlen(title_str) + 1;
 
-  xine_event_send(my_vcd.stream, &uevent);
+  xine_event_send (this->stream, &uevent);
 }
 
 #if LIBVCD_VERSION_NUM >= 23
@@ -1576,6 +1641,7 @@ send_mouse_enter_leave_event(vcd_input_plugin_t *p_this, bool b_mouse_in)
 */
 static int
 vcd_plugin_open (input_plugin_t *this_gen ) {
+  vcd_input_plugin_t *this = (vcd_input_plugin_t *)this_gen;
   vcd_input_class_t  *class = (vcd_input_class_t *) this_gen->input_class;
 
   gl_default_vcd_log_handler  = vcd_log_set_handler (vcd_log_handler);
@@ -1583,8 +1649,8 @@ vcd_plugin_open (input_plugin_t *this_gen ) {
 
   /* actually, this is also done by class initialization. But just in
      case... */
-  class->ip          = &my_vcd;
-  my_vcd.i_old_still = 0;
+  class->ip          = this;
+  this->i_old_still = 0;
 
   return 1;
 }
@@ -1607,48 +1673,126 @@ vcd_class_get_instance (input_class_t *class_gen, xine_stream_t *stream,
                         const char *mrl)
 {
   vcd_input_class_t  *class = (vcd_input_class_t *) class_gen;
+  vcd_input_plugin_t *this;
 
-  char intended_vcd_device[MAX_DEVICE_LEN+1]= { '\0', };
   vcdinfo_itemid_t itemid;
-  char *check_mrl=NULL;
   bool used_default;
 
-  if (mrl == NULL)
-    check_mrl = strdup(MRL_PREFIX);
-  else
-    check_mrl = strdup(mrl);
+  dbg_print (class, (INPUT_DBG_CALL|INPUT_DBG_EXT), "called with %s\n", mrl);
 
-  dbg_print((INPUT_DBG_CALL|INPUT_DBG_EXT), "called with %s\n", mrl);
+  if (!mrl)
+    mrl = MRL_PREFIX;
+  if (strncasecmp (mrl, MRL_PREFIX, MRL_PREFIX_LEN))
+    return NULL;
 
-  if ( strncasecmp(check_mrl, MRL_PREFIX, MRL_PREFIX_LEN) ) {
-    goto free_and_return;
+  if (class->ip) {
+    if (class->inuse)
+      return NULL;
+    this = class->ip;
+    this->stream = NULL;
+    if (this->player.b_opened)
+      vcdio_close (&this->player);
+    free (this->player_device);
+    this->player_device = NULL;
+  } else {
+    this = calloc (1, sizeof (*this));
+    if (!this)
+      return NULL;
   }
+
+  /*------------------------------------------------------------------
+    Callback functions.
+  ---------------------------------------------------------------------*/
+  this->player.user_data              = this;
+  this->player.flush_buffers          = &vcd_flush_buffers;
+  this->player.update_title           = &vcd_update_title_display;
+  this->player.log_err                = (debug_fn) &vcd_log_err;
+  this->player.log_msg                = (debug_fn) &vcd_log_msg;
+  this->player.force_redisplay        = &vcd_force_redisplay;
+  this->player.set_aspect_ratio       = &vcd_set_aspect_ratio;
+
+  /*-------------------------------------------------------------
+     Playback control-specific fields
+   --------------------------------------------------------------*/
+
+  this->player.i_lid                  = VCDINFO_INVALID_ENTRY;
+  this->player.end_lsn                = VCDINFO_NULL_LSN;
+
+  this->player.pdi                    = -1;
+  this->player.pxd.psd                = NULL;
+
+  /*-----------------------------------
+     Navigation fields
+   ------------------------------------*/
+  this->player.next_entry             = -1;
+  this->player.prev_entry             = -1;
+  this->player.return_entry           = -1;
+  this->player.default_entry          = -1;
+
+  /*-----------------------------------
+     Config items
+   ------------------------------------*/
+  this->player.default_autoplay = class->default_autoplay;
+  this->player.autoadvance      = class->autoadvance;
+  this->player.wrap_next_prev   = class->wrap_next_prev;
+  this->player.show_rejected    = class->show_rejected;
+  this->player.slider_length    = class->slider_length;
+  this->v_config                = class->v_config;
+  this->player.i_debug          = class->vcdplayer_debug;
+
+  this->input_plugin.open               = vcd_plugin_open;
+  this->input_plugin.get_capabilities   = vcd_plugin_get_capabilities;
+  this->input_plugin.read               = vcd_plugin_read;
+  this->input_plugin.read_block         = vcd_plugin_read_block;
+  this->input_plugin.seek               = vcd_plugin_seek;
+  this->input_plugin.get_current_pos    = vcd_plugin_get_current_pos;
+  this->input_plugin.get_length         = vcd_plugin_get_length;
+  this->input_plugin.get_blocksize      = vcd_plugin_get_blocksize;
+  this->input_plugin.get_mrl            = vcd_plugin_get_mrl;
+  this->input_plugin.get_optional_data  = vcd_get_optional_data;
+  this->input_plugin.dispose            = vcd_plugin_dispose;
+  this->input_plugin.input_class        = (input_class_t *) class;
+
+  if (stream == XINE_ANON_STREAM)
+    stream = NULL;
+  this->stream                          = stream;
+  this->class                           = class;
+  this->i_mouse_button                  = -1;
+  this->b_mouse_in                      = false;
+
+  this->player.psz_source               = NULL;
+
+  this->player.b_opened                 = false;
+  this->player.play_item.num            = VCDINFO_INVALID_ENTRY;
+  this->player.play_item.type           = VCDINFO_ITEM_TYPE_ENTRY;
+
+  this->player_device                   = NULL;
 
   vcd_get_default_device(class, false);
 
-  if (!vcd_parse_mrl(class->vcd_device, check_mrl,
-                     intended_vcd_device, &itemid,
-                     my_vcd.player.default_autoplay, &used_default)) {
-    dbg_print(INPUT_DBG_MRL, "parsing MRL %s failed\n", check_mrl);
-    goto free_and_return;
+  {
+    char intended_vcd_device[MAX_DEVICE_LEN+1] = { '\0', };
+
+    if (!vcd_parse_mrl (class, class->vcd_device, mrl, intended_vcd_device, &itemid,
+        this->player.default_autoplay, &used_default)) {
+      dbg_print (class, INPUT_DBG_MRL, "parsing MRL %s failed\n", mrl);
+      return NULL;
+    }
+
+    free (this->mrl);
+    this->mrl = strdup (mrl);
+    if (this->stream)
+      this->event_queue = xine_event_new_queue (stream);
+    class->ip = this;
+
+    if (!vcd_build_mrl_list (class, intended_vcd_device))
+      return NULL;
   }
-
-  free(my_vcd.mrl);
-  my_vcd.mrl         = strdup(check_mrl);
-  my_vcd.stream      = stream;
-  my_vcd.event_queue = xine_event_new_queue (stream);
-  class->ip          = &my_vcd; /* Can probably get rid of this... */
-
-  if (!vcd_build_mrl_list(class, intended_vcd_device)) {
-    goto free_and_return;
-  }
-
-  my_vcd.player.user_data   = (void *) class;
 
   /* Do we set PBC (via LID) on? */
-  my_vcd.player.i_lid =
+  this->player.i_lid =
     ( VCDINFO_ITEM_TYPE_LID == itemid.type
-      && my_vcd.player.i_lids > itemid.num )
+      && this->player.i_lids > itemid.num )
     ? itemid.num
     :  VCDINFO_INVALID_ENTRY;
 
@@ -1664,77 +1808,53 @@ vcd_class_get_instance (input_class_t *class_gen, xine_stream_t *stream,
             || (VCDINFO_ITEM_TYPE_TRACK == itemid.type) ) )
     itemid.num = 1;
 
-  dbg_print(INPUT_DBG_PBC, "Jumping to NUM >%i<, type >%i<\n",
+  dbg_print (class, INPUT_DBG_PBC, "Jumping to NUM >%i<, type >%i<\n",
             itemid.num, itemid.type);
 
-  vcd_set_meta_info(&my_vcd);
-  vcdplayer_play(&my_vcd.player, itemid);
+  vcd_set_meta_info (this);
+  vcdplayer_play(&this->player, itemid);
 
 
-  dbg_print(INPUT_DBG_MRL, "Successfully opened MRL %s.\n",
-            my_vcd.mrl);
+  dbg_print (class, INPUT_DBG_MRL, "Successfully opened MRL %s.\n",
+            this->mrl);
 
-  free (check_mrl);
-  return &(my_vcd.input_plugin);
+  if (this->stream)
+    class->inuse = 1;
 
- free_and_return:
-  free (check_mrl);
-  return NULL;
+  return &(this->input_plugin);
 }
 
 #define VCD_NUM_CALLBACK(fn_name, var) \
- static void fn_name(void *this_gen, xine_cfg_entry_t *entry) \
-{ \
-\
-  dbg_print(INPUT_DBG_CALL, "Called setting %d\n", entry->num_value); \
-\
-  my_vcd.player.var = entry->num_value; \
-}
+  static void fn_name (void *this_gen, xine_cfg_entry_t *entry) {\
+    vcd_input_class_t *class = (vcd_input_class_t *)this_gen;\
+    dbg_print (class, INPUT_DBG_CALL, "Called setting %d\n", entry->num_value);\
+    class->var = entry->num_value;\
+  }
 
 #define VCD_ENUM_CALLBACK(fn_name, enum_type, var) \
- static void fn_name(void *this_gen, xine_cfg_entry_t *entry) \
-{ \
-  dbg_print(INPUT_DBG_CALL, "Called setting %d\n", entry->num_value); \
-\
-  my_vcd.player.var = (enum_type) entry->num_value; \
-}
+  static void fn_name (void *this_gen, xine_cfg_entry_t *entry) {\
+    vcd_input_class_t *class = (vcd_input_class_t *)this_gen;\
+    dbg_print (class, INPUT_DBG_CALL, "Called setting %d\n", entry->num_value);\
+    class->var = (enum_type)entry->num_value;\
+  }
 
 #define VCD_STR_CALLBACK(fn_name, var) \
- static void fn_name(void *this_gen, xine_cfg_entry_t *entry) \
-{ \
-\
-  dbg_print(INPUT_DBG_CALL, "Called setting %s\n", entry->str_value); \
-  if ( NULL == entry->str_value ) return; \
-\
-  if ( var ) free(var); \
-  var = strdup(entry->str_value); \
-}
+  static void fn_name (void *this_gen, xine_cfg_entry_t *entry) {\
+    vcd_input_class_t *class = (vcd_input_class_t *)this_gen;\
+    dbg_print (class, INPUT_DBG_CALL, "Called setting %s\n", entry->str_value);\
+    if (NULL == entry->str_value) return;\
+    free (class->var);\
+    class->var = strdup (entry->str_value);\
+  }
 
-VCD_STR_CALLBACK(vcd_default_dev_changed_cb,
-                  my_vcd.class->vcd_device)
-
-VCD_STR_CALLBACK(vcd_title_format_changed_cb,
-                  my_vcd.v_config.title_format)
-
-VCD_STR_CALLBACK(vcd_comment_format_changed_cb,
-                  my_vcd.v_config.comment_format)
-
-VCD_NUM_CALLBACK(vcd_show_rejected_cb, show_rejected)
-
-VCD_NUM_CALLBACK(vcd_autoadvance_cb, autoadvance)
-
-VCD_ENUM_CALLBACK(vcd_slider_length_cb, vcdplayer_slider_length_t,
-                   slider_length)
-
-VCD_ENUM_CALLBACK(vcd_default_autoplay_cb, vcdinfo_item_enum_t,
-                   default_autoplay)
-
-static void
-vcd_debug_cb(void *this_gen, xine_cfg_entry_t *entry)
-{
-  dbg_print(INPUT_DBG_CALL, "Called setting %d\n", entry->num_value);
-  vcdplayer_debug = entry->num_value;
-}
+VCD_STR_CALLBACK (vcd_default_dev_changed_cb, vcd_device)
+VCD_STR_CALLBACK (vcd_title_format_changed_cb, v_config.title_format)
+VCD_STR_CALLBACK (vcd_comment_format_changed_cb, v_config.comment_format)
+VCD_NUM_CALLBACK (vcd_show_rejected_cb, show_rejected)
+VCD_NUM_CALLBACK (vcd_autoadvance_cb, autoadvance)
+VCD_ENUM_CALLBACK (vcd_slider_length_cb, vcdplayer_slider_length_t, slider_length)
+VCD_ENUM_CALLBACK (vcd_default_autoplay_cb, vcdinfo_item_enum_t, default_autoplay)
+VCD_NUM_CALLBACK (vcd_debug_cb, vcdplayer_debug)
 
 static void *
 vcd_init (xine_t *xine, void *data)
@@ -1742,14 +1862,15 @@ vcd_init (xine_t *xine, void *data)
   vcd_input_class_t  *class;
   config_values_t    *config;
 
-  dbg_print(INPUT_DBG_CALL, "Called\n");
+  xprintf (xine, XINE_VERBOSITY_DEBUG, "input_vcd: init class\n");
 
-  class = calloc(1, sizeof (vcd_input_class_t));
+  class = calloc (1, sizeof (vcd_input_class_t));
+  if (!class)
+    return NULL;
 
   class->xine   = xine;
   class->config = config = xine->config;
 
-  vcd_class     = class;
   class->mrls   = NULL;
 
   class->input_class.get_instance        = vcd_class_get_instance;
@@ -1759,36 +1880,6 @@ vcd_init (xine_t *xine, void *data)
   class->input_class.get_autoplay_list   = vcd_class_get_autoplay_list;
   class->input_class.dispose		 = vcd_class_dispose;
   class->input_class.eject_media         = vcd_class_eject_media;
-
-  memset(&my_vcd, 0, sizeof(my_vcd));
-
-  /*------------------------------------------------------------------
-    Callback functions.
-  ---------------------------------------------------------------------*/
-  my_vcd.player.flush_buffers          = &vcd_flush_buffers;
-  my_vcd.player.update_title           = &vcd_update_title_display;
-  my_vcd.player.log_err                = (generic_fn) &xine_log_err;
-  my_vcd.player.log_msg                = (generic_fn) &xine_log_msg;
-  my_vcd.player.force_redisplay        = &vcd_force_redisplay;
-  my_vcd.player.set_aspect_ratio       = &vcd_set_aspect_ratio;
-
-  /*-------------------------------------------------------------
-     Playback control-specific fields
-   --------------------------------------------------------------*/
-
-  my_vcd.player.i_lid                  = VCDINFO_INVALID_ENTRY;
-  my_vcd.player.end_lsn                = VCDINFO_NULL_LSN;
-
-  my_vcd.player.pdi                    = -1;
-  my_vcd.player.pxd.psd                = NULL;
-
-  /*-----------------------------------
-     Navigation fields
-   ------------------------------------*/
-  my_vcd.player.next_entry             = -1;
-  my_vcd.player.prev_entry             = -1;
-  my_vcd.player.return_entry           = -1;
-  my_vcd.player.default_entry          = -1;
 
   /*--------------------------------------------------------------
     Configuration variables
@@ -1807,7 +1898,7 @@ vcd_init (xine_t *xine, void *data)
     static const char *const length_reporting_modes[] =
       { "auto", "track", "entry", NULL };
 
-    my_vcd.player.default_autoplay =
+    class->default_autoplay =
       config->register_enum(config,
                             "media.vcd.autoplay",
                             VCDPLAYER_AUTOPLAY_PBC,
@@ -1826,10 +1917,9 @@ _("The VCD play unit to use when none is specified in an MRL, e.g. "
           _("CD-ROM drive used for VCD when none given"),
 _("What to use if no drive specified. If the setting is empty, xine will scan for CD drives."),
                               20,
-                              vcd_default_dev_changed_cb,
-                              (void *) class));
+                              vcd_default_dev_changed_cb, class));
 
-    my_vcd.player.slider_length =
+    class->slider_length =
       config->register_enum(config,
                             "media.vcd.length_reporting",
                             VCDPLAYER_SLIDER_LENGTH_AUTO,
@@ -1837,30 +1927,29 @@ _("What to use if no drive specified. If the setting is empty, xine will scan fo
                             _("VCD position slider range"),
 _("range that the stream playback position slider represents playing a VCD."),
                             10,
-                            vcd_slider_length_cb, NULL);
+                            vcd_slider_length_cb, class);
 
 #if READAHEAD_FINISHED
-    my_vcd.player.readahead =
+    class->readahead =
       config->register_bool(config, "vcd.use_readahead",
                             (int) false,
                             _("VCD read-ahead caching?"),
                             _("Class "
                               "may lead to jerky playback on low-end "
                               "machines."),
-                            vcd_read_ahead_cb, NULL);
+                            vcd_read_ahead_cb, class);
 #endif
 
-  my_vcd.player.autoadvance =
+  class->autoadvance =
     config->register_bool(config,
                         "media.vcd.autoadvance",
                         (int) true,
                         _("automatically advance VCD track/entry"),
 _("If enabled, we should automatically advance to the next entry or track. Used only when playback control (PBC) is disabled."),
                         10,
-                        vcd_autoadvance_cb,
-                        NULL);
+                        vcd_autoadvance_cb, class);
 
-  my_vcd.player.show_rejected =
+  class->show_rejected =
     config->register_bool(config,
                         "media.vcd.show_rejected",
                         (int) false,
@@ -1869,10 +1958,9 @@ _("Some playback list IDs (LIDs) are marked not showable, "
 "but you can see them in the MRL list if this is set. Rejected entries "
 "are marked with an asterisk (*) appended to the MRL."),
                         10,
-                        vcd_show_rejected_cb,
-                        NULL);
+                        vcd_show_rejected_cb, class);
 
-  my_vcd.v_config.title_format =
+  class->v_config.title_format =
     strdup(config->register_string(config,
                           "media.vcd.title_format",
                           "%F - %I %N%L%S, disk %c of %C - %v %A",
@@ -1895,10 +1983,9 @@ _("VCD format used in the GUI Title. Similar to the Unix date "
 "      A number between 1 and the volume count.\n"
 " %% : a %\n"),
                           20,
-                          vcd_title_format_changed_cb,
-                          NULL));
+                          vcd_title_format_changed_cb, class));
 
-  my_vcd.v_config.comment_format =
+  class->v_config.comment_format =
     strdup(config->register_string(config,
                           "media.vcd.comment_format",
                           "%P - Track %T",
@@ -1908,10 +1995,9 @@ _("VCD format used in the GUI Title. Similar to the Unix date "
 "%A, %C, %c, %F, %I, %L, %N, %P, %p, %S, %T, %V, %v, and %%.\n"
 "See the help for the title_format for the meanings of these."),
                           20,
-                          vcd_comment_format_changed_cb,
-                          NULL));
+                          vcd_comment_format_changed_cb, class));
 
-  vcdplayer_debug =
+  class->vcdplayer_debug =
   config->register_num(config,
                        "media.vcd.debug",
                        0,
@@ -1931,39 +2017,12 @@ _("For tracking down bugs in the VCD plugin. Mask values are:\n"
 "2048: Debugging from VCDINFO\n"
 ),
                         20,
-                        vcd_debug_cb,
-                        class);
+                        vcd_debug_cb, class);
   }
 
   gl_default_vcd_log_handler  = vcd_log_set_handler (uninit_log_handler);
   gl_default_cdio_log_handler =
     cdio_log_set_handler ((cdio_log_handler_t) uninit_log_handler);
-
-  my_vcd.input_plugin.open               = vcd_plugin_open;
-  my_vcd.input_plugin.get_capabilities   = vcd_plugin_get_capabilities;
-  my_vcd.input_plugin.read               = vcd_plugin_read;
-  my_vcd.input_plugin.read_block         = vcd_plugin_read_block;
-  my_vcd.input_plugin.seek               = vcd_plugin_seek;
-  my_vcd.input_plugin.get_current_pos    = vcd_plugin_get_current_pos;
-  my_vcd.input_plugin.get_length         = vcd_plugin_get_length;
-  my_vcd.input_plugin.get_blocksize      = vcd_plugin_get_blocksize;
-  my_vcd.input_plugin.get_mrl            = vcd_plugin_get_mrl;
-  my_vcd.input_plugin.get_optional_data  = vcd_get_optional_data;
-  my_vcd.input_plugin.dispose            = vcd_plugin_dispose;
-  my_vcd.input_plugin.input_class        = (input_class_t *) class;
-
-  my_vcd.stream                          = NULL;
-  my_vcd.class                           = class;
-  my_vcd.i_mouse_button                  = -1;
-  my_vcd.b_mouse_in                      = false;
-
-  my_vcd.player.psz_source               = NULL;
-
-  my_vcd.player.b_opened                 = false;
-  my_vcd.player.play_item.num            = VCDINFO_INVALID_ENTRY;
-  my_vcd.player.play_item.type           = VCDINFO_ITEM_TYPE_ENTRY;
-
-  my_vcd.player_device                   = NULL;
 
   return class;
 }
