@@ -121,7 +121,7 @@ typedef struct {
  *
  * ------------------------------------------- */
 
-void       Error( HWND hwnd, LPSTR szfmt, ... );
+void       Error( HWND hwnd, LPCSTR szfmt, ... );
 boolean    CreateDirectSound( ao_directx_t * ao_directx );
 void       DestroyDirectSound( ao_directx_t * ao_directx );
 boolean    CreateSoundBuffer( ao_directx_t * ao_directx );
@@ -131,7 +131,7 @@ uint32_t   FillSoundBuffer( ao_directx_t * ao_directx, int code, unsigned char *
 /* Display formatted error message in
  * popup message box. */
 
-void Error( HWND hwnd, LPSTR szfmt, ... )
+void Error( HWND hwnd, LPCSTR szfmt, ... )
 {
   char tempbuff[ 256 ];
   *tempbuff = 0;
