@@ -105,6 +105,7 @@ xineplug_ao_out_sun_la_LIBADD = $(XINE_LIB)
 
 xineplug_ao_out_directx_la_SOURCES = audio_directx_out.c
 xineplug_ao_out_directx_la_LIBADD = $(XINE_LIB) $(DIRECTX_AUDIO_LIBS) $(LTLIBINTL)
+xineplug_ao_out_directx_la_CFLAGS = $(AM_CPPFLAGS) $(DIRECTX_CFLAGS) -fno-strict-aliasing
 xineplug_ao_out_directx_la_CPPFLAGS = $(AM_CPPFLAGS) $(DIRECTX_CPPFLAGS)
 
 xineplug_ao_out_coreaudio_la_SOURCES = audio_coreaudio_out.c
