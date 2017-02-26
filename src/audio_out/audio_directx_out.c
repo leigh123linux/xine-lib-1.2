@@ -121,13 +121,6 @@ typedef struct {
  *
  * ------------------------------------------- */
 
-static void       Error( HWND hwnd, LPCSTR szfmt, ... );
-static boolean    CreateDirectSound( ao_directx_t * ao_directx );
-static void       DestroyDirectSound( ao_directx_t * ao_directx );
-static boolean    CreateSoundBuffer( ao_directx_t * ao_directx );
-static void       DestroySoundBuffer( ao_directx_t * ao_directx );
-static uint32_t   FillSoundBuffer( ao_directx_t * ao_directx, int code, unsigned char * samples );
-
 /* Display formatted error message in
  * popup message box. */
 
@@ -206,166 +199,6 @@ static void DestroyDirectSound( ao_directx_t * ao_directx )
     }
 
   lprintf("DestroyDirectSound() Exit\n");
-}
-
-/* Used to create directx sound buffer,
- * notification events, and initialize
- * buffer to null sample data. */
-
-static boolean CreateSoundBuffer( ao_directx_t * ao_directx )
-{
-  DSBUFFERDESC	dsbdesc;
-  PCMWAVEFORMAT	pcmwf;
-
-  lprintf("CreateSoundBuffer(%08x) Enter\n", (unsigned long)ao_directx);
-
-  /* calculate buffer and frame size */
-
-  ao_directx->frsz        = ( ao_directx->bits / 8 ) * ao_directx->chnn;
-  /* buffer size, must be even and aligned to frame size */
-  ao_directx->buffer_size = (ao_directx->frsz * ((ao_directx->rate / SOUND_BUFFER_DIV + 1) & ~1));
-
-  /* release any existing sound buffer
-   * related resources */
-
-  DestroySoundBuffer( ao_directx );
-
-  /* create a secondary sound buffer */
-
-  memset( &pcmwf, 0, sizeof( PCMWAVEFORMAT ) );
-  pcmwf.wBitsPerSample     = ( unsigned short ) ao_directx->bits;
-  pcmwf.wf.wFormatTag      = WAVE_FORMAT_PCM;
-  pcmwf.wf.nChannels       = ao_directx->chnn;
-  pcmwf.wf.nSamplesPerSec  = ao_directx->rate;
-  pcmwf.wf.nBlockAlign     = ao_directx->frsz;
-  pcmwf.wf.nAvgBytesPerSec = ao_directx->rate * ao_directx->frsz;
-
-  memset( &dsbdesc, 0, sizeof( DSBUFFERDESC ) );
-  dsbdesc.dwSize        = sizeof( DSBUFFERDESC );
-  dsbdesc.dwFlags       = (DSBCAPS_CTRLVOLUME | DSBCAPS_GLOBALFOCUS |
-			   DSBCAPS_GETCURRENTPOSITION2 | DSBCAPS_CTRLPOSITIONNOTIFY);
-  dsbdesc.dwBufferBytes = ao_directx->buffer_size;
-  dsbdesc.lpwfxFormat   = ( LPWAVEFORMATEX ) &pcmwf;
-
-  if( IDirectSound_CreateSoundBuffer( ao_directx->dsobj, &dsbdesc,
-				      &ao_directx->dsbuffer, 0 ) != DS_OK )
-    {
-      Error( 0, "IDirectSound_CreateSoundBuffer : Unable to create secondary sound buffer" );
-      return FALSE;
-    }
-
-  /* get the buffer capabilities */
-
-  memset( &ao_directx->dsbcaps, 0, sizeof( DSBCAPS ) );
-  ao_directx->dsbcaps.dwSize = sizeof( DSBCAPS );
-
-  if( IDirectSound_GetCaps( ao_directx->dsbuffer, &ao_directx->dsbcaps ) != DS_OK )
-    {
-      Error( 0, "IDirectSound_GetCaps : Unable to get secondary sound buffer capabilities" );
-      return FALSE;
-    }
-
-  /* create left side notification ( non-signaled ) */
-
-  ao_directx->notify_events[ 0 ].hEventNotify = CreateEvent( NULL, FALSE, FALSE, NULL );
-
-  /* create right side notification ( signaled ) */
-
-  ao_directx->notify_events[ 1 ].hEventNotify = CreateEvent( NULL, FALSE, FALSE, NULL );
-
-  if( !ao_directx->notify_events[ 0 ].hEventNotify || !ao_directx->notify_events[ 1 ].hEventNotify )
-    {
-      Error( 0, "CreateEvent : Unable to create sound notification events" );
-      return FALSE;
-    }
-
-  /* get the direct sound notification interface */
-
-  if( IDirectSoundBuffer_QueryInterface( ao_directx->dsbuffer,
-					 &IID_IDirectSoundNotify,
-					 (LPVOID *)&ao_directx->notify ) != DS_OK )
-    {
-      Error( 0, "IDirectSoundBuffer_QueryInterface : Unable to get notification interface" );
-      return FALSE;
-    }
-
-  /* set notification events */
-
-  ao_directx->notify_events[ 0 ].dwOffset = 0;
-  ao_directx->notify_events[ 1 ].dwOffset = ao_directx->buffer_size / 2;
-
-  if( IDirectSoundNotify_SetNotificationPositions(  ao_directx->notify, 2,
-						    ao_directx->notify_events ) != DS_OK )
-    {
-      Error( 0, "IDirectSoundNotify_SetNotificationPositions : Unable to set notification positions" );
-      return FALSE;
-    }
-
-  /* DEBUG : set sound buffer volume */
-
-  if( IDirectSoundBuffer_SetVolume( ao_directx->dsbuffer, DSBVOLUME_MAX ) != DS_OK )
-    {
-      Error( 0, "IDirectSoundBuffer_SetVolume : Unable to set sound buffer volume" );
-      return FALSE;
-    }
-
-  /* initialize our sound buffer */
-
-  IDirectSoundBuffer_SetVolume( ao_directx->dsbuffer, DSBVOLUME_MIN );
-  FillSoundBuffer( ao_directx, DSBUFF_INIT, 0 );
-
-  return TRUE;
-
-  lprintf("CreateSoundBuffer() Exit\n");
-}
-
-/* Destroy all direct sound buffer allocated
- * resources. */
-
-static void DestroySoundBuffer( ao_directx_t * ao_directx )
-{
-  lprintf("DestroySoundBuffer(%08x) Enter\n", (unsigned long)ao_directx);
-
-  /* stop our buffer and zero it out */
-
-  if( ao_directx->dsbuffer )
-    {
-      IDirectSoundBuffer_SetVolume( ao_directx->dsbuffer, DSBVOLUME_MIN );
-      IDirectSoundBuffer_Stop( ao_directx->dsbuffer );
-      FillSoundBuffer( ao_directx, DSBUFF_INIT, 0 );
-    }
-
-  /* release our notification events */
-
-  if( ao_directx->notify_events[ 0 ].hEventNotify )
-    {
-      CloseHandle( ao_directx->notify_events[ 0 ].hEventNotify );
-      ao_directx->notify_events[ 0 ].hEventNotify = 0;
-    }
-
-  if( ao_directx->notify_events[ 1 ].hEventNotify )
-    {
-      CloseHandle( ao_directx->notify_events[ 1 ].hEventNotify );
-      ao_directx->notify_events[ 1 ].hEventNotify = 0;
-    }
-
-  /* release our buffer notification interface */
-
-  if( ao_directx->notify )
-    {
-      IDirectSoundNotify_Release( ao_directx->notify );
-      ao_directx->notify = 0;
-    }
-
-  /* release our direct sound buffer */
-
-  if( ao_directx->dsbuffer )
-    {
-      IDirectSoundBuffer_Release( ao_directx->dsbuffer );
-      ao_directx->dsbuffer = 0;
-    }
-
-  lprintf("DestroySoundBuffer() Exit\n");
 }
 
 /* Used to fill our looping sound buffer
@@ -502,6 +335,167 @@ static uint32_t FillSoundBuffer( ao_directx_t * ao_directx, int code, unsigned c
   lprintf("FillSoundBuffer() Exit\n");
 
   return buff_length;
+}
+
+
+/* Destroy all direct sound buffer allocated
+ * resources. */
+
+static void DestroySoundBuffer( ao_directx_t * ao_directx )
+{
+  lprintf("DestroySoundBuffer(%08x) Enter\n", (unsigned long)ao_directx);
+
+  /* stop our buffer and zero it out */
+
+  if( ao_directx->dsbuffer )
+    {
+      IDirectSoundBuffer_SetVolume( ao_directx->dsbuffer, DSBVOLUME_MIN );
+      IDirectSoundBuffer_Stop( ao_directx->dsbuffer );
+      FillSoundBuffer( ao_directx, DSBUFF_INIT, 0 );
+    }
+
+  /* release our notification events */
+
+  if( ao_directx->notify_events[ 0 ].hEventNotify )
+    {
+      CloseHandle( ao_directx->notify_events[ 0 ].hEventNotify );
+      ao_directx->notify_events[ 0 ].hEventNotify = 0;
+    }
+
+  if( ao_directx->notify_events[ 1 ].hEventNotify )
+    {
+      CloseHandle( ao_directx->notify_events[ 1 ].hEventNotify );
+      ao_directx->notify_events[ 1 ].hEventNotify = 0;
+    }
+
+  /* release our buffer notification interface */
+
+  if( ao_directx->notify )
+    {
+      IDirectSoundNotify_Release( ao_directx->notify );
+      ao_directx->notify = 0;
+    }
+
+  /* release our direct sound buffer */
+
+  if( ao_directx->dsbuffer )
+    {
+      IDirectSoundBuffer_Release( ao_directx->dsbuffer );
+      ao_directx->dsbuffer = 0;
+    }
+
+  lprintf("DestroySoundBuffer() Exit\n");
+}
+
+/* Used to create directx sound buffer,
+ * notification events, and initialize
+ * buffer to null sample data. */
+
+static boolean CreateSoundBuffer( ao_directx_t * ao_directx )
+{
+  DSBUFFERDESC	dsbdesc;
+  PCMWAVEFORMAT	pcmwf;
+
+  lprintf("CreateSoundBuffer(%08x) Enter\n", (unsigned long)ao_directx);
+
+  /* calculate buffer and frame size */
+
+  ao_directx->frsz        = ( ao_directx->bits / 8 ) * ao_directx->chnn;
+  /* buffer size, must be even and aligned to frame size */
+  ao_directx->buffer_size = (ao_directx->frsz * ((ao_directx->rate / SOUND_BUFFER_DIV + 1) & ~1));
+
+  /* release any existing sound buffer
+   * related resources */
+
+  DestroySoundBuffer( ao_directx );
+
+  /* create a secondary sound buffer */
+
+  memset( &pcmwf, 0, sizeof( PCMWAVEFORMAT ) );
+  pcmwf.wBitsPerSample     = ( unsigned short ) ao_directx->bits;
+  pcmwf.wf.wFormatTag      = WAVE_FORMAT_PCM;
+  pcmwf.wf.nChannels       = ao_directx->chnn;
+  pcmwf.wf.nSamplesPerSec  = ao_directx->rate;
+  pcmwf.wf.nBlockAlign     = ao_directx->frsz;
+  pcmwf.wf.nAvgBytesPerSec = ao_directx->rate * ao_directx->frsz;
+
+  memset( &dsbdesc, 0, sizeof( DSBUFFERDESC ) );
+  dsbdesc.dwSize        = sizeof( DSBUFFERDESC );
+  dsbdesc.dwFlags       = (DSBCAPS_CTRLVOLUME | DSBCAPS_GLOBALFOCUS |
+			   DSBCAPS_GETCURRENTPOSITION2 | DSBCAPS_CTRLPOSITIONNOTIFY);
+  dsbdesc.dwBufferBytes = ao_directx->buffer_size;
+  dsbdesc.lpwfxFormat   = ( LPWAVEFORMATEX ) &pcmwf;
+
+  if( IDirectSound_CreateSoundBuffer( ao_directx->dsobj, &dsbdesc,
+				      &ao_directx->dsbuffer, 0 ) != DS_OK )
+    {
+      Error( 0, "IDirectSound_CreateSoundBuffer : Unable to create secondary sound buffer" );
+      return FALSE;
+    }
+
+  /* get the buffer capabilities */
+
+  memset( &ao_directx->dsbcaps, 0, sizeof( DSBCAPS ) );
+  ao_directx->dsbcaps.dwSize = sizeof( DSBCAPS );
+
+  if( IDirectSound_GetCaps( ao_directx->dsbuffer, &ao_directx->dsbcaps ) != DS_OK )
+    {
+      Error( 0, "IDirectSound_GetCaps : Unable to get secondary sound buffer capabilities" );
+      return FALSE;
+    }
+
+  /* create left side notification ( non-signaled ) */
+
+  ao_directx->notify_events[ 0 ].hEventNotify = CreateEvent( NULL, FALSE, FALSE, NULL );
+
+  /* create right side notification ( signaled ) */
+
+  ao_directx->notify_events[ 1 ].hEventNotify = CreateEvent( NULL, FALSE, FALSE, NULL );
+
+  if( !ao_directx->notify_events[ 0 ].hEventNotify || !ao_directx->notify_events[ 1 ].hEventNotify )
+    {
+      Error( 0, "CreateEvent : Unable to create sound notification events" );
+      return FALSE;
+    }
+
+  /* get the direct sound notification interface */
+
+  if( IDirectSoundBuffer_QueryInterface( ao_directx->dsbuffer,
+					 &IID_IDirectSoundNotify,
+					 (LPVOID *)&ao_directx->notify ) != DS_OK )
+    {
+      Error( 0, "IDirectSoundBuffer_QueryInterface : Unable to get notification interface" );
+      return FALSE;
+    }
+
+  /* set notification events */
+
+  ao_directx->notify_events[ 0 ].dwOffset = 0;
+  ao_directx->notify_events[ 1 ].dwOffset = ao_directx->buffer_size / 2;
+
+  if( IDirectSoundNotify_SetNotificationPositions(  ao_directx->notify, 2,
+						    ao_directx->notify_events ) != DS_OK )
+    {
+      Error( 0, "IDirectSoundNotify_SetNotificationPositions : Unable to set notification positions" );
+      return FALSE;
+    }
+
+  /* DEBUG : set sound buffer volume */
+
+  if( IDirectSoundBuffer_SetVolume( ao_directx->dsbuffer, DSBVOLUME_MAX ) != DS_OK )
+    {
+      Error( 0, "IDirectSoundBuffer_SetVolume : Unable to set sound buffer volume" );
+      return FALSE;
+    }
+
+  /* initialize our sound buffer */
+
+  IDirectSoundBuffer_SetVolume( ao_directx->dsbuffer, DSBVOLUME_MIN );
+  FillSoundBuffer( ao_directx, DSBUFF_INIT, 0 );
+
+  return TRUE;
+
+  lprintf("CreateSoundBuffer() Exit\n");
 }
 
 /* -----------------------------------------
