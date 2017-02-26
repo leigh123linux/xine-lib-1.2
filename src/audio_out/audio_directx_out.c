@@ -121,17 +121,17 @@ typedef struct {
  *
  * ------------------------------------------- */
 
-void       Error( HWND hwnd, LPCSTR szfmt, ... );
-boolean    CreateDirectSound( ao_directx_t * ao_directx );
-void       DestroyDirectSound( ao_directx_t * ao_directx );
-boolean    CreateSoundBuffer( ao_directx_t * ao_directx );
-void       DestroySoundBuffer( ao_directx_t * ao_directx );
-uint32_t   FillSoundBuffer( ao_directx_t * ao_directx, int code, unsigned char * samples );
+static void       Error( HWND hwnd, LPCSTR szfmt, ... );
+static boolean    CreateDirectSound( ao_directx_t * ao_directx );
+static void       DestroyDirectSound( ao_directx_t * ao_directx );
+static boolean    CreateSoundBuffer( ao_directx_t * ao_directx );
+static void       DestroySoundBuffer( ao_directx_t * ao_directx );
+static uint32_t   FillSoundBuffer( ao_directx_t * ao_directx, int code, unsigned char * samples );
 
 /* Display formatted error message in
  * popup message box. */
 
-void Error( HWND hwnd, LPCSTR szfmt, ... )
+static void Error( HWND hwnd, LPCSTR szfmt, ... )
 {
   char tempbuff[ 256 ];
   *tempbuff = 0;
@@ -142,7 +142,7 @@ void Error( HWND hwnd, LPCSTR szfmt, ... )
 /* Create our direct sound object and
  * set the cooperative level. */
 
-boolean CreateDirectSound( ao_directx_t * ao_directx )
+static boolean CreateDirectSound( ao_directx_t * ao_directx )
 {
   DSCAPS        dscaps;
   HWND          hxinewnd;
@@ -192,7 +192,7 @@ boolean CreateDirectSound( ao_directx_t * ao_directx )
 /* Destroy all direct sound allocated
  * resources. */
 
-void DestroyDirectSound( ao_directx_t * ao_directx )
+static void DestroyDirectSound( ao_directx_t * ao_directx )
 {
 
   lprintf("DestroyDirectSound(%08x) Enter\n", (unsigned long)ao_directx);
@@ -212,7 +212,7 @@ void DestroyDirectSound( ao_directx_t * ao_directx )
  * notification events, and initialize
  * buffer to null sample data. */
 
-boolean CreateSoundBuffer( ao_directx_t * ao_directx )
+static boolean CreateSoundBuffer( ao_directx_t * ao_directx )
 {
   DSBUFFERDESC	dsbdesc;
   PCMWAVEFORMAT	pcmwf;
@@ -322,7 +322,7 @@ boolean CreateSoundBuffer( ao_directx_t * ao_directx )
 /* Destroy all direct sound buffer allocated
  * resources. */
 
-void DestroySoundBuffer( ao_directx_t * ao_directx )
+static void DestroySoundBuffer( ao_directx_t * ao_directx )
 {
   lprintf("DestroySoundBuffer(%08x) Enter\n", (unsigned long)ao_directx);
 
@@ -371,7 +371,7 @@ void DestroySoundBuffer( ao_directx_t * ao_directx )
 /* Used to fill our looping sound buffer
  * with data. */
 
-uint32_t FillSoundBuffer( ao_directx_t * ao_directx, int code, unsigned char * samples )
+static uint32_t FillSoundBuffer( ao_directx_t * ao_directx, int code, unsigned char * samples )
 {
   uint8_t *     buff_pointer;   /* pointer inside circular buffer */
   DWORD         buff_length;    /* bytes locked by pointer */
