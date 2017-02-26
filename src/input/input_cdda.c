@@ -302,8 +302,8 @@ typedef struct {
   int                  cache_last;
 
 #ifdef WIN32
-    HANDLE h_device_handle;                         /* vcd device descriptor */
-  long  hASPI;
+  HANDLE  h_device_handle;   /* vcd device descriptor */
+  HMODULE hASPI;             /* wnaspi32.dll */
   short i_sid;
   long  (*lpSendCommand)( void* );
 #endif
@@ -2072,8 +2072,8 @@ static int cdda_open(cdda_input_plugin_t *this_gen,
     this_gen->fd = -1;
     this_gen->h_device_handle = NULL;
     this_gen->i_sid = 0;
-    this_gen->hASPI = 0;
-    this_gen->lpSendCommand = 0;
+    this_gen->hASPI = NULL;
+    this_gen->lpSendCommand = NULL;
   }
   else
       return -1;
@@ -2182,7 +2182,7 @@ static int cdda_open(cdda_input_plugin_t *this_gen,
                       ( srbGDEVBlock.SRB_DeviceType == DTYPE_CDROM ) )
 		    {
                       this_gen->i_sid = MAKEWORD( i, j );
-                      this_gen->hASPI = (long)hASPI;
+                      this_gen->hASPI = hASPI;
                       this_gen->lpSendCommand = lpSendCommand;
 
                       lprintf( "using aspi layer" );
@@ -2238,8 +2238,8 @@ static int cdda_close(cdda_input_plugin_t *this_gen) {
      CloseHandle( this_gen->h_device_handle );
   this_gen->h_device_handle = NULL;
   if( this_gen->hASPI )
-      FreeLibrary( (HMODULE)this_gen->hASPI );
-  this_gen->hASPI = (long)NULL;
+      FreeLibrary( this_gen->hASPI );
+  this_gen->hASPI = NULL;
 #endif /* WIN32 */
 
   return 0;
