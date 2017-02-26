@@ -592,7 +592,7 @@ static void *buffer_service(void *data) {
         // check for buffer underrun
         data_in_buffer =  buffer_occupied_size(this);
         if ( data_in_buffer < buffer_min){
-          xine_log(this->class->xine, XINE_LOG_MSG, _(LOG_MODULE ": play cursor overran (data %u, min %u), flushing buffers\n"),
+          xine_log(this->class->xine, XINE_LOG_MSG, _(LOG_MODULE ": play cursor overran (data %zu, min %zu), flushing buffers\n"),
                    data_in_buffer, buffer_min);
           if (!audio_stop(this)) goto fail;
           if (!audio_flush(this)) goto fail;
