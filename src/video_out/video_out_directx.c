@@ -151,7 +151,6 @@ typedef struct {
   xine_t                  *xine;
 } directx_class_t;
 
-char *config_hwaccel_values[] = {"full", "scale", "none", NULL };
 
 /* -----------------------------------------
  *
@@ -163,7 +162,7 @@ char *config_hwaccel_values[] = {"full", "scale", "none", NULL };
 /* Display formatted error message in
  * popup message box.*/
 
-static void Error( HWND hwnd, LPSTR szfmt, ... )
+static void Error( HWND hwnd, LPCSTR szfmt, ... )
 {
   char tempbuff[ 256 ];
   *tempbuff = 0;
@@ -1262,6 +1261,7 @@ static vo_driver_t *open_plugin (video_driver_class_t *class_gen, const void *wi
   directx_class_t *class = (directx_class_t *)class_gen;
   win32_driver_t  *win32_driver = calloc(1, sizeof(win32_driver_t));
 
+  static const char * const config_hwaccel_values[] = {"full", "scale", "none", NULL };
 
   _x_alphablend_init(&win32_driver->alphablend_extra_data, class->xine);
 
@@ -1284,7 +1284,7 @@ static vo_driver_t *open_plugin (video_driver_class_t *class_gen, const void *wi
   win32_driver->vo_driver.redraw_needed         = win32_redraw_needed;
 
   win32_driver->hwaccel = class->config->register_enum(class->config,
-    "video.directx.hwaccel", 0, config_hwaccel_values,
+    "video.directx.hwaccel", 0, (char**)config_hwaccel_values,
     _("HW acceleration level"),
     _("Possible values (default full):\n\n"
 "full: full acceleration\n"
