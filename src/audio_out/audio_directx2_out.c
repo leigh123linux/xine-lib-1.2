@@ -224,7 +224,7 @@ static void dsound_destroy(LPDIRECTSOUND ds) {
 
 /* fill out wave format header */
 static void dsound_fill_wfx(WAVEFORMATEX *wfx, uint32_t bits, uint32_t rate, int channels, size_t frame_size) {
-  memset(wfx, 0, sizeof(wfx));
+  memset(wfx, 0, sizeof(*wfx));
   wfx->wFormatTag = WAVE_FORMAT_PCM;
   wfx->nChannels = channels;
   wfx->nSamplesPerSec = rate;
