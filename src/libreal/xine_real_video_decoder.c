@@ -178,7 +178,9 @@ static int load_syms_linux (realdec_decoder_t *this, const char *codec_name, con
 static int init_codec (realdec_decoder_t *this, buf_element_t *buf) {
 
   /* unsigned int* extrahdr = (unsigned int*) (buf->content+28); */
+#ifdef LOG
   int           result;
+#endif
   rv_init_t     init_data = {11, 0, 0, 0, 0, 0, 1, 0}; /* rv30 */
 
   switch (buf->type) {
@@ -252,7 +254,10 @@ static int init_codec (realdec_decoder_t *this, buf_element_t *buf) {
 
   this->context = NULL;
 
-  result = this->rvyuv_init (&init_data, &this->context);
+#ifdef LOG
+  result =
+#endif
+    this->rvyuv_init (&init_data, &this->context);
 
   lprintf ("init result: %d\n", result);
 
@@ -349,8 +354,9 @@ static void realdec_decode_data (video_decoder_t *this_gen, buf_element_t *buf) 
       lprintf ("special buffer (%d bytes)\n", buf->size);
 
       if (buf->decoder_info[1] == BUF_SPECIAL_RV_CHUNK_TABLE) {
-
+#ifdef LOG
         int            result;
+#endif
         vo_frame_t    *img;
 
         transform_out_t transform_out;
@@ -387,7 +393,10 @@ static void realdec_decode_data (video_decoder_t *this_gen, buf_element_t *buf) 
                       2*(buf->decoder_info[2]+1)*sizeof(uint32_t));
 #endif
 
-        result = this->rvyuv_transform (this->chunk_buffer,
+#ifdef LOG
+        result =
+#endif
+          this->rvyuv_transform (this->chunk_buffer,
                                         this->frame_buffer,
                                         &transform_in,
                                         &transform_out,

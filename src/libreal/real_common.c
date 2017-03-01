@@ -69,7 +69,9 @@ void __ctype_b(void) { exit(0); }
 #endif
 
 void _x_real_codecs_init(xine_t *const xine) {
-  const char *real_codecs_path = NULL;
+#ifdef LOG
+  const char *real_codecs_path;
+#endif
 #ifdef REAL_CODEC_PATH
   const char *const default_real_codecs_path = REAL_CODEC_PATH;
 #else
@@ -132,7 +134,9 @@ void _x_real_codecs_init(xine_t *const xine) {
 
 #endif
 
+#ifdef LOG
   real_codecs_path =
+#endif
     xine->config->register_filename (xine->config, "decoder.external.real_codecs_path",
 				     default_real_codecs_path,
 				     XINE_CONFIG_STRING_IS_DIRECTORY_NAME,

@@ -395,7 +395,9 @@ static void realdec_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) 
       } else {
 	audio_buffer_t *audio_buffer;
 	int n, len;
+#ifdef LOG
 	int result;
+#endif
 
 	memcpy (this->frame_buffer + this->frame_num_bytes,
 		buf->content + buf->size - size, need);
@@ -407,7 +409,10 @@ static void realdec_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) 
 
 	  audio_buffer = this->stream->audio_out->get_buffer (this->stream->audio_out);
 
-	  result = this->raDecode (this->context,
+#ifdef LOG
+	  result =
+#endif
+            this->raDecode (this->context,
 				   this->frame_buffer + n,
 				   this->block_align,
 				   (char *) audio_buffer->mem, &len, -1);
