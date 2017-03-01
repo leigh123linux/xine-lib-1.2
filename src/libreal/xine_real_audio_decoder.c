@@ -75,7 +75,7 @@ typedef struct realdec_decoder_s {
   uint32_t       (*raOpenCodec2)(ra_codec_t *, const char *);
   uint32_t       (*raSetFlavor)(ra_codec_t, uint16_t);
   void           (*raSetDLLAccessPath)(char *);
-  void           (*raSetPwd)(ra_codec_t, char *);
+  void           (*raSetPwd)(ra_codec_t, const char *);
 
   ra_codec_t       context;
 
