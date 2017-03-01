@@ -798,7 +798,7 @@ int xine_socket_cloexec(int domain, int type, int protocol)
 #  define XINE_MEM_ALIGN 32
 #endif
 #define XINE_MEM_ADD (sizeof (size_t) + XINE_MEM_ALIGN)
-#define XINE_MEM_MASK ((unsigned long int)XINE_MEM_ALIGN - 1)
+#define XINE_MEM_MASK ((uintptr_t)XINE_MEM_ALIGN - 1)
 
 void *xine_mallocz_aligned (size_t size) {
   uint8_t *new;
@@ -808,7 +808,7 @@ void *xine_mallocz_aligned (size_t size) {
     return NULL;
   sp = (size_t *)new;
   *sp = size;
-  new = (uint8_t *)(((unsigned long int)new + XINE_MEM_ADD) & ~XINE_MEM_MASK);
+  new = (uint8_t *)(((uintptr_t)new + XINE_MEM_ADD) & ~XINE_MEM_MASK);
   new[-1] = new - (uint8_t *)sp;
   return new;
 }
@@ -821,7 +821,7 @@ void *xine_malloc_aligned (size_t size) {
     return NULL;
   sp = (size_t *)new;
   *sp = size;
-  new = (uint8_t *)(((unsigned long int)new + XINE_MEM_ADD) & ~XINE_MEM_MASK);
+  new = (uint8_t *)(((uintptr_t)new + XINE_MEM_ADD) & ~XINE_MEM_MASK);
   new[-1] = new - (uint8_t *)sp;
   return new;
 }
@@ -847,7 +847,7 @@ void *xine_realloc_aligned (void *ptr, size_t size) {
     return NULL;
   sp = (size_t *)new;
   *sp = size;
-  new = (uint8_t *)(((unsigned long int)new + XINE_MEM_ADD) & ~XINE_MEM_MASK);
+  new = (uint8_t *)(((uintptr_t)new + XINE_MEM_ADD) & ~XINE_MEM_MASK);
   new[-1] = new - (uint8_t *)sp;
   /* realloc () may break the alignment, requiring a slow memmove () afterwards */
   if (old) {
