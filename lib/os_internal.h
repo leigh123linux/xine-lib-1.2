@@ -84,7 +84,9 @@
 #endif
 
 #include <inttypes.h>
+#ifndef HAVE_PTHREAD_MUTEX_TIMEDLOCK
 #include <pthread.h>
+#endif
 #include <xine/attributes.h>
 
 
