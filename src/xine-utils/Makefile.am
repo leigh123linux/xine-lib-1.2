@@ -34,6 +34,8 @@ libxineutils_la_SOURCES = $(pppc_files) \
 	pool.c \
 	ring_buffer.c
 
+if !WIN32
 noinst_PROGRAMS = xmltest
 xmltest_SOURCES = xmllexer.c xmlparser.c
 xmltest_CFLAGS = -DLOG -DXINE_XML_PARSER_TEST $(AM_CFLAGS)
+endif
