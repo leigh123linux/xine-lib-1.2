@@ -613,7 +613,10 @@ static void dxr3_flush(video_decoder_t *this_gen)
      * with no sequence end code. Since it is very likely that flush() is called
      * in still situations, we send one here. */
     static const uint8_t end_buffer[4] = { 0x00, 0x00, 0x01, 0xb7 };
-    write(this->fd_video, &end_buffer, 4);
+    if (write(this->fd_video, &end_buffer, 4) != 4) {
+      xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
+              _("dxr3_decode_video: video device write failed (%s)\n"), strerror(errno));
+    }
     this->sequence_open = 0;
     xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG, "dxr3_decode_video: WARNING: added missing end sequence\n");
   }

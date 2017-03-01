@@ -851,7 +851,10 @@ static void dxr3_overlay_end(vo_driver_t *this_gen, vo_frame_t *frame_gen)
       0x00, 0x01, 0x00, 0x20, 0x02, 0xFF };
     /* just clear any previous spu */
     dxr3_spu_button(this->fd_spu, NULL);
-    write(this->fd_spu, empty_spu, sizeof(empty_spu));
+    if (write(this->fd_spu, empty_spu, sizeof(empty_spu)) != sizeof(empty_spu)) {
+      xprintf(this->class->xine, XINE_VERBOSITY_DEBUG,
+              "video_out_dxr3: spu device write failed (%s)\n", strerror(errno));
+    }
     pthread_mutex_unlock(&this->spu_device_lock);
     return;
   }
@@ -1231,7 +1234,10 @@ static void dxr3_dispose(vo_driver_t *this_gen)
       0x00, 0x01, 0x00, 0x20, 0x02, 0xFF };
     /* clear any remaining spu */
     dxr3_spu_button(this->fd_spu, NULL);
-    write(this->fd_spu, empty_spu, sizeof(empty_spu));
+    if (write(this->fd_spu, empty_spu, sizeof(empty_spu)) != sizeof(empty_spu)) {
+      xprintf(this->class->xine, XINE_VERBOSITY_DEBUG,
+              "video_out_dxr3: spu device write failed (%s)\n", strerror(errno));
+    }
     close(this->fd_spu);
   }
   pthread_mutex_unlock(&this->spu_device_lock);

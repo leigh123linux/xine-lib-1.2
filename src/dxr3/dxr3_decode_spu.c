@@ -376,7 +376,10 @@ static void dxr3_spudec_decode_data(spu_decoder_t *this_gen, buf_element_t *buf)
 	this->button_filter = 1;
 	pthread_mutex_lock(&this->dxr3_vo->spu_device_lock);
         dxr3_spu_button(this->fd_spu, NULL);
-        write(this->fd_spu, empty_spu, sizeof(empty_spu));
+        if (write(this->fd_spu, empty_spu, sizeof(empty_spu)) != sizeof(empty_spu)) {
+          xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
+                  _("dxr3_decode_spu: spu device write failed (%s)\n"), strerror(errno));
+        }
 	pthread_mutex_unlock(&this->dxr3_vo->spu_device_lock);
       }
     }
@@ -557,7 +560,10 @@ static void dxr3_spudec_dispose(spu_decoder_t *this_gen)
   pthread_mutex_lock(&this->dxr3_vo->spu_device_lock);
   /* clear any remaining spu */
   dxr3_spu_button(this->fd_spu, NULL);
-  write(this->fd_spu, empty_spu, sizeof(empty_spu));
+  if (write(this->fd_spu, empty_spu, sizeof(empty_spu)) != sizeof(empty_spu)) {
+    xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
+            _("dxr3_decode_spu: spu device write failed (%s)\n"), strerror(errno));
+  }
   close(this->fd_spu);
   this->fd_spu = 0;
   this->dxr3_vo->fd_spu = 0;
