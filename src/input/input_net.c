@@ -45,15 +45,18 @@
 #include <fcntl.h>
 #include <string.h>
 #include <sys/socket.h>
+#ifdef HAVE_NETINET_IN_H
 #include <netinet/in.h>
+#endif
 
 #ifdef ENABLE_IPV6
 #include <sys/types.h>
-#include <netdb.h>
 #endif
 
-#ifndef WIN32
+#ifdef HAVE_ARPA_INET_H
 #include <arpa/inet.h>
+#endif
+#ifdef HAVE_NETDB_H
 #include <netdb.h>
 #endif
 

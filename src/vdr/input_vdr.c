@@ -33,9 +33,13 @@
 #include <pthread.h>
 
 #include <sys/socket.h>
+#ifdef HAVE_NETINET_IN_H
 #include <netinet/in.h>
+#endif
 #include <resolv.h>
+#ifdef HAVE_NETDB_H
 #include <netdb.h>
+#endif
 
 #define LOG_MODULE "input_vdr"
 #define LOG_VERBOSE

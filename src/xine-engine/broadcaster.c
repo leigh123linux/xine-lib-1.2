@@ -50,11 +50,15 @@
 #include <errno.h>
 #include <sys/time.h>
 #include <sys/socket.h>
+#ifdef HAVE_NETINET_IN_H
 #include <netinet/in.h>
+#endif
+#ifdef HAVE_ARPA_INET_H
+#include <arpa/inet.h>
+#endif
 
 #ifndef WIN32
 #include <sys/ioctl.h>
-#include <arpa/inet.h>
 #include <netdb.h>
 #endif
 

@@ -51,10 +51,14 @@
 #  include <winioctl.h>
 #endif
 
+#ifdef HAVE_NETDB_H
 #include <netdb.h>
+#endif
 
 #include <signal.h>
+#ifdef HAVE_NETINET_IN_H
 #include <netinet/in.h>
+#endif
 #include <sys/socket.h>
 
 #include <basedir.h>

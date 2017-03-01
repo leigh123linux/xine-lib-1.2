@@ -146,7 +146,9 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <string.h>
+#ifdef HAVE_ARPA_INET_H
 #include <arpa/inet.h>
+#endif
 
 #define LOG_MODULE "demux_ts"
 #define LOG_VERBOSE

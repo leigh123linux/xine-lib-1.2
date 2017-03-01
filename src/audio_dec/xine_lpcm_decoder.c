@@ -41,8 +41,12 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#ifdef HAVE_ARPA_INET_H
 #include <arpa/inet.h> /* htons */
+#endif
+#ifdef HAVE_NETINET_IN_H
 #include <netinet/in.h> /* ntohs */
+#endif
 
 #include <xine/xine_internal.h>
 #include <xine/audio_out.h>
