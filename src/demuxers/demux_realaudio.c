@@ -79,7 +79,7 @@ typedef struct {
 } demux_ra_class_t;
 
 /* Map flavour to bytes per second */
-static const int sipr_fl2bps[4] = {813, 1062, 625, 2000}; // 6.5, 8.5, 5, 16 kbit per second
+//static const int sipr_fl2bps[4] = {813, 1062, 625, 2000}; // 6.5, 8.5, 5, 16 kbit per second
 
 /* returns 1 if the RealAudio file was opened successfully, 0 otherwise */
 static int open_ra_file(demux_ra_t *this) {
