@@ -44,7 +44,9 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <string.h>
+#ifdef HAVE_SYS_SOCKET_H
 #include <sys/socket.h>
+#endif
 #ifdef HAVE_NETINET_IN_H
 #include <netinet/in.h>
 #endif

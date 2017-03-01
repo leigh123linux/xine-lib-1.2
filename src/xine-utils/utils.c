@@ -45,7 +45,9 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <ctype.h>
+#ifdef HAVE_SYS_SOCKET_H
 #include <sys/socket.h>
+#endif
 
 #if HAVE_EXECINFO_H
 #include <execinfo.h>
