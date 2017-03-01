@@ -91,19 +91,19 @@ typedef union {
 
 static const yuy2_color_t /* SD, mpeg range */
   tdaan_BLACK       = {{ 16, 128,  16, 128}},
-  tdaan_DARK_BLUE   = {{ 61, 190,  61, 118}},
+//tdaan_DARK_BLUE   = {{ 61, 190,  61, 118}},
   tdaan_DARK_RED    = {{ 83, 107,  83, 190}},
-  tdaan_DARK_MAGENTA= {{ 97, 169,  97, 180}},
+//tdaan_DARK_MAGENTA= {{ 97, 169,  97, 180}},
   tdaan_DARK_GREEN  = {{124,  87, 124,  76}},
-  tdaan_DARK_CYAN   = {{132, 149, 132,  66}},
+//tdaan_DARK_CYAN   = {{132, 149, 132,  66}},
   tdaan_DARK_YELLOW = {{155,  66, 155, 138}},
   tdaan_GREY        = {{128, 128, 128, 128}},
   tdaan_LIGHT_GRAY  = {{170, 128, 170, 128}},
-  tdaan_BLUE        = {{ 74, 209,  74, 115}},
+//tdaan_BLUE        = {{ 74, 209,  74, 115}},
   tdaan_RED         = {{103, 101, 103, 209}},
-  tdaan_MAGENTA     = {{121, 181, 121, 196}},
+//tdaan_MAGENTA     = {{121, 181, 121, 196}},
   tdaan_GREEN       = {{148,  74, 148,  60}},
-  tdaan_CYAN        = {{166, 155, 166,  47}},
+//tdaan_CYAN        = {{166, 155, 166,  47}},
   tdaan_YELLOW      = {{195,  47, 195, 141}},
   tdaan_WHITE       = {{220, 128, 220, 128}};
 
