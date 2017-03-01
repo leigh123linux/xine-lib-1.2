@@ -26,6 +26,7 @@ AC_DEFUN([XINE_INPUT_PLUGINS], [
         cygwin* | mingw*)
             default_enable_gnomevfs=no
             default_enable_samba=no
+            default_enable_vdr=no
             ;;
         darwin*)
             default_enable_gnomevfs=no

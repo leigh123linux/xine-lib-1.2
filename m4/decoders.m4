@@ -85,7 +85,7 @@ AC_DEFUN([XINE_DECODER_PLUGINS], [
     AM_CONDITIONAL([WITH_EXTERNAL_FAAD], [test x"$have_external_faad" = x"yes"])
 
     dnl ffmpeg (optional, enabled by default)
-    dnl this also affects dxr3 and vaapi
+    dnl this also affects dxr3
     AC_ARG_ENABLE([ffmpeg],
         [AS_HELP_STRING([--disable-ffmpeg], [Disable support for FFmpeg decoders (default: enabled)])])
     if test x"$enable_ffmpeg" != x"no" ; then
@@ -245,7 +245,6 @@ AC_DEFUN([XINE_DECODER_PLUGINS], [
         elif test x"$prefix" != x"NONE"; then
             LIBFLAC_CFLAGS="-I$prefix/include"
         fi
-        AC_SUBST(LIBFLAC_CFLAGS)
 
         if test x"$with_libFLAC_libraries" != x""; then
             LIBFLAC_LIBS="-L$with_libFLAC_libraries"
@@ -254,7 +253,6 @@ AC_DEFUN([XINE_DECODER_PLUGINS], [
         elif test x"$prefix" != x"NONE"; then
             LIBFLAC_LIBS="-L$prefix/$XINE_LIBDIRNAME"
         fi
-        AC_SUBST(LIBFLAC_LIBS)
 
         ac_save_CPPFLAGS="$CPPFLAGS" CPPFLAGS="$CPPFLAGS $LIBFLAC_CFLAGS"
         AC_CHECK_LIB([FLAC], [FLAC__stream_decoder_new],
@@ -264,11 +262,20 @@ AC_DEFUN([XINE_DECODER_PLUGINS], [
                      [have_libflac=no], [-lm])
         CPPFLAGS="$ac_save_CPPFLAGS"
 
+        if test x"$have_libflac" != x"yes"; then
+          PKG_CHECK_MODULES([LIBFLAC], [flac],
+                            [have_libflac=yes],
+                            [have_libflac=no])
+        fi
+
         if test x"$with_libflac" = x"yes" && test x"$have_libflac" != x"yes"; then
             AC_MSG_ERROR([libFLAC-based decoder support requested, but libFLAC not found])
         elif test x"$have_libflac" != x"yes"; then
             LIBFLAC_CFLAGS="" LIBFLAC_LIBS=""
         fi
+
+        AC_SUBST(LIBFLAC_CFLAGS)
+        AC_SUBST(LIBFLAC_LIBS)
     fi
     AM_CONDITIONAL([ENABLE_LIBFLAC], [test x"$have_libflac" = x"yes"])
 

@@ -99,7 +99,7 @@ AC_DEFUN([AM_PATH_XINE], [
             AC_MSG_NOTICE([
 *** You need a version of xine-lib newer than $XINE_VERSION.
 *** The latest version of xine-lib is always available from:
-***        http://www.xinehq.de
+***        http://www.xine-project.org
 ***
 *** If you have already installed a sufficiently new version, this error
 *** probably means that the wrong copy of the xine-config shell script is
