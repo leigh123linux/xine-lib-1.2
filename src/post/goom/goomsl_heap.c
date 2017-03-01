@@ -1,4 +1,6 @@
 #include "goomsl_heap.h"
+
+#include <stdint.h>
 #include <stdlib.h>
 
 struct _GOOM_HEAP {
