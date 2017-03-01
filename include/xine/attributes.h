@@ -44,7 +44,7 @@
 
 # if __GNUC__ >= 4
 #  define SUPPORT_ATTRIBUTE_VISIBILITY_DEFAULT 1
-#  if __ELF__
+#  if defined(__ELF__) && __ELF__
 #   define SUPPORT_ATTRIBUTE_VISIBILITY_PROTECTED 1
 #  endif
 #  define SUPPORT_ATTRIBUTE_SENTINEL 1
