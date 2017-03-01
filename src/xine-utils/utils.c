@@ -374,9 +374,8 @@ const char *xine_get_homedir(void) {
 #ifdef WIN32
   static char homedir[1024] = {0, };
   char *s;
-  int len;
 
-  len = xine_strcpy_command(GetCommandLine(), homedir, sizeof(homedir));
+  xine_strcpy_command(GetCommandLine(), homedir, sizeof(homedir));
   s = strdup(homedir);
   GetFullPathName(s, sizeof(homedir), homedir, NULL);
   free(s);
