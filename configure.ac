@@ -346,7 +346,7 @@ AC_HEADER_STDC
 
 AC_CHECK_HEADERS([alloca.h])
 AC_CHECK_HEADERS([assert.h byteswap.h dirent.h errno.h execinfo.h fcntl.h glob.h])
-AC_CHECK_HEADERS([libgen.h malloc.h netdb.h stdbool.h ucontext.h])
+AC_CHECK_HEADERS([libgen.h malloc.h netdb.h pwd.h stdbool.h ucontext.h])
 AC_CHECK_HEADERS([sys/ioctl.h sys/mixer.h sys/mman.h sys/param.h sys/times.h sys/wait.h sys/sysmacros.h])
 AC_CHECK_HEADERS([arpa/inet.h netinet/in.h])
 

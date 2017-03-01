@@ -36,7 +36,9 @@
 #include "../xine-engine/bswap.h"
 
 #include <errno.h>
+#ifdef HAVE_PWD_H
 #include <pwd.h>
+#endif
 #include <sys/types.h>
 #include <sys/time.h>
 #include <time.h>
