@@ -4,7 +4,7 @@
 
 include $(top_srcdir)/misc/Makefile.quiet
 
-AUTOMAKE_OPTIONS = 1.9 no-dist-gzip dist-xz
+AUTOMAKE_OPTIONS = 1.10 no-dist-gzip dist-xz
 
 ACLOCAL_AMFLAGS = -I m4
 
