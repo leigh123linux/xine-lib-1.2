@@ -31,7 +31,7 @@
 
 #include <xine/xine_internal.h>
 
-const plugin_info_t xine_builtin_plugin_info[7];
+extern const plugin_info_t xine_builtin_plugin_info[7];
 
 #endif
 
