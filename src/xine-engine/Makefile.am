@@ -13,6 +13,9 @@ YUV_LIB = $(top_builddir)/src/video_out/libyuv2rgb.la
 # FIXME: these are currently unused:
 EXTRA_DIST = lrb.c lrb.h accel_vaapi.h accel_vdpau.h accel_xvmc.h
 
+BUILT_SOURCES = dummy.c
+CLEANFILES = dummy.c
+
 if WIN32
 DEF_FILE = libxine-$(XINE_MAJOR).def
 def_ldflags=-Wl,--output-def,$(DEF_FILE)
@@ -48,7 +51,11 @@ libxine_la_LDFLAGS = $(LDFLAGS_NOUNDEFINED) $(AM_LDFLAGS) $(def_ldflags) $(GCSEC
 	-weak libxine-interface.la \
 	-version-info $(XINE_LT_CURRENT):$(XINE_LT_REVISION):$(XINE_LT_AGE)
 
-libxine_interface_la_SOURCES =
+dummy.c:
+	$(AM_V_at)rm -f dummy.c
+	$(AM_V_GEN)echo '/* Automatically generated */' > dummy.c
+
+libxine_interface_la_SOURCES = dummy.c
 
 libxine_interface_la_LDFLAGS = $(AM_LDFLAGS) $(def_ldflags) \
 	-version-info $(XINE_LT_CURRENT):$(XINE_LT_REVISION):$(XINE_LT_AGE)
