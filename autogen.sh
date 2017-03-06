@@ -25,9 +25,9 @@
 PROG=xine-lib
 
 # Minimum value required to build
-export WANT_AUTOMAKE_1_10=1
-export WANT_AUTOMAKE=1.10
-AUTOMAKE_MIN=1.10.0
+export WANT_AUTOMAKE_1_11=1
+export WANT_AUTOMAKE=1.11
+AUTOMAKE_MIN=1.11.0
 AUTOCONF_MIN=2.59
 LIBTOOL_MIN=1.5.20
 
