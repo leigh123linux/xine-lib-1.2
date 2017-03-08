@@ -992,6 +992,111 @@ static void handle_sub_utf8 (demux_plugin_t *this_gen, matroska_track_t *track,
   }
 }
 
+/* 0x02 (not a keyframe) | 0x01 (is visible) */
+static int vp9_frametype (const uint8_t *h) {
+  if ((h[0] & 0xc0) != 0x80) /* frame marker missing */
+    return 1;
+  if ((h[0] & 0x30) == 0x30) { /* profile 3+ */
+    if (h[0] & 0x08) /* profile 4+ not supported */
+      return 0;
+    if (h[0] & 0x04) /* 3 bits ref */
+      return 1;
+    return h[0] & 3;
+  }
+  if (h[0] & 0x08) /* 3 bits ref */
+    return 1;
+  return (h[0] >> 1) & 3;
+}
+
+static void handle_vp9 (demux_plugin_t *this_gen, matroska_track_t *track, int decoder_flags,
+  uint8_t *data, size_t data_len, int64_t data_pts, int data_duration, int input_normpos, int input_time) {
+  /* !@$%*#~ undocumented multiframe feature */
+  do {
+    uint8_t mfhead;
+    uint8_t *l;
+    int mfframes, i;
+    size_t mfbytes, mfsize;
+
+    if (!data_len)
+      return;
+    mfhead = data[data_len - 1];
+    if ((mfhead & 0xe0) != 0xc0)
+      break;
+    mfframes =  (mfhead & 7) + 1;
+    mfbytes  = ((mfhead >> 3) & 3) + 1;
+    mfsize   =   mfframes * mfbytes + 2;
+    if (mfsize > data_len)
+      break;
+    l = data + data_len - mfsize;
+    if (*l++ != mfhead)
+      break;
+    data_len -= mfsize;
+    data_duration /= mfframes;
+    for (i = 0; i < mfframes; i++) {
+      size_t flen = *l++;
+      if (mfbytes > 1)
+        flen += (size_t)(*l++) << 8;
+      if (mfbytes > 2)
+        flen += (size_t)(*l++) << 16;
+      if (mfbytes > 3)
+        flen += (size_t)(*l++) << 24;
+      if (flen > data_len)
+        flen = data_len;
+      if (flen) {
+        /* Nasty kludge: take invisible frames out of pts sequence.
+         * A conventional b-frame sequence looks like this:
+         * I1 P1 B1 B2 B3 P2 B4 ...
+         * after reordering:
+         * I1 B1 B2 B3 P1 B4 ... P2
+         * VP9 now avoids reordering and storing both dts and pts
+         * by adding "P" as "invisible" to a (multiframe group):
+         * I1 (P1 B1) B2 B3 (P2 B4) ...
+         * "B3" usually is very small, and yields a quite verbatim copy of "P1",
+         * which does not stay completely hidden this way.
+         */
+        int64_t pts = data_pts;
+        int type = vp9_frametype (data);
+        if (type & 2)
+          decoder_flags &= ~BUF_FLAG_KEYFRAME;
+        else
+          decoder_flags |= BUF_FLAG_KEYFRAME;
+        if (type & 1) { /* visible */
+          if (!pts)
+            pts = track->delayed_pts;
+          track->delayed_pts = data_pts = 0;
+        } else { /* invisible */
+          pts = 0;
+          track->delayed_pts = data_pts;
+        }
+        _x_demux_send_data (track->fifo, data, flen, pts, track->buf_type,
+          decoder_flags, input_normpos, input_time, data_duration, 0);
+        data += flen;
+        data_len -= flen;
+      }
+    }
+    return;
+  } while (0);
+
+  {
+    int64_t pts = data_pts;
+    int type = vp9_frametype (data);
+    if (type & 2)
+      decoder_flags &= ~BUF_FLAG_KEYFRAME;
+    else
+      decoder_flags |= BUF_FLAG_KEYFRAME;
+    if (type & 1) { /* visible */
+      if (!pts)
+        pts = track->delayed_pts;
+      track->delayed_pts = data_pts = 0;
+    } else { /* invisible */
+      pts = 0;
+      track->delayed_pts = data_pts;
+    }
+    _x_demux_send_data (track->fifo, data, data_len, pts, track->buf_type,
+      decoder_flags, input_normpos, input_time, data_duration, 0);
+  }
+}
+
 
 static int uncompress_zlib(demux_matroska_t *this,
                            const uint8_t *data, size_t data_len, uint8_t **out_data, size_t *out_data_len)
@@ -1463,6 +1568,7 @@ static int parse_track_entry(demux_matroska_t *this, matroska_track_t *track) {
       fill_extra_data(track, ME_FOURCC('v', 'p', '9', '0'));
       track->buf_type = BUF_VIDEO_VP9;
       init_codec = init_codec_video;
+      track->handle_content = handle_vp9;
     } else if (!strcmp(track->codec_id, MATROSKA_CODEC_ID_V_HEVC)) {
       lprintf("MATROSKA_CODEC_ID_V_HEVC\n");
       fill_extra_data(track, ME_FOURCC('h', 'e', 'v', 'c'));
@@ -2067,17 +2173,13 @@ static int parse_block (demux_matroska_t *this, size_t block_size,
     }
 
     if (track->handle_content != NULL) {
-      track->handle_content((demux_plugin_t *)this, track,
-                             decoder_flags,
-                             data, block_size_left,
-                             pts, xduration,
-                             normpos, pts / 90);
+      track->handle_content ((demux_plugin_t *)this, track, decoder_flags,
+        data, block_size_left, pts, xduration, normpos, pts / 90);
     } else {
-      _x_demux_send_data(track->fifo, data, block_size_left,
-                         pts, track->buf_type, decoder_flags,
-                         normpos, pts / 90,
-                         this->duration, 0);
+      _x_demux_send_data (track->fifo, data, block_size_left, pts, track->buf_type,
+        decoder_flags, normpos, pts / 90, this->duration, 0);
     }
+
   } else {
 
     size_t block_size_left;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2000-2016 the xine project
+ * Copyright (C) 2000-2017 the xine project
  *
  * This file is part of xine, a free video player.
  *
@@ -283,6 +283,7 @@ struct matroska_track_s {
   matroska_sub_track_t    *sub_track;
 
   int64_t                  last_pts;
+  int64_t                  delayed_pts;
 
   void                   (*handle_content) (demux_plugin_t *this_gen,
                                             matroska_track_t *track,
