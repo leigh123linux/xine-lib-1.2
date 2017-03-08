@@ -2054,6 +2054,9 @@ static int parse_block (demux_matroska_t *this, size_t block_size,
     size_t block_size_left;
     lprintf("no lacing\n");
 
+    if (is_key)
+      decoder_flags |= BUF_FLAG_KEYFRAME;
+
     block_size_left = (this->block_data + block_size + this->compress_maxlen) - data;
     lprintf("size: %d, block_size: %u, block_offset: %u\n", block_size_left, block_size, this->compress_maxlen);
 
