@@ -238,38 +238,45 @@ AC_DEFUN([XINE_DECODER_PLUGINS], [
         esac
         AC_MSG_RESULT([$XINE_LIBDIRNAME])
 
+        dnl try to get automatic defaults, and dont abort when failing.
+        dnl we need to do this before setting LIBFLAC_LIBS manually, or it will always succeed.
+        PKG_CHECK_MODULES([LIBFLAC], [flac], [have_libflac=yes], [have_libflac=no])
+
+        dnl user overrides
         if test x"$with_libFLAC_includes" != x""; then
+            have_libflac=user
             LIBFLAC_CFLAGS="-I$with_libFLAC_includes"
         elif test x"$with_libFLAC_prefix" != x""; then
+            have_libflac=user
             LIBFLAC_CFLAGS="-I$with_libFLAC_prefix/include"
-        elif test x"$prefix" != x"NONE"; then
+        elif test x"$have_libflac" != x"yes" -a x"$prefix" != x"NONE"; then
+            have_libflac=user
             LIBFLAC_CFLAGS="-I$prefix/include"
         fi
 
         if test x"$with_libFLAC_libraries" != x""; then
+            have_libflac=user
             LIBFLAC_LIBS="-L$with_libFLAC_libraries"
         elif test x"$with_libFLAC_prefix" != x""; then
+            have_libflac=user
             LIBFLAC_LIBS="-L$with_libFLAC_prefix/$XINE_LIBDIRNAME"
-        elif test x"$prefix" != x"NONE"; then
+        elif test x"$have_libflac" != x"yes" -a x"$prefix" != x"NONE"; then
+            have_libflac=user
             LIBFLAC_LIBS="-L$prefix/$XINE_LIBDIRNAME"
         fi
 
-        ac_save_CPPFLAGS="$CPPFLAGS" CPPFLAGS="$CPPFLAGS $LIBFLAC_CFLAGS"
-        AC_CHECK_LIB([FLAC], [FLAC__stream_decoder_new],
-                     [AC_CHECK_HEADERS([FLAC/stream_decoder.h],
-                                       [have_libflac=yes LIBFLAC_LIBS="$LIBFLAC_LIBS -lFLAC -lm"],
-                                       [have_libflac=no])],
-                     [have_libflac=no], [-lm])
-        CPPFLAGS="$ac_save_CPPFLAGS"
-
-        if test x"$have_libflac" != x"yes"; then
-          PKG_CHECK_MODULES([LIBFLAC], [flac],
-                            [have_libflac=yes],
-                            [have_libflac=no])
+        dnl now test for usability
+        if test x"have_libflac" = x"user" ; then
+            ac_save_CPPFLAGS="$CPPFLAGS" CPPFLAGS="$CPPFLAGS $LIBFLAC_CFLAGS"
+            AC_CHECK_LIB([FLAC], [FLAC__stream_decoder_new],
+                [AC_CHECK_HEADERS([FLAC/stream_decoder.h],
+                    [have_libflac=yes LIBFLAC_LIBS="$LIBFLAC_LIBS -lFLAC -lm"], [have_libflac=no])],
+                [have_libflac=no], [-lm])
+            CPPFLAGS="$ac_save_CPPFLAGS"
         fi
 
         if test x"$with_libflac" = x"yes" && test x"$have_libflac" != x"yes"; then
-            AC_MSG_ERROR([libFLAC-based decoder support requested, but libFLAC not found])
+            AC_MSG_WARN([libFLAC-based decoder support requested, but libFLAC not found])
         elif test x"$have_libflac" != x"yes"; then
             LIBFLAC_CFLAGS="" LIBFLAC_LIBS=""
         fi
