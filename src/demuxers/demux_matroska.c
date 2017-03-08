@@ -1235,7 +1235,8 @@ static void fill_extra_data(matroska_track_t *track, uint32_t fourcc) {
   bih->biCompression = fourcc;
   bih->biWidth = track->video_track->pixel_width;
   bih->biHeight = track->video_track->pixel_height;
-  _x_bmiheader_le2me(bih);
+  /* this is to be passed to decoder in native machine endian */
+  /* (no _x_bmiheader_le2me(bih);) */
 
   /* add bih extra data */
   memcpy(bih + 1, track->codec_private, track->codec_private_len);
