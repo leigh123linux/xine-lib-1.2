@@ -173,12 +173,14 @@ struct ff_video_decoder_s {
 
   /* Ugly: 2nd guess the reason for flush.
      ff_flush () should really have an extra argument telling this. */
-#define STATE_RESET         0
-#define STATE_DISCONTINUITY 1
-#define STATE_READING_DATA  2
-#define STATE_FRAME_SENT    3
-#define STATE_FLUSHED       4
-  int               state;
+  enum {
+    STATE_RESET = 0,
+    STATE_DISCONTINUITY,
+    STATE_READING_DATA,
+    STATE_FRAME_SENT,
+    STATE_FLUSHED
+  }                 state;
+  int               decode_attempts;
 
 #ifdef ENABLE_EMMS
   /* see get_buffer () */
@@ -1816,6 +1818,7 @@ static int decode_video_wrapper(ff_video_decoder_t *this, AVFrame *av_frame, int
   }
 # endif /* XFF_PALETTE */
 
+  this->decode_attempts++;
   len = avcodec_decode_video2 (this->context, av_frame,
                                got_picture, &avpkt);
 
@@ -1838,6 +1841,8 @@ static int decode_video_wrapper(ff_video_decoder_t *this, AVFrame *av_frame, int
 # endif /* XFF_PALETTE */
 
 #else /* XFF_VIDEO */
+
+  this->decode_attempts++;
   len = avcodec_decode_video (this->context, av_frame,
                               got_picture, buf, buf_size);
 #endif /* XFF_VIDEO */
@@ -2420,7 +2425,11 @@ static void ff_flush_internal (ff_video_decoder_t *this, int display) {
   AVRational  avr00 = {0, 1};
 
   /* This is a stripped version of ff_handle_buffer (). It shall return yet undisplayed frames. */
+
   if (!this->context || !this->decoder_ok || this->state == STATE_FLUSHED)
+    return;
+  /* For some reason, we are flushed right while reading the first frame?? */
+  if (!this->decode_attempts)
     return;
   this->state = STATE_FLUSHED;
 
@@ -2521,6 +2530,8 @@ static void ff_flush_internal (ff_video_decoder_t *this, int display) {
     av_frame_unref (this->av_frame2);
 #endif
   }
+
+  this->decode_attempts = 0;
 
   if (frames)
     xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG,
