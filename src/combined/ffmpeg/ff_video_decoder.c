@@ -110,6 +110,7 @@ struct ff_video_decoder_s {
   uint8_t           is_direct_rendering_disabled:1;  /* used only to avoid flooding log */
   uint8_t           cs_convert_init:1;
   uint8_t           assume_bad_field_picture:1;
+  uint8_t           use_bad_frames:1;
 
   xine_bmiheader    bih;
   unsigned char    *buf;
@@ -895,6 +896,10 @@ static void init_video_codec (ff_video_decoder_t *this, unsigned int codec_type)
   if (this->codec->id == CODEC_ID_SVQ3) {
     thread_count = 1;
   }
+
+  /* Use "bad frames" to fill pts gaps */
+  if (codec_type != BUF_VIDEO_VP9)
+    this->use_bad_frames = 1;
 
   /* Check for VAAPI HWDEC capability */
 #ifdef ENABLE_VAAPI
@@ -2317,7 +2322,7 @@ static void ff_handle_buffer (ff_video_decoder_t *this, buf_element_t *buf) {
     /* workaround for demux_mpeg_pes sending fields as frames:
      * do not generate a bad frame for the first field picture
      */
-    if (!got_one_picture && (this->size || this->video_step || this->assume_bad_field_picture)) {
+    if (!got_one_picture && this->use_bad_frames && (this->size || this->video_step || this->assume_bad_field_picture)) {
       /* skipped frame, output a bad frame (use size 16x16, when size still uninitialized) */
       img = this->stream->video_out->get_frame (this->stream->video_out,
                                                 (this->bih.biWidth  <= 0) ? 16 : ((this->bih.biWidth  + 15) & ~15),
