@@ -215,6 +215,7 @@ static vo_driver_t *dxr3_vo_open_plugin(video_driver_class_t *class_gen, const v
   int encoder, confnum;
   static const char *available_encoders[SUPPORTED_ENCODER_COUNT + 2];
   plugin_node_t *node = NULL; /* unused inside dxr3_lavc_init () anyway... */
+  int fd_control;
 
   static const char *const videoout_modes[] = {
     "letterboxed tv", "widescreen tv",
@@ -230,8 +231,20 @@ static vo_driver_t *dxr3_vo_open_plugin(video_driver_class_t *class_gen, const v
   */
   if (class->instance) return NULL;
 
+  snprintf(tmpstr, sizeof(tmpstr), "/dev/em8300-%d", class->devnum);
+  llprintf(LOG_VID, "Entering video init, devname = %s.\n", tmpstr);
+  if ((fd_control = xine_open_cloexec(tmpstr, O_WRONLY)) < 0) {
+    xprintf(class->xine, XINE_VERBOSITY_LOG,
+            _("video_out_dxr3: Failed to open control device %s (%s)\n"), tmpstr, strerror(errno));
+    return NULL;
+  }
+
+
   this = calloc(1, sizeof(dxr3_driver_t));
-  if (!this) return NULL;
+  if (!this) {
+    close(fd_control);
+    return NULL;
+  }
 
   this->vo_driver.get_capabilities     = dxr3_get_capabilities;
   this->vo_driver.alloc_frame          = dxr3_alloc_frame;
@@ -253,6 +266,7 @@ static vo_driver_t *dxr3_vo_open_plugin(video_driver_class_t *class_gen, const v
   _x_vo_scale_init(&this->scale, 0, 0, config);
   _x_alphablend_init(&this->alphablend_extra_data, class->xine);
 
+  this->fd_control = fd_control;
   this->fd_spu = -1;
 
   this->class                          = class;
@@ -271,16 +285,6 @@ static vo_driver_t *dxr3_vo_open_plugin(video_driver_class_t *class_gen, const v
     _("use smooth play mode for mpeg encoder playback"),
     _("Enabling this option will utilise a smoother play mode for non-MPEG content."),
     20, dxr3_update_enhanced_mode, this);
-
-  snprintf(tmpstr, sizeof(tmpstr), "/dev/em8300-%d", class->devnum);
-  llprintf(LOG_VID, "Entering video init, devname = %s.\n", tmpstr);
-  if ((this->fd_control = xine_open_cloexec(tmpstr, O_WRONLY)) < 0) {
-
-    xprintf(this->class->xine, XINE_VERBOSITY_LOG,
-	    _("video_out_dxr3: Failed to open control device %s (%s)\n"), tmpstr, strerror(errno));
-
-    return 0;
-  }
 
   snprintf (tmpstr, sizeof(tmpstr), "/dev/em8300_mv-%d", class->devnum);
   if ((this->fd_video = xine_open_cloexec(tmpstr, O_WRONLY | O_SYNC )) < 0) {
