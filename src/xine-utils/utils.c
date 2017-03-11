@@ -868,6 +868,7 @@ size_t xine_base64_encode (uint8_t *from, char *to, size_t size) {
   uint8_t *q = (uint8_t *)to;
   int l = size;
   from[size] = 0;
+  from[size+1] = 0;
   while (l > 0) {
     uint32_t v = _X_BE_24 (p);
     p += 3;
