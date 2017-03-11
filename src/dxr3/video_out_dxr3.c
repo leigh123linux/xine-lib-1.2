@@ -290,7 +290,8 @@ static vo_driver_t *dxr3_vo_open_plugin(video_driver_class_t *class_gen, const v
   if ((this->fd_video = xine_open_cloexec(tmpstr, O_WRONLY | O_SYNC )) < 0) {
     xprintf(this->class->xine, XINE_VERBOSITY_LOG,
 	    _("video_out_dxr3: Failed to open video device %s (%s)\n"), tmpstr, strerror(errno));
-    return 0;
+    dxr3_dispose(&this->vo_driver);
+    return NULL;
   }
   /* close now and and let the decoder/encoder reopen if they want */
   close(this->fd_video);
@@ -335,20 +336,23 @@ static vo_driver_t *dxr3_vo_open_plugin(video_driver_class_t *class_gen, const v
     if ((strcmp(available_encoders[encoder], "libavcodec") == 0) && !dxr3_lavc_init(this, node)) {
       xprintf(this->class->xine, XINE_VERBOSITY_LOG,
 	      _("video_out_dxr3: Mpeg encoder libavcodec failed to init.\n"));
-      return 0;
+      dxr3_dispose(&this->vo_driver);
+      return NULL;
     }
 #ifdef HAVE_LIBRTE
     if ((strcmp(available_encoders[encoder], "rte") == 0) && !dxr3_rte_init(this)) {
       xprintf(this->class->xine, XINE_VERBOSITY_LOG,
 	      _("video_out_dxr3: Mpeg encoder rte failed to init.\n"));
-      return 0;
+      dxr3_dispose(&this->vo_driver);
+      return NULL;
     }
 #endif
 #ifdef HAVE_LIBFAME
     if ((strcmp(available_encoders[encoder], "fame") == 0) && !dxr3_fame_init(this)) {
       xprintf(this->class->xine, XINE_VERBOSITY_LOG,
 	      _("video_out_dxr3: Mpeg encoder fame failed to init.\n"));
-      return 0;
+      dxr3_dispose(&this->vo_driver);
+      return NULL;
     }
 #endif
     if (strcmp(available_encoders[encoder], "none") == 0)
@@ -1229,7 +1233,8 @@ static void dxr3_dispose(vo_driver_t *this_gen)
     this->enc->on_close(this);
   if(this->overlay_enabled)
     ioctl(this->fd_control, EM8300_IOCTL_OVERLAY_SETMODE, &val);
-  close(this->fd_control);
+  if (this->fd_control >= 0)
+    close(this->fd_control);
   pthread_mutex_lock(&this->spu_device_lock);
   if (this->fd_spu >= 0) {
     static const uint8_t empty_spu[] = {
