@@ -119,13 +119,13 @@ to the extent permitted by law.\n",
 
   xine_init (xine);
 
-  char *text = NULL;
+  char *text = NULL, *freeme = NULL;
   char *sep, *sep2;
   switch (which)
   {
   case 'a':
   case 'm':
-    text = xine_get_mime_types (xine);
+    freeme = text = xine_get_mime_types (xine);
     if (!text || !*text)
       goto read_fail;
     sep = sep2 = text - 1;
@@ -142,7 +142,7 @@ to the extent permitted by law.\n",
     break;
 
   case 'e':
-    text = xine_get_file_extensions (xine);
+    freeme = text = xine_get_file_extensions (xine);
     if (!text || !*text)
       goto read_fail;
     sep = text - 1;
@@ -157,6 +157,8 @@ to the extent permitted by law.\n",
     break;
   }
 
+  xine_exit(xine);
+  free(freeme);
   return 0;
 
  read_fail:
