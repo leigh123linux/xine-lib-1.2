@@ -253,6 +253,8 @@ static vo_driver_t *dxr3_vo_open_plugin(video_driver_class_t *class_gen, const v
   _x_vo_scale_init(&this->scale, 0, 0, config);
   _x_alphablend_init(&this->alphablend_extra_data, class->xine);
 
+  this->fd_spu = -1;
+
   this->class                          = class;
   this->swap_fields                    = config->register_bool(config,
     "dxr3.encoding.swap_fields", 0, _("swap odd and even lines"),
@@ -831,7 +833,7 @@ static void dxr3_overlay_end(vo_driver_t *this_gen, vo_frame_t *frame_gen)
   pthread_mutex_lock(&this->spu_device_lock);
 
   /* try to open the dxr3 spu device */
-  if (!this->fd_spu) {
+  if (this->fd_spu < 0) {
     snprintf (tmpstr, sizeof(tmpstr), "/dev/em8300_sp-%d", this->class->devnum);
     if ((this->fd_spu = xine_open_cloexec(tmpstr, O_WRONLY)) < 0) {
       xprintf(this->class->xine, XINE_VERBOSITY_DEBUG,
@@ -1225,7 +1227,7 @@ static void dxr3_dispose(vo_driver_t *this_gen)
     ioctl(this->fd_control, EM8300_IOCTL_OVERLAY_SETMODE, &val);
   close(this->fd_control);
   pthread_mutex_lock(&this->spu_device_lock);
-  if (this->fd_spu) {
+  if (this->fd_spu >= 0) {
     static const uint8_t empty_spu[] = {
       0x00, 0x26, 0x00, 0x08, 0x80, 0x00, 0x00, 0x80,
       0x00, 0x00, 0x00, 0x20, 0x01, 0x03, 0x00, 0x00,

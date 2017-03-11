@@ -231,7 +231,7 @@ static spu_decoder_t *dxr3_spudec_open_plugin(spu_decoder_class_t *class_gen, xi
     CONF_KEY, 0, CONF_NAME, CONF_HELP, 10, NULL, NULL);
 
   pthread_mutex_lock(&this->dxr3_vo->spu_device_lock);
-  if (this->dxr3_vo->fd_spu)
+  if (this->dxr3_vo->fd_spu >= 0)
     this->fd_spu = this->dxr3_vo->fd_spu;
   else {
     /* open dxr3 spu device */
@@ -565,8 +565,8 @@ static void dxr3_spudec_dispose(spu_decoder_t *this_gen)
             _("dxr3_decode_spu: spu device write failed (%s)\n"), strerror(errno));
   }
   close(this->fd_spu);
-  this->fd_spu = 0;
-  this->dxr3_vo->fd_spu = 0;
+  this->fd_spu = -1;
+  this->dxr3_vo->fd_spu = -1;
   pthread_mutex_unlock(&this->dxr3_vo->spu_device_lock);
 
   dxr3_spudec_clear_nav_list(this);
