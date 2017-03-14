@@ -701,10 +701,6 @@ asf_header_t *asf_header_new (uint8_t *buffer, int buffer_len) {
   uint32_t object_count;
   uint16_t junk;
 
-  asf_header = calloc(1, sizeof(asf_header_internal_t));
-  if (!asf_header)
-    return NULL;
-
   lprintf("parsing_asf_header\n");
   if (buffer_len < 6) {
     printf("invalid buffer size\n");
