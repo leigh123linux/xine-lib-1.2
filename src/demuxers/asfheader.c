@@ -283,11 +283,13 @@ static int asf_header_parse_file_properties(asf_header_t *header, uint8_t *buffe
 }
 
 static void asf_header_delete_stream_properties(asf_stream_t *asf_stream) {
-  if (asf_stream->private_data)
-    free(asf_stream->private_data);
-  if (asf_stream->error_correction_data)
-    free(asf_stream->error_correction_data);
-  free(asf_stream);
+  if (asf_stream) {
+    if (asf_stream->private_data)
+      free(asf_stream->private_data);
+    if (asf_stream->error_correction_data)
+      free(asf_stream->error_correction_data);
+    free(asf_stream);
+  }
 }
 
 static int asf_header_parse_stream_properties(asf_header_t *header, uint8_t *buffer, int buffer_len) {
@@ -349,13 +351,7 @@ static int asf_header_parse_stream_properties(asf_header_t *header, uint8_t *buf
   return 1;
 
 exit_error:
-  if (asf_stream) {
-    if (asf_stream->private_data)
-      free(asf_stream->private_data);
-    if (asf_stream->error_correction_data)
-      free(asf_stream->error_correction_data);
-    free(asf_stream);
-  }
+  asf_header_delete_stream_properties(asf_stream);
   return 0;
 }
 
