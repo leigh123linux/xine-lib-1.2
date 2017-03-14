@@ -477,7 +477,10 @@ static vbri_header_t *XINE_MALLOC parse_vbri_header(mpg_audio_frame_t *frame,
     lprintf("entry_size: %d\n", vbri->entry_size);
     lprintf("entry_frames: %d\n", vbri->entry_frames);
 
-    if ((ptr + (vbri->toc_entries + 1) * vbri->entry_size) >= (buf + bufsize)) return 0;
+    if ((ptr + (vbri->toc_entries + 1) * vbri->entry_size) >= (buf + bufsize)) {
+      free (vbri);
+      return NULL;
+    }
     vbri->toc = xine_xcalloc ((vbri->toc_entries + 1), sizeof(int));
     if (!vbri->toc) {
       free (vbri);
