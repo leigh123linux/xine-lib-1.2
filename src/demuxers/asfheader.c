@@ -282,6 +282,14 @@ static int asf_header_parse_file_properties(asf_header_t *header, uint8_t *buffe
   return 1;
 }
 
+static void asf_header_delete_stream_properties(asf_stream_t *asf_stream) {
+  if (asf_stream->private_data)
+    free(asf_stream->private_data);
+  if (asf_stream->error_correction_data)
+    free(asf_stream->error_correction_data);
+  free(asf_stream);
+}
+
 static int asf_header_parse_stream_properties(asf_header_t *header, uint8_t *buffer, int buffer_len) {
   asf_reader_t reader;
   uint16_t flags = 0;
@@ -349,6 +357,18 @@ exit_error:
     free(asf_stream);
   }
   return 0;
+}
+
+static void asf_header_delete_stream_extended_properties(asf_stream_extension_t *asf_stream_extension) {
+  int i;
+
+  if (asf_stream_extension->stream_name_count > 0) {
+    for (i = 0; i < asf_stream_extension->stream_name_count; i++) {
+      free(asf_stream_extension->stream_names[i]);
+    }
+    free(asf_stream_extension->stream_names);
+  }
+  free(asf_stream_extension);
 }
 
 static int asf_header_parse_stream_extended_properties(asf_header_t *header, uint8_t *buffer, int buffer_len) {
@@ -786,26 +806,6 @@ static void asf_header_delete_content(asf_content_t *asf_content) {
   if (asf_content->rating)
     free(asf_content->rating);
   free(asf_content);
-}
-
-static void asf_header_delete_stream_properties(asf_stream_t *asf_stream) {
-  if (asf_stream->private_data)
-    free(asf_stream->private_data);
-  if (asf_stream->error_correction_data)
-    free(asf_stream->error_correction_data);
-  free(asf_stream);
-}
-
-static void asf_header_delete_stream_extended_properties(asf_stream_extension_t *asf_stream_extension) {
-  int i;
-
-  if (asf_stream_extension->stream_name_count > 0) {
-    for (i = 0; i < asf_stream_extension->stream_name_count; i++) {
-      free(asf_stream_extension->stream_names[i]);
-    }
-    free(asf_stream_extension->stream_names);
-  }
-  free(asf_stream_extension);
 }
 
 void asf_header_delete (asf_header_t *header_pub) {
