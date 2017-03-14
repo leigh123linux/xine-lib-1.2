@@ -146,6 +146,8 @@ static void demux_tta_send_headers(demux_plugin_t *this_gen) {
     sizeof(uint32_t)*this->totalframes;
   unsigned char *header;
 
+  memset(&wave, 0, sizeof(wave));
+
   header = malloc(total_size);
 
   this->audio_fifo  = this->stream->audio_fifo;
