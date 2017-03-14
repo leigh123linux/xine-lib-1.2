@@ -347,6 +347,8 @@ static int asf_header_parse_stream_properties(asf_header_t *header, uint8_t *buf
   if (stream_id >= 0) {
     header->streams[stream_id] = asf_stream;
     header->stream_count++;
+  } else {
+    asf_header_delete_stream_properties(asf_stream);
   }
   return 1;
 
@@ -481,6 +483,10 @@ static int asf_header_parse_stream_extended_properties(asf_header_t *header, uin
   lprintf("  seekable_flag:                     %d\n", asf_stream_extension->seekable_flag);
   lprintf("  no_cleanpoints_flag:               %d\n", asf_stream_extension->no_cleanpoints_flag);
   lprintf("  resend_live_cleanpoints_flag:      %d\n", asf_stream_extension->resend_live_cleanpoints_flag);
+
+  if (stream_id < 0) {
+    asf_header_delete_stream_extended_properties(asf_stream_extension);
+  }
 
   return 1;
 }
