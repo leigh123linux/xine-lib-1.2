@@ -1534,6 +1534,7 @@ exit:
   free(description);
   free(help);
   free(output);
+  free(key);
 
   if (enum_values) {
     for (i = 0; i < value_count; i++) {
