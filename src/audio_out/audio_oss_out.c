@@ -674,7 +674,7 @@ static int probe_audio_devices(oss_driver_t *this) {
   for(base_num = 0; base_num < 2; ++base_num) {
     for(i = -1; i < 16; i++) {
       if (i == -1) strcpy(devname, base_names[base_num]);
-      else sprintf(devname, "%s%d", base_names[base_num], i);
+      else snprintf(devname, sizeof(devname), "%s%d", base_names[base_num], i);
 
       /* Test the device */
       audio_fd = open(devname, O_WRONLY|O_NONBLOCK);
@@ -756,7 +756,7 @@ static ao_driver_t *open_plugin (audio_driver_class_t *class_gen, const void *da
   else {
     /* Create the device name /dev[/sound]/dsp[0-15] */
     if (devname_num < 0) strcpy(this->audio_dev, devname_opts[devname_val]);
-    else sprintf(this->audio_dev, "%s%d", devname_opts[devname_val], devname_num);
+    else snprintf(this->audio_dev, sizeof(this->audio_dev), "%s%d", devname_opts[devname_val], devname_num);
   }
 
   /*
