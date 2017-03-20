@@ -23,6 +23,11 @@ endif
 
 noinst_HEADERS = net_buf_ctrl.h mms.h mmsh.h pnm.h media_helper.h http_helper.h
 
+ASFHEADER_LIB = $(top_builddir)/src/demuxers/libasfheader.la
+$(ASFHEADER_LIB):
+	$(MAKE) -C $(top_builddir)/src/demuxers libasfheader.la
+
+
 if !ENABLE_LIBXINE_BUILTINS
 in_builtins = xineplug_inp_file.la xineplug_inp_stdin_fifo.la xineplug_inp_test.la
 endif
@@ -106,9 +111,8 @@ xineplug_inp_dvd_la_CFLAGS = $(AM_CFLAGS) $(DVD_CFLAGS)
 xineplug_inp_net_la_SOURCES = input_net.c net_buf_ctrl.c
 xineplug_inp_net_la_LIBADD = $(XINE_LIB) $(NET_LIBS) $(PTHREAD_LIBS) $(LTLIBINTL)
 
-# note: input_mms.c #includes demuxers/asfheader.c so please use same compiler options
 xineplug_inp_mms_la_SOURCES = input_mms.c net_buf_ctrl.c mms.c mmsh.c http_helper.c
-xineplug_inp_mms_la_LIBADD = $(XINE_LIB) $(LTLIBICONV) $(PTHREAD_LIBS) $(LTLIBINTL)
+xineplug_inp_mms_la_LIBADD = $(XINE_LIB) $(LTLIBICONV) $(PTHREAD_LIBS) $(LTLIBINTL) $(ASFHEADER_LIB)
 
 xineplug_inp_vcdo_la_SOURCES = input_vcd.c media_helper.c
 xineplug_inp_vcdo_la_LIBADD = $(XINE_LIB) $(LTLIBINTL)

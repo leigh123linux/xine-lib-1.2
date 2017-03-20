@@ -5,6 +5,9 @@ include $(top_srcdir)/misc/Makefile.common
 AM_CFLAGS  = $(DEFAULT_OCFLAGS) $(VISIBILITY_FLAG)
 AM_LDFLAGS = $(xineplug_ldflags)
 
+noinst_LTLIBRARIES = libasfheader.la
+libasfheader_la_SOURCES = asfheader.c
+
 ##
 # IMPORTANT:
 # ---------
@@ -55,10 +58,8 @@ xineplug_dmx_video_la_CFLAGS = $(AM_CFLAGS)
 xineplug_dmx_video_la_CPPFLAGS = $(AM_CPPFLAGS) $(ZLIB_CPPFLAGS)
 xineplug_dmx_video_la_LIBADD = $(XINE_LIB) $(LTLIBINTL) $(ZLIB_LIBS)
 
-# note: asfheader.c also used from ../input
-# is safe given same compiler options
-xineplug_dmx_asf_la_SOURCES = demux_asf.c asfheader.c
-xineplug_dmx_asf_la_LIBADD = $(XINE_LIB) $(LTLIBINTL) $(LTLIBICONV)
+xineplug_dmx_asf_la_SOURCES = demux_asf.c
+xineplug_dmx_asf_la_LIBADD = $(XINE_LIB) $(LTLIBINTL) $(LTLIBICONV) libasfheader.la
 
 xineplug_dmx_fli_la_SOURCES = demux_fli.c
 xineplug_dmx_fli_la_LIBADD = $(XINE_LIB)

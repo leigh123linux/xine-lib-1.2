@@ -55,14 +55,6 @@
 #include "mmsh.h"
 #include "net_buf_ctrl.h"
 
-/*
- * not very nice but maybe still better than the previous solution
- * (rebuild and link demuxers/asfheader.c from here, and let newer
- * automake disagree about where to store asfheader.o) ...
- */
-#undef LOG_MODULE
-#include "demuxers/asfheader.c"
-#undef LOG_MODULE
 #define LOG_MODULE "input_mms"
 
 #define PROTOCOL_UNDEFINED 0
