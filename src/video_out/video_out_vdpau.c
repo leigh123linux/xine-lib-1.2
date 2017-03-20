@@ -3069,31 +3069,31 @@ static vo_driver_t *vdpau_open_plugin (video_driver_class_t *class_gen, const vo
   int deint_default = 0;
   this->deinterlacers_name[deint_count] = vdpau_deinterlacer_name[0];
   this->deinterlacers_method[deint_count] = DEINT_BOB;
-  strcat( deinterlacers_description, vdpau_deinterlacer_description[0] );
+  strlcat( deinterlacers_description, vdpau_deinterlacer_description[0], sizeof(deinterlacers_description) );
   ++deint_count;
   if ( this->temporal_is_supported ) {
     this->deinterlacers_name[deint_count] = vdpau_deinterlacer_name[1];
     this->deinterlacers_method[deint_count] = DEINT_HALF_TEMPORAL;
-    strcat( deinterlacers_description, vdpau_deinterlacer_description[1] );
+    strlcat( deinterlacers_description, vdpau_deinterlacer_description[1], sizeof(deinterlacers_description) );
     ++deint_count;
   }
   if ( this->temporal_spatial_is_supported ) {
     this->deinterlacers_name[deint_count] = vdpau_deinterlacer_name[2];
     this->deinterlacers_method[deint_count] = DEINT_HALF_TEMPORAL_SPATIAL;
-    strcat( deinterlacers_description, vdpau_deinterlacer_description[2] );
+    strlcat( deinterlacers_description, vdpau_deinterlacer_description[2], sizeof(deinterlacers_description) );
     ++deint_count;
   }
   if ( this->temporal_is_supported ) {
     this->deinterlacers_name[deint_count] = vdpau_deinterlacer_name[3];
     this->deinterlacers_method[deint_count] = DEINT_TEMPORAL;
-    strcat( deinterlacers_description, vdpau_deinterlacer_description[3] );
+    strlcat( deinterlacers_description, vdpau_deinterlacer_description[3], sizeof(deinterlacers_description) );
     deint_default = deint_count;
     ++deint_count;
   }
   if ( this->temporal_spatial_is_supported ) {
     this->deinterlacers_name[deint_count] = vdpau_deinterlacer_name[4];
     this->deinterlacers_method[deint_count] = DEINT_TEMPORAL_SPATIAL;
-    strcat( deinterlacers_description, vdpau_deinterlacer_description[4] );
+    strlcat( deinterlacers_description, vdpau_deinterlacer_description[4], sizeof(deinterlacers_description) );
     ++deint_count;
   }
   this->deinterlacers_name[deint_count] = NULL;
