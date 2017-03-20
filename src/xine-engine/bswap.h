@@ -28,48 +28,48 @@
 #include "ffmpeg_bswap.h"
 
 /* These are the Aligned variants */
-#define _X_ABE_16(x) (be2me_16(*(uint16_t*)(x)))
-#define _X_ABE_32(x) (be2me_32(*(uint32_t*)(x)))
-#define _X_ABE_64(x) (be2me_64(*(uint64_t*)(x)))
-#define _X_ALE_16(x) (le2me_16(*(uint16_t*)(x)))
-#define _X_ALE_32(x) (le2me_32(*(uint32_t*)(x)))
-#define _X_ALE_64(x) (le2me_64(*(uint64_t*)(x)))
+#define _X_ABE_16(x) (be2me_16(*(const uint16_t*)(x)))
+#define _X_ABE_32(x) (be2me_32(*(const uint32_t*)(x)))
+#define _X_ABE_64(x) (be2me_64(*(const uint64_t*)(x)))
+#define _X_ALE_16(x) (le2me_16(*(const uint16_t*)(x)))
+#define _X_ALE_32(x) (le2me_32(*(const uint32_t*)(x)))
+#define _X_ALE_64(x) (le2me_64(*(const uint64_t*)(x)))
 
-#define _X_BE_16(x) (((uint16_t)(((uint8_t*)(x))[0]) << 8) | \
-                  ((uint16_t)((uint8_t*)(x))[1]))
-#define _X_BE_24(x) (((uint32_t)(((uint8_t*)(x))[0]) << 16) | \
-                  ((uint32_t)(((uint8_t*)(x))[1]) << 8) | \
-                  ((uint32_t)(((uint8_t*)(x))[2])))
-#define _X_BE_32(x) (((uint32_t)(((uint8_t*)(x))[0]) << 24) | \
-                  ((uint32_t)(((uint8_t*)(x))[1]) << 16) | \
-                  ((uint32_t)(((uint8_t*)(x))[2]) << 8) | \
-                  ((uint32_t)((uint8_t*)(x))[3]))
-#define _X_BE_64(x) (((uint64_t)(((uint8_t*)(x))[0]) << 56) | \
-                  ((uint64_t)(((uint8_t*)(x))[1]) << 48) | \
-                  ((uint64_t)(((uint8_t*)(x))[2]) << 40) | \
-                  ((uint64_t)(((uint8_t*)(x))[3]) << 32) | \
-                  ((uint64_t)(((uint8_t*)(x))[4]) << 24) | \
-                  ((uint64_t)(((uint8_t*)(x))[5]) << 16) | \
-                  ((uint64_t)(((uint8_t*)(x))[6]) << 8) | \
-                  ((uint64_t)((uint8_t*)(x))[7]))
+#define _X_BE_16(x) (((uint16_t)(((const uint8_t*)(x))[0]) << 8) | \
+                  ((uint16_t)((const uint8_t*)(x))[1]))
+#define _X_BE_24(x) (((uint32_t)(((const uint8_t*)(x))[0]) << 16) | \
+                  ((uint32_t)(((const uint8_t*)(x))[1]) << 8) | \
+                  ((uint32_t)(((const uint8_t*)(x))[2])))
+#define _X_BE_32(x) (((uint32_t)(((const uint8_t*)(x))[0]) << 24) | \
+                  ((uint32_t)(((const uint8_t*)(x))[1]) << 16) | \
+                  ((uint32_t)(((const uint8_t*)(x))[2]) << 8) | \
+                  ((uint32_t)((const uint8_t*)(x))[3]))
+#define _X_BE_64(x) (((uint64_t)(((const uint8_t*)(x))[0]) << 56) | \
+                  ((uint64_t)(((const uint8_t*)(x))[1]) << 48) | \
+                  ((uint64_t)(((const uint8_t*)(x))[2]) << 40) | \
+                  ((uint64_t)(((const uint8_t*)(x))[3]) << 32) | \
+                  ((uint64_t)(((const uint8_t*)(x))[4]) << 24) | \
+                  ((uint64_t)(((const uint8_t*)(x))[5]) << 16) | \
+                  ((uint64_t)(((const uint8_t*)(x))[6]) << 8) | \
+                  ((uint64_t)((const uint8_t*)(x))[7]))
 
-#define _X_LE_16(x) (((uint16_t)(((uint8_t*)(x))[1]) << 8) | \
-                  ((uint16_t)((uint8_t*)(x))[0]))
-#define _X_LE_24(x) (((uint32_t)(((uint8_t*)(x))[2]) << 16) | \
-                  ((uint32_t)(((uint8_t*)(x))[1]) << 8) | \
-                  ((uint32_t)(((uint8_t*)(x))[0])))
-#define _X_LE_32(x) (((uint32_t)(((uint8_t*)(x))[3]) << 24) | \
-                  ((uint32_t)(((uint8_t*)(x))[2]) << 16) | \
-                  ((uint32_t)(((uint8_t*)(x))[1]) << 8) | \
-                  ((uint32_t)((uint8_t*)(x))[0]))
-#define _X_LE_64(x) (((uint64_t)(((uint8_t*)(x))[7]) << 56) | \
-                  ((uint64_t)(((uint8_t*)(x))[6]) << 48) | \
-                  ((uint64_t)(((uint8_t*)(x))[5]) << 40) | \
-                  ((uint64_t)(((uint8_t*)(x))[4]) << 32) | \
-                  ((uint64_t)(((uint8_t*)(x))[3]) << 24) | \
-                  ((uint64_t)(((uint8_t*)(x))[2]) << 16) | \
-                  ((uint64_t)(((uint8_t*)(x))[1]) << 8) | \
-                  ((uint64_t)((uint8_t*)(x))[0]))
+#define _X_LE_16(x) (((uint16_t)(((const uint8_t*)(x))[1]) << 8) | \
+                  ((uint16_t)((const uint8_t*)(x))[0]))
+#define _X_LE_24(x) (((uint32_t)(((const uint8_t*)(x))[2]) << 16) | \
+                  ((uint32_t)(((const uint8_t*)(x))[1]) << 8) | \
+                  ((uint32_t)(((const uint8_t*)(x))[0])))
+#define _X_LE_32(x) (((uint32_t)(((const uint8_t*)(x))[3]) << 24) | \
+                  ((uint32_t)(((const uint8_t*)(x))[2]) << 16) | \
+                  ((uint32_t)(((const uint8_t*)(x))[1]) << 8) | \
+                  ((uint32_t)((const uint8_t*)(x))[0]))
+#define _X_LE_64(x) (((uint64_t)(((const uint8_t*)(x))[7]) << 56) | \
+                  ((uint64_t)(((const uint8_t*)(x))[6]) << 48) | \
+                  ((uint64_t)(((const uint8_t*)(x))[5]) << 40) | \
+                  ((uint64_t)(((const uint8_t*)(x))[4]) << 32) | \
+                  ((uint64_t)(((const uint8_t*)(x))[3]) << 24) | \
+                  ((uint64_t)(((const uint8_t*)(x))[2]) << 16) | \
+                  ((uint64_t)(((const uint8_t*)(x))[1]) << 8) | \
+                  ((uint64_t)((const uint8_t*)(x))[0]))
 
 /* Tested with gcc 4.4 */
 #if defined(__GNUC__) && ((__GNUC__ > 4) || (__GNUC__ == 4 && __GNUC_MINOR__ > 3)) || defined(__clang__)
