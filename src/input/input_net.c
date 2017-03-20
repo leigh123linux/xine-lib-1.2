@@ -426,7 +426,7 @@ static void net_plugin_dispose (input_plugin_t *this_gen ) {
 
 static int net_plugin_open (input_plugin_t *this_gen ) {
   net_input_plugin_t *this = (net_input_plugin_t *) this_gen;
-  char *filename;
+  const char *filename;
   char *pptr;
   int port = 7658;
   int toread = MAX_PREVIEW_SIZE;
@@ -468,10 +468,10 @@ static input_plugin_t *net_class_get_instance (input_class_t *cls_gen, xine_stre
   /* net_input_plugin_t *this = (net_input_plugin_t *) this_gen; */
   net_input_plugin_t *this;
   nbc_t *nbc = NULL;
-  char *filename;
+  const char *filename;
 
   if (!strncasecmp (mrl, "tcp://", 6)) {
-    filename = (char *) &mrl[6];
+    filename = &mrl[6];
 
     if((!filename) || (strlen(filename) == 0)) {
       return NULL;
@@ -481,7 +481,7 @@ static input_plugin_t *net_class_get_instance (input_class_t *cls_gen, xine_stre
 
   } else if (!strncasecmp (mrl, "slave://", 8)) {
 
-    filename = (char *) &mrl[8];
+    filename = &mrl[8];
 
     if((!filename) || (strlen(filename) == 0)) {
       return NULL;
