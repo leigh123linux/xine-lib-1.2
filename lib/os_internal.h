@@ -110,6 +110,18 @@
 #define	MIN(a,b) (((a)<(b))?(a):(b))
 #endif
 
+#ifndef HAVE_STRLCAT
+#define HAVE_STRLCAT
+#define strlcat(D, S, N) xine_private_strlcat((D), (S), (N))
+size_t xine_private_strlcat(char *dst, const char *src, size_t size);
+#endif
+
+#ifndef HAVE_STRLCPY
+#define HAVE_STRLCPY
+#define strlcpy(D, S, N) xine_private_strlcpy((D), (S), (N))
+size_t xine_private_strlcpy(char *dst, const char *src, size_t size);
+#endif
+
 /* replacement of strndup */
 #ifndef HAVE_STRNDUP
 #define HAVE_STRNDUP

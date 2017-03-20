@@ -922,7 +922,7 @@ AC_CHECK_FUNCS([strncasecmp _strnicmp], [have_required_function="yes"])
 
 AC_FUNC_FSEEKO
 
-AC_REPLACE_FUNCS([asprintf basename gettimeofday setenv strcasestr strndup strpbrk strsep strtok_r timegm unsetenv memmem])
+AC_REPLACE_FUNCS([asprintf basename gettimeofday setenv strcasestr strlcat strlcpy strndup strpbrk strsep strtok_r timegm unsetenv memmem])
 
 AC_LIBSOURCE([hstrerror.c])
 saveLIBS="${LIBS}"
