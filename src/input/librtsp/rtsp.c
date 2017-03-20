@@ -595,7 +595,6 @@ char *rtsp_search_answers(rtsp_t *s, const char *tag) {
   char **answer;
   char *ptr;
 
-  if (!s->answers) return NULL;
   answer=s->answers;
 
   while (*answer) {
@@ -685,7 +684,6 @@ void rtsp_unschedule_all(rtsp_t *s) {
 
   char **ptr;
 
-  if (!s->scheduled) return;
   ptr=s->scheduled;
 
   while (*ptr) {
@@ -702,7 +700,6 @@ void rtsp_free_answers(rtsp_t *s) {
 
   char **answer;
 
-  if (!s->answers) return;
   answer=s->answers;
 
   while (*answer) {
