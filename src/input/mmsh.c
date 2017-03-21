@@ -683,18 +683,13 @@ fail:
   lprintf("mmsh_connect: failed\n" );
   if (this->s != -1)
     close(this->s);
-  if (this->url)
-    free(this->url);
-  if (this->proto)
-    free(this->proto);
-  if (this->host)
-    free(this->host);
-  if (this->user)
-    free(this->user);
-  if (this->password)
-    free(this->password);
-  if (this->uri)
-    free(this->uri);
+
+  free(this->url);
+  free(this->proto);
+  free(this->host);
+  free(this->user);
+  free(this->password);
+  free(this->uri);
 
   free(this);
 
@@ -872,22 +867,18 @@ void mmsh_close (mmsh_t *this) {
 
   if (this->s != -1)
     close(this->s);
-  if (this->url)
-    free (this->url);
-  if (this->proto)
-    free(this->proto);
-  if (this->host)
-    free(this->host);
-  if (this->user)
-    free(this->user);
-  if (this->password)
-    free(this->password);
-  if (this->uri)
-    free(this->uri);
+
   if (this->asf_header)
     asf_header_delete(this->asf_header);
-  if (this)
-    free (this);
+
+  free(this->url);
+  free(this->proto);
+  free(this->host);
+  free(this->user);
+  free(this->password);
+  free(this->uri);
+
+  free(this);
 }
 
 
