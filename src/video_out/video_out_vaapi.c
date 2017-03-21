@@ -3007,7 +3007,7 @@ static void vaapi_duplicate_frame_data (vo_frame_t *this_gen, vo_frame_t *origin
     }
   }
 
-  if (driver->guarded_render && accel_this && va_surface_this) {
+  if (driver->guarded_render) {
     accel_this->index = va_surface_this->index;
     va_surface_this->status = SURFACE_RENDER;
   }
