@@ -2060,6 +2060,7 @@ static int vdr_plugin_open_socket(vdr_input_plugin_t *this, struct hostent *host
     xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
             _("%s: failed to connect to port %d (%s)\n"), LOG_MODULE, port,
             strerror(errno));
+    close(fd);
 
     return -1;
   }
