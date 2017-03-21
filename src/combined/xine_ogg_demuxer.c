@@ -595,6 +595,8 @@ static void read_chapter_comment (demux_ogg_t *this, ogg_packet *op) {
         chapter_time = chapter_name = 0;
       }
     }
+    free(chapter_name);
+    free(chapter_time);
   }
   vorbis_comment_clear(&vc);
   vorbis_info_clear(&vi);
