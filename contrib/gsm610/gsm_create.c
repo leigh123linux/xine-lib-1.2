@@ -4,7 +4,7 @@
  * details.  THERE IS ABSOLUTELY NO WARRANTY FOR THIS SOFTWARE.
  */
 
-static char const	ident[] = "$Header: /nfshome/cvs/xine-lib/src/libxineadec/gsm610/gsm_create.c,v 1.1 2002/10/12 19:12:49 tmmm Exp $";
+//static char const	ident[] = "$Header: /nfshome/cvs/xine-lib/src/libxineadec/gsm610/gsm_create.c,v 1.1 2002/10/12 19:12:49 tmmm Exp $";
 
 #include	"gsm_config.h"
 
