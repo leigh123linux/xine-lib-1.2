@@ -234,6 +234,7 @@ static buf_element_t* v4l2_input_read_block(input_plugin_t *this_gen, fifo_buffe
 
         lprintf("Sending video header\n");
         xine_bmiheader bih;
+        memset(&bih, 0, sizeof(bih));
         bih.biSize = sizeof(xine_bmiheader);
 	/* HACK: Why do I need to do this and why is it magic? */
         bih.biWidth = this->video->resolution.width*2;
