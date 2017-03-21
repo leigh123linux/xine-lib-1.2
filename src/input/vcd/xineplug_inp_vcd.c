@@ -273,11 +273,15 @@ meta_info_assign (vcd_input_plugin_t *this, int field, xine_stream_t *stream, co
 
 /* Set stream information. */
 static void vcd_set_meta_info (vcd_input_plugin_t *this) {
+  char *tmp;
   vcdinfo_obj_t *p_vcdinfo= this->player.vcd;
   meta_info_assign (this, XINE_META_INFO_ALBUM, this->stream, vcdinfo_get_album_id(p_vcdinfo));
   meta_info_assign (this, XINE_META_INFO_ARTIST, this->stream, vcdinfo_get_preparer_id (p_vcdinfo));
-  meta_info_assign (this, XINE_META_INFO_COMMENT, this->stream,
-    vcdplayer_format_str (&this->player, this->v_config.comment_format));
+
+  tmp = vcdplayer_format_str (&this->player, this->v_config.comment_format);
+  meta_info_assign (this, XINE_META_INFO_COMMENT, this->stream, tmp);
+  free(tmp);
+
   meta_info_assign (this, XINE_META_INFO_GENRE, this->stream, vcdinfo_get_format_version_str (p_vcdinfo));
 }
 
@@ -971,10 +975,13 @@ vcd_class_get_dir (input_class_t *this_gen, const char *filename,
       goto no_mrls;
     }
   } else {
-    char *mrl = strdup(filename);
+    char *mrl;
     dbg_print (class, (INPUT_DBG_CALL|INPUT_DBG_EXT),
               "called with %s\n", filename);
-    if (!vcd_get_default_device(class, true)) goto no_mrls;
+    if (!vcd_get_default_device(class, true))
+      goto no_mrls;
+
+    mrl = strdup(filename);
     if (!vcd_parse_mrl(class, class->vcd_device, mrl,
                        intended_vcd_device, &itemid,
                        vcdplayer->default_autoplay, &used_default)) {
@@ -1579,15 +1586,18 @@ static void vcd_update_title_display (void *user_data) {
   xine_event_t uevent;
   xine_ui_data_t data;
 
-  char *title_str;
+  char *title_str, *tmp;
   if (!this->stream)
     return;
 
   title_str = vcdplayer_format_str (&this->player, this->v_config.title_format);
 
   meta_info_assign (this, XINE_META_INFO_TITLE, this->stream, title_str);
-  meta_info_assign (this, XINE_META_INFO_COMMENT, this->stream,
-    vcdplayer_format_str (&this->player, this->class->v_config.comment_format));
+
+  tmp = vcdplayer_format_str (&this->player, this->class->v_config.comment_format);
+  meta_info_assign (this, XINE_META_INFO_COMMENT, this->stream, tmp);
+  free(tmp);
+
   stream_info_assign (XINE_STREAM_INFO_VIDEO_HAS_STILL, this->stream, this->player.i_still);
 
   /* Set_str title/chapter display */
@@ -1602,6 +1612,7 @@ static void vcd_update_title_display (void *user_data) {
   data.str_len = strlen(title_str) + 1;
 
   xine_event_send (this->stream, &uevent);
+  free(title_str);
 }
 
 #if LIBVCD_VERSION_NUM >= 23
