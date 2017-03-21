@@ -2222,8 +2222,9 @@ static void do_record (dvb_input_plugin_t *this) {
     t = NULL;
     strftime(dates,63,"%Y-%m-%d_%H%M",tma);
 
-    if (xine_config_lookup_entry(this->stream->xine, "media.capture.save_dir", &savedir)){
-      if(strlen(savedir.str_value)>1){
+    if (xine_config_lookup_entry(this->stream->xine, "media.capture.save_dir", &savedir)
+        && strlen(savedir.str_value) > 1) {
+
         if((dir = opendir(savedir.str_value))==NULL){
           snprintf (filename, 256, "%s/%s_%s.ts",xine_get_homedir(),this->channels[this->channel].name, dates);
           xprintf(this->class->xine,XINE_VERBOSITY_LOG,"savedir is wrong... saving to home directory\n");
@@ -2232,10 +2233,9 @@ static void do_record (dvb_input_plugin_t *this) {
           snprintf (filename, 256, "%s/%s_%s.ts",savedir.str_value,this->channels[this->channel].name, dates);
           xprintf(this->class->xine,XINE_VERBOSITY_LOG,"saving to savedir\n");
         }
-      } else {
+    } else {
         snprintf (filename, 256, "%s/%s_%s.ts",xine_get_homedir(),this->channels[this->channel].name, dates);
         xprintf(this->class->xine,XINE_VERBOSITY_LOG,"Saving to HomeDir\n");
-      }
     }
     /* remove spaces from name */
     while((filename[x]!=0) && x<255){
