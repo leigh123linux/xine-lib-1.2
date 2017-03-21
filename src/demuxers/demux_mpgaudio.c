@@ -458,7 +458,10 @@ static vbri_header_t *XINE_MALLOC parse_vbri_header(mpg_audio_frame_t *frame,
     lprintf("found Vbri header\n");
     ptr += 4;
 
-    if ((ptr + 22) >= (buf + bufsize)) return 0;
+    if ((ptr + 22) >= (buf + bufsize)) {
+      free(vbri);
+      return NULL;
+    }
     vbri->version           = _X_BE_16(ptr); ptr += 2;
     vbri->delai             = _X_BE_16(ptr); ptr += 2;
     vbri->quality           = _X_BE_16(ptr); ptr += 2;
