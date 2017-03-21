@@ -1302,6 +1302,8 @@ static void decode_flac_header (demux_ogg_t *this, const int stream_num, ogg_pac
   buf_element_t *buf;
   xine_waveformatex wave;
 
+  memset(&wave, 0, sizeof(wave));
+
   /* Packet type */
   _x_assert(op->packet[0] == 0x7F);
 

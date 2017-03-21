@@ -5,7 +5,7 @@
 #include "drawmethods.h"
 #include <math.h>
 #include <stdio.h>
-
+#include <string.h>
 
 #ifdef CPU_POWERPC
 #include <sys/types.h>
@@ -74,6 +74,8 @@ void plugin_info_init(PluginInfo *pp, int nbVisuals) {
 
 	PluginInfo p;
 	int i;
+
+        memset(&p, 0, sizeof(p));
 
 	p.sound.speedvar = p.sound.accelvar = p.sound.totalgoom = 0;
     p.sound.prov_max = 0;
