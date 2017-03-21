@@ -675,7 +675,7 @@ static int mms_choose_best_streams(mms_t *this) {
  */
 mms_t *mms_connect (xine_stream_t *stream, const char *url, int bandwidth) {
 #ifdef USE_ICONV
-  iconv_t url_conv;
+  iconv_t url_conv = (iconv_t)-1;
 #else
   int     url_conv = 0;
 #endif
@@ -908,6 +908,10 @@ mms_t *mms_connect (xine_stream_t *stream, const char *url, int bandwidth) {
   return this;
 
 fail:
+#ifdef USE_ICONV
+  string_utf16_close(url_conv);
+#endif
+
   if (this->s != -1)
     close (this->s);
   if (this->url)
