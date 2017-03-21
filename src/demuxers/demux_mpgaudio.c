@@ -445,13 +445,14 @@ static vbri_header_t *XINE_MALLOC parse_vbri_header(mpg_audio_frame_t *frame,
   uint8_t *ptr = buf;
   vbri_header_t *vbri;
 
+  ptr += (32 + 4);
+
+  if ((ptr + 4) >= (buf + bufsize)) return 0;
+
   vbri = calloc(1, sizeof(vbri_header_t));
   if (!vbri)
     return NULL;
 
-  ptr += (32 + 4);
-
-  if ((ptr + 4) >= (buf + bufsize)) return 0;
   lprintf("Checking %08X\n", *ptr);
   if (_X_BE_32(ptr) == VBRI_TAG) {
     lprintf("found Vbri header\n");
