@@ -331,6 +331,7 @@ static void *deinterlace_init_plugin(xine_t *xine, void *data)
   if( !get_num_deinterlace_methods() ) {
       xprintf(xine, XINE_VERBOSITY_LOG,
 	      _("tvtime: No deinterlacing methods available, exiting.\n"));
+      free(class);
       return NULL;
   }
 
