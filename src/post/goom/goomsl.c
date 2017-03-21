@@ -1,3 +1,5 @@
+#include "config.h"
+
 #include <math.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -1480,7 +1482,7 @@ void gsl_append_file_to_buffer(const char *fname, char **buffer)
     }
     
     /* add fname to the already imported files. */
-    strcpy(gsl_already_imported[gsl_nb_import++], fname);
+    strlcpy(gsl_already_imported[gsl_nb_import], fname, sizeof(gsl_already_imported[0]));
 
     /* load the file */
     fbuffer = gsl_read_file(fname);

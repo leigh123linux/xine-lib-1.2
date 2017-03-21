@@ -844,7 +844,7 @@ void update_message (PluginInfo *goomInfo, char *message) {
     
     if (message) {
         int i=1,j=0;
-	strcpy(goomInfo->update_message.message, message);
+        strlcpy(goomInfo->update_message.message, message, sizeof(goomInfo->update_message.message));
         for (j=0;goomInfo->update_message.message[j];j++)
             if (goomInfo->update_message.message[j]=='\n')
                 i++;
