@@ -1033,6 +1033,7 @@ static avi_t *XINE_MALLOC AVI_init(demux_avi_t *this) {
       {
          lprintf("broken index !, dwSize=%d, entries=%d\n", n, superindex->nEntriesInUse);
          i += 8 + n;
+         free(superindex);
          continue;
       }
 
@@ -1060,6 +1061,8 @@ static avi_t *XINE_MALLOC AVI_init(demux_avi_t *this) {
          AVI->audio[AVI->n_audio-1]->audio_superindex = superindex;
          AVI->is_opendml = 1;
       } else {
+        free(superindex->aIndex);
+        free(superindex);
          xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG,
 	               "demux_avi: there should not be an index there, lasttag = %d\n", lasttag);
       }
