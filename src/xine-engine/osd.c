@@ -889,7 +889,7 @@ static int osd_renderer_load_font(osd_renderer_t *this, char *filename) {
         font->fontchar[i].code = gzread_i16(fp);
         font->fontchar[i].width = gzread_i16(fp);
         font->fontchar[i].height = gzread_i16(fp);
-        font->fontchar[i].bmp = malloc(font->fontchar[i].width*font->fontchar[i].height);
+        font->fontchar[i].bmp = malloc((size_t)font->fontchar[i].width * (size_t)font->fontchar[i].height);
         if( gzread(fp, font->fontchar[i].bmp,
               font->fontchar[i].width*font->fontchar[i].height) <= 0 )
           break;

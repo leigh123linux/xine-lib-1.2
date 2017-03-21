@@ -607,7 +607,7 @@ break;
               int y;
 
               if (src_stride == dst_stride)
-                xine_fast_memcpy(dst, src, src_stride * data->height);
+                xine_fast_memcpy(dst, src, src_stride * (size_t)data->height);
               else
               {
                 for (y = 0; y < data->height; y++)
