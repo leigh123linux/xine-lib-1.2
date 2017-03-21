@@ -623,9 +623,9 @@ _vcdplayer_inc_play_item(vcdplayer_t *p_vcdplayer)
 {
   int noi;
 
-  dbg_print (p_vcdplayer, INPUT_DBG_CALL, "called pli: %d\n", p_vcdplayer->pdi);
-
   if ( NULL == p_vcdplayer || NULL == p_vcdplayer->pxd.pld  ) return false;
+
+  dbg_print (p_vcdplayer, INPUT_DBG_CALL, "called pli: %d\n", p_vcdplayer->pdi);
 
   noi = vcdinf_pld_get_noi(p_vcdplayer->pxd.pld);
 
