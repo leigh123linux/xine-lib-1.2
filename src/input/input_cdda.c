@@ -2603,6 +2603,7 @@ static const char * const * cdda_class_get_autoplay_list (input_class_t *this_ge
       lprintf("cdda_class_get_autoplay_list: opening >%s< failed %s\n",
               this->cdda_device, strerror(errno));
       if (ip != this->ip) free(ip);
+      free_cdrom_toc(toc);
       return NULL;
     }
 
@@ -2621,6 +2622,7 @@ static const char * const * cdda_class_get_autoplay_list (input_class_t *this_ge
 
   if ( err < 0 ) {
     if (ip != this->ip) free(ip);
+    free_cdrom_toc(toc);
     return NULL;
   }
 
