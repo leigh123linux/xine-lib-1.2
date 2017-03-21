@@ -453,8 +453,8 @@ static void rtsp_basicauth (const char *user, const char *password, char** dest)
 rtsp_t *rtsp_connect(xine_stream_t *stream, const char *mrl, const char *user_agent) {
 
   rtsp_t *s = malloc(sizeof(rtsp_t));
-  char *mrl_ptr=strdup(mrl);
-  char *slash, *colon, *amp;
+  const char *mrl_ptr = mrl;
+  const char *slash, *colon, *amp;
   int hostend, i;
   size_t pathbegin;
 
@@ -590,7 +590,7 @@ void rtsp_close(rtsp_t *s) {
  * after the first matched tag. returns NULL if no match found.
  */
 
-char *rtsp_search_answers(rtsp_t *s, const char *tag) {
+const char *rtsp_search_answers(rtsp_t *s, const char *tag) {
 
   char **answer;
   char *ptr;

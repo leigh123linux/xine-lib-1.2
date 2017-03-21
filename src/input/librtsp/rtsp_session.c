@@ -86,12 +86,11 @@ static const char *const rtsp_bandwidth_strs[]={"14.4 Kbps (Modem)", "19.2 Kbps 
 						"1.5 Mbps (T1)", "10.5 Mbps (LAN)", NULL};
 
 
-rtsp_session_t *rtsp_session_start(xine_stream_t *stream, char *mrl) {
+rtsp_session_t *rtsp_session_start(xine_stream_t *stream, const char *mrl) {
 
   rtsp_session_t *rtsp_session = calloc(1, sizeof(rtsp_session_t));
   xine_t *xine = stream->xine;
-  char *server;
-  char *mrl_line=strdup(mrl);
+  const char *server;
   rmff_header_t *h;
   int bandwidth_id;
   uint32_t bandwidth;
@@ -110,24 +109,23 @@ rtsp_session_t *rtsp_session_start(xine_stream_t *stream, char *mrl) {
 connect:
 
   /* connect to server */
-  rtsp_session->s=rtsp_connect(stream, mrl_line, NULL);
+  rtsp_session->s=rtsp_connect(stream, mrl, NULL);
   if (!rtsp_session->s)
   {
     xprintf(stream->xine, XINE_VERBOSITY_LOG,
-	    _("rtsp_session: failed to connect to server %s\n"), mrl_line);
+	    _("rtsp_session: failed to connect to server %s\n"), mrl);
     xine_buffer_free(rtsp_session->recv);
     free(rtsp_session);
     return NULL;
   }
 
   /* looking for server type */
-  if (rtsp_search_answers(rtsp_session->s,"Server"))
-    server=strdup(rtsp_search_answers(rtsp_session->s,"Server"));
-  else {
+  server = rtsp_search_answers(rtsp_session->s,"Server");
+  if (!server) {
     if (rtsp_search_answers(rtsp_session->s,"RealChallenge1"))
-      server=strdup("Real");
+      server = "Real";
     else
-      server=strdup("unknown");
+      server = "unknown";
   }
 
   if (strstr(server,"Real") || strstr(server,"Helix"))
@@ -137,19 +135,16 @@ connect:
     h=real_setup_and_get_header(rtsp_session->s, bandwidth);
     if (!h) {
       /* got an redirect? */
-      if (rtsp_search_answers(rtsp_session->s, "Location"))
-      {
-        free(mrl_line);
-	mrl_line=strdup(rtsp_search_answers(rtsp_session->s, "Location"));
-        xprintf(stream->xine, XINE_VERBOSITY_DEBUG, "rtsp_session: redirected to %s\n", mrl_line);
-	rtsp_close(rtsp_session->s);
-	free(server);
+      const char *location = rtsp_search_answers(rtsp_session->s, "Location");
+
+      rtsp_close(rtsp_session->s);
+
+      if (location) {
+        xprintf(stream->xine, XINE_VERBOSITY_DEBUG, "rtsp_session: redirected to %s\n", location);
 	goto connect; /* *shudder* i made a design mistake somewhere */
-      } else
-      {
+      } else {
         xprintf(stream->xine, XINE_VERBOSITY_LOG,
 		_("rtsp_session: session can not be established.\n"));
-        rtsp_close(rtsp_session->s);
         xine_buffer_free(rtsp_session->recv);
         free(rtsp_session);
         return NULL;
@@ -174,12 +169,10 @@ connect:
 	    _("rtsp_session: rtsp server type '%s' not supported yet. sorry.\n"), server);
     session_abort:
     rtsp_close(rtsp_session->s);
-    free(server);
     xine_buffer_free(rtsp_session->recv);
     free(rtsp_session);
     return NULL;
   }
-  free(server);
 
   return rtsp_session;
 }
