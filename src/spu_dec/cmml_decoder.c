@@ -286,7 +286,7 @@ static void spudec_decode_data (spu_decoder_t *this_gen, buf_element_t *buf) {
 	lprintf ("found title: \"%s\"\n", data.str);
 
 	/* set xine meta-info */
-	_x_meta_info_set(this->stream, XINE_META_INFO_TITLE, strdup(data.str));
+	_x_meta_info_set(this->stream, XINE_META_INFO_TITLE, data.str);
 
 	/* and push out a new event signifying the title update on the event
 	 * queue */
@@ -306,8 +306,10 @@ static void spudec_decode_data (spu_decoder_t *this_gen, buf_element_t *buf) {
 
         /* found the <a> tag: grab its value and its href property */
 
-        if (clip_node->data)
+        if (clip_node->data) {
+          free(anchor_text);
           anchor_text = strdup (clip_node->data);
+        }
 
         for (href_property = clip_node->props; href_property != NULL; href_property = href_property->next) {
           if (strcasecmp (href_property->name, "href") == 0) {
