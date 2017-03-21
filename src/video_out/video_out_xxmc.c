@@ -2335,7 +2335,11 @@ static void checkXvMCCap( xxmc_driver_t *this, XvPortID xv_port)
   }
   this->xvmc_cap = (xvmc_capabilities_t *)
     xine_xmalloc(numSurf * sizeof(xvmc_capabilities_t));
-  if (NULL == this->xvmc_cap) return;
+  if (NULL == this->xvmc_cap) {
+    XVMCUNLOCKDISPLAY( this->display );
+    xvmc_context_writer_unlock( &this->xvmc_lock );
+    return;
+  }
   this->xvmc_num_cap = numSurf;
   curInfo = surfaceInfo;
   curCap = this->xvmc_cap;
