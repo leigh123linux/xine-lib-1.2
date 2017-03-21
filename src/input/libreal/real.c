@@ -52,7 +52,7 @@ static const unsigned char xor_table[] = {
 #define _X_BE_32C(x,y) do { *(uint32_t *)(x) = be2me_32((y)); } while(0)
 #define _X_LE_32C(x,y) do { *(uint32_t *)(x) = le2me_32((y)); } while(0)
 
-static void hash(char *field, char *param) {
+static void hash(const char *field, const char *param) {
 
   uint32_t a, b, c, d;
 
@@ -214,7 +214,7 @@ static void hash(char *field, char *param) {
   _X_LE_32C(field+12, d);
 }
 
-static void call_hash (char *key, char *challenge, unsigned int len) {
+static void call_hash (char *key, const char *challenge, unsigned int len) {
 
   char *ptr1, *ptr2;
   uint32_t a, b, c, d, tmp;
@@ -285,7 +285,7 @@ static void calc_response (char *result, char *field) {
 }
 
 
-static void calc_response_string (char *result, char *challenge) {
+static void calc_response_string (char *result, const char *challenge) {
 
   char field[128] = {
     0x01, 0x23, 0x45, 0x67, 0x89, 0xAB, 0xCD, 0xEF,
@@ -479,6 +479,7 @@ rmff_header_t *real_parse_sdp(char *data, char **stream_rules, uint32_t bandwidt
 
     if (!desc->stream[i]->mlti_data) {
      len = 0;
+     xine_buffer_free(buf);
      buf = NULL;
     }
     else
@@ -525,7 +526,8 @@ rmff_header_t *real_parse_sdp(char *data, char **stream_rules, uint32_t bandwidt
       desc->flags);
 
   rmff_fix_header(header);
-  xine_buffer_free(buf);
+  if (buf)
+    xine_buffer_free(buf);
   sdpplin_free(desc);
 
   return header;
@@ -606,11 +608,11 @@ rmff_header_t  *real_setup_and_get_header(rtsp_t *rtsp_session, uint32_t bandwid
 
   char *description=NULL;
   char *session_id=NULL;
-  rmff_header_t *h;
+  rmff_header_t *h = NULL;
   char *challenge1;
   char challenge2[64];
   char checksum[34];
-  char *subscribe;
+  char *subscribe = NULL;
   char *buf=xine_buffer_init(256);
   char *mrl=rtsp_get_mrl(rtsp_session);
   unsigned int size;
@@ -634,13 +636,12 @@ rmff_header_t  *real_setup_and_get_header(rtsp_t *rtsp_session, uint32_t bandwid
 
   if ( status<200 || status>299 )
   {
-    char *alert=rtsp_search_answers(rtsp_session,"Alert");
+    const char *alert=rtsp_search_answers(rtsp_session,"Alert");
     if (alert) {
       lprintf("real: got message from server:\n%s\n", alert);
     }
     rtsp_send_ok(rtsp_session);
-    xine_buffer_free(buf);
-    return NULL;
+    goto out;
   }
 
   /* receive description */
@@ -653,8 +654,7 @@ rmff_header_t  *real_setup_and_get_header(rtsp_t *rtsp_session, uint32_t bandwid
   if (size > MAX_DESC_BUF) {
     printf("real: Content-length for description too big (> %uMB)!\n",
            MAX_DESC_BUF/(1024*1024) );
-    xine_buffer_free(buf);
-    return NULL;
+    goto out;
   }
 
   if (!rtsp_search_answers(rtsp_session,"ETag"))
@@ -667,8 +667,7 @@ rmff_header_t  *real_setup_and_get_header(rtsp_t *rtsp_session, uint32_t bandwid
   description = malloc(size+1);
 
   if( rtsp_read_data(rtsp_session, description, size) <= 0) {
-    xine_buffer_free(buf);
-    return NULL;
+    goto out;
   }
   description[size]=0;
 
@@ -677,9 +676,7 @@ rmff_header_t  *real_setup_and_get_header(rtsp_t *rtsp_session, uint32_t bandwid
   strcpy(subscribe, "Subscribe: ");
   h=real_parse_sdp(description, &subscribe, bandwidth);
   if (!h) {
-    xine_buffer_free(subscribe);
-    xine_buffer_free(buf);
-    return NULL;
+    goto out;
   }
   rmff_fix_header(h);
 
@@ -713,8 +710,14 @@ rmff_header_t  *real_setup_and_get_header(rtsp_t *rtsp_session, uint32_t bandwid
   rtsp_schedule_field(rtsp_session, subscribe);
   rtsp_request_setparameter(rtsp_session,NULL);
 
-  xine_buffer_free(subscribe);
+ out:
+  free(description);
+  free(challenge1);
+  free(session_id);
+  if (subscribe)
+    xine_buffer_free(subscribe);
   xine_buffer_free(buf);
+
   return h;
 }
 

@@ -64,6 +64,20 @@ static int filter(const char *in, const char *filter, char **out) {
 
   return 0;
 }
+
+static void sdpplin_free_stream(sdpplin_stream_t **pp)
+{
+  if (*pp) {
+    sdpplin_stream_t *p = *pp;
+    _x_freep(&p->id);
+    _x_freep(&p->stream_name);
+    _x_freep(&p->mime_type);
+    _x_freep(&p->mlti_data);
+    _x_freep(&p->asm_rule_book);
+    _x_freep(pp);
+  }
+}
+
 static sdpplin_stream_t *XINE_MALLOC sdpplin_parse_stream(char **data) {
 
   sdpplin_stream_t *desc = calloc(1, sizeof(sdpplin_stream_t));
@@ -186,7 +200,6 @@ static sdpplin_stream_t *XINE_MALLOC sdpplin_parse_stream(char **data) {
 sdpplin_t *sdpplin_parse(char *data) {
 
   sdpplin_t        *desc = calloc(1, sizeof(sdpplin_t));
-  sdpplin_stream_t *stream;
   char             *buf=xine_buffer_init(32);
   int              handled;
   int              len;
@@ -199,16 +212,21 @@ sdpplin_t *sdpplin_parse(char *data) {
     handled=0;
 
     if (filter(data, "m=", &buf)) {
+      sdpplin_stream_t *stream;
       if ( ! desc->stream ) {
 	fprintf(stderr, "sdpplin.c: stream identifier found before stream count, skipping.");
 	continue;
       }
       stream=sdpplin_parse_stream(&data);
       lprintf("got data for stream id %u\n", stream->stream_id);
-      if ( stream->stream_id >= desc->stream_count )
+      if ( stream->stream_id >= desc->stream_count ) {
 	lprintf("stream id %u is greater than stream count %u\n", stream->stream_id, desc->stream_count);
-      else
-	desc->stream[stream->stream_id]=stream;
+        sdpplin_free_stream(&stream);
+      } else {
+        if (desc->stream[stream->stream_id])
+          sdpplin_free_stream(&desc->stream[stream->stream_id]);
+        desc->stream[stream->stream_id]=stream;
+      }
       continue;
     }
 
@@ -300,9 +318,21 @@ sdpplin_t *sdpplin_parse(char *data) {
   return desc;
 }
 
-void sdpplin_free(sdpplin_t *description) {
+void sdpplin_free(sdpplin_t *p) {
 
-  /* TODO: free strings */
-  free(description);
+  if (p->stream) {
+    unsigned i;
+    for (i = 0; i < p->stream_count; i++) {
+      sdpplin_free_stream(&p->stream[i]);
+    }
+    _x_freep(&p->stream);
+  }
+
+  _x_freep(&p->title);
+  _x_freep(&p->author);
+  _x_freep(&p->copyright);
+  _x_freep(&p->abstract);
+
+  free(p);
 }
 
