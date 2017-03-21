@@ -1156,6 +1156,7 @@ static void pvr_event_handler (pvr_input_plugin_t *this) {
        close(this->dev_fd);
        this->dev_fd = xine_open_cloexec(this->class->devname, O_RDWR);
        if (this->dev_fd == -1) {
+         pthread_mutex_unlock(&this->dev_lock);
          xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
 		 _("input_pvr: error opening device %s\n"), this->class->devname );
          return;
