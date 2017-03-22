@@ -692,15 +692,16 @@ static audio_index_entry_t *audio_cur_index_entry(demux_avi_t *this,
 static void AVI_close(avi_t *AVI){
   int i;
 
-  if(AVI->idx) free(AVI->idx);
-  if(AVI->video_idx.vindex) free(AVI->video_idx.vindex);
-  if(AVI->bih) free(AVI->bih);
+  _x_freep(&AVI->idx);
+  _x_freep(&AVI->video_idx.vindex);
+  _x_freep(&AVI->bih);
 
   for(i=0; i<AVI->n_audio; i++) {
-    if(AVI->audio[i]->audio_idx.aindex) free(AVI->audio[i]->audio_idx.aindex);
-    if(AVI->audio[i]->wavex) free(AVI->audio[i]->wavex);
-    free(AVI->audio[i]);
+    _x_freep(&AVI->audio[i]->audio_idx.aindex);
+    _x_freep(&AVI->audio[i]->wavex);
+    _x_freep(&AVI->audio[i]);
   }
+
   free(AVI);
 }
 
