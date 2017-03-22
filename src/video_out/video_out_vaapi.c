@@ -149,7 +149,6 @@ static const int scaling_level_enum_values[] = {
 typedef struct vaapi_driver_s vaapi_driver_t;
 
 typedef struct {
-    int x0, y0;
     int x1, y1, x2, y2;
 } vaapi_rect_t;
 
@@ -2577,8 +2576,8 @@ static void vaapi_overlay_end (vo_driver_t *this_gen, vo_frame_t *frame_gen) {
 
   int need_init = 0;
 
-  lprintf("dirty_rect.x0 %d dirty_rect.y0 %d dirty_rect.x2 %d dirty_rect.y2 %d output_width %d output_height %d\n",
-      dirty_rect.x0, dirty_rect.y0, dirty_rect.x2, dirty_rect.y2, output_width, output_height);
+  lprintf("dirty_rect.x1 %d dirty_rect.y1 %d dirty_rect.x2 %d dirty_rect.y2 %d output_width %d output_height %d\n",
+      dirty_rect.x1, dirty_rect.y1, dirty_rect.x2, dirty_rect.y2, output_width, output_height);
 
   if (first_scaled) {
     vaapi_rect_t dest;
