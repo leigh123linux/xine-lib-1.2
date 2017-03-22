@@ -885,6 +885,7 @@ static avi_t *XINE_MALLOC AVI_init(demux_avi_t *this) {
           avi_audio_t *a = (avi_audio_t *) calloc(1, sizeof(avi_audio_t));
           if(a==NULL) {
             this->AVI_errno = AVI_ERR_NO_MEM;
+            AVI_close(AVI);
             return 0;
           }
           AVI->audio[AVI->n_audio] = a;
