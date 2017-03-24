@@ -882,6 +882,8 @@ static void handle_sub_ssa (demux_plugin_t *this_gen, matroska_track_t *track,
                             uint8_t *data, size_t data_len,
                             int64_t data_pts, int data_duration,
                             int input_normpos, int input_time) {
+  demux_matroska_t *this = (demux_matroska_t *)this_gen;
+
   buf_element_t *buf;
   uint32_t *val;
   int commas = 0;
@@ -902,8 +904,8 @@ static void handle_sub_ssa (demux_plugin_t *this_gen, matroska_track_t *track,
   buf->type = track->buf_type;
   buf->decoder_flags = decoder_flags | BUF_FLAG_SPECIAL;
   buf->decoder_info[1] = BUF_SPECIAL_CHARSET_ENCODING;
-  buf->decoder_info_ptr[2] = "utf-8";
-  buf->decoder_info[2] = strlen(buf->decoder_info_ptr[2]);
+  buf->decoder_info_ptr[2] = this->class->literal_utf_8;
+  buf->decoder_info[2] = LITERAL_UTF_8_LEN;
 
   val = (uint32_t *)buf->content;
   *val++ = data_pts / 90;                    /* start time */
@@ -971,8 +973,8 @@ static void handle_sub_utf8 (demux_plugin_t *this_gen, matroska_track_t *track,
     buf->type = track->buf_type;
     buf->decoder_flags = decoder_flags | BUF_FLAG_SPECIAL;
     buf->decoder_info[1] = BUF_SPECIAL_CHARSET_ENCODING;
-    buf->decoder_info_ptr[2] = "utf-8";
-    buf->decoder_info[2] = strlen(buf->decoder_info_ptr[2]);
+    buf->decoder_info_ptr[2] = this->class->literal_utf_8;
+    buf->decoder_info[2] = LITERAL_UTF_8_LEN;
 
     val = (uint32_t *)buf->content;
     *val++ = data_pts / 90;                    /* start time */
@@ -1243,6 +1245,8 @@ static void handle_hdmv_textst (demux_plugin_t *this_gen, matroska_track_t *trac
                                 uint8_t *data, size_t data_len,
                                 int64_t data_pts, int data_duration,
                                 int input_normpos, int input_time) {
+  demux_matroska_t *this = (demux_matroska_t *)this_gen;
+
   buf_element_t *buf;
   uint32_t *val;
   char *dest;
@@ -1273,8 +1277,8 @@ static void handle_hdmv_textst (demux_plugin_t *this_gen, matroska_track_t *trac
   buf->type = track->buf_type;
   buf->decoder_flags = decoder_flags | BUF_FLAG_SPECIAL;
   buf->decoder_info[1] = BUF_SPECIAL_CHARSET_ENCODING;
-  buf->decoder_info_ptr[2] = "utf-8";
-  buf->decoder_info[2] = strlen(buf->decoder_info_ptr[2]);
+  buf->decoder_info_ptr[2] = this->class->literal_utf_8;
+  buf->decoder_info[2] = LITERAL_UTF_8_LEN;
 
   val = (uint32_t *)buf->content;
   *val++ = data_pts / 90;                    /* start time */
@@ -3232,6 +3236,10 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
   }
 
   this = calloc(1, sizeof(demux_matroska_t));
+  if (!this)
+    return NULL;
+
+  this->class = (demux_matroska_class_t *)class_gen;
 
   this->demux_plugin.send_headers      = demux_matroska_send_headers;
   this->demux_plugin.send_chunk        = demux_matroska_send_chunk;
@@ -3287,6 +3295,9 @@ void *demux_matroska_init_class (xine_t *xine, void *data) {
   demux_matroska_class_t     *this;
 
   this         = calloc(1, sizeof(demux_matroska_class_t));
+  if (!this)
+    return NULL;
+
   this->xine   = xine;
 
   this->demux_class.open_plugin     = open_plugin;
@@ -3298,6 +3309,8 @@ void *demux_matroska_init_class (xine_t *xine, void *data) {
 
   this->demux_class.extensions      = "mkv wbm webm";
   this->demux_class.dispose         = default_demux_class_dispose;
+
+  memcpy (this->literal_utf_8, "utf-8", LITERAL_UTF_8_LEN + 1);
 
   return this;
 }

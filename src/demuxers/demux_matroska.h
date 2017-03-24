@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2000-2016 the xine project
+ * Copyright (C) 2000-2017 the xine project
  *
  * This file is part of xine, a free video player.
  *
@@ -60,7 +60,22 @@ typedef struct {
 
 typedef struct {
 
+  demux_class_t     demux_class;
+
+  /* class-wide, global variables here */
+
+  xine_t           *xine;
+
+#define LITERAL_UTF_8_LEN 5
+  char              literal_utf_8[8]; /* "utf-8" */
+
+} demux_matroska_class_t;
+
+typedef struct {
+
   demux_plugin_t       demux_plugin;
+
+  demux_matroska_class_t *class;
 
   xine_stream_t       *stream;
 
@@ -123,16 +138,6 @@ typedef struct {
   /* event handling (chapter navigation) */
   xine_event_queue_t  *event_queue;
 } demux_matroska_t ;
-
-typedef struct {
-
-  demux_class_t     demux_class;
-
-  /* class-wide, global variables here */
-
-  xine_t           *xine;
-
-} demux_matroska_class_t;
 
 /* "entry points" for chapter handling.
  * The parser descends into "Chapters" elements at the _parse_ function,
