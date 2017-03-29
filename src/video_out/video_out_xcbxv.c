@@ -64,11 +64,13 @@
 #include <xine/xineutils.h>
 #include <xine/vo_scale.h>
 #include "xcbosd.h"
+#define XV_PROPS
 #include "xv_common.h"
 
 typedef struct xv_driver_s xv_driver_t;
 
 typedef struct {
+  int                initial_value;
   int                value;
   int                min;
   int                max;
@@ -76,15 +78,10 @@ typedef struct {
 
   int                defer;
 
+  const char        *name;
   cfg_entry_t       *entry;
-
   xv_driver_t       *this;
 } xv_property_t;
-
-typedef struct {
-  char              *name;
-  int                value;
-} xv_portattribute_t;
 
 typedef struct {
   vo_frame_t         vo_frame;
@@ -123,7 +120,7 @@ struct xv_driver_s {
   int                use_shm;
   int                use_pitch_alignment;
   uint32_t           capabilities;
-  xv_property_t      props[VO_NUM_PROPERTIES];
+  xv_property_t      props[XV_NUM_PROPERTIES];
 
   xv_frame_t        *recent_frames[VO_NUM_RECENT_FRAMES];
   xv_frame_t        *cur_frame;
@@ -133,14 +130,6 @@ struct xv_driver_s {
   /* all scaling information goes here */
   vo_scale_t         sc;
 
-  int                use_colorkey;
-  uint32_t           colorkey;
-
-  int                sync_is_vsync;
-
-  /* hold initial port attributes values to restore on exit */
-  xine_list_t       *port_attributes;
-
   xine_t            *xine;
 
   alphablend_t       alphablend_extra_data;
@@ -149,7 +138,6 @@ struct xv_driver_s {
 
   /* color matrix switching */
   int                cm_active, cm_state;
-  xcb_atom_t         cm_atom, cm_atom2;
   int                fullrange_mode;
 };
 
@@ -465,8 +453,10 @@ static void xv_clean_output_area (xv_driver_t *this) {
   if (rects_count > 0)
     xcb_poly_fill_rectangle(this->connection, this->window, this->gc, rects_count, rects);
 
-  if (this->use_colorkey) {
-    xcb_change_gc(this->connection, this->gc, XCB_GC_FOREGROUND, &this->colorkey);
+  if ((this->props[VO_PROP_COLORKEY].atom != XCB_NONE) ||
+      (this->props[VO_PROP_AUTOPAINT_COLORKEY].value == 1)) {
+    uint32_t colorkey = this->props[VO_PROP_COLORKEY].value;
+    xcb_change_gc (this->connection, this->gc, XCB_GC_FOREGROUND, &colorkey);
     xcb_rectangle_t rectangle = { this->sc.output_xoffset, this->sc.output_yoffset,
 				  this->sc.output_width, this->sc.output_height };
     xcb_poly_fill_rectangle(this->connection, this->window, this->gc, 1, &rectangle);
@@ -652,19 +642,19 @@ static void xv_new_color (xv_driver_t *this, int cm) {
     xcb_xv_set_port_attribute (this->connection, this->xv_port, atom, satu);
   pthread_mutex_unlock(&this->main_mutex);
 
-  if (this->cm_atom != XCB_NONE) {
+  if (this->props[XV_PROP_ITURBT_709].atom != XCB_NONE) {
     /* 0 = 601 (SD), 1 = 709 (HD) */
     /* so far only binary nvidia drivers support this. why not nuveau? */
     cm2 = (0xc00c >> cm) & 1;
     pthread_mutex_lock(&this->main_mutex);
-    xcb_xv_set_port_attribute (this->connection, this->xv_port, this->cm_atom, cm2);
+    xcb_xv_set_port_attribute (this->connection, this->xv_port, this->props[XV_PROP_ITURBT_709].atom, cm2);
     pthread_mutex_unlock(&this->main_mutex);
     cm2 = cm2 ? 2 : 10;
-  } else if (this->cm_atom2 != XCB_NONE) {
+  } else if (this->props[XV_PROP_COLORSPACE].atom != XCB_NONE) {
     /* radeonhd: 0 = size based auto, 1 = 601 (SD), 2 = 709 (HD) */
     cm2 = ((0xc00c >> cm) & 1) + 1;
     pthread_mutex_lock(&this->main_mutex);
-    xcb_xv_set_port_attribute (this->connection, this->xv_port, this->cm_atom2, cm2);
+    xcb_xv_set_port_attribute (this->connection, this->xv_port, this->props[XV_PROP_COLORSPACE].atom, cm2);
     pthread_mutex_unlock(&this->main_mutex);
     cm2 = cm2 == 2 ? 2 : 10;
   } else {
@@ -780,16 +770,6 @@ static int xv_get_property (vo_driver_t *this_gen, int property) {
   lprintf(LOG_MODULE ": property #%d = %d\n", property, this->props[property].value);
 
   return this->props[property].value;
-}
-
-static void xv_property_callback (void *property_gen, xine_cfg_entry_t *entry) {
-  xv_property_t *property = (xv_property_t *) property_gen;
-  xv_driver_t   *this = property->this;
-
-  pthread_mutex_lock(&this->main_mutex);
-  xcb_xv_set_port_attribute(this->connection, this->xv_port,
-			    property->atom, entry->num_value);
-  pthread_mutex_unlock(&this->main_mutex);
 }
 
 static int xv_set_property (vo_driver_t *this_gen,
@@ -1002,60 +982,40 @@ static int xv_gui_data_exchange (vo_driver_t *this_gen,
   return 0;
 }
 
-static void xv_store_port_attribute(xv_driver_t *this, const char * const name) {
+static xcb_atom_t xv_atom_from_name (xv_driver_t *this, const char *name) {
+  xcb_atom_t               ret = XCB_NONE;
   xcb_intern_atom_cookie_t atom_cookie;
   xcb_intern_atom_reply_t *atom_reply;
+  xcb_generic_error_t     *err = NULL;
 
-  xcb_xv_get_port_attribute_cookie_t get_attribute_cookie;
-  xcb_xv_get_port_attribute_reply_t *get_attribute_reply;
+  atom_cookie = xcb_intern_atom (this->connection, 0, strlen (name), name);
+  atom_reply = xcb_intern_atom_reply (this->connection, atom_cookie, &err);
 
-  pthread_mutex_lock(&this->main_mutex);
-  atom_cookie = xcb_intern_atom(this->connection, 0, strlen(name), name);
-  atom_reply = xcb_intern_atom_reply(this->connection, atom_cookie, NULL);
-  get_attribute_cookie = xcb_xv_get_port_attribute(this->connection, this->xv_port, atom_reply->atom);
-  get_attribute_reply = xcb_xv_get_port_attribute_reply(this->connection, get_attribute_cookie, NULL);
-  free(atom_reply);
-  pthread_mutex_unlock(&this->main_mutex);
-
-  if (get_attribute_reply != NULL) {
-    xv_portattribute_t *attr;
-
-    attr = (xv_portattribute_t *) malloc(sizeof(xv_portattribute_t));
-    attr->name = strdup(name);
-    attr->value = get_attribute_reply->value;
-    free(get_attribute_reply);
-
-    xine_list_push_back(this->port_attributes, attr);
+  free (err);
+  if (atom_reply) {
+    ret = atom_reply->atom;
+    free (atom_reply);
   }
+  return ret;
 }
 
 static void xv_restore_port_attributes(xv_driver_t *this) {
-  xine_list_iterator_t ite;
+  int i;
 
-  xcb_intern_atom_cookie_t atom_cookie;
-  xcb_intern_atom_reply_t *atom_reply;
-
-  while ((ite = xine_list_front(this->port_attributes)) != NULL) {
-    xv_portattribute_t *attr = xine_list_get_value(this->port_attributes, ite);
-    xine_list_remove (this->port_attributes, ite);
-
-    pthread_mutex_lock(&this->main_mutex);
-    atom_cookie = xcb_intern_atom(this->connection, 0, strlen(attr->name), attr->name);
-    atom_reply = xcb_intern_atom_reply(this->connection, atom_cookie, NULL);
-    xcb_xv_set_port_attribute(this->connection, this->xv_port, atom_reply->atom, attr->value);
-    free(atom_reply);
-    pthread_mutex_unlock(&this->main_mutex);
-
-    free( attr->name );
-    free( attr );
+  for (i = 0; i < XV_NUM_PROPERTIES; i++) {
+    xv_property_t *prop = &this->props[i];
+    if (prop->atom == XCB_NONE)
+      continue;
+    if (prop->defer || (prop->value != prop->initial_value)) {
+      pthread_mutex_lock (&this->main_mutex);
+      xcb_xv_set_port_attribute (this->connection, this->xv_port, prop->atom, prop->initial_value);
+      pthread_mutex_unlock (&this->main_mutex);
+    }
   }
 
   pthread_mutex_lock(&this->main_mutex);
   xcb_flush(this->connection);
   pthread_mutex_unlock(&this->main_mutex);
-
-  xine_list_delete( this->port_attributes );
-  this->port_attributes = NULL;
 }
 
 static void xv_dispose (vo_driver_t *this_gen) {
@@ -1063,9 +1023,7 @@ static void xv_dispose (vo_driver_t *this_gen) {
   int          i;
 
   /* restore port attributes to their initial values */
-  if (this->port_attributes) {
-    xv_restore_port_attributes(this);
-  }
+  xv_restore_port_attributes (this);
 
   pthread_mutex_lock(&this->main_mutex);
   if (this->xv_port) {
@@ -1098,155 +1056,77 @@ static void xv_dispose (vo_driver_t *this_gen) {
   free (this);
 }
 
-static int xv_check_yv12(xcb_connection_t *connection, xcb_xv_port_t port) {
-  xcb_xv_list_image_formats_cookie_t list_formats_cookie;
-  xcb_xv_list_image_formats_reply_t *list_formats_reply;
+static void xv_prop_init (xv_driver_t *this, const xv_prop_list_t *l, const xcb_xv_attribute_info_t *attr) {
+  xv_property_t *prop = &this->props[l->index];
 
-  xcb_xv_image_format_info_iterator_t format_it;
+  xcb_atom_t atom = xv_atom_from_name (this, l->name);
+  if (atom == XCB_NONE)
+    return;
+  prop->atom = atom;
 
-  list_formats_cookie = xcb_xv_list_image_formats(connection, port);
-  list_formats_reply = xcb_xv_list_image_formats_reply(connection, list_formats_cookie, NULL);
-  if (!list_formats_reply)
-    return 1; /* no formats listed; probably due to an invalid port no. */
-  format_it = xcb_xv_list_image_formats_format_iterator(list_formats_reply);
-
-  for (; format_it.rem; xcb_xv_image_format_info_next(&format_it))
-    if ((format_it.data->id == XINE_IMGFMT_YV12) &&
-	(! (strcmp ((char *) format_it.data->guid, "YV12")))) {
-      xcb_xv_image_format_info_end (format_it);
-      free(list_formats_reply);
-      return 0;
-    }
-
-  xcb_xv_image_format_info_end (format_it);
-  free(list_formats_reply);
-  return 1;
-}
-
-static void xv_check_capability (xv_driver_t *this,
-				 int property, xcb_xv_attribute_info_t *attr,
-				 int base_id,
-				 const char *config_name,
-				 const char *config_desc,
-				 const char *config_help) {
-  int          int_default;
-  cfg_entry_t *entry;
-  const char  *str_prop = xcb_xv_attribute_info_name(attr);
-  xv_property_t *prop;
-
-  xcb_xv_get_port_attribute_cookie_t get_attribute_cookie;
-  xcb_xv_get_port_attribute_reply_t *get_attribute_reply;
-
-  xcb_intern_atom_cookie_t atom_cookie;
-  xcb_intern_atom_reply_t *atom_reply;
-
-  atom_cookie = xcb_intern_atom(this->connection, 0, strlen(str_prop), str_prop);
-  atom_reply = xcb_intern_atom_reply(this->connection, atom_cookie, NULL);
-
-  prop = &this->props[property];
-
-  prop->min  = attr->min;
-  prop->max  = attr->max;
-  prop->atom = atom_reply->atom;
-
-  free(atom_reply);
+  prop->name = l->name;
+  this->capabilities |= l->caps;
 
   /*
    * some Xv drivers (Gatos ATI) report some ~0 as max values, this is confusing.
    */
+  prop->min = attr->min;
+  prop->max = attr->max;
   if ((prop->min >= 0) && (prop->max < 0))
     prop->max = 2147483615;
 
-  get_attribute_cookie = xcb_xv_get_port_attribute(this->connection, this->xv_port, prop->atom);
-  get_attribute_reply = xcb_xv_get_port_attribute_reply(this->connection, get_attribute_cookie, NULL);
+  {
+    xcb_xv_get_port_attribute_cookie_t get_attribute_cookie;
+    xcb_xv_get_port_attribute_reply_t *get_attribute_reply;
+    pthread_mutex_lock (&this->main_mutex);
+    get_attribute_cookie = xcb_xv_get_port_attribute (this->connection, this->xv_port, atom);
+    get_attribute_reply  = xcb_xv_get_port_attribute_reply (this->connection, get_attribute_cookie, NULL);
+    pthread_mutex_unlock (&this->main_mutex);
+    if (!get_attribute_reply)
+      return;
+    prop->initial_value = prop->value = get_attribute_reply->value;
+    free (get_attribute_reply);
+  }
 
-  int_default = get_attribute_reply->value;
-
-  free(get_attribute_reply);
-
-  xprintf(this->xine, XINE_VERBOSITY_DEBUG,
-	  LOG_MODULE ": port attribute %s (%d) value is %d\n", str_prop, property, int_default);
-
-  /* disable autopaint colorkey by default */
-  /* might be overridden using config entry */
-  if(strcmp(str_prop, "XV_AUTOPAINT_COLORKEY") == 0)
-    int_default = 0;
-
-  if (config_name) {
-    /* is this a boolean property ? */
-    if ((attr->min == 0) && (attr->max == 1)) {
-      this->config->register_bool (this->config, config_name, int_default,
-				   config_desc,
-				   config_help, 20, xv_property_callback, prop);
-
-    } else {
-      this->config->register_range (this->config, config_name, int_default,
-				    prop->min, prop->max,
-				    config_desc,
-				    config_help, 20, xv_property_callback, prop);
-    }
-
-    entry = this->config->lookup_entry (this->config, config_name);
-
-    if((entry->num_value < prop->min) ||
-       (entry->num_value > prop->max)) {
-
-      this->config->update_num(this->config, config_name, ((prop->min + prop->max) >> 1));
-
-      entry = this->config->lookup_entry (this->config, config_name);
-    }
-
-    prop->entry = entry;
-
-    xv_set_property (&this->vo_driver, property, entry->num_value);
-
-    if (strcmp(str_prop, "XV_COLORKEY") == 0) {
-      this->use_colorkey |= 1;
-      this->colorkey = entry->num_value;
-    } else if(strcmp(str_prop, "XV_AUTOPAINT_COLORKEY") == 0) {
-      if(entry->num_value==1)
-        this->use_colorkey |= 2;	/* colorkey is autopainted */
-    }
-  } else
-    prop->value  = int_default;
+  xprintf (this->xine, XINE_VERBOSITY_DEBUG,
+    LOG_MODULE ": port attribute %s (%d) value is %d\n", l->name, l->index, prop->value);
 }
 
-static void xv_update_attr (void *this_gen, xine_cfg_entry_t *entry,
-			    const char *atomstr, const char *debugstr)
-{
-  xv_driver_t *this = (xv_driver_t *) this_gen;
-
-  xcb_intern_atom_cookie_t atom_cookie;
-  xcb_intern_atom_reply_t *atom_reply;
+static void xv_prop_update (void *prop_gen, xine_cfg_entry_t *entry) {
+  xv_property_t *prop = (xv_property_t *)prop_gen;
+  xv_driver_t   *this = prop->this;
 
   pthread_mutex_lock(&this->main_mutex);
-  atom_cookie = xcb_intern_atom(this->connection, 0, strlen (atomstr), atomstr);
-  atom_reply = xcb_intern_atom_reply(this->connection, atom_cookie, NULL);
-  xcb_xv_set_port_attribute(this->connection, this->xv_port, atom_reply->atom, entry->num_value);
-  free(atom_reply);
+  xcb_xv_set_port_attribute (this->connection, this->xv_port, prop->atom, entry->num_value);
   pthread_mutex_unlock(&this->main_mutex);
+  prop->value = entry->num_value;
 
-  xprintf(this->xine, XINE_VERBOSITY_DEBUG,
-	  LOG_MODULE ": %s = %d\n", debugstr, entry->num_value);
+  xprintf (this->xine, XINE_VERBOSITY_DEBUG, LOG_MODULE ": %s = %d\n", prop->name, entry->num_value);
 }
 
-static void xv_update_XV_FILTER(void *this_gen, xine_cfg_entry_t *entry) {
-  xv_update_attr (this_gen, entry, "XV_FILTER", "bilinear scaling mode");
-}
+static void xv_prop_conf (xv_driver_t *this, int property,
+  const char *config_name, const char *config_desc, const char *config_help) {
+  xv_property_t *prop = &this->props[property];
+  cfg_entry_t *entry;
 
-static void xv_update_XV_DOUBLE_BUFFER(void *this_gen, xine_cfg_entry_t *entry) {
-  xv_update_attr (this_gen, entry, "XV_DOUBLE_BUFFER", "double buffering mode");
-}
+  /* is this a boolean property ? */
+  if ((prop->min == 0) && (prop->max == 1))
+    this->config->register_bool (this->config, config_name, prop->value,
+      config_desc, config_help, 20, xv_prop_update, prop);
+  else
+    this->config->register_range (this->config, config_name, prop->value,
+      prop->min, prop->max, config_desc, config_help, 20, xv_prop_update, prop);
 
-static void xv_update_XV_SYNC_TO_VBLANK(void *this_gen, xine_cfg_entry_t *entry) {
-  xv_update_attr (this_gen, entry,
-		  sync_atoms[((xv_driver_t *)this_gen)->sync_is_vsync],
-		  "sync to vblank");
-}
+  entry = this->config->lookup_entry (this->config, config_name);
 
-static void xv_update_XV_BICUBIC(void *this_gen, xine_cfg_entry_t *entry)
-{
-  xv_update_attr (this_gen, entry, "XV_BICUBIC", "bicubic filtering mode");
+  if ((entry->num_value < prop->min) || (entry->num_value > prop->max)) {
+    this->config->update_num (this->config, config_name, ((prop->min + prop->max) >> 1));
+    entry = this->config->lookup_entry (this->config, config_name);
+  }
+
+  prop->entry = entry;
+
+  xv_set_property (&this->vo_driver, property, entry->num_value);
 }
 
 static void xv_update_xv_pitch_alignment(void *this_gen, xine_cfg_entry_t *entry) {
@@ -1266,22 +1146,71 @@ static void xv_fullrange_cb_config (void *this_gen, xine_cfg_entry_t *entry) {
 }
 
 static xcb_xv_port_t xv_open_port (xv_driver_t *this, xcb_xv_port_t port) {
-  xcb_xv_grab_port_cookie_t grab_port_cookie;
-  xcb_xv_grab_port_reply_t *grab_port_reply;
-
-  if (xv_check_yv12 (this->connection, port))
-    return 0;
-
-  grab_port_cookie = xcb_xv_grab_port (this->connection, port, XCB_CURRENT_TIME);
-  grab_port_reply = xcb_xv_grab_port_reply (this->connection, grab_port_cookie, NULL);
-
-  if (grab_port_reply && (grab_port_reply->result == XCB_GRAB_STATUS_SUCCESS))
   {
-    free (grab_port_reply);
-    return port;
+    xcb_xv_list_image_formats_cookie_t list_formats_cookie;
+    xcb_xv_list_image_formats_reply_t *list_formats_reply;
+    xcb_xv_image_format_info_iterator_t format_it;
+    xcb_generic_error_t *err = NULL;
+
+    list_formats_cookie = xcb_xv_list_image_formats (this->connection, port);
+    list_formats_reply = xcb_xv_list_image_formats_reply (this->connection, list_formats_cookie, &err);
+    free (err);
+    if (!list_formats_reply)
+      return 0;
+
+    this->xv_format_yv12 = 0;
+    this->xv_format_yuy2 = 0;
+    format_it = xcb_xv_list_image_formats_format_iterator (list_formats_reply);
+    for (; format_it.rem; xcb_xv_image_format_info_next (&format_it)) {
+      lprintf ("Xv image format: 0x%x (%4.4s) %s\n", format_it.data->id, (char*)&format_it.data->id,
+        (format_it.data->format == XCB_XV_IMAGE_FORMAT_INFO_FORMAT_PACKED) ? "packed" : "planar");
+      switch (format_it.data->id) {
+        case XINE_IMGFMT_YV12:
+          this->xv_format_yv12 = format_it.data->id;
+          this->capabilities |= VO_CAP_YV12;
+          xprintf (this->xine, XINE_VERBOSITY_LOG,
+            _("%s: this adaptor supports the %s format.\n"), LOG_MODULE, "YV12");
+        break;
+        case XINE_IMGFMT_YUY2:
+          this->xv_format_yuy2 = format_it.data->id;
+          this->capabilities |= VO_CAP_YUY2;
+          xprintf (this->xine, XINE_VERBOSITY_LOG,
+            _("%s: this adaptor supports the %s format.\n"), LOG_MODULE, "YUY2");
+        break;
+        default: ;
+      }
+    }
+    xcb_xv_image_format_info_end (format_it);
+    free (list_formats_reply);
   }
-  free (grab_port_reply);
-  return 0;
+
+  /* XXX
+   * Bail out if both YV12 and YUY2 are not supported.
+   * Proper fix would be implementing format conversions.
+   * - decoder should check video output CAP_ flags
+   * - video out could insert automatic conversion filter
+   * - ...
+   */
+  if (!this->xv_format_yuy2 || !this->xv_format_yv12) {
+    xprintf (this->xine, XINE_VERBOSITY_LOG,
+      LOG_MODULE ": this adaptor does not support YV12 and YUY2 formats.\n");
+    return 0;
+  }
+
+  {
+    xcb_xv_grab_port_cookie_t grab_port_cookie;
+    xcb_xv_grab_port_reply_t *grab_port_reply;
+
+    grab_port_cookie = xcb_xv_grab_port (this->connection, port, XCB_CURRENT_TIME);
+    grab_port_reply = xcb_xv_grab_port_reply (this->connection, grab_port_cookie, NULL);
+
+    if (grab_port_reply && (grab_port_reply->result == XCB_GRAB_STATUS_SUCCESS)) {
+      free (grab_port_reply);
+      return port;
+    }
+    free (grab_port_reply);
+    return 0;
+  }
 }
 
 static xcb_xv_adaptor_info_iterator_t *
@@ -1342,10 +1271,15 @@ static vo_driver_t *open_plugin(video_driver_class_t *class_gen, const void *vis
   if (!this)
     return NULL;
 
-  this->connection        = visual->connection;
-  this->screen            = visual->screen;
-  this->window            = visual->window;
-  this->config            = config;
+  this->capabilities = VO_CAP_CROP | VO_CAP_ZOOM_X | VO_CAP_ZOOM_Y;
+  this->use_shm      = 1;
+  this->xoverlay     = NULL;
+  this->ovl_changed  = 0;
+  this->xine         = class->xine;
+  this->connection   = visual->connection;
+  this->screen       = visual->screen;
+  this->window       = visual->window;
+  this->config       = config;
 
   /*
    * check for Xvideo support
@@ -1447,15 +1381,6 @@ static vo_driver_t *open_plugin(video_driver_class_t *class_gen, const void *vis
 
   this->gc                      = xcb_generate_id(this->connection);
   xcb_create_gc(this->connection, this->gc, this->window, 0, NULL);
-  this->capabilities            = VO_CAP_CROP | VO_CAP_ZOOM_X | VO_CAP_ZOOM_Y;
-  this->use_shm                 = 1;
-  this->use_colorkey            = 0;
-  this->colorkey                = 0;
-  this->xoverlay                = NULL;
-  this->ovl_changed             = 0;
-  this->xine                    = class->xine;
-  this->cm_atom                 = XCB_NONE;
-  this->cm_atom2                = XCB_NONE;
 
   this->vo_driver.get_capabilities     = xv_get_capabilities;
   this->vo_driver.alloc_frame          = xv_alloc_frame;
@@ -1475,12 +1400,14 @@ static vo_driver_t *open_plugin(video_driver_class_t *class_gen, const void *vis
    * init properties
    */
 
-  for (i = 0; i < VO_NUM_PROPERTIES; i++) {
+  for (i = 0; i < XV_NUM_PROPERTIES; i++) {
+    this->props[i].initial_value = 0;
     this->props[i].value = 0;
     this->props[i].min   = 0;
     this->props[i].max   = 0;
     this->props[i].atom  = XCB_NONE;
     this->props[i].defer = 0;
+    this->props[i].name  = NULL;
     this->props[i].entry = NULL;
     this->props[i].this  = this;
   }
@@ -1495,7 +1422,6 @@ static vo_driver_t *open_plugin(video_driver_class_t *class_gen, const void *vis
   /*
    * check this adaptor's capabilities
    */
-  this->port_attributes = xine_list_new();
   {
     xcb_xv_query_port_attributes_cookie_t query_attributes_cookie;
     xcb_xv_query_port_attributes_reply_t *query_attributes_reply;
@@ -1515,105 +1441,47 @@ static vo_driver_t *open_plugin(video_driver_class_t *class_gen, const void *vis
 
         if ((attribute_it.data->flags & XCB_XV_ATTRIBUTE_FLAG_SETTABLE)
          && (attribute_it.data->flags & XCB_XV_ATTRIBUTE_FLAG_GETTABLE)) {
-          const char *const name = xcb_xv_attribute_info_name (attribute_it.data);
-          /* store initial port attribute value */
-          xv_store_port_attribute(this, name);
+          const char *name = xcb_xv_attribute_info_name (attribute_it.data);
+          const xv_prop_list_t *l = xv_find_prop (name);
+          xcb_xv_attribute_info_name_end (attribute_it.data);
+          if (!l)
+            continue;
+          if ((l->index == VO_PROP_HUE) && (!strncmp (adaptor_name, "NV", 2))) {
+            xprintf (this->xine, XINE_VERBOSITY_NONE, LOG_MODULE ": ignoring broken XV_HUE settings on NVidia cards\n");
+            continue;
+          }
+          xv_prop_init (this, l, attribute_it.data);
 
-          if (!strcmp(name, "XV_HUE")) {
-            if (!strncmp (adaptor_name, "NV", 2)) {
-              xprintf (this->xine, XINE_VERBOSITY_NONE, LOG_MODULE ": ignoring broken XV_HUE settings on NVidia cards\n");
-            } else {
-              this->capabilities |= VO_CAP_HUE;
-              xv_check_capability (this, VO_PROP_HUE, attribute_it.data, base_port, NULL, NULL, NULL);
-            }
+          if (l->index == XV_PROP_ITURBT_709) { /* nvidia */
+            this->cm_active = this->props[XV_PROP_ITURBT_709].value ? 2 : 10;
 
-          } else if (!strcmp(name, "XV_SATURATION")) {
-            this->capabilities |= VO_CAP_SATURATION;
-            xv_check_capability (this, VO_PROP_SATURATION, attribute_it.data, base_port, NULL, NULL, NULL);
+          } else if (l->index == XV_PROP_COLORSPACE) { /* radeonhd */
+            this->cm_active = this->props[XV_PROP_COLORSPACE].value == 2 ? 2 : (this->props[XV_PROP_COLORSPACE].value == 1 ? 10 : 0);
 
-          } else if (!strcmp(name, "XV_BRIGHTNESS")) {
-            this->capabilities |= VO_CAP_BRIGHTNESS;
-            xv_check_capability (this, VO_PROP_BRIGHTNESS, attribute_it.data, base_port, NULL, NULL, NULL);
+          } else if (l->index == VO_PROP_COLORKEY) {
+            xv_prop_conf (this, VO_PROP_COLORKEY, "video.device.xv_colorkey", VIDEO_DEVICE_XV_COLORKEY_HELP);
 
-          } else if (!strcmp(name, "XV_CONTRAST")) {
-            this->capabilities |= VO_CAP_CONTRAST;
-            xv_check_capability (this, VO_PROP_CONTRAST, attribute_it.data, base_port, NULL, NULL, NULL);
-
-          } else if (!strcmp(name, "XV_GAMMA")) {
-            this->capabilities |= VO_CAP_GAMMA;
-            xv_check_capability (this, VO_PROP_GAMMA, attribute_it.data, base_port, NULL, NULL, NULL);
-
-          } else if (!strcmp(name, "XV_ITURBT_709")) { /* nvidia */
-            xcb_xv_get_port_attribute_cookie_t get_attribute_cookie;
-            xcb_xv_get_port_attribute_reply_t *get_attribute_reply;
-            xcb_intern_atom_cookie_t atom_cookie;
-            xcb_intern_atom_reply_t *atom_reply;
-            pthread_mutex_lock(&this->main_mutex);
-            atom_cookie = xcb_intern_atom (this->connection, 0, 13, name);
-            atom_reply = xcb_intern_atom_reply (this->connection, atom_cookie, NULL);
-            if (atom_reply) {
-              this->cm_atom = atom_reply->atom;
-              free (atom_reply);
-            }
-            if (this->cm_atom != XCB_NONE) {
-              get_attribute_cookie = xcb_xv_get_port_attribute (this->connection, this->xv_port, this->cm_atom);
-              get_attribute_reply = xcb_xv_get_port_attribute_reply (this->connection, get_attribute_cookie, NULL);
-              if (get_attribute_reply) {
-                this->cm_active = get_attribute_reply->value ? 2 : 10;
-                free (get_attribute_reply);
-                this->capabilities |= VO_CAP_COLOR_MATRIX;
-              }
-            }
-            pthread_mutex_unlock(&this->main_mutex);
-
-          } else if (!strcmp(name, "XV_COLORSPACE")) { /* radeonhd */
-            xcb_xv_get_port_attribute_cookie_t get_attribute_cookie;
-            xcb_xv_get_port_attribute_reply_t *get_attribute_reply;
-            xcb_intern_atom_cookie_t atom_cookie;
-            xcb_intern_atom_reply_t *atom_reply;
-            pthread_mutex_lock (&this->main_mutex);
-            atom_cookie = xcb_intern_atom (this->connection, 0, 13, name);
-            atom_reply = xcb_intern_atom_reply (this->connection, atom_cookie, NULL);
-            if (atom_reply) {
-              this->cm_atom2 = atom_reply->atom;
-              free (atom_reply);
-            }
-            if (this->cm_atom2 != XCB_NONE) {
-              get_attribute_cookie = xcb_xv_get_port_attribute (this->connection, this->xv_port, this->cm_atom2);
-              get_attribute_reply = xcb_xv_get_port_attribute_reply (this->connection, get_attribute_cookie, NULL);
-              if (get_attribute_reply) {
-                this->cm_active = get_attribute_reply->value == 2 ? 2 : (get_attribute_reply->value == 1 ? 10 : 0);
-                free (get_attribute_reply);
-                this->capabilities |= VO_CAP_COLOR_MATRIX;
-              }
-            }
-            pthread_mutex_unlock (&this->main_mutex);
-
-          } else if (!strcmp(name, "XV_COLORKEY")) {
-            this->capabilities |= VO_CAP_COLORKEY;
-            xv_check_capability (this, VO_PROP_COLORKEY, attribute_it.data, base_port,
-              "video.device.xv_colorkey", VIDEO_DEVICE_XV_COLORKEY_HELP);
-
-          } else if (!strcmp(name, "XV_AUTOPAINT_COLORKEY")) {
-            this->capabilities |= VO_CAP_AUTOPAINT_COLORKEY;
-            xv_check_capability (this, VO_PROP_AUTOPAINT_COLORKEY, attribute_it.data, base_port,
+          } else if (l->index == VO_PROP_AUTOPAINT_COLORKEY) {
+            /* disable autopaint colorkey by default, might be overridden using config entry */
+            this->props[VO_PROP_AUTOPAINT_COLORKEY].value = 0;
+            xv_prop_conf (this, VO_PROP_AUTOPAINT_COLORKEY,
               "video.device.xv_autopaint_colorkey", VIDEO_DEVICE_XV_AUTOPAINT_COLORKEY_HELP);
 
-          } else if (!strcmp(name, "XV_FILTER")) {
+          } else if (l->index == XV_PROP_FILTER) {
             int xv_filter;
             /* This setting is specific to Permedia 2/3 cards. */
             xv_filter = config->register_range (config, "video.device.xv_filter", 0,
               attribute_it.data->min, attribute_it.data->max, VIDEO_DEVICE_XV_FILTER_HELP,
-              20, xv_update_XV_FILTER, this);
+              20, xv_prop_update, &this->props[XV_PROP_FILTER]);
             config->update_num (config,"video.device.xv_filter",xv_filter);
 
-          } else if (!strcmp(name, "XV_DOUBLE_BUFFER")) {
-            int xv_double_buffer = config->register_bool (config, "video.device.xv_double_buffer", 1,
-              VIDEO_DEVICE_XV_DOUBLE_BUFFER_HELP, 20, xv_update_XV_DOUBLE_BUFFER, this);
+          } else if (l->index == XV_PROP_DOUBLE_BUFFER) {
+            int xv_double_buffer;
+            xv_double_buffer = config->register_bool (config, "video.device.xv_double_buffer", 1,
+              VIDEO_DEVICE_XV_DOUBLE_BUFFER_HELP, 20, xv_prop_update, &this->props[XV_PROP_DOUBLE_BUFFER]);
             config->update_num (config,"video.device.xv_double_buffer",xv_double_buffer);
 
-          } else if (!strcmp(name, sync_atoms[this->sync_is_vsync = 0]) ||
-                     !strcmp(name, sync_atoms[this->sync_is_vsync = 1])) {
+          } else if (l->index == XV_PROP_SYNC_TO_VBLANK) {
             int xv_sync_to_vblank;
             xv_sync_to_vblank = config->register_bool (config, "video.device.xv_sync_to_vblank", 1,
               _("enable vblank sync"),
@@ -1622,16 +1490,15 @@ static vo_driver_t *open_plugin(video_driver_class_t *class_gen, const void *vis
                 "flickering and tearing artifacts. On nvidia cards one may also "
                 "need to run \"nvidia-settings\" and choose which display device to "
                 "sync to under the XVideo Settings tab"),
-              20, xv_update_XV_SYNC_TO_VBLANK, this);
+              20, xv_prop_update, &this->props[XV_PROP_SYNC_TO_VBLANK]);
             config->update_num(config,"video.device.xv_sync_to_vblank",xv_sync_to_vblank);
 
-          } else if (!strcmp(name, "XV_BICUBIC")) {
-            int xv_bicubic = config->register_enum (config, "video.device.xv_bicubic", 2,
-              (char **)bicubic_types, VIDEO_DEVICE_XV_BICUBIC_HELP, 20, xv_update_XV_BICUBIC, this);
+          } else if (l->index == XV_PROP_BICUBIC) {
+            int xv_bicubic;
+            xv_bicubic = config->register_enum (config, "video.device.xv_bicubic", 2,
+              (char **)bicubic_types, VIDEO_DEVICE_XV_BICUBIC_HELP, 20, xv_prop_update, &this->props[XV_PROP_BICUBIC]);
               config->update_num(config,"video.device.xv_bicubic",xv_bicubic);
           }
-
-          xcb_xv_attribute_info_name_end (attribute_it.data);
         }
       }
       xcb_xv_attribute_info_end (attribute_it);
@@ -1671,77 +1538,17 @@ static vo_driver_t *open_plugin(video_driver_class_t *class_gen, const void *vis
     this->fullrange_mode = 0;
   }
 
-  /*
-   * check supported image formats
-   */
-  this->xv_format_yv12 = 0;
-  this->xv_format_yuy2 = 0;
-  do {
-    xcb_xv_list_image_formats_cookie_t list_formats_cookie;
-    xcb_xv_list_image_formats_reply_t *list_formats_reply;
-    xcb_xv_image_format_info_iterator_t format_it;
-    xcb_generic_error_t *err = NULL;
-
-    list_formats_cookie = xcb_xv_list_image_formats (this->connection, xv_port);
-    list_formats_reply = xcb_xv_list_image_formats_reply (this->connection, list_formats_cookie, &err);
-    if (err) {
-      free (err);
-      err = NULL;
-    }
-    if (!list_formats_reply)
-      break;
-
-    format_it = xcb_xv_list_image_formats_format_iterator (list_formats_reply);
-
-
-    for (; format_it.rem; xcb_xv_image_format_info_next (&format_it)) {
-      lprintf ("Xv image format: 0x%x (%4.4s) %s\n", format_it.data->id, (char*)&format_it.data->id,
-        (format_it.data->format == XCB_XV_IMAGE_FORMAT_INFO_FORMAT_PACKED) ? "packed" : "planar");
-
-      switch (format_it.data->id) {
-        case XINE_IMGFMT_YV12:
-          this->xv_format_yv12 = format_it.data->id;
-          this->capabilities |= VO_CAP_YV12;
-          xprintf (this->xine, XINE_VERBOSITY_LOG,
-            _("%s: this adaptor supports the %s format.\n"), LOG_MODULE, "YV12");
-        break;
-        case XINE_IMGFMT_YUY2:
-          this->xv_format_yuy2 = format_it.data->id;
-          this->capabilities |= VO_CAP_YUY2;
-          xprintf (this->xine, XINE_VERBOSITY_LOG,
-            _("%s: this adaptor supports the %s format.\n"), LOG_MODULE, "YUY2");
-        break;
-        default: ;
-      }
-    }
-    xcb_xv_image_format_info_end (format_it);
-    free (list_formats_reply);
-  } while (0);
-
-  // XXX
-  // Bail out if both YV12 and YUY2 are not supported.
-  // Proper fix would be implementing format conversions.
-  //  - decoder should check video output CAP_ flags
-  //  - video out could insert automatic conversion filter
-  //  - ...
-  if (!this->xv_format_yuy2 || !this->xv_format_yv12) {
-    xprintf(this->xine, XINE_VERBOSITY_LOG,
-            LOG_MODULE ": this adaptor does not support YV12 and YUY2 formats.\n");
-    xv_dispose(&this->vo_driver);
-    return NULL;
-  }
-
-
   this->use_pitch_alignment =
     config->register_bool (config, "video.device.xv_pitch_alignment", 0,
 			   VIDEO_DEVICE_XV_PITCH_ALIGNMENT_HELP,
 			   10, xv_update_xv_pitch_alignment, this);
 
-  if(this->use_colorkey==1) {
+  if ((this->props[VO_PROP_COLORKEY].atom != XCB_NONE) &&
+      (this->props[VO_PROP_AUTOPAINT_COLORKEY].value != 1)) {
     this->xoverlay = xcbosd_create(this->xine, this->connection, this->screen,
                                    this->window, XCBOSD_COLORKEY);
     if(this->xoverlay)
-      xcbosd_colorkey(this->xoverlay, this->colorkey, &this->sc);
+      xcbosd_colorkey (this->xoverlay, this->props[VO_PROP_COLORKEY].value, &this->sc);
   } else {
     this->xoverlay = xcbosd_create(this->xine, this->connection, this->screen,
                                    this->window, XCBOSD_SHAPED);
