@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008 the xine project
+ * Copyright (C) 2008-2017 the xine project
  *
  * This file is part of xine, a free video player.
  *
@@ -19,6 +19,8 @@
  *
  * xv_common.h: X11 Xv common bits
  */
+
+#include <xine/video_out.h>
 
 #define VIDEO_DEVICE_XV_COLORKEY_HELP \
 	_("video overlay colour key"), \
@@ -81,3 +83,52 @@
 	_("bicubic filtering"), \
 	_("This option controls bicubic filtering of the video image. " \
 	  "It may be used instead of, or as well as, xine's deinterlacers.")
+
+#ifdef XV_PROPS
+
+/* port attributes that dont map to a standard vo prop */
+typedef enum {
+  XV_PROP_ITURBT_709 = VO_NUM_PROPERTIES,
+  XV_PROP_COLORSPACE,
+  XV_PROP_COLORKEY,
+  XV_PROP_AUTOPAINT_COLORKEY,
+  XV_PROP_FILTER,
+  XV_PROP_DOUBLE_BUFFER,
+  XV_PROP_SYNC_TO_VBLANK,
+  XV_PROP_BICUBIC,
+  XV_NUM_PROPERTIES
+} xv_prop_enum_t;
+
+typedef struct {
+  const char *name;
+  int         index;
+  int         caps;
+} xv_prop_list_t;
+
+static const xv_prop_list_t xv_props_list[] = {
+  { "XV_HUE",                VO_PROP_HUE,                 VO_CAP_HUE                },
+  { "XV_SATURATION",         VO_PROP_SATURATION,          VO_CAP_SATURATION         },
+  { "XV_BRIGHTNESS",         VO_PROP_BRIGHTNESS,          VO_CAP_BRIGHTNESS         },
+  { "XV_CONTRAST",           VO_PROP_CONTRAST,            VO_CAP_CONTRAST           },
+  { "XV_GAMMA",              VO_PROP_GAMMA,               VO_CAP_GAMMA              },
+  { "XV_ITURBT_709",         XV_PROP_ITURBT_709,          VO_CAP_COLOR_MATRIX       },
+  { "XV_COLORSPACE",         XV_PROP_COLORSPACE,          VO_CAP_COLOR_MATRIX       },
+  { "XV_COLORKEY",           XV_PROP_COLORKEY,            VO_CAP_COLORKEY           },
+  { "XV_AUTOPAINT_COLORKEY", XV_PROP_AUTOPAINT_COLORKEY,  VO_CAP_AUTOPAINT_COLORKEY },
+  { "XV_FILTER",             XV_PROP_FILTER,              0                         },
+  { "XV_DOUBLE_BUFFER",      XV_PROP_DOUBLE_BUFFER,       0                         },
+  { "XV_SYNC_TO_VBLANK",     XV_PROP_SYNC_TO_VBLANK,      0                         },
+  { "XV_VSYNC",              XV_PROP_SYNC_TO_VBLANK,      0                         },
+  { "XV_BICUBIC",            XV_PROP_BICUBIC,             0                         }
+};
+
+static const xv_prop_list_t *xv_find_prop (const char *name) {
+  int i;
+  for (i = 0; i < sizeof (xv_props_list) / sizeof (xv_prop_list_t); i++) {
+    if (!strcmp (name, xv_props_list[i].name))
+      return &xv_props_list[i];
+  }
+  return NULL;
+}
+
+#endif /* XV_PROPS */
