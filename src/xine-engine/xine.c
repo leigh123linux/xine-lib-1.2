@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2000-2016 the xine project
+ * Copyright (C) 2000-2017 the xine project
  *
  * This file is part of xine, a free video player.
  *
@@ -301,27 +301,27 @@ static void ticket_revoke(xine_ticket_t *this, int atomic) {
     pthread_mutex_unlock(&this->revoke_lock);
 }
 
-static int ticket_lock_port_rewiring(xine_ticket_t *this, int ms_timeout) {
-
+static int lock_timeout (pthread_mutex_t *mutex, int ms_timeout) {
   if (ms_timeout >= 0) {
     struct timespec abstime;
-
     struct timeval now;
-    gettimeofday(&now, 0);
-
-    abstime.tv_sec = now.tv_sec + ms_timeout / 1000;
-    abstime.tv_nsec = now.tv_usec * 1000 + (ms_timeout % 1000) * 1e6;
-
-    if (abstime.tv_nsec > 1e9) {
-      abstime.tv_nsec -= 1e9;
-      abstime.tv_sec++;
+    gettimeofday (&now, NULL);
+    now.tv_sec  +=  ms_timeout / 1000;
+    now.tv_usec += (ms_timeout % 1000) * 1000;
+    if (now.tv_usec >= 1000000) {
+      now.tv_usec -= 1000000;
+      now.tv_sec++;
     }
-
-    return (0 == pthread_mutex_timedlock(&this->port_rewiring_lock, &abstime));
+    abstime.tv_sec  = now.tv_sec;
+    abstime.tv_nsec = now.tv_usec * 1000;
+    return (0 == pthread_mutex_timedlock (mutex, &abstime));
   }
-
-  pthread_mutex_lock(&this->port_rewiring_lock);
+  pthread_mutex_lock (mutex);
   return 1;
+}
+
+static int ticket_lock_port_rewiring(xine_ticket_t *this, int ms_timeout) {
+  return lock_timeout (&this->port_rewiring_lock, ms_timeout);
 }
 
 static void ticket_unlock_port_rewiring(xine_ticket_t *this) {
@@ -2526,27 +2526,8 @@ void _x_unlock_port_rewiring(xine_t *xine)
   xine->port_ticket->unlock_port_rewiring(xine->port_ticket);
 }
 
-int _x_lock_frontend(xine_stream_t *stream, int ms_to_time_out)
-{
-  if (ms_to_time_out >= 0) {
-    struct timespec abstime;
-
-    struct timeval now;
-    gettimeofday(&now, 0);
-
-    abstime.tv_sec = now.tv_sec + ms_to_time_out / 1000;
-    abstime.tv_nsec = now.tv_usec * 1000 + (ms_to_time_out % 1000) * 1e6;
-
-    if (abstime.tv_nsec > 1e9) {
-      abstime.tv_nsec -= 1e9;
-      abstime.tv_sec++;
-    }
-
-    return (0 == pthread_mutex_timedlock(&stream->frontend_lock, &abstime));
-  }
-
-  pthread_mutex_lock(&stream->frontend_lock);
-  return 1;
+int _x_lock_frontend(xine_stream_t *stream, int ms_to_time_out) {
+  return lock_timeout (&stream->frontend_lock, ms_to_time_out);
 }
 
 void _x_unlock_frontend(xine_stream_t *stream)
