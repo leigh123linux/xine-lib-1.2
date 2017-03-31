@@ -730,6 +730,7 @@ static void xv_new_color (xv_driver_t *this, int cm) {
     LOCK_DISPLAY(this);
     XvSetPortAttribute (this->display, this->xv_port, this->props[XV_PROP_ITURBT_709].atom, cm2);
     UNLOCK_DISPLAY(this);
+    this->props[XV_PROP_ITURBT_709].value = cm2;
     cm2 = cm2 ? 2 : 10;
   } else if (this->props[XV_PROP_COLORSPACE].atom != None) {
     /* radeonhd: 0 = size based auto, 1 = 601 (SD), 2 = 709 (HD) */
@@ -737,6 +738,7 @@ static void xv_new_color (xv_driver_t *this, int cm) {
     LOCK_DISPLAY(this);
     XvSetPortAttribute (this->display, this->xv_port, this->props[XV_PROP_COLORSPACE].atom, cm2);
     UNLOCK_DISPLAY(this);
+    this->props[XV_PROP_COLORSPACE].value = cm2;
     cm2 = cm2 == 2 ? 2 : 10;
   } else {
     cm2 = 10;

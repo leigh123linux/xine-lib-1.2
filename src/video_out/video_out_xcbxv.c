@@ -649,6 +649,7 @@ static void xv_new_color (xv_driver_t *this, int cm) {
     pthread_mutex_lock(&this->main_mutex);
     xcb_xv_set_port_attribute (this->connection, this->xv_port, this->props[XV_PROP_ITURBT_709].atom, cm2);
     pthread_mutex_unlock(&this->main_mutex);
+    this->props[XV_PROP_ITURBT_709].value = cm2;
     cm2 = cm2 ? 2 : 10;
   } else if (this->props[XV_PROP_COLORSPACE].atom != XCB_NONE) {
     /* radeonhd: 0 = size based auto, 1 = 601 (SD), 2 = 709 (HD) */
@@ -656,6 +657,7 @@ static void xv_new_color (xv_driver_t *this, int cm) {
     pthread_mutex_lock(&this->main_mutex);
     xcb_xv_set_port_attribute (this->connection, this->xv_port, this->props[XV_PROP_COLORSPACE].atom, cm2);
     pthread_mutex_unlock(&this->main_mutex);
+    this->props[XV_PROP_COLORSPACE].value = cm2;
     cm2 = cm2 == 2 ? 2 : 10;
   } else {
     cm2 = 10;
