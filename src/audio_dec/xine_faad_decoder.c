@@ -86,7 +86,7 @@ typedef struct faad_decoder_s {
   int              size;
   int              rec_audio_src_size;
   int              max_audio_src_size;
-  int64_t          pts;
+  int64_t          pts0, pts1;
 
   unsigned char   *dec_config;
   int              dec_config_size;
@@ -227,9 +227,12 @@ static int faad_open_output( faad_decoder_t *this ) {
 
   this->rec_audio_src_size = this->num_channels * FAAD_MIN_STREAMSIZE;
 
+  /* maybe not needed again here */
   this->faac_cfg = NeAACDecGetCurrentConfiguration (this->faac_dec);
-  this->faac_cfg->outputFormat = FAAD_FMT_FLOAT;
-  NeAACDecSetConfiguration (this->faac_dec, this->faac_cfg);
+  if (this->faac_cfg) {
+    this->faac_cfg->outputFormat = (this->class->caps & FIXED_POINT_CAP) ? FAAD_FMT_FIXED : FAAD_FMT_FLOAT;
+    NeAACDecSetConfiguration (this->faac_dec, this->faac_cfg);
+  }
 #if 0
   switch( this->num_channels ) {
     case 1:
@@ -264,10 +267,38 @@ static int faad_open_output( faad_decoder_t *this ) {
   }
 }
 
+static int faad_reopen_dec (faad_decoder_t *this) {
+
+  if (this->faac_dec)
+    NeAACDecClose (this->faac_dec);
+
+  this->faac_dec = NeAACDecOpen ();
+
+  if (!this->faac_dec) {
+    xprintf (this->stream->xine, XINE_VERBOSITY_LOG, _("libfaad: libfaad NeAACDecOpen() failed.\n"));
+    this->faac_failed++;
+    return -1;
+  }
+
+  this->class->caps = NeAACDecGetCapabilities ();
+  this->faac_cfg = NeAACDecGetCurrentConfiguration (this->faac_dec);
+  if (this->faac_cfg) {
+    /* We want float or fixed point data. */
+    this->faac_cfg->outputFormat = (this->class->caps & FIXED_POINT_CAP) ? FAAD_FMT_FIXED : FAAD_FMT_FLOAT;
+    NeAACDecSetConfiguration (this->faac_dec, this->faac_cfg);
+  }
+  return 0;
+}
+
 static int faad_apply_conf (faad_decoder_t *this, uint8_t *conf, int len) {
   unsigned long rate = 0;
   uint8_t num_channels = 0;
-  int res = NeAACDecInit2 (this->faac_dec, conf, len, &rate, &num_channels);
+  int res;
+
+  if (faad_reopen_dec (this) < 0)
+    return -1;
+
+  res = NeAACDecInit2 (this->faac_dec, conf, len, &rate, &num_channels);
   /* HACK: At least internal libfaad does not understand
    *  AOT_PS / n Hz / Mono / n*2 Hz / AOT_AAC_LC.
    * But it does understand (and find that PS in)
@@ -300,6 +331,7 @@ static int faad_apply_conf (faad_decoder_t *this, uint8_t *conf, int len) {
     }
     if (this->output_open <= 0)
       faad_open_output (this);
+    faad_meta_info_set (this);
     return res;
   }
   /* no, its not working */
@@ -307,69 +339,58 @@ static int faad_apply_conf (faad_decoder_t *this, uint8_t *conf, int len) {
   return res;
 }
 
-static int faad_open_dec( faad_decoder_t *this ) {
+static int faad_apply_frame (faad_decoder_t *this, uint8_t *frame, int len) {
+  unsigned long rate = 0;
+  uint8_t num_channels = 0;
+  int res;
 
-  if (!this->bits_per_sample)
-    this->bits_per_sample = 16;
+  if (faad_reopen_dec (this) < 0)
+    return -1;
 
-  if (!this->faac_dec)
-    this->faac_dec = NeAACDecOpen ();
+  res = NeAACDecInit (this->faac_dec, frame, len, &rate, &num_channels);
 
-  if (!this->faac_dec) {
-
-    xprintf (this->stream->xine, XINE_VERBOSITY_LOG, _("libfaad: libfaad NeAACDecOpen() failed.\n"));
-    this->faac_failed++;
-
-  } else {
-
-    this->class->caps = NeAACDecGetCapabilities ();
-    this->faac_cfg = NeAACDecGetCurrentConfiguration (this->faac_dec);
-    this->faac_cfg->outputFormat = FAAD_FMT_FLOAT;
-    NeAACDecSetConfiguration (this->faac_dec, this->faac_cfg);
-
-    if (this->dec_config) {
-
-      if (faad_apply_conf (this, this->dec_config, this->dec_config_size) < 0)
-        this->faac_failed++;
-
-    } else {
-
-      int used = NeAACDecInit (this->faac_dec, this->buf, this->size, &this->rate, &this->num_channels);
-
-      if( used < 0 ) {
-        xprintf ( this->stream->xine, XINE_VERBOSITY_LOG,
-                  _("libfaad: libfaad NeAACDecInit failed.\n"));
-        this->faac_failed++;
-      } else {
-        lprintf( "NeAACDecInit() returned rate=%lu channels=%d (used=%d)\n",
-                 this->rate, this->num_channels, used);
-
-        this->size -= used;
-        memmove( this->buf, &this->buf[used], this->size );
-      }
+  /* are we fine? */
+  if (res >= 0) {
+    if ((rate != this->rate) || (num_channels != this->num_channels)) {
+      this->rate = rate;
+      this->num_channels = num_channels;
+      faad_close_output (this);
     }
+    if (this->output_open <= 0)
+      faad_open_output (this);
+    faad_meta_info_set (this);
+    return res;
   }
+  /* no, its not working */
+  xprintf (this->stream->xine, XINE_VERBOSITY_LOG, _("libfaad: libfaad NeAACDecInit failed.\n"));
+  return res;
+}
 
-  if( this->faac_failed ) {
-    if( this->faac_dec ) {
-      NeAACDecClose( this->faac_dec );
+static int faad_open_dec (faad_decoder_t *this) {
+  int res;
+
+  if (this->dec_config)
+    res = faad_apply_conf (this, this->dec_config, this->dec_config_size);
+  else
+    res = faad_apply_frame (this, this->buf, this->size);
+
+  if (res < 0) {
+    if (this->faac_dec) {
+      NeAACDecClose (this->faac_dec);
       this->faac_dec = NULL;
     }
-    _x_stream_info_set(this->stream, XINE_STREAM_INFO_AUDIO_HANDLED, 0);
-  } else {
-    faad_meta_info_set(this);
+    _x_stream_info_set (this->stream, XINE_STREAM_INFO_AUDIO_HANDLED, 0);
+    return 1;
   }
 
-  return this->faac_failed;
+  lprintf ("NeAACDecInit() returned rate=%lu channels=%d (used=%d)\n", this->rate, this->num_channels, used);
+  return 0;
 }
 
 static void faad_decode_audio ( faad_decoder_t *this, int end_frame ) {
   int used, decoded, framecount;
   const uint8_t *sample_buffer;
   uint8_t *inbuf;
-
-  if( !this->faac_dec )
-    return;
 
 #define ADTS_FAKE_CFG
 
@@ -411,6 +432,17 @@ static void faad_decode_audio ( faad_decoder_t *this, int end_frame ) {
         framecount = (q[6] & 3) + 1;
         /* seen this head before? */
         if (((q[2] ^ this->adts_lasthead[0]) & 0xfd) | ((q[3] ^ this->adts_lasthead[1]) & 0xc0)) {
+          /* Safety: require this new head to appear at least got7 I mean twice ;-) */
+          if (this->size < s + 4)
+            break;
+          if ((q[s] != 0xff) || ((q[s + 1] & 0xf6) != 0xf0)
+            || ((q[2] ^ q[s + 2]) & 0xfd) || ((q[3] ^ q[s + 3]) & 0xc0)) {
+            framecount = 0;
+            inbuf++;
+            this->size--;
+            continue;
+          }
+          xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG, "faad_audio_decoder: got new AAC config from ADTS\n");
           memcpy (this->adts_lasthead, q + 2, 2);
           /* TJ. A note on that nasty SBR hack below.
            * SBR (Spectral Band Replication) is a more efficient algorithm for encoding high pitched sound.
@@ -448,11 +480,12 @@ static void faad_decode_audio ( faad_decoder_t *this, int end_frame ) {
           } while (0);
 #endif
           if (!this->adts_fake) {
-            unsigned long rate = 0;
-            uint8_t chan = 0;
-            used = NeAACDecInit (this->faac_dec, inbuf, this->size, &rate, &chan);
-            if (used < 0)
-              xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG, "libfaad: NeAACDecInit () failed\n");
+            if (faad_apply_frame (this, inbuf, s) < 0) {
+              framecount = 0;
+              inbuf++;
+              this->size--;
+              continue;
+            }
           }
         }
         if (this->adts_fake) {
@@ -480,7 +513,11 @@ static void faad_decode_audio ( faad_decoder_t *this, int end_frame ) {
       used = l;
       if (latm_state & BEBF_LATM_GOT_CONF) {
         xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG, "faad_audio_decoder: got new AAC config from LATM\n");
-        faad_apply_conf (this, this->latm.config, this->latm.conflen);
+        if (faad_apply_conf (this, this->latm.config, this->latm.conflen) < 0) {
+          inbuf++;
+          this->size--;
+          continue;
+        }
       }
       sample_buffer = NULL;
       if (latm_state & BEBF_LATM_GOT_FRAME) {
@@ -491,6 +528,12 @@ static void faad_decode_audio ( faad_decoder_t *this, int end_frame ) {
       }
 
     } else {
+      if (!this->faac_dec) {
+        if (faad_open_dec (this)) {
+          this->size = 0;
+          return;
+        }
+      }
       if (this->latm_mode == BEBF_LATM_IS_RAW) {
         if (!end_frame || this->size < 10)
           break;
@@ -570,6 +613,9 @@ static void faad_decode_audio ( faad_decoder_t *this, int end_frame ) {
 
 #define sat16(v) (((v + 0x8000) & ~0xffff) ? ((v) >> 31) ^ 0x7fff : (v))
 
+      /* Maximum frame size is 1024 samples * 8 channels * 2 bytes = 16k.
+       * Thus we probably dont need to while this.
+       */
       while (decoded) {
         audio_buffer_t *audio_buffer = this->stream->audio_out->get_buffer (this->stream->audio_out);
         int done = this->out_channels;
@@ -577,7 +623,8 @@ static void faad_decode_audio ( faad_decoder_t *this, int end_frame ) {
         if (done > decoded)
           done = decoded;
         audio_buffer->num_frames = done;
-        audio_buffer->vpts = this->pts;
+        audio_buffer->vpts = this->pts0;
+        this->pts0 = 0;
 
         if ((this->in_channels <= 2) && (this->out_channels > this->in_channels))
           memset (audio_buffer->mem, 0, this->out_channels * done * 2);
@@ -772,10 +819,12 @@ static void faad_decode_audio ( faad_decoder_t *this, int end_frame ) {
 
         this->stream->audio_out->put_buffer (this->stream->audio_out, audio_buffer, this->stream);
 
-        this->pts = 0;
         decoded -= done;
       }
     }
+
+    this->pts0 = this->pts1;
+    this->pts1 = 0;
 
     if ((used >= this->size) || (this->latm_mode == BEBF_LATM_IS_RAW)) {
       this->size = 0;
@@ -790,6 +839,42 @@ static void faad_decode_audio ( faad_decoder_t *this, int end_frame ) {
 
 }
 
+static void faad_get_conf (faad_decoder_t *this, const uint8_t *d, int len) {
+  uint8_t *b;
+
+  if (!d || (len <= 0))
+    return;
+
+  b = this->dec_config;
+  if (b) {
+    if ((this->dec_config_size == len) && !memcmp (b, d, len))
+      return;
+    if (this->dec_config_size < len) {
+      free (b);
+      this->dec_config = b = NULL;
+      this->dec_config_size = 0;
+    }
+  }
+
+  if (!b) {
+    b = malloc (len + 8);
+    if (!b)
+      return;
+  }
+
+  memcpy (b, d, len);
+  memset (b + len, 0, 8);
+  this->dec_config = b;
+  this->dec_config_size = len;
+  this->latm_mode = BEBF_LATM_IS_RAW;
+  xprintf (this->class->xine, XINE_VERBOSITY_DEBUG, "faad_audio_decoder: got new AAC config from demuxer\n");
+
+  if (!this->faac_dec)
+    return;
+  NeAACDecClose (this->faac_dec);
+  this->faac_dec = NULL;
+}
+
 static void faad_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) {
 
   faad_decoder_t *this = (faad_decoder_t *) this_gen;
@@ -798,73 +883,80 @@ static void faad_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) {
     return;
 
   /* store config information from ESDS mp4/qt atom */
-  if( !this->faac_dec && (buf->decoder_flags & BUF_FLAG_SPECIAL) &&
-      buf->decoder_info[1] == BUF_SPECIAL_DECODER_CONFIG ) {
-
-    this->dec_config = malloc(buf->decoder_info[2]);
-    this->dec_config_size = buf->decoder_info[2];
-    memcpy(this->dec_config, buf->decoder_info_ptr[2], buf->decoder_info[2]);
-
-    if( faad_open_dec(this) )
-      return;
-
-    this->latm_mode = BEBF_LATM_IS_RAW;
-  }
+  if ((buf->decoder_flags & BUF_FLAG_SPECIAL) &&
+      (buf->decoder_info[1] == BUF_SPECIAL_DECODER_CONFIG))
+    faad_get_conf (this, buf->decoder_info_ptr[2], buf->decoder_info[2]);
 
   /* get audio parameters from file header
      (may be overwritten by libfaad returned parameters) */
   if (buf->decoder_flags & BUF_FLAG_STDHEADER) {
-    this->rate=buf->decoder_info[1];
-    this->bits_per_sample=buf->decoder_info[2] ;
-    this->num_channels=buf->decoder_info[3] ;
-
-    if( buf->size > sizeof(xine_waveformatex) ) {
-      xine_waveformatex *wavex = (xine_waveformatex *) buf->content;
-
-      if( wavex->cbSize > 0 ) {
-        this->dec_config = malloc(wavex->cbSize);
-        this->dec_config_size = wavex->cbSize;
-        memcpy(this->dec_config, buf->content + sizeof(xine_waveformatex),
-               wavex->cbSize);
-
-        if( faad_open_dec(this) )
-          return;
-
-        this->latm_mode = BEBF_LATM_IS_RAW;
+    xine_waveformatex *wavex = (xine_waveformatex *)buf->content;
+    this->rate            = buf->decoder_info[1];
+    this->bits_per_sample = buf->decoder_info[2];
+    this->num_channels    = buf->decoder_info[3];
+    if (wavex) {
+      int len = (int)buf->size - sizeof (xine_waveformatex);
+      if (len > 0) {
+        if (len > wavex->cbSize)
+          len = wavex->cbSize;
+        faad_get_conf (this, buf->content + sizeof (xine_waveformatex), len);
       }
     }
   } else {
 
     lprintf ("decoding %d data bytes...\n", buf->size);
 
-    if( (int)buf->size <= 0 || this->faac_failed )
+    if ((int)buf->size <= 0)
       return;
 
-    if( !this->size )
-      this->pts = buf->pts;
+    /* Queue up to 2 pts values as frames may overlap buffer boundaries (mpeg-ts). */
+    if (!this->size || !this->pts0) {
+      this->pts0 = buf->pts;
+      this->pts1 = 0;
+    } else if (!this->pts1) {
+      this->pts1 = buf->pts;
+    }
 
-    if (this->size + buf->size + 8 > this->max_audio_src_size ) {
-      this->max_audio_src_size = this->size + 2 * buf->size + 8;
-      this->buf = realloc( this->buf, this->max_audio_src_size );
+    if (this->size + buf->size + 8 > this->max_audio_src_size) {
+      size_t s = this->size + 2 * buf->size + 8;
+      uint8_t *b = realloc (this->buf, s);
+      if (!b)
+        return;
+      this->buf = b;
+      this->max_audio_src_size = s;
     }
 
     memcpy (&this->buf[this->size], buf->content, buf->size);
     this->size += buf->size;
 
-    if ((buf->type & (BUF_MAJOR_MASK | BUF_DECODER_MASK)) == BUF_AUDIO_AAC_LATM) {
+    /* Instream header formats like ADTS do support midstream config changes,
+     * eg a 5.1 movie following the stereo news show.
+     * Unfortunately, libfaad by itself does detect such changes, but it does
+     * not follow them, and bails out instead. It probably does so to prevent
+     * glitches from damaged streams.
+     * However, this leaves us to decide what a real change is, and call
+     * NeAACDecInit () again on the new data. Even worse, switching from 5.1
+     * to stereo needs a full reopen.
+     * Making that sane requires parsing anyway, so maybe it is a good idea
+     * to always parse here.
+     */
+#ifdef PARSE_ONLY_LATM
+    if ((buf->type & (BUF_MAJOR_MASK | BUF_DECODER_MASK)) == BUF_AUDIO_AAC_LATM)
+#endif
+    {
       if (this->latm_mode == BEBF_LATM_NEED_MORE_DATA) {
         this->latm_mode = bebf_latm_test ((const uint8_t *)this->buf, this->size);
         if (this->latm_mode == BEBF_LATM_NEED_MORE_DATA)
           return;
         if (this->latm_mode == BEBF_LATM_IS_ADTS) {
-          xprintf (this->class->xine, XINE_VERBOSITY_DEBUG,
-            "faad_audio_decoder: stream says LATM but is ADTS\n");
+#ifndef PARSE_ONLY_LATM
+          if ((buf->type & (BUF_MAJOR_MASK | BUF_DECODER_MASK)) == BUF_AUDIO_AAC_LATM)
+#endif
+            xprintf (this->class->xine, XINE_VERBOSITY_DEBUG,
+              "faad_audio_decoder: stream says LATM but is ADTS\n");
         }
       }
     }
-
-    if( !this->faac_dec && faad_open_dec(this) )
-      return;
 
     faad_decode_audio(this, buf->decoder_flags & BUF_FLAG_FRAME_END );
   }
@@ -928,6 +1020,7 @@ static audio_decoder_t *open_plugin (audio_decoder_class_t *class_gen, xine_stre
   this->total_time         = 0;
   this->total_data         = 0;
 
+  this->bits_per_sample    = 16;
   this->rate               = 0;
 
   bebf_latm_open (&this->latm);

@@ -806,7 +806,8 @@ typedef enum {
   BEBF_LATM_NEED_MORE_DATA,
   BEBF_LATM_IS_RAW,
   BEBF_LATM_IS_ADTS,
-  BEBF_LATM_IS_LATM
+  BEBF_LATM_IS_LATM,
+  BEBF_LATM_IS_UNKNOWN
 } bebf_latm_parser_status_t;
 
 /**
@@ -846,7 +847,7 @@ static bebf_latm_parser_status_t bebf_UNUSED bebf_latm_test (const uint8_t *in, 
       return BEBF_LATM_IS_LATM;
     } while (0);
   }
-  return nbytes < BEBF_TEST_MAX ? BEBF_LATM_NEED_MORE_DATA : BEBF_LATM_IS_RAW;
+  return nbytes < BEBF_TEST_MAX ? BEBF_LATM_NEED_MORE_DATA : BEBF_LATM_IS_UNKNOWN;
 }
 
 /**
