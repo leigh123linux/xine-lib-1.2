@@ -147,6 +147,9 @@ static int my_snd_mixer_wait(snd_mixer_t *mixer, int timeout) {
 
     err = snd_mixer_poll_descriptors(mixer, pfds, (unsigned int) count);
     assert(err == count);
+    if (err < 0) {
+      return err;
+    }
   }
 
   err = poll(pfds, (unsigned int) count, timeout);
