@@ -1342,13 +1342,17 @@ static void vdpau_backup_frame( vo_driver_t *this_gen, vo_frame_t *frame_gen )
 {
   vdpau_driver_t  *this  = (vdpau_driver_t *) this_gen;
   vdpau_frame_t   *frame = (vdpau_frame_t *) frame_gen;
-
+#if NUM_FRAMES_BACK > 1
   int i;
+#endif
+
   if ( this->back_frame[NUM_FRAMES_BACK-1]) {
     this->back_frame[NUM_FRAMES_BACK-1]->vo_frame.free (&this->back_frame[NUM_FRAMES_BACK-1]->vo_frame);
   }
+#if NUM_FRAMES_BACK > 1
   for ( i=NUM_FRAMES_BACK-1; i>0; i-- )
     this->back_frame[i] = this->back_frame[i-1];
+#endif
   this->back_frame[0] = frame;
 }
 
