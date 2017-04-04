@@ -275,6 +275,10 @@ meta_info_assign (vcd_input_plugin_t *this, int field, xine_stream_t *stream, co
 static void vcd_set_meta_info (vcd_input_plugin_t *this) {
   char *tmp;
   vcdinfo_obj_t *p_vcdinfo= this->player.vcd;
+
+  if (!this->stream)
+    return;
+
   meta_info_assign (this, XINE_META_INFO_ALBUM, this->stream, vcdinfo_get_album_id(p_vcdinfo));
   meta_info_assign (this, XINE_META_INFO_ARTIST, this->stream, vcdinfo_get_preparer_id (p_vcdinfo));
 
