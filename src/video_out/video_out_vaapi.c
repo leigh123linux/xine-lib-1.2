@@ -2776,10 +2776,6 @@ static void vaapi_provide_standard_frame_data (vo_frame_t *orig, xine_current_fr
   uint32_t  pitches[3];
   uint8_t   *base[3];
 
-  if(driver == NULL) {
-    return;
-  }
-
   if (this->format != XINE_IMGFMT_VAAPI) {
     xprintf(driver->xine, XINE_VERBOSITY_LOG, LOG_MODULE "vaapi_provide_standard_frame_data: unexpected frame format 0x%08x!\n", this->format);
     return;
