@@ -3237,7 +3237,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
 
   this = calloc(1, sizeof(demux_matroska_t));
   if (!this)
-    return NULL;
+    goto error;
 
   this->class = (demux_matroska_class_t *)class_gen;
 
