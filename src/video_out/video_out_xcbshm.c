@@ -1341,6 +1341,7 @@ static vo_driver_t *xshm_open_plugin(video_driver_class_t *class_gen, const void
   if (!mode) {
     xprintf (this->xine, XINE_VERBOSITY_LOG,
 	     _("%s: your video mode was not recognized, sorry :-(\n"), LOG_MODULE);
+    xshm_dispose(&this->vo_driver);
     return NULL;
   }
 
