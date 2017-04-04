@@ -1214,6 +1214,12 @@ static vo_driver_t *xshm_open_plugin(video_driver_class_t *class_gen, const void
 
   free(window_attrs_reply);
 
+  if (!visualtype) {
+    xprintf (this->xine, XINE_VERBOSITY_LOG, LOG_MODULE ": visual type was not recognized\n");
+    xshm_dispose(&this->vo_driver);
+    return NULL;
+  }
+
   geometry_reply = xcb_get_geometry_reply(this->connection, geometry_cookie, NULL);
 
   this->depth = geometry_reply->depth;
