@@ -1481,7 +1481,10 @@ static int play_internal (xine_stream_t *stream, int start_pos, int start_time) 
     xine_log (stream->xine, XINE_LOG_MSG, _("xine_play: demux failed to start\n"));
 
     stream->err = XINE_ERROR_DEMUX_FAILED;
+    pthread_mutex_lock (&stream->first_frame_lock);
     stream->first_frame_flag = 0;
+    // no need to signal: wait is done only in this function.
+    pthread_mutex_unlock (&stream->first_frame_lock);
     return 0;
 
   } else {
@@ -2569,10 +2572,14 @@ int _x_continue_stream_processing(xine_stream_t *stream)
 
 void _x_trigger_relaxed_frame_drop_mode(xine_stream_t *stream)
 {
+  pthread_mutex_lock (&stream->first_frame_lock);
   stream->first_frame_flag = 2;
+  pthread_mutex_unlock (&stream->first_frame_lock);
 }
 
 void _x_reset_relaxed_frame_drop_mode(xine_stream_t *stream)
 {
+  pthread_mutex_lock (&stream->first_frame_lock);
   stream->first_frame_flag = 1;
+  pthread_mutex_unlock (&stream->first_frame_lock);
 }
