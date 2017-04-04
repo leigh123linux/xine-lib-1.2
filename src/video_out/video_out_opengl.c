@@ -1114,7 +1114,6 @@ static void *render_run (opengl_driver_t *this) {
     case RENDER_DRAW:
       this->render_action = RENDER_NONE;
       this->render_frame_changed = 0;
-      pthread_mutex_unlock (&this->render_action_mutex);
       if (this->context && frame) {
 	/* update fragprog if color matrix changed */
 	if (this->render_fun_id == 0) {
@@ -1122,9 +1121,11 @@ static void *render_run (opengl_driver_t *this) {
 	  if (cm != this->cm_fragprog) {
 	    this->cm_fragprog = cm;
 	    this->render_action = RENDER_SETUP;
+            pthread_mutex_unlock (&this->render_action_mutex);
 	    break;
 	  }
 	}
+        pthread_mutex_unlock (&this->render_action_mutex);
 	XLockDisplay (this->display);
 	CHECKERR ("pre-render");
 	ret = 1;
