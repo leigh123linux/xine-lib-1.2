@@ -1185,7 +1185,7 @@ static void handle_vobsub (demux_plugin_t *this_gen, matroska_track_t *track,
   }
   else
   {
-    lprintf("VobSub: track %d isn't compressed (%d bytes)\n",
+    lprintf("VobSub: track %d isn't compressed (%zu bytes)\n",
             (int)track->track_num, data_len);
   }
 
@@ -2168,7 +2168,7 @@ static int parse_block (demux_matroska_t *this, size_t block_size,
       decoder_flags |= BUF_FLAG_KEYFRAME;
 
     block_size_left = (this->block_data + block_size + this->compress_maxlen) - data;
-    lprintf("size: %d, block_size: %u, block_offset: %u\n", block_size_left, block_size, this->compress_maxlen);
+    lprintf("size: %zu, block_size: %zu, block_offset: %zu\n", block_size_left, block_size, this->compress_maxlen);
 
     if (headers_len) {
       data -= headers_len;
@@ -2255,13 +2255,13 @@ static int parse_block (demux_matroska_t *this, size_t block_size,
         }
         if (first_frame_size > INT_MAX) {
           xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
-                  "demux_matroska: invalid first frame size (%" PRId64 ")\n",
+                  "demux_matroska: invalid first frame size (%" PRIu64 ")\n",
                   first_frame_size);
           return 0;
         }
         data += num_len; block_size_left -= num_len;
         frame[0] = (int) first_frame_size;
-        lprintf("first frame len: %d\n", frame[0]);
+        lprintf("first frame len: %zu\n", frame[0]);
         block_size_left -= frame[0];
 
         for (i = 1; i < lace_num; i++) {
