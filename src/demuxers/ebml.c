@@ -50,7 +50,7 @@ ebml_parser_t *new_ebml_parser (xine_t *xine, input_plugin_t *input) {
 
 
 void dispose_ebml_parser(ebml_parser_t *ebml) {
-  if (embl) {
+  if (ebml) {
     _x_freep(&ebml->doctype);
     free(ebml);
   }
