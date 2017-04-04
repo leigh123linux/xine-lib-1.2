@@ -359,21 +359,21 @@ static void process_sequence_mpeg12_dependent_data( vdpau_mpeg12_decoder_t *this
     double pel_aspect_ratio; /* height / width */
 
     switch ( sequence->aspect_ratio_information ) {
-      case  1: pel_aspect_ratio = 1.0000;
-      case  2: pel_aspect_ratio = 0.6735;
-      case  3: pel_aspect_ratio = 0.7031;
-      case  4: pel_aspect_ratio = 0.7615;
-      case  5: pel_aspect_ratio = 0.8055;
-      case  6: pel_aspect_ratio = 0.8437;
-      case  7: pel_aspect_ratio = 0.8935;
-      case  8: pel_aspect_ratio = 0.9157;
-      case  9: pel_aspect_ratio = 0.9815;
-      case 10: pel_aspect_ratio = 1.0255;
-      case 11: pel_aspect_ratio = 1.0695;
-      case 12: pel_aspect_ratio = 1.0950;
-      case 13: pel_aspect_ratio = 1.1575;
-      case 14: pel_aspect_ratio = 1.2015;
-      default: pel_aspect_ratio = 1.0000; /* fallback */
+      case  1: pel_aspect_ratio = 1.0000; break;
+      case  2: pel_aspect_ratio = 0.6735; break;
+      case  3: pel_aspect_ratio = 0.7031; break;
+      case  4: pel_aspect_ratio = 0.7615; break;
+      case  5: pel_aspect_ratio = 0.8055; break;
+      case  6: pel_aspect_ratio = 0.8437; break;
+      case  7: pel_aspect_ratio = 0.8935; break;
+      case  8: pel_aspect_ratio = 0.9157; break;
+      case  9: pel_aspect_ratio = 0.9815; break;
+      case 10: pel_aspect_ratio = 1.0255; break;
+      case 11: pel_aspect_ratio = 1.0695; break;
+      case 12: pel_aspect_ratio = 1.0950; break;
+      case 13: pel_aspect_ratio = 1.1575; break;
+      case 14: pel_aspect_ratio = 1.2015; break;
+      default: pel_aspect_ratio = 1.0000; /* fallback */ break;
     }
 
     sequence->ratio = ((double)sequence->coded_width/(double)sequence->coded_height)/pel_aspect_ratio;
