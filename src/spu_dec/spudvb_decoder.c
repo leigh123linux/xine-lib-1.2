@@ -977,7 +977,7 @@ static void* dvbsub_timer_func(void *this_gen)
     {
       /* We timed out, and no-one changed the timeout underneath us.
          Hide the OSD, then wait until we're signalled. */
-      if(this && this->stream && this->stream->osd_renderer)
+      if(this->stream && this->stream->osd_renderer)
       {
 	for ( i=0; i<this->dvbsub->max_regions; i++ ) {
 	  if ( this->dvbsub->regions[i].osd ) {

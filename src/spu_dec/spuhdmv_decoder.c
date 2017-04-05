@@ -866,10 +866,7 @@ static void hide_overlays(spuhdmv_decoder_t *this, int64_t pts)
     metronom_t              *metronom    = this->stream->metronom;
 
     event.object.handle = this->overlay_handles[i];
-    if (this)
-      event.vpts = metronom->got_spu_packet (metronom, pts);
-    else
-      event.vpts = 0;
+    event.vpts = metronom->got_spu_packet (metronom, pts);
     event.event_type = OVERLAY_EVENT_HIDE;
     event.object.overlay = NULL;
     ovl_manager->add_event (ovl_manager, (void *)&event);
