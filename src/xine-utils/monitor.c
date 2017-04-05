@@ -122,12 +122,12 @@ void xine_profiler_print_results (void) {
 	  "ID", "name", "cpu cycles", "calls", "cycles/call", "usec/call");
   for (i=0; i<MAX_ID; i++) {
     if (profiler[i].p_label) {
-      printf ("%2d: %-24.24s %12lld %9ld",
+      printf ("%2d: %-24.24s %12" PRIu64 " %9ld",
 	      i, profiler[i].p_label, profiler[i].p_times, profiler[i].p_calls);
       if (profiler[i].p_calls) {
-	  printf(" %12lld", profiler[i].p_times / profiler[i].p_calls);
+          printf(" %12" PRIu64, profiler[i].p_times / (uint64_t)profiler[i].p_calls);
 #if defined(ARCH_X86) || defined(ARCH_X86_64)
-	  printf(" %9lld", profiler[i].p_times / (cpu_speed * profiler[i].p_calls));
+	  printf(" %9" PRIu64, profiler[i].p_times / ((uint64_t)cpu_speed * profiler[i].p_calls));
 #endif
       }
       printf ("\n");
