@@ -1146,6 +1146,8 @@ static void *render_run (opengl_driver_t *this) {
 	  if (render->fallback != -1 && this->gl_exts)
 	    this->config->update_num (this->config, "video.output.opengl_renderer", render->fallback);
 	}
+      } else {
+        pthread_mutex_unlock (&this->render_action_mutex);
       }
       break;
 
