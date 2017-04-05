@@ -241,7 +241,7 @@ static uint32_t read_exp_golomb(struct buf_reader *buf)
   while (read_bits(buf, 1) == 0 && leading_zero_bits < 32)
     leading_zero_bits++;
 
-  uint32_t code = (1 << leading_zero_bits) - 1 + read_bits(buf,
+  uint32_t code = ((uint64_t)1 << leading_zero_bits) - 1 + read_bits(buf,
       leading_zero_bits);
   return code;
 }
