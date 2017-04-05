@@ -2854,16 +2854,17 @@ static void dispose_plugin_list (xine_sarray_t *list, int is_cache) {
       case PLUGIN_VIDEO_DECODER:
 	decoder_info = (decoder_info_t *)node->info->special_info;
 
-	free ((void *)decoder_info->supported_types);
+        _x_freep (&decoder_info->supported_types);
 
+        /* fall thru */
       default:
-	free ((void *)node->info->special_info);
+        _x_freep (&node->info->special_info);
 	break;
       }
 
       /* free info structure and string copies */
-      free ((void *)node->info->id);
-      free (node->info);
+      _x_freep (&node->info->id);
+      _x_freep (&node->info);
 
       /* don't free the entry list if the node is cache */
       if (!is_cache) {
@@ -2875,6 +2876,7 @@ static void dispose_plugin_list (xine_sarray_t *list, int is_cache) {
             ite = xine_list_next (node->config_entry_list, ite);
           }
           xine_list_delete(node->config_entry_list);
+          node->config_entry_list = NULL;
         }
       }
       free (node);
@@ -2891,7 +2893,7 @@ static void dispose_plugin_file_list (xine_list_t *list) {
   ite = xine_list_front (list);
   while (ite) {
     file = xine_list_get_value (list, ite);
-    free (file->filename);
+    _x_freep (&file->filename);
     free (file);
     ite = xine_list_next (list, ite);
   }
@@ -2916,10 +2918,10 @@ void _x_dispose_plugins (xine_t *this) {
     dispose_plugin_file_list (this->plugin_catalog->file_list);
 
     for (i = 0; this->plugin_catalog->prio_desc[i]; i++)
-      free(this->plugin_catalog->prio_desc[i]);
+      _x_freep(&this->plugin_catalog->prio_desc[i]);
 
     pthread_mutex_destroy(&this->plugin_catalog->lock);
 
-    free (this->plugin_catalog);
+    _x_freep (&this->plugin_catalog);
   }
 }
