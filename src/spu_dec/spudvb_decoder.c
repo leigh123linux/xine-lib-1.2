@@ -62,8 +62,7 @@ static void sparse_array_delete (sparse_array_t *sa) {
   sa->sorted_entries =
   sa->used_entries   =
   sa->max_entries    = 0;
-  free (sa->entries);
-  sa->entries        = NULL;
+  _x_freep (&sa->entries);
 }
 
 static int _sparse_array_find (sparse_array_t *sa, uint32_t key, uint32_t *pos) {
@@ -337,20 +336,14 @@ static void update_region (dvb_spu_decoder_t * this, int region_id, int region_w
 
   /* reject invalid sizes and set some limits ! */
   if ( region_width<=0 || region_height<=0 || region_width>SPU_MAX_WIDTH || region_height>SPU_MAX_HEIGHT ) {
-    if ( reg->img ) {
-      free( reg->img );
-      reg->img = NULL;
-    }
+    _x_freep( &reg->img );
     lprintf("rejected region %d = %dx%d\n", region_id, region_width, region_height );
     return;
   }
 
   if ( reg->width*reg->height<region_width*region_height ) {
     lprintf("update size of region %d = %dx%d\n", region_id, region_width, region_height);
-    if ( reg->img ) {
-      free( reg->img );
-      reg->img = NULL;
-    }
+    _x_freep( &reg->img );
   }
 
   if ( !reg->img ) {
@@ -1243,24 +1236,19 @@ static void spudec_dispose (spu_decoder_t * this_gen)
   pthread_mutex_destroy(&this->dvbsub_osd_mutex);
   pthread_cond_destroy(&this->dvbsub_restart_timeout);
 
-  if(this->spu_descriptor){
-    free(this->spu_descriptor);
-    this->spu_descriptor=NULL;
-  }
+  _x_freep(&this->spu_descriptor);
 
   for ( i=0; i<MAX_REGIONS; i++ ) {
-    if ( this->dvbsub->regions[i].img )
-      free( this->dvbsub->regions[i].img );
+    _x_freep( &this->dvbsub->regions[i].img );
     if ( this->dvbsub->regions[i].osd )
       this->stream->osd_renderer->free_object( this->dvbsub->regions[i].osd );
   }
 
-  if (this->pes_pkt)
-    free (this->pes_pkt);
+  _x_freep (&this->pes_pkt);
 
   if (this->dvbsub) {
     sparse_array_delete (&this->dvbsub->object_pos);
-    free (this->dvbsub);
+    _x_freep (&this->dvbsub);
   }
 
   free (this);

@@ -1304,10 +1304,10 @@ static void demux_sputext_dispose (demux_plugin_t *this_gen) {
 
   for (i = 0; i < this->num; i++) {
     for (l = 0; l < this->subtitles[i].lines; l++)
-      free(this->subtitles[i].text[l]);
+      _x_freep(&this->subtitles[i].text[l]);
   }
-  free(this->subtitles);
-  free(this->encoding);
+  _x_freep(&this->subtitles);
+  _x_freep(&this->encoding);
   free(this);
 }
 

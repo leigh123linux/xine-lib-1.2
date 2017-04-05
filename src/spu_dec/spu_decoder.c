@@ -197,13 +197,13 @@ static void spudec_dispose (spu_decoder_t *this_gen) {
       ovl_manager->free_handle(ovl_manager,
 			       this->spudec_stream_state[i].overlay_handle);
     this->spudec_stream_state[i].overlay_handle = -1;
-    free (this->spudec_stream_state[i].ra_seq.buf);
+    _x_freep (&this->spudec_stream_state[i].ra_seq.buf);
   }
 
   spudec_clear_nav_list(this);
   pthread_mutex_destroy(&this->nav_pci_lock);
 
-  free (this->event.object.overlay);
+  _x_freep (&this->event.object.overlay);
   free (this);
 }
 
@@ -306,12 +306,9 @@ static void spudec_set_button (spu_decoder_t *this_gen, int32_t button, int32_t 
             overlay_event->vpts);
 #endif
     ovl_manager->add_event (ovl_manager, (void *)overlay_event);
-    free(overlay_event);
-    free(overlay);
-  } else {
-    free(overlay_event);
-    free(overlay);
   }
+  free(overlay_event);
+  free(overlay);
   return;
 }
 

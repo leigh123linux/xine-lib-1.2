@@ -182,8 +182,8 @@ struct presentation_segment_s {
 static void free_subtitle_object(void *ptr)
 {
   if (ptr) {
-    free(((subtitle_object_t*)ptr)->rle);
-    free(((subtitle_object_t*)ptr)->raw_data);
+    _x_freep(&((subtitle_object_t*)ptr)->rle);
+    _x_freep(&((subtitle_object_t*)ptr)->raw_data);
     free(ptr);
   }
 }
@@ -229,8 +229,7 @@ static segment_buffer_t *segbuf_init(void)
 
 static void segbuf_dispose(segment_buffer_t *buf)
 {
-  if (buf->buf)
-    free (buf->buf);
+  _x_freep (&buf->buf);
   free (buf);
 }
 
@@ -485,8 +484,7 @@ static subtitle_object_t *segbuf_decode_object(segment_buffer_t *buf, subtitle_o
       XINE_HDMV_TRACE("    object length %d bytes, have only %zd bytes -> missing %d bytes\n",
                       obj->data_len, segbuf_data_length(buf), obj->data_len - (int)segbuf_data_length(buf));
 
-      if (obj->raw_data)
-        free(obj->raw_data);
+      _x_freep(&obj->raw_data);
 
       /* store partial RLE data in HDMV format */
       obj->raw_data_len  = segbuf_data_length(buf);
@@ -543,8 +541,7 @@ static subtitle_object_t *segbuf_decode_object(segment_buffer_t *buf, subtitle_o
     }
 
     /* free decode buffer */
-    free(objects->raw_data);
-    objects->raw_data      = NULL;
+    _x_freep(&objects->raw_data);
     objects->raw_data_len  = 0;
     objects->raw_data_size = 0;
   }

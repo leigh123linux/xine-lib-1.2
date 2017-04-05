@@ -336,10 +336,7 @@ void spudec_reassembly (xine_t *xine, spudec_seq_t *seq, uint8_t *pkt_data, u_in
 #ifdef LOG_DEBUG
       printf ("spu: MALLOC1: seq->buf %p, len=%d\n", seq->buf,seq->buf_len);
 #endif
-      if (seq->buf) {
-        free(seq->buf);
-        seq->buf = NULL;
-      }
+      free(seq->buf);
       seq->buf = malloc(seq->buf_len);
 #ifdef LOG_DEBUG
       printf ("spu: MALLOC2: seq->buf %p, len=%d\n", seq->buf,seq->buf_len);
@@ -814,7 +811,6 @@ static void spudec_draw_picture (xine_t *xine, spudec_state_t *state, spudec_seq
 	     "libspudec: spudec_draw_picture: ovl->rle is not empty!!!! It should be!!! "
 	     "You should never see this message.\n");
     free(ovl->rle);
-    ovl->rle=NULL;
   }
   ovl->rle = malloc(ovl->data_size);
 
