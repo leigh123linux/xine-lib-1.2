@@ -509,7 +509,7 @@ static void ff_map_channels (ff_audio_decoder_t *this) {
   ff_map = this->context->channel_layout;
   if (!ff_map) /* wma2 bug */
 #endif
-    ff_map = (1 << this->context->channels) - 1;
+    ff_map = ((uint64_t)1 << this->context->channels) - 1;
 
   if ((caps != this->ao_caps) || (ff_map != this->ff_map)) {
     int i, j;
