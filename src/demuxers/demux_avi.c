@@ -886,7 +886,7 @@ static avi_t *XINE_MALLOC AVI_init(demux_avi_t *this) {
           if(a==NULL) {
             this->AVI_errno = AVI_ERR_NO_MEM;
             AVI_close(AVI);
-            return 0;
+            return NULL;
           }
           AVI->audio[AVI->n_audio] = a;
 
@@ -930,7 +930,7 @@ static avi_t *XINE_MALLOC AVI_init(demux_avi_t *this) {
         if(AVI->bih == NULL) {
           this->AVI_errno = AVI_ERR_NO_MEM;
           AVI_close(AVI);
-          return 0;
+          return NULL;
         }
 
         memcpy (AVI->bih, hdrl_data+i, n);
@@ -981,7 +981,7 @@ static avi_t *XINE_MALLOC AVI_init(demux_avi_t *this) {
         if (!wavex) {
           this->AVI_errno = AVI_ERR_NO_MEM;
           AVI_close(AVI);
-          return 0;
+          return NULL;
         }
         memcpy((void *)wavex, hdrl_data+i, n);
         _x_waveformatex_le2me( wavex );
