@@ -929,6 +929,7 @@ static avi_t *XINE_MALLOC AVI_init(demux_avi_t *this) {
           malloc((n < sizeof(xine_bmiheader)) ? sizeof(xine_bmiheader) : n);
         if(AVI->bih == NULL) {
           this->AVI_errno = AVI_ERR_NO_MEM;
+          AVI_close(AVI);
           return 0;
         }
 
@@ -979,6 +980,7 @@ static avi_t *XINE_MALLOC AVI_init(demux_avi_t *this) {
         wavex = (xine_waveformatex *)malloc(n);
         if (!wavex) {
           this->AVI_errno = AVI_ERR_NO_MEM;
+          AVI_close(AVI);
           return 0;
         }
         memcpy((void *)wavex, hdrl_data+i, n);
