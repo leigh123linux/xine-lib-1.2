@@ -720,7 +720,7 @@ static ao_driver_t *open_jack_plugin (audio_driver_class_t *class_gen,
   /* for usability reasons, keep this in sync with audio_alsa_out.c */
   speakers =
     config->register_enum (config, "audio.output.speaker_arrangement",
-			   STEREO, speaker_arrangement,
+                           STEREO, (char **)speaker_arrangement,
                            AUDIO_DEVICE_SPEAKER_ARRANGEMENT_HELP,
 			   0, jack_speaker_arrangement_cb, this);
 
