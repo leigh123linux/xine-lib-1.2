@@ -77,7 +77,7 @@ typedef struct {
  * @param nbits new position in bits from the beginning.
  */
 static void bebf_UNUSED bebf_seek (bebf_t *bebf, uint32_t nbits) {
-  const uint32_t *p = (const uint32_t *)(((unsigned long int)bebf->readstart + (nbits >> 3)) & ~(unsigned long int)3);
+  const uint32_t *p = (const uint32_t *)(((uintptr_t)bebf->readstart + (nbits >> 3)) & ~(uintptr_t)3);
   uint32_t n = (int32_t)nbits - (((const uint8_t *)p - bebf->readstart) << 3);
   bebf->readbits = n;
   if (p < bebf->readstop) {
@@ -112,7 +112,7 @@ static void bebf_UNUSED bebf_align (bebf_t *bebf) {
  */
 static void bebf_UNUSED bebf_set_read (bebf_t *bebf, const uint8_t *rp, uint32_t nbytes) {
   bebf->readstart = rp;
-  bebf->readstop = (const uint32_t *)(((unsigned long int)rp + nbytes + 3) & ~(unsigned long int)3);
+  bebf->readstop = (const uint32_t *)(((uintptr_t)rp + nbytes + 3) & ~(uintptr_t)3);
   bebf_seek (bebf, 0);
 }
 
