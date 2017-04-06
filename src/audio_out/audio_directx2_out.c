@@ -694,15 +694,6 @@ static int ao_dx2_open(ao_driver_t *this_gen, uint32_t bits, uint32_t rate, int 
   if (!audio_create_buffers(this)) return 0;
   if (!audio_set_volume(this, this->volume)) goto fail_buffers;
 
-  if (pthread_cond_init(&this->data_cond, NULL) != 0) {
-    xine_log(this->class->xine, XINE_LOG_MSG, _(LOG_MODULE ": can't create pthread condition: %s\n"), strerror(errno));
-    goto fail_buffers;
-  }
-  if (pthread_mutex_init(&this->data_mutex, NULL) != 0) {
-    xine_log(this->class->xine, XINE_LOG_MSG, _(LOG_MODULE ": can't create pthread mutex: %s\n"), strerror(errno));
-    goto fail_cond;
-  }
-
   /* creating the service thread and waiting for its signal */
   pthread_mutex_lock(&this->data_mutex);
   if (pthread_create(&this->buffer_service, NULL, buffer_service, this) != 0) {
@@ -716,9 +707,6 @@ static int ao_dx2_open(ao_driver_t *this_gen, uint32_t bits, uint32_t rate, int 
 
 fail_mutex:
   pthread_mutex_unlock(&this->data_mutex);
-  pthread_mutex_destroy(&this->data_mutex);
-fail_cond:
-  pthread_cond_destroy(&this->data_cond);
 fail_buffers:
   audio_destroy_buffers(this);
   return 0;
@@ -827,12 +815,6 @@ static void ao_dx2_close(ao_driver_t *this_gen) {
   lprintf("pthread joined\n");
   pthread_mutex_unlock(&this->data_mutex);
 
-  if (pthread_cond_destroy(&this->data_cond) != 0) {
-    xine_log(this->class->xine, XINE_LOG_MSG, _(LOG_MODULE ": can't destroy pthread condition: %s\n"), strerror(errno));
-  }
-  if (pthread_mutex_destroy(&this->data_mutex) != 0) {
-    xine_log(this->class->xine, XINE_LOG_MSG, _(LOG_MODULE ": can't destroy pthread mutex: %s\n"), strerror(errno));
-  }
   audio_destroy_buffers(this);
 }
 
@@ -842,7 +824,17 @@ static void ao_dx2_exit(ao_driver_t *this_gen) {
 
   lprintf("exit instance\n");
 
-  dsound_destroy(this->ds);
+  if (this->ds) {
+    dsound_destroy(this->ds);
+  }
+
+  if (pthread_cond_destroy(&this->data_cond) != 0) {
+    xine_log(this->class->xine, XINE_LOG_MSG, _(LOG_MODULE ": can't destroy pthread condition: %s\n"), strerror(errno));
+  }
+  if (pthread_mutex_destroy(&this->data_mutex) != 0) {
+    xine_log(this->class->xine, XINE_LOG_MSG, _(LOG_MODULE ": can't destroy pthread mutex: %s\n"), strerror(errno));
+  }
+
   free(this);
 }
 
@@ -926,8 +918,20 @@ static ao_driver_t *open_plugin(audio_driver_class_t *class_gen, const void *dat
 
   this->failed = 0;
 
-  if ((this->ds = dsound_create()) == NULL) {
+  if (pthread_cond_init(&this->data_cond, NULL) != 0) {
+    xine_log(this->class->xine, XINE_LOG_MSG, _(LOG_MODULE ": can't create pthread condition: %s\n"), strerror(errno));
     free(this);
+    return NULL;
+  }
+  if (pthread_mutex_init(&this->data_mutex, NULL) != 0) {
+    xine_log(this->class->xine, XINE_LOG_MSG, _(LOG_MODULE ": can't create pthread mutex: %s\n"), strerror(errno));
+    pthread_cond_destroy(&this->data_cond);
+    free(this);
+    return NULL;
+  }
+
+  if ((this->ds = dsound_create()) == NULL) {
+    ao_dx2_exit(&this->ao_driver);
     return NULL;
   }
   test_capabilities(this);
