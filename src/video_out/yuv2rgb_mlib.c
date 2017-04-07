@@ -1,5 +1,10 @@
 /*
  * yuv2rgb_mlib.c
+ *
+ * Copyright (C) 2001-2017 the xine project
+ * This file is part of xine, a free video player.
+ *
+ * based on work from mpeg2dec:
  * Copyright (C) 2000-2001 Silicon Integrated System Corp.
  * All Rights Reserved.
  *
@@ -36,16 +41,18 @@
 
 #include <xine/attributes.h>
 #include <xine/xineutils.h>
-#include "yuv2rgb.h"
 
-static void mlib_yuv420_rgb24(yuv2rgb_t *this,
+#include "yuv2rgb_private.h"
+
+static void mlib_yuv420_rgb24(yuv2rgb_t *this_gen,
 			      uint8_t * image, uint8_t * py,
 			      uint8_t * pu, uint8_t * pv)
 {
+  yuv2rgb_impl_t *this = (yuv2rgb_impl_t *)this_gen;
   int src_height = MIN(this->slice_height, this->source_height-this->slice_offset) &~ 1;
   int dst_height;
 
-  dst_height = this->next_slice(this, &image);
+  dst_height = this_gen->next_slice(this_gen, &image);
   if (this->do_scale) {
     mlib_u8 *resize_buffer = this->mlib_resize_buffer;
     mlib_s32 resize_stride = this->dest_width << 2;
@@ -78,14 +85,15 @@ static void mlib_yuv420_rgb24(yuv2rgb_t *this,
   }
 }
 
-static void mlib_yuv420_argb32(yuv2rgb_t *this,
+static void mlib_yuv420_argb32(yuv2rgb_t *this_gen,
 			       uint8_t * image, uint8_t * py,
 			       uint8_t * pu, uint8_t * pv)
 {
+  yuv2rgb_impl_t *this = (yuv2rgb_impl_t *)this_gen;
   int src_height = MIN(this->slice_height, this->source_height-this->slice_offset) &~ 1;
   int dst_height;
 
-  dst_height = this->next_slice(this, &image);
+  dst_height = this_gen->next_slice(this_gen, &image);
   if (this->do_scale) {
     mlib_VideoColorYUV420seq_to_ARGBint((mlib_u32*)this->mlib_buffer,
 					py, pu, pv, py, 0,
@@ -117,14 +125,15 @@ static void mlib_yuv420_argb32(yuv2rgb_t *this,
   }
 }
 
-static void mlib_yuv420_abgr32(yuv2rgb_t *this,
+static void mlib_yuv420_abgr32(yuv2rgb_t *this_gen,
 			       uint8_t * image, uint8_t * py,
 			       uint8_t * pu, uint8_t * pv)
 {
+  yuv2rgb_impl_t *this = (yuv2rgb_impl_t *)this_gen;
   int src_height = MIN(this->slice_height, this->source_height-this->slice_offset) &~ 1;
   int dst_height;
 
-  dst_height = this->next_slice (this, &image);
+  dst_height = this_gen->next_slice (this_gen, &image);
   if (this->do_scale) {
     mlib_VideoColorYUV420seq_to_ABGRint((mlib_u32*)this->mlib_buffer,
 					py, pu, pv, py, 0,
@@ -157,7 +166,7 @@ static void mlib_yuv420_abgr32(yuv2rgb_t *this,
   }
 }
 
-void yuv2rgb_init_mlib (yuv2rgb_factory_t *this)
+void yuv2rgb_init_mlib (yuv2rgb_factory_impl_t *this)
 {
   switch (this->mode) {
   case MODE_24_RGB:

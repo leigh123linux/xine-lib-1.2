@@ -1,5 +1,11 @@
 /*
  * yuv2rgb_mmx.c
+ *
+ * Copyright (C) 2001-2017 the xine project
+ * This file is part of xine, a free video player.
+ *
+ * based on work from mpeg2dec:
+ *
  * Copyright (C) 2000-2001 Silicon Integrated System Corp.
  * All Rights Reserved.
  *
@@ -31,9 +37,10 @@
 #include <string.h>
 #include <inttypes.h>
 
-#include "yuv2rgb.h"
 #include <xine/xineutils.h>
 #include "xine_mmx.h"
+
+#include "yuv2rgb_private.h"
 
 #define CPU_MMXEXT 0
 #define CPU_MMX 1
@@ -63,9 +70,10 @@ struct mmx_csc_s {
 
 extern const int32_t Inverse_Table_6_9[8][4];
 
-void mmx_yuv2rgb_set_csc_levels(yuv2rgb_factory_t *this,
+void mmx_yuv2rgb_set_csc_levels(yuv2rgb_factory_t *this_gen,
   int brightness, int contrast, int saturation, int colormatrix)
 {
+  yuv2rgb_factory_impl_t *this = (yuv2rgb_factory_impl_t*)this_gen;
   int i, cty;
 
   int yoffset = -16;
@@ -525,11 +533,12 @@ static inline void mmx_unpack_24bgr (uint8_t * image, int cpu)
     movntq (mm6, *(image+16));
 }
 
-static inline void yuv420_rgb16 (yuv2rgb_t *this,
+static inline void yuv420_rgb16 (yuv2rgb_t *this_gen,
 				 uint8_t * image,
 				 uint8_t * py, uint8_t * pu, uint8_t * pv,
 				 int cpu)
 {
+    yuv2rgb_impl_t *this = (yuv2rgb_impl_t*)this_gen;
     int i, height, dst_height;
     int rgb_stride = this->rgb_stride;
     int y_stride   = this->y_stride;
@@ -540,7 +549,7 @@ static inline void yuv420_rgb16 (yuv2rgb_t *this,
     width >>= 3;
 
     if (!this->do_scale) {
-      height = this->next_slice (this, &image);
+      height = this_gen->next_slice (this_gen, &image);
       y_stride -= 8 * width;
       uv_stride -= 4 * width;
 
@@ -580,7 +589,7 @@ static inline void yuv420_rgb16 (yuv2rgb_t *this,
       scale_line (py, this->y_buffer,
 		  this->dest_width, this->step_dx);
 
-      dst_height = this->next_slice (this, &image);
+      dst_height = this_gen->next_slice (this_gen, &image);
 
       for (height = 0;; ) {
 
@@ -638,11 +647,12 @@ static inline void yuv420_rgb16 (yuv2rgb_t *this,
     }
 }
 
-static inline void yuv420_rgb15 (yuv2rgb_t *this,
+static inline void yuv420_rgb15 (yuv2rgb_t *this_gen,
 				 uint8_t * image,
 				 uint8_t * py, uint8_t * pu, uint8_t * pv,
 				 int cpu)
 {
+    yuv2rgb_impl_t *this = (yuv2rgb_impl_t*)this_gen;
     int i, height, dst_height;
     int rgb_stride = this->rgb_stride;
     int y_stride   = this->y_stride;
@@ -653,7 +663,7 @@ static inline void yuv420_rgb15 (yuv2rgb_t *this,
     width >>= 3;
 
     if (!this->do_scale) {
-      height = this->next_slice (this, &image);
+      height = this_gen->next_slice (this_gen, &image);
       y_stride -= 8 * width;
       uv_stride -= 4 * width;
 
@@ -693,7 +703,7 @@ static inline void yuv420_rgb15 (yuv2rgb_t *this,
       scale_line (py, this->y_buffer,
 		  this->dest_width, this->step_dx);
 
-      dst_height = this->next_slice (this, &image);
+      dst_height = this_gen->next_slice (this_gen, &image);
 
       for (height = 0;; ) {
 
@@ -750,10 +760,11 @@ static inline void yuv420_rgb15 (yuv2rgb_t *this,
     }
 }
 
-static inline void yuv420_rgb24 (yuv2rgb_t *this,
+static inline void yuv420_rgb24 (yuv2rgb_t *this_gen,
 				 uint8_t * image, uint8_t * py,
 				 uint8_t * pu, uint8_t * pv, int cpu)
 {
+    yuv2rgb_impl_t *this = (yuv2rgb_impl_t*)this_gen;
     int i, height, dst_height;
     int rgb_stride = this->rgb_stride;
     int y_stride   = this->y_stride;
@@ -765,7 +776,7 @@ static inline void yuv420_rgb24 (yuv2rgb_t *this,
     width >>= 3;
 
     if (!this->do_scale) {
-      height = this->next_slice (this, &image);
+      height = this_gen->next_slice (this_gen, &image);
       y_stride -= 8 * width;
       uv_stride -= 4 * width;
 
@@ -803,7 +814,7 @@ static inline void yuv420_rgb24 (yuv2rgb_t *this,
       scale_line (py, this->y_buffer,
 		  this->dest_width, this->step_dx);
 
-      dst_height = this->next_slice (this, &image);
+      dst_height = this_gen->next_slice (this_gen, &image);
 
       for (height = 0;; ) {
 
@@ -862,10 +873,11 @@ static inline void yuv420_rgb24 (yuv2rgb_t *this,
     }
 }
 
-static inline void yuv420_bgr24 (yuv2rgb_t *this,
+static inline void yuv420_bgr24 (yuv2rgb_t *this_gen,
 				 uint8_t * image, uint8_t * py,
 				 uint8_t * pu, uint8_t * pv, int cpu)
 {
+    yuv2rgb_impl_t *this = (yuv2rgb_impl_t*)this_gen;
     int i, height, dst_height;
     int rgb_stride = this->rgb_stride;
     int y_stride   = this->y_stride;
@@ -877,7 +889,7 @@ static inline void yuv420_bgr24 (yuv2rgb_t *this,
     width >>= 3;
 
     if (!this->do_scale) {
-      height = this->next_slice (this, &image);
+      height = this_gen->next_slice (this_gen, &image);
       y_stride -= 8 * width;
       uv_stride -= 4 * width;
 
@@ -915,7 +927,7 @@ static inline void yuv420_bgr24 (yuv2rgb_t *this,
       scale_line (py, this->y_buffer,
 		  this->dest_width, this->step_dx);
 
-      dst_height = this->next_slice (this, &image);
+      dst_height = this_gen->next_slice (this_gen, &image);
 
       for (height = 0;; ) {
 
@@ -974,10 +986,11 @@ static inline void yuv420_bgr24 (yuv2rgb_t *this,
     }
 }
 
-static inline void yuv420_argb32 (yuv2rgb_t *this,
+static inline void yuv420_argb32 (yuv2rgb_t *this_gen,
 				  uint8_t * image, uint8_t * py,
 				  uint8_t * pu, uint8_t * pv, int cpu)
 {
+    yuv2rgb_impl_t *this = (yuv2rgb_impl_t*)this_gen;
     int i, height, dst_height;
     int rgb_stride = this->rgb_stride;
     int y_stride   = this->y_stride;
@@ -989,7 +1002,7 @@ static inline void yuv420_argb32 (yuv2rgb_t *this,
     width >>= 3;
 
     if (!this->do_scale) {
-      height = this->next_slice (this, &image);
+      height = this_gen->next_slice (this_gen, &image);
       y_stride -= 8 * width;
       uv_stride -= 4 * width;
 
@@ -1027,7 +1040,7 @@ static inline void yuv420_argb32 (yuv2rgb_t *this,
       scale_line (py, this->y_buffer,
 		  this->dest_width, this->step_dx);
 
-      dst_height = this->next_slice (this, &image);
+      dst_height = this_gen->next_slice (this_gen, &image);
 
       for (height = 0;; ) {
 
@@ -1085,10 +1098,11 @@ static inline void yuv420_argb32 (yuv2rgb_t *this,
     }
 }
 
-static inline void yuv420_abgr32 (yuv2rgb_t *this,
+static inline void yuv420_abgr32 (yuv2rgb_t *this_gen,
 				  uint8_t * image, uint8_t * py,
 				  uint8_t * pu, uint8_t * pv, int cpu)
 {
+    yuv2rgb_impl_t *this = (yuv2rgb_impl_t*)this_gen;
     int i, height, dst_height;
     int rgb_stride = this->rgb_stride;
     int y_stride   = this->y_stride;
@@ -1100,7 +1114,7 @@ static inline void yuv420_abgr32 (yuv2rgb_t *this,
     width >>= 3;
 
     if (!this->do_scale) {
-      height = this->next_slice (this, &image);
+      height = this_gen->next_slice (this_gen, &image);
       y_stride -= 8 * width;
       uv_stride -= 4 * width;
 
@@ -1138,7 +1152,7 @@ static inline void yuv420_abgr32 (yuv2rgb_t *this,
       scale_line (py, this->y_buffer,
 		  this->dest_width, this->step_dx);
 
-      dst_height = this->next_slice (this, &image);
+      dst_height = this_gen->next_slice (this_gen, &image);
 
       for (height = 0;; ) {
 
@@ -1274,7 +1288,7 @@ static void mmx_abgr32 (yuv2rgb_t *this, uint8_t * image,
     emms();	/* re-initialize x86 FPU after MMX use */
 }
 
-void yuv2rgb_init_mmxext (yuv2rgb_factory_t *this) {
+void yuv2rgb_init_mmxext (yuv2rgb_factory_impl_t *this) {
 
   if (this->swapped)
     return; /*no swapped pixel output upto now*/
@@ -1298,7 +1312,7 @@ void yuv2rgb_init_mmxext (yuv2rgb_factory_t *this) {
   }
 }
 
-void yuv2rgb_init_mmx (yuv2rgb_factory_t *this) {
+void yuv2rgb_init_mmx (yuv2rgb_factory_impl_t *this) {
 
   if (this->swapped) switch (this->mode) {
   case MODE_24_RGB:

@@ -1,7 +1,7 @@
 /*
  * yuv2rgb.c
  *
- * Copyright (C) 2003-2016 the xine project
+ * Copyright (C) 2003-2017 the xine project
  * This file is part of xine, a free video player.
  *
  * based on work from mpeg2dec:
@@ -31,9 +31,7 @@
 #include <string.h>
 #include <inttypes.h>
 
-
-
-#include "yuv2rgb.h"
+#include "yuv2rgb_private.h"
 
 #define LOG_MODULE "yuv2rgb"
 #define LOG_VERBOSE
@@ -75,7 +73,7 @@ static void *my_malloc_aligned (size_t alignment, size_t size, void **chunk)
 }
 
 
-static int yuv2rgb_next_slice (yuv2rgb_t *this, uint8_t **dest)
+static int yuv2rgb_next_slice (yuv2rgb_impl_t *this, uint8_t **dest)
 {
   int y0, y1;
 
@@ -101,8 +99,15 @@ static int yuv2rgb_next_slice (yuv2rgb_t *this, uint8_t **dest)
   }
 }
 
-static void yuv2rgb_dispose (yuv2rgb_t *this)
+static int yuv2rgb_next_slice_intf (yuv2rgb_t *this_gen, uint8_t **dest)
 {
+  yuv2rgb_impl_t *this = (yuv2rgb_impl_t *)this_gen;
+  return yuv2rgb_next_slice (this, dest);
+}
+
+static void yuv2rgb_dispose (yuv2rgb_t *this_gen)
+{
+  yuv2rgb_impl_t *this = (yuv2rgb_impl_t *)this_gen;
   free (this->y_chunk);
   free (this->u_chunk);
   free (this->v_chunk);
@@ -112,11 +117,13 @@ static void yuv2rgb_dispose (yuv2rgb_t *this)
   free (this);
 }
 
-static int yuv2rgb_configure (yuv2rgb_t *this,
+static int yuv2rgb_configure (yuv2rgb_t *this_gen,
 			      int source_width, int source_height,
 			      int y_stride, int uv_stride,
 			      int dest_width, int dest_height,
 			      int rgb_stride) {
+
+  yuv2rgb_impl_t *this = (yuv2rgb_impl_t *)this_gen;
 /*
   printf ("yuv2rgb setup (%d x %d => %d x %d)\n", source_width, source_height,
 	  dest_width, dest_height);
@@ -1497,9 +1504,10 @@ static void scale_line_4 (uint8_t *source, uint8_t *dest,
 	Y = py_2[2*i+1];						\
 	dst_2[2*i+1] = this->cmap[r[Y] + g[Y] + b[Y]];
 
-static void yuv2rgb_c_32 (yuv2rgb_t *this, uint8_t * _dst,
+static void yuv2rgb_c_32 (yuv2rgb_t *this_gen, uint8_t * _dst,
 			  uint8_t * _py, uint8_t * _pu, uint8_t * _pv)
 {
+  yuv2rgb_impl_t *this = (yuv2rgb_impl_t*)this_gen;
   int U, V, Y;
   uint8_t  * py_1, * py_2, * pu, * pv;
   uint32_t * r, * g, * b;
@@ -1518,7 +1526,7 @@ static void yuv2rgb_c_32 (yuv2rgb_t *this, uint8_t * _dst,
 		this->dest_width, this->step_dx);
 
     dy = 0;
-    dst_height = this->next_slice (this, &_dst);
+    dst_height = yuv2rgb_next_slice (this, &_dst);
 
     for (height = 0;; ) {
       dst_1 = (uint32_t*)_dst;
@@ -1582,7 +1590,7 @@ static void yuv2rgb_c_32 (yuv2rgb_t *this, uint8_t * _dst,
       } while( dy>=32768);
     }
   } else {
-    height = this->next_slice (this, &_dst) >> 1;
+    height = yuv2rgb_next_slice (this, &_dst) >> 1;
     do {
       dst_1 = (uint32_t*)_dst;
       dst_2 = (void*)( (uint8_t *)_dst + this->rgb_stride );
@@ -1627,9 +1635,10 @@ static void yuv2rgb_c_32 (yuv2rgb_t *this, uint8_t * _dst,
 }
 
 /* This is very near from the yuv2rgb_c_32 code */
-static void yuv2rgb_c_24_rgb (yuv2rgb_t *this, uint8_t * _dst,
+static void yuv2rgb_c_24_rgb (yuv2rgb_t *this_gen, uint8_t * _dst,
 			      uint8_t * _py, uint8_t * _pu, uint8_t * _pv)
 {
+  yuv2rgb_impl_t *this = (yuv2rgb_impl_t*)this_gen;
   int U, V, Y;
   uint8_t * py_1, * py_2, * pu, * pv;
   uint8_t * r, * g, * b;
@@ -1649,7 +1658,7 @@ static void yuv2rgb_c_24_rgb (yuv2rgb_t *this, uint8_t * _dst,
 		this->dest_width, this->step_dx);
 
     dy = 0;
-    dst_height = this->next_slice (this, &_dst);
+    dst_height = yuv2rgb_next_slice (this, &_dst);
 
     for (height = 0;; ) {
       dst_1 = _dst;
@@ -1713,7 +1722,7 @@ static void yuv2rgb_c_24_rgb (yuv2rgb_t *this, uint8_t * _dst,
       } while (dy>=32768);
     }
   } else {
-    height = this->next_slice (this, &_dst) >> 1;
+    height = yuv2rgb_next_slice (this, &_dst) >> 1;
     do {
       dst_1 = _dst;
       dst_2 = (void*)( (uint8_t *)_dst + this->rgb_stride );
@@ -1758,9 +1767,10 @@ static void yuv2rgb_c_24_rgb (yuv2rgb_t *this, uint8_t * _dst,
 }
 
 /* only trivial mods from yuv2rgb_c_24_rgb */
-static void yuv2rgb_c_24_bgr (yuv2rgb_t *this, uint8_t * _dst,
+static void yuv2rgb_c_24_bgr (yuv2rgb_t *this_gen, uint8_t * _dst,
 			      uint8_t * _py, uint8_t * _pu, uint8_t * _pv)
 {
+  yuv2rgb_impl_t *this = (yuv2rgb_impl_t*)this_gen;
   int U, V, Y;
   uint8_t * py_1, * py_2, * pu, * pv;
   uint8_t * r, * g, * b;
@@ -1780,7 +1790,7 @@ static void yuv2rgb_c_24_bgr (yuv2rgb_t *this, uint8_t * _dst,
 		this->dest_width, this->step_dx);
 
     dy = 0;
-    dst_height = this->next_slice (this, &_dst);
+    dst_height = yuv2rgb_next_slice (this, &_dst);
 
     for (height = 0;; ) {
       dst_1 = _dst;
@@ -1845,7 +1855,7 @@ static void yuv2rgb_c_24_bgr (yuv2rgb_t *this, uint8_t * _dst,
     }
 
   } else {
-    height = this->next_slice (this, &_dst) >> 1;
+    height = yuv2rgb_next_slice (this, &_dst) >> 1;
     do {
       dst_1 = _dst;
       dst_2 = (void*)( (uint8_t *)_dst + this->rgb_stride );
@@ -1890,9 +1900,10 @@ static void yuv2rgb_c_24_bgr (yuv2rgb_t *this, uint8_t * _dst,
 
 /* This is exactly the same code as yuv2rgb_c_32 except for the types of */
 /* r, g, b, dst_1, dst_2 */
-static void yuv2rgb_c_16 (yuv2rgb_t *this, uint8_t * _dst,
+static void yuv2rgb_c_16 (yuv2rgb_t *this_gen, uint8_t * _dst,
 			  uint8_t * _py, uint8_t * _pu, uint8_t * _pv)
 {
+  yuv2rgb_impl_t *this = (yuv2rgb_impl_t*)this_gen;
   int U, V, Y;
   uint8_t * py_1, * py_2, * pu, * pv;
   uint16_t * r, * g, * b;
@@ -1911,7 +1922,7 @@ static void yuv2rgb_c_16 (yuv2rgb_t *this, uint8_t * _dst,
 		this->dest_width, this->step_dx);
 
     dy = 0;
-    dst_height = this->next_slice (this, &_dst);
+    dst_height = yuv2rgb_next_slice (this, &_dst);
 
     for (height = 0;; ) {
       dst_1 = (uint16_t*)_dst;
@@ -1975,7 +1986,7 @@ static void yuv2rgb_c_16 (yuv2rgb_t *this, uint8_t * _dst,
       } while( dy>=32768);
     }
   } else {
-    height = this->next_slice (this, &_dst) >> 1;
+    height = yuv2rgb_next_slice (this, &_dst) >> 1;
     do {
       dst_1 = (uint16_t*)_dst;
       dst_2 = (void*)( (uint8_t *)_dst + this->rgb_stride );
@@ -2020,9 +2031,10 @@ static void yuv2rgb_c_16 (yuv2rgb_t *this, uint8_t * _dst,
 
 /* This is exactly the same code as yuv2rgb_c_32 except for the types of */
 /* r, g, b, dst_1, dst_2 */
-static void yuv2rgb_c_8 (yuv2rgb_t *this, uint8_t * _dst,
+static void yuv2rgb_c_8 (yuv2rgb_t *this_gen, uint8_t * _dst,
 			  uint8_t * _py, uint8_t * _pu, uint8_t * _pv)
 {
+  yuv2rgb_impl_t *this = (yuv2rgb_impl_t*)this_gen;
   int U, V, Y;
   uint8_t  * py_1, * py_2, * pu, * pv;
   uint8_t * r, * g, * b;
@@ -2041,7 +2053,7 @@ static void yuv2rgb_c_8 (yuv2rgb_t *this, uint8_t * _dst,
 		this->dest_width, this->step_dx);
 
     dy = 0;
-    dst_height = this->next_slice (this, &_dst);
+    dst_height = yuv2rgb_next_slice (this, &_dst);
 
     for (height = 0;; ) {
       dst_1 = (uint8_t*)_dst;
@@ -2105,7 +2117,7 @@ static void yuv2rgb_c_8 (yuv2rgb_t *this, uint8_t * _dst,
       } while( dy>=32768 );
     }
   } else {
-    height = this->next_slice (this, &_dst) >> 1;
+    height = yuv2rgb_next_slice (this, &_dst) >> 1;
     do {
       dst_1 = (uint8_t*)_dst;
       dst_2 = (void*)( (uint8_t *)_dst + this->rgb_stride );
@@ -2150,9 +2162,10 @@ static void yuv2rgb_c_8 (yuv2rgb_t *this, uint8_t * _dst,
 }
 
 /* now for something different: 256 grayscale mode */
-static void yuv2rgb_c_gray (yuv2rgb_t *this, uint8_t * _dst,
+static void yuv2rgb_c_gray (yuv2rgb_t *this_gen, uint8_t * _dst,
 			    uint8_t * _py, uint8_t * _pu, uint8_t * _pv)
 {
+  yuv2rgb_impl_t *this = (yuv2rgb_impl_t*)this_gen;
   int height, dst_height;
   int dy;
 
@@ -2160,7 +2173,7 @@ static void yuv2rgb_c_gray (yuv2rgb_t *this, uint8_t * _dst,
     scale_line_func_t scale_line = this->scale_line;
 
     dy = 0;
-    dst_height = this->next_slice (this, &_dst);
+    dst_height = yuv2rgb_next_slice (this, &_dst);
 
     for (;;) {
       scale_line (_py, _dst, this->dest_width, this->step_dx);
@@ -2186,7 +2199,7 @@ static void yuv2rgb_c_gray (yuv2rgb_t *this, uint8_t * _dst,
       */
     }
   } else {
-    for (height = this->next_slice (this, &_dst); --height >= 0; ) {
+    for (height = yuv2rgb_next_slice (this, &_dst); --height >= 0; ) {
       xine_fast_memcpy(_dst, _py, this->dest_width);
       _dst += this->rgb_stride;
       _py += this->y_stride;
@@ -2195,9 +2208,10 @@ static void yuv2rgb_c_gray (yuv2rgb_t *this, uint8_t * _dst,
 }
 
 /* now for something different: 256 color mode */
-static void yuv2rgb_c_palette (yuv2rgb_t *this, uint8_t * _dst,
+static void yuv2rgb_c_palette (yuv2rgb_t *this_gen, uint8_t * _dst,
 			       uint8_t * _py, uint8_t * _pu, uint8_t * _pv)
 {
+  yuv2rgb_impl_t *this = (yuv2rgb_impl_t*)this_gen;
   int U, V, Y;
   uint8_t * py_1, * py_2, * pu, * pv;
   uint16_t * r, * g, * b;
@@ -2216,7 +2230,7 @@ static void yuv2rgb_c_palette (yuv2rgb_t *this, uint8_t * _dst,
 		this->dest_width, this->step_dx);
 
     dy = 0;
-    dst_height = this->next_slice (this, &_dst);
+    dst_height = yuv2rgb_next_slice (this, &_dst);
 
     for (height = 0;; ) {
       dst_1 = _dst;
@@ -2280,7 +2294,7 @@ static void yuv2rgb_c_palette (yuv2rgb_t *this, uint8_t * _dst,
       } while( dy>=32768 );
     }
   } else {
-    height = this->next_slice (this, &_dst) >> 1;
+    height = yuv2rgb_next_slice (this, &_dst) >> 1;
     do {
       dst_1 = _dst;
       dst_2 = _dst + this->rgb_stride;
@@ -2331,9 +2345,10 @@ static int div_round (int dividend, int divisor)
     return -((-dividend + (divisor>>1)) / divisor);
 }
 
-static void yuv2rgb_set_csc_levels (yuv2rgb_factory_t *this,
+static void yuv2rgb_set_csc_levels (yuv2rgb_factory_t *this_gen,
   int brightness, int contrast, int saturation, int colormatrix)
 {
+  yuv2rgb_factory_impl_t *this = (yuv2rgb_factory_impl_t*)this_gen;
   int i;
   uint8_t table_Y[1024];
   uint32_t * table_32 = 0;
@@ -2544,12 +2559,13 @@ static void yuv2rgb_set_csc_levels (yuv2rgb_factory_t *this,
   }
 
 #if defined(ARCH_X86) || defined(ARCH_X86_64)
-  mmx_yuv2rgb_set_csc_levels (this, brightness, contrast, saturation, colormatrix);
+  mmx_yuv2rgb_set_csc_levels (this_gen, brightness, contrast, saturation, colormatrix);
 #endif
 }
 
-static uint32_t yuv2rgb_single_pixel_32 (yuv2rgb_t *this, uint8_t y, uint8_t u, uint8_t v)
+static uint32_t yuv2rgb_single_pixel_32 (yuv2rgb_t *this_gen, uint8_t y, uint8_t u, uint8_t v)
 {
+  yuv2rgb_impl_t *this = (yuv2rgb_impl_t*)this_gen;
   uint32_t * r, * g, * b;
 
   r = this->table_rV[v];
@@ -2559,8 +2575,9 @@ static uint32_t yuv2rgb_single_pixel_32 (yuv2rgb_t *this, uint8_t y, uint8_t u, 
   return r[y] + g[y] + b[y];
 }
 
-static uint32_t yuv2rgb_single_pixel_24_rgb (yuv2rgb_t *this, uint8_t y, uint8_t u, uint8_t v)
+static uint32_t yuv2rgb_single_pixel_24_rgb (yuv2rgb_t *this_gen, uint8_t y, uint8_t u, uint8_t v)
 {
+  yuv2rgb_impl_t *this = (yuv2rgb_impl_t*)this_gen;
   uint8_t * r, * g, * b;
 
   r = this->table_rV[v];
@@ -2572,8 +2589,9 @@ static uint32_t yuv2rgb_single_pixel_24_rgb (yuv2rgb_t *this, uint8_t y, uint8_t
           ((uint32_t) b[y] << 16);
 }
 
-static uint32_t yuv2rgb_single_pixel_24_bgr (yuv2rgb_t *this, uint8_t y, uint8_t u, uint8_t v)
+static uint32_t yuv2rgb_single_pixel_24_bgr (yuv2rgb_t *this_gen, uint8_t y, uint8_t u, uint8_t v)
 {
+  yuv2rgb_impl_t *this = (yuv2rgb_impl_t*)this_gen;
   uint8_t * r, * g, * b;
 
   r = this->table_rV[v];
@@ -2585,8 +2603,9 @@ static uint32_t yuv2rgb_single_pixel_24_bgr (yuv2rgb_t *this, uint8_t y, uint8_t
           ((uint32_t) r[y] << 16);
 }
 
-static uint32_t yuv2rgb_single_pixel_16 (yuv2rgb_t *this, uint8_t y, uint8_t u, uint8_t v)
+static uint32_t yuv2rgb_single_pixel_16 (yuv2rgb_t *this_gen, uint8_t y, uint8_t u, uint8_t v)
 {
+  yuv2rgb_impl_t *this = (yuv2rgb_impl_t*)this_gen;
   uint16_t * r, * g, * b;
 
   r = this->table_rV[v];
@@ -2596,8 +2615,9 @@ static uint32_t yuv2rgb_single_pixel_16 (yuv2rgb_t *this, uint8_t y, uint8_t u, 
   return r[y] + g[y] + b[y];
 }
 
-static uint32_t yuv2rgb_single_pixel_8 (yuv2rgb_t *this, uint8_t y, uint8_t u, uint8_t v)
+static uint32_t yuv2rgb_single_pixel_8 (yuv2rgb_t *this_gen, uint8_t y, uint8_t u, uint8_t v)
 {
+  yuv2rgb_impl_t *this = (yuv2rgb_impl_t*)this_gen;
   uint8_t * r, * g, * b;
 
   r = this->table_rV[v];
@@ -2607,13 +2627,14 @@ static uint32_t yuv2rgb_single_pixel_8 (yuv2rgb_t *this, uint8_t y, uint8_t u, u
   return r[y] + g[y] + b[y];
 }
 
-static uint32_t yuv2rgb_single_pixel_gray (yuv2rgb_t *this, uint8_t y, uint8_t u, uint8_t v)
+static uint32_t yuv2rgb_single_pixel_gray (yuv2rgb_t *this_gen, uint8_t y, uint8_t u, uint8_t v)
 {
   return y;
 }
 
-static uint32_t yuv2rgb_single_pixel_palette (yuv2rgb_t *this, uint8_t y, uint8_t u, uint8_t v)
+static uint32_t yuv2rgb_single_pixel_palette (yuv2rgb_t *this_gen, uint8_t y, uint8_t u, uint8_t v)
 {
+  yuv2rgb_impl_t *this = (yuv2rgb_impl_t*)this_gen;
   uint16_t * r, * g, * b;
 
   r = this->table_rV[v];
@@ -2624,7 +2645,7 @@ static uint32_t yuv2rgb_single_pixel_palette (yuv2rgb_t *this, uint8_t y, uint8_
 }
 
 
-static void yuv2rgb_c_init (yuv2rgb_factory_t *this)
+static void yuv2rgb_c_init (yuv2rgb_factory_impl_t *this)
 {
   switch (this->mode) {
   case MODE_32_RGB:
@@ -2667,7 +2688,7 @@ static void yuv2rgb_c_init (yuv2rgb_factory_t *this)
 
 }
 
-static void yuv2rgb_single_pixel_init (yuv2rgb_factory_t *this) {
+static void yuv2rgb_single_pixel_init (yuv2rgb_factory_impl_t *this) {
 
   switch (this->mode) {
   case MODE_32_RGB:
@@ -2714,8 +2735,9 @@ static void yuv2rgb_single_pixel_init (yuv2rgb_factory_t *this) {
  * yuy2 stuff
  */
 
-static void yuy22rgb_c_32 (yuv2rgb_t *this, uint8_t * _dst, uint8_t * _p)
+static void yuy22rgb_c_32 (yuv2rgb_t *this_gen, uint8_t * _dst, uint8_t * _p)
 {
+  yuv2rgb_impl_t *this = (yuv2rgb_impl_t*)this_gen;
   int U, V, Y;
   uint8_t * py_1, * pu, * pv;
   uint32_t * r, * g, * b;
@@ -2733,7 +2755,7 @@ static void yuy22rgb_c_32 (yuv2rgb_t *this, uint8_t * _dst, uint8_t * _p)
 		this->dest_width, this->step_dx);
 
   dy = 0;
-  height = this->next_slice (this, &_dst);
+  height = yuv2rgb_next_slice (this, &_dst);
 
   for (;;) {
     dst_1 = (uint32_t*)_dst;
@@ -2793,8 +2815,9 @@ static void yuy22rgb_c_32 (yuv2rgb_t *this, uint8_t * _dst, uint8_t * _p)
   }
 }
 
-static void yuy22rgb_c_24_rgb (yuv2rgb_t *this, uint8_t * _dst, uint8_t * _p)
+static void yuy22rgb_c_24_rgb (yuv2rgb_t *this_gen, uint8_t * _dst, uint8_t * _p)
 {
+  yuv2rgb_impl_t *this = (yuv2rgb_impl_t*)this_gen;
   int U, V, Y;
   uint8_t * py_1, * pu, * pv;
   uint8_t * r, * g, * b;
@@ -2812,7 +2835,7 @@ static void yuy22rgb_c_24_rgb (yuv2rgb_t *this, uint8_t * _dst, uint8_t * _p)
 		this->dest_width, this->step_dx);
 
   dy = 0;
-  height = this->next_slice (this, &_dst);
+  height = yuv2rgb_next_slice (this, &_dst);
 
   for (;;) {
     dst_1 = _dst;
@@ -2871,8 +2894,9 @@ static void yuy22rgb_c_24_rgb (yuv2rgb_t *this, uint8_t * _dst, uint8_t * _p)
   }
 }
 
-static void yuy22rgb_c_24_bgr (yuv2rgb_t *this, uint8_t * _dst, uint8_t * _p)
+static void yuy22rgb_c_24_bgr (yuv2rgb_t *this_gen, uint8_t * _dst, uint8_t * _p)
 {
+  yuv2rgb_impl_t *this = (yuv2rgb_impl_t*)this_gen;
   int U, V, Y;
   uint8_t * py_1, * pu, * pv;
   uint8_t * r, * g, * b;
@@ -2890,7 +2914,7 @@ static void yuy22rgb_c_24_bgr (yuv2rgb_t *this, uint8_t * _dst, uint8_t * _p)
 		this->dest_width, this->step_dx);
 
   dy = 0;
-  height = this->next_slice (this, &_dst);
+  height = yuv2rgb_next_slice (this, &_dst);
 
   for (;;) {
     dst_1 = _dst;
@@ -2945,8 +2969,9 @@ static void yuy22rgb_c_24_bgr (yuv2rgb_t *this, uint8_t * _dst, uint8_t * _p)
   }
 }
 
-static void yuy22rgb_c_16 (yuv2rgb_t *this, uint8_t * _dst, uint8_t * _p)
+static void yuy22rgb_c_16 (yuv2rgb_t *this_gen, uint8_t * _dst, uint8_t * _p)
 {
+  yuv2rgb_impl_t *this = (yuv2rgb_impl_t*)this_gen;
   int U, V, Y;
   uint8_t * py_1, * pu, * pv;
   uint16_t * r, * g, * b;
@@ -2964,7 +2989,7 @@ static void yuy22rgb_c_16 (yuv2rgb_t *this, uint8_t * _dst, uint8_t * _p)
 		this->dest_width, this->step_dx);
 
   dy = 0;
-  height = this->next_slice (this, &_dst);
+  height = yuv2rgb_next_slice (this, &_dst);
 
   for (;;) {
     dst_1 = (uint16_t*)_dst;
@@ -3019,8 +3044,9 @@ static void yuy22rgb_c_16 (yuv2rgb_t *this, uint8_t * _dst, uint8_t * _p)
   }
 }
 
-static void yuy22rgb_c_8 (yuv2rgb_t *this, uint8_t * _dst, uint8_t * _p)
+static void yuy22rgb_c_8 (yuv2rgb_t *this_gen, uint8_t * _dst, uint8_t * _p)
 {
+  yuv2rgb_impl_t *this = (yuv2rgb_impl_t*)this_gen;
   int U, V, Y;
   uint8_t * py_1, * pu, * pv;
   uint8_t * r, * g, * b;
@@ -3038,7 +3064,7 @@ static void yuy22rgb_c_8 (yuv2rgb_t *this, uint8_t * _dst, uint8_t * _p)
 		this->dest_width, this->step_dx);
 
   dy = 0;
-  height = this->next_slice (this, &_dst);
+  height = yuv2rgb_next_slice (this, &_dst);
 
   for (;;) {
     dst_1 = _dst;
@@ -3093,8 +3119,9 @@ static void yuy22rgb_c_8 (yuv2rgb_t *this, uint8_t * _dst, uint8_t * _p)
   }
 }
 
-static void yuy22rgb_c_gray (yuv2rgb_t *this, uint8_t * _dst, uint8_t * _p)
+static void yuy22rgb_c_gray (yuv2rgb_t *this_gen, uint8_t * _dst, uint8_t * _p)
 {
+  yuv2rgb_impl_t *this = (yuv2rgb_impl_t*)this_gen;
   int width, height;
   int dy;
   uint8_t * dst;
@@ -3102,7 +3129,7 @@ static void yuy22rgb_c_gray (yuv2rgb_t *this, uint8_t * _dst, uint8_t * _p)
 
   if (this->do_scale) {
     dy = 0;
-    height = this->next_slice (this, &_dst);
+    height = yuv2rgb_next_slice (this, &_dst);
 
     for (;;) {
       scale_line_2 (_p, _dst, this->dest_width, this->step_dx);
@@ -3125,7 +3152,7 @@ static void yuy22rgb_c_gray (yuv2rgb_t *this, uint8_t * _dst, uint8_t * _p)
       dy &= 32767;
     }
   } else {
-    for (height = this->next_slice (this, &_dst); --height >= 0; ) {
+    for (height = yuv2rgb_next_slice (this, &_dst); --height >= 0; ) {
       dst = _dst;
       y = _p;
       for (width = this->source_width; --width >= 0; ) {
@@ -3138,8 +3165,9 @@ static void yuy22rgb_c_gray (yuv2rgb_t *this, uint8_t * _dst, uint8_t * _p)
   }
 }
 
-static void yuy22rgb_c_palette (yuv2rgb_t *this, uint8_t * _dst, uint8_t * _p)
+static void yuy22rgb_c_palette (yuv2rgb_t *this_gen, uint8_t * _dst, uint8_t * _p)
 {
+  yuv2rgb_impl_t *this = (yuv2rgb_impl_t*)this_gen;
   int U, V, Y;
   uint8_t * py_1, * pu, * pv;
   uint16_t * r, * g, * b;
@@ -3155,7 +3183,7 @@ static void yuy22rgb_c_palette (yuv2rgb_t *this, uint8_t * _dst, uint8_t * _p)
 		this->dest_width, this->step_dx);
 
   dy = 0;
-  height = this->next_slice (this, &_dst);
+  height = yuv2rgb_next_slice (this, &_dst);
 
   for (;;) {
     dst_1 = _dst;
@@ -3210,7 +3238,7 @@ static void yuy22rgb_c_palette (yuv2rgb_t *this, uint8_t * _dst, uint8_t * _p)
   }
 }
 
-static void yuy22rgb_c_init (yuv2rgb_factory_t *this)
+static void yuy22rgb_c_init (yuv2rgb_factory_impl_t *this)
 {
   switch (this->mode) {
   case MODE_32_RGB:
@@ -3250,11 +3278,26 @@ static void yuy22rgb_c_init (yuv2rgb_factory_t *this)
   }
 }
 
-static yuv2rgb_t *yuv2rgb_create_converter (yuv2rgb_factory_t *factory) {
+static yuv2rgb_t *yuv2rgb_create_converter (yuv2rgb_factory_t *this_gen) {
 
-  yuv2rgb_t *this = calloc(1, sizeof(yuv2rgb_t));
+  yuv2rgb_factory_impl_t *factory = (yuv2rgb_factory_impl_t*)this_gen;
+  yuv2rgb_impl_t *this;
+  yuv2rgb_t *intf;
 
-  this->swapped			 = factory->swapped;
+  this = calloc(1, sizeof(yuv2rgb_impl_t));
+  if (!this)
+    return NULL;
+
+  intf = &this->intf;
+  intf->configure                = yuv2rgb_configure;
+  intf->next_slice               = yuv2rgb_next_slice_intf;
+  intf->dispose                  = yuv2rgb_dispose;
+
+  intf->yuv2rgb_fun              = factory->yuv2rgb_fun;
+  intf->yuy22rgb_fun             = factory->yuy22rgb_fun;
+  intf->yuv2rgb_single_pixel_fun = factory->yuv2rgb_single_pixel_fun;
+
+  this->swapped                  = factory->swapped;
   this->cmap                     = factory->cmap;
 
   this->y_chunk = this->y_buffer = NULL;
@@ -3273,21 +3316,16 @@ static yuv2rgb_t *yuv2rgb_create_converter (yuv2rgb_factory_t *factory) {
   this->table_bU                 = factory->table_bU;
   this->table_mmx                = factory->table_mmx;
 
-  this->yuv2rgb_fun              = factory->yuv2rgb_fun;
-  this->yuy22rgb_fun             = factory->yuy22rgb_fun;
-  this->yuv2rgb_single_pixel_fun = factory->yuv2rgb_single_pixel_fun;
-
-  this->configure                = yuv2rgb_configure;
-  this->next_slice               = yuv2rgb_next_slice;
-  this->dispose                  = yuv2rgb_dispose;
-  return this;
+  return intf;
 }
 
 /*
  * factory functions
  */
 
-static void yuv2rgb_factory_dispose (yuv2rgb_factory_t *this) {
+static void yuv2rgb_factory_dispose (yuv2rgb_factory_t *this_gen) {
+
+  yuv2rgb_factory_impl_t *this = (yuv2rgb_factory_impl_t*)this_gen;
 
   free (this->table_base);
   xine_free_aligned(this->table_mmx);
@@ -3297,22 +3335,27 @@ static void yuv2rgb_factory_dispose (yuv2rgb_factory_t *this) {
 yuv2rgb_factory_t* yuv2rgb_factory_init (int mode, int swapped,
 					 uint8_t *cmap) {
 
-  yuv2rgb_factory_t *this;
+  yuv2rgb_factory_impl_t *this;
+  yuv2rgb_factory_t      *intf;
   uint32_t mm = xine_mm_accel();
 
   this = malloc (sizeof (yuv2rgb_factory_t));
+  if (!this)
+    return NULL;
+
+  intf = &this->intf;
+  intf->create_converter    = yuv2rgb_create_converter;
+  intf->set_csc_levels      = yuv2rgb_set_csc_levels;
+  intf->dispose             = yuv2rgb_factory_dispose;
 
   this->mode                = mode;
   this->swapped             = swapped;
   this->cmap                = cmap;
-  this->create_converter    = yuv2rgb_create_converter;
-  this->set_csc_levels      = yuv2rgb_set_csc_levels;
-  this->dispose             = yuv2rgb_factory_dispose;
   this->table_base          = NULL;
   this->table_mmx           = NULL;
 
 
-  yuv2rgb_set_csc_levels (this, 0, 128, 128, CM_DEFAULT);
+  yuv2rgb_set_csc_levels (intf, 0, 128, 128, CM_DEFAULT);
 
   /*
    * auto-probe for the best yuv2rgb function
@@ -3370,5 +3413,5 @@ yuv2rgb_factory_t* yuv2rgb_factory_init (int mode, int swapped,
 
   yuv2rgb_single_pixel_init (this);
 
-  return this;
+  return intf;
 }
