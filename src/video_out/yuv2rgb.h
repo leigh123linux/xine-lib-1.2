@@ -24,8 +24,8 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
  */
 
-#ifndef HAVE_YUV2RGB_H
-#define HAVE_YUV2RGB_H
+#ifndef XINE_YUV2RGB_H
+#define XINE_YUV2RGB_H
 
 #include "config.h"
 
@@ -203,4 +203,4 @@ void yuv2rgb_init_mmxext (yuv2rgb_factory_t *this);
 void yuv2rgb_init_mmx (yuv2rgb_factory_t *this);
 void yuv2rgb_init_mlib (yuv2rgb_factory_t *this);
 
-#endif
+#endif /* XINE_YUV2RGB_H */
