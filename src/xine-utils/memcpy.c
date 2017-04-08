@@ -55,7 +55,7 @@
 #include <xine/xine_internal.h>
 #include "../xine-engine/xine_private.h"
 
-void *(* xine_fast_memcpy)(void *to, const void *from, size_t len);
+void *(* xine_fast_memcpy)(void *to, const void *from, size_t len) = NULL;
 
 /* Original comments from mplayer (file: aclib.c)
  This part of code was taken by me from Linux-2.4.3 and slightly modified
@@ -552,33 +552,79 @@ static uint64_t rdtsc(int config_flags)
 }
 #endif
 
-static void update_fast_memcpy(void *user_data, xine_cfg_entry_t *entry) {
-  static int   config_flags = -1;
-  xine_t      *xine = (xine_t *) user_data;
-  int          method;
+static int xine_probe_fast_memcpy_int (xine_t *xine) {
+#define BUFSIZE 1024*1024
+  uint64_t     t;
+  char        *buf1, *buf2;
+  unsigned int i, j, best = 0;
+  int          config_flags = xine_mm_accel ();
 
-  config_flags = xine_mm_accel();
+  if ((buf1 = malloc (BUFSIZE)) == NULL)
+    return 0;
+  if ((buf2 = malloc (BUFSIZE)) == NULL) {
+    free (buf1);
+    return 0;
+  }
 
-  method = entry->num_value;
+  xprintf (xine, XINE_VERBOSITY_LOG, _("Benchmarking memcpy methods (smaller is better):\n"));
 
-  if (method != 0
-      && (config_flags & memcpy_method[method].cpu_require) ==
-      memcpy_method[method].cpu_require ) {
-    lprintf("using %s memcpy()\n", memcpy_method[method].name );
+  /* make sure buffers are present on physical memory */
+  memset (buf1, 0, BUFSIZE);
+  memset (buf2, 0, BUFSIZE);
+
+  /* some initial activity to ensure that we're not running slowly :-) */
+  for (j = 0; j < 50; j++) {
+    memcpy_method[1].function (buf2, buf1, BUFSIZE);
+    memcpy_method[1].function (buf1, buf2, BUFSIZE);
+  }
+
+  for (i = 1; memcpy_method[i].name[0]; i++) {
+    if ((config_flags & memcpy_method[i].cpu_require) != memcpy_method[i].cpu_require)
+      continue;
+
+    t = rdtsc (config_flags);
+    for (j = 0; j < 50; j++) {
+      memcpy_method[i].function (buf2, buf1, BUFSIZE);
+      memcpy_method[i].function (buf1, buf2, BUFSIZE);
+    }
+    t = rdtsc (config_flags) - t;
+    memcpy_timing[i] = t;
+
+    xprintf (xine, XINE_VERBOSITY_LOG, "\t%s memcpy() : %" PRIu64 "\n", memcpy_method[i].name, t);
+
+    if (best == 0 || t < memcpy_timing[best])
+      best = i;
+  }
+
+  free (buf1);
+  free (buf2);
+
+  return best;
+}
+
+static void update_fast_memcpy (void *user_data, xine_cfg_entry_t *entry) {
+  int     config_flags = xine_mm_accel ();
+  xine_t *xine = (xine_t *)user_data;
+  int     method = entry->num_value;
+
+  /* check if function is configured and valid for this machine */
+  if ((method > 0) && (method < sizeof (memcpy_method) / sizeof (memcpy_method[0]) - 1) &&
+     ((config_flags & memcpy_method[method].cpu_require) == memcpy_method[method].cpu_require)) {
+    xprintf (xine, XINE_VERBOSITY_DEBUG, "xine_fast_memcpy (): using \"%s\"\n", memcpy_method[method].name);
     xine_fast_memcpy = memcpy_method[method].function;
     return;
-  } else {
-    xprintf(xine, XINE_VERBOSITY_DEBUG, "xine: will probe memcpy on startup\n" );
+  }
+
+  method = xine_probe_fast_memcpy_int (xine);
+  if (method) {
+    /* should not be an endless recursion as this method will pass the test above */
+    xine->config->update_num (xine->config, "engine.performance.memcpy_method", method);
   }
 }
 
-#define BUFSIZE 1024*1024
 void xine_probe_fast_memcpy(xine_t *xine)
 {
-  uint64_t          t;
-  char             *buf1, *buf2;
-  unsigned int      i, j, best;
-  int               config_flags = -1;
+  unsigned int      method;
   static const char *const memcpy_methods[] = {
     "probe", "libc",
 #if (defined(ARCH_X86) || defined(ARCH_X86_64)) && !defined(_MSC_VER)
@@ -593,9 +639,7 @@ void xine_probe_fast_memcpy(xine_t *xine)
     NULL
   };
 
-  config_flags = xine_mm_accel();
-
-  best = xine->config->register_enum (xine->config, "engine.performance.memcpy_method", 0,
+  method = xine->config->register_enum (xine->config, "engine.performance.memcpy_method", 0,
 				      (char **)memcpy_methods,
 				      _("memcopy method used by xine"),
 				      _("The copying of large memory blocks is one of the most "
@@ -604,63 +648,10 @@ void xine_probe_fast_memcpy(xine_t *xine)
 					"Usually, the best method is detected automatically."),
 				      20, update_fast_memcpy, (void *) xine);
 
-  /* check if function is configured and valid for this machine */
-  if( best != 0 &&
-      best < sizeof(memcpy_methods)/sizeof(memcpy_method[0]) &&
-     (config_flags & memcpy_method[best].cpu_require) ==
-      memcpy_method[best].cpu_require ) {
-    lprintf("using %s memcpy()\n", memcpy_method[best].name );
-    xine_fast_memcpy = memcpy_method[best].function;
+  /* an earlier xine engine instance has already set this */
+  if (xine_fast_memcpy)
     return;
-  }
-
-  best = 0;
-
   xine_fast_memcpy = memcpy;
 
-  if( (buf1 = malloc(BUFSIZE)) == NULL )
-    return;
-
-  if( (buf2 = malloc(BUFSIZE)) == NULL ) {
-    free(buf1);
-    return;
-  }
-
-  xprintf(xine, XINE_VERBOSITY_LOG, _("Benchmarking memcpy methods (smaller is better):\n"));
-  /* make sure buffers are present on physical memory */
-  memset(buf1,0,BUFSIZE);
-  memset(buf2,0,BUFSIZE);
-
-  /* some initial activity to ensure that we're not running slowly :-) */
-  for(j=0;j<50;j++) {
-    memcpy_method[1].function(buf2,buf1,BUFSIZE);
-    memcpy_method[1].function(buf1,buf2,BUFSIZE);
-  }
-
-  for(i=1; memcpy_method[i].name[0]; i++)
-  {
-    if( (config_flags & memcpy_method[i].cpu_require) !=
-         memcpy_method[i].cpu_require )
-      continue;
-
-    t = rdtsc(config_flags);
-    for(j=0;j<50;j++) {
-      memcpy_method[i].function(buf2,buf1,BUFSIZE);
-      memcpy_method[i].function(buf1,buf2,BUFSIZE);
-    }
-
-    t = rdtsc(config_flags) - t;
-    memcpy_timing[i] = t;
-
-    xprintf(xine, XINE_VERBOSITY_LOG, "\t%s memcpy() : %" PRIu64 "\n", memcpy_method[i].name, t);
-
-    if( best == 0 || t < memcpy_timing[best] )
-      best = i;
-  }
-
-  xine->config->update_num (xine->config, "engine.performance.memcpy_method", best);
-
-  free(buf1);
-  free(buf2);
+  xine->config->update_num (xine->config, "engine.performance.memcpy_method", method);
 }
-
