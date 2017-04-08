@@ -488,6 +488,7 @@ static void xshm_frame_dispose (vo_frame_t *vo_img) {
   xine_free_aligned (frame->vo_frame.base[0]);
   xine_free_aligned (frame->vo_frame.base[1]);
   xine_free_aligned (frame->vo_frame.base[2]);
+  pthread_mutex_destroy (&frame->vo_frame.mutex);
   free (frame);
 }
 

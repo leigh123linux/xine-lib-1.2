@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2012 Edgar Hucek <gimli|@dark-green.com>
- * Copyright (C) 2012-2016 xine developers
+ * Copyright (C) 2012-2017 xine developers
  *
  * This file is part of xine, a free video player.
  *
@@ -2306,6 +2306,7 @@ static void vaapi_frame_dispose (vo_frame_t *vo_img) {
     va_surface->status = SURFACE_FREE;
   }
 
+  pthread_mutex_destroy (&frame->vo_frame.mutex);
   free (frame);
 }
 

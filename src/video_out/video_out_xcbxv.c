@@ -180,6 +180,7 @@ static void xv_frame_dispose (vo_frame_t *vo_img) {
   else
     free(frame->image);
 
+  pthread_mutex_destroy (&frame->vo_frame.mutex);
   free (frame);
 }
 

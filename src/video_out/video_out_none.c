@@ -73,6 +73,7 @@ static void vo_none_free_framedata(vo_none_frame_t* frame) {
 static void vo_none_frame_dispose(vo_frame_t *vo_frame) {
   vo_none_frame_t *frame = (vo_none_frame_t *)vo_frame;
   vo_none_free_framedata(frame);
+  pthread_mutex_destroy (&frame->vo_frame.mutex);
   free (frame);
 }
 

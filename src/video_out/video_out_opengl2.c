@@ -731,6 +731,7 @@ static void opengl2_frame_dispose( vo_frame_t *vo_img )
   opengl2_frame_t  *frame = (opengl2_frame_t *) vo_img ;
 
   xine_free_aligned (frame->vo_frame.base[0]);
+  pthread_mutex_destroy (&frame->vo_frame.mutex);
   free (frame);
 }
 

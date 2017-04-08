@@ -1,6 +1,6 @@
 /*
  * kate: space-indent on; indent-width 2; mixedindent off; indent-mode cstyle; remove-trailing-space on;
- * Copyright (C) 2008-2016 the xine project
+ * Copyright (C) 2008-2017 the xine project
  * Copyright (C) 2008 Christophe Thommeret <hftom@free.fr>
  *
  * This file is part of xine, a free video player.
@@ -1003,6 +1003,7 @@ static void vdpau_frame_dispose (vo_frame_t *vo_img)
   xine_free_aligned (frame->vo_frame.base[2]);
   if ( frame->vdpau_accel_data.surface != VDP_INVALID_HANDLE )
     vdp_video_surface_destroy( frame->vdpau_accel_data.surface );
+  pthread_mutex_destroy (&frame->vo_frame.mutex);
   free (frame);
 }
 
