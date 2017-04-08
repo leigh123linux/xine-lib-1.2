@@ -422,9 +422,11 @@ typedef struct {
   int               color_matrix;
   int               update_csc;
   int               cm_state;
+  uint8_t           cm_lut[32];
 } vdpau_driver_t;
 
 /* import common color matrix stuff */
+#define CM_LUT
 #define CM_HAVE_YCGCO_SUPPORT 1
 #define CM_DRIVER_T vdpau_driver_t
 #include "color_matrix.c"

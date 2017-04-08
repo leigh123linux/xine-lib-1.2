@@ -137,6 +137,7 @@ struct xv_driver_s {
   pthread_mutex_t    main_mutex;
 
   /* color matrix switching */
+  uint8_t            cm_lut[32];
   int                cm_active, cm_state;
   int                fullrange_mode;
 };
@@ -149,6 +150,7 @@ typedef struct {
 } xv_class_t;
 
 /* import common color matrix stuff */
+#define CM_LUT
 #define CM_DRIVER_T xv_driver_t
 #include "color_matrix.c"
 

@@ -156,6 +156,7 @@ typedef struct {
   int		            zoom_y;
 
   int                cm_state;
+  uint8_t            cm_lut[32];
 
   int                exit_indx;
   int                exiting;
@@ -224,6 +225,7 @@ static void opengl2_exit_register (opengl2_driver_t *this) {
 /* !exit_stuff */
 
 /* import common color matrix stuff */
+#define CM_LUT
 #define CM_HAVE_YCGCO_SUPPORT 1
 #define CM_DRIVER_T opengl2_driver_t
 #include "color_matrix.c"

@@ -208,6 +208,7 @@ typedef struct {
 
   /* color matrix switching */
   int                cm_yuv2rgb, cm_fragprog, cm_state;
+  uint8_t            cm_lut[32];
 
   /* Frame state */
   opengl_frame_t    *frame[NUM_FRAMES_BACKLOG];
@@ -246,6 +247,7 @@ typedef struct {
 
 
 /* import common color matrix stuff */
+#define CM_LUT
 #define CM_DRIVER_T opengl_driver_t
 #include "color_matrix.c"
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012-2013 the xine project
+ * Copyright (C) 2012-2017 the xine project
  *
  * This file is part of xine, a free video player.
  *
@@ -22,12 +22,25 @@
 
 /*
   TJ. the output color matrix selection feature.
+  Example use:
+*/
+#if 0
+  #define CM_LUT /* recommended optimization */
 
-  This file must be included after declaration of xxxx_driver_t,
-  and #define'ing CM_DRIVER_T to it.
-  That struct must contain the integer value cm_state.
-  Also #define CM_HAVE_YCGCO_SUPPORT if you already handle that.
+  typedef struct {
+    ...
+    int     cm_state;
+  #ifdef CM_LUT
+    uint8_t cm_lut[32];
+  #endif
+    ...
+  } xxxx_driver_t;
 
+  #define CM_HAVE_YCGCO_SUPPORT /* if you already handle that */
+  #define CM_DRIVER_T xxxx_driver_t
+  #include "color_matrix.c"
+#endif
+/*
   cm_from_frame () returns current (color_matrix << 1) | color_range control value.
   Having only 1 var simplifies change event handling and avoids unecessary vo
   reconfiguration. In the libyuv2rgb case, they are even handled by same code.
@@ -52,9 +65,6 @@
   that effectively go way off standards.
   So I decided to provide functionality, and let the user decide if and how
   to actually use it.
-
-  BTW. Rumour has it that proprietory ATI drivers auto switch their xv ports
-  based on video size. not user configurable, and not tested...
 */
 
 /* eveybody gets these */
@@ -122,13 +132,58 @@ static const char * const cr_conf_labels[] = {
   "Auto", "MPEG", "FULL", NULL
 };
 
-/* callback when user changes them */
-static void cm_cb_config (void *this, xine_cfg_entry_t *entry) {
-  *((int *)this) = (*((int *)this) & 3) | (entry->num_value << 2);
+#ifdef CM_HAVE_YCGCO_SUPPORT
+#  define CM_G 16
+#else
+#  define CM_G 10
+#endif
+
+static
+#ifdef CM_LUT
+const
+#endif
+uint8_t cm_m[] = {
+  10, 2,10, 6, 8,10,12,14,CM_G,10,10,10,10,10,10,10, /* SIGNAL */
+  10, 2, 0, 6, 8,10,12,14,CM_G,10,10,10,10,10,10,10, /* SIZE */
+  10,10,10,10,10,10,10,10,CM_G,10,10,10,10,10,10,10, /* SD */
+  10, 2, 2, 2, 2, 2, 2, 2,CM_G, 2, 2, 2, 2, 2, 2, 2  /* HD */
+};
+
+static void cm_lut_setup (CM_DRIVER_T *this) {
+#ifdef CM_LUT
+  {
+    const uint8_t *a = cm_m + ((this->cm_state >> 2) << 4);
+    uint8_t *d = this->cm_lut, *e = d + 32;
+    while (d < e) {
+      d[0] = d[1] = *a++;
+      d += 2;
+    }
+  }
+  if ((this->cm_state & 3) == CR_CONFIG_AUTO) {
+    /* keep range */
+    int i;
+    for (i = 1; i < 32; i += 2)
+      this->cm_lut[i] |= 1;
+  } else if ((this->cm_state & 3) == CR_CONFIG_FULL) {
+    /* force full range */
+    int i;
+    for (i = 0; i < 32; i += 1)
+      this->cm_lut[i] |= 1;
+  }
+#endif
 }
 
-static void cr_cb_config (void *this, xine_cfg_entry_t *entry) {
-  *((int *)this) = (*((int *)this) & 0x1c) | entry->num_value;
+/* callback when user changes them */
+static void cm_cb_config (void *this_gen, xine_cfg_entry_t *entry) {
+  CM_DRIVER_T *this = (CM_DRIVER_T *)this_gen;
+  this->cm_state = (this->cm_state & 3) | (entry->num_value << 2);
+  cm_lut_setup (this);
+}
+
+static void cr_cb_config (void *this_gen, xine_cfg_entry_t *entry) {
+  CM_DRIVER_T *this = (CM_DRIVER_T *)this_gen;
+  this->cm_state = (this->cm_state & 0x1c) | entry->num_value;
+  cm_lut_setup (this);
 }
 
 static void cm_init (CM_DRIVER_T *this) {
@@ -150,7 +205,7 @@ static void cm_init (CM_DRIVER_T *this) {
       "        Try when there is too much green coming out.\n\n"),
     10,
     cm_cb_config,
-    &this->cm_state
+    this
   ) << 2;
   this->cm_state |= this->xine->config->register_enum (
     this->xine->config,
@@ -167,31 +222,27 @@ static void cm_init (CM_DRIVER_T *this) {
       "      Try when flat black and white spots appear.\n\n"),
     10,
     cr_cb_config,
-    &this->cm_state
+    this
   );
+  cm_lut_setup (this);
 }
-
-static uint8_t cm_m[] = {
-  5, 1, 5, 3, 4, 5, 6, 7, 8, 5, 5, 5, 5, 5, 5, 5, /* SIGNAL */
-  5, 1, 5, 3, 4, 5, 6, 7, 8, 5, 5, 5, 5, 5, 5, 5, /* SIZE */
-  5, 5, 5, 5, 5, 5, 5, 5, 8, 5, 5, 5, 5, 5, 5, 5, /* SD */
-  5, 1, 1, 1, 1, 1, 1, 1, 8, 1, 1, 1, 1, 1, 1, 1  /* HD */
-};
-
-static uint8_t cm_r[] = {0, 0, 1, 0}; /* AUTO, MPEG, FULL, safety */
 
 static int cm_from_frame (vo_frame_t *frame) {
   CM_DRIVER_T *this = (CM_DRIVER_T *)frame->driver;
   int cm = VO_GET_FLAGS_CM (frame->flags);
-  int cf = this->cm_state;
-
-  cm_m[18] = (frame->height - frame->crop_top - frame->crop_bottom >= 720) ||
-             (frame->width - frame->crop_left - frame->crop_right >= 1280) ? 1 : 5;
-  cm_r[0] = cm & 1;
-#ifdef CM_HAVE_YCGCO_SUPPORT
-  return ((cm_m[((cf >> 2) << 4) | (cm >> 1)] << 1) | cm_r[cf & 2]);
+#ifdef CM_LUT
+  cm = this->cm_lut[cm & 31];
+  if (cm & ~1)
+    return cm;
+  return cm | ((frame->height - frame->crop_top - frame->crop_bottom >= 720) ||
+               (frame->width - frame->crop_left - frame->crop_right >= 1280) ? 2 : 10);
 #else
-  return ((cm_m[((cf >> 2) << 4) | (cm >> 1)] << 1) | cm_r[cf & 2]) & 15;
+  static uint8_t cm_r[] = {0, 0, 1, 0}; /* AUTO, MPEG, FULL, safety */
+  int cf = this->cm_state;
+  cm_m[18] = (frame->height - frame->crop_top - frame->crop_bottom >= 720) ||
+             (frame->width - frame->crop_left - frame->crop_right >= 1280) ? 2 : 10;
+  cm_r[0] = cm & 1;
+  return cm_m[((cf >> 2) << 4) | (cm >> 1)] | cm_r[cf & 3];
 #endif
 }
 
@@ -202,3 +253,4 @@ static void cm_close (CM_DRIVER_T *this) {
 }
 
 #endif /* defined CM_DRIVER_T */
+

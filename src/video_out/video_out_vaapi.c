@@ -261,6 +261,7 @@ struct vaapi_driver_s {
   unsigned int        swap_uv_planes;
 
   /* color matrix and fullrange emulation */
+  uint8_t             cm_lut[32];
   int                 cm_state;
   int                 color_matrix;
   int                 vaapi_cm_flags;
@@ -274,6 +275,7 @@ struct vaapi_driver_s {
 };
 
 /* import common color matrix stuff */
+#define CM_LUT
 #define CM_HAVE_YCGCO_SUPPORT 1
 #define CM_DRIVER_T vaapi_driver_t
 #include "color_matrix.c"

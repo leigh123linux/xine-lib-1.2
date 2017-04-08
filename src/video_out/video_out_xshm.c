@@ -118,6 +118,7 @@ typedef struct {
 
   /* color matrix switching */
   int                cm_active, cm_state;
+  uint8_t            cm_lut[32];
 
   vo_scale_t         sc;
 
@@ -148,6 +149,7 @@ typedef struct {
 
 
 /* import common color matrix stuff */
+#define CM_LUT
 #define CM_DRIVER_T xshm_driver_t
 #include "color_matrix.c"
 
