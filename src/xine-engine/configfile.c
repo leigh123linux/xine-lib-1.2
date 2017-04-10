@@ -430,32 +430,20 @@ static cfg_entry_t *config_lookup_entry(config_values_t *this, const char *key) 
 
 static void config_reset_value(cfg_entry_t *entry) {
 
-  if (entry->str_value) {
-    free (entry->str_value);
-    entry->str_value = NULL;
-  }
-  if (entry->str_default) {
-    free (entry->str_default);
-    entry->str_default = NULL;
-  }
-  if (entry->description) {
-    free (entry->description);
-    entry->description = NULL;
-  }
-  if (entry->help) {
-    free (entry->help);
-    entry->help = NULL;
-  }
+  _x_freep (&entry->str_value);
+  _x_freep (&entry->str_default);
+  _x_freep (&entry->description);
+  _x_freep (&entry->help);
+
   if (entry->enum_values) {
     char **value;
 
     value = entry->enum_values;
     while (*value) {
-      free (*value);
+      _x_freep (value);
       value++;
     }
-    free (entry->enum_values);
-    entry->enum_values = NULL;
+    _x_freep (&entry->enum_values);
   }
   entry->num_value = 0;
 }
