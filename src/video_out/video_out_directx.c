@@ -47,8 +47,8 @@ typedef unsigned char boolean;
 /* Set to 1 for RGB support */
 #define RGB_SUPPORT          0
 
-#define BORDER_SIZE	     8
-#define IMGFMT_NATIVE	     4
+#define BORDER_SIZE          8
+#define IMGFMT_NATIVE        4
 
 /*****************************************************************************
  * DirectDraw GUIDs.
@@ -57,7 +57,7 @@ typedef unsigned char boolean;
  *****************************************************************************/
 #if 1
 static const GUID xine_IID_IDirectDraw = {
-	0x6C14DB80,0xA733,0x11CE,{0xA5,0x21,0x00,0x20,0xAF,0x0B,0xE5,0x60}
+        0x6C14DB80,0xA733,0x11CE,{0xA5,0x21,0x00,0x20,0xAF,0x0B,0xE5,0x60}
 };
 #ifdef IID_IDirectDraw
 #  undef IID_IDirectDraw
@@ -67,7 +67,7 @@ static const GUID xine_IID_IDirectDraw = {
 
 #if 0
 static const GUID IID_IDirectDraw2 = {
-	0xB3A6F3E0,0x2B43,0x11CF,{0xA2,0xDE,0x00,0xAA,0x00,0xB9,0x33,0x56}
+        0xB3A6F3E0,0x2B43,0x11CF,{0xA2,0xDE,0x00,0xAA,0x00,0xB9,0x33,0x56}
 };
 #ifdef IID_IDirectDraw2
 #  undef IID_IDirectDraw2
@@ -77,7 +77,7 @@ static const GUID IID_IDirectDraw2 = {
 
 #if 0
 static const GUID IID_IDirectDraw4 = {
-	0x9C59509A,0x39BD,0x11D1,{0x8C,0x4A,0x00,0xC0,0x4F,0xD9,0x30,0xC5}
+        0x9C59509A,0x39BD,0x11D1,{0x8C,0x4A,0x00,0xC0,0x4F,0xD9,0x30,0xC5}
 };
 #ifdef IID_IDirectDraw4
 #  undef IID_IDirectDraw4
@@ -94,11 +94,11 @@ static const GUID IID_IDirectDraw4 = {
 typedef struct {
   vo_frame_t               vo_frame;
   uint8_t                 *buffer;
-  int			   format;
-  uint32_t			   width;
-  uint32_t			   height;
-  int		           size;
-  double	           ratio;
+  int                      format;
+  uint32_t                         width;
+  uint32_t                         height;
+  int                      size;
+  double                   ratio;
 } win32_frame_t;
 
 /* -----------------------------------------
@@ -114,31 +114,31 @@ typedef enum {
 } vo_directx_hwaccel_enum;
 
 typedef struct {
-  vo_driver_t		   vo_driver;
+  vo_driver_t              vo_driver;
   win32_visual_t          *win32_visual;
 
   xine_t                  *xine;
 
-  LPDIRECTDRAW		   ddobj;	    /* direct draw object */
-  LPDIRECTDRAWSURFACE	   primary;	    /* primary dd surface */
-  LPDIRECTDRAWSURFACE	   secondary;	    /* secondary dd surface  */
-  LPDIRECTDRAWCLIPPER	   ddclipper;	    /* dd clipper object */
-  uint8_t *		   contents;	    /* secondary contents */
+  LPDIRECTDRAW             ddobj;           /* direct draw object */
+  LPDIRECTDRAWSURFACE      primary;         /* primary dd surface */
+  LPDIRECTDRAWSURFACE      secondary;       /* secondary dd surface  */
+  LPDIRECTDRAWCLIPPER      ddclipper;       /* dd clipper object */
+  uint8_t *                contents;        /* secondary contents */
   win32_frame_t           *current;         /* current frame */
 
-  int			   req_format;	    /* requested frame format */
-  int			   act_format;	    /* actual frame format */
-  uint32_t			   width;	    /* frame with */
-  uint32_t			   height;	    /* frame height */
-  double		   ratio;	    /* frame ratio */
+  int                      req_format;      /* requested frame format */
+  int                      act_format;      /* actual frame format */
+  uint32_t                         width;           /* frame with */
+  uint32_t                         height;          /* frame height */
+  double                   ratio;           /* frame ratio */
   vo_directx_hwaccel_enum  hwaccel;         /* requested level of HW acceleration */
 
   yuv2rgb_factory_t       *yuv2rgb_factory; /* used for format conversion */
   yuv2rgb_t               *yuv2rgb;         /* used for format conversion */
-  int			   mode;	    /* rgb mode */
-  int		           bytespp;	    /* rgb bits per pixel */
+  int                      mode;            /* rgb mode */
+  int                      bytespp;         /* rgb bits per pixel */
   DDPIXELFORMAT primary_pixel_format;
-  DDSURFACEDESC	ddsd; /* set by Lock(), used during display_frame */
+  DDSURFACEDESC ddsd; /* set by Lock(), used during display_frame */
   alphablend_t             alphablend_extra_data;
 } win32_driver_t;
 
@@ -163,7 +163,7 @@ static void Error( HWND hwnd, LPCSTR szfmt, ... )
 {
   char tempbuff[ 256 ];
   *tempbuff = 0;
-  wvsprintf(	&tempbuff[ strlen( tempbuff ) ], szfmt, ( char * )( &szfmt + 1 ) );
+  wvsprintf(    &tempbuff[ strlen( tempbuff ) ], szfmt, ( char * )( &szfmt + 1 ) );
   MessageBox( hwnd, tempbuff, "Error", MB_ICONERROR | MB_OK | MB_APPLMODAL | MB_SYSTEMMODAL );
 }
 
@@ -175,8 +175,8 @@ static void UpdateRect( win32_visual_t * win32_visual )
   if( win32_visual->FullScreen )
     {
       SetRect( &win32_visual->WndRect, 0, 0,
-	       GetSystemMetrics( SM_CXSCREEN ),
-	       GetSystemMetrics( SM_CYSCREEN ) );
+               GetSystemMetrics( SM_CXSCREEN ),
+               GetSystemMetrics( SM_CYSCREEN ) );
     }
   else
     {
@@ -196,9 +196,9 @@ static void UpdateRect( win32_visual_t * win32_visual )
 
 static boolean CreatePrimary( win32_driver_t * win32_driver )
 {
-  LPDIRECTDRAW			ddobj;
-  DDSURFACEDESC			ddsd;
-  HRESULT					result;
+  LPDIRECTDRAW                  ddobj;
+  DDSURFACEDESC                 ddsd;
+  HRESULT                                       result;
 
   /* create direct draw object */
 
@@ -312,9 +312,9 @@ static boolean CreateSecondary( win32_driver_t * win32_driver, int width, int he
   /* store our reqested format,
    * width and height */
 
-  win32_driver->req_format	= format;
-  win32_driver->width			= width;
-  win32_driver->height		= height;
+  win32_driver->req_format      = format;
+  win32_driver->width                   = width;
+  win32_driver->height          = height;
 
   /* if we already have a secondary
    * surface then release it */
@@ -448,8 +448,8 @@ static void Destroy( win32_driver_t * win32_driver )
 
 static boolean CheckPixelFormat( win32_driver_t * win32_driver )
 {
-  DDPIXELFORMAT	ddpf;
-  HRESULT			result;
+  DDPIXELFORMAT ddpf;
+  HRESULT                       result;
 
   /* get the pixel format of our primary surface */
 
@@ -485,36 +485,36 @@ static boolean CheckPixelFormat( win32_driver_t * win32_driver )
   if( ddpf.dwRGBBitCount == 32 )
     {
       if( ddpf.dwRBitMask == 0xff0000 )
-	win32_driver->mode = MODE_32_RGB;
+        win32_driver->mode = MODE_32_RGB;
       else
-	win32_driver->mode = MODE_32_BGR;
+        win32_driver->mode = MODE_32_BGR;
     }
 
   if( ddpf.dwRGBBitCount == 24 )
     {
       if( ddpf.dwRBitMask == 0xff0000 )
-	win32_driver->mode = MODE_24_RGB;
+        win32_driver->mode = MODE_24_RGB;
       else
-	win32_driver->mode = MODE_24_BGR;
+        win32_driver->mode = MODE_24_BGR;
     }
 
   if( ddpf.dwRGBBitCount == 16 )
     {
       if( ddpf.dwRBitMask == 0xf800 )
-	win32_driver->mode = MODE_16_RGB;
+        win32_driver->mode = MODE_16_RGB;
       else
-	win32_driver->mode = MODE_16_BGR;
+        win32_driver->mode = MODE_16_BGR;
     }
 
   if( ddpf.dwRGBBitCount == 15 )
     {
       if( ddpf.dwRBitMask == 0x7C00 )
-	win32_driver->mode = MODE_15_RGB;
+        win32_driver->mode = MODE_15_RGB;
       else
-	win32_driver->mode = MODE_15_BGR;
+        win32_driver->mode = MODE_15_BGR;
     }
 
-	lprintf("win32 mode: %u\n", win32_driver->mode);
+        lprintf("win32 mode: %u\n", win32_driver->mode);
   return TRUE;
 }
 
@@ -529,12 +529,12 @@ static boolean CheckPixelFormat( win32_driver_t * win32_driver )
 
 static LPDIRECTDRAWSURFACE CreateBMP( win32_driver_t * win32_driver, int resource )
 {
-  LPDIRECTDRAWSURFACE	bmp_surf;
-  DDSURFACEDESC	bmp_ddsd;
-  HBITMAP		bmp_hndl;
-  BITMAP		bmp_head;
-  HDC			hdc_dds;
-  HDC			hdc_mem;
+  LPDIRECTDRAWSURFACE   bmp_surf;
+  DDSURFACEDESC bmp_ddsd;
+  HBITMAP               bmp_hndl;
+  BITMAP                bmp_head;
+  HDC                   hdc_dds;
+  HDC                   hdc_mem;
 
   /* load our bitmap from a resource */
 
@@ -574,7 +574,7 @@ static LPDIRECTDRAWSURFACE CreateBMP( win32_driver_t * win32_driver, int resourc
    * into our dd surface */
 
   BitBlt( hdc_dds, 0, 0, bmp_head.bmWidth, bmp_head.bmHeight,
-	  hdc_mem, 0, 0, SRCCOPY );
+          hdc_mem, 0, 0, SRCCOPY );
 
   /* clean up */
 
@@ -592,14 +592,14 @@ static LPDIRECTDRAWSURFACE CreateBMP( win32_driver_t * win32_driver, int resourc
  * is supported. */
 
 static boolean Overlay( LPDIRECTDRAWSURFACE src_surface, RECT * src_rect,
-		 LPDIRECTDRAWSURFACE dst_surface, RECT * dst_rect,
-		 COLORREF color_key )
+                 LPDIRECTDRAWSURFACE dst_surface, RECT * dst_rect,
+                 COLORREF color_key )
 {
-  DWORD			dw_color_key;
-  DDPIXELFORMAT		ddpf;
-  DDOVERLAYFX		ddofx;
-  int			flags;
-  HRESULT		result;
+  DWORD                 dw_color_key;
+  DDPIXELFORMAT         ddpf;
+  DDOVERLAYFX           ddofx;
+  int                   flags;
+  HRESULT               result;
 
   /* compute the colorkey pixel value from the RGB value we've got/
    * NOTE : based on videolan colorkey code */
@@ -631,17 +631,17 @@ static boolean Overlay( LPDIRECTDRAWSURFACE src_surface, RECT * src_rect,
   if( result != DD_OK )
     {
       if( result == DDERR_SURFACELOST )
-	{
-	  IDirectDrawSurface_Restore( src_surface );
-	  IDirectDrawSurface_Restore( dst_surface );
+        {
+          IDirectDrawSurface_Restore( src_surface );
+          IDirectDrawSurface_Restore( dst_surface );
 
-	  IDirectDrawSurface_UpdateOverlay( src_surface, src_rect, dst_surface, dst_rect, flags, &ddofx );
-	}
+          IDirectDrawSurface_UpdateOverlay( src_surface, src_rect, dst_surface, dst_rect, flags, &ddofx );
+        }
       else
-	{
-	  Error( 0, "IDirectDrawSurface_UpdateOverlay : error 0x%lx. You can try disable hardware acceleration (option video.directx.hwaccel).", result );
-	  return FALSE;
-	}
+        {
+          Error( 0, "IDirectDrawSurface_UpdateOverlay : error 0x%lx. You can try disable hardware acceleration (option video.directx.hwaccel).", result );
+          return FALSE;
+        }
     }
 
   return TRUE;
@@ -653,10 +653,10 @@ static boolean Overlay( LPDIRECTDRAWSURFACE src_surface, RECT * src_rect,
  * not supported. */
 
 static boolean BltCopy( LPDIRECTDRAWSURFACE src_surface, RECT * src_rect,
-		 LPDIRECTDRAWSURFACE dst_surface, RECT * dst_rect )
+                 LPDIRECTDRAWSURFACE dst_surface, RECT * dst_rect )
 {
-  DDSURFACEDESC	ddsd_target;
-  HRESULT	result;
+  DDSURFACEDESC ddsd_target;
+  HRESULT       result;
 
   memset( &ddsd_target, 0, sizeof( ddsd_target ) );
   ddsd_target.dwSize = sizeof( ddsd_target );
@@ -667,17 +667,17 @@ static boolean BltCopy( LPDIRECTDRAWSURFACE src_surface, RECT * src_rect,
   if( result != DD_OK )
     {
       if( result != DDERR_SURFACELOST )
-	{
-	  IDirectDrawSurface_Restore( src_surface );
-	  IDirectDrawSurface_Restore( dst_surface );
+        {
+          IDirectDrawSurface_Restore( src_surface );
+          IDirectDrawSurface_Restore( dst_surface );
 
-	  IDirectDrawSurface_Blt( dst_surface, dst_rect, src_surface, src_rect, DDBLT_WAIT, 0 );
-	}
+          IDirectDrawSurface_Blt( dst_surface, dst_rect, src_surface, src_rect, DDBLT_WAIT, 0 );
+        }
       else
-	{
-	  Error( 0, "IDirectDrawSurface_Blt : error 0x%lx", result );
-	  return FALSE;
-	}
+        {
+          Error( 0, "IDirectDrawSurface_Blt : error 0x%lx", result );
+          return FALSE;
+        }
     }
 
   return TRUE;
@@ -691,21 +691,21 @@ static boolean BltCopy( LPDIRECTDRAWSURFACE src_surface, RECT * src_rect,
 
 static boolean DisplayFrame( win32_driver_t * win32_driver )
 {
-  int					view_width;
-  int					view_height;
-  int					scaled_width;
-  int					scaled_height;
-  int					screen_width;
-  int					screen_height;
-  RECT					clipped;
-  RECT					centered;
+  int                                   view_width;
+  int                                   view_height;
+  int                                   scaled_width;
+  int                                   scaled_height;
+  int                                   screen_width;
+  int                                   screen_height;
+  RECT                                  clipped;
+  RECT                                  centered;
 
   /* aspect ratio calculations */
 
   /* TODO : account for screen ratio as well */
 
-  view_width	= win32_driver->win32_visual->WndRect.right - win32_driver->win32_visual->WndRect.left;
-  view_height	= win32_driver->win32_visual->WndRect.bottom - win32_driver->win32_visual->WndRect.top;
+  view_width    = win32_driver->win32_visual->WndRect.right - win32_driver->win32_visual->WndRect.left;
+  view_height   = win32_driver->win32_visual->WndRect.bottom - win32_driver->win32_visual->WndRect.top;
 
   if( view_width / win32_driver->ratio < view_height )
     {
@@ -727,8 +727,8 @@ static boolean DisplayFrame( win32_driver_t * win32_driver )
 
   /* clip our overlay if it is off screen */
 
-  screen_width	= GetSystemMetrics( SM_CXSCREEN );
-  screen_height	= GetSystemMetrics( SM_CYSCREEN );
+  screen_width  = GetSystemMetrics( SM_CXSCREEN );
+  screen_height = GetSystemMetrics( SM_CYSCREEN );
 
   if( centered.left < 0 )
     {
@@ -796,8 +796,8 @@ static boolean DisplayFrame( win32_driver_t * win32_driver )
 
 static void * Lock( win32_driver_t * win32_driver, void * surface )
 {
-  LPDIRECTDRAWSURFACE	lock_surface = ( LPDIRECTDRAWSURFACE ) surface;
-  HRESULT		result;
+  LPDIRECTDRAWSURFACE   lock_surface = ( LPDIRECTDRAWSURFACE ) surface;
+  HRESULT               result;
 
   if( !surface )
     return 0;
@@ -812,16 +812,16 @@ static void * Lock( win32_driver_t * win32_driver, void * surface )
       result = IDirectDrawSurface_Lock( lock_surface, 0, &win32_driver->ddsd, DDLOCK_WAIT | DDLOCK_NOSYSLOCK, 0 );
 
       if( result != DD_OK )
-	return 0;
+        return 0;
 
     }
   else if( result != DD_OK )
     {
       if( result == DDERR_GENERIC )
-	{
-	  Error( 0, "surface->Lock : error, DDERR_GENERIC" );
-	  exit( 1 );
-	}
+        {
+          Error( 0, "surface->Lock : error, DDERR_GENERIC" );
+          exit( 1 );
+        }
     }
 
   return win32_driver->ddsd.lpSurface;
@@ -918,7 +918,7 @@ static vo_frame_t * win32_alloc_frame( vo_driver_t * vo_driver )
 
 
 static void win32_update_frame_format( vo_driver_t * vo_driver, vo_frame_t * vo_frame, uint32_t width,
-				       uint32_t height, double ratio, int format, int flags )
+                                       uint32_t height, double ratio, int format, int flags )
 {
   win32_driver_t  *win32_driver = ( win32_driver_t * ) vo_driver;
   win32_frame_t   *win32_frame  = ( win32_frame_t * ) vo_frame;
@@ -926,9 +926,9 @@ static void win32_update_frame_format( vo_driver_t * vo_driver, vo_frame_t * vo_
   /*printf("vo_out_directx : win32_update_frame_format() - width = %d, height=%d, ratio_code=%d, format=%d, flags=%d\n", width, height, ratio_code, format, flags);*/
 
 
-  if( ( win32_frame->format	!= format	) ||
-      ( win32_frame->width	!= width	) ||
-      ( win32_frame->height	!= height	) )
+  if( ( win32_frame->format     != format       ) ||
+      ( win32_frame->width      != width        ) ||
+      ( win32_frame->height     != height       ) )
     {
       /* free our allocated memory */
 
@@ -936,46 +936,46 @@ static void win32_update_frame_format( vo_driver_t * vo_driver, vo_frame_t * vo_
 
       /* create new render buffer */
       if( format == XINE_IMGFMT_YV12 )
-	{
-	  win32_frame->vo_frame.pitches[0] = 8*((width + 7) / 8);
-	  win32_frame->vo_frame.pitches[1] = 8*((width + 15) / 16);
-	  win32_frame->vo_frame.pitches[2] = 8*((width + 15) / 16);
+        {
+          win32_frame->vo_frame.pitches[0] = 8*((width + 7) / 8);
+          win32_frame->vo_frame.pitches[1] = 8*((width + 15) / 16);
+          win32_frame->vo_frame.pitches[2] = 8*((width + 15) / 16);
 
-	  win32_frame->vo_frame.base[0] = malloc(win32_frame->vo_frame.pitches[0] * height);
-	  win32_frame->vo_frame.base[1] = malloc(win32_frame->vo_frame.pitches[1] * ((height+1)/2));
-	  win32_frame->vo_frame.base[2] = malloc(win32_frame->vo_frame.pitches[2] * ((height+1)/2));
+          win32_frame->vo_frame.base[0] = malloc(win32_frame->vo_frame.pitches[0] * height);
+          win32_frame->vo_frame.base[1] = malloc(win32_frame->vo_frame.pitches[1] * ((height+1)/2));
+          win32_frame->vo_frame.base[2] = malloc(win32_frame->vo_frame.pitches[2] * ((height+1)/2));
 
-	  win32_frame->size = win32_frame->vo_frame.pitches[0] * height * 2;
-	}
+          win32_frame->size = win32_frame->vo_frame.pitches[0] * height * 2;
+        }
       else if( format == XINE_IMGFMT_YUY2 )
-	{
-	  win32_frame->vo_frame.pitches[0] = 8*((width + 3) / 4);
+        {
+          win32_frame->vo_frame.pitches[0] = 8*((width + 3) / 4);
 
-	  win32_frame->vo_frame.base[0] = malloc(win32_frame->vo_frame.pitches[0] * height * 2);
-	  win32_frame->vo_frame.base[1] = NULL;
-	  win32_frame->vo_frame.base[2] = NULL;
+          win32_frame->vo_frame.base[0] = malloc(win32_frame->vo_frame.pitches[0] * height * 2);
+          win32_frame->vo_frame.base[1] = NULL;
+          win32_frame->vo_frame.base[2] = NULL;
 
-	  win32_frame->size = win32_frame->vo_frame.pitches[0] * height * 2;
-	}
+          win32_frame->size = win32_frame->vo_frame.pitches[0] * height * 2;
+        }
 #if RGB_SUPPORT
       else if( format == IMGFMT_RGB )
-	{
-	  win32_frame->size   = width * height * 3;
-	  win32_frame->buffer = malloc( win32_frame->size );
-	  vo_frame->base[0]   = win32_frame->buffer;
-	}
+        {
+          win32_frame->size   = width * height * 3;
+          win32_frame->buffer = malloc( win32_frame->size );
+          vo_frame->base[0]   = win32_frame->buffer;
+        }
 #endif
       else
-	{
-	  xprintf (win32_driver->xine, XINE_VERBOSITY_DEBUG,
-		   "vo_out_directx : !!! unsupported image format %04x !!!\n", format );
-	  exit (1);
-	}
+        {
+          xprintf (win32_driver->xine, XINE_VERBOSITY_DEBUG,
+                   "vo_out_directx : !!! unsupported image format %04x !!!\n", format );
+          exit (1);
+        }
 
-      win32_frame->format	= format;
-      win32_frame->width	= width;
-      win32_frame->height	= height;
-      win32_frame->ratio	= ratio;
+      win32_frame->format       = format;
+      win32_frame->width        = width;
+      win32_frame->height       = height;
+      win32_frame->ratio        = ratio;
     }
 
 }
@@ -989,9 +989,9 @@ static void win32_display_frame( vo_driver_t * vo_driver, vo_frame_t * vo_frame 
   /* if the required width, height or format has changed
    * then recreate the secondary buffer */
 
-  if( ( win32_driver->req_format	!= win32_frame->format	) ||
-      ( win32_driver->width		!= win32_frame->width	) ||
-      ( win32_driver->height		!= win32_frame->height	) )
+  if( ( win32_driver->req_format        != win32_frame->format  ) ||
+      ( win32_driver->width             != win32_frame->width   ) ||
+      ( win32_driver->height            != win32_frame->height  ) )
     {
       CreateSecondary( win32_driver, win32_frame->width, win32_frame->height, win32_frame->format );
     }
@@ -1022,46 +1022,46 @@ static void win32_display_frame( vo_driver_t * vo_driver, vo_frame_t * vo_frame 
        * pixel format ... this is slow */
 
       if( win32_driver->req_format == XINE_IMGFMT_YV12 )
-	{
-	  /* convert from yv12 to native
-	   * screen pixel format */
+        {
+          /* convert from yv12 to native
+           * screen pixel format */
 
-	  win32_driver->yuv2rgb->configure( win32_driver->yuv2rgb,
-					    win32_driver->width, win32_driver->height,
-					    win32_frame->vo_frame.pitches[0], win32_frame->vo_frame.pitches[1],
-					    win32_driver->width, win32_driver->height,
-					    win32_driver->width * win32_driver->bytespp);
+          win32_driver->yuv2rgb->configure( win32_driver->yuv2rgb,
+                                            win32_driver->width, win32_driver->height,
+                                            win32_frame->vo_frame.pitches[0], win32_frame->vo_frame.pitches[1],
+                                            win32_driver->width, win32_driver->height,
+                                            win32_driver->width * win32_driver->bytespp);
 
-	  win32_driver->yuv2rgb->yuv2rgb_fun( win32_driver->yuv2rgb,
-					      win32_driver->contents,
-					      win32_frame->vo_frame.base[0],
-					      win32_frame->vo_frame.base[1],
-					      win32_frame->vo_frame.base[2] );
-	}
+          win32_driver->yuv2rgb->yuv2rgb_fun( win32_driver->yuv2rgb,
+                                              win32_driver->contents,
+                                              win32_frame->vo_frame.base[0],
+                                              win32_frame->vo_frame.base[1],
+                                              win32_frame->vo_frame.base[2] );
+        }
 
       if( win32_driver->req_format == XINE_IMGFMT_YUY2 )
-	{
-	  /* convert from yuy2 to native
-	   * screen pixel format */
-	  win32_driver->yuv2rgb->configure( win32_driver->yuv2rgb,
-					    win32_driver->width, win32_driver->height,
-					    win32_frame->vo_frame.pitches[0], win32_frame->vo_frame.pitches[0] / 2,
-					    win32_driver->width, win32_driver->height,
-					    win32_driver->width * win32_driver->bytespp );
+        {
+          /* convert from yuy2 to native
+           * screen pixel format */
+          win32_driver->yuv2rgb->configure( win32_driver->yuv2rgb,
+                                            win32_driver->width, win32_driver->height,
+                                            win32_frame->vo_frame.pitches[0], win32_frame->vo_frame.pitches[0] / 2,
+                                            win32_driver->width, win32_driver->height,
+                                            win32_driver->width * win32_driver->bytespp );
 
-	  win32_driver->yuv2rgb->yuy22rgb_fun( win32_driver->yuv2rgb,
-					       win32_driver->contents,
-					       win32_frame->vo_frame.base[0] );
-	}
+          win32_driver->yuv2rgb->yuy22rgb_fun( win32_driver->yuv2rgb,
+                                               win32_driver->contents,
+                                               win32_frame->vo_frame.base[0] );
+        }
 
 #if RGB_SUPPORT
       if( win32_driver->req_format == IMGFMT_RGB )
-	{
-	  /* convert from 24 bit rgb to native
-	   * screen pixel format */
+        {
+          /* convert from 24 bit rgb to native
+           * screen pixel format */
 
-	  /* TODO : rgb2rgb conversion */
-	}
+          /* TODO : rgb2rgb conversion */
+        }
 #endif
     }
   else
@@ -1075,7 +1075,7 @@ static void win32_display_frame( vo_driver_t * vo_driver, vo_frame_t * vo_frame 
     uint8_t * dst = (uint8_t *)win32_driver->contents;
 
     switch(win32_frame->format)
-	{
+        {
       case XINE_IMGFMT_YV12:
         src = frame->base[0];
         for (line = 0; line < frame->height ; line++){
@@ -1097,18 +1097,18 @@ static void win32_display_frame( vo_driver_t * vo_driver, vo_frame_t * vo_frame 
           src += vo_frame->pitches[1];
           dst += win32_driver->ddsd.lPitch/2;
         }
-	  break;
+          break;
 
-	case XINE_IMGFMT_YUY2:
-	default:
+        case XINE_IMGFMT_YUY2:
+        default:
       src = frame->base[0];
       for (line = 0; line < frame->height ; line++){
-	    xine_fast_memcpy( dst, src, frame->width*2);
-	    src += vo_frame->pitches[0];
-	    dst += win32_driver->ddsd.lPitch;
-	  }
-	  break;
-	}
+            xine_fast_memcpy( dst, src, frame->width*2);
+            src += vo_frame->pitches[0];
+            dst += win32_driver->ddsd.lPitch;
+          }
+          break;
+        }
   }
 
   /* unlock the surface  */
@@ -1141,9 +1141,9 @@ static void win32_overlay_blend( vo_driver_t * vo_driver, vo_frame_t * vo_frame,
   if( vo_overlay->rle )
     {
       if( vo_frame->format == XINE_IMGFMT_YV12 )
-	_x_blend_yuv( win32_frame->vo_frame.base, vo_overlay, win32_frame->width, win32_frame->height, win32_frame->vo_frame.pitches, &win32_driver->alphablend_extra_data );
+        _x_blend_yuv( win32_frame->vo_frame.base, vo_overlay, win32_frame->width, win32_frame->height, win32_frame->vo_frame.pitches, &win32_driver->alphablend_extra_data );
       else
-	_x_blend_yuy2( win32_frame->vo_frame.base[0], vo_overlay, win32_frame->width, win32_frame->height, win32_frame->vo_frame.pitches[0], &win32_driver->alphablend_extra_data );
+        _x_blend_yuy2( win32_frame->vo_frame.base[0], vo_overlay, win32_frame->width, win32_frame->height, win32_frame->vo_frame.pitches[0], &win32_driver->alphablend_extra_data );
     }
 }
 
@@ -1181,23 +1181,23 @@ static int win32_gui_data_exchange( vo_driver_t * vo_driver, int data_type, void
       HRESULT result;
       HWND newWndHnd = (HWND) data;
 
-	  /* set cooperative level */
-	  result = IDirectDraw_SetCooperativeLevel( win32_driver->ddobj, newWndHnd, DDSCL_NORMAL );
+          /* set cooperative level */
+          result = IDirectDraw_SetCooperativeLevel( win32_driver->ddobj, newWndHnd, DDSCL_NORMAL );
       if( result != DD_OK )
       {
         Error( 0, "SetCooperativeLevel : error 0x%lx", result );
         return 0;
       }
       /* associate our clipper with new window */
-	  result = IDirectDrawClipper_SetHWnd( win32_driver->ddclipper, 0, newWndHnd );
+          result = IDirectDrawClipper_SetHWnd( win32_driver->ddclipper, 0, newWndHnd );
       if( result != DD_OK )
       {
         Error( 0, "ddclipper->SetHWnd : error 0x%lx", result );
         return 0;
       }
       /* store our objects in our visual struct */
-	  win32_driver->win32_visual->WndHnd = newWndHnd;
-	  /* update video area and redraw current frame */
+          win32_driver->win32_visual->WndHnd = newWndHnd;
+          /* update video area and redraw current frame */
       UpdateRect( win32_driver->win32_visual );
       DisplayFrame( win32_driver );
       break;
@@ -1249,17 +1249,17 @@ static vo_driver_t *open_plugin (video_driver_class_t *class_gen, const void *wi
   /* Make sure that the DirectX drivers are available and present! */
   /* Not complete yet */
 
-  win32_driver->win32_visual			= (win32_visual_t *)win32_visual;
-  win32_driver->vo_driver.get_capabilities	= win32_get_capabilities;
-  win32_driver->vo_driver.alloc_frame		= win32_alloc_frame ;
-  win32_driver->vo_driver.update_frame_format	= win32_update_frame_format;
-  win32_driver->vo_driver.display_frame		= win32_display_frame;
-  win32_driver->vo_driver.overlay_blend		= win32_overlay_blend;
-  win32_driver->vo_driver.get_property		= win32_get_property;
-  win32_driver->vo_driver.set_property		= win32_set_property;
-  win32_driver->vo_driver.get_property_min_max	= win32_get_property_min_max;
-  win32_driver->vo_driver.gui_data_exchange	= win32_gui_data_exchange;
-  win32_driver->vo_driver.dispose		= win32_exit;
+  win32_driver->win32_visual                    = (win32_visual_t *)win32_visual;
+  win32_driver->vo_driver.get_capabilities      = win32_get_capabilities;
+  win32_driver->vo_driver.alloc_frame           = win32_alloc_frame ;
+  win32_driver->vo_driver.update_frame_format   = win32_update_frame_format;
+  win32_driver->vo_driver.display_frame         = win32_display_frame;
+  win32_driver->vo_driver.overlay_blend         = win32_overlay_blend;
+  win32_driver->vo_driver.get_property          = win32_get_property;
+  win32_driver->vo_driver.set_property          = win32_set_property;
+  win32_driver->vo_driver.get_property_min_max  = win32_get_property_min_max;
+  win32_driver->vo_driver.gui_data_exchange     = win32_gui_data_exchange;
+  win32_driver->vo_driver.dispose               = win32_exit;
   win32_driver->vo_driver.redraw_needed         = win32_redraw_needed;
 
   win32_driver->hwaccel = class->config->register_enum(class->config,
