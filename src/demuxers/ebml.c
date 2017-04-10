@@ -474,7 +474,8 @@ int ebml_check_header(ebml_parser_t *ebml) {
       default:
         xprintf(ebml->xine, XINE_VERBOSITY_LOG,
                 "ebml: Unknown data type 0x%x in EBML header (ignored)\n", elem.id);
-	ebml_skip(ebml, &elem);
+        if (!ebml_skip(ebml, &elem))
+          return 0;
     }
     next_level = ebml_get_next_level(ebml, &elem);
   }
