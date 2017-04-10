@@ -1268,7 +1268,6 @@ static vo_driver_t *open_plugin(video_driver_class_t *class_gen, const void *vis
   xcb_xv_port_t         xv_port;
   xv_prefertype		prefer_type;
   char                 *adaptor_name;
-  unsigned int          base_port;
 
   const xcb_query_extension_reply_t *query_extension_reply;
 
@@ -1363,7 +1362,6 @@ static vo_driver_t *open_plugin(video_driver_class_t *class_gen, const void *vis
 
     adaptor_name = xcb_xv_adaptor_info_name (adaptor_it.data);
     adaptor_name = strdup (adaptor_name ? adaptor_name : "");
-    base_port = adaptor_it.data->base_id;
 
     xcb_xv_adaptor_info_name_end (adaptor_it.data);
     xcb_xv_adaptor_info_end (adaptor_it);
