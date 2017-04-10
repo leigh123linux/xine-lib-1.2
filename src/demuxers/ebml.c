@@ -62,7 +62,9 @@ uint32_t ebml_get_next_level(ebml_parser_t *ebml, ebml_elem_t *elem) {
 
   if (ebml->level > 0) {
     parent_elem = &ebml->elem_stack[ebml->level - 1];
-    while ((elem->start + elem->len) >= (parent_elem->start + parent_elem->len)) {
+    while (/* avoid overflows with undefined len (=UINT64_MAX) */
+           /* (elem->start + elem->len) >= (parent_elem->start + parent_elem->len) */
+           (elem->start - parent_elem->start + elem->len) >= parent_elem->len) {
       lprintf("parent: %" PRIdMAX ", %" PRIu64 "; elem: %" PRIdMAX  ", %" PRIu64 "\n",
               (intmax_t)parent_elem->start, parent_elem->len, (intmax_t)elem->start, elem->len);
       ebml->level--;
