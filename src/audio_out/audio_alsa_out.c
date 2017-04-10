@@ -133,6 +133,7 @@ static int my_snd_mixer_wait(snd_mixer_t *mixer, int timeout) {
   struct pollfd  spfds[16];
   struct pollfd *pfds = spfds;
   int            err, count;
+  void          *freeme = NULL;
 
   count = snd_mixer_poll_descriptors(mixer, pfds, sizeof(spfds) / sizeof(spfds[0]));
 
@@ -140,19 +141,23 @@ static int my_snd_mixer_wait(snd_mixer_t *mixer, int timeout) {
     return count;
 
   if ((unsigned int) count > sizeof(spfds) / sizeof(spfds[0])) {
-    pfds = calloc(count, sizeof(*pfds));
+    freeme = pfds = calloc(count, sizeof(*pfds));
 
     if (!pfds)
       return -ENOMEM;
 
     err = snd_mixer_poll_descriptors(mixer, pfds, (unsigned int) count);
+    // XXX is this assert correct ? if triggered, it would be alsa bug, not xine bug ?
     assert(err == count);
     if (err < 0) {
+      free(freeme);
       return err;
     }
   }
 
   err = poll(pfds, (unsigned int) count, timeout);
+
+  free(freeme);
 
   if (err < 0)
     return -errno;
