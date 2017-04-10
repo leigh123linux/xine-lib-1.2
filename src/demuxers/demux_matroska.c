@@ -2929,7 +2929,12 @@ static void demux_matroska_send_headers (demux_plugin_t *this_gen) {
    */
 
   /* enter in the segment */
-  ebml_read_master (this->ebml, &this->segment);
+  if (!ebml_read_master (this->ebml, &this->segment)) {
+    xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG,
+            "demux_matroska: failed to read file header\n");
+    this->status = DEMUX_FINISHED;
+    return;
+  }
 
   /* seek back to the beginning of the segment */
   next_level = 1;
