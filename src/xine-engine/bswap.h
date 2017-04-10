@@ -80,17 +80,17 @@
 # undef _X_LE_32
 # undef _X_LE_64
 # ifdef WORDS_BIGENDIAN
-#  define _X_LE_24(x) ({ int32_t tempi; __builtin_memcpy (&tempi, (x), 4); (uint32_t)(__builtin_bswap32 (tempi)) & 0xffffff; })
+#  define _X_LE_24(x) ({ int32_t tempi; __builtin_memcpy (&tempi, (x), 3); (uint32_t)(__builtin_bswap32 (tempi)) & 0xffffff; })
 #  define _X_LE_32(x) ({ int32_t tempi; __builtin_memcpy (&tempi, (x), 4); (uint32_t)(__builtin_bswap32 (tempi)); })
 #  define _X_LE_64(x) ({ int64_t tempi; __builtin_memcpy (&tempi, (x), 8); (uint64_t)(__builtin_bswap64 (tempi)); })
-#  define _X_BE_24(x) ({ uint32_t tempi; __builtin_memcpy (&tempi, (x), 4); tempi >> 8; })
+#  define _X_BE_24(x) ({ uint32_t tempi; __builtin_memcpy (&tempi, (x), 3); tempi >> 8; })
 #  define _X_BE_32(x) ({ uint32_t tempi; __builtin_memcpy (&tempi, (x), 4); tempi; })
 #  define _X_BE_64(x) ({ uint64_t tempi; __builtin_memcpy (&tempi, (x), 8); tempi; })
 # else
-#  define _X_BE_24(x) ({ int32_t tempi; __builtin_memcpy (&tempi, (x), 4); (uint32_t)(__builtin_bswap32 (tempi)) >> 8; })
+#  define _X_BE_24(x) ({ int32_t tempi; __builtin_memcpy (&tempi, (x), 3); (uint32_t)(__builtin_bswap32 (tempi)) >> 8; })
 #  define _X_BE_32(x) ({ int32_t tempi; __builtin_memcpy (&tempi, (x), 4); (uint32_t)(__builtin_bswap32 (tempi)); })
 #  define _X_BE_64(x) ({ int64_t tempi; __builtin_memcpy (&tempi, (x), 8); (uint64_t)(__builtin_bswap64 (tempi)); })
-#  define _X_LE_24(x) ({ uint32_t tempi; __builtin_memcpy (&tempi, (x), 4); tempi & 0xffffff; })
+#  define _X_LE_24(x) ({ uint32_t tempi; __builtin_memcpy (&tempi, (x), 3); tempi & 0xffffff; })
 #  define _X_LE_32(x) ({ uint32_t tempi; __builtin_memcpy (&tempi, (x), 4); tempi; })
 #  define _X_LE_64(x) ({ uint64_t tempi; __builtin_memcpy (&tempi, (x), 8); tempi; })
 # endif
