@@ -607,7 +607,10 @@ static int pvr_break_rec_page (pvr_input_plugin_t *this) {
       this->play_fd = -1;
     }
 
-    remove(filename);
+    if (remove(filename) < 0) {
+      xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
+              "input_pvr: error removing pvr file (%s)\n", filename);
+    }
     free(filename);
   }
   return 1;
@@ -895,7 +898,10 @@ static void pvr_finish_recording (pvr_input_plugin_t *this) {
       if( this->save_page == (unsigned)-1 || i < this->save_page ) {
         lprintf("erasing old pvr file (%s)\n", src_filename);
 
-        remove(src_filename);
+        if (remove(src_filename) < 0) {
+          xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
+                  "input_pvr: error removing pvr file (%s)\n", src_filename);
+        }
       } else {
 
         if( !this->save_name || !strlen(this->save_name) )
@@ -905,7 +911,10 @@ static void pvr_finish_recording (pvr_input_plugin_t *this) {
 
         lprintf("moving (%s) to (%s)\n", src_filename, dst_filename);
 
-        rename(src_filename,dst_filename);
+        if (rename(src_filename, dst_filename) < 0) {
+          xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
+                  "input_pvr: error renaming pvr file (%s->%s)\n", src_filename, dst_filename);
+        }
         free(dst_filename);
       }
       free(src_filename);
@@ -1123,7 +1132,10 @@ static void pvr_event_handler (pvr_input_plugin_t *this) {
 
                 lprintf("moving (%s) to (%s)\n", src_filename, dst_filename);
 
-                rename(src_filename,dst_filename);
+                if (rename(src_filename, dst_filename) < 0) {
+                  xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
+                          "input_pvr: error renaming pvr file (%s->%s)\n", src_filename, dst_filename);
+                }
                 free(dst_filename);
                 free(src_filename);
               }
