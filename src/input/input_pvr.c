@@ -632,12 +632,12 @@ static int pvr_rec_file(pvr_input_plugin_t *this) {
       return 0;
   }
   pos = (off_t)(this->rec_blk - this->page_block[this->rec_page]) * PVR_BLOCK_SIZE;
-  if( lseek (this->rec_fd, pos, SEEK_SET) != pos ) {
-    xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG,
-	    "input_pvr: error setting position for writing %" PRIdMAX "\n", (intmax_t)pos);
-    return 0;
-  }
   if( this->rec_fd != -1 ) {
+    if( lseek (this->rec_fd, pos, SEEK_SET) != pos ) {
+      xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG,
+              "input_pvr: error setting position for writing %" PRIdMAX "\n", (intmax_t)pos);
+      return 0;
+    }
     if( write(this->rec_fd, this->data, PVR_BLOCK_SIZE) < PVR_BLOCK_SIZE ) {
       xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG,
 	      "input_pvr: short write to pvr file (out of disk space?)\n");
