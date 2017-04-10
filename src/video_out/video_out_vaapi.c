@@ -847,7 +847,8 @@ static void destroy_glx(vo_driver_t *this_gen)
     vaapi_x11_trap_errors();
     mpglXDestroyPixmap(this->display, this->gl_pixmap);
     XSync(this->display, False);
-    vaapi_x11_untrap_errors();
+    if (vaapi_x11_untrap_errors())
+      xprintf(this->xine, XINE_VERBOSITY_LOG, LOG_MODULE " vaapi_destroy_glx : mpglXDestroyPixmap failed\n");
     this->gl_pixmap = None;
   }
 
