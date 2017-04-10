@@ -500,7 +500,7 @@ static int mmsh_tcp_connect(mmsh_t *this) {
 
   this->s = _x_io_tcp_connect (this->stream, this->host, this->port);
 
-  if (this->s == -1) {
+  if (this->s < 0) {
     xprintf (this->stream->xine, XINE_VERBOSITY_LOG,
              "libmmsh: failed to connect '%s'\n", this->host);
     return 1;
