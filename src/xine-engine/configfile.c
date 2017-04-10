@@ -460,7 +460,7 @@ static void config_reset_value(cfg_entry_t *entry) {
   entry->num_value = 0;
 }
 
-static void config_shallow_copy(xine_cfg_entry_t *dest, cfg_entry_t *src);
+static void config_shallow_copy(xine_cfg_entry_t *dest, const cfg_entry_t *src);
 
 static cfg_entry_t *config_register_key (config_values_t *this,
 					 const char *key,
@@ -795,7 +795,7 @@ static int config_register_enum (config_values_t *this,
   return entry->num_value;
 }
 
-static void config_shallow_copy(xine_cfg_entry_t *dest, cfg_entry_t *src)
+static void config_shallow_copy(xine_cfg_entry_t *dest, const cfg_entry_t *src)
 {
   dest->key           = src->key;
   dest->type          = src->type;
