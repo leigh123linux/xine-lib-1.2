@@ -1921,12 +1921,6 @@ static void ff_handle_mpeg12_buffer (ff_video_decoder_t *this, buf_element_t *bu
     this->context->hurry_up = (this->skipframes > 0);
 #endif
 
-#ifdef XFF_AV_BUFFER
-    if (need_unref) {
-      av_frame_unref (this->av_frame);
-      need_unref = 0;
-    }
-#endif
     lprintf("avcodec_decode_video: size=%d\n", this->mpeg_parser->buffer_size);
 
     len = decode_video_wrapper(this, this->av_frame, &got_picture,
