@@ -2068,6 +2068,10 @@ static void ff_handle_buffer (ff_video_decoder_t *this, buf_element_t *buf) {
       init_video_codec(this, codec_type);
       init_postprocess(this);
       this->decoder_init_mode = 0;
+
+      if (!this->decoder_ok)
+        return;
+
     } else {
       return;
     }
