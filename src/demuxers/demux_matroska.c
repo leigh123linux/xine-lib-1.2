@@ -2127,7 +2127,7 @@ static int parse_block (demux_matroska_t *this, size_t block_size,
 
   /*gap = flags & 1;*/
   lacing = (flags >> 1) & 0x3;
-/*fprintf(stderr, "lacing: %x\n", lacing);*/
+  lprintf("lacing: %x\n", lacing);
 
   if (!find_track_by_id(this, (int)track_num, &track)) {
      xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
@@ -2743,7 +2743,7 @@ static int parse_top_level_head(demux_matroska_t *this, int *next_level) {
           return 0;
         break;
       case MATROSKA_ID_CLUSTER:
-        lprintf("Cluster\n");
+        lprintf("Slipping Cluster\n");
         if (!ebml_skip(ebml, &elem))
           return 0;
         ret_value = 2;
@@ -2800,23 +2800,23 @@ static int parse_top_level(demux_matroska_t *this, int *next_level) {
 
   switch (elem.id) {
     case MATROSKA_ID_SEEKHEAD:
-      lprintf("SeekHead\n");
+      lprintf("Skipping SeekHead\n");
       if (!ebml_skip(ebml, &elem))
         return 0;
       this->has_seekhead = 1;
       break;
     case MATROSKA_ID_INFO:
-      lprintf("Info\n");
+      lprintf("Skipping Info\n");
       if (!ebml_skip(ebml, &elem))
         return 0;
       break;
     case MATROSKA_ID_TRACKS:
-      lprintf("Tracks\n");
+      lprintf("Skipping Tracks\n");
       if (!ebml_skip(ebml, &elem))
         return 0;
       break;
     case MATROSKA_ID_CHAPTERS:
-      lprintf("Chapters\n");
+      lprintf("Skipping Chapters\n");
       if (!ebml_skip(ebml, &elem))
         return 0;
       break;
@@ -2828,17 +2828,17 @@ static int parse_top_level(demux_matroska_t *this, int *next_level) {
         return 0;
       break;
     case MATROSKA_ID_CUES:
-      lprintf("Cues\n");
+      lprintf("Skipping Cues\n");
       if (!ebml_skip(ebml, &elem))
         return 0;
       break;
     case MATROSKA_ID_ATTACHMENTS:
-      lprintf("Attachments\n");
+      lprintf("Skipping Attachments\n");
       if (!ebml_skip(ebml, &elem))
         return 0;
       break;
     case MATROSKA_ID_TAGS:
-      lprintf("Tags\n");
+      lprintf("Skipping Tags\n");
       if (!ebml_skip(ebml, &elem))
         return 0;
       break;
@@ -2850,6 +2850,8 @@ static int parse_top_level(demux_matroska_t *this, int *next_level) {
   }
   if (next_level)
     *next_level = ebml_get_next_level(ebml, &elem);
+
+  lprintf("parse_top_level() done\n");
   return 1;
 }
 
