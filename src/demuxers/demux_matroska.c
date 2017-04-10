@@ -177,10 +177,11 @@ static int parse_info(demux_matroska_t *this) {
 
 static int parse_video_track (demux_matroska_t *this, matroska_video_track_t *vt) {
   ebml_parser_t *ebml = this->ebml;
-  int next_level = 4;
+  int this_level = ebml->level;
+  int next_level = this_level;
   uint64_t val;
 
-  while (next_level == 4) {
+  while (next_level == this_level) {
     ebml_elem_t elem;
 
     if (!ebml_read_elem_head(ebml, &elem))
@@ -230,9 +231,10 @@ static int parse_video_track (demux_matroska_t *this, matroska_video_track_t *vt
 
 static int parse_audio_track (demux_matroska_t *this, matroska_audio_track_t *at) {
   ebml_parser_t *ebml = this->ebml;
-  int next_level = 4;
+  int this_level = ebml->level;
+  int next_level = this_level;
 
-  while (next_level == 4) {
+  while (next_level == this_level) {
     ebml_elem_t elem;
     uint64_t    val;
     double      fval;
@@ -278,9 +280,10 @@ static int parse_audio_track (demux_matroska_t *this, matroska_audio_track_t *at
 
 static int parse_content_compression (demux_matroska_t *this, matroska_track_t *track) {
   ebml_parser_t *ebml = this->ebml;
-  int next_level = 6;
+  int this_level = ebml->level;
+  int next_level = this_level;
 
-  while (next_level == 6) {
+  while (next_level == this_level) {
     ebml_elem_t elem;
     uint64_t    val;
 
@@ -327,9 +330,10 @@ static int parse_content_compression (demux_matroska_t *this, matroska_track_t *
 
 static int parse_content_encoding (demux_matroska_t *this, matroska_track_t *track) {
   ebml_parser_t *ebml = this->ebml;
-  int next_level = 5;
+  int this_level = ebml->level;
+  int next_level = this_level;
 
-  while (next_level == 5) {
+  while (next_level == this_level) {
     ebml_elem_t elem;
     uint64_t    val;
 
@@ -388,9 +392,10 @@ static int parse_content_encoding (demux_matroska_t *this, matroska_track_t *tra
 
 static int parse_content_encodings (demux_matroska_t *this, matroska_track_t *track) {
   ebml_parser_t *ebml = this->ebml;
-  int next_level = 4;
+  int this_level = ebml->level;
+  int next_level = this_level;
 
-  while (next_level == 4) {
+  while (next_level == this_level) {
     ebml_elem_t elem;
 
     if (!ebml_read_elem_head(ebml, &elem))
@@ -1356,9 +1361,10 @@ static void fill_extra_data(matroska_track_t *track, uint32_t fourcc) {
 
 static int parse_track_entry(demux_matroska_t *this, matroska_track_t *track) {
   ebml_parser_t *ebml = this->ebml;
-  int next_level = 3;
+  int this_level = ebml->level;
+  int next_level = this_level;
 
-  while (next_level == 3) {
+  while (next_level == this_level) {
     ebml_elem_t elem;
 
     if (!ebml_read_elem_head(ebml, &elem))
@@ -1771,9 +1777,10 @@ static int parse_track_entry(demux_matroska_t *this, matroska_track_t *track) {
 
 static int parse_tracks(demux_matroska_t *this) {
   ebml_parser_t *ebml = this->ebml;
-  int next_level = 2;
+  int this_level = ebml->level;
+  int next_level = this_level;
 
-  while (next_level == 2) {
+  while (next_level == this_level) {
     ebml_elem_t elem;
 
     if (!ebml_read_elem_head(ebml, &elem))
