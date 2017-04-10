@@ -2058,23 +2058,21 @@ static void ff_handle_buffer (ff_video_decoder_t *this, buf_element_t *buf) {
   lprintf("handle_buffer\n");
 
   if (!this->decoder_ok) {
-    if (this->decoder_init_mode) {
-      int codec_type = buf->type & (BUF_MAJOR_MASK | BUF_DECODER_MASK);
-
-      if (!ff_check_extradata(this, codec_type, buf))
-	return;
-
-      /* init ffmpeg decoder */
-      init_video_codec(this, codec_type);
-      init_postprocess(this);
-      this->decoder_init_mode = 0;
-
-      if (!this->decoder_ok)
-        return;
-
-    } else {
+    if (!this->decoder_init_mode)
       return;
-    }
+
+    int codec_type = buf->type & (BUF_MAJOR_MASK | BUF_DECODER_MASK);
+
+    if (!ff_check_extradata(this, codec_type, buf))
+      return;
+
+    /* init ffmpeg decoder */
+    init_video_codec(this, codec_type);
+    init_postprocess(this);
+    this->decoder_init_mode = 0;
+
+    if (!this->decoder_ok)
+      return;
   }
 
   if (buf->decoder_flags & BUF_FLAG_FRAME_START) {
@@ -2085,8 +2083,7 @@ static void ff_handle_buffer (ff_video_decoder_t *this, buf_element_t *buf) {
   if (this->size == 0) {
     /* take over pts when we are about to buffer a frame */
     this->av_frame->reordered_opaque = ff_tag_pts(this, this->pts);
-    if (this->context) /* shouldn't be NULL */
-      this->context->reordered_opaque = ff_tag_pts(this, this->pts);
+    this->context->reordered_opaque = ff_tag_pts(this, this->pts);
     this->pts = 0;
   }
 
