@@ -1226,13 +1226,14 @@ static void spudec_discontinuity (spu_decoder_t * this_gen)
   /* do nothing */
 }
 
-static void spudec_dispose (spu_decoder_t * this_gen)
+static void spudec_dispose_internal (dvb_spu_decoder_t * this, int thread_running)
 {
-  dvb_spu_decoder_t *this = (dvb_spu_decoder_t *) this_gen;
   int i;
 
-  pthread_cancel(this->dvbsub_timer_thread);
-  pthread_join(this->dvbsub_timer_thread, NULL);
+  if (thread_running) {
+    pthread_cancel(this->dvbsub_timer_thread);
+    pthread_join(this->dvbsub_timer_thread, NULL);
+  }
   pthread_mutex_destroy(&this->dvbsub_osd_mutex);
   pthread_cond_destroy(&this->dvbsub_restart_timeout);
 
@@ -1252,6 +1253,12 @@ static void spudec_dispose (spu_decoder_t * this_gen)
   }
 
   free (this);
+}
+
+static void spudec_dispose (spu_decoder_t * this_gen)
+{
+  dvb_spu_decoder_t *this = (dvb_spu_decoder_t *) this_gen;
+  spudec_dispose_internal(this, 1);
 }
 
 static spu_decoder_t *dvb_spu_class_open_plugin (spu_decoder_class_t * class_gen, xine_stream_t * stream)
@@ -1328,7 +1335,12 @@ static spu_decoder_t *dvb_spu_class_open_plugin (spu_decoder_class_t * class_gen
   pthread_cond_init(&this->dvbsub_restart_timeout, NULL);
   this->dvbsub_hide_timeout.tv_nsec = 0;
   this->dvbsub_hide_timeout.tv_sec = time(NULL);
-  pthread_create(&this->dvbsub_timer_thread, NULL, dvbsub_timer_func, this);
+
+  if (pthread_create(&this->dvbsub_timer_thread, NULL, dvbsub_timer_func, this)) {
+    xprintf (this->class->xine, XINE_VERBOSITY_LOG, LOG_MODULE ": pthread_create() failed\n");
+    spudec_dispose_internal(this, 0);
+    return NULL;
+  }
 
   return (spu_decoder_t *) this;
 }

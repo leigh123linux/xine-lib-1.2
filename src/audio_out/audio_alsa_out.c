@@ -1354,7 +1354,10 @@ static void ao_alsa_mixer_init(ao_driver_t *this_gen) {
     pthread_attr_getschedparam(&pth_attrs, &pth_params);
     pth_params.sched_priority = sched_get_priority_min(SCHED_OTHER);
     pthread_attr_setschedparam(&pth_attrs, &pth_params);
-    pthread_create(&this->mixer.thread, &pth_attrs, ao_alsa_handle_event_thread, (void *) this);
+    if (pthread_create(&this->mixer.thread, &pth_attrs, ao_alsa_handle_event_thread, (void *) this)) {
+      xprintf (this->class->xine, XINE_VERBOSITY_LOG, LOG_MODULE ": pthread_create() failed\n");
+      this->mixer.thread = 0;
+    }
     pthread_attr_destroy(&pth_attrs);
   } else {
     this->mixer.thread = 0;

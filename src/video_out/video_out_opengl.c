@@ -1891,15 +1891,16 @@ static int opengl_gui_data_exchange (vo_driver_t *this_gen,
   return 0;
 }
 
-static void opengl_dispose (vo_driver_t *this_gen) {
-  opengl_driver_t *this = (opengl_driver_t *) this_gen;
+static void opengl_dispose_internal (opengl_driver_t *this, int thread_running) {
   int i;
 
-  pthread_mutex_lock    (&this->render_action_mutex);
-  this->render_action = RENDER_EXIT;
-  pthread_cond_signal   (&this->render_action_cond);
-  pthread_mutex_unlock  (&this->render_action_mutex);
-  pthread_join          (this->render_thread, NULL);
+  if (thread_running) {
+    pthread_mutex_lock    (&this->render_action_mutex);
+    this->render_action = RENDER_EXIT;
+    pthread_cond_signal   (&this->render_action_cond);
+    pthread_mutex_unlock  (&this->render_action_mutex);
+    pthread_join          (this->render_thread, NULL);
+  }
   pthread_mutex_destroy (&this->render_action_mutex);
   pthread_cond_destroy  (&this->render_action_cond);
   pthread_cond_destroy  (&this->render_return_cond);
@@ -1921,6 +1922,11 @@ static void opengl_dispose (vo_driver_t *this_gen) {
   _x_alphablend_free(&this->alphablend_extra_data);
 
   free (this);
+}
+
+static void opengl_dispose (vo_driver_t *this_gen) {
+  opengl_driver_t *this = (opengl_driver_t *) this_gen;
+  opengl_dispose_internal(this, 1);
 }
 
 static void opengl_cb_render_fun (void *this_gen, xine_cfg_entry_t *entry) {
@@ -2044,7 +2050,11 @@ static vo_driver_t *opengl_open_plugin (video_driver_class_t *class_gen, const v
   pthread_mutex_init (&this->render_action_mutex, NULL);
   pthread_cond_init  (&this->render_action_cond, NULL);
   pthread_cond_init  (&this->render_return_cond, NULL);
-  pthread_create (&this->render_thread, NULL, (thread_run_t) render_run, this);
+  if (pthread_create (&this->render_thread, NULL, (thread_run_t) render_run, this)) {
+    xprintf (this->xine, XINE_VERBOSITY_LOG, LOG_MODULE ": pthread_create() failed\n");
+    opengl_dispose_internal (this, 0);
+    return NULL;
+  }
 
   /* Check for OpenGL capable visual */
   pthread_mutex_lock   (&this->render_action_mutex);
@@ -2063,7 +2073,7 @@ static vo_driver_t *opengl_open_plugin (video_driver_class_t *class_gen, const v
 
   if (! this->vinfo) {
     /* no OpenGL capable visual available */
-    opengl_dispose (&this->vo_driver);
+    opengl_dispose_internal (this, 1);
     return NULL;
   }
   if (! this->context)
