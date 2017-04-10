@@ -44,8 +44,6 @@ typedef unsigned char boolean;
 
 #include "yuv2rgb.h"
 
-#define NEW_YUV 1
-
 /* Set to 1 for RGB support */
 #define RGB_SUPPORT          0
 
@@ -1028,20 +1026,11 @@ static void win32_display_frame( vo_driver_t * vo_driver, vo_frame_t * vo_frame 
 	  /* convert from yv12 to native
 	   * screen pixel format */
 
-#if NEW_YUV
 	  win32_driver->yuv2rgb->configure( win32_driver->yuv2rgb,
 					    win32_driver->width, win32_driver->height,
 					    win32_frame->vo_frame.pitches[0], win32_frame->vo_frame.pitches[1],
 					    win32_driver->width, win32_driver->height,
 					    win32_driver->width * win32_driver->bytespp);
-#else
-	  yuv2rgb_setup( win32_driver->yuv2rgb,
-			 win32_driver->width, win32_driver->height,
-			 win32_frame->vo_frame.pitches[0], win32_frame->vo_frame.pitches[1],
-			 win32_driver->width, win32_driver->height,
-			 win32_driver->width * win32_driver->bytespp );
-
-#endif
 
 	  win32_driver->yuv2rgb->yuv2rgb_fun( win32_driver->yuv2rgb,
 					      win32_driver->contents,
@@ -1054,21 +1043,12 @@ static void win32_display_frame( vo_driver_t * vo_driver, vo_frame_t * vo_frame 
 	{
 	  /* convert from yuy2 to native
 	   * screen pixel format */
-#if NEW_YUV
 	  win32_driver->yuv2rgb->configure( win32_driver->yuv2rgb,
 					    win32_driver->width, win32_driver->height,
 					    win32_frame->vo_frame.pitches[0], win32_frame->vo_frame.pitches[0] / 2,
 					    win32_driver->width, win32_driver->height,
 					    win32_driver->width * win32_driver->bytespp );
-#else
 
-	  yuv2rgb_setup( win32_driver->yuv2rgb,
-			 win32_driver->width, win32_driver->height,
-			 win32_frame->vo_frame.pitches[0], win32_frame->vo_frame.pitches[0] / 2,
-			 win32_driver->width, win32_driver->height,
-			 win32_driver->width * win32_driver->bytespp );
-
-#endif
 	  win32_driver->yuv2rgb->yuy22rgb_fun( win32_driver->yuv2rgb,
 					       win32_driver->contents,
 					       win32_frame->vo_frame.base[0] );
@@ -1302,12 +1282,8 @@ static vo_driver_t *open_plugin (video_driver_class_t *class_gen, const void *wi
       return NULL;
     }
 
-#if (NEW_YUV)
   win32_driver->yuv2rgb_factory = yuv2rgb_factory_init( win32_driver->mode, 0, 0 );
   win32_driver->yuv2rgb = win32_driver->yuv2rgb_factory->create_converter(win32_driver->yuv2rgb_factory);
-#else
-  win32_driver->yuv2rgb = yuv2rgb_init( win32_driver->mode, 0, 0 );
-#endif
 
   return ( vo_driver_t * ) win32_driver;
 }
