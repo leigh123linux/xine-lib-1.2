@@ -264,8 +264,10 @@ int xine_config_lookup_entry (xine_t *this, const char *key,
   int result;
   config_values_t *config = this->config;
 
-  config->cur = config->lookup_entry (config, key);
   pthread_mutex_lock(&config->config_lock);
+  /* safe because of the mutex is recursive */
+  config->cur = config->lookup_entry (config, key);
+
   /* do not hand out unclaimed entries */
   if (config->cur && config->cur->type == XINE_CONFIG_TYPE_UNKNOWN)
     config->cur = NULL;
