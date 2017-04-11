@@ -206,10 +206,6 @@ struct vaapi_driver_s {
   vaapi_rect_t        overlay_dirty_rect;
   int                 has_overlay;
 
-  uint32_t            overlay_unscaled_width;
-  uint32_t            overlay_unscaled_height;
-  vaapi_rect_t        overlay_unscaled_dirty_rect;
-
   /* all scaling information goes here */
   vo_scale_t          sc;
 
@@ -1305,7 +1301,6 @@ static void vaapi_init_subpicture(vaapi_driver_t *this_gen) {
   this->va_subpic_image.image_id      = VA_INVALID_ID;
 
   this->overlay_output_width = this->overlay_output_height = 0;
-  this->overlay_unscaled_width = this->overlay_unscaled_height = 0;
   this->ovl_changed = 0;
   this->has_overlay = 0;
   this->overlay_bitmap = NULL;
@@ -2609,11 +2604,7 @@ static void vaapi_overlay_end (vo_driver_t *this_gen, vo_frame_t *frame_gen) {
   }
 
   if (first_unscaled) {
-    this->overlay_unscaled_width = unscaled_width;
-    this->overlay_unscaled_height = unscaled_height;
-
     need_unscaled_init = 1;
-    this->overlay_unscaled_dirty_rect = unscaled_dirty_rect;
   }
 
   if (has_rle || need_init || need_unscaled_init) {
