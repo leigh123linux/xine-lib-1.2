@@ -142,6 +142,7 @@ src/xine-engine/input_cache.c
 src/xine-engine/input_rip.c
 src/xine-engine/io_helper.c
 src/xine-engine/load_plugins.c
+src/xine-engine/metronom.c
 src/xine-engine/osd.c
 src/xine-engine/spu.c
 src/xine-engine/video_decoder.c
