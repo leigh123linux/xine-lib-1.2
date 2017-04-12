@@ -1411,7 +1411,7 @@ static void _cdda_mkdir_safe(xine_t *xine, char *path) {
     WIN32_FIND_DATA FileData;
 
     // Get the proper directory path
-    sprintf(szDir, "%s\\*", path);
+    snprintf(szDir, sizeof(szDir), "%s\\*", path);
 
     // Get the first file
     hList = FindFirstFile(szDir, &FileData);
@@ -1791,7 +1791,7 @@ static int _cdda_cddb_retrieve(cdda_input_plugin_t *this) {
      * that most people don't like.
      */
     memset(&buffer, 0, sizeof(buffer));
-    sprintf(buffer, "cddb hello unknown localhost xine %s\n", VERSION);
+    snprintf(buffer, sizeof(buffer), "cddb hello unknown localhost xine %s\n", VERSION);
     if ((err = _cdda_cddb_send_command(this, buffer)) <= 0) {
       xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG,
 	      "input_cdda: error while sending cddb hello command.\n");
@@ -1811,7 +1811,7 @@ static int _cdda_cddb_retrieve(cdda_input_plugin_t *this) {
     /* For UTF-8 support - use protocol 6 */
 
     memset(&buffer, 0, sizeof(buffer));
-    sprintf(buffer, "proto %d\n",CDDB_PROTOCOL);
+    snprintf(buffer, sizeof(buffer), "proto %d\n", CDDB_PROTOCOL);
     if ((err = _cdda_cddb_send_command(this, buffer)) <= 0) {
       xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG,
 	      "input_cdda: error while sending cddb protocol command.\n");
@@ -1975,14 +1975,14 @@ static void _cdda_cdindex(cdda_input_plugin_t *this, cdrom_toc *toc) {
 
   sha160_init (&sha);
 
-  sprintf (temp, "%02X%02X%08X",
+  snprintf (temp, sizeof(temp), "%02X%02X%08X",
     toc->first_track,
     toc->last_track - toc->ignore_last_track,
     toc->leadout_track.first_frame); /* + 150 */
   sha160_update (&sha, temp, 12);
 
   for (i = toc->first_track; i <= toc->last_track - toc->ignore_last_track; i++) {
-    sprintf (temp, "%08X", toc->toc_entries[i - 1].first_frame);
+    snprintf (temp, sizeof(temp), "%08X", toc->toc_entries[i - 1].first_frame);
     sha160_update (&sha, temp, 8);
   }
 

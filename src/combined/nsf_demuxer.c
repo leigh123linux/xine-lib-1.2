@@ -156,7 +156,7 @@ static int demux_nsf_send_chunk(demux_plugin_t *this_gen) {
 
       buf->decoder_info[1] = this->current_song;
       this->new_song = 0;
-      sprintf(title, "%s, song %d/%d",
+      snprintf(title, sizeof(title), "%s, song %d/%d",
         this->title, this->current_song, this->total_songs);
 
       _x_meta_info_set(this->stream, XINE_META_INFO_TITLE, title);
@@ -202,7 +202,7 @@ static void demux_nsf_send_headers(demux_plugin_t *this_gen) {
 
   _x_meta_info_set(this->stream, XINE_META_INFO_TITLE, this->title);
   _x_meta_info_set(this->stream, XINE_META_INFO_ARTIST, this->artist);
-  sprintf(copyright, "(C) %s", this->copyright);
+  snprintf(copyright, sizeof(copyright), "(C) %s", this->copyright);
   _x_meta_info_set(this->stream, XINE_META_INFO_COMMENT, copyright);
 
   /* send start buffers */
