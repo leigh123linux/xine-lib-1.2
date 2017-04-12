@@ -602,6 +602,10 @@ static void *buffer_service(void *data) {
         // just wait BUFFER_MIN_MS before next check
         xine_usec_sleep(BUFFER_MIN_MS * 1000);
 				break;
+
+      default:
+        pthread_mutex_unlock(&this->data_mutex);
+        break;
     }
   }
   return NULL;
@@ -813,7 +817,6 @@ static void ao_dx2_close(ao_driver_t *this_gen) {
     return;
   }
   lprintf("pthread joined\n");
-  pthread_mutex_unlock(&this->data_mutex);
 
   audio_destroy_buffers(this);
 }
