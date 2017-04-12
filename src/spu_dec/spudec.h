@@ -133,7 +133,7 @@ typedef struct spudec_decoder_s {
   int64_t          last_event_vpts;
 } spudec_decoder_t;
 
-void spudec_reassembly (xine_t *xine, spudec_seq_t *seq, uint8_t *pkt_data, u_int pkt_len);
+void spudec_reassembly (xine_t *xine, spudec_seq_t *seq, uint8_t *pkt_data, unsigned pkt_len);
 void spudec_process( spudec_decoder_t *this, int stream_id);
 /* the nav functions must be called with the nav_pci_lock held */
 void spudec_decode_nav( spudec_decoder_t *this, buf_element_t *buf);

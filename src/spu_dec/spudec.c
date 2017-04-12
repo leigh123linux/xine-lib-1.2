@@ -314,7 +314,7 @@ void spudec_process_nav(spudec_decoder_t *this)
   this->button_filter=1;
 }
 
-void spudec_reassembly (xine_t *xine, spudec_seq_t *seq, uint8_t *pkt_data, u_int pkt_len)
+void spudec_reassembly (xine_t *xine, spudec_seq_t *seq, uint8_t *pkt_data, unsigned int pkt_len)
 {
 #ifdef LOG_DEBUG
   printf ("libspudec: seq->complete = %d\n", seq->complete);
@@ -683,8 +683,8 @@ static void spudec_do_commands(xine_t *xine, spudec_state_t *state, spudec_seq_t
       break;
 
     case CMD_SPU_SET_PXD_OFFSET:	/* image top[0] field / image bottom[1] field*/
-      state->field_offs[0] = (((u_int)buf[1]) << 8) | buf[2];
-      state->field_offs[1] = (((u_int)buf[3]) << 8) | buf[4];
+      state->field_offs[0] = (((unsigned int)buf[1]) << 8) | buf[2];
+      state->field_offs[1] = (((unsigned int)buf[3]) << 8) | buf[4];
 
 #ifdef LOG_DEBUG
       printf ("spu: \toffset[0] = %d offset[1] = %d\n",
@@ -734,11 +734,11 @@ static uint8_t *bit_ptr[2];
 static int field;		// which field we are currently decoding
 static int put_x, put_y;
 
-static u_int get_bits (u_int bits)
+static unsigned int get_bits (unsigned int bits)
 {
-  static u_int data;
-  static u_int bits_left;
-  u_int ret = 0;
+  static unsigned int data;
+  static unsigned int bits_left;
+  unsigned int ret = 0;
 
   if (!bits) {	/* for realignment to next byte */
     bits_left = 0;
@@ -821,8 +821,8 @@ static void spudec_draw_picture (xine_t *xine, spudec_state_t *state, spudec_seq
 #endif
 
   while (bit_ptr[1] < seq->buf + seq->cmd_offs) {
-    u_int len;
-    u_int vlc;
+    unsigned int len;
+    unsigned int vlc;
 
     vlc = get_bits (4);
     if (vlc < 0x0004) {
