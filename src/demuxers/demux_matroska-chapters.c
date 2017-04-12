@@ -204,21 +204,15 @@ static int parse_chapter_atom(demux_matroska_t *this, matroska_chapter_t *chap, 
   /* fallback information */
   /* FIXME: check allocations! */
   if (NULL == chap->title) {
-    chap->title = malloc(9);
-    if (chap->title != NULL)
-      strncpy(chap->title, "No title", 9);
+    chap->title = strdup("No title");
   }
 
   if (NULL == chap->language) {
-    chap->language = malloc(4);
-    if (chap->language != NULL)
-      strncpy(chap->language, "unk", 4);
+    chap->language = strdup("unk");
   }
 
   if (NULL == chap->country) {
-    chap->country = malloc(3);
-    if (chap->country != NULL)
-      strncpy(chap->country, "XX", 3);
+    chap->country = strdup("XX");
   }
 
   lprintf( "Chapter 0x%" PRIx64 ": %" PRIu64 "-%" PRIu64 "(pts), %s (%s). %shidden, %senabled.\n",
