@@ -380,8 +380,8 @@ static int audio_set_volume(dx2_driver_t *this, int volume) {
 
 /* add given data into the ring buffer */
 static int audio_fill(dx2_driver_t *this, char *data, size_t size) {
-  DWORD size1, size2;
-  void *ptr1, *ptr2;
+  DWORD size1 = 0, size2 = 0;
+  void *ptr1 = NULL, *ptr2 = NULL;
   HRESULT err;
 
   /* lock a part of the buffer, begin position on free space */
