@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2000-2013 the xine project
+ * Copyright (C) 2000-2017 the xine project
  *
  * This file is part of xine, a free video player.
  *
@@ -60,7 +60,6 @@
    i guess llabs may not be available everywhere */
 #define abs(x) ( ((x)<0) ? -(x) : (x) )
 
-
 /*
  * ****************************************
  *   primary SCR plugin:
@@ -69,11 +68,12 @@
  */
 
 typedef struct unixscr_s {
-  scr_plugin_t     scr;
+  scr_plugin_t    scr;
+  void           *mem_to_free;
 
-  struct timeval   cur_time;
+  struct timeval  cur_time;
   int64_t         cur_pts;
-  double           speed_factor;
+  double          speed_factor;
 
   pthread_mutex_t  lock;
 
@@ -169,13 +169,20 @@ static void unixscr_exit (scr_plugin_t *scr) {
   unixscr_t *this = (unixscr_t*) scr;
 
   pthread_mutex_destroy (&this->lock);
-  free(this);
+  free (this->mem_to_free);
 }
 
-static scr_plugin_t *XINE_MALLOC unixscr_init () {
-  unixscr_t *this;
+static scr_plugin_t *unixscr_init (void *this_gen) {
+  unixscr_t *this = (unixscr_t *)this_gen;
 
-  this = calloc(1, sizeof(unixscr_t));
+  if (this) {
+    this->mem_to_free = NULL;
+  } else {
+    this = calloc (1, sizeof (unixscr_t));
+    if (!this)
+      return NULL;
+    this->mem_to_free = this;
+  }
 
   this->scr.interface_version = 3;
   this->scr.get_priority      = unixscr_get_priority;
@@ -194,60 +201,117 @@ static scr_plugin_t *XINE_MALLOC unixscr_init () {
 }
 
 
-/*
- * ****************************************
- *       master clock feature
- * ****************************************
- */
+/************************************************************************
+* The master clock feature. It shall handle these basic cases:          *
+* 1. A single system clock controls all timing.                         *
+* 2. Some plugin is hard wired to use its own non-adjustable clock.     *
+*    That clock is slightly faster or slower than system clock.         *
+*    It will drift away over time, and wants xine to follow that drift. *
+*    Such clock registers as high priority (> 5),                       *
+*    and thus becomes the new master.                                   *
+* 3. Some plugin uses its own drifting clock, but it is adjustable,     *
+*    and wants xine to fix that drift.                                  *
+*    Such clock registers as low priority (< 5).                        *
+* In cases 2 and 3, we "sync" the masters time to all other clocks      *
+* roughly every 5 seconds.                                              *
+************************************************************************/
 
+/* #$@! dont break existing API */
+typedef struct {
+  metronom_clock_t mct;
+  unixscr_t        uscr;
+  int              next_sync_pts; /* sync by API calls, STOP_PTS to disable */
+  enum {
+    SYNC_THREAD_NONE,             /* thread disabled by user, see above */
+    SYNC_THREAD_OFF,              /* no clock to sync, or thread unavailable and -"- */
+    SYNC_THREAD_RUNNING           /* self explaining */
+  }                sync_thread_state;
+  scr_plugin_t    *providers[MAX_SCR_PROVIDERS + 1];
+} metronom_clock_private_t;
+
+#define START_PTS 0
+#define STOP_PTS ~0
+#define MASK_PTS (1 << 19) /* 5.825 s */
 
 static void metronom_start_clock (metronom_clock_t *this, int64_t pts) {
-  scr_plugin_t** scr;
+  metronom_clock_private_t *this_priv = (metronom_clock_private_t *)this;
+  scr_plugin_t **r;
 
   lprintf("start_clock (at %" PRId64 ")\n", pts);
 
-  for (scr = this->scr_list; scr < this->scr_list+MAX_SCR_PROVIDERS; scr++)
-    if (*scr) (*scr)->start(*scr, pts);
+  if (this_priv->next_sync_pts != STOP_PTS)
+    this_priv->next_sync_pts = (int)pts & MASK_PTS;
 
-  this->speed = XINE_FINE_SPEED_NORMAL;
+  pthread_mutex_lock (&this_priv->mct.lock);
+  for (r = this_priv->providers; *r && (r < this_priv->providers + MAX_SCR_PROVIDERS); r++)
+    (*r)->start (*r, pts);
+  pthread_mutex_unlock (&this_priv->mct.lock);
+
+  this_priv->mct.speed = XINE_FINE_SPEED_NORMAL;
 }
-
 
 static int64_t metronom_get_current_time (metronom_clock_t *this) {
-  return this->scr_master->get_current(this->scr_master);
+  metronom_clock_private_t *this_priv = (metronom_clock_private_t *)this;
+  int64_t pts = this_priv->mct.scr_master->get_current (this_priv->mct.scr_master);
+  scr_plugin_t **r;
+
+  /* sync not needed or done by separate thread */
+  if (((int)pts & MASK_PTS) != this_priv->next_sync_pts)
+    return pts;
+
+  this_priv->next_sync_pts ^= MASK_PTS;
+
+  pthread_mutex_lock (&this_priv->mct.lock);
+  for (r = this_priv->providers; *r && (r < this_priv->providers + MAX_SCR_PROVIDERS); r++)
+    if (*r != this_priv->mct.scr_master)
+      (*r)->adjust (*r, pts);
+  pthread_mutex_unlock (&this_priv->mct.lock);
+
+  return pts;
 }
 
-
 static void metronom_stop_clock(metronom_clock_t *this) {
-  scr_plugin_t** scr;
-  for (scr = this->scr_list; scr < this->scr_list+MAX_SCR_PROVIDERS; scr++)
-    if (*scr) (*scr)->set_fine_speed(*scr, XINE_SPEED_PAUSE);
+  metronom_clock_private_t *this_priv = (metronom_clock_private_t *)this;
+  scr_plugin_t **r;
+
+  pthread_mutex_lock (&this_priv->mct.lock);
+  for (r = this_priv->providers; *r && (r < this_priv->providers + MAX_SCR_PROVIDERS); r++)
+    (*r)->set_fine_speed (*r, XINE_SPEED_PAUSE);
+  pthread_mutex_unlock (&this_priv->mct.lock);
 }
 
 static void metronom_resume_clock(metronom_clock_t *this) {
-  scr_plugin_t** scr;
-  for (scr = this->scr_list; scr < this->scr_list+MAX_SCR_PROVIDERS; scr++)
-    if (*scr) (*scr)->set_fine_speed(*scr, XINE_FINE_SPEED_NORMAL);
+  metronom_clock_private_t *this_priv = (metronom_clock_private_t *)this;
+  scr_plugin_t **r;
+
+  pthread_mutex_lock (&this_priv->mct.lock);
+  for (r = this_priv->providers; *r && (r < this_priv->providers + MAX_SCR_PROVIDERS); r++)
+    (*r)->set_fine_speed (*r, XINE_FINE_SPEED_NORMAL);
+  pthread_mutex_unlock (&this_priv->mct.lock);
 }
 
-
-
 static void metronom_adjust_clock(metronom_clock_t *this, int64_t desired_pts) {
-  if (this->scr_adjustable)
-    this->scr_master->adjust(this->scr_master, desired_pts);
+  metronom_clock_private_t *this_priv = (metronom_clock_private_t *)this;
+
+  if (this_priv->mct.scr_adjustable)
+    this_priv->mct.scr_master->adjust (this_priv->mct.scr_master, desired_pts);
+  if (this_priv->next_sync_pts != STOP_PTS)
+    this_priv->next_sync_pts = (int)desired_pts & MASK_PTS;
 }
 
 static int metronom_set_speed (metronom_clock_t *this, int speed) {
-
-  scr_plugin_t **scr;
+  metronom_clock_private_t *this_priv = (metronom_clock_private_t *)this;
+  scr_plugin_t **r;
   int            true_speed;
 
-  true_speed = this->scr_master->set_fine_speed (this->scr_master, speed);
+  true_speed = this_priv->mct.scr_master->set_fine_speed (this_priv->mct.scr_master, speed);
 
-  this->speed = true_speed;
+  this_priv->mct.speed = true_speed;
 
-  for (scr = this->scr_list; scr < this->scr_list+MAX_SCR_PROVIDERS; scr++)
-    if (*scr) (*scr)->set_fine_speed(*scr, true_speed);
+  pthread_mutex_lock (&this_priv->mct.lock);
+  for (r = this_priv->providers; *r && (r < this_priv->providers + MAX_SCR_PROVIDERS); r++)
+    (*r)->set_fine_speed (*r, true_speed);
+  pthread_mutex_unlock (&this_priv->mct.lock);
 
   return true_speed;
 }
@@ -842,26 +906,105 @@ static void metronom_set_master(metronom_t *this, metronom_t *master) {
 }
 
 static scr_plugin_t* get_master_scr(metronom_clock_t *this) {
-  int select = -1, maxprio = 0, i;
+  metronom_clock_private_t *this_priv = (metronom_clock_private_t *)this;
+  scr_plugin_t *found = NULL, **r;
+  int maxprio = 0;
 
   /* find the SCR provider with the highest priority */
-  for (i=0; i<MAX_SCR_PROVIDERS; i++) if (this->scr_list[i]) {
-    scr_plugin_t *scr = this->scr_list[i];
-
-    if (maxprio < scr->get_priority(scr)) {
-      select = i;
-      maxprio = scr->get_priority(scr);
+  for (r = this_priv->providers; *r && (r < this_priv->providers + MAX_SCR_PROVIDERS); r++) {
+    int p = (*r)->get_priority (*r);
+    if (maxprio < p) {
+      found = *r;
+      maxprio = p;
     }
   }
-  if (select < 0) {
-    xprintf(this->xine, XINE_VERBOSITY_NONE, "panic - no scr provider found!\n");
+  if (!found) {
+    xprintf (this_priv->mct.xine, XINE_VERBOSITY_NONE, "panic - no scr provider found!\n");
     return NULL;
   }
-  return this->scr_list[select];
+  return found;
+}
+
+static void *metronom_sync_loop (void *const this_gen) {
+  metronom_clock_private_t *const this_priv = (metronom_clock_private_t *const)this_gen;
+
+  struct timeval tv;
+  struct timespec ts;
+  scr_plugin_t **r;
+  int64_t        pts;
+
+  while (this_priv->mct.thread_running) {
+    /* synchronise every 5 seconds */
+    pthread_mutex_lock (&this_priv->mct.lock);
+
+    pts = this_priv->mct.scr_master->get_current (this_priv->mct.scr_master);
+
+    for (r = this_priv->providers; *r && (r < this_priv->providers + MAX_SCR_PROVIDERS); r++)
+      if (*r != this_priv->mct.scr_master) (*r)->adjust (*r, pts);
+
+    gettimeofday(&tv, NULL);
+    ts.tv_sec  = tv.tv_sec + 5;
+    ts.tv_nsec = tv.tv_usec * 1000;
+    pthread_cond_timedwait (&this_priv->mct.cancel, &this_priv->mct.lock, &ts);
+
+    pthread_mutex_unlock (&this_priv->mct.lock);
+  }
+  return NULL;
+}
+
+static void metronom_start_sync_thread (metronom_clock_private_t *this_priv) {
+  int err;
+
+  if (this_priv->sync_thread_state == SYNC_THREAD_NONE) {
+    this_priv->next_sync_pts = START_PTS;
+    return;
+  }
+
+  if (this_priv->sync_thread_state != SYNC_THREAD_OFF)
+    return;
+
+  pthread_cond_init  (&this_priv->mct.cancel, NULL);
+
+  this_priv->mct.thread_running = 1;
+
+  err = pthread_create (&this_priv->mct.sync_thread, NULL, metronom_sync_loop, &this_priv->mct);
+
+  if (err) {
+    xprintf (this_priv->mct.xine, XINE_VERBOSITY_NONE, "cannot create sync thread (%s)\n", strerror (err));
+    this_priv->next_sync_pts = START_PTS;
+  } else {
+    this_priv->sync_thread_state = SYNC_THREAD_RUNNING;
+    this_priv->next_sync_pts = STOP_PTS;
+  }
+}
+
+static void metronom_stop_sync_thread (metronom_clock_private_t *this_priv) {
+
+  if (this_priv->sync_thread_state == SYNC_THREAD_NONE) {
+    this_priv->next_sync_pts = STOP_PTS;
+    return;
+  }
+
+  if (this_priv->sync_thread_state != SYNC_THREAD_RUNNING)
+    return;
+
+  this_priv->mct.thread_running = 0;
+
+  pthread_mutex_lock (&this_priv->mct.lock);
+  pthread_cond_signal (&this_priv->mct.cancel);
+  pthread_mutex_unlock (&this_priv->mct.lock);
+
+  pthread_join (this_priv->mct.sync_thread, NULL);
+
+  pthread_cond_destroy (&this_priv->mct.cancel);
+
+  this_priv->sync_thread_state = SYNC_THREAD_OFF;
+  this_priv->next_sync_pts = STOP_PTS;
 }
 
 static int metronom_register_scr (metronom_clock_t *this, scr_plugin_t *scr) {
-  int i;
+  metronom_clock_private_t *this_priv = (metronom_clock_private_t *)this;
+  scr_plugin_t **r;
 
   if (scr->interface_version != 3) {
     xprintf(this->xine, XINE_VERBOSITY_NONE,
@@ -869,64 +1012,56 @@ static int metronom_register_scr (metronom_clock_t *this, scr_plugin_t *scr) {
     return -1;
   }
 
-  for (i=0; i<MAX_SCR_PROVIDERS; i++)
-    if (this->scr_list[i] == NULL) break;
-  if (i >= MAX_SCR_PROVIDERS)
-    return -1; /* No free slot available */
+  if (this_priv->providers[0] && !this_priv->providers[1])
+    metronom_start_sync_thread (this_priv);
 
-  scr->clock = this;
-  this->scr_list[i] = scr;
-  this->scr_master = get_master_scr(this);
+  pthread_mutex_lock (&this_priv->mct.lock);
+  for (r = this_priv->providers; *r && (r < this_priv->providers + MAX_SCR_PROVIDERS); r++) ;
+  if (r >= this_priv->providers + MAX_SCR_PROVIDERS) {
+    pthread_mutex_unlock (&this_priv->mct.lock);
+    return -1; /* No free slot available */
+  }
+
+  scr->clock = &this_priv->mct;
+  *r = scr;
+  this_priv->mct.scr_master = get_master_scr (&this_priv->mct);
+  pthread_mutex_unlock (&this_priv->mct.lock);
   return 0;
 }
 
 static void metronom_unregister_scr (metronom_clock_t *this, scr_plugin_t *scr) {
-  int i;
-  int64_t time;
+  metronom_clock_private_t *this_priv = (metronom_clock_private_t *)this;
+  scr_plugin_t **found = NULL, **r;
+  int64_t now;
 
+  if (!scr)
+    return;
+
+  pthread_mutex_lock (&this_priv->mct.lock);
   /* never unregister scr_list[0]! */
-  for (i=1; i<MAX_SCR_PROVIDERS; i++)
-    if (this->scr_list[i] == scr)
-      break;
-
-  if (i >= MAX_SCR_PROVIDERS)
-    return; /* Not found */
-
-  this->scr_list[i] = NULL;
-  time = this->get_current_time(this);
-
-  /* master could have been adjusted, others must follow now */
-  for (i=0; i<MAX_SCR_PROVIDERS; i++)
-    if (this->scr_list[i]) this->scr_list[i]->adjust(this->scr_list[i], time);
-
-  this->scr_master = get_master_scr(this);
-}
-
-static void *metronom_sync_loop (void *const this_gen) {
-  metronom_clock_t *const this = (metronom_clock_t *const)this_gen;
-
-  struct timeval tv;
-  struct timespec ts;
-  scr_plugin_t** scr;
-  int64_t        pts;
-
-  while (this->thread_running) {
-    /* synchronise every 5 seconds */
-    pthread_mutex_lock (&this->lock);
-
-    pts = this->scr_master->get_current(this->scr_master);
-
-    for (scr = this->scr_list; scr < this->scr_list+MAX_SCR_PROVIDERS; scr++)
-      if (*scr && *scr != this->scr_master) (*scr)->adjust(*scr, pts);
-
-    gettimeofday(&tv, NULL);
-    ts.tv_sec  = tv.tv_sec + 5;
-    ts.tv_nsec = tv.tv_usec * 1000;
-    pthread_cond_timedwait (&this->cancel, &this->lock, &ts);
-
-    pthread_mutex_unlock (&this->lock);
+  for (r = this_priv->providers + 1; *r && r < this_priv->providers + MAX_SCR_PROVIDERS; r++) {
+    if (*r == scr)
+      found = r;
   }
-  return NULL;
+  if (!found) {
+    pthread_mutex_unlock (&this_priv->mct.lock);
+    return; /* Not found */
+  }
+  /* avoid holes in list */
+  found[0] = r[-1];
+  r[-1] = NULL;
+
+  now = this_priv->mct.scr_master->get_current (this_priv->mct.scr_master);
+  /* master could have been adjusted, others must follow now */
+  for (r = this_priv->providers; *r && (r < this_priv->providers + MAX_SCR_PROVIDERS); r++)
+    if (*r != this_priv->mct.scr_master)
+      (*r)->adjust (*r, now);
+
+  this_priv->mct.scr_master = get_master_scr (&this_priv->mct);
+  pthread_mutex_unlock (&this_priv->mct.lock);
+
+  if (this_priv->providers[0] && !this_priv->providers[1])
+    metronom_stop_sync_thread (this_priv);
 }
 
 static void metronom_exit (metronom_t *this) {
@@ -939,25 +1074,20 @@ static void metronom_exit (metronom_t *this) {
 }
 
 static void metronom_clock_exit (metronom_clock_t *this) {
+  metronom_clock_private_t *this_priv = (metronom_clock_private_t *)this;
+  scr_plugin_t **r;
 
-  scr_plugin_t** scr;
+  this_priv->mct.xine->config->unregister_callback (this_priv->mct.xine->config, "engine.use_metronom_sync_thread");
 
-  this->thread_running = 0;
+  metronom_stop_sync_thread (this_priv);
 
-  pthread_mutex_lock (&this->lock);
-  pthread_cond_signal (&this->cancel);
-  pthread_mutex_unlock (&this->lock);
+  pthread_mutex_lock (&this_priv->mct.lock);
+  for (r = this_priv->providers; *r && (r < this_priv->providers + MAX_SCR_PROVIDERS); r++)
+    (*r)->exit (*r);
+  pthread_mutex_unlock (&this_priv->mct.lock);
 
-  pthread_join (this->sync_thread, NULL);
-
-  pthread_mutex_destroy (&this->lock);
-  pthread_cond_destroy (&this->cancel);
-
-  for (scr = this->scr_list; scr < this->scr_list+MAX_SCR_PROVIDERS; scr++)
-    if (*scr) (*scr)->exit(*scr);
-
-  free (this->scr_list);
-  free (this);
+  pthread_mutex_destroy (&this_priv->mct.lock);
+  free (this_priv);
 }
 
 
@@ -1014,37 +1144,65 @@ metronom_t * _x_metronom_init (int have_video, int have_audio, xine_t *xine) {
 }
 
 
+static void metronom_sync_hook (void *this_gen, xine_cfg_entry_t *entry) {
+  metronom_clock_private_t *this_priv = (metronom_clock_private_t *)this_gen;
+
+  if (entry->num_value) {
+    if (this_priv->sync_thread_state != SYNC_THREAD_NONE)
+      return;
+    this_priv->sync_thread_state = SYNC_THREAD_OFF;
+    this_priv->next_sync_pts = STOP_PTS;
+    if (this_priv->providers[1])
+      metronom_start_sync_thread (this_priv);
+  } else {
+    if (this_priv->sync_thread_state == SYNC_THREAD_NONE)
+      return;
+    metronom_stop_sync_thread (this_priv);
+    this_priv->sync_thread_state = SYNC_THREAD_NONE;
+    if (this_priv->providers[1])
+      this_priv->next_sync_pts = START_PTS;
+  }
+}
+
 metronom_clock_t *_x_metronom_clock_init(xine_t *xine)
 {
-  metronom_clock_t *this = calloc(1, sizeof(metronom_clock_t));
-  int err;
+  metronom_clock_private_t *this_priv = calloc (1, sizeof (metronom_clock_private_t));
 
-  this->set_option           = metronom_clock_set_option;
-  this->get_option           = metronom_clock_get_option;
-  this->start_clock          = metronom_start_clock;
-  this->stop_clock           = metronom_stop_clock;
-  this->resume_clock         = metronom_resume_clock;
-  this->get_current_time     = metronom_get_current_time;
-  this->adjust_clock         = metronom_adjust_clock;
-  this->set_fine_speed       = metronom_set_speed;
-  this->register_scr         = metronom_register_scr;
-  this->unregister_scr       = metronom_unregister_scr;
-  this->exit                 = metronom_clock_exit;
+  if (!this_priv)
+    return NULL;
 
-  this->xine                 = xine;
-  this->scr_adjustable       = 1;
-  this->scr_list             = calloc(MAX_SCR_PROVIDERS, sizeof(void*));
-  this->register_scr(this, unixscr_init());
+  this_priv->mct.set_option       = metronom_clock_set_option;
+  this_priv->mct.get_option       = metronom_clock_get_option;
+  this_priv->mct.start_clock      = metronom_start_clock;
+  this_priv->mct.stop_clock       = metronom_stop_clock;
+  this_priv->mct.resume_clock     = metronom_resume_clock;
+  this_priv->mct.get_current_time = metronom_get_current_time;
+  this_priv->mct.adjust_clock     = metronom_adjust_clock;
+  this_priv->mct.set_fine_speed   = metronom_set_speed;
+  this_priv->mct.register_scr     = metronom_register_scr;
+  this_priv->mct.unregister_scr   = metronom_unregister_scr;
+  this_priv->mct.exit             = metronom_clock_exit;
 
-  pthread_mutex_init (&this->lock, NULL);
-  pthread_cond_init (&this->cancel, NULL);
+  this_priv->mct.xine             = xine;
+  this_priv->mct.scr_adjustable   = 1;
+  this_priv->mct.scr_list         = this_priv->providers;
 
-  this->thread_running       = 1;
+  pthread_mutex_init (&this_priv->mct.lock, NULL);
+  this_priv->mct.register_scr (&this_priv->mct, unixscr_init (&this_priv->uscr));
 
-  if ((err = pthread_create(&this->sync_thread, NULL,
-			    metronom_sync_loop, this)) != 0)
-    xprintf(this->xine, XINE_VERBOSITY_NONE, "cannot create sync thread (%s)\n",
-	    strerror(err));
+  this_priv->mct.thread_running   = 0;
 
-  return this;
+  this_priv->next_sync_pts = STOP_PTS;
+
+  if (this_priv->mct.xine->config->register_bool (this_priv->mct.xine->config,
+    "engine.use_metronom_sync_thread", 0,
+    _("Sync multiple clocks in a separate thread"),
+    _("Enable this when there are problems with multiple (eg application supplied) clocks."),
+    20, metronom_sync_hook, this_priv)) {
+    this_priv->sync_thread_state  = SYNC_THREAD_OFF;
+  } else {
+    this_priv->sync_thread_state  = SYNC_THREAD_NONE;
+  }
+
+  return &this_priv->mct;
 }
