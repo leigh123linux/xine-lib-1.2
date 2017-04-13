@@ -55,9 +55,6 @@ struct yuv2rgb_impl_s {
   uint8_t          *y_buffer;
   uint8_t          *u_buffer;
   uint8_t          *v_buffer;
-  void             *y_chunk;
-  void             *u_chunk;
-  void             *v_chunk;
 
   void            **table_rV;
   void            **table_gU;
@@ -71,8 +68,6 @@ struct yuv2rgb_impl_s {
 #ifdef HAVE_MLIB
   uint8_t          *mlib_buffer;
   uint8_t          *mlib_resize_buffer;
-  void             *mlib_chunk;
-  void             *mlib_resize_chunk;
   mlib_filter      mlib_filter_type;
 #endif
 };

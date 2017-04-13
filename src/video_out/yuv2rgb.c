@@ -58,21 +58,6 @@ const int32_t Inverse_Table_6_9[8][4] = {
 };
 
 
-static void *my_malloc_aligned (size_t alignment, size_t size, void **chunk)
-{
-  char *pMem;
-
-  pMem = xine_xmalloc (size+alignment);
-
-  *chunk = pMem;
-
-  while ((uintptr_t) pMem % alignment)
-    pMem++;
-
-  return pMem;
-}
-
-
 static int yuv2rgb_next_slice (yuv2rgb_impl_t *this, uint8_t **dest)
 {
   int y0, y1;
@@ -108,11 +93,12 @@ static int yuv2rgb_next_slice_intf (yuv2rgb_t *this_gen, uint8_t **dest)
 static void yuv2rgb_dispose (yuv2rgb_t *this_gen)
 {
   yuv2rgb_impl_t *this = (yuv2rgb_impl_t *)this_gen;
-  free (this->y_chunk);
-  free (this->u_chunk);
-  free (this->v_chunk);
+  xine_free_aligned (this->y_buffer);
+  xine_free_aligned (this->u_buffer);
+  xine_free_aligned (this->v_buffer);
 #ifdef HAVE_MLIB
-  free (this->mlib_chunk);
+  xine_free_aligned (this->mlib_buffer);
+  xine_free_aligned (this->mlib_resize_buffer);
 #endif
   free (this);
 }
@@ -141,28 +127,13 @@ static int yuv2rgb_configure (yuv2rgb_t *this_gen,
   this->slice_height  = source_height;
   this->slice_offset  = 0;
 
-  if (this->y_chunk) {
-    free (this->y_chunk);
-    this->y_buffer = this->y_chunk = NULL;
-  }
-  if (this->u_chunk) {
-    free (this->u_chunk);
-    this->u_buffer = this->u_chunk = NULL;
-  }
-  if (this->v_chunk) {
-    free (this->v_chunk);
-    this->v_buffer = this->v_chunk = NULL;
-  }
+  xine_freep_aligned (&this->y_buffer);
+  xine_freep_aligned (&this->u_buffer);
+  xine_freep_aligned (&this->v_buffer);
 
 #ifdef HAVE_MLIB
-  if (this->mlib_chunk) {
-    free (this->mlib_chunk);
-    this->mlib_buffer = this->mlib_chunk = NULL;
-  }
-  if (this->mlib_resize_chunk) {
-    free (this->mlib_resize_chunk);
-    this->mlib_resize_buffer = this->mlib_resize_chunk = NULL;
-  }
+  xine_freep_aligned (&this->mlib_buffer);
+  xine_freep_aligned (&this->mlib_resize_buffer);
 #endif
 
   this->step_dx = source_width  * 32768 / dest_width;
@@ -180,13 +151,13 @@ static int yuv2rgb_configure (yuv2rgb_t *this_gen,
      * space for two y-lines (for yuv2rgb_mlib)
      * u,v subsampled 2:1
      */
-    this->y_buffer = my_malloc_aligned (16, 2*dest_width, &this->y_chunk);
+    this->y_buffer = xine_malloc_aligned (2 * dest_width);
     if (!this->y_buffer)
       return 0;
-    this->u_buffer = my_malloc_aligned (16, (dest_width+1)/2, &this->u_chunk);
+    this->u_buffer = xine_malloc_aligned ((dest_width + 1) / 2);
     if (!this->u_buffer)
       return 0;
-    this->v_buffer = my_malloc_aligned (16, (dest_width+1)/2, &this->v_chunk);
+    this->v_buffer = xine_malloc_aligned ((dest_width + 1) / 2);
     if (!this->v_buffer)
       return 0;
 
@@ -197,24 +168,24 @@ static int yuv2rgb_configure (yuv2rgb_t *this_gen,
      * space for two y-lines (for yuv2rgb_mlib)
      * u,v subsampled 2:1
      */
-    this->y_buffer = my_malloc_aligned (16, 2*dest_width, &this->y_chunk);
+    this->y_buffer = xine_malloc_aligned (2 * dest_width);
     if (!this->y_buffer)
       return 0;
-    this->u_buffer = my_malloc_aligned (16, (dest_width+1)/2, &this->u_chunk);
+    this->u_buffer = xine_malloc_aligned ((dest_width + 1) / 2);
     if (!this->u_buffer)
       return 0;
-    this->v_buffer = my_malloc_aligned (16, (dest_width+1)/2, &this->v_chunk);
+    this->v_buffer = xine_malloc_aligned ((dest_width + 1) / 2);
     if (!this->v_buffer)
       return 0;
 
 #if HAVE_MLIB
     /* Only need these if we are resizing and in mlib code */
-    this->mlib_buffer = my_malloc_aligned (16, source_width*source_height*4, &this->mlib_chunk);
+    this->mlib_buffer = xine_malloc_aligned (source_width * source_height * 4);
     if (!this->mlib_buffer)
       return 0;
     /* Only need this one if we are 24 bit */
     if((rgb_stride / dest_width) == 3) {
-      this->mlib_resize_buffer = my_malloc_aligned (16, dest_width*dest_height*4, &this->mlib_resize_chunk);
+      this->mlib_resize_buffer = xine_malloc_aligned (dest_width * dest_height * 4);
       if (!this->mlib_resize_buffer)
       return 0;
     }
@@ -3300,14 +3271,14 @@ static yuv2rgb_t *yuv2rgb_create_converter (yuv2rgb_factory_t *this_gen) {
   this->swapped                  = factory->swapped;
   this->cmap                     = factory->cmap;
 
-  this->y_chunk = this->y_buffer = NULL;
-  this->u_chunk = this->u_buffer = NULL;
-  this->v_chunk = this->v_buffer = NULL;
+  this->y_buffer                 = NULL;
+  this->u_buffer                 = NULL;
+  this->v_buffer                 = NULL;
 
 #ifdef HAVE_MLIB
-  this->mlib_chunk = this->mlib_buffer = NULL;
-  this->mlib_resize_chunk = this->mlib_resize_buffer = NULL;
-  this->mlib_filter_type = MLIB_BILINEAR;
+  this->mlib_buffer              = NULL;
+  this->mlib_resize_buffer       = NULL;
+  this->mlib_filter_type         = MLIB_BILINEAR;
 #endif
 
   this->table_rV                 = factory->table_rV;
