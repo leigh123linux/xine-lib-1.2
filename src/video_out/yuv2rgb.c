@@ -3284,7 +3284,7 @@ static yuv2rgb_t *yuv2rgb_create_converter (yuv2rgb_factory_t *this_gen) {
   yuv2rgb_impl_t *this;
   yuv2rgb_t *intf;
 
-  this = calloc(1, sizeof(yuv2rgb_impl_t));
+  this = calloc (1, sizeof (*this));
   if (!this)
     return NULL;
 
@@ -3339,7 +3339,7 @@ yuv2rgb_factory_t* yuv2rgb_factory_init (int mode, int swapped,
   yuv2rgb_factory_t      *intf;
   uint32_t mm = xine_mm_accel();
 
-  this = malloc (sizeof (yuv2rgb_factory_t));
+  this = malloc (sizeof (*this));
   if (!this)
     return NULL;
 
