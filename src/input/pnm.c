@@ -371,7 +371,7 @@ static void pnm_send_request(pnm_t *p, uint32_t bandwidth) {
   c+=pnm_write_chunk(PNA_CLIENT_CHALLANGE,strlen(pnm_challenge),
           pnm_challenge,&p->buffer[c]);
   c+=pnm_write_chunk(PNA_CLIENT_CAPS,PNM_CLIENT_CAPS_SIZE,
-          (char*)pnm_client_caps,&p->buffer[c]);
+          pnm_client_caps,&p->buffer[c]);
   c+=pnm_write_chunk(0x0a,0,NULL,&p->buffer[c]);
   c+=pnm_write_chunk(0x0c,0,NULL,&p->buffer[c]);
   c+=pnm_write_chunk(0x0d,0,NULL,&p->buffer[c]);
@@ -390,7 +390,7 @@ static void pnm_send_request(pnm_t *p, uint32_t bandwidth) {
   c+=pnm_write_chunk(PNA_GUID,strlen(pnm_guid),
           pnm_guid,&p->buffer[c]);
   c+=pnm_write_chunk(PNA_TWENTYFOUR,PNM_TWENTYFOUR_SIZE,
-          (char*)pnm_twentyfour,&p->buffer[c]);
+          pnm_twentyfour,&p->buffer[c]);
 
   /* data after chunks */
   memcpy(&p->buffer[c],after_chunks,after_chunks_length);

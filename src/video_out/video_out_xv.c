@@ -1298,7 +1298,7 @@ static vo_driver_t *open_plugin_2 (video_driver_class_t *class_gen, const void *
   config_values_t      *config = class->config;
   xv_driver_t          *this;
   int                   i;
-  x11_visual_t         *visual = (x11_visual_t *) visual_gen;
+  const x11_visual_t   *visual = (const x11_visual_t *) visual_gen;
   XvPortID              xv_port;
   char                 *adaptor_name;
 
@@ -1624,7 +1624,7 @@ static vo_driver_t *open_plugin_2 (video_driver_class_t *class_gen, const void *
 }
 
 static vo_driver_t *open_plugin_old (video_driver_class_t *class_gen, const void *visual_gen) {
-  x11_visual_t         *old_visual  = (x11_visual_t *) visual_gen;
+  const x11_visual_t  *old_visual  = (const x11_visual_t *) visual_gen;
   x11_visual_t         visual;
 
   /* provides compatibility for XINE_VISUAL_TYPE_X11 */

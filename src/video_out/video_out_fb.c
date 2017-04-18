@@ -948,11 +948,7 @@ static vo_driver_t *fb_open_plugin(video_driver_class_t *class_gen,
   config_values_t *config;
   fb_driver_t *this;
   fb_class_t *class;
-  fb_visual_t *visual = NULL;
-
-  if (visual_gen) {
-    visual = (fb_visual_t *) visual_gen;
-  }
+  const fb_visual_t *visual = (const fb_visual_t *)visual_gen;
 
   class = (fb_class_t *)class_gen;
   config = class->config;

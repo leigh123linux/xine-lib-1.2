@@ -1317,7 +1317,7 @@ static vo_driver_t *open_plugin (video_driver_class_t *class_gen, const void *vi
   XvAttribute          *attr;
   XvImageFormatValues  *fo;
   int                   nattr;
-  x11_visual_t         *visual  = (x11_visual_t *) visual_gen;
+  const x11_visual_t   *visual  = (const x11_visual_t *) visual_gen;
   XColor                dummy;
   XvAdaptorInfo        *adaptor_info = class->adaptor_info;
   unsigned int          adaptor_num  = class->adaptor_num;
@@ -1539,7 +1539,7 @@ static void dispose_class (video_driver_class_t *this_gen) {
 }
 
 static void *init_class (xine_t *xine, void *visual_gen) {
-  x11_visual_t      *visual = (x11_visual_t *) visual_gen;
+  const x11_visual_t *visual = (const x11_visual_t *) visual_gen;
   xvmc_class_t      *this;
   Display           *display = NULL;
   unsigned int       adaptors, j = 0;

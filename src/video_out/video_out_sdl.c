@@ -494,7 +494,7 @@ static vo_driver_t *open_plugin (video_driver_class_t *class_gen, const void *vi
 
   if (visual_gen) {
     if (class->visual_type == XINE_VISUAL_TYPE_X11) {
-      x11_visual_t      *visual = (x11_visual_t *) visual_gen;
+      const x11_visual_t *visual = (const x11_visual_t *) visual_gen;
 
       this->sc.frame_output_cb   = visual->frame_output_cb;
       this->sc.user_data         = visual->user_data;
@@ -506,7 +506,7 @@ static vo_driver_t *open_plugin (video_driver_class_t *class_gen, const void *vi
       }
 
     } else {
-      fb_visual_t *visual = (fb_visual_t *) visual_gen;
+      const fb_visual_t *visual = (const fb_visual_t *) visual_gen;
 
       this->sc.frame_output_cb   = visual->frame_output_cb;
       this->sc.user_data         = visual->user_data;
@@ -544,7 +544,7 @@ static vo_driver_t *open_plugin (video_driver_class_t *class_gen, const void *vi
   this->sc.gui_height        = 240;
 #ifdef HAVE_X11
   if (visual_gen && class->visual_type == XINE_VISUAL_TYPE_X11) {
-    x11_visual_t *visual = (x11_visual_t *) visual_gen;
+    const x11_visual_t *visual = (const x11_visual_t *) visual_gen;
     XGetWindowAttributes(visual->display, visual->d, &window_attributes);
     this->sc.gui_width         = window_attributes.width;
     this->sc.gui_height        = window_attributes.height;

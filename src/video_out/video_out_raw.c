@@ -438,9 +438,9 @@ static void raw_dispose (vo_driver_t *this_gen)
 
 
 static vo_driver_t *raw_open_plugin (video_driver_class_t *class_gen, const void *visual_gen)
-{
+{ 
+  const raw_visual_t *visual  = (const raw_visual_t *) visual_gen;
   raw_class_t       *class   = (raw_class_t *) class_gen;
-  raw_visual_t         *visual  = (raw_visual_t *) visual_gen;
   raw_driver_t      *this;
   int i;
 

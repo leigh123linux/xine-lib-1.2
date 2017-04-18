@@ -2064,9 +2064,9 @@ _("For tracking down bugs in the VCD plugin. Mask values are:\n"
 
 const plugin_info_t xine_plugin_info[] EXPORTED = {
   /* type, API, "name", version, special_info, init_function */
-  { PLUGIN_INPUT | PLUGIN_MUST_PRELOAD, 18, (char *) SHORT_PLUGIN_NAME,
+  { PLUGIN_INPUT | PLUGIN_MUST_PRELOAD, 18, SHORT_PLUGIN_NAME,
     XINE_VERSION_CODE, NULL, vcd_init },
-  { PLUGIN_NONE, 0, (char *) "", 0, NULL, NULL }
+  { PLUGIN_NONE, 0, "", 0, NULL, NULL }
 };
 
 /*

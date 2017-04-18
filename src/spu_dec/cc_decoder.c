@@ -461,7 +461,7 @@ static void get_font_metrics(osd_renderer_t *renderer,
   *maxw = 0;
   *maxh = 0;
 
-  renderer->set_font(testc, (char *) fontname, font_size);
+  renderer->set_font(testc, fontname, font_size);
   renderer->set_encoding(testc, "iso-8859-1");
   for (c = 32; c < 256; c++) {
     int tw, th;
@@ -572,7 +572,7 @@ static void ccrow_set_attributes(cc_renderer_t *renderer, cc_row_t *this,
     fontname = cap_info->italic_font;
   else
     fontname = cap_info->font;
-  renderer->osd_renderer->set_font(renderer->cap_display, (char *) fontname,
+  renderer->osd_renderer->set_font(renderer->cap_display, fontname,
 				   cap_info->font_size);
 }
 

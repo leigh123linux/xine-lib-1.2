@@ -159,7 +159,7 @@ void    goom_draw_text (Pixel * buf,int resolx,int resoly,
 		return ;
 
 	if (center) {
-		unsigned char   *tmp = (unsigned char*)str;
+                const unsigned char   *tmp = (const unsigned char*)str;
 		float   lg = -charspace;
 
 		while (*tmp != '\0')

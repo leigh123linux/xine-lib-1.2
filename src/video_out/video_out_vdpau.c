@@ -2643,7 +2643,7 @@ static int vdpau_init_error( VdpStatus st, const char *msg, vo_driver_t *driver,
 static vo_driver_t *vdpau_open_plugin (video_driver_class_t *class_gen, const void *visual_gen)
 {
   vdpau_class_t       *class   = (vdpau_class_t *) class_gen;
-  x11_visual_t        *visual  = (x11_visual_t *) visual_gen;
+  const x11_visual_t  *visual  = (const x11_visual_t *) visual_gen;
   vdpau_driver_t      *this;
   config_values_t      *config  = class->xine->config;
   int i;

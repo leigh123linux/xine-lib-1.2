@@ -1126,7 +1126,7 @@ static const char *visual_class_name(xcb_visualtype_t *visual) {
 static vo_driver_t *xshm_open_plugin(video_driver_class_t *class_gen, const void *visual_gen) {
   xshm_class_t         *class   = (xshm_class_t *) class_gen;
   config_values_t      *config  = class->config;
-  xcb_visual_t         *visual  = (xcb_visual_t *) visual_gen;
+  const xcb_visual_t   *visual  = (const xcb_visual_t *) visual_gen;
   xshm_driver_t        *this;
   xcb_visualtype_t     *visualtype;
   int                   mode;

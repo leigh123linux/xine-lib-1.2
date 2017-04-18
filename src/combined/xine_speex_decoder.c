@@ -204,7 +204,7 @@ static void speex_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) {
     if (this->header_count) {
 
       if (!this->st) {
-	SpeexMode * spx_mode;
+        const SpeexMode * spx_mode;
 	SpeexHeader * spx_header;
 	unsigned int modeID;
 	int bitrate;
@@ -224,7 +224,7 @@ static void speex_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) {
 	  return;
 	}
 
-	spx_mode = (SpeexMode *) speex_mode_list[modeID];
+        spx_mode = speex_mode_list[modeID];
 
 	if (spx_mode->bitstream_version != spx_header->mode_bitstream_version) {
 	  xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG, "libspeex: incompatible Speex mode bitstream version\n");

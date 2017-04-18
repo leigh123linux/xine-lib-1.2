@@ -1916,13 +1916,13 @@ static inline const char *mrl_to_host (const char *mrl)
 static int vdr_plugin_open_fifo_mrl(input_plugin_t *this_gen)
 {
   vdr_input_plugin_t *this = (vdr_input_plugin_t *)this_gen;
-  char *filename = (char *)mrl_to_fifo (this->mrl);
+  const char *fifoname = mrl_to_fifo (this->mrl);
 
-  if(!strcmp(filename, "/")) {
-	  filename = (char *)VDR_ABS_FIFO_DIR "/stream";
+  if(!strcmp(fifoname, "/")) {
+    fifoname = VDR_ABS_FIFO_DIR "/stream";
   }
 
-  filename = strdup(filename);
+  char *filename = strdup(fifoname);
 
   _x_mrl_unescape (filename);
   this->fh = xine_open_cloexec(filename, O_RDONLY | O_NONBLOCK);

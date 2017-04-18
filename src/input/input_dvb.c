@@ -1339,9 +1339,10 @@ static int channel_index(dvb_input_plugin_t* this, int service_id) {
 }
 
 static int compare_epg_by_starttime(const void* a, const void* b) {
-    const epg_entry_t **epg_a, **epg_b;
-    epg_a = (const epg_entry_t**)a;
-    epg_b = (const epg_entry_t**)b;
+    const epg_entry_t * const *epg_a;
+    const epg_entry_t * const *epg_b;
+    epg_a = (const epg_entry_t* const *)a;
+    epg_b = (const epg_entry_t* const *)b;
 
     if ((*epg_a)->starttime < (*epg_b)->starttime) {
 	return -1;
@@ -3121,7 +3122,7 @@ static input_plugin_t *dvb_class_get_instance (input_class_t *class_gen,
 
   dvb_input_class_t  *class = (dvb_input_class_t *) class_gen;
   dvb_input_plugin_t *this;
-  char               *mrl = (char *) data;
+  const char         *mrl = data;
 
   if(strncasecmp (mrl, "dvb://",6))
     if(strncasecmp(mrl,"dvbs://",7))

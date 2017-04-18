@@ -899,7 +899,7 @@ static void decode_vorbis_header (demux_ogg_t *this, const int stream_num, ogg_p
 static void decode_speex_header (demux_ogg_t *this, const int stream_num, ogg_packet *op) {
 #ifdef HAVE_SPEEX
   void *st;
-  SpeexMode *mode;
+  const SpeexMode *mode;
   SpeexHeader *header;
 
   this->si[stream_num]->buf_types = BUF_AUDIO_SPEEX
@@ -911,7 +911,7 @@ static void decode_speex_header (demux_ogg_t *this, const int stream_num, ogg_pa
 
   if (header) {
     int bitrate;
-    mode = (SpeexMode *) speex_mode_list[header->mode];
+    mode = speex_mode_list[header->mode];
 
     st = speex_decoder_init (mode);
 

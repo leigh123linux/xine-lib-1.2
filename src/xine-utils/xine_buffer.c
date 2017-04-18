@@ -99,16 +99,17 @@ typedef struct {
  * some macros
  */
 
-#define CHECK_MAGIC(x) if (*(((uint8_t *)x)-1)!=XINE_BUFFER_MAGIC) \
+#define CHECK_MAGIC(x) if (*(((const uint8_t *)x)-1)!=XINE_BUFFER_MAGIC) \
   {printf("xine_buffer: FATAL: xine_buffer_header not recognized!\n");exit(1);}
 
 #define GET_HEADER(x) ((xine_buffer_header_t*)(((uint8_t*)x)-XINE_BUFFER_HEADER_SIZE))
+#define GET_HEADER_CONST(x) ((const xine_buffer_header_t *)(((const uint8_t *)x)-XINE_BUFFER_HEADER_SIZE))
 
 /* reallocs buf, if smaller than size. */
 #define GROW_TO(buf, to_size) \
-    if (GET_HEADER(buf)->size < (to_size)) { \
-    int new_size = (to_size) + GET_HEADER(buf)->chunk_size - \
-        ((to_size) % GET_HEADER(buf)->chunk_size);\
+    if (GET_HEADER_CONST(buf)->size < (to_size)) { \
+    int new_size = (to_size) + GET_HEADER_CONST(buf)->chunk_size - \
+        ((to_size) % GET_HEADER_CONST(buf)->chunk_size);\
     \
     buf = ((uint8_t*)realloc(((uint8_t*)buf)-XINE_BUFFER_HEADER_SIZE, new_size+XINE_BUFFER_HEADER_SIZE)) + XINE_BUFFER_HEADER_SIZE;\
     GET_HEADER(buf)->size=new_size; }
@@ -166,10 +167,10 @@ void *xine_buffer_dup(const void *buf) {
   CHECK_MAGIC(buf);
 #endif
 
-  new = malloc(GET_HEADER(buf)->size+XINE_BUFFER_HEADER_SIZE);
+  new = malloc(GET_HEADER_CONST(buf)->size+XINE_BUFFER_HEADER_SIZE);
 
-  xine_fast_memcpy(new, ((uint8_t*)buf)-XINE_BUFFER_HEADER_SIZE,
-      GET_HEADER(buf)->size+XINE_BUFFER_HEADER_SIZE);
+  xine_fast_memcpy(new, ((const uint8_t*)buf)-XINE_BUFFER_HEADER_SIZE,
+      GET_HEADER_CONST(buf)->size+XINE_BUFFER_HEADER_SIZE);
 
   return new+XINE_BUFFER_HEADER_SIZE;
 }
@@ -211,14 +212,14 @@ void xine_buffer_copyout(const void *buf, int index, void *data, int len) {
   CHECK_MAGIC(buf);
 #endif
 
-  if (GET_HEADER(buf)->size < index+len)
+  if (GET_HEADER_CONST(buf)->size < index+len)
   {
     lprintf("warning: attempt to read over boundary!\n");
-    if (GET_HEADER(buf)->size < index)
+    if (GET_HEADER_CONST(buf)->size < index)
       return;
-    len = GET_HEADER(buf)->size - index;
+    len = GET_HEADER_CONST(buf)->size - index;
   }
-  xine_fast_memcpy(data, ((uint8_t*)buf)+index, len);
+  xine_fast_memcpy(data, ((const uint8_t*)buf)+index, len);
 }
 
 /*
@@ -305,7 +306,7 @@ int xine_buffer_get_size(const void *buf) {
   CHECK_MAGIC(buf);
 #endif
 
-  return GET_HEADER(buf)->size;
+  return GET_HEADER_CONST(buf)->size;
 }
 
 /*

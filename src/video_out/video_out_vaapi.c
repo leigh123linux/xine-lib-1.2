@@ -693,7 +693,7 @@ static void vaapi_get_functions(vo_driver_t *this_gen, void *(*getProcAddress)(c
 }
 
 /* Check if opengl indirect/software rendering is used */
-static int vaapi_opengl_verify_direct (x11_visual_t *vis) {
+static int vaapi_opengl_verify_direct (const x11_visual_t *vis) {
   Window        root, win;
   XVisualInfo  *visinfo;
   GLXContext    ctx;
@@ -2132,7 +2132,7 @@ static VAStatus vaapi_init_internal(vo_driver_t *this_gen, int va_profile, int w
   xprintf(this->xine, XINE_VERBOSITY_LOG, LOG_MODULE " vaapi_open: Vendor : %s\n", vendor);
     
   this->query_va_status = 1;
-  char *p = (char *)vendor;
+  const char *p = vendor;
   for(i = 0; i < strlen(vendor); i++, p++) {
     if(strncmp(p, "VDPAU", strlen("VDPAU")) == 0) {
       xprintf(this->xine, XINE_VERBOSITY_LOG, LOG_MODULE " vaapi_open: Enable Splitted-Desktop Systems VDPAU-VIDEO workarounds.\n");
@@ -3966,7 +3966,7 @@ static void vaapi_csc_mode(void *this_gen, xine_cfg_entry_t *entry)
 static vo_driver_t *vaapi_open_plugin (video_driver_class_t *class_gen, const void *visual_gen) {
 
   vaapi_class_t           *class  = (vaapi_class_t *) class_gen;
-  x11_visual_t            *visual = (x11_visual_t *) visual_gen;
+  const x11_visual_t      *visual = (const x11_visual_t *) visual_gen;
   vaapi_driver_t          *this;
   config_values_t         *config = class->config;
   XSetWindowAttributes    xswa;
@@ -4023,7 +4023,7 @@ static vo_driver_t *vaapi_open_plugin (video_driver_class_t *class_gen, const vo
         20, vaapi_opengl_use_tfp, this );
 
   if(this->opengl_render) {
-      this->opengl_render = vaapi_opengl_verify_direct ((x11_visual_t *)visual_gen);
+      this->opengl_render = vaapi_opengl_verify_direct (visual);
       if(!this->opengl_render)
         xprintf (this->xine, XINE_VERBOSITY_LOG, LOG_MODULE " vaapi_open: Opengl indirect/software rendering does not work. Fallback to plain VAAPI output !!!!\n");
   }

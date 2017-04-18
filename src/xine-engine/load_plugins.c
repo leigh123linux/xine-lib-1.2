@@ -174,7 +174,7 @@ static int get_decoder_priority(xine_t *this, plugin_node_t *node) {
     /* user given priorities should definitely override defaults, so multiply them */
     return entry->num_value * 100;
   else
-    return ((decoder_info_t *)node->info->special_info)->priority;
+    return ((const decoder_info_t *)node->info->special_info)->priority;
 }
 
 static void map_decoder_list (xine_t *this,
@@ -195,7 +195,7 @@ static void map_decoder_list (xine_t *this,
   for (list_id = 0; list_id < list_size; list_id++) {
 
     plugin_node_t *node = xine_sarray_get(decoder_list, list_id);
-    const uint32_t *type = ((decoder_info_t *)node->info->special_info)->supported_types;
+    const uint32_t *type = ((const decoder_info_t *)node->info->special_info)->supported_types;
     int priority = get_decoder_priority(this, node);
 
     lprintf ("mapping decoder %s\n", node->info->id);
@@ -718,8 +718,8 @@ static inline int _plugin_info_equal(const plugin_info_t *a,
     case PLUGIN_VIDEO_OUT:
       /* FIXME: Could special_info be NULL? */
       if (a->special_info && b->special_info) {
-        return (((vo_info_t*)a->special_info)->visual_type ==
-                ((vo_info_t*)b->special_info)->visual_type);
+        return (((const vo_info_t*)a->special_info)->visual_type ==
+                ((const vo_info_t*)b->special_info)->visual_type);
       }
       break;
 
@@ -1808,12 +1808,12 @@ static vo_driver_t *_load_video_driver (xine_t *this, plugin_node_t *node,
 }
 
 vo_driver_t *_x_load_video_output_plugin(xine_t *this,
-					   char *id,
+                                         const char *id,
 					   int visual_type, void *visual) {
 
   plugin_node_t      *node;
   vo_driver_t        *driver;
-  vo_info_t          *vo_info;
+  const vo_info_t    *vo_info;
   plugin_catalog_t   *catalog = this->plugin_catalog;
   int                 list_id, list_size;
 
@@ -1829,7 +1829,7 @@ vo_driver_t *_x_load_video_output_plugin(xine_t *this,
 
     node = xine_sarray_get (catalog->plugin_lists[PLUGIN_VIDEO_OUT - 1], list_id);
 
-    vo_info = (vo_info_t *)node->info->special_info;
+    vo_info = (const vo_info_t *)node->info->special_info;
     if (vo_info->visual_type == visual_type) {
       if (id) {
 	if (!strcasecmp (node->info->id, id)) {
@@ -1861,7 +1861,7 @@ xine_video_port_t *xine_open_video_driver (xine_t *this,
   vo_driver_t        *driver;
   xine_video_port_t  *port;
 
-  driver = _x_load_video_output_plugin(this, (char *)id, visual_type, visual);
+  driver = _x_load_video_output_plugin(this, id, visual_type, visual);
 
   if (!driver) {
     lprintf ("failed to load video output plugin <%s>\n", id);
@@ -1947,7 +1947,7 @@ const char *const *xine_list_video_output_plugins_typed(xine_t *xine, uint64_t t
   for (list_id = i = 0; list_id < list_size; list_id++)
   {
     node = xine_sarray_get (catalog->plugin_lists[PLUGIN_VIDEO_OUT - 1], list_id);
-    if (typemask & (1ULL << ((vo_info_t *)node->info->special_info)->visual_type))
+    if (typemask & (1ULL << ((const vo_info_t *)node->info->special_info)->visual_type))
     {
       const char *id = node->info->id;
       int j = i;
@@ -2017,7 +2017,7 @@ xine_audio_port_t *xine_open_audio_driver (xine_t *this, const char *id,
   plugin_node_t      *node;
   ao_driver_t        *driver;
   xine_audio_port_t  *port;
-  ao_info_t          *ao_info;
+  const ao_info_t    *ao_info;
   plugin_catalog_t   *catalog = this->plugin_catalog;
   int                 list_id, list_size;
 
@@ -2033,7 +2033,7 @@ xine_audio_port_t *xine_open_audio_driver (xine_t *this, const char *id,
 
     node = xine_sarray_get (this->plugin_catalog->plugin_lists[PLUGIN_AUDIO_OUT - 1], list_id);
 
-    ao_info = (ao_info_t *)node->info->special_info;
+    ao_info = (const ao_info_t *)node->info->special_info;
 
     if (id) {
       if (!strcasecmp(node->info->id, id)) {
@@ -2554,7 +2554,7 @@ const char *const *xine_list_post_plugins_typed(xine_t *xine, uint32_t type) {
 
   for (list_id = 0; list_id < list_size; list_id++) {
     node = xine_sarray_get (catalog->plugin_lists[PLUGIN_POST - 1], list_id);
-    if (((post_info_t *)node->info->special_info)->type == type)
+    if (((const post_info_t *)node->info->special_info)->type == type)
       catalog->ids[i++] = node->info->id;
   }
   catalog->ids[i] = NULL;
@@ -2668,7 +2668,7 @@ xine_post_t *xine_post_init(xine_t *xine, const char *name, int inputs,
 	post->output_ids[i] = NULL;
 
 	/* copy the post plugin type to the public part */
-	post->xine_post.type = ((post_info_t *)node->info->special_info)->type;
+	post->xine_post.type = ((const post_info_t *)node->info->special_info)->type;
 
 	break;
       } else {

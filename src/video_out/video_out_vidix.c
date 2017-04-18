@@ -1145,7 +1145,7 @@ static void *init_class (xine_t *xine, void *visual_gen) {
 static vo_driver_t *vidix_open_plugin (video_driver_class_t *class_gen, const void *visual_gen) {
   vidix_driver_t       *this   = open_plugin(class_gen);
   config_values_t      *config = this->config;
-  x11_visual_t         *visual = (x11_visual_t *) visual_gen;
+  const x11_visual_t   *visual = (const x11_visual_t *) visual_gen;
   XWindowAttributes     window_attributes;
 
   this->visual_type       = XINE_VISUAL_TYPE_X11;

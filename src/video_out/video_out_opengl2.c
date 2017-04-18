@@ -1722,7 +1722,7 @@ static void opengl2_dispose( vo_driver_t *this_gen )
 static vo_driver_t *opengl2_open_plugin( video_driver_class_t *class_gen, const void *visual_gen )
 {
   opengl2_class_t     *class   = (opengl2_class_t *) class_gen;
-  x11_visual_t        *visual  = (x11_visual_t *) visual_gen;
+  const x11_visual_t  *visual  = (const x11_visual_t *) visual_gen;
   opengl2_driver_t    *this;
   config_values_t     *config  = class->xine->config;
 
@@ -1867,7 +1867,7 @@ static vo_driver_t *opengl2_open_plugin( video_driver_class_t *class_gen, const 
 
 
 
-static int opengl2_check_platform( opengl2_class_t *this_gen, x11_visual_t *vis )
+static int opengl2_check_platform( opengl2_class_t *this_gen, const x11_visual_t *vis )
 {
   int attribs[] = { GLX_RGBA, GLX_DOUBLEBUFFER, GLX_RED_SIZE, 8,
     GLX_GREEN_SIZE, 8, GLX_BLUE_SIZE, 8, GLX_DEPTH_SIZE, 16, None };
@@ -1923,7 +1923,7 @@ static void *opengl2_init_class( xine_t *xine, void *visual_gen )
 {
   opengl2_class_t *this = (opengl2_class_t *) calloc(1, sizeof(opengl2_class_t));
 
-  if ( !opengl2_check_platform( this, (x11_visual_t *)visual_gen ) ) {
+  if ( !opengl2_check_platform( this, (const x11_visual_t *)visual_gen ) ) {
     free(this);
     return NULL;
   }

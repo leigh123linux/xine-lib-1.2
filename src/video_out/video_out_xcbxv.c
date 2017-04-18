@@ -1263,7 +1263,7 @@ static vo_driver_t *open_plugin(video_driver_class_t *class_gen, const void *vis
   config_values_t      *config = class->config;
   xv_driver_t          *this;
   int                   i;
-  xcb_visual_t         *visual = (xcb_visual_t *) visual_gen;
+  const xcb_visual_t   *visual = (const xcb_visual_t *) visual_gen;
   xcb_xv_port_t         xv_port;
   xv_prefertype		prefer_type;
   char                 *adaptor_name;

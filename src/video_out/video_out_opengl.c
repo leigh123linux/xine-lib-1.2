@@ -689,7 +689,7 @@ static int render_help_verify_ext (opengl_driver_t *this, const char *ext) {
   int ret = 0;
   const size_t l = strlen (ext);
   const char *e;
-  for (e = (char *) this->gl_exts; e && *e; e = strchr (e, ' ')) {
+  for (e = (const char *) this->gl_exts; e && *e; e = strchr (e, ' ')) {
     while (isspace (*e))
       e++;
     if (strncmp (e, ext, l) == 0 && (e[l] == 0 || e[l] == ' ')) {
@@ -1928,7 +1928,7 @@ static void opengl_cb_default (void *val_gen, xine_cfg_entry_t *entry) {
 static vo_driver_t *opengl_open_plugin (video_driver_class_t *class_gen, const void *visual_gen) {
   opengl_class_t       *class   = (opengl_class_t *) class_gen;
   config_values_t      *config  = class->xine->config;
-  x11_visual_t         *visual  = (x11_visual_t *) visual_gen;
+  const x11_visual_t   *visual  = (const x11_visual_t *) visual_gen;
   opengl_driver_t      *this;
   const char          **render_fun_names;
   int                   i;

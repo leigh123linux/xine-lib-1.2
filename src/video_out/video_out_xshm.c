@@ -1197,7 +1197,7 @@ static const char *visual_class_name(Visual *visual) {
 static vo_driver_t *xshm_open_plugin_2 (video_driver_class_t *class_gen, const void *visual_gen) {
   xshm_class_t         *class   = (xshm_class_t *) class_gen;
   config_values_t      *config  = class->config;
-  x11_visual_t         *visual  = (x11_visual_t *) visual_gen;
+  const x11_visual_t   *visual  = (const x11_visual_t *) visual_gen;
   xshm_driver_t        *this;
   XWindowAttributes     attribs;
   XImage               *myimage;
@@ -1396,7 +1396,7 @@ static vo_driver_t *xshm_open_plugin_2 (video_driver_class_t *class_gen, const v
 }
 
 static vo_driver_t *xshm_open_plugin_old (video_driver_class_t *class_gen, const void *visual_gen) {
-  x11_visual_t         *old_visual  = (x11_visual_t *) visual_gen;
+  const x11_visual_t  *old_visual  = (const x11_visual_t *) visual_gen;
   x11_visual_t         visual;
 
   /* provides compatibility for XINE_VISUAL_TYPE_X11 */

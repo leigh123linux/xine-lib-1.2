@@ -192,7 +192,7 @@ static void bebf_UNUSED bebf_skip (bebf_t *bebf, uint32_t nbits) {
  * @return     stream position in bits.
  */
 static uint32_t bebf_UNUSED bebf_tell (bebf_t *bebf) {
-  return (((uint8_t *)bebf->readptr - bebf->readstart) << 3) + bebf->readbits - 64;
+  return (((const uint8_t *)bebf->readptr - bebf->readstart) << 3) + bebf->readbits - 64;
 }
 
 /**

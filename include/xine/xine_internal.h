@@ -492,7 +492,7 @@ int              _x_decoder_available  (xine_t *xine, uint32_t buftype) XINE_PRO
  */
 
 vo_driver_t *_x_load_video_output_plugin(xine_t *this_gen,
-					 char *id, int visual_type, void *visual) XINE_PROTECTED;
+                                         const char *id, int visual_type, void *visual) XINE_PROTECTED;
 
 /*
  * audio output plugin dynamic loading stuff

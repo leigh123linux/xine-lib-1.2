@@ -44,7 +44,7 @@ static int Fieldcopy(void *dest, const void *src, size_t count,
                      int rows, int dst_pitch, int src_pitch)
 {
    unsigned char* pDest = (unsigned char*) dest;
-   unsigned char* pSrc = (unsigned char*) src;
+   const unsigned char* pSrc = (const unsigned char*) src;
    int i;
 
    for (i=0; i < rows; i++) {
