@@ -3108,13 +3108,6 @@ static void vaapi_update_frame_format (vo_driver_t *this_gen,
   frame->vo_frame.future_frame = NULL;
 }
 
-static inline uint8_t clip_uint8_vlc( int32_t a )
-{
-  if( a&(~255) ) return (-a)>>31;
-  else           return a;
-}
-
-
 static void nv12_to_yv12(const uint8_t *y_src,  int y_src_pitch, 
                          const uint8_t *uv_src, int uv_src_pitch, 
                          uint8_t *y_dst, int y_dst_pitch,
