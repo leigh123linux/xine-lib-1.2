@@ -3046,8 +3046,8 @@ static void vaapi_update_frame_format (vo_driver_t *this_gen,
 
     // (re-) allocate render space
     xine_freep_aligned(&frame->vo_frame.base[0]);
-    xine_freep_aligned(&frame->vo_frame.base[0]);
-    xine_freep_aligned(&frame->vo_frame.base[0]);
+    xine_freep_aligned(&frame->vo_frame.base[1]);
+    xine_freep_aligned(&frame->vo_frame.base[2]);
 
     /* set init_vaapi on frame formats XINE_IMGFMT_YV12/XINE_IMGFMT_YUY2 only.
      * for XINE_IMGFMT_VAAPI the init was already done.
