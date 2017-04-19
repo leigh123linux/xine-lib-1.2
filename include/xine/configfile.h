@@ -66,7 +66,7 @@ struct cfg_entry_s {
 
   /** type range specific: */
   int              range_min;
-  int              range_max;
+  int              range_max;  /* also used for enum */
 
   /** type enum specific: */
   char           **enum_values;

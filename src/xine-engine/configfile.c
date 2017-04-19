@@ -778,6 +778,14 @@ static int config_register_enum (config_values_t *this,
   entry->description   = (description) ? strdup(description) : NULL;
   entry->help          = (help) ? strdup(help) : NULL;
 
+  entry->range_min = 0;
+  entry->range_max = value_count;
+
+  if (entry->num_value < 0)
+    entry->num_value = 0;
+  if (entry->num_value >= value_count)
+    entry->num_value = value_count;
+
   pthread_mutex_unlock(&this->config_lock);
 
   return entry->num_value;
@@ -827,6 +835,18 @@ static void config_update_num (config_values_t *this,
   }
 
   pthread_mutex_lock(&this->config_lock);
+
+  if (entry->type == XINE_CONFIG_TYPE_ENUM) {
+    if (value >= entry->range_max) {
+      printf("configfile: error - tried to update enum value to %d (max %d)\n", value, entry->range_max);
+      value = entry->range_max - 1;
+    }
+    if (value < 0) {
+      printf("configfile: error - tried to update enum value to %d\n", value);
+      value = 0;
+    }
+  }
+
   entry->num_value = value;
 
   if (entry->callback) {
@@ -1117,7 +1137,9 @@ void xine_config_save (xine_t *xine, const char *filename) {
 	fprintf (f_config, "}, default: %d\n",
 		 entry->num_default);
 
-	if (entry->enum_values[entry->num_value] != NULL) {
+        if (entry->num_value >= 0 &&
+            entry->num_value < entry->range_max &&
+            entry->enum_values[entry->num_value] != NULL) {
 	  if (entry->num_value == entry->num_default) fprintf (f_config, "#");
 	  fprintf (f_config, "%s:", entry->key);
 	  fprintf (f_config, "%s\n", entry->enum_values[entry->num_value]);
