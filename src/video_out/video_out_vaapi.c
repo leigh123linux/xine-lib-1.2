@@ -3173,13 +3173,11 @@ static void yv12_to_nv12(const uint8_t *y_src, int y_src_pitch,
     y_dst += y_dst_pitch;
   }
 
-  for(y = 0; y < height; y++) {
+  for(y = 0; y < height / 2; y++) {
     uint8_t *uv_dst_tmp = uv_dst;
-    for(x = 0; x < u_src_pitch; x++) {
-      if(((y * uv_dst_pitch) + x) < uv_dst_size) {
-        *(uv_dst_tmp    ) = *(u_src + x);
-        *(uv_dst_tmp + 1) = *(v_src + x);
-      }
+    for(x = 0; x < width / 2; x++) {
+      *(uv_dst_tmp    ) = *(u_src + x);
+      *(uv_dst_tmp + 1) = *(v_src + x);
       uv_dst_tmp += 2;
     }
     uv_dst += uv_dst_pitch;
