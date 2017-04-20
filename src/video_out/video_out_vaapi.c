@@ -299,9 +299,7 @@ static void yv12_to_nv12(const uint8_t *y_src, int y_src_pitch,
                          const uint8_t *v_src, int v_src_pitch,
                          uint8_t *y_dst,  int y_dst_pitch,
                          uint8_t *uv_dst, int uv_dst_pitch,
-                         int src_width, int src_height, 
-                         int dst_width, int dst_height,
-                         int dst_data_size);
+                         int width, int height);
 
 void (GLAPIENTRY *mpglGenTextures)(GLsizei, GLuint *);
 void (GLAPIENTRY *mpglBindTexture)(GLenum, GLuint);
@@ -3151,21 +3149,10 @@ static void yv12_to_nv12(const uint8_t *y_src, int y_src_pitch,
                          const uint8_t *v_src, int v_src_pitch,
                          uint8_t *y_dst,  int y_dst_pitch,
                          uint8_t *uv_dst, int uv_dst_pitch,
-                         int src_width, int src_height, 
-                         int dst_width, int dst_height,
-                         int dst_data_size) {
-
-  int y_dst_size  = dst_height * y_dst_pitch;
+                         int width, int height) {
   int y, x;
 
   lprintf("yv12_to_nv12 converter\n");
-
-  int uv_dst_size = dst_height * uv_dst_pitch / 2;
-  if((y_dst_size + uv_dst_size) != (dst_data_size))
-    printf("yv12_to_nv12 strange %d\n", (y_dst_size + uv_dst_size) - (dst_data_size));
-
-  int height  = (src_height > dst_height) ? dst_height : src_height;
-  int width   = (src_width > dst_width) ? dst_width : src_width;
 
   for(y = 0; y < height; y++) {
     xine_fast_memcpy(y_dst, y_src, width);
@@ -3284,9 +3271,7 @@ static VAStatus vaapi_software_render_frame(vo_driver_t *this_gen, vo_frame_t *f
                    frame_gen->base[2], frame_gen->pitches[2],
                    (uint8_t *)p_base + va_image->offsets[0], va_image->pitches[0],
                    (uint8_t *)p_base + va_image->offsets[1], va_image->pitches[1],
-                   frame_gen->width, frame_gen->height, 
-                   va_image->width,  va_image->height, 
-                   va_image->data_size);
+                   frame_gen->width, frame_gen->height);
 
     }
   } else if (frame->format == XINE_IMGFMT_YUY2) {
