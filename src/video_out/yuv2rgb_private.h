@@ -85,7 +85,6 @@ struct yuv2rgb_factory_impl_s {
   void    *table_gU[256];
   int      table_gV[256];
   void    *table_bU[256];
-  void    *table_mmx_base;
   void    *table_mmx;
 
   /* preselected functions for mode/swap/hardware */
