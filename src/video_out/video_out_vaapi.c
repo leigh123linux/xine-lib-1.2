@@ -3154,23 +3154,32 @@ static void yv12_to_nv12(const uint8_t *y_src, int y_src_pitch,
 
   lprintf("yv12_to_nv12 converter\n");
 
-  for(y = 0; y < height; y++) {
+  for (y = 0; y < height; y++) {
     xine_fast_memcpy(y_dst, y_src, width);
     y_src += y_src_pitch;
     y_dst += y_dst_pitch;
   }
 
+  /* Combine uv line to temporary (cached) buffer.
+     Avoids fetching destination plane to cache. */
+  uint8_t *line = xine_malloc_aligned(width + 1);
+  if (!line)
+    return;
+
   for(y = 0; y < height / 2; y++) {
-    uint8_t *uv_dst_tmp = uv_dst;
     for(x = 0; x < width / 2; x++) {
-      *(uv_dst_tmp    ) = *(u_src + x);
-      *(uv_dst_tmp + 1) = *(v_src + x);
-      uv_dst_tmp += 2;
+      line[2*x]     = *(u_src + x);
+      line[2*x + 1] = *(v_src + x);
     }
+
+    xine_fast_memcpy(uv_dst, line, width);
+
     uv_dst += uv_dst_pitch;
     u_src += u_src_pitch;
     v_src += v_src_pitch;
   }
+
+  xine_free_aligned(line);
 }
 
 static void yuy2_to_nv12(const uint8_t *src_yuy2_map, int yuy2_pitch, 
