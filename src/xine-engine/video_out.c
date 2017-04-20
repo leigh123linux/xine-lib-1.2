@@ -995,6 +995,14 @@ static int vo_frame_draw (vo_frame_t *img, xine_stream_t *stream) {
       vo_frame_inc_lock( img );
     vo_append_to_img_buf_queue (&this->display_img_buf_queue, img);
 
+    if (img->is_first && (this->display_img_buf_queue.first == img)) {
+      /* wake up render thread */
+      pthread_mutex_lock (&this->trigger_drawing_mutex);
+      this->trigger_drawing = 1;
+      pthread_cond_signal (&this->trigger_drawing_cond);
+      pthread_mutex_unlock (&this->trigger_drawing_mutex);
+    }
+
   } else {
     lprintf ("bad_frame\n");
 
@@ -1283,24 +1291,29 @@ static vo_frame_t *next_frame (vos_t *this, int64_t *vpts) {
       printf ("video_out: first frame pts=%"PRId64", now=%"PRId64", discard=%d\n",
         img->vpts, *vpts, this->discard_frames);
 #endif
-      img->is_first--;
-      /* make sure to wake up xine_play even if this first frame gets discarded */
-      if (img->is_first == 0)
-        img->is_first = -1;
-      /*
-       * before displaying the first frame without
-       * "metronom prebuffering" we should make sure it's
-       * not used as a decoder reference anymore.
+      /* The user seek brake feature: display first frame after seek right now
+       * (without "metronom prebuffering") if
+       * - it is either no longer referenced by decoder or post layer, or
+       * - it is due for display naturally, or
+       * - we have waited too long for that to happen.
+       * This shall do 3 things:
+       * - User sees the effect of seek soon, and
+       * - We dont decode too many frames in vain when there is a new seek, and
+       * - We dont drop frames already decoded in time.
+       * Finally, dont zero img->is_first so xine_play () gets woken up properly.
        */
-      if( img->lock_counter == 1 ) {
-        /* display it immediately */
+      if ((img->lock_counter == 1) || (img->vpts <= *vpts) || (img->is_first == 1)) {
         img->vpts = *vpts;
         *vpts = img->vpts + (img->duration ? img->duration : DEFAULT_FRAME_DURATION);
         break;
       }
       /* poll */
       lprintf ("frame still referenced %d times, is_first=%d\n", img->lock_counter, img->is_first);
-      img->vpts = *vpts + FIRST_FRAME_POLL_DELAY;
+      img->is_first--;
+      *vpts += FIRST_FRAME_POLL_DELAY;
+      pthread_mutex_unlock (&this->display_img_buf_queue.mutex);
+      this->wakeups_early++;
+      return NULL;
     }
 
     {
@@ -1332,25 +1345,6 @@ static vo_frame_t *next_frame (vos_t *this, int64_t *vpts) {
       pthread_mutex_lock (&img->stream->current_extra_info_lock);
       _x_extra_info_merge (img->stream->current_extra_info, img->extra_info);
       pthread_mutex_unlock (&img->stream->current_extra_info_lock);
-      /* wake up xine_play now if we just discarded first frame */
-      if (img->is_first != 0) {
-        xine_list_iterator_t ite;
-        pthread_mutex_lock (&this->streams_lock);
-        for (ite = xine_list_front(this->streams); ite;
-          ite = xine_list_next(this->streams, ite)) {
-          xine_stream_t *stream = xine_list_get_value (this->streams, ite);
-          if (stream == XINE_ANON_STREAM)
-            continue;
-          pthread_mutex_lock (&stream->first_frame_lock);
-          if (stream->first_frame_flag) {
-            stream->first_frame_flag = 0;
-            pthread_cond_broadcast (&stream->first_frame_reached);
-          }
-          pthread_mutex_unlock (&stream->first_frame_lock);
-        }
-        pthread_mutex_unlock (&this->streams_lock);
-        xine_log (this->xine, XINE_LOG_MSG, _("video_out: just discarded first frame after seek\n"));
-      }
     }
 
     /* last frame? back it up for still frame creation */
