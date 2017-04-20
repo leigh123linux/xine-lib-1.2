@@ -2501,6 +2501,18 @@ static void vaapi_overlay_blend (vo_driver_t *this_gen,
   ++this->ovl_changed;
 }
 
+static void _merge_rects(vaapi_rect_t *rect, const vo_overlay_t *ovl)
+{
+  if (ovl->x < rect->x1)
+    rect->x1 = ovl->x;
+  if (ovl->y < rect->y1)
+    rect->y1 = ovl->y;
+  if ((ovl->x + ovl->width) > rect->x2)
+    rect->x2 = ovl->x + ovl->width;
+  if ((ovl->y + ovl->height) > rect->y2)
+    rect->y2 = ovl->y + ovl->height;
+}
+
 static void vaapi_overlay_end (vo_driver_t *this_gen, vo_frame_t *frame_gen) {
   vaapi_driver_t      *this       = (vaapi_driver_t *) this_gen;
   vaapi_frame_t       *frame      = (vaapi_frame_t *) frame_gen;
@@ -2529,14 +2541,7 @@ static void vaapi_overlay_end (vo_driver_t *this_gen, vo_frame_t *frame_gen) {
 
     if (ovl->unscaled) {
       if (first_unscaled) {
-        if (ovl->x < unscaled_dirty_rect.x1)
-          unscaled_dirty_rect.x1 = ovl->x;
-        if (ovl->y < unscaled_dirty_rect.y1)
-          unscaled_dirty_rect.y1 = ovl->y;
-        if ((ovl->x + ovl->width) > unscaled_dirty_rect.x2)
-          unscaled_dirty_rect.x2 = ovl->x + ovl->width;
-        if ((ovl->y + ovl->height) > unscaled_dirty_rect.y2)
-          unscaled_dirty_rect.y2 = ovl->y + ovl->height;
+        _merge_rects(&unscaled_dirty_rect, ovl);
       } else {
         first_unscaled = ovl;
         unscaled_dirty_rect.x1 = ovl->x;
@@ -2549,14 +2554,7 @@ static void vaapi_overlay_end (vo_driver_t *this_gen, vo_frame_t *frame_gen) {
       unscaled_height = unscaled_dirty_rect.y2;
     } else {
       if (first_scaled) {
-        if (ovl->x < dirty_rect.x1)
-          dirty_rect.x1 = ovl->x;
-        if (ovl->y < dirty_rect.y1)
-          dirty_rect.y1 = ovl->y;
-        if ((ovl->x + ovl->width) > dirty_rect.x2)
-          dirty_rect.x2 = ovl->x + ovl->width;
-        if ((ovl->y + ovl->height) > dirty_rect.y2)
-          dirty_rect.y2 = ovl->y + ovl->height;
+        _merge_rects(&dirty_rect, ovl);
       } else {
         first_scaled = ovl;
         dirty_rect.x1 = ovl->x;
