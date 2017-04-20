@@ -103,6 +103,8 @@ void _x_handle_stream_end (xine_stream_t *stream, int non_user) {
 
     xine_event_t event;
 
+    stream->finished_naturally = 1;
+
     event.data_length = 0;
     event.type        = XINE_EVENT_UI_PLAYBACK_FINISHED;
 
@@ -466,7 +468,7 @@ void xine_stop (xine_stream_t *stream) {
 static void close_internal (xine_stream_t *stream) {
 
   int i ;
-  int gapless_switch = stream->gapless_switch;
+  int flush = !stream->gapless_switch && !stream->finished_naturally;
 
   if( stream->slave ) {
     xine_close( stream->slave );
@@ -477,7 +479,7 @@ static void close_internal (xine_stream_t *stream) {
     }
   }
 
-  if( !gapless_switch ) {
+  if (flush) {
     /* make sure that other threads cannot change the speed, especially pauseing the stream */
     pthread_mutex_lock(&stream->speed_change_lock);
     stream->ignore_speed_change = 1;
@@ -493,7 +495,7 @@ static void close_internal (xine_stream_t *stream) {
 
   stop_internal( stream );
 
-  if( !gapless_switch ) {
+  if (flush) {
     if (stream->video_out)
       stream->video_out->set_property(stream->video_out, VO_PROP_DISCARD_FRAMES, 0);
     if (stream->audio_out)
@@ -620,9 +622,12 @@ xine_stream_t *xine_stream_new (xine_t *this,
    * create a new stream object
    */
 
+  stream = (xine_stream_t *) calloc (1, sizeof (xine_stream_t)) ;
+  if (!stream)
+    return NULL;
+
   pthread_mutex_lock (&this->streams_lock);
 
-  stream = (xine_stream_t *) calloc (1, sizeof (xine_stream_t)) ;
   stream->current_extra_info       = malloc( sizeof( extra_info_t ) );
   stream->audio_decoder_extra_info = malloc( sizeof( extra_info_t ) );
   stream->video_decoder_extra_info = malloc( sizeof( extra_info_t ) );
@@ -649,6 +654,7 @@ xine_stream_t *xine_stream_new (xine_t *this,
   stream->delay_finish_event     = 0;
   stream->gapless_switch         = 0;
   stream->keep_ao_driver_open    = 0;
+  stream->finished_naturally     = 0;
 
   stream->video_out              = vo;
   if (vo)
@@ -1401,6 +1407,7 @@ static void wait_first_frame (xine_stream_t *stream) {
 
 static int play_internal (xine_stream_t *stream, int start_pos, int start_time) {
 
+  int        flush;
   int        demux_status;
   int        demux_thread_running;
 
@@ -1413,6 +1420,12 @@ static int play_internal (xine_stream_t *stream, int start_pos, int start_time) 
     return 0;
   }
 
+  if (start_pos || start_time)
+    stream->finished_naturally = 0;
+  flush = (stream->master == stream) && !stream->gapless_switch && !stream->finished_naturally;
+  if (!flush)
+    xprintf (stream->xine, XINE_VERBOSITY_DEBUG, "xine_play: using gapless switch\n");
+
   /* hint demuxer thread we want to interrupt it */
   _x_action_raise(stream);
 
@@ -1423,7 +1436,7 @@ static int play_internal (xine_stream_t *stream, int start_pos, int start_time) 
   stream->xine->port_ticket->acquire(stream->xine->port_ticket, 1);
 
   /* only flush/discard output ports on master streams */
-  if( stream->master == stream && !stream->gapless_switch) {
+  if (flush) {
     /* discard audio/video buffers to get engine going and take the lock faster */
     if (stream->audio_out)
       stream->audio_out->set_property(stream->audio_out, AO_PROP_DISCARD_BUFFERS, 1);
@@ -1453,7 +1466,7 @@ static int play_internal (xine_stream_t *stream, int start_pos, int start_time) 
 					     stream->demux_thread_running);
 
   /* only flush/discard output ports on master streams */
-  if( stream->master == stream && !stream->gapless_switch) {
+  if (flush) {
     if (stream->audio_out)
       stream->audio_out->set_property(stream->audio_out, AO_PROP_DISCARD_BUFFERS, 0);
     if (stream->video_out)
@@ -1492,6 +1505,7 @@ static int play_internal (xine_stream_t *stream, int start_pos, int start_time) 
       _x_demux_start_thread( stream );
       stream->status = XINE_STATUS_PLAY;
     }
+    stream->finished_naturally = 0;
   }
 
 

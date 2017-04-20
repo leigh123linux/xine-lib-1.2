@@ -63,7 +63,7 @@ void _x_demux_flush_engine (xine_stream_t *stream) {
 
   buf_element_t *buf;
 
-  if( stream->gapless_switch )
+  if (stream->gapless_switch || stream->finished_naturally)
     return;
 
   stream->xine->port_ticket->acquire(stream->xine->port_ticket, 1);

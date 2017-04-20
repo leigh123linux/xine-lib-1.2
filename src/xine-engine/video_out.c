@@ -1232,6 +1232,7 @@ static vo_frame_t *next_frame (vos_t *this, int64_t *vpts) {
    * FIXME: when switching from movie to logo, somebody briefly flashes VO_PROP_DISCARD_FRAMES.
    * This kills up to num_frames from the end. For now, just forget the flush there.
    * That happens here automagically because we come here late ;-)
+   * FIXED: by auto gapless switch.
    */
   if (this->discard_frames) {
     vo_frame_t *first_frame = NULL, *last_frame = NULL;
