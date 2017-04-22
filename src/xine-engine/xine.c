@@ -1806,6 +1806,19 @@ void xine_init (xine_t *this) {
   setenv ("HOME", xine_get_homedir (), 0); /* libxdg-basedir needs $HOME */
   xdgInitHandle(&this->basedir_handle);
 
+  /* debug verbosity override */
+  {
+    int v = 0;
+    const uint8_t *s = (const uint8_t *)getenv ("LIBXINE_VERBOSITY"), *t = s;
+    uint8_t z;
+    if (s) {
+      while ((z = *s++ ^ '0') < 10)
+        v = 10 * v + z;
+      if (s > t + 1)
+        this->verbosity = v;
+    }
+  }
+
   /*
    * locks
    */
