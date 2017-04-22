@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2000-2014 the xine project
+ * Copyright (C) 2000-2017 the xine project
  *
  * This file is part of xine, a free video player.
  *
@@ -35,8 +35,6 @@
 #define LOG
 */
 
-
-#define LOG_DVBSPEED
 
 #include "net_buf_ctrl.h"
 
@@ -140,10 +138,7 @@ static void dvbspeed_init (nbc_t *this) {
         this->dvbs_audio_in = this->dvbs_audio_out = this->dvbs_audio_fill = 0;
         this->dvbs_video_in = this->dvbs_video_out = this->dvbs_video_fill = 0;
         this->dvbspeed = 7;
-#ifdef LOG_DVBSPEED
-        /* I'm using plain printf because kaffeine sets verbosity to 0 */
-        printf ("net_buf_ctrl: dvbspeed mode\n");
-#endif
+        xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG, "net_buf_ctrl: dvbspeed mode\n");
 #if 1
         /* somewhat rude but saves user a lot of frustration */
         if (this->stream) {
@@ -153,16 +148,12 @@ static void dvbspeed_init (nbc_t *this) {
           if (xine_config_lookup_entry (xine, "audio.synchronization.slow_fast_audio",
             &entry) && (entry.num_value == 0)) {
             config->update_num (config, "audio.synchronization.slow_fast_audio", 1);
-#ifdef LOG_DVBSPEED
-            printf ("net_buf_ctrl: slow/fast audio playback enabled\n");
-#endif
+            xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG, "net_buf_ctrl: slow/fast audio playback enabled\n");
           }
           if (xine_config_lookup_entry (xine, "engine.buffers.video_num_buffers",
             &entry) && (entry.num_value < 800)) {
             config->update_num (config, "engine.buffers.video_num_buffers", 800);
-#ifdef LOG_DVBSPEED
-            printf ("net_buf_ctrl: enlarged video fifo to 800 buffers\n");
-#endif
+            xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG, "net_buf_ctrl: enlarged video fifo to 800 buffers\n");
           }
         }
 #endif
@@ -174,9 +165,8 @@ static void dvbspeed_init (nbc_t *this) {
 static void dvbspeed_close (nbc_t *this) {
   if (((0xec >> this->dvbspeed) & 1) && this->stream)
     _x_set_fine_speed (this->stream, XINE_FINE_SPEED_NORMAL);
-#ifdef LOG_DVBSPEED
-  if (this->dvbspeed) printf ("net_buf_ctrl: dvbspeed OFF\n");
-#endif
+  if (this->dvbspeed)
+    xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG, "net_buf_ctrl: dvbspeed OFF\n");
   this->dvbspeed = 0;
 }
 
@@ -216,10 +206,8 @@ static void dvbspeed_put (nbc_t *this, fifo_buffer_t * fifo, buf_element_t *b) {
         (100 * used > 98 * fifo->buffer_pool_capacity)) {
         _x_set_fine_speed (this->stream, XINE_FINE_SPEED_NORMAL * 201 / 200);
         this->dvbspeed += 2;
-#ifdef LOG_DVBSPEED
-        printf ("net_buf_ctrl: dvbspeed 100.5%% @ %s %d ms %d buffers\n",
-          name, (int)*fill / 90, used);
-#endif
+        xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG,
+          "net_buf_ctrl: dvbspeed 100.5%% @ %s %d ms %d buffers\n", name, (int)*fill / 90, used);
       }
       break;
     case 7:
@@ -227,9 +215,7 @@ static void dvbspeed_put (nbc_t *this, fifo_buffer_t * fifo, buf_element_t *b) {
         /* Pause on first a/v buffer. Decoder headers went through at this time
            already, and xine_play is done waiting for that */
         _x_set_fine_speed (this->stream, 0);
-#ifdef LOG_DVBSPEED
-        printf ("net_buf_ctrl: prebuffering...\n");
-#endif
+        xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG, "net_buf_ctrl: prebuffering...\n");
         break;
       }
       /* DVB streams usually mux video > 0.5 seconds earlier than audio
@@ -245,10 +231,8 @@ static void dvbspeed_put (nbc_t *this, fifo_buffer_t * fifo, buf_element_t *b) {
       if ((*fill > this->dvbs_center) || (100 * used > 73 * fifo->buffer_pool_capacity)) {
         _x_set_fine_speed (this->stream, XINE_FINE_SPEED_NORMAL);
         this->dvbspeed = (mode & 0x10) ? 1 : 4;
-#ifdef LOG_DVBSPEED
-        printf ("net_buf_ctrl: dvbspeed 100%% @ %s %d ms %d buffers\n",
-          name, (int)*fill / 90, used);
-#endif
+        xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG,
+          "net_buf_ctrl: dvbspeed 100%% @ %s %d ms %d buffers\n", name, (int)*fill / 90, used);
         /* dont let low bitrate radio switch speed too often */
         if (used < 30) this->dvbs_width = 135000;
       }
@@ -292,19 +276,15 @@ static void dvbspeed_get (nbc_t *this, fifo_buffer_t * fifo, buf_element_t *b) {
         (100 * used < 38 * fifo->buffer_pool_capacity)) {
         _x_set_fine_speed (this->stream, XINE_FINE_SPEED_NORMAL * 199 / 200);
         this->dvbspeed += 1;
-#ifdef LOG_DVBSPEED
-        printf ("net_buf_ctrl: dvbspeed 99.5%% @ %s %d ms %d buffers\n",
-          name, (int)*fill / 90, used);
-#endif
+        xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG,
+          "net_buf_ctrl: dvbspeed 99.5%% @ %s %d ms %d buffers\n", name, (int)*fill / 90, used);
       }
     break;
     case 2:
     case 5:
       if (used <= 1) {
         this->dvbspeed = 7;
-#ifdef LOG_DVBSPEED
-        printf ("net_buf_ctrl: signal lost\n");
-#endif
+        xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG, "net_buf_ctrl: signal lost\n");
       }
     break;
     case 3:
@@ -312,10 +292,8 @@ static void dvbspeed_get (nbc_t *this, fifo_buffer_t * fifo, buf_element_t *b) {
       if (*fill && (*fill < this->dvbs_center) && (100 * used < 73 * fifo->buffer_pool_capacity)) {
         _x_set_fine_speed (this->stream, XINE_FINE_SPEED_NORMAL);
         this->dvbspeed -= 2;
-#ifdef LOG_DVBSPEED
-        printf ("net_buf_ctrl: dvbspeed 100%% @ %s %d ms %d buffers\n",
-          name, (int)*fill / 90, used);
-#endif
+        xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG,
+          "net_buf_ctrl: dvbspeed 100%% @ %s %d ms %d buffers\n", name, (int)*fill / 90, used);
       }
     break;
   }
