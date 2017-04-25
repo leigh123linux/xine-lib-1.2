@@ -356,6 +356,9 @@ static vo_frame_t *vo_queue_pop_int (img_buf_fifo_t *queue) {
 static vo_frame_t *vo_queue_get_dupl (img_buf_fifo_t *queue, vo_frame_t *s) {
   vo_frame_t *img, *prev = NULL, *found = NULL, *fprev = NULL;
 
+  if (!s)
+    return NULL;
+
   pthread_mutex_lock (&queue->mutex);
 
   for (img = queue->first; img; img = img->next) {
@@ -2491,5 +2494,4 @@ xine_video_port_t *_x_vo_new_port (xine_t *xine, vo_driver_t *driver, int grabon
 
   return &this->vo;
 }
-
 
