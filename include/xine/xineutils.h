@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2000-2016 the xine project
+ * Copyright (C) 2000-2017 the xine project
  *
  * This file is part of xine, a free video player.
  *
@@ -55,6 +55,55 @@ extern "C" {
 #  define DL_IMPORT __declspec(dllimport)
 #  define extern DL_IMPORT extern
 #endif
+
+
+/* Amiga style doubly linked lists, taken from TJtools. */
+/* Why does this work with aliasing? */
+
+#define DLIST_IS_EMPTY(l) ((void *)((l)->head) == (void *)(&(l)->null))
+
+#define DLIST_REMOVE(n) { \
+  dnode_t *dl_rm_this = (dnode_t *)(n); \
+  dnode_t *dl_rm_prev = dl_rm_this->prev; \
+  dnode_t *dl_rm_next = dl_rm_this->next; \
+  dl_rm_next->prev = dl_rm_prev; \
+  dl_rm_prev->next = dl_rm_next; \
+}
+
+#define DLIST_ADD_HEAD(n,l) { \
+  dlist_t *dl_ah_list = (dlist_t *)(l); \
+  dnode_t *dl_ah_node = (dnode_t *)(n); \
+  dnode_t *dl_ah_head = dl_ah_list->head; \
+  dl_ah_node->next = dl_ah_head; \
+  dl_ah_node->prev = (void *)dl_ah_list; \
+  dl_ah_list->head = dl_ah_node; \
+  dl_ah_head->prev = dl_ah_node; \
+}
+
+#define DLIST_ADD_TAIL(n,l) { \
+  dlist_t *dl_at_list = (dlist_t *)(l); \
+  dnode_t *dl_at_node = (dnode_t *)(n); \
+  dnode_t *dl_at_tail = dl_at_list->tail; \
+  dl_at_node->next = (void *)(&dl_at_list->null); \
+  dl_at_node->prev = dl_at_tail; \
+  dl_at_tail->next = dl_at_node; \
+  dl_at_list->tail = dl_at_node; \
+}
+
+#define DLIST_INIT(l) { \
+  dlist_t *dl_in_list = (dlist_t *)(l); \
+  dl_in_list->head = (void *)(&dl_in_list->null); \
+  dl_in_list->null = NULL; \
+  dl_in_list->tail = (void *)(&dl_in_list->head); }
+
+typedef struct dnode_st {
+  struct dnode_st *next, *prev;
+} dnode_t;
+
+typedef struct {
+  dnode_t *head, *null, *tail;
+} dlist_t;
+
 
   /*
    * debugable mutexes
