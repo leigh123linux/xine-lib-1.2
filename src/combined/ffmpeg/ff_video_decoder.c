@@ -142,7 +142,9 @@ struct ff_video_decoder_s {
 
   int               output_format;
 
-  xine_list_t       *dr1_frames;
+  dlist_t           ffsf_free, ffsf_used;
+  int               ffsf_num, ffsf_total;
+  pthread_mutex_t   ffsf_mutex;
 
 #if XFF_PALETTE == 1
   AVPaletteControl  palette_control;
@@ -191,6 +193,59 @@ struct ff_video_decoder_s {
 /* import color matrix names */
 #define CM_HAVE_YCGCO_SUPPORT 1
 #include "../../video_out/color_matrix.c"
+
+
+/* Keep track of DR1 frames */
+
+typedef struct {
+  dnode_t             node;
+  int                 refs;
+  ff_video_decoder_t *this;
+  vo_frame_t         *vo_frame;
+#ifdef ENABLE_VAAPI
+  ff_vaapi_surface_t *va_surface;
+#endif
+} ff_saved_frame_t;
+
+static ff_saved_frame_t *ffsf_new (ff_video_decoder_t *this) {
+  ff_saved_frame_t *ffsf;
+
+  pthread_mutex_lock (&this->ffsf_mutex);
+  if (DLIST_IS_EMPTY (&this->ffsf_free)) {
+    ffsf = calloc (1, sizeof (*ffsf));
+    if (ffsf) {
+      ffsf->this = this;
+      DLIST_ADD_TAIL (ffsf, &this->ffsf_used);
+      this->ffsf_num++;
+      this->ffsf_total++;
+    }
+  } else {
+    ffsf = (ff_saved_frame_t *)this->ffsf_free.head;
+    DLIST_REMOVE (ffsf);
+    ffsf->refs = 0;
+    ffsf->this = this;
+    ffsf->vo_frame = NULL;
+#ifdef ENABLE_VAAPI
+    ffsf->va_surface = NULL;
+#endif
+    DLIST_ADD_TAIL (ffsf, &this->ffsf_used);
+    this->ffsf_num++;
+  }
+  pthread_mutex_unlock (&this->ffsf_mutex);
+  return ffsf;
+}
+
+static void ffsf_delete (ff_saved_frame_t *ffsf) {
+  if (!ffsf)
+    return;
+
+  pthread_mutex_lock (&ffsf->this->ffsf_mutex);
+  DLIST_REMOVE (ffsf);
+  DLIST_ADD_TAIL (ffsf, &ffsf->this->ffsf_free);
+  ffsf->this->ffsf_num--;
+  pthread_mutex_unlock (&ffsf->this->ffsf_mutex);
+}
+
 
 static void ff_check_colorspace (ff_video_decoder_t *this) {
   int i, cm, caps;
@@ -313,16 +368,8 @@ static void set_stream_info(ff_video_decoder_t *this) {
 }
 
 #ifdef ENABLE_DIRECT_RENDERING
-#ifdef XFF_AV_BUFFER
-typedef struct {
-  int                 refs;
-  ff_video_decoder_t *this;
-  vo_frame_t         *vo_frame;
-#ifdef ENABLE_VAAPI
-  ff_vaapi_surface_t *va_surface;
-#endif
-} ff_saved_frame_t;
 
+#ifdef XFF_AV_BUFFER
 static void release_frame (void *saved_frame, uint8_t *data) {
   ff_saved_frame_t *ffsf = saved_frame;
   /* At this point in time, AVFrame may already be reused. So take our saved values instead. */
@@ -333,14 +380,9 @@ static void release_frame (void *saved_frame, uint8_t *data) {
     if (ffsf->va_surface)
       ffsf->this->accel->release_vaapi_surface (ffsf->this->accel_img, ffsf->va_surface);
 #endif
-    if (ffsf->vo_frame) {
-      xine_list_iterator_t it;
+    if (ffsf->vo_frame)
       ffsf->vo_frame->free (ffsf->vo_frame);
-      it = xine_list_find (ffsf->this->dr1_frames, ffsf->vo_frame);
-      if (it)
-        xine_list_remove (ffsf->this->dr1_frames, it);
-    }
-    free (ffsf);
+    ffsf_delete (ffsf);
   }
 }
 #endif
@@ -354,9 +396,7 @@ static int get_buffer (AVCodecContext *context, AVFrame *av_frame)
   {
   ff_video_decoder_t *this = (ff_video_decoder_t *)context->opaque;
   vo_frame_t *img;
-#ifdef XFF_AV_BUFFER
   ff_saved_frame_t *ffsf;
-#endif
   int buf_width  = av_frame->width;
   int buf_height = av_frame->height;
   /* The visible size, may be smaller. */
@@ -420,12 +460,10 @@ static int get_buffer (AVCodecContext *context, AVFrame *av_frame)
 #endif
     av_frame->reordered_opaque = context->reordered_opaque;
 
-#ifdef XFF_AV_BUFFER
-    ffsf = calloc (1, sizeof (ff_saved_frame_t));
+    ffsf = ffsf_new (this);
     if (!ffsf)
       return AVERROR (ENOMEM);
-    ffsf->this     = this;
-#endif
+    av_frame->opaque = ffsf;
 
     /* reinitialize vaapi for new image size */
     if (width != this->vaapi_width || height != this->vaapi_height) {
@@ -454,9 +492,6 @@ static int get_buffer (AVCodecContext *context, AVFrame *av_frame)
                                             this->output_format,
                                             VO_BOTH_FIELDS|this->frame_flags);
 
-      av_frame->opaque = img;
-      xine_list_push_back(this->dr1_frames, img);
-
       vaapi_accel_t *accel = (vaapi_accel_t*)img->accel_data;
       ff_vaapi_surface_t *va_surface = accel->get_vaapi_surface(img);
 
@@ -464,9 +499,7 @@ static int get_buffer (AVCodecContext *context, AVFrame *av_frame)
         av_frame->data[0] = (void *)va_surface;//(void *)(uintptr_t)va_surface->va_surface_id;
         av_frame->data[3] = (void *)(uintptr_t)va_surface->va_surface_id;
       }
-#ifdef XFF_AV_BUFFER
       ffsf->vo_frame = img;
-#endif
     } else {
       ff_vaapi_surface_t *va_surface = this->accel->get_vaapi_surface(this->accel_img);
 
@@ -474,9 +507,7 @@ static int get_buffer (AVCodecContext *context, AVFrame *av_frame)
         av_frame->data[0] = (void *)va_surface;//(void *)(uintptr_t)va_surface->va_surface_id;
         av_frame->data[3] = (void *)(uintptr_t)va_surface->va_surface_id;
       }
-#ifdef XFF_AV_BUFFER
       ffsf->va_surface = va_surface;
-#endif
     }
 
     lprintf("1: 0x%08x\n", av_frame->data[3]);
@@ -571,17 +602,18 @@ static int get_buffer (AVCodecContext *context, AVFrame *av_frame)
                                             this->output_format,
                                             VO_BOTH_FIELDS|this->frame_flags);
 
-#ifdef XFF_AV_BUFFER
-  /* Sigh. Wrap vo image planes into AVBufferRefs. When ff unref's them, they unref our trigger.
-    That one then fires image release. */
-  ffsf = calloc (1, sizeof (ff_saved_frame_t));
+  ffsf = ffsf_new (this);
   if (!ffsf) {
     img->free (img);
     return AVERROR (ENOMEM);
   }
-  ffsf->this     = this;
   ffsf->vo_frame = img;
-  /* For single chunk render space like video_out_opengl2, just 1 AVBufferRef is enough. */
+
+#ifdef XFF_AV_BUFFER
+  /* Sigh. Wrap vo image planes into AVBufferRefs. When ff unref's them, they unref our trigger.
+   * That one then fires image release.
+   * For single chunk render space like video_out_opengl2, just 1 AVBufferRef is enough.
+   */
   {
     size_t s0 = img->height * img->pitches[0];
     size_t s1 = (img->height + 1) >> 1, s2 = s1;
@@ -597,7 +629,7 @@ static int get_buffer (AVCodecContext *context, AVFrame *av_frame)
       (ffsf->refs)++;
     } else {
       img->free (img);
-      free (ffsf);
+      ffsf_delete (ffsf);
       return AVERROR (ENOMEM);
     }
     if (s1) {
@@ -613,7 +645,7 @@ static int get_buffer (AVCodecContext *context, AVFrame *av_frame)
   av_frame->type = FF_BUFFER_TYPE_USER;
 #endif
 
-  av_frame->opaque = img;
+  av_frame->opaque = ffsf;
 
   av_frame->extended_data = av_frame->data;
 
@@ -647,8 +679,6 @@ static int get_buffer (AVCodecContext *context, AVFrame *av_frame)
   /* take over pts for this frame to have it reordered */
   av_frame->reordered_opaque = context->reordered_opaque;
 
-  xine_list_push_back(this->dr1_frames, img);
-
   return 0;
 }
 
@@ -670,16 +700,10 @@ static void release_buffer(struct AVCodecContext *context, AVFrame *av_frame){
 
   if (av_frame->type == FF_BUFFER_TYPE_USER) {
     if (av_frame->opaque) {
-      vo_frame_t *img = (vo_frame_t *)av_frame->opaque;
-      xine_list_iterator_t it;
-
-      img->free (img);
-
-      it = xine_list_find (this->dr1_frames, av_frame->opaque);
-      assert (it);
-      if (it != NULL) {
-        xine_list_remove (this->dr1_frames, it);
-      }
+      ff_saved_frame_t *ffsf = (ff_saved_frame_t *)av_frame->opaque;
+      if (ffsf->vo_frame)
+        ffsf->vo_frame->free (ffsf->vo_frame);
+      ffsf_delete (ffsf);
     }
 
     av_frame->opaque  = NULL;
@@ -1956,7 +1980,12 @@ static void ff_handle_mpeg12_buffer (ff_video_decoder_t *this, buf_element_t *bu
 
     if (got_picture && this->av_frame->data[0]) {
       /* got a picture, draw it */
-      if(!this->av_frame->opaque) {
+      img = NULL;
+      if (this->av_frame->opaque) {
+        ff_saved_frame_t *ffsf = (ff_saved_frame_t *)this->av_frame->opaque;
+        img = ffsf->vo_frame;
+      }
+      if (!img) {
         /* indirect rendering */
         img = this->stream->video_out->get_frame (this->stream->video_out,
                                                   this->bih.biWidth,
@@ -1970,7 +1999,6 @@ static void ff_handle_mpeg12_buffer (ff_video_decoder_t *this, buf_element_t *bu
         free_img = 1;
       } else {
         /* DR1 */
-        img = (vo_frame_t*) this->av_frame->opaque;
         free_img = 0;
       }
 
@@ -2213,8 +2241,13 @@ static void ff_handle_buffer (ff_video_decoder_t *this, buf_element_t *buf) {
       if (got_picture && this->av_frame->data[0]) {
         /* got a picture, draw it */
         got_one_picture = 1;
-        if(!this->av_frame->opaque) {
-	  /* indirect rendering */
+        img = NULL;
+        if (this->av_frame->opaque) {
+          ff_saved_frame_t *ffsf = (ff_saved_frame_t *)this->av_frame->opaque;
+          img = ffsf->vo_frame;
+        }
+        if (!img) {
+          /* indirect rendering */
 
           /* prepare for colorspace conversion */
 #ifdef ENABLE_VAAPI
@@ -2260,7 +2293,6 @@ static void ff_handle_buffer (ff_video_decoder_t *this, buf_element_t *buf) {
           free_img = 1;
         } else {
           /* DR1 */
-          img = (vo_frame_t*) this->av_frame->opaque;
           free_img = 0;
         }
 
@@ -2270,7 +2302,7 @@ static void ff_handle_buffer (ff_video_decoder_t *this, buf_element_t *buf) {
 
         if(this->pp_available && this->pp_quality && this->context->pix_fmt != PIX_FMT_VAAPI_VLD) {
 
-          if(this->av_frame->opaque) {
+          if (!free_img) {
             /* DR1: filter into a new frame. Same size to avoid reallcation, just move the
                image to top left corner. */
             img = this->stream->video_out->get_frame (this->stream->video_out,
@@ -2284,7 +2316,7 @@ static void ff_handle_buffer (ff_video_decoder_t *this, buf_element_t *buf) {
             free_img = 1;
           }
           ff_postprocess (this, img);
-        } else if (!this->av_frame->opaque) {
+        } else if (free_img) {
           /* colorspace conversion or copy */
           ff_convert_frame(this, img, this->av_frame);
         }
@@ -2468,7 +2500,12 @@ static void ff_flush_internal (ff_video_decoder_t *this, int display) {
       this->set_stream_info = 0;
     }
 
-    if (!this->av_frame2->opaque) {
+    img = NULL;
+    if (this->av_frame->opaque) {
+      ff_saved_frame_t *ffsf = (ff_saved_frame_t *)this->av_frame->opaque;
+      img = ffsf->vo_frame;
+    }
+    if (!img) {
       /* indirect rendering */
       if (this->aspect_ratio_prio == 0) {
         this->aspect_ratio = (double)this->bih.biWidth / (double)this->bih.biHeight;
@@ -2485,7 +2522,6 @@ static void ff_flush_internal (ff_video_decoder_t *this, int display) {
       free_img = 1;
     } else {
       /* DR1 */
-      img = (vo_frame_t*)this->av_frame2->opaque;
       free_img = 0;
     }
 
@@ -2493,7 +2529,7 @@ static void ff_flush_internal (ff_video_decoder_t *this, int display) {
     if (this->pp_quality != this->class->pp_quality && this->context->pix_fmt != PIX_FMT_VAAPI_VLD)
       pp_change_quality (this);
     if (this->pp_available && this->pp_quality && this->context->pix_fmt != PIX_FMT_VAAPI_VLD) {
-      if (this->av_frame2->opaque) {
+      if (!free_img) {
         /* DR1: filter into a new frame. Same size to avoid reallcation, just move the
            image to top left corner. */
         img = this->stream->video_out->get_frame (this->stream->video_out, img->width, img->height,
@@ -2503,7 +2539,7 @@ static void ff_flush_internal (ff_video_decoder_t *this, int display) {
         free_img = 1;
       }
       ff_postprocess (this, img);
-    } else if (!this->av_frame2->opaque) {
+    } else if (free_img) {
       /* colorspace conversion or copy */
       ff_convert_frame (this, img, this->av_frame2);
     }
@@ -2535,7 +2571,6 @@ static void ff_flush_internal (ff_video_decoder_t *this, int display) {
 }
 
 static void ff_free_dr1_frames (ff_video_decoder_t *this, int all) {
-  xine_list_iterator_t it;
   int frames;
   /* Some codecs (wmv2, vp6, svq3...) are hard-wired to a few reference frames.
      They will only be replaced when new ones arrive, and freed on codec close.
@@ -2544,10 +2579,7 @@ static void ff_free_dr1_frames (ff_video_decoder_t *this, int all) {
      Even worse: multithreading seems to always do it like that...
      So lets tolerate this behaviour on plain stream seek. */
   if (!all) {
-    it = NULL;
-    frames = 0;
-    while ((it = xine_list_next (this->dr1_frames, it)) != NULL)
-      frames++;
+    frames = this->ffsf_num;
     if (!frames)
       return;
     if (frames < 12) {
@@ -2566,16 +2598,19 @@ static void ff_free_dr1_frames (ff_video_decoder_t *this, int all) {
      Tracking and killing the AVBufferRef's themselves would risk heap
      corruption and segfaults.
      Now tell me whether I really sigh too much... */
-  it = NULL;
+  pthread_mutex_lock (&this->ffsf_mutex);
   frames = 0;
-  while ((it = xine_list_next (this->dr1_frames, it)) != NULL) {
-    vo_frame_t *img = (vo_frame_t *)xine_list_get_value(this->dr1_frames, it);
-    if (img) {
-      img->free (img);
+  while (!DLIST_IS_EMPTY (&this->ffsf_used)) {
+    ff_saved_frame_t *ffsf = (ff_saved_frame_t *)this->ffsf_used.head;
+    if (ffsf->vo_frame) {
+      ffsf->vo_frame->free (ffsf->vo_frame);
       frames++;
     }
+    DLIST_REMOVE (ffsf);
+    DLIST_ADD_TAIL (ffsf, &this->ffsf_free);
+    this->ffsf_num--;
   }
-  xine_list_clear (this->dr1_frames);
+  pthread_mutex_unlock (&this->ffsf_mutex);
   /* we probably never get this. */
   if (frames)
     xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG,
@@ -2705,7 +2740,15 @@ static void ff_dispose (video_decoder_t *this_gen) {
 
   mpeg_parser_dispose(this->mpeg_parser);
 
-  xine_list_delete(this->dr1_frames);
+  while (!DLIST_IS_EMPTY (&this->ffsf_free)) {
+    ff_saved_frame_t *ffsf = (ff_saved_frame_t *)this->ffsf_free.head;
+    DLIST_REMOVE (ffsf);
+    free (ffsf);
+  }
+  if (this->ffsf_total)
+    xprintf (this->class->xine, XINE_VERBOSITY_LOG,
+      _("ffmpeg_video_dec: used %d DR1 frames.\n"), this->ffsf_total);
+  pthread_mutex_destroy (&this->ffsf_mutex);
 
 #ifdef ENABLE_VAAPI
   if(this->accel_img)
@@ -2722,6 +2765,8 @@ static video_decoder_t *ff_video_open_plugin (video_decoder_class_t *class_gen, 
   lprintf ("open_plugin\n");
 
   this = calloc(1, sizeof (ff_video_decoder_t));
+  if (!this)
+    return NULL;
 
   this->video_decoder.decode_data         = ff_decode_data;
   this->video_decoder.flush               = ff_flush;
@@ -2755,7 +2800,10 @@ static video_decoder_t *ff_video_open_plugin (video_decoder_class_t *class_gen, 
 
   this->mpeg_parser       = NULL;
 
-  this->dr1_frames        = xine_list_new();
+  DLIST_INIT (&this->ffsf_free);
+  DLIST_INIT (&this->ffsf_used);
+  pthread_mutex_init (&this->ffsf_mutex, NULL);
+
   this->set_stream_info   = 0;
 
   this->pix_fmt           = -1;
