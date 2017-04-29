@@ -106,7 +106,12 @@ typedef struct {
   pthread_mutex_t           driver_lock;
   xine_t                   *xine;
   metronom_clock_t         *clock;
-  xine_list_t              *streams;
+
+  int                       num_null_streams;
+  int                       num_anon_streams;
+  int                       num_streams;
+  int                       streams_size;
+  xine_stream_t           **streams;
   pthread_mutex_t           streams_lock;
 
   img_buf_fifo_t            free_img_buf_queue;
@@ -150,18 +155,20 @@ typedef struct {
   /* pts value when decoder delivered last video frame */
   int64_t                   last_delivery_pts;
 
-
   video_overlay_manager_t  *overlay_source;
 
   extra_info_t             *extra_info_base; /* used to free mem chunk */
 
   int                       current_width, current_height;
   int64_t                   current_duration;
+
   int                       frame_drop_limit_max;
   int                       frame_drop_limit;
   int                       frame_drop_cpt;
   int                       frame_drop_suggested;
+
   int                       crop_left, crop_right, crop_top, crop_bottom;
+
   pthread_mutex_t           trigger_drawing_mutex;
   pthread_cond_t            trigger_drawing_cond;
   int                       trigger_drawing;
@@ -176,6 +183,76 @@ typedef struct {
   int                       wakeups_early;
 } vos_t;
 
+
+/********************************************************************
+ * streams register.                                                *
+ * Reading is way more speed relevant here.                         *
+ *******************************************************************/
+
+static int vo_streams_open (vos_t *this) {
+  this->num_null_streams = 0;
+  this->num_anon_streams = 0;
+  this->num_streams      = 0;
+  this->streams_size     = 32;
+  pthread_mutex_init (&this->streams_lock, NULL);
+  this->streams = calloc (32, sizeof (void *));
+  return !!this->streams;
+}
+
+static void vo_streams_close (vos_t *this) {
+  pthread_mutex_destroy (&this->streams_lock);
+  free (this->streams);
+  this->streams          = NULL;
+  this->num_null_streams = 0;
+  this->num_anon_streams = 0;
+  this->num_streams      = 0;
+  this->streams_size     = 0;
+}
+
+static void vo_streams_register (vos_t *this, xine_stream_t *s) {
+  pthread_mutex_lock (&this->streams_lock);
+  if (!s) {
+    this->num_null_streams++;
+  } else if (s == XINE_ANON_STREAM) {
+    this->num_anon_streams++;
+  } else do {
+    xine_stream_t **a = this->streams;
+    if (this->num_streams + 2 > this->streams_size) {
+      xine_stream_t **n = malloc ((this->streams_size + 32) * sizeof (void *));
+      if (!n)
+        break;
+      memcpy (n, a, this->streams_size * sizeof (void *));
+      this->streams = n;
+      free (a);
+      a = n;
+      this->streams_size += 32;
+    }
+    a[this->num_streams++] = s;
+    a[this->num_streams] = NULL;
+  } while (0);
+  pthread_mutex_unlock (&this->streams_lock);
+}
+
+static void vo_streams_unregister (vos_t *this, xine_stream_t *s) {
+  pthread_mutex_lock (&this->streams_lock);
+  if (!s) {
+    this->num_null_streams--;
+  } else if (s == XINE_ANON_STREAM) {
+    this->num_anon_streams--;
+  } else {
+    xine_stream_t **a = this->streams;
+    while (*a && (*a != s))
+      a++;
+    if (*a) {
+      do {
+        a[0] = a[1];
+        a++;
+      } while (*a);
+      this->num_streams--;
+    }
+  }
+  pthread_mutex_unlock (&this->streams_lock);
+}
 
 /********************************************************************
  * frame queue (fifo)                                               *
@@ -221,6 +298,20 @@ static void vo_queue_dispose_all (img_buf_fifo_t *queue) {
   }
 }
 
+static void vo_queue_read_lock (img_buf_fifo_t *queue) {
+  pthread_mutex_lock (&queue->mutex);
+  queue->locked_for_read = 1;
+  pthread_mutex_unlock (&queue->mutex);
+}
+
+static void vo_queue_read_unlock (img_buf_fifo_t *queue) {
+  pthread_mutex_lock (&queue->mutex);
+  queue->locked_for_read = 0;
+  if (queue->first)
+    pthread_cond_signal (&queue->not_empty);
+  pthread_mutex_unlock (&queue->mutex);
+}
+
 static void vo_queue_append_int (img_buf_fifo_t *queue, vo_frame_t *img) {
 
   /* img already enqueue? (serious leak) */
@@ -242,7 +333,8 @@ static void vo_queue_append_int (img_buf_fifo_t *queue, vo_frame_t *img) {
   if (queue->num_buffers_max < queue->num_buffers)
     queue->num_buffers_max = queue->num_buffers;
 
-  pthread_cond_signal (&queue->not_empty);
+  if (!queue->locked_for_read)
+    pthread_cond_signal (&queue->not_empty);
 }
 
 static void vo_queue_append (img_buf_fifo_t *queue, vo_frame_t *img) {
@@ -876,11 +968,7 @@ static vo_frame_t *vo_get_frame (xine_video_port_t *this_gen,
 static int vo_frame_draw (vo_frame_t *img, xine_stream_t *stream) {
 
   vos_t         *this = (vos_t *) img->port;
-  int64_t        diff;
-  int64_t        cur_vpts;
-  int64_t        pic_vpts ;
   int            frames_to_skip;
-  int            duration;
 
   /* handle anonymous streams like NULL for easy checking */
   if (stream == XINE_ANON_STREAM) stream = NULL;
@@ -898,24 +986,14 @@ static int vo_frame_draw (vo_frame_t *img, xine_stream_t *stream) {
 
   if (!this->grab_only) {
 
-    pic_vpts = img->vpts;
     img->extra_info->vpts = img->vpts;
 
-    cur_vpts = this->clock->get_current_time(this->clock);
-    this->last_delivery_pts = cur_vpts;
+    this->last_delivery_pts = this->clock->get_current_time (this->clock);
 
-    lprintf ("got image oat master vpts %" PRId64 ". vpts for picture is %" PRId64 " (pts was %" PRId64 ")\n",
-	     cur_vpts, pic_vpts, img->pts);
+    lprintf ("got image at master vpts %" PRId64 ". vpts for picture is %" PRId64 " (pts was %" PRId64 ")\n",
+      this->last_delivery_pts, img->vpts, img->pts);
 
     this->num_frames_delivered++;
-
-    diff = pic_vpts - cur_vpts;
-
-    /* avoid division by zero */
-    if( img->duration <= 0 )
-      duration = DEFAULT_FRAME_DURATION;
-    else
-      duration = img->duration;
 
     /* Frame dropping slow start:
      *   The engine starts to drop frames if there are less than frame_drop_limit
@@ -933,25 +1011,29 @@ static int vo_frame_draw (vo_frame_t *img, xine_stream_t *stream) {
       this->frame_drop_cpt = 10;
 
     if (this->frame_drop_cpt) {
-      this->frame_drop_limit = this->frame_drop_limit_max - (this->frame_drop_cpt / 2);
+      this->frame_drop_limit = this->frame_drop_limit_max - (this->frame_drop_cpt >> 1);
       this->frame_drop_cpt--;
     }
-    frames_to_skip = ((-1 * diff) / duration + this->frame_drop_limit) * 2;
 
     /* do not skip decoding until output fifo frames are consumed */
-    if (this->display_img_buf_queue.num_buffers >= this->frame_drop_limit ||
-        frames_to_skip < 0)
+    if (this->display_img_buf_queue.num_buffers < this->frame_drop_limit) {
+      int duration = img->duration > 0 ? img->duration : DEFAULT_FRAME_DURATION;
+      frames_to_skip = (this->last_delivery_pts - img->vpts) / duration;
+      frames_to_skip = (frames_to_skip + this->frame_drop_limit) * 2;
+      if (frames_to_skip < 0)
+        frames_to_skip = 0;
+    } else {
       frames_to_skip = 0;
+    }
 
     /* Do not drop frames immediately, but remember this as suggestion and give
      * decoder a further chance to supply frames.
      * This avoids unnecessary frame drops in situations where there is only
      * a very little number of image buffers, e. g. when using xxmc.
      */
-    if (this->frame_drop_suggested && frames_to_skip == 0)
+    if (!frames_to_skip) {
       this->frame_drop_suggested = 0;
-
-    if (frames_to_skip > 0) {
+    } else {
       if (!this->frame_drop_suggested) {
         this->frame_drop_suggested = 1;
         frames_to_skip = 0;
@@ -959,7 +1041,7 @@ static int vo_frame_draw (vo_frame_t *img, xine_stream_t *stream) {
     }
 
     lprintf ("delivery diff : %" PRId64 ", current vpts is %" PRId64 ", %d frames to skip\n",
-	     diff, cur_vpts, frames_to_skip);
+      img->vpts - this->last_delivery_pts, this->last_delivery_pts, frames_to_skip);
 
   } else {
     frames_to_skip = 0;
@@ -975,7 +1057,6 @@ static int vo_frame_draw (vo_frame_t *img, xine_stream_t *stream) {
   if (!img->bad_frame) {
 
     int img_already_locked = 0;
-    xine_list_iterator_t ite;
 
     /* add cropping requested by frontend */
     img->crop_left   = (img->crop_left + this->crop_left) & ~1;
@@ -1017,26 +1098,26 @@ static int vo_frame_draw (vo_frame_t *img, xine_stream_t *stream) {
      */
     img->is_first = 0;
     /* avoid a complex deadlock situation caused by net_buf_control */
-    if (!pthread_mutex_trylock(&this->streams_lock)) {
-      for (ite = xine_list_front(this->streams); ite;
-           ite = xine_list_next(this->streams, ite)) {
-        stream = xine_list_get_value(this->streams, ite);
-        if (stream == XINE_ANON_STREAM) continue;
-        pthread_mutex_lock (&stream->first_frame_lock);
-        if (stream->first_frame_flag == 2) {
+    if (!pthread_mutex_trylock (&this->streams_lock)) {
+      xine_stream_t **s;
+      for (s = this->streams; *s; s++) {
+        /* a little speedup */
+        if ((*s)->first_frame_flag != 2)
+          continue;
+        pthread_mutex_lock (&(*s)->first_frame_lock);
+        if ((*s)->first_frame_flag == 2) {
           if (this->grab_only) {
-            stream->first_frame_flag = 0;
-            pthread_cond_broadcast(&stream->first_frame_reached);
+            (*s)->first_frame_flag = 0;
+            pthread_cond_broadcast (&(*s)->first_frame_reached);
           } else {
-            stream->first_frame_flag = 1;
+            (*s)->first_frame_flag = 1;
           }
           img->is_first = FIRST_FRAME_MAX_POLL;
-
           lprintf ("get_next_video_frame first_frame_reached\n");
         }
-        pthread_mutex_unlock (&stream->first_frame_lock);
+        pthread_mutex_unlock (&(*s)->first_frame_lock);
       }
-      pthread_mutex_unlock(&this->streams_lock);
+      pthread_mutex_unlock (&this->streams_lock);
     }
 
     if (!img_already_locked)
@@ -1067,9 +1148,9 @@ static int vo_frame_draw (vo_frame_t *img, xine_stream_t *stream) {
    * performance measurement
    */
 
-  if ((this->num_frames_delivered % 200) == 0 && this->num_frames_delivered) {
+  if (this->num_frames_delivered == 200) {
     int send_event;
-    xine_list_iterator_t ite;
+    xine_stream_t **it;
 
     if( (100 * this->num_frames_skipped / this->num_frames_delivered) >
          this->warn_skipped_threshold ||
@@ -1087,10 +1168,8 @@ static int vo_frame_draw (vo_frame_t *img, xine_stream_t *stream) {
     this->warn_threshold_event_sent = send_event;
 
     pthread_mutex_lock(&this->streams_lock);
-    for (ite = xine_list_front(this->streams); ite;
-         ite = xine_list_next(this->streams, ite)) {
-      stream = xine_list_get_value(this->streams, ite);
-      if (stream == XINE_ANON_STREAM) continue;
+    for (it = this->streams; *it; it++) {
+      stream = *it;
       _x_stream_info_set(stream, XINE_STREAM_INFO_SKIPPED_FRAMES,
 			 1000 * this->num_frames_skipped / this->num_frames_delivered);
       _x_stream_info_set(stream, XINE_STREAM_INFO_DISCARDED_FRAMES,
@@ -1440,10 +1519,7 @@ static vo_frame_t *next_frame (vos_t *this, int64_t *vpts) {
   }
 }
 
-static void overlay_and_display_frame (vos_t *this,
-				       vo_frame_t *img, int64_t vpts) {
-  xine_stream_t *stream;
-  xine_list_iterator_t ite;
+static void overlay_and_display_frame (vos_t *this, vo_frame_t *img, int64_t vpts) {
 
   lprintf ("displaying image with vpts = %" PRId64 "\n", img->vpts);
 
@@ -1466,20 +1542,18 @@ static void overlay_and_display_frame (vos_t *this,
    * (eg an X window event handler). If it is waiting for a frame we better wake
    * it up _before_ we start displaying, or the first 10 seconds of video are lost.
    */
-  if( img->is_first ) {
-    pthread_mutex_lock(&this->streams_lock);
-    for (ite = xine_list_front(this->streams); ite;
-         ite = xine_list_next(this->streams, ite)) {
-      stream = xine_list_get_value(this->streams, ite);
-      if (stream == XINE_ANON_STREAM) continue;
-      pthread_mutex_lock (&stream->first_frame_lock);
-      if (stream->first_frame_flag) {
-        stream->first_frame_flag = 0;
-        pthread_cond_broadcast(&stream->first_frame_reached);
+  if (img->is_first) {
+    xine_stream_t **s;
+    pthread_mutex_lock (&this->streams_lock);
+    for (s = this->streams; *s; s++) {
+      pthread_mutex_lock (&(*s)->first_frame_lock);
+      if ((*s)->first_frame_flag) {
+        (*s)->first_frame_flag = 0;
+        pthread_cond_broadcast (&(*s)->first_frame_reached);
       }
-      pthread_mutex_unlock (&stream->first_frame_lock);
+      pthread_mutex_unlock (&(*s)->first_frame_lock);
     }
-    pthread_mutex_unlock(&this->streams_lock);
+    pthread_mutex_unlock (&this->streams_lock);
   }
 
   /* calling the frontend's frame output hook (via driver->display_frame () here)
@@ -1512,9 +1586,7 @@ static void overlay_and_display_frame (vos_t *this,
 static void paused_loop( vos_t *this, int64_t vpts )
 {
   /* prevent decoder thread from allocating new frames */
-  pthread_mutex_lock (&this->free_img_buf_queue.mutex);
-  this->free_img_buf_queue.locked_for_read = 1;
-  pthread_mutex_unlock (&this->free_img_buf_queue.mutex);
+  vo_queue_read_lock (&this->free_img_buf_queue);
 
   while (this->clock->speed == XINE_SPEED_PAUSE && this->video_loop_running) {
 
@@ -1589,9 +1661,7 @@ static void paused_loop( vos_t *this, int64_t vpts )
     }
   }
 
-  pthread_mutex_lock (&this->free_img_buf_queue.mutex);
-  this->free_img_buf_queue.locked_for_read = 0;
-  pthread_mutex_unlock (&this->free_img_buf_queue.mutex);
+  vo_queue_read_unlock (&this->free_img_buf_queue);
 }
 
 static void video_out_update_disable_flush_from_video_out(void *disable_decoder_flush_from_video_out, xine_cfg_entry_t *entry)
@@ -1600,13 +1670,8 @@ static void video_out_update_disable_flush_from_video_out(void *disable_decoder_
 }
 
 static void *video_out_loop (void *this_gen) {
-
-  int64_t            vpts, diff;
-  vo_frame_t        *img;
-  vos_t             *this = (vos_t *) this_gen;
-  int64_t            next_frame_vpts = 0;
-  int64_t            usec_to_sleep;
-  int                disable_decoder_flush_from_video_out;
+  vos_t *this = (vos_t *) this_gen;
+  int    disable_decoder_flush_from_video_out;
 
 #ifndef WIN32
   errno = 0;
@@ -1632,6 +1697,9 @@ static void *video_out_loop (void *this_gen) {
   lprintf ("loop starting...\n");
 
   while ( this->video_loop_running ) {
+    int64_t vpts, next_frame_vpts;
+    int64_t usec_to_sleep;
+
     /* record current time as both speed dependent virtual presentation timestamp (vpts)
      * and absolute system time, and hope these are halfway in sync.
      */
@@ -1639,19 +1707,16 @@ static void *video_out_loop (void *this_gen) {
     gettimeofday (&this->now, NULL);
     lprintf ("loop iteration at %" PRId64 "\n", vpts);
 
-    /*
-     * find frame to display
-     */
-    img = next_frame (this, &next_frame_vpts);
-
-    /*
-     * if we have found a frame, display it
-     */
-
     this->wakeups_total++;
-    if (img) {
-      lprintf ("displaying frame (id=%d)\n", img->id);
-      overlay_and_display_frame (this, img, vpts);
+
+    {
+      /* find frame to display */
+      vo_frame_t *img = next_frame (this, &next_frame_vpts);
+      /* if we have found a frame, display it */
+      if (img) {
+        lprintf ("displaying frame (id=%d)\n", img->id);
+        overlay_and_display_frame (this, img, vpts);
+      }
     }
 
     /*
@@ -1660,24 +1725,19 @@ static void *video_out_loop (void *this_gen) {
      * test display fifo empty to protect from deadlocks
      */
 
-    diff = vpts - this->last_delivery_pts;
-    if (diff > 30000 && !this->display_img_buf_queue.first) {
-      xine_list_iterator_t ite;
-
+    if ((vpts - this->last_delivery_pts > 30000) && !this->display_img_buf_queue.first) {
+      xine_stream_t **s;
       pthread_mutex_lock(&this->streams_lock);
-      for (ite = xine_list_front(this->streams); ite;
-           ite = xine_list_next(this->streams, ite)) {
-	xine_stream_t *stream = xine_list_get_value(this->streams, ite);
-	if (stream == XINE_ANON_STREAM) continue;
-        if (stream->video_decoder_plugin && stream->video_fifo && !disable_decoder_flush_from_video_out) {
+      for (s = this->streams; *s; s++) {
+        if ((*s)->video_decoder_plugin && (*s)->video_fifo && !disable_decoder_flush_from_video_out) {
           buf_element_t *buf;
 
 	  lprintf ("flushing current video decoder plugin\n");
 
-          buf = stream->video_fifo->buffer_pool_try_alloc (stream->video_fifo);
+          buf = (*s)->video_fifo->buffer_pool_try_alloc ((*s)->video_fifo);
           if( buf ) {
             buf->type = BUF_CONTROL_FLUSH_DECODER;
-            stream->video_fifo->insert(stream->video_fifo, buf);
+            (*s)->video_fifo->insert ((*s)->video_fifo, buf);
           }
         }
       }
@@ -1751,13 +1811,13 @@ static void *video_out_loop (void *this_gen) {
    */
 
   pthread_mutex_lock(&this->display_img_buf_queue.mutex);
-  img = this->display_img_buf_queue.first;
-  while (img) {
-
-    img = vo_queue_pop_int (&this->display_img_buf_queue);
-    vo_frame_dec_lock( img );
-
-    img = this->display_img_buf_queue.first;
+  {
+    vo_frame_t *img = this->display_img_buf_queue.first;
+    while (img) {
+      img = vo_queue_pop_int (&this->display_img_buf_queue);
+      vo_frame_dec_lock (img);
+      img = this->display_img_buf_queue.first;
+    }
   }
   pthread_mutex_unlock(&this->display_img_buf_queue.mutex);
   /* dont let folks wait forever in vain */
@@ -1795,11 +1855,8 @@ int xine_get_next_video_frame (xine_video_port_t *this_gen, xine_video_frame_t *
 
   while (!this->display_img_buf_queue.first) {
     {
-      xine_list_iterator_t ite = xine_list_front (this->streams);
-      xine_stream_t *stream = xine_list_get_value (this->streams, ite);
-      if (stream
-        && (stream != XINE_ANON_STREAM)
-        && (stream->video_fifo->fifo_size == 0)
+      xine_stream_t *stream = this->streams[0];
+      if (stream && (stream->video_fifo->fifo_size == 0)
         && (stream->demux_plugin->get_status(stream->demux_plugin) != DEMUX_OK)) {
         /* no further data can be expected here */
         pthread_mutex_unlock (&this->display_img_buf_queue.mutex);
@@ -1877,15 +1934,13 @@ static void vo_open (xine_video_port_t *this_gen, xine_stream_t *stream) {
   if (!this->overlay_enabled && (stream == XINE_ANON_STREAM || stream == NULL || stream->spu_channel_user > -2))
     /* enable overlays if our new stream might want to show some */
     this->overlay_enabled = 1;
-  pthread_mutex_lock(&this->streams_lock);
-  xine_list_push_back(this->streams, stream);
-  pthread_mutex_unlock(&this->streams_lock);
+
+  vo_streams_register (this, stream);
 }
 
 static void vo_close (xine_video_port_t *this_gen, xine_stream_t *stream) {
 
   vos_t      *this = (vos_t *) this_gen;
-  xine_list_iterator_t ite;
 
   /* this will make sure all hide events were processed */
   if (this->overlay_source)
@@ -1894,16 +1949,7 @@ static void vo_close (xine_video_port_t *this_gen, xine_stream_t *stream) {
   this->video_opened = 0;
 
   /* unregister stream */
-  pthread_mutex_lock(&this->streams_lock);
-  for (ite = xine_list_front(this->streams); ite;
-       ite = xine_list_next(this->streams, ite)) {
-    xine_stream_t *cur = xine_list_get_value(this->streams, ite);
-    if (cur == stream) {
-      xine_list_remove(this->streams, ite);
-      break;
-    }
-  }
-  pthread_mutex_unlock(&this->streams_lock);
+  vo_streams_unregister (this, stream);
 }
 
 
@@ -1930,7 +1976,7 @@ static int vo_get_property (xine_video_port_t *this_gen, int property) {
 
   case VO_PROP_NUM_STREAMS:
     pthread_mutex_lock(&this->streams_lock);
-    ret = xine_list_size(this->streams);
+    ret = this->num_null_streams + this->num_anon_streams + this->num_streams;
     pthread_mutex_unlock(&this->streams_lock);
     break;
 
@@ -2090,26 +2136,30 @@ static int vo_set_property (xine_video_port_t *this_gen, int property, int value
 
 static int vo_status (xine_video_port_t *this_gen, xine_stream_t *stream,
                       int *width, int *height, int64_t *img_duration) {
-
   vos_t      *this = (vos_t *) this_gen;
-  xine_list_iterator_t ite;
-  int ret = 0;
 
-  pthread_mutex_lock(&this->streams_lock);
-  for (ite = xine_list_front(this->streams); ite;
-       ite = xine_list_next(this->streams, ite)) {
-    xine_stream_t *cur = xine_list_get_value(this->streams, ite);
-    if (cur == stream || !stream) {
-      *width = this->current_width;
-      *height = this->current_height;
-      *img_duration = this->current_duration;
-      ret = !!stream; /* return false for a NULL stream, true otherwise */
-      break;
+  if (!stream || (stream == XINE_ANON_STREAM)) {
+    *width = this->current_width;
+    *height = this->current_height;
+    *img_duration = this->current_duration;
+    return 0;
+  }
+
+  pthread_mutex_lock (&this->streams_lock);
+  {
+    xine_stream_t **s;
+    for (s = this->streams; *s; s++) {
+      if (*s == stream) {
+        *width = this->current_width;
+        *height = this->current_height;
+        *img_duration = this->current_duration;
+        pthread_mutex_unlock (&this->streams_lock);
+        return 1;
+      }
     }
   }
   pthread_mutex_unlock(&this->streams_lock);
-
-  return ret;
+  return 0;
 }
 
 static void vo_free_img_buffers (xine_video_port_t *this_gen) {
@@ -2153,8 +2203,7 @@ static void vo_exit (xine_video_port_t *this_gen) {
     this->overlay_source->dispose (this->overlay_source);
   }
 
-  xine_list_delete(this->streams);
-  pthread_mutex_destroy(&this->streams_lock);
+  vo_streams_close (this);
 
   vo_queue_close (&this->free_img_buf_queue);
   vo_queue_close (&this->display_img_buf_queue);
@@ -2200,13 +2249,14 @@ static void vo_enable_overlay (xine_video_port_t *this_gen, int overlay_enabled)
     this->overlay_enabled = 1;
   } else {
     /* ... but we only actually DISable, if all associated streams have SPU off */
-    xine_list_iterator_t ite;
-
+    xine_stream_t **s;
     pthread_mutex_lock(&this->streams_lock);
-    for (ite = xine_list_front(this->streams); ite;
-         ite = xine_list_next(this->streams, ite)) {
-      xine_stream_t *stream = xine_list_get_value(this->streams, ite);
-      if (stream == XINE_ANON_STREAM || stream->spu_channel_user > -2) {
+    if (this->num_anon_streams > 0) {
+      pthread_mutex_unlock (&this->streams_lock);
+      return;
+    }
+    for (s = this->streams; *s; s++) {
+      if ((*s)->spu_channel_user > -2) {
 	pthread_mutex_unlock(&this->streams_lock);
 	return;
       }
@@ -2325,13 +2375,18 @@ xine_video_port_t *_x_vo_new_port (xine_t *xine, vo_driver_t *driver, int grabon
 
 
   this = calloc(1, sizeof(vos_t)) ;
+  if (!this)
+    return NULL;
 
   this->xine                  = xine;
   this->clock                 = xine->clock;
   this->driver                = driver;
-  this->streams               = xine_list_new();
 
-  pthread_mutex_init(&this->streams_lock, NULL);
+  if (!vo_streams_open (this)) {
+    free (this);
+    return NULL;
+  }
+
   pthread_mutex_init(&this->driver_lock, NULL );
 
   this->vo.open                  = vo_open;
@@ -2416,6 +2471,8 @@ xine_video_port_t *_x_vo_new_port (xine_t *xine, vo_driver_t *driver, int grabon
   this->extra_info_base = calloc (num_frame_buffers,
 					  sizeof(extra_info_t));
 
+  /* nobody is listening yet, omit locking and signalling */
+  this->free_img_buf_queue.locked_for_read = 1;
   for (i=0; i<num_frame_buffers; i++) {
     vo_frame_t *img;
 
@@ -2432,8 +2489,9 @@ xine_video_port_t *_x_vo_new_port (xine_t *xine, vo_driver_t *driver, int grabon
 
     img->extra_info = &this->extra_info_base[i];
 
-    vo_queue_append (&this->free_img_buf_queue, img);
+    vo_queue_append_int (&this->free_img_buf_queue, img);
   }
+  this->free_img_buf_queue.locked_for_read = 0;
 
   this->warn_skipped_threshold =
     xine->config->register_num (xine->config, "engine.performance.warn_skipped_threshold", 10,
@@ -2494,4 +2552,3 @@ xine_video_port_t *_x_vo_new_port (xine_t *xine, vo_driver_t *driver, int grabon
 
   return &this->vo;
 }
-
