@@ -387,6 +387,100 @@ static void release_frame (void *saved_frame, uint8_t *data) {
 }
 #endif
 
+#ifdef ENABLE_VAAPI
+static int get_buffer_vaapi_vld (AVCodecContext *context, AVFrame *av_frame)
+{
+  ff_video_decoder_t *this = (ff_video_decoder_t *)context->opaque;
+#ifdef XFF_AV_BUFFER
+  ff_saved_frame_t *ffsf;
+#endif
+  int width  = context->width;
+  int height = context->height;
+
+  av_frame->opaque  = NULL;
+  av_frame->data[0] = NULL;
+  av_frame->data[1] = NULL;
+  av_frame->data[2] = NULL;
+  av_frame->data[3] = NULL;
+#ifdef XFF_FRAME_AGE
+  av_frame->age = 1;
+#endif
+  av_frame->reordered_opaque = context->reordered_opaque;
+
+  ffsf = ffsf_new (this);
+  if (!ffsf)
+    return AVERROR (ENOMEM);
+  av_frame->opaque = ffsf;
+
+  /* reinitialize vaapi for new image size */
+  if (width != this->vaapi_width || height != this->vaapi_height) {
+    VAStatus status;
+
+    this->vaapi_width  = width;
+    this->vaapi_height = height;
+    status = this->accel->vaapi_init (this->accel_img, this->vaapi_profile, width, height);
+
+    if (status == VA_STATUS_SUCCESS) {
+      ff_vaapi_context_t *va_context = this->accel->get_context (this->accel_img);
+
+      if (va_context) {
+        this->vaapi_context.config_id  = va_context->va_config_id;
+        this->vaapi_context.context_id = va_context->va_context_id;
+        this->vaapi_context.display    = va_context->va_display;
+      }
+    }
+  }
+
+  if(!this->accel->guarded_render(this->accel_img)) {
+    vo_frame_t *img;
+    img = this->stream->video_out->get_frame (this->stream->video_out,
+                                              width,
+                                              height,
+                                              this->aspect_ratio,
+                                              this->output_format,
+                                              VO_BOTH_FIELDS|this->frame_flags);
+
+    vaapi_accel_t *accel = (vaapi_accel_t*)img->accel_data;
+    ff_vaapi_surface_t *va_surface = accel->get_vaapi_surface(img);
+
+    if(va_surface) {
+      av_frame->data[0] = (void *)va_surface;//(void *)(uintptr_t)va_surface->va_surface_id;
+      av_frame->data[3] = (void *)(uintptr_t)va_surface->va_surface_id;
+    }
+    ffsf->vo_frame = img;
+  } else {
+    ff_vaapi_surface_t *va_surface = this->accel->get_vaapi_surface(this->accel_img);
+
+    if(va_surface) {
+      av_frame->data[0] = (void *)va_surface;//(void *)(uintptr_t)va_surface->va_surface_id;
+      av_frame->data[3] = (void *)(uintptr_t)va_surface->va_surface_id;
+    }
+    ffsf->va_surface = va_surface;
+  }
+
+  lprintf("1: 0x%08x\n", av_frame->data[3]);
+
+  av_frame->linesize[0] = 0;
+  av_frame->linesize[1] = 0;
+  av_frame->linesize[2] = 0;
+  av_frame->linesize[3] = 0;
+
+#ifdef XFF_AV_BUFFER
+  /* Does this really work???? */
+  av_frame->buf[0] = av_buffer_create (NULL, 0, release_frame, ffsf, 0);
+  if (av_frame->buf[0])
+    (ffsf->refs)++;
+  av_frame->buf[1] = NULL;
+  av_frame->buf[2] = NULL;
+#else
+  av_frame->type = FF_BUFFER_TYPE_USER;
+#endif
+  this->is_direct_rendering_disabled = 1;
+
+  return 0;
+}
+#endif /* ENABLE_VAAPI */
+
 /* called from ffmpeg to do direct rendering method 1 */
 #ifdef XFF_AV_BUFFER
 static int get_buffer (AVCodecContext *context, AVFrame *av_frame, int flags)
@@ -449,87 +543,7 @@ static int get_buffer (AVCodecContext *context, AVFrame *av_frame)
 
 #ifdef ENABLE_VAAPI
   if( context->pix_fmt == PIX_FMT_VAAPI_VLD ) {
-
-    av_frame->opaque  = NULL;
-    av_frame->data[0] = NULL;
-    av_frame->data[1] = NULL;
-    av_frame->data[2] = NULL;
-    av_frame->data[3] = NULL;
-#ifdef XFF_FRAME_AGE
-    av_frame->age = 1;
-#endif
-    av_frame->reordered_opaque = context->reordered_opaque;
-
-    ffsf = ffsf_new (this);
-    if (!ffsf)
-      return AVERROR (ENOMEM);
-    av_frame->opaque = ffsf;
-
-    /* reinitialize vaapi for new image size */
-    if (width != this->vaapi_width || height != this->vaapi_height) {
-      VAStatus status;
-
-      this->vaapi_width  = width;
-      this->vaapi_height = height;
-      status = this->accel->vaapi_init (this->accel_img, this->vaapi_profile, width, height);
-
-      if (status == VA_STATUS_SUCCESS) {
-        ff_vaapi_context_t *va_context = this->accel->get_context (this->accel_img);
-
-        if (va_context) {
-          this->vaapi_context.config_id  = va_context->va_config_id;
-          this->vaapi_context.context_id = va_context->va_context_id;
-          this->vaapi_context.display    = va_context->va_display;
-        }
-      }
-    }
-
-    if(!this->accel->guarded_render(this->accel_img)) {
-      img = this->stream->video_out->get_frame (this->stream->video_out,
-                                            width,
-                                            height,
-                                            this->aspect_ratio,
-                                            this->output_format,
-                                            VO_BOTH_FIELDS|this->frame_flags);
-
-      vaapi_accel_t *accel = (vaapi_accel_t*)img->accel_data;
-      ff_vaapi_surface_t *va_surface = accel->get_vaapi_surface(img);
-
-      if(va_surface) {
-        av_frame->data[0] = (void *)va_surface;//(void *)(uintptr_t)va_surface->va_surface_id;
-        av_frame->data[3] = (void *)(uintptr_t)va_surface->va_surface_id;
-      }
-      ffsf->vo_frame = img;
-    } else {
-      ff_vaapi_surface_t *va_surface = this->accel->get_vaapi_surface(this->accel_img);
-
-      if(va_surface) {
-        av_frame->data[0] = (void *)va_surface;//(void *)(uintptr_t)va_surface->va_surface_id;
-        av_frame->data[3] = (void *)(uintptr_t)va_surface->va_surface_id;
-      }
-      ffsf->va_surface = va_surface;
-    }
-
-    lprintf("1: 0x%08x\n", av_frame->data[3]);
-
-    av_frame->linesize[0] = 0;
-    av_frame->linesize[1] = 0;
-    av_frame->linesize[2] = 0;
-    av_frame->linesize[3] = 0;
-
-#ifdef XFF_AV_BUFFER
-    /* Does this really work???? */
-    av_frame->buf[0] = av_buffer_create (NULL, 0, release_frame, ffsf, 0);
-    if (av_frame->buf[0])
-      (ffsf->refs)++;
-    av_frame->buf[1] = NULL;
-    av_frame->buf[2] = NULL;
-#else
-    av_frame->type = FF_BUFFER_TYPE_USER;
-#endif
-    this->is_direct_rendering_disabled = 1;
-
-    return 0;
+    return get_buffer_vaapi_vld(context, av_frame);
   }
 
   /* on vaapi out do not use direct rendeing */
