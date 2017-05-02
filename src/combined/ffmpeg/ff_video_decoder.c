@@ -2055,28 +2055,28 @@ static void ff_handle_mpeg12_buffer (ff_video_decoder_t *this, buf_element_t *bu
   }
 }
 
-static void ff_postprocess (ff_video_decoder_t *this, vo_frame_t *img) {
+static void ff_postprocess (ff_video_decoder_t *this, AVFrame *av_frame, vo_frame_t *img) {
   int qstride, qtype;
   int8_t *qtable;
 #ifdef XFF_AV_BUFFER
 # if LIBAVUTIL_VERSION_INT < XFF_INT_VERSION(53,0,0)
-  qtable = av_frame_get_qp_table (this->av_frame, &qstride, &qtype);
+  qtable = av_frame_get_qp_table (av_frame, &qstride, &qtype);
 # else
   /* Why should they keep these long deprecated fields, and remove
     their safe accessor av_frame_get_qp_table () instead?? */
-  qtable  = this->av_frame->qscale_table;
-  qstride = this->av_frame->qstride;
-  qtype   = this->av_frame->qscale_type;
+  qtable  = av_frame->qscale_table;
+  qstride = av_frame->qstride;
+  qtype   = av_frame->qscale_type;
 # endif
 #else
-  qtable  = this->av_frame->qscale_table;
-  qstride = this->av_frame->qstride;
+  qtable  = av_frame->qscale_table;
+  qstride = av_frame->qstride;
   qtype   = 0;
 #endif
-  pp_postprocess ((const uint8_t **)this->av_frame->data, this->av_frame->linesize,
+  pp_postprocess ((const uint8_t **)av_frame->data, av_frame->linesize,
                   img->base, img->pitches, this->bih.biWidth, this->bih.biHeight,
                   qtable, qstride, this->our_mode, this->our_context,
-                  this->av_frame->pict_type | (qtype ? PP_PICT_TYPE_QP2 : 0));
+                  av_frame->pict_type | (qtype ? PP_PICT_TYPE_QP2 : 0));
 }
 
 static void ff_handle_buffer (ff_video_decoder_t *this, buf_element_t *buf) {
@@ -2315,7 +2315,7 @@ static void ff_handle_buffer (ff_video_decoder_t *this, buf_element_t *buf) {
             img->crop_bottom = img->height - this->bih.biHeight;
             free_img = 1;
           }
-          ff_postprocess (this, img);
+          ff_postprocess (this, this->av_frame, img);
         } else if (free_img) {
           /* colorspace conversion or copy */
           ff_convert_frame(this, img, this->av_frame);
@@ -2538,7 +2538,7 @@ static void ff_flush_internal (ff_video_decoder_t *this, int display) {
         img->crop_bottom = img->height - this->bih.biHeight;
         free_img = 1;
       }
-      ff_postprocess (this, img);
+      ff_postprocess (this, this->av_frame2, img);
     } else if (free_img) {
       /* colorspace conversion or copy */
       ff_convert_frame (this, img, this->av_frame2);
