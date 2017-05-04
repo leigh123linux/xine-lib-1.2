@@ -1,6 +1,6 @@
 
 /*
- * Copyright (C) 2007-2016 the xine project
+ * Copyright (C) 2007-2017 the xine project
  *
  * This file is part of xine, a free video player.
  *

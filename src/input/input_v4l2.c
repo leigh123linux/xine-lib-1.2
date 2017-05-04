@@ -1,5 +1,5 @@
 /*
-* Copyright (C) 2010-2011 the xine project
+* Copyright (C) 2010-2017 the xine project
 * Copyright (C) 2010 Trever Fischer <tdfischer@fedoraproject.org>
 *
 * This file is part of xine, a free video player.
