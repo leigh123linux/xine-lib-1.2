@@ -1,3 +1,27 @@
+xine-lib (1.2.9) ????-??-??
+  * Add LIBXINE_VERBOSITY environment var override.
+  * Add auto gapless switch.
+    Play clips to their very end when that is likely what the user wants.
+  * Add some more debug logging.
+  * Again, lots of small fixes and optimizations.
+  * Fix VAAPI guarded render mode.
+  * Matroska fixes.
+  * Build fixes.
+  * Directx2 audio fixes.
+  * Win64 fixes.
+  * XCB video fixes and optimizations.
+  * FAAD audio compatibility fixes.
+  * Fix VP9 playback.
+  * Better multiengine client safety.
+  * Minor ffmpeg optimization.
+  * Lift a few video engine handbrakes.
+    Less CPU load, fewer frame drops, faster seeking.
+  * Optimize metronom clock.
+  * Optimize sse/mmx2 memcpy.
+  * Update german translation.
+  * Hide yuv2rgb implementation details.
+  * Code cleanup.
+
 xine-lib (1.2.8) 2017-02-21
   * Add HEVC to QT demuxer.
   * Add libOpenHEVC decoder.
