@@ -146,6 +146,7 @@ typedef struct {
   int                       num_frames_delivered;
   int                       num_frames_skipped;
   int                       num_frames_discarded;
+  int                       num_frames_burst;
 
   /* threshold for sending XINE_EVENT_DROPPED_FRAMES */
   int                       warn_skipped_threshold;
@@ -300,7 +301,7 @@ static void vo_queue_dispose_all (img_buf_fifo_t *queue) {
 
 static void vo_queue_read_lock (img_buf_fifo_t *queue) {
   pthread_mutex_lock (&queue->mutex);
-  queue->locked_for_read = 1;
+  queue->locked_for_read = 2;
   pthread_mutex_unlock (&queue->mutex);
 }
 
@@ -333,7 +334,7 @@ static void vo_queue_append_int (img_buf_fifo_t *queue, vo_frame_t *img) {
   if (queue->num_buffers_max < queue->num_buffers)
     queue->num_buffers_max = queue->num_buffers;
 
-  if (!queue->locked_for_read)
+  if (queue->num_buffers > queue->locked_for_read)
     pthread_cond_signal (&queue->not_empty);
 }
 
@@ -351,46 +352,48 @@ static vo_frame_t *vo_queue_get_nonblock (img_buf_fifo_t *queue,
 
   do {
     prev = NULL;
-    img = (queue->locked_for_read) ? NULL : queue->first;
-
+    if (queue->num_buffers > queue->locked_for_read) {
+      img = queue->first;
 #if EXPERIMENTAL_FRAME_QUEUE_OPTIMIZATION
-    if (img && width && height) {
-      /* try to obtain a frame with the same format first.
-       * doing so may avoid unnecessary alloc/free's at the vo
-       * driver, specially when using post plugins that change
-       * format like the tvtime deinterlacer does.
-       */
-      int i = 0;
-      while (img && 
-        ((img->format != format) || (img->width != width) ||
-         (img->height != height) || (img->ratio != ratio))) {
-        prev = img;
-        img = img->next;
-        i++;
-      }
-
-      if (!img) {
-        if ((queue->num_buffers == 1) && (queue->num_buffers_max > 8)) {
-          /* only a single frame on fifo with different
-           * format -> ignore it (give another chance of a frame format hit)
-           * only if we have a lot of buffers at all.
-           */
-          lprintf("frame format mismatch - will wait another frame\n");
-        } else {
-          /* we have just a limited number of buffers or at least 2 frames
-           * on fifo but they don't match -> give up. return whatever we got.
-           */
-          prev = NULL;
-          img = queue->first;
-          lprintf("frame format miss (%d/%d)\n", i, queue->num_buffers);
+      if (width && height) {
+        /* try to obtain a frame with the same format first.
+         * doing so may avoid unnecessary alloc/free's at the vo
+         * driver, specially when using post plugins that change
+         * format like the tvtime deinterlacer does.
+         */
+        int i = 0;
+        while (img && 
+          ((img->format != format) || (img->width != width) ||
+           (img->height != height) || (img->ratio != ratio))) {
+          prev = img;
+          img = img->next;
+          i++;
         }
-      } else {
-        /* good: format match! */
-        lprintf("frame format hit (%d/%d)\n", i, queue->num_buffers);
-      }
-    }
-#endif
 
+        if (!img) {
+          if ((queue->num_buffers == 1) && (queue->num_buffers_max > 8)) {
+            /* only a single frame on fifo with different
+             * format -> ignore it (give another chance of a frame format hit)
+             * only if we have a lot of buffers at all.
+             */
+            lprintf("frame format mismatch - will wait another frame\n");
+          } else {
+            /* we have just a limited number of buffers or at least 2 frames
+             * on fifo but they don't match -> give up. return whatever we got.
+             */
+            prev = NULL;
+            img = queue->first;
+            lprintf("frame format miss (%d/%d)\n", i, queue->num_buffers);
+          }
+        } else {
+          /* good: format match! */
+          lprintf("frame format hit (%d/%d)\n", i, queue->num_buffers);
+        }
+      }
+#endif
+    } else {
+      img = NULL;
+    }
     if (!img) {
       struct timeval tv;
       struct timespec ts;
@@ -968,20 +971,45 @@ static vo_frame_t *vo_get_frame (xine_video_port_t *this_gen,
 static int vo_frame_draw (vo_frame_t *img, xine_stream_t *stream) {
 
   vos_t         *this = (vos_t *) img->port;
-  int            frames_to_skip;
+  int            frames_to_skip, first_frame_flag = 0;
+
+  img->stream = NULL;
+
+  if (this->discard_frames) {
+    /* Now that we have the auto gapless switch it should be safe to always drop here. */
+    lprintf ("i'm in flush mode, not appending this frame to queue\n");
+    return 0;
+  }
 
   /* handle anonymous streams like NULL for easy checking */
   if (stream == XINE_ANON_STREAM) stream = NULL;
 
-  img->stream = stream;
-  this->current_width = img->width;
-  this->current_height = img->height;
-
   if (stream) {
+    first_frame_flag = stream->first_frame_flag;
+    if (first_frame_flag == 2) {
+      /* Frame reordering and/or multithreaded deoders feature an initial delay.
+       * Even worse: mpeg-ts does not seek to keyframes, as that would need quite some 
+       * decoder knowledge. As a result, there often burst in many "bad" frames here quickly.
+       * Dont let these mess up timing, generate high frames_to_skip values,
+       * and kill the following keyframe seq with that.
+       */
+      if (img->bad_frame) {
+        this->num_frames_burst++;
+        return 0;
+      }
+      if (this->num_frames_burst) {
+        xprintf (this->xine, XINE_VERBOSITY_DEBUG,
+          "video_out: dropped %d bad frames after seek.\n", this->num_frames_burst);
+        this->num_frames_burst = 0;
+      }
+    }
+    img->stream = stream;
     _x_refcounter_inc(stream->refcounter);
     _x_extra_info_merge( img->extra_info, stream->video_decoder_extra_info );
     stream->metronom->got_video_frame (stream->metronom, img);
   }
+  this->current_width = img->width;
+  this->current_height = img->height;
   this->current_duration = img->duration;
 
   if (!this->grab_only) {
@@ -1007,7 +1035,7 @@ static int vo_frame_draw (vo_frame_t *img, xine_stream_t *stream) {
      *   will be (-4 -> 1) when frame_drop_limit_max is only 1. This maximum value
      *   depends on the number of video buffers which the output device provides.
      */
-    if (stream && stream->first_frame_flag == 2)
+    if (first_frame_flag == 2)
       this->frame_drop_cpt = 10;
 
     if (this->frame_drop_cpt) {
@@ -1045,12 +1073,6 @@ static int vo_frame_draw (vo_frame_t *img, xine_stream_t *stream) {
 
   } else {
     frames_to_skip = 0;
-
-    if (this->discard_frames) {
-      lprintf ("i'm in flush mode, not appending this frame to queue\n");
-
-      return 0;
-    }
   }
 
 
@@ -1152,10 +1174,9 @@ static int vo_frame_draw (vo_frame_t *img, xine_stream_t *stream) {
     int send_event;
     xine_stream_t **it;
 
-    if( (100 * this->num_frames_skipped / this->num_frames_delivered) >
-         this->warn_skipped_threshold ||
-        (100 * this->num_frames_discarded / this->num_frames_delivered) >
-         this->warn_discarded_threshold )
+    /* 100 * n / num_frames_delivered */
+    if (((this->num_frames_skipped >> 1)   > this->warn_skipped_threshold) ||
+        ((this->num_frames_discarded >> 1) > this->warn_discarded_threshold))
       this->warn_threshold_exceeded++;
     else
       this->warn_threshold_exceeded = 0;
@@ -1169,11 +1190,14 @@ static int vo_frame_draw (vo_frame_t *img, xine_stream_t *stream) {
 
     pthread_mutex_lock(&this->streams_lock);
     for (it = this->streams; *it; it++) {
+      int skipped, discarded;
       stream = *it;
-      _x_stream_info_set(stream, XINE_STREAM_INFO_SKIPPED_FRAMES,
-			 1000 * this->num_frames_skipped / this->num_frames_delivered);
-      _x_stream_info_set(stream, XINE_STREAM_INFO_DISCARDED_FRAMES,
-			 1000 * this->num_frames_discarded / this->num_frames_delivered);
+
+      /* 1000 * n / num_frames_delivered */
+      skipped   = 5 * this->num_frames_skipped;
+      discarded = 5 * this->num_frames_discarded;
+      _x_stream_info_set (stream, XINE_STREAM_INFO_SKIPPED_FRAMES, skipped);
+      _x_stream_info_set (stream, XINE_STREAM_INFO_DISCARDED_FRAMES, discarded);
 
       /* we send XINE_EVENT_DROPPED_FRAMES to frontend to warn that
        * number of skipped or discarded frames is too high.
@@ -1186,9 +1210,9 @@ static int vo_frame_draw (vo_frame_t *img, xine_stream_t *stream) {
          event.stream      = stream;
          event.data        = &data;
          event.data_length = sizeof(data);
-         data.skipped_frames = _x_stream_info_get(stream, XINE_STREAM_INFO_SKIPPED_FRAMES);
+         data.skipped_frames = skipped;
          data.skipped_threshold = this->warn_skipped_threshold * 10;
-         data.discarded_frames = _x_stream_info_get(stream, XINE_STREAM_INFO_DISCARDED_FRAMES);
+         data.discarded_frames = discarded;
          data.discarded_threshold = this->warn_discarded_threshold * 10;
          xine_event_send(stream, &event);
       }
@@ -1199,7 +1223,7 @@ static int vo_frame_draw (vo_frame_t *img, xine_stream_t *stream) {
     if( this->num_frames_skipped || this->num_frames_discarded ) {
       xine_log(this->xine, XINE_LOG_MSG,
 	       _("%d frames delivered, %d frames skipped, %d frames discarded\n"),
-	       this->num_frames_delivered,
+               200,
 	       this->num_frames_skipped, this->num_frames_discarded);
     }
 
@@ -1585,7 +1609,7 @@ static void overlay_and_display_frame (vos_t *this, vo_frame_t *img, int64_t vpt
  */
 static void paused_loop( vos_t *this, int64_t vpts )
 {
-  /* prevent decoder thread from allocating new frames */
+  /* prevent decoder thread from allocating too many new frames */
   vo_queue_read_lock (&this->free_img_buf_queue);
 
   while (this->clock->speed == XINE_SPEED_PAUSE && this->video_loop_running) {
@@ -2472,7 +2496,7 @@ xine_video_port_t *_x_vo_new_port (xine_t *xine, vo_driver_t *driver, int grabon
 					  sizeof(extra_info_t));
 
   /* nobody is listening yet, omit locking and signalling */
-  this->free_img_buf_queue.locked_for_read = 1;
+  this->free_img_buf_queue.locked_for_read = 1000;
   for (i=0; i<num_frame_buffers; i++) {
     vo_frame_t *img;
 
@@ -2529,6 +2553,9 @@ xine_video_port_t *_x_vo_new_port (xine_t *xine, vo_driver_t *driver, int grabon
     this->video_loop_running   = 1;
     this->video_opened         = 0;
     this->grab_only            = 0;
+
+    /* render thread needs no display queue signals */
+    this->display_img_buf_queue.locked_for_read = 1000;
 
     pthread_attr_init(&pth_attrs);
 #if defined(_POSIX_THREAD_PRIORITY_SCHEDULING) && (_POSIX_THREAD_PRIORITY_SCHEDULING > 0)
