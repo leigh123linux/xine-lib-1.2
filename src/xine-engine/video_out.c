@@ -173,6 +173,8 @@ typedef struct {
   pthread_mutex_t           trigger_drawing_mutex;
   pthread_cond_t            trigger_drawing_cond;
   int                       trigger_drawing;
+  int                       step;
+  pthread_cond_t            done_stepping;
 
   /* frames usage stats */
   int                       frames_total;
@@ -1625,15 +1627,48 @@ static void paused_loop( vos_t *this, int64_t vpts )
       }
     }
 
-    /* refresh output */
-    check_redraw_needed (this, vpts);
-    if (this->redraw_needed) {
-      vo_frame_t *img = duplicate_frame (this, this->img_backup);
-      if( img ) {
-        /* extra info of the backup is thrown away, because it is not up to date */
-        _x_extra_info_reset(img->extra_info);
-        overlay_and_display_frame (this, img, vpts);
+    /* what a terrible HACK.
+     * For single step mode, keep the engine paused all the time, as audio out
+     * seems unable to pause that quickly. Instead, advance manually and nudge
+     * that master clock. After this, audio out will get this message as well.
+     */
+    {
+      vo_frame_t *f = NULL;
+
+      if (this->step) {
+        pthread_mutex_lock (&this->trigger_drawing_mutex);
+        if (this->step) {
+          pthread_mutex_lock (&this->display_img_buf_queue.mutex);
+          if (this->display_img_buf_queue.first)
+            f = vo_queue_pop_int (&this->display_img_buf_queue);
+          pthread_mutex_unlock (&this->display_img_buf_queue.mutex);
+          if (f) {
+            this->step = 0;
+            pthread_cond_broadcast (&this->done_stepping);
+          }
+        }
+        pthread_mutex_unlock (&this->trigger_drawing_mutex);
+
+        if (f) {
+          if (this->img_backup)
+            vo_frame_dec_lock (this->img_backup);
+          vo_frame_inc_lock (f);
+          this->img_backup = f;
+          vpts = f->vpts;
+          this->clock->adjust_clock (this->clock, vpts);
+          xprintf (this->xine, XINE_VERBOSITY_DEBUG,
+            "video_out: SINGLE_STEP: vpts %"PRId64".\n", vpts);
+        }
       }
+
+      if (!f) {
+        check_redraw_needed (this, vpts);
+        if (this->redraw_needed)
+          f = duplicate_frame (this, this->img_backup);
+      }
+      /* refresh output */
+      if (f)
+        overlay_and_display_frame (this, f, vpts);
     }
 
     /* wait for 1/50s or wakeup */
@@ -1844,9 +1879,14 @@ static void *video_out_loop (void *this_gen) {
     }
   }
   pthread_mutex_unlock(&this->display_img_buf_queue.mutex);
+
   /* dont let folks wait forever in vain */
   if (this->discard_frames)
     pthread_cond_broadcast (&this->done_flushing);
+  if (this->step) {
+    this->step = 0;
+    pthread_cond_broadcast (&this->done_stepping);
+  }
 
   if (this->img_backup) {
     vo_frame_dec_lock( this->img_backup );
@@ -1982,6 +2022,10 @@ static int vo_get_property (xine_video_port_t *this_gen, int property) {
   int ret;
 
   switch (property) {
+  case XINE_PARAM_VO_SINGLE_STEP:
+    ret = 0;
+    break;
+
   case VO_PROP_DISCARD_FRAMES:
     ret = this->discard_frames;
     break;
@@ -2060,6 +2104,32 @@ static int vo_set_property (xine_video_port_t *this_gen, int property, int value
   int ret;
 
   switch (property) {
+
+  case XINE_PARAM_VO_SINGLE_STEP:
+    ret = !!value;
+    if (this->grab_only)
+      break;
+    /* xine_set_param () will (un)pause for us here to avoid ticket freeze. */
+    pthread_mutex_lock (&this->trigger_drawing_mutex);
+    this->step = ret;
+    this->trigger_drawing = 0;
+    pthread_cond_signal (&this->trigger_drawing_cond);
+    if (ret) {
+      struct timeval tv;
+      struct timespec ts;
+      gettimeofday (&tv, NULL);
+      tv.tv_usec += 500000;
+      if (tv.tv_usec >= 1000000) {
+        tv.tv_sec++;
+        tv.tv_usec -= 1000000;
+      }
+      ts.tv_sec = tv.tv_sec;
+      ts.tv_nsec = tv.tv_usec * 1000;
+      if (pthread_cond_timedwait (&this->done_stepping, &this->trigger_drawing_mutex, &ts))
+        ret = 0;
+    }
+    pthread_mutex_unlock (&this->trigger_drawing_mutex);
+    break;
 
   case VO_PROP_DISCARD_FRAMES:
     /* recursive discard frames setting */
@@ -2232,6 +2302,7 @@ static void vo_exit (xine_video_port_t *this_gen) {
   vo_queue_close (&this->free_img_buf_queue);
   vo_queue_close (&this->display_img_buf_queue);
 
+  pthread_cond_destroy(&this->done_stepping);
   pthread_cond_destroy(&this->trigger_drawing_cond);
   pthread_mutex_destroy(&this->trigger_drawing_mutex);
 
@@ -2532,7 +2603,9 @@ xine_video_port_t *_x_vo_new_port (xine_t *xine, vo_driver_t *driver, int grabon
 
   pthread_mutex_init(&this->trigger_drawing_mutex, NULL);
   pthread_cond_init(&this->trigger_drawing_cond, NULL);
+  pthread_cond_init (&this->done_stepping, NULL);
   this->trigger_drawing = 0;
+  this->step = 0;
 
   if (grabonly) {
 

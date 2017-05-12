@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2000-2013 the xine project
+ * Copyright (C) 2000-2017 the xine project
  *
  * This file is part of xine, a free video player.
  *
@@ -355,6 +355,7 @@ int  xine_get_param (xine_stream_t *stream, int param) XINE_PROTECTED;
 #define XINE_PARAM_VO_CROP_RIGHT           0x01000021 /* crop frame pixels  */
 #define XINE_PARAM_VO_CROP_TOP             0x01000022 /* crop frame pixels  */
 #define XINE_PARAM_VO_CROP_BOTTOM          0x01000023 /* crop frame pixels  */
+#define XINE_PARAM_VO_SINGLE_STEP          0x01000024 /* 1 = "advance to next frame, then pause" */
 
 #define XINE_VO_ZOOM_STEP                  100
 #define XINE_VO_ZOOM_MAX                   400

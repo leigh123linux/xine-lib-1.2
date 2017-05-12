@@ -372,19 +372,58 @@ static xine_ticket_t *XINE_MALLOC ticket_init(void) {
 
 static void set_speed_internal (xine_stream_t *stream, int speed) {
   xine_t *xine = stream->xine;
-  int old_speed = xine->clock->speed;
+  int old_speed = xine->clock->speed, live_pause = 0;
+  int mode = 2 * (speed == XINE_SPEED_PAUSE) + (old_speed == XINE_SPEED_PAUSE);
 
-  if (old_speed != XINE_SPEED_PAUSE && speed == XINE_SPEED_PAUSE)
-    /* get all decoder and post threads in a state where they agree to be blocked */
-    xine->port_ticket->revoke(xine->port_ticket, 0);
+  if (speed == XINE_LIVE_PAUSE_ON) {
+    if (!(mode & 1))
+      return;
+    live_pause = 1;
+    mode = 3;
+  } else if (speed == XINE_LIVE_PAUSE_OFF) {
+    if (!(mode & 1))
+      return;
+    mode = 3;
+  }
 
-  if (old_speed == XINE_SPEED_PAUSE && speed != XINE_SPEED_PAUSE)
-    /* all decoder and post threads may continue now */
-    xine->port_ticket->issue(xine->port_ticket, 0);
-
-  if (old_speed != XINE_SPEED_PAUSE && speed == XINE_SPEED_PAUSE)
-    /* set master clock so audio_out loop can pause in a safe place */
-    stream->xine->clock->set_fine_speed (stream->xine->clock, speed);
+  if (mode & 2) {
+    if (mode & 1) {
+      /* switch pause mode */
+      if (xine->live_pause == live_pause)
+        return;
+      pthread_mutex_lock (&xine->pause_mutex);
+      if (xine->live_pause != live_pause) {
+        if (live_pause)
+          xine->port_ticket->issue (xine->port_ticket, 0);
+        else
+          xine->port_ticket->revoke (xine->port_ticket, 0);
+        xine->live_pause = live_pause;
+      }
+      pthread_mutex_unlock (&xine->pause_mutex);
+      return;
+    } else {
+      /* pause */
+      /* get all decoder and post threads in a state where they agree to be blocked */
+      xine->port_ticket->revoke (xine->port_ticket, 0);
+      /* set master clock so audio_out loop can pause in a safe place */
+      xine->clock->set_fine_speed (xine->clock, speed);
+    }
+  } else {
+    if (mode & 1) {
+      /* unpause */
+      pthread_mutex_lock (&xine->pause_mutex);
+      if (xine->live_pause)
+        xine->live_pause = 0;
+      else
+        /* all decoder and post threads may continue now */
+        xine->port_ticket->issue (xine->port_ticket, 0);
+      pthread_mutex_unlock (&xine->pause_mutex);
+    } else {
+      /* plain change */
+      if (speed == old_speed)
+        return;
+    }
+  }
 
   /* see coment on audio_out loop about audio_paused */
   if( stream->audio_out ) {
@@ -396,9 +435,9 @@ static void set_speed_internal (xine_stream_t *stream, int speed) {
     xine->port_ticket->release(xine->port_ticket, 1);
   }
 
-  if (old_speed == XINE_SPEED_PAUSE || speed != XINE_SPEED_PAUSE)
+  if (mode < 2)
     /* master clock is set after resuming the audio device (audio_out loop may continue) */
-    stream->xine->clock->set_fine_speed (stream->xine->clock, speed);
+    xine->clock->set_fine_speed (xine->clock, speed);
 }
 
 
@@ -565,6 +604,9 @@ static int stream_rewire_audio(xine_post_out_t *output, void *data)
   if (!data)
     return 0;
 
+  /* just an optimization */
+  set_speed_internal (stream, XINE_LIVE_PAUSE_OFF);
+
   stream->xine->port_ticket->lock_port_rewiring(stream->xine->port_ticket, -1);
   stream->xine->port_ticket->revoke(stream->xine->port_ticket, 1);
 
@@ -590,6 +632,9 @@ static int stream_rewire_video(xine_post_out_t *output, void *data)
 
   if (!data)
     return 0;
+
+  /* just an optimization */
+  set_speed_internal (stream, XINE_LIVE_PAUSE_OFF);
 
   stream->xine->port_ticket->lock_port_rewiring(stream->xine->port_ticket, -1);
   stream->xine->port_ticket->revoke(stream->xine->port_ticket, 1);
@@ -1664,6 +1709,8 @@ void xine_exit (xine_t *this) {
 
   pthread_mutex_destroy(&this->log_lock);
 
+  pthread_mutex_destroy (&this->pause_mutex);
+
 #if defined(WIN32)
   WSACleanup();
 #endif
@@ -1710,6 +1757,9 @@ xine_t *xine_new (void) {
    */
   memset(this->log_buffers, 0, sizeof(this->log_buffers));
   pthread_mutex_init (&this->log_lock, NULL);
+
+  this->live_pause = 0;
+  pthread_mutex_init (&this->pause_mutex, NULL);
 
 
 #ifdef WIN32

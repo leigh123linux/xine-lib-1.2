@@ -488,6 +488,24 @@ void xine_set_param (xine_stream_t *stream, int param, int value) {
     stream->xine->port_ticket->release(stream->xine->port_ticket, 0);
     break;
 
+  case XINE_PARAM_VO_SINGLE_STEP:
+    pthread_mutex_lock (&stream->frontend_lock);
+    if (_x_get_fine_speed (stream) != XINE_SPEED_PAUSE) {
+      _x_set_fine_speed (stream, XINE_SPEED_PAUSE);
+    } else {
+      /* HACK: temporarily resume decoders. */
+      _x_set_fine_speed (stream, XINE_LIVE_PAUSE_ON);
+      /* rather miss 1 strobe than wait or freeze. */
+      if (stream->xine->port_ticket->ticket_revoked == 0) {
+        stream->xine->port_ticket->acquire(stream->xine->port_ticket, 0);
+        stream->video_out->set_property (stream->video_out, param, value);
+        stream->audio_out->set_property (stream->audio_out, param, value);
+        stream->xine->port_ticket->release(stream->xine->port_ticket, 0);
+      }
+    }
+    pthread_mutex_unlock (&stream->frontend_lock);
+    break;
+
   case XINE_PARAM_IGNORE_VIDEO:
     _x_stream_info_set(stream, XINE_STREAM_INFO_IGNORE_VIDEO, value);
     break;

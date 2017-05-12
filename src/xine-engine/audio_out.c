@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2000-2014 the xine project
+ * Copyright (C) 2000-2017 the xine project
  *
  * This file is part of xine, a free video player.
  *
@@ -261,6 +261,11 @@ typedef struct {
   int             discard_buffers;
   pthread_mutex_t flush_audio_driver_lock;
   pthread_cond_t  flush_audio_driver_reached;
+
+  int             dropped;
+  int             step;
+  pthread_mutex_t step_mutex;
+  pthread_cond_t  done_stepping;
 
   /* some built-in audio filters */
 
@@ -1062,7 +1067,7 @@ static void *ao_loop (void *this_gen) {
           (this->current_speed != XINE_FINE_SPEED_NORMAL &&
            !this->slow_fast_audio) ) )  {
 
-      if (this->current_speed != XINE_SPEED_PAUSE) {
+      if ((this->current_speed != XINE_SPEED_PAUSE) || this->step) {
 
 	cur_time = this->clock->get_current_time (this->clock);
 	if (in_buf->vpts < cur_time ) {
@@ -1073,8 +1078,20 @@ static void *ao_loop (void *this_gen) {
 	  fifo_append (this->free_fifo, in_buf);
 	  in_buf = NULL;
 	  pthread_mutex_unlock(&this->current_speed_lock);
+          this->dropped++;
 	  continue;
 	}
+
+        if (this->step) {
+          pthread_mutex_lock (&this->step_mutex);
+          this->step = 0;
+          pthread_cond_broadcast (&this->done_stepping);
+          pthread_mutex_unlock (&this->step_mutex);
+          if (this->dropped)
+            xprintf (this->xine, XINE_VERBOSITY_DEBUG,
+              "audio_out: SINGLE_STEP: dropped %d buffers.\n", this->dropped);
+        }
+        this->dropped = 0;
 
         if ((in_buf->vpts - cur_time) > 2 * 90000)
 	  xprintf (this->xine, XINE_VERBOSITY_DEBUG,
@@ -1314,6 +1331,13 @@ static void *ao_loop (void *this_gen) {
     if (in_buf->stream)
       _x_refcounter_dec(in_buf->stream->refcounter);
     fifo_append (this->free_fifo, in_buf);
+  }
+
+  if (this->step) {
+    pthread_mutex_lock (&this->step_mutex);
+    this->step = 0;
+    pthread_cond_broadcast (&this->done_stepping);
+    pthread_mutex_unlock (&this->step_mutex);
   }
 
   return NULL;
@@ -1719,6 +1743,9 @@ static void ao_exit(xine_audio_port_t *this_gen) {
   pthread_mutex_destroy(&this->flush_audio_driver_lock);
   pthread_cond_destroy(&this->flush_audio_driver_reached);
 
+  pthread_mutex_destroy (&this->step_mutex);
+  pthread_cond_destroy  (&this->done_stepping);
+
   buf = this->free_fifo->first;
 
   while (buf != NULL) {
@@ -1784,6 +1811,10 @@ static int ao_get_property (xine_audio_port_t *this_gen, int property) {
   int ret;
 
   switch (property) {
+  case XINE_PARAM_VO_SINGLE_STEP:
+    ret = 0;
+    break;
+
   case AO_PROP_COMPRESSOR:
     ret = this->compression_factor_max*100;
     break;
@@ -1854,6 +1885,30 @@ static int ao_set_property (xine_audio_port_t *this_gen, int property, int value
   int ret = 0;
 
   switch (property) {
+  /* not a typo :-) */
+  case XINE_PARAM_VO_SINGLE_STEP:
+    ret = !!value;
+    if (this->grab_only)
+      break;
+    pthread_mutex_lock (&this->step_mutex);
+    this->step = ret;
+    if (ret) {
+      struct timeval tv;
+      struct timespec ts;
+      gettimeofday (&tv, NULL);
+      tv.tv_usec += 500000;
+      if (tv.tv_usec >= 1000000) {
+        tv.tv_sec++;
+        tv.tv_usec -= 1000000;
+      }
+      ts.tv_sec = tv.tv_sec;
+      ts.tv_nsec = tv.tv_usec * 1000;
+      if (pthread_cond_timedwait (&this->done_stepping, &this->step_mutex, &ts))
+        ret = 0;
+    }
+    pthread_mutex_unlock (&this->step_mutex);
+    break;
+
   case AO_PROP_COMPRESSOR:
 
     this->compression_factor_max = (double) value / 100.0;
@@ -2155,6 +2210,10 @@ xine_audio_port_t *_x_ao_new_port (xine_t *xine, ao_driver_t *driver,
   pthread_mutex_init( &this->current_speed_lock, NULL );
   pthread_mutex_init( &this->flush_audio_driver_lock, NULL );
   pthread_cond_init( &this->flush_audio_driver_reached, NULL );
+
+  this->step = 0;
+  pthread_mutex_init (&this->step_mutex, NULL);
+  pthread_cond_init  (&this->done_stepping, NULL);
 
   if (!grab_only)
     this->gap_tolerance          = driver->get_gap_tolerance (this->driver);

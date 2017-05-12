@@ -108,6 +108,13 @@ struct xine_s {
   void                      *log_cb_user_data;
 
   int                        flags;
+
+  /* set when pauseing with port ticket granted, for XINE_PARAM_VO_SINGLE_STEP. */
+  int                        live_pause;
+  pthread_mutex_t            pause_mutex;
+  /* special values for set_speed_internal () */
+# define XINE_LIVE_PAUSE_ON 0x7ffffffd
+# define XINE_LIVE_PAUSE_OFF 0x7ffffffc
 #endif
 };
 
