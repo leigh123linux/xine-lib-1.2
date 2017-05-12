@@ -136,67 +136,58 @@ void _x_extra_info_merge( extra_info_t *dst, extra_info_t *src ) {
   }
 }
 
-static int acquire_allowed_to_block(xine_ticket_t *this) {
-  pthread_t own_id = pthread_self();
-  unsigned entry;
-  unsigned new_size;
-
-  for(entry = 0; entry < this->holder_thread_count; ++entry) {
-    if(pthread_equal(this->holder_threads[entry].holder, own_id)) {
-      /* This thread may already hold this ticket */
-      this->holder_threads[entry].count++;
-      return (this->holder_threads[entry].count == 1);
-    }
-  }
-  /* If we get this far, this thread hasn't claimed this ticket before.
-     We need to give it a new entry in the list, then return true */
-  for(entry = 0; entry < this->holder_thread_count; ++entry) {
-    if(this->holder_threads[entry].count == 0) {
-      this->holder_threads[entry].holder = own_id;
-      this->holder_threads[entry].count = 1;
-      return 1;
-    }
-  }
-  /* List too small. Realloc to larger size */
-  new_size = this->holder_thread_count * 2;
-  lprintf("Reallocing from %d to %d entries\n", this->holder_thread_count, new_size);
-
-  this->holder_threads = realloc(this->holder_threads, sizeof(*this->holder_threads) * new_size);
-  memset(this->holder_threads + this->holder_thread_count, 0, this->holder_thread_count);
-
-  /* Old size is equivalent to index of first newly allocated entry*/
-  this->holder_threads[this->holder_thread_count].count = 1;
-  this->holder_threads[this->holder_thread_count].holder = own_id;
-  this->holder_thread_count = new_size;
-
-  return 1;
-}
-
 static int ticket_acquire_internal(xine_ticket_t *this, int irrevocable, int nonblocking) {
-  int must_wait = 0;
+  pthread_t self = pthread_self ();
+  int wait, i;
 
-  pthread_mutex_lock(&this->lock);
-  int allowed_to_block = acquire_allowed_to_block(this);
+  pthread_mutex_lock (&this->lock);
 
-  if (this->ticket_revoked && !this->irrevocable_tickets)
-    must_wait = !nonblocking;
-  else if (this->atomic_revoke && !pthread_equal(this->atomic_revoker_thread, pthread_self()))
-    must_wait = 1;
+  /* find ourselves in user list */
+  for (i = 0; i < this->holder_thread_count; i++) {
+    if (pthread_equal (this->holder_threads[i].holder, self))
+      break;
+  }
 
-  if (must_wait && allowed_to_block) {
-    if (nonblocking) {
-      pthread_mutex_unlock(&this->lock);
+  if (i == this->holder_thread_count) {
+    /* not found */
+    wait = (this->ticket_revoked && !this->irrevocable_tickets) ? !nonblocking
+         : (this->atomic_revoke ? !pthread_equal (this->atomic_revoker_thread, self) : 0);
+    if (nonblocking && wait) {
+      /* not available immediately, bail out */
+      pthread_mutex_unlock (&this->lock);
       return 0;
     }
-
-    pthread_cond_wait(&this->issued, &this->lock);
+    /* add */
+    if (((i & 31) == 31) && (this->holder_threads[i].count = -1000)) {
+      /* enlarge list */
+      void *new = realloc (this->holder_threads, sizeof (*this->holder_threads) * (i + 33));
+      if (!new) {
+        pthread_mutex_unlock (&this->lock);
+        return 0;
+      }
+      this->holder_threads = new;
+      this->holder_threads[i + 32].count = -1000;
+    }
+    this->holder_threads[i].count = 1;
+    this->holder_threads[i].holder = self;
+    this->holder_thread_count = i + 1;
+  } else {
+    /* found, we already hold this */
+    this->holder_threads[i].count++;
+    wait = 0;
+  }
+    
+  while (wait) {
+    pthread_cond_wait (&this->issued, &this->lock);
+    wait = (this->ticket_revoked && !this->irrevocable_tickets) ? 1
+         : (this->atomic_revoke ? !pthread_equal (this->atomic_revoker_thread, self) : 0);
   }
 
   this->tickets_granted++;
   if (irrevocable)
     this->irrevocable_tickets++;
 
-  pthread_mutex_unlock(&this->lock);
+  pthread_mutex_unlock (&this->lock);
   return 1;
 }
 
@@ -208,46 +199,53 @@ static void ticket_acquire(xine_ticket_t *this, int irrevocable) {
   ticket_acquire_internal(this, irrevocable, 0);
 }
 
-static int release_allowed_to_block(xine_ticket_t *this) {
-  pthread_t own_id = pthread_self();
-  unsigned entry;
+static void ticket_release_internal(xine_ticket_t *this, int irrevocable) {
+  pthread_t self = pthread_self ();
+  int i;
 
-  for(entry = 0; entry < this->holder_thread_count; ++entry) {
-    if(pthread_equal(this->holder_threads[entry].holder, own_id)) {
-      this->holder_threads[entry].count--;
-      return this->holder_threads[entry].count == 0;
+  pthread_mutex_lock (&this->lock);
+
+  /* find ourselves in user list */
+  for (i = 0; i < this->holder_thread_count; i++) {
+    if (pthread_equal (this->holder_threads[i].holder, self))
+      break;
+  }
+
+  if (i == this->holder_thread_count) {
+    lprintf ("BUG! Ticket 0x%p released by a thread that never took it! Allowing code to continue\n", this);
+    _x_assert (0);
+  } else {
+    this->holder_threads[i].count--;
+    if (this->holder_threads[i].count == 0) {
+      this->holder_thread_count--;
+      if (i < this->holder_thread_count) {
+        this->holder_threads[i].count  = this->holder_threads[this->holder_thread_count].count;
+        this->holder_threads[i].holder = this->holder_threads[this->holder_thread_count].holder;
+      }
     }
   }
-  lprintf("BUG! Ticket 0x%p released by a thread that never took it! Allowing code to continue\n", this);
-  _x_assert(0);
-  return 1;
-}
-
-static void ticket_release_internal(xine_ticket_t *this, int irrevocable, int nonblocking) {
-
-  pthread_mutex_lock(&this->lock);
-  int allowed_to_block = release_allowed_to_block(this);
 
   this->tickets_granted--;
-  if (irrevocable)
+  if (this->tickets_granted < 0)
+    this->tickets_granted = 0;
+  if (irrevocable) {
     this->irrevocable_tickets--;
+    if (this->irrevocable_tickets < 0)
+      this->irrevocable_tickets = 0;
+  }
 
   if (this->ticket_revoked && !this->tickets_granted)
     pthread_cond_broadcast(&this->revoked);
-  if (allowed_to_block) {
-    if (this->ticket_revoked && !this->irrevocable_tickets && !nonblocking)
-      pthread_cond_wait(&this->issued, &this->lock);
-  }
 
   pthread_mutex_unlock(&this->lock);
 }
 
 static void ticket_release_nonblocking(xine_ticket_t *this, int irrevocable) {
-  ticket_release_internal(this, irrevocable, 1);
+  ticket_release_internal (this, irrevocable);
 }
 
 static void ticket_release(xine_ticket_t *this, int irrevocable) {
-  ticket_release_internal(this, irrevocable, 0);
+  ticket_release_internal (this, irrevocable);
 }
 
 static void ticket_renew(xine_ticket_t *this, int irrevocable) {
@@ -274,8 +272,11 @@ static void ticket_issue(xine_ticket_t *this, int atomic) {
   pthread_mutex_lock(&this->lock);
 
   this->pending_revocations--;
+  if (this->pending_revocations < 0)
+    this->pending_revocations = 0;
   if (!this->pending_revocations)
     pthread_cond_broadcast(&this->issued);
+
   this->atomic_revoke = 0;
 
   pthread_mutex_unlock(&this->lock);
@@ -288,11 +289,13 @@ static void ticket_revoke(xine_ticket_t *this, int atomic) {
   pthread_mutex_lock(&this->lock);
 
   this->pending_revocations++;
-  this->ticket_revoked = 1;
-  if (this->tickets_granted)
-    pthread_cond_wait(&this->revoked, &this->lock);
-  _x_assert(!this->tickets_granted);
+
+  while (this->tickets_granted) {
+    this->ticket_revoked = 1;
+    pthread_cond_wait (&this->revoked, &this->lock);
+  }
   this->ticket_revoked = 0;
+
   if (atomic) {
     this->atomic_revoke = 1;
     this->atomic_revoker_thread = pthread_self();
@@ -346,7 +349,9 @@ static void ticket_dispose(xine_ticket_t *this) {
 static xine_ticket_t *XINE_MALLOC ticket_init(void) {
   xine_ticket_t *port_ticket;
 
-  port_ticket = calloc(1, sizeof(xine_ticket_t));
+  port_ticket = calloc (1, sizeof(xine_ticket_t));
+  if (!port_ticket)
+    return NULL;
 
   port_ticket->acquire_nonblocking  = ticket_acquire_nonblocking;
   port_ticket->acquire              = ticket_acquire;
@@ -358,8 +363,13 @@ static xine_ticket_t *XINE_MALLOC ticket_init(void) {
   port_ticket->lock_port_rewiring   = ticket_lock_port_rewiring;
   port_ticket->unlock_port_rewiring = ticket_unlock_port_rewiring;
   port_ticket->dispose              = ticket_dispose;
-  port_ticket->holder_thread_count = XINE_MAX_TICKET_HOLDER_THREADS;
-  port_ticket->holder_threads = calloc(XINE_MAX_TICKET_HOLDER_THREADS,sizeof(*port_ticket->holder_threads));
+  port_ticket->holder_thread_count  = 0;
+  port_ticket->holder_threads       = malloc (32 * sizeof (*port_ticket->holder_threads));
+  if (!port_ticket->holder_threads) {
+    free (port_ticket);
+    return NULL;
+  }
+  port_ticket->holder_threads[31].count = -1000;
 
   pthread_mutex_init(&port_ticket->lock, NULL);
   pthread_mutex_init(&port_ticket->revoke_lock, NULL);
