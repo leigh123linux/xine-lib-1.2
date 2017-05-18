@@ -17,6 +17,7 @@ xine-lib (1.2.9) ????-??-??
   * Minor ffmpeg optimization.
   * Lift a few video engine handbrakes.
     Less CPU load, fewer frame drops, faster seeking.
+  * Optimize audio engine.
   * Optimize metronom clock.
   * Optimize sse/mmx2 memcpy.
   * Update german translation.
