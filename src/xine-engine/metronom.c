@@ -371,8 +371,8 @@ static void metronom_handle_discontinuity (metronom_t *this, int type,
       this->force_audio_jump = 1;
       this->force_video_jump = 1;
       this->video_drift = 0;
-      xprintf(this->xine, XINE_VERBOSITY_DEBUG,
-	      "vpts adjusted with prebuffer to %" PRId64 "\n", this->video_vpts);
+      xprintf (this->xine, XINE_VERBOSITY_DEBUG,
+        "metronom: vpts adjusted with prebuffer to %" PRId64 ".\n", this->video_vpts);
       break;
 
     case DISC_ABSOLUTE:
@@ -382,7 +382,8 @@ static void metronom_handle_discontinuity (metronom_t *this, int type,
         if (this->audio_vpts > cur_time) {
           /* still frame with audio */
           this->video_vpts = this->audio_vpts;
-          xprintf(this->xine, XINE_VERBOSITY_DEBUG, "video vpts adjusted to audio vpts %" PRId64 "\n", this->video_vpts);
+          xprintf (this->xine, XINE_VERBOSITY_DEBUG,
+            "metronom: video vpts adjusted to audio vpts %" PRId64 ".\n", this->video_vpts);
         } else {
           /* still frame, no audio */
           this->video_vpts = this->prebuffer + cur_time;
@@ -391,7 +392,8 @@ static void metronom_handle_discontinuity (metronom_t *this, int type,
           this->force_video_jump = 1;
           this->force_audio_jump = 1;
           this->video_drift = 0;
-          xprintf(this->xine, XINE_VERBOSITY_DEBUG, "vpts adjusted with prebuffer to %" PRId64 "\n",
+          xprintf (this->xine, XINE_VERBOSITY_DEBUG,
+            "metronom: vpts adjusted with prebuffer to %" PRId64 ".\n",
 	    this->video_vpts);
         }
       } else {
@@ -400,7 +402,8 @@ static void metronom_handle_discontinuity (metronom_t *this, int type,
           /* video, no sound */
           this->audio_vpts = this->video_vpts;
           this->audio_vpts_rmndr = 0;
-          xprintf(this->xine, XINE_VERBOSITY_DEBUG, "audio vpts adjusted to video vpts %" PRId64 "\n", this->video_vpts);
+          xprintf (this->xine, XINE_VERBOSITY_DEBUG,
+            "metronom: audio vpts adjusted to video vpts %" PRId64 ".\n", this->video_vpts);
         } else {
           /* video + audio */
         }
@@ -448,14 +451,16 @@ static void metronom_handle_video_discontinuity (metronom_t *this, int type,
   this->video_discontinuity_count++;
   pthread_cond_signal (&this->video_discontinuity_reached);
 
-  xprintf(this->xine, XINE_VERBOSITY_DEBUG, "video discontinuity #%d, type is %d, disc_off %" PRId64 "\n",
+  xprintf (this->xine, XINE_VERBOSITY_DEBUG,
+    "metronom: video discontinuity #%d, type is %d, disc_off %" PRId64 ".\n",
     this->video_discontinuity_count, type, disc_off);
 
   if (this->have_audio) {
     while (this->audio_discontinuity_count <
 	   this->video_discontinuity_count) {
 
-      xprintf(this->xine, XINE_VERBOSITY_DEBUG, "waiting for audio discontinuity #%d\n",
+      xprintf (this->xine, XINE_VERBOSITY_DEBUG,
+        "metronom: waiting for audio discontinuity #%d...\n",
         this->video_discontinuity_count);
 
       pthread_cond_wait (&this->audio_discontinuity_reached, &this->lock);
@@ -548,7 +553,8 @@ static void metronom_got_video_frame (metronom_t *this, vo_frame_t *img) {
         this->video_drift      = 0;
         this->video_drift_step = 0;
 
-        xprintf(this->xine, XINE_VERBOSITY_DEBUG, "metronom: video jump by %"PRId64" pts\n", diff);
+        xprintf (this->xine, XINE_VERBOSITY_DEBUG,
+          "metronom: video jump by %"PRId64" pts.\n", diff);
 
       } else {
         /* TJ. Drift into new value over the next 30 frames.
@@ -609,7 +615,7 @@ static void metronom_got_video_frame (metronom_t *this, vo_frame_t *img) {
 
   pthread_mutex_unlock (&this->lock);
   if (this->xine->verbosity == XINE_VERBOSITY_DEBUG + 1)
-    xprintf (this->xine, XINE_VERBOSITY_DEBUG + 1, "metronom: video pts: %"PRId64":%04d ->  %"PRId64"\n",
+    xprintf (this->xine, XINE_VERBOSITY_DEBUG + 1, "metronom: video pts: %"PRId64":%04d ->  %"PRId64".\n",
       img->pts, (int)img->duration, img->vpts);
 }
 
@@ -627,8 +633,9 @@ static void metronom_handle_audio_discontinuity (metronom_t *this, int type,
   this->audio_discontinuity_count++;
   pthread_cond_signal (&this->audio_discontinuity_reached);
 
-  xprintf(this->xine, XINE_VERBOSITY_DEBUG, "audio discontinuity #%d, type is %d, disc_off %" PRId64 "\n",
-	  this->audio_discontinuity_count, type, disc_off);
+  xprintf (this->xine, XINE_VERBOSITY_DEBUG,
+    "metronom: audio discontinuity #%d, type is %d, disc_off %" PRId64 ".\n",
+    this->audio_discontinuity_count, type, disc_off);
 
   if (this->have_video) {
 
@@ -636,8 +643,9 @@ static void metronom_handle_audio_discontinuity (metronom_t *this, int type,
     while ( this->audio_discontinuity_count >
             this->discontinuity_handled_count ) {
 
-      xprintf(this->xine, XINE_VERBOSITY_DEBUG, "waiting for in_discontinuity update #%d\n",
-	      this->audio_discontinuity_count);
+      xprintf (this->xine, XINE_VERBOSITY_DEBUG,
+        "metronom: waiting for in_discontinuity update #%d...\n",
+        this->audio_discontinuity_count);
 
       pthread_cond_wait (&this->video_discontinuity_reached, &this->lock);
     }
@@ -692,7 +700,7 @@ static int64_t metronom_got_audio_samples (metronom_t *this, int64_t pts,
       this->audio_vpts       = vpts;
       this->audio_vpts_rmndr = 0;
       this->audio_drift_step = 0;
-      xprintf(this->xine, XINE_VERBOSITY_DEBUG, "audio jump, diff=%" PRId64 "\n", diff);
+      xprintf (this->xine, XINE_VERBOSITY_DEBUG, "metronom: audio jump, diff=%" PRId64 ".\n", diff);
     } else {
       if( this->audio_samples ) {
         /* calculate drift_step to recover vpts errors */
@@ -778,11 +786,13 @@ static void metronom_set_option (metronom_t *this, int option, int64_t value) {
   switch (option) {
   case METRONOM_AV_OFFSET:
     this->av_offset = value;
-    xprintf(this->xine, XINE_VERBOSITY_LOG, "av_offset=%" PRId64 " pts\n", this->av_offset);
+    xprintf (this->xine, XINE_VERBOSITY_LOG,
+      "metronom: av_offset=%" PRId64 " pts.\n", this->av_offset);
     break;
   case METRONOM_SPU_OFFSET:
     this->spu_offset = value;
-    xprintf(this->xine, XINE_VERBOSITY_LOG, "spu_offset=%" PRId64 " pts\n", this->spu_offset);
+    xprintf (this->xine, XINE_VERBOSITY_LOG,
+      "metronom: spu_offset=%" PRId64 " pts.\n", this->spu_offset);
     break;
   case METRONOM_ADJ_VPTS_OFFSET:
     this->audio_vpts      += value;
@@ -793,14 +803,17 @@ static void metronom_set_option (metronom_t *this, int option, int64_t value) {
      * once in a while means a small sound card drift (or system
      * clock drift -- who knows?). nothing to worry about.
      */
-    xprintf(this->xine, XINE_VERBOSITY_LOG, "fixing sound card drift by %" PRId64 " pts\n", value);
+    xprintf (this->xine, XINE_VERBOSITY_LOG,
+      "metronom: fixing sound card drift by %" PRId64 " pts.\n", value);
     break;
   case METRONOM_PREBUFFER:
     this->prebuffer = value;
-    xprintf(this->xine, XINE_VERBOSITY_LOG, "prebuffer=%" PRId64 " pts\n", this->prebuffer);
+    xprintf (this->xine, XINE_VERBOSITY_LOG,
+      "metronom: prebuffer=%" PRId64 " pts.\n", this->prebuffer);
     break;
   default:
-    xprintf(this->xine, XINE_VERBOSITY_NONE, "unknown option in set_option: %d\n", option);
+    xprintf(this->xine, XINE_VERBOSITY_NONE,
+      "metronom: unknown option in set_option: %d.\n", option);
   }
 
   pthread_mutex_unlock (&this->lock);
@@ -816,7 +829,8 @@ static void metronom_clock_set_option (metronom_clock_t *this,
     this->scr_adjustable = value;
     break;
   default:
-    xprintf(this->xine, XINE_VERBOSITY_NONE, "unknown option in set_option: %d\n", option);
+    xprintf (this->xine, XINE_VERBOSITY_NONE,
+      "metronom: unknown option in set_option: %d.\n", option);
   }
 
   pthread_mutex_unlock (&this->lock);
@@ -867,7 +881,8 @@ static int64_t metronom_get_option (metronom_t *this, int option) {
       break;
   default:
     result = 0;
-    xprintf(this->xine, XINE_VERBOSITY_NONE, "unknown option in get_option: %d\n", option);
+    xprintf (this->xine, XINE_VERBOSITY_NONE,
+      "metronom: unknown option in get_option: %d.\n", option);
     break;
   }
 
@@ -883,7 +898,8 @@ static int64_t metronom_clock_get_option (metronom_clock_t *this, int option) {
   case CLOCK_SCR_ADJUSTABLE:
     return this->scr_adjustable;
   }
-  xprintf(this->xine, XINE_VERBOSITY_NONE, "unknown option in get_option: %d\n", option);
+  xprintf (this->xine, XINE_VERBOSITY_NONE,
+    "metronom: unknown option in get_option: %d.\n", option);
   return 0;
 }
 
@@ -919,7 +935,8 @@ static scr_plugin_t* get_master_scr(metronom_clock_t *this) {
     }
   }
   if (!found) {
-    xprintf (this_priv->mct.xine, XINE_VERBOSITY_NONE, "panic - no scr provider found!\n");
+    xprintf (this_priv->mct.xine, XINE_VERBOSITY_NONE,
+      "metronom: panic - no scr provider found!\n");
     return NULL;
   }
   return found;
@@ -970,7 +987,8 @@ static void metronom_start_sync_thread (metronom_clock_private_t *this_priv) {
   err = pthread_create (&this_priv->mct.sync_thread, NULL, metronom_sync_loop, &this_priv->mct);
 
   if (err) {
-    xprintf (this_priv->mct.xine, XINE_VERBOSITY_NONE, "cannot create sync thread (%s)\n", strerror (err));
+    xprintf (this_priv->mct.xine, XINE_VERBOSITY_NONE,
+      "metronom: cannot create sync thread (%s).\n", strerror (err));
     this_priv->next_sync_pts = START_PTS;
   } else {
     this_priv->sync_thread_state = SYNC_THREAD_RUNNING;
@@ -1007,8 +1025,8 @@ static int metronom_register_scr (metronom_clock_t *this, scr_plugin_t *scr) {
   scr_plugin_t **r;
 
   if (scr->interface_version != 3) {
-    xprintf(this->xine, XINE_VERBOSITY_NONE,
-            "wrong interface version for scr provider!\n");
+    xprintf (this->xine, XINE_VERBOSITY_NONE,
+      "metronom: wrong interface version for scr provider!\n");
     return -1;
   }
 
