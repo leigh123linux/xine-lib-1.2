@@ -176,6 +176,9 @@ typedef struct {
   int                       step;
   pthread_cond_t            done_stepping;
 
+  /* frame stream refs */
+  xine_stream_t           **img_streams;
+
   /* frames usage stats */
   int                       frames_total;
   int                       frames_extref;
@@ -255,6 +258,37 @@ static void vo_streams_unregister (vos_t *this, xine_stream_t *s) {
     }
   }
   pthread_mutex_unlock (&this->streams_lock);
+}
+
+/********************************************************************
+ * reuse frame stream refs.                                         *
+ * be the current owner of img when calling this.                   *
+ *******************************************************************/
+
+static void vo_reref (vos_t *this, vo_frame_t *img) {
+  /* Paranoia? */
+  if ((img->id >= 0) && (img->id < this->frames_total)) {
+    xine_stream_t **s = this->img_streams + img->id;
+    if (img->stream != *s) {
+      if (*s)
+        _x_refcounter_dec ((*s)->refcounter);
+      if (img->stream)
+        _x_refcounter_inc (img->stream->refcounter);
+      *s = img->stream;
+    }
+  }
+}
+
+static void vo_unref_all (vos_t *this) {
+  if (this->free_img_buf_queue.first) {
+    vo_frame_t *img;
+    pthread_mutex_lock (&this->free_img_buf_queue.mutex);
+    for (img = this->free_img_buf_queue.first; img; img = img->next) {
+      img->stream = NULL;
+      vo_reref (this, img);
+    }
+    pthread_mutex_unlock (&this->free_img_buf_queue.mutex);
+  }
 }
 
 /********************************************************************
@@ -534,10 +568,6 @@ static void vo_frame_dec_lock (vo_frame_t *img) {
   } else
   if (!img->lock_counter) {
     vos_t *this = (vos_t *) img->port;
-    if (img->stream) {
-      _x_refcounter_dec(img->stream->refcounter);
-      img->stream = NULL;
-    }
     vo_queue_append (&this->free_img_buf_queue, img);
   }
 
@@ -1006,7 +1036,7 @@ static int vo_frame_draw (vo_frame_t *img, xine_stream_t *stream) {
       }
     }
     img->stream = stream;
-    _x_refcounter_inc(stream->refcounter);
+    vo_reref (this, img);
     _x_extra_info_merge( img->extra_info, stream->video_decoder_extra_info );
     stream->metronom->got_video_frame (stream->metronom, img);
   }
@@ -1279,10 +1309,8 @@ static vo_frame_t * duplicate_frame( vos_t *this, vo_frame_t *img ) {
   dupl->overlay_offset_x = img->overlay_offset_x;
   dupl->overlay_offset_y = img->overlay_offset_y;
 
-  if (dupl->stream) {
-    _x_refcounter_dec (dupl->stream->refcounter);
-    dupl->stream = NULL;
-  }
+  dupl->stream = img->stream;
+  vo_reref (this, dupl);
 
   this->driver->update_frame_format (this->driver, dupl, dupl->width, dupl->height,
 				     dupl->ratio, dupl->format, dupl->flags);
@@ -1396,6 +1424,8 @@ static vo_frame_t *next_frame (vos_t *this, int64_t *vpts) {
       img = this->display_img_buf_queue.first;
     }
     pthread_mutex_unlock (&this->display_img_buf_queue.mutex);
+
+    vo_unref_all (this);
 
     if (n) {
       pthread_mutex_lock (&this->trigger_drawing_mutex);
@@ -1712,6 +1742,8 @@ static void paused_loop( vos_t *this, int64_t vpts )
       }
       pthread_mutex_unlock (&this->display_img_buf_queue.mutex);
 
+      vo_unref_all (this);
+
       if (n) {
         pthread_mutex_lock (&this->trigger_drawing_mutex);
         pthread_cond_broadcast (&this->done_flushing);
@@ -1899,6 +1931,8 @@ static void *video_out_loop (void *this_gen) {
     this->last_frame = NULL;
   }
   pthread_mutex_unlock(&this->grab_lock);
+
+  vo_unref_all (this);
 
   return NULL;
 }
@@ -2161,6 +2195,8 @@ static int vo_set_property (xine_video_port_t *this_gen, int property, int value
         vo_frame_dec_lock (img);
       }
       pthread_mutex_unlock(&this->display_img_buf_queue.mutex);
+
+      vo_unref_all (this);
     }
     break;
 
@@ -2288,6 +2324,8 @@ static void vo_exit (xine_video_port_t *this_gen) {
   }
 
   vo_free_img_buffers (this_gen);
+
+  free (this->img_streams);
 
   this->driver->dispose (this->driver);
 
@@ -2450,8 +2488,8 @@ static vo_frame_t * crop_frame( xine_video_port_t *this_gen, vo_frame_t *img ) {
   dupl->is_first  = img->is_first;
 
   dupl->stream    = img->stream;
-  if (img->stream)
-    _x_refcounter_inc(img->stream->refcounter);
+  vo_reref ((vos_t *)this_gen, img);
+
   memcpy( dupl->extra_info, img->extra_info, sizeof(extra_info_t) );
 
   /* delay frame processing for now, we might not even need it (eg. frame will be discarded) */
@@ -2542,6 +2580,8 @@ xine_video_port_t *_x_vo_new_port (xine_t *xine, vo_driver_t *driver, int grabon
   this->frames_total = num_frame_buffers;
   this->frames_extref = 0;
   this->frames_peak_used = 0;
+
+  this->img_streams = calloc (num_frame_buffers, sizeof (void *));
 
   pthread_cond_init (&this->done_flushing, NULL);
 
