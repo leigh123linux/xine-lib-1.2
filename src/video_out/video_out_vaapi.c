@@ -3023,11 +3023,6 @@ static void vaapi_update_frame_format (vo_driver_t *this_gen,
   vaapi_frame_t       *frame      = (vaapi_frame_t*)frame_gen;
   vaapi_accel_t       *accel      = &frame->vaapi_accel_data;
 
-  lprintf("vaapi_update_frame_format\n");
-
-  pthread_mutex_lock(&this->vaapi_lock);
-  DO_LOCKDISPLAY;
-
   lprintf("vaapi_update_frame_format %s %s width %d height %d\n", 
         (frame->format == XINE_IMGFMT_VAAPI) ? "XINE_IMGFMT_VAAPI" : ((frame->format == XINE_IMGFMT_YV12) ? "XINE_IMGFMT_YV12" : "XINE_IMGFMT_YUY2") ,
         (format == XINE_IMGFMT_VAAPI) ? "XINE_IMGFMT_VAAPI" : ((format == XINE_IMGFMT_YV12) ? "XINE_IMGFMT_YV12" : "XINE_IMGFMT_YUY2") ,
@@ -3080,6 +3075,9 @@ static void vaapi_update_frame_format (vo_driver_t *this_gen,
     frame->flags  = flags;
     vaapi_frame_field ((vo_frame_t *)frame, flags);
   }
+
+  pthread_mutex_lock(&this->vaapi_lock);
+  DO_LOCKDISPLAY;
 
   if(this->guarded_render) {
     ff_vaapi_surface_t *va_surface = &this->va_context->va_render_surfaces[accel->index];
