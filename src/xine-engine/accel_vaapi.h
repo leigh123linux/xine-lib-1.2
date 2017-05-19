@@ -35,7 +35,7 @@ extern "C" {
 #include "config.h"
 #endif
 
-#include <va/va_x11.h>
+#include <va/va.h>
 
 #define NUM_OUTPUT_SURFACES 22
 
