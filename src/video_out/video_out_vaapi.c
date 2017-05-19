@@ -2660,7 +2660,7 @@ static void vaapi_overlay_end (vo_driver_t *this_gen, vo_frame_t *frame_gen) {
 
       _x_overlay_to_argb32(ovl, bitmap, ovl->width, "BGRA");
 
-      lprintf("width %d height %d pos %d %d\n", ovl->width, ovl->height, pos, ovl->width * ovl->height);
+      lprintf("width %d height %d\n", ovl->width, ovl->height);
     } else {
       pthread_mutex_lock(&ovl->argb_layer->mutex);
       bitmap = ovl->argb_layer->buffer;
