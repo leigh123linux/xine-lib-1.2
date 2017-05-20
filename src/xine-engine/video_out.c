@@ -280,15 +280,13 @@ static void vo_reref (vos_t *this, vo_frame_t *img) {
 }
 
 static void vo_unref_all (vos_t *this) {
-  if (this->free_img_buf_queue.first) {
-    vo_frame_t *img;
-    pthread_mutex_lock (&this->free_img_buf_queue.mutex);
-    for (img = this->free_img_buf_queue.first; img; img = img->next) {
-      img->stream = NULL;
-      vo_reref (this, img);
-    }
-    pthread_mutex_unlock (&this->free_img_buf_queue.mutex);
+  vo_frame_t *img;
+  pthread_mutex_lock (&this->free_img_buf_queue.mutex);
+  for (img = this->free_img_buf_queue.first; img; img = img->next) {
+    img->stream = NULL;
+    vo_reref (this, img);
   }
+  pthread_mutex_unlock (&this->free_img_buf_queue.mutex);
 }
 
 /********************************************************************
@@ -568,6 +566,10 @@ static void vo_frame_dec_lock (vo_frame_t *img) {
   } else
   if (!img->lock_counter) {
     vos_t *this = (vos_t *) img->port;
+    if (!this->num_streams) {
+      img->stream = NULL;
+      vo_reref (this, img);
+    }
     vo_queue_append (&this->free_img_buf_queue, img);
   }
 
@@ -1425,8 +1427,6 @@ static vo_frame_t *next_frame (vos_t *this, int64_t *vpts) {
     }
     pthread_mutex_unlock (&this->display_img_buf_queue.mutex);
 
-    vo_unref_all (this);
-
     if (n) {
       pthread_mutex_lock (&this->trigger_drawing_mutex);
       pthread_cond_broadcast (&this->done_flushing);
@@ -1742,8 +1742,6 @@ static void paused_loop( vos_t *this, int64_t vpts )
       }
       pthread_mutex_unlock (&this->display_img_buf_queue.mutex);
 
-      vo_unref_all (this);
-
       if (n) {
         pthread_mutex_lock (&this->trigger_drawing_mutex);
         pthread_cond_broadcast (&this->done_flushing);
@@ -1932,8 +1930,6 @@ static void *video_out_loop (void *this_gen) {
   }
   pthread_mutex_unlock(&this->grab_lock);
 
-  vo_unref_all (this);
-
   return NULL;
 }
 
@@ -2023,7 +2019,7 @@ static void vo_open (xine_video_port_t *this_gen, xine_stream_t *stream) {
 
   vos_t      *this = (vos_t *) this_gen;
 
-  lprintf("vo_open\n");
+  xprintf (this->xine, XINE_VERBOSITY_DEBUG, "video_out: vo_open (%p)\n", stream);
 
   this->video_opened = 1;
   this->discard_frames = 0;
@@ -2039,6 +2035,10 @@ static void vo_open (xine_video_port_t *this_gen, xine_stream_t *stream) {
 static void vo_close (xine_video_port_t *this_gen, xine_stream_t *stream) {
 
   vos_t      *this = (vos_t *) this_gen;
+
+  xprintf (this->xine, XINE_VERBOSITY_DEBUG, "video_out: vo_close (%p)\n", stream);
+
+  vo_unref_all (this);
 
   /* this will make sure all hide events were processed */
   if (this->overlay_source)
@@ -2195,8 +2195,6 @@ static int vo_set_property (xine_video_port_t *this_gen, int property, int value
         vo_frame_dec_lock (img);
       }
       pthread_mutex_unlock(&this->display_img_buf_queue.mutex);
-
-      vo_unref_all (this);
     }
     break;
 
@@ -2323,6 +2321,7 @@ static void vo_exit (xine_video_port_t *this_gen) {
     pthread_join (this->video_thread, &p);
   }
 
+  vo_unref_all (this);
   vo_free_img_buffers (this_gen);
 
   free (this->img_streams);
