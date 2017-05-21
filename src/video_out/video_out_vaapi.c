@@ -2335,7 +2335,6 @@ static vo_frame_t *vaapi_alloc_frame (vo_driver_t *this_gen) {
   frame->vo_frame.dispose                           = vaapi_frame_dispose;
   frame->vo_frame.driver                            = this_gen;
 
-  frame->vaapi_accel_data.vo_frame                  = &frame->vo_frame;
   frame->vaapi_accel_data.vaapi_init                = &vaapi_init;
   frame->vaapi_accel_data.profile_from_imgfmt       = &profile_from_imgfmt;
   frame->vaapi_accel_data.get_context               = &get_context;
@@ -2755,13 +2754,12 @@ static int vaapi_redraw_needed (vo_driver_t *this_gen) {
   return ret;
 }
 
-static void vaapi_provide_standard_frame_data (vo_frame_t *orig, xine_current_frame_data_t *data)
+static void vaapi_provide_standard_frame_data (vo_frame_t *this, xine_current_frame_data_t *data)
 {
-  vaapi_driver_t      *driver     = (vaapi_driver_t *) orig->driver;
+  vaapi_driver_t      *driver     = (vaapi_driver_t *) this->driver;
   ff_vaapi_context_t  *va_context = driver->va_context;
 
-  vaapi_accel_t       *accel      = (vaapi_accel_t *) orig->accel_data;
-  vo_frame_t          *this       = accel->vo_frame;
+  vaapi_accel_t       *accel      = (vaapi_accel_t *) this->accel_data;
   ff_vaapi_surface_t  *va_surface = &va_context->va_render_surfaces[accel->index];
 
   uint32_t  pitches[3];

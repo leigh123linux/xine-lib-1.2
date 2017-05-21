@@ -108,7 +108,6 @@ struct ff_vaapi_surface_s {
 
 struct vaapi_accel_s {
   unsigned int        index;
-  vo_frame_t          *vo_frame;
 
   int  (*lock_vaapi)(vo_frame_t *frame_gen);
   void (*unlock_vaapi)(vo_frame_t *frame_gen);
