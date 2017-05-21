@@ -67,7 +67,6 @@ struct ff_vaapi_context_s {
   unsigned int      va_head;
 
   vo_driver_t       *driver;
-  struct vaapi_equalizer va_equalizer;
   VAImageFormat     *va_image_formats;
   int               va_num_image_formats;
 };
