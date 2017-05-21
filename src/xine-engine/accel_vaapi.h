@@ -37,8 +37,6 @@ extern "C" {
 
 #include <va/va.h>
 
-#define NUM_OUTPUT_SURFACES 22
-
 #define SURFACE_FREE            0
 #define SURFACE_ALOC            1
 #define SURFACE_RELEASE         2
