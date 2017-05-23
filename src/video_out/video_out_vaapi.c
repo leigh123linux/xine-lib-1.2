@@ -2055,15 +2055,12 @@ static VAStatus vaapi_init_soft_surfaces(vo_driver_t *this_gen, int width, int h
 
   /* allocate software surfaces */
   for(i = 0; i < SOFT_SURFACES; i++) {
-    ff_vaapi_surface_t *va_surface  = &va_context->va_render_surfaces[i];
 
     vaStatus = vaapi_create_image((vo_driver_t *)this, this->va_soft_surface_ids[i], &this->va_soft_images[i], width, height, 1);
     if(!vaapi_check_status(this_gen, vaStatus, "vaapi_create_image()")) {
       this->va_soft_images[i].image_id = VA_INVALID_ID;
       goto error;
     }
-
-    va_surface->index = i;
 
     if (!this->is_bound) {
       vaStatus = vaPutImage(va_context->va_display, this->va_soft_surface_ids[i], this->va_soft_images[i].image_id,
