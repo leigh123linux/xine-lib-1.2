@@ -3903,13 +3903,6 @@ static void vaapi_opengl_use_tfp( void *this_gen, xine_cfg_entry_t *entry )
   this->opengl_use_tfp = entry->num_value;
 }
 
-static void vaapi_guarded_render( void *this_gen, xine_cfg_entry_t *entry )
-{
-  vaapi_driver_t  *this  = (vaapi_driver_t *) this_gen;
-
-  this->guarded_render = entry->num_value;
-}
-
 static void vaapi_scaling_level( void *this_gen, xine_cfg_entry_t *entry )
 {
   vaapi_driver_t  *this  = (vaapi_driver_t *) this_gen;
@@ -4098,7 +4091,7 @@ static vo_driver_t *vaapi_open_plugin (video_driver_class_t *class_gen, const vo
   this->guarded_render = config->register_num( config, "video.output.vaapi_guarded_render", 1,
         _("vaapi: set vaapi_guarded_render to 0 ( no ) 1 ( yes )"),
         _("vaapi: set vaapi_guarded_render to 0 ( no ) 1 ( yes )"),
-        10, vaapi_guarded_render, this );
+        10, NULL, this );
 
   this->scaling_level_enum = config->register_enum(config, "video.output.vaapi_scaling_level", 0,
     (char **)scaling_level_enum_names,
