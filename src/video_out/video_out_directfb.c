@@ -938,6 +938,18 @@ static int directfb_set_property (vo_driver_t *this_gen,
   directfb_driver_t *this = (directfb_driver_t *) this_gen;
 
   switch (property) {
+
+    case VO_PROP_DISCARD_FRAMES:
+      if (value == -1) {
+        value = 0;
+        if (this->cur_frame) {
+          this->cur_frame->vo_frame.free (&this->cur_frame->vo_frame);
+          this->cur_frame = NULL;
+          value = 1;
+        }
+      }
+      break;
+
     case VO_PROP_INTERLACED:
       xprintf (this->xine, XINE_VERBOSITY_DEBUG,
                "video_out_directfb: deinterlacing set to %d.\n", value);

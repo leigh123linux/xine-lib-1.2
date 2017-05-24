@@ -1156,6 +1156,19 @@ static int win32_get_property( vo_driver_t * vo_driver, int property )
 
 static int win32_set_property( vo_driver_t * vo_driver, int property, int value )
 {
+  win32_driver_t *win32_driver = (win32_driver_t *)vo_driver;
+
+  if (property == VO_PROP_DISCARD_FRAMES) {
+    if (value == -1) {
+      value = 0;
+      if (win32_driver->current) {
+        win32_driver->current->vo_frame.free (&win32_driver->current->vo_frame);
+        win32_driver->current = NULL;
+        value = 1;
+      }
+    }
+  }
+
   return value;
 }
 
