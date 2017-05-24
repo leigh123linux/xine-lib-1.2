@@ -1327,16 +1327,18 @@ static int vdpau_redraw_needed (vo_driver_t *this_gen)
 
 
 
-static void vdpau_release_back_frames( vo_driver_t *this_gen )
-{
+static int vdpau_release_back_frames (vo_driver_t *this_gen) {
   vdpau_driver_t  *this  = (vdpau_driver_t *) this_gen;
-  int i;
+  int i, n = 0;
 
-  for ( i=0; i<NUM_FRAMES_BACK; ++i ) {
-    if ( this->back_frame[ i ])
-      this->back_frame[ i ]->vo_frame.free( &this->back_frame[ i ]->vo_frame );
-    this->back_frame[ i ] = NULL;
+  for (i = 0; i < NUM_FRAMES_BACK; ++i) {
+    if (this->back_frame[i]) {
+      this->back_frame[i]->vo_frame.free (&this->back_frame[i]->vo_frame);
+      this->back_frame[i] = NULL;
+      n++;
+    }
   }
+  return n;
 }
 
 
@@ -2177,6 +2179,10 @@ static int vdpau_set_property (vo_driver_t *this_gen, int property, int value)
   lprintf("vdpau_set_property: property=%d, value=%d\n", property, value );
 
   switch (property) {
+    case VO_PROP_DISCARD_FRAMES:
+      if (value == -1)
+        value = vdpau_release_back_frames (this_gen);
+      break;
     case VO_PROP_INTERLACED:
       this->deinterlace = value;
       vdpau_set_deinterlace( this_gen );

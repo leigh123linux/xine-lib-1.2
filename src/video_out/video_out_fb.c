@@ -589,6 +589,23 @@ static int fb_set_property(vo_driver_t *this_gen, int property, int value)
 
   switch(property)
   {
+    case VO_PROP_DISCARD_FRAMES:
+      if (value == -1) {
+        int n = 0;
+        if (this->old_frame) {
+          this->old_frame->vo_frame.free (&this->old_frame->vo_frame);
+          this->old_frame = NULL;
+          n++;
+        }
+        if (this->cur_frame) {
+          this->cur_frame->vo_frame.free (&this->cur_frame->vo_frame);
+          this->cur_frame = NULL;
+          n++;
+        }
+        value = n;
+      }
+      break;
+
     case VO_PROP_ASPECT_RATIO:
       if(value>=XINE_VO_ASPECT_NUM_RATIOS)
 	value = XINE_VO_ASPECT_AUTO;

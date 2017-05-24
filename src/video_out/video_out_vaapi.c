@@ -3499,8 +3499,10 @@ static void vaapi_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen) {
   vaapi_redraw_needed (this_gen);
 
   /* posible race could happen while the lock is opened */
-  if(!this->va_context || !this->va_context->valid_context)
+  if(!this->va_context || !this->va_context->valid_context) {
+    frame_gen->free (frame_gen);
     return;
+  }
 
   pthread_mutex_lock(&this->vaapi_lock);
   DO_LOCKDISPLAY;

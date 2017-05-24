@@ -1722,6 +1722,20 @@ static int opengl_set_property (vo_driver_t *this_gen,
   opengl_driver_t *this = (opengl_driver_t *) this_gen;
 
   switch (property) {
+
+  case VO_PROP_DISCARD_FRAMES:
+    if (value == -1) {
+      int i, n = 0;
+      for (i = NUM_FRAMES_BACKLOG - 1; i >= 0; i--) {
+        if (this->frame[i]) {
+          this->frame[i]->vo_frame.free (&this->frame[i]->vo_frame);
+          this->frame[i] = NULL;
+          n++;
+        }
+      }
+      value = n;
+    }
+    break;
   case VO_PROP_ASPECT_RATIO:
     if (value>=XINE_VO_ASPECT_NUM_RATIOS)
       value = XINE_VO_ASPECT_AUTO;

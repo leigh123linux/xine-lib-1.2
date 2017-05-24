@@ -1595,6 +1595,19 @@ static void xxmc_add_recent_frame (xxmc_driver_t *this, xxmc_frame_t *frame)
   this->recent_frames[0] = frame;
 }
 
+static int xv_flush_recent_frames (xxmc_driver_t *this) {
+  int i, n = 0;
+
+  for (i = 0; i < VO_NUM_RECENT_FRAMES; i++) {
+    if (this->recent_frames[i]) {
+      this->recent_frames[i]->vo_frame.free (&this->recent_frames[i]->vo_frame);
+      this->recent_frames[i] = NULL;
+      n++;
+    }
+  }
+  return n;
+}
+
 static int xxmc_redraw_needed (vo_driver_t *this_gen)
 {
   xxmc_driver_t  *this = (xxmc_driver_t *) this_gen;
@@ -1878,6 +1891,11 @@ static int xxmc_set_property (vo_driver_t *this_gen,
   }
   else {
     switch (property) {
+
+    case VO_PROP_DISCARD_FRAMES:
+      if (value == -1)
+        value = xv_flush_recent_frames (this);
+      break;
 
     case VO_PROP_INTERLACED:
       this->props[property].value = value;

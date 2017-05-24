@@ -253,7 +253,12 @@ struct xine_video_port_s {
 #define VO_PROP_MAX_NUM_FRAMES        11
 #define VO_PROP_GAMMA		      12
 #define VO_PROP_ZOOM_Y                13
-#define VO_PROP_DISCARD_FRAMES        14 /* not used by drivers */
+/* while this is set, vo shall drop all incoming and queued frames.
+ * when receiving a value of -1 for this, driver shall unref any held frames,
+ * and return their count. drivers not needing this will silently return
+ * -1 or 0.
+ */
+#define VO_PROP_DISCARD_FRAMES        14
 #define VO_PROP_WINDOW_WIDTH          15 /* read-only */
 #define VO_PROP_WINDOW_HEIGHT         16 /* read-only */
 #define VO_PROP_BUFS_IN_FIFO          17 /* read-only */

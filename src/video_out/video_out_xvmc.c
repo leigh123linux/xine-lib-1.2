@@ -873,21 +873,18 @@ static void xvmc_add_recent_frame (xvmc_driver_t *this, xvmc_frame_t *frame) {
   this->recent_frames[0] = frame;
 }
 
-/* currently not used - we could have a method to call this from video loop */
-#if 0
-static void xvmc_flush_recent_frames (xvmc_driver_t *this) {
-  int i;
+static int xv_flush_recent_frames (xvmc_driver_t *this) {
+  int i, n = 0;
 
-  lprintf ("xvmc_flush_recent_frames\n");
-
-  for( i=0; i < VO_NUM_RECENT_FRAMES; i++ ) {
-    if( this->recent_frames[i] )
-      this->recent_frames[i]->vo_frame.free
-	(&this->recent_frames[i]->vo_frame);
-    this->recent_frames[i] = NULL;
+  for (i = 0; i < VO_NUM_RECENT_FRAMES; i++) {
+    if (this->recent_frames[i]) {
+      this->recent_frames[i]->vo_frame.free (&this->recent_frames[i]->vo_frame);
+      this->recent_frames[i] = NULL;
+      n++;
+    }
   }
+  return n;
 }
-#endif
 
 static int xvmc_redraw_needed (vo_driver_t *this_gen) {
   xvmc_driver_t  *this = (xvmc_driver_t *) this_gen;
@@ -1057,6 +1054,11 @@ static int xvmc_set_property (vo_driver_t *this_gen,
   }
   else {
     switch (property) {
+    case VO_PROP_DISCARD_FRAMES:
+      if (value == -1)
+        value = xv_flush_recent_frames (this);
+      break;
+
     case VO_PROP_ASPECT_RATIO:
       if (value>=XINE_VO_ASPECT_NUM_RATIOS)
 	value = XINE_VO_ASPECT_AUTO;

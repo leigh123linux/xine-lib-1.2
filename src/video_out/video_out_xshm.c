@@ -969,6 +969,17 @@ static int xshm_set_property (vo_driver_t *this_gen,
   xshm_driver_t *this = (xshm_driver_t *) this_gen;
 
   switch (property) {
+  case VO_PROP_DISCARD_FRAMES:
+    if (value == -1) {
+      value = 0;
+      if (this->cur_frame) {
+        this->cur_frame->vo_frame.free (&this->cur_frame->vo_frame);
+        this->cur_frame = NULL;
+        value = 1;
+      }
+    }
+    break;
+
   case VO_PROP_ASPECT_RATIO:
     if (value>=XINE_VO_ASPECT_NUM_RATIOS)
       value = XINE_VO_ASPECT_AUTO;

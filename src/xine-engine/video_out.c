@@ -177,6 +177,7 @@ typedef struct {
   pthread_cond_t            done_stepping;
 
   /* frame stream refs */
+  vo_frame_t              **frames;
   xine_stream_t           **img_streams;
 
   /* frames usage stats */
@@ -281,12 +282,44 @@ static void vo_reref (vos_t *this, vo_frame_t *img) {
 
 static void vo_unref_all (vos_t *this) {
   vo_frame_t *img;
+  int n = this->frames_total;
   pthread_mutex_lock (&this->free_img_buf_queue.mutex);
   for (img = this->free_img_buf_queue.first; img; img = img->next) {
     img->stream = NULL;
     vo_reref (this, img);
+    n--;
   }
   pthread_mutex_unlock (&this->free_img_buf_queue.mutex);
+  if (n > 0)
+    xprintf (this->xine, XINE_VERBOSITY_DEBUG,
+      "video_out: unref_all: %d frames still in use.\n", n);
+}
+
+static void vo_force_unref_all (vos_t *this) {
+  vo_frame_t *img;
+  pthread_mutex_lock (&this->free_img_buf_queue.mutex);
+  for (img = this->free_img_buf_queue.first; img; img = img->next) {
+    int i;
+    img->stream = NULL;
+    vo_reref (this, img);
+    for (i = 0; i < this->frames_total; i++) {
+      if (this->frames[i] == img) {
+        this->frames[i] = NULL;
+        break;
+      }
+    }
+  }
+  pthread_mutex_unlock (&this->free_img_buf_queue.mutex);
+  {
+    int i;
+    for (i = 0; i < this->frames_total; i++) {
+      if (this->frames[i]) {
+        xprintf (this->xine, XINE_VERBOSITY_DEBUG,
+          "video_out: BUG: frame #%d (%p) still in use (%d refs).\n",
+          i, this->frames[i], this->frames[i]->lock_counter);
+      }
+    }
+  }
 }
 
 /********************************************************************
@@ -2290,9 +2323,7 @@ static int vo_status (xine_video_port_t *this_gen, xine_stream_t *stream,
   return 0;
 }
 
-static void vo_free_img_buffers (xine_video_port_t *this_gen) {
-  vos_t      *this = (vos_t *) this_gen;
-
+static void vo_free_img_buffers (vos_t *this) {
   /* print frame usage stats */
   xprintf (this->xine, XINE_VERBOSITY_LOG,
     _("video_out: max frames used: %d of %d\n"),
@@ -2311,7 +2342,7 @@ static void vo_exit (xine_video_port_t *this_gen) {
 
   vos_t      *this = (vos_t *) this_gen;
 
-  lprintf ("vo_exit...\n");
+  xprintf (this->xine, XINE_VERBOSITY_DEBUG, "video_out: exit.\n");
 
   if (this->video_loop_running) {
     void *p;
@@ -2321,14 +2352,19 @@ static void vo_exit (xine_video_port_t *this_gen) {
     pthread_join (this->video_thread, &p);
   }
 
-  vo_unref_all (this);
-  vo_free_img_buffers (this_gen);
+  {
+    int n = this->driver->set_property (this->driver, VO_PROP_DISCARD_FRAMES, -1);
+    if (n > 0)
+      xprintf (this->xine, XINE_VERBOSITY_DEBUG,
+        "video_out: returned %d held frames from driver.\n", n);
+  }
 
-  free (this->img_streams);
+  vo_force_unref_all (this);
+  vo_free_img_buffers (this);
 
   this->driver->dispose (this->driver);
 
-  lprintf ("vo_exit... done\n");
+  free (this->frames);
 
   if (this->overlay_source) {
     this->overlay_source->dispose (this->overlay_source);
@@ -2347,6 +2383,8 @@ static void vo_exit (xine_video_port_t *this_gen) {
   pthread_cond_destroy(&this->grab_cond);
 
   pthread_cond_destroy(&this->done_flushing);
+
+  lprintf ("vo_exit... done\n");
 
   free (this);
 }
@@ -2510,16 +2548,14 @@ xine_video_port_t *_x_vo_new_port (xine_t *xine, vo_driver_t *driver, int grabon
   if (!this)
     return NULL;
 
-  this->xine                  = xine;
-  this->clock                 = xine->clock;
-  this->driver                = driver;
+  this->xine   = xine;
+  this->clock  = xine->clock;
+  this->driver = driver;
 
   if (!vo_streams_open (this)) {
     free (this);
     return NULL;
   }
-
-  pthread_mutex_init(&this->driver_lock, NULL );
 
   this->vo.open                  = vo_open;
   this->vo.get_frame             = vo_get_frame;
@@ -2537,34 +2573,31 @@ xine_video_port_t *_x_vo_new_port (xine_t *xine, vo_driver_t *driver, int grabon
   this->vo.status                = vo_status;
   this->vo.driver                = driver;
 
+  /* not really needed as *this is already zeroed */ 
   this->num_frames_delivered  = 0;
   this->num_frames_skipped    = 0;
   this->num_frames_discarded  = 0;
-  vo_queue_open (&this->free_img_buf_queue);
-  vo_queue_open (&this->display_img_buf_queue);
+
+  this->grab_only             = 0;
+  this->video_opened          = 0;
   this->video_loop_running    = 0;
+  this->trigger_drawing       = 0;
+  this->step                  = 0;
 
   this->img_backup            = NULL;
 
   this->last_frame            = NULL;
   this->pending_grab_request  = NULL;
-  pthread_mutex_init(&this->grab_lock, NULL);
-  pthread_cond_init(&this->grab_cond, NULL);
-
-  this->overlay_source        = _x_video_overlay_new_manager(xine);
-  this->overlay_source->init (this->overlay_source);
-  this->overlay_enabled       = 1;
-
 
   /* default number of video frames from config */
   num_frame_buffers = xine->config->register_num (xine->config,
-                                                  "engine.buffers.video_num_frames",
-                                                  NUM_FRAME_BUFFERS, /* default */
-                                                  _("default number of video frames"),
-						  _("The default number of video frames to request "
-						    "from xine video out driver. Some drivers will "
-						    "override this setting with their own values."),
-                                                    20, NULL, NULL);
+    "engine.buffers.video_num_frames",
+    NUM_FRAME_BUFFERS, /* default */
+    _("default number of video frames"),
+    _("The default number of video frames to request "
+      "from xine video out driver. Some drivers will "
+      "override this setting with their own values."),
+    20, NULL, NULL);
 
   /* check driver's limit and use the smaller value */
   i = driver->get_property (driver, VO_PROP_MAX_NUM_FRAMES);
@@ -2579,10 +2612,6 @@ xine_video_port_t *_x_vo_new_port (xine_t *xine, vo_driver_t *driver, int grabon
   this->frames_total = num_frame_buffers;
   this->frames_extref = 0;
   this->frames_peak_used = 0;
-
-  this->img_streams = calloc (num_frame_buffers, sizeof (void *));
-
-  pthread_cond_init (&this->done_flushing, NULL);
 
   /* Choose a frame_drop_limit which matches num_frame_buffers.
    * xxmc for example supplies only 8 buffers. 2 are occupied by
@@ -2602,8 +2631,36 @@ xine_video_port_t *_x_vo_new_port (xine_t *xine, vo_driver_t *driver, int grabon
   this->frame_drop_cpt        = 0;
   this->frame_drop_suggested  = 0;
 
-  this->extra_info_base = calloc (num_frame_buffers,
-					  sizeof(extra_info_t));
+  /* get some extra mem */
+  this->extra_info_base = calloc (num_frame_buffers, sizeof (extra_info_t));
+  {
+    void **m = calloc (2 * num_frame_buffers, sizeof (void *));
+    this->frames = (vo_frame_t **)m;
+    this->img_streams = (xine_stream_t **)(m + num_frame_buffers);
+  }
+  if (!this->extra_info_base || !this->frames) {
+    free (this->extra_info_base);
+    free (this->frames);
+    vo_streams_close (this);
+    free (this);
+    return NULL;
+  }
+
+  this->overlay_source        = _x_video_overlay_new_manager (xine);
+  this->overlay_source->init (this->overlay_source);
+  this->overlay_enabled       = 1;
+
+  pthread_mutex_init (&this->driver_lock, NULL);
+  pthread_mutex_init (&this->trigger_drawing_mutex, NULL);
+  pthread_mutex_init (&this->grab_lock, NULL);
+
+  pthread_cond_init (&this->grab_cond, NULL);
+  pthread_cond_init (&this->trigger_drawing_cond, NULL);
+  pthread_cond_init (&this->done_stepping, NULL);
+  pthread_cond_init (&this->done_flushing, NULL);
+
+  vo_queue_open (&this->free_img_buf_queue);
+  vo_queue_open (&this->display_img_buf_queue);
 
   /* nobody is listening yet, omit locking and signalling */
   this->free_img_buf_queue.locked_for_read = 1000;
@@ -2623,6 +2680,7 @@ xine_video_port_t *_x_vo_new_port (xine_t *xine, vo_driver_t *driver, int grabon
 
     img->extra_info = &this->extra_info_base[i];
 
+    this->frames[i] = img;
     vo_queue_append_int (&this->free_img_buf_queue, img);
   }
   this->free_img_buf_queue.locked_for_read = 0;
@@ -2640,17 +2698,9 @@ xine_video_port_t *_x_vo_new_port (xine_t *xine, vo_driver_t *driver, int grabon
       "were not scheduled for display in time, xine sends a notification."),
     20, NULL, NULL);
 
-  pthread_mutex_init(&this->trigger_drawing_mutex, NULL);
-  pthread_cond_init(&this->trigger_drawing_cond, NULL);
-  pthread_cond_init (&this->done_stepping, NULL);
-  this->trigger_drawing = 0;
-  this->step = 0;
-
   if (grabonly) {
 
-    this->video_loop_running   = 0;
-    this->video_opened         = 0;
-    this->grab_only            = 1;
+    this->grab_only = 1;
 
   } else {
 
@@ -2662,9 +2712,7 @@ xine_video_port_t *_x_vo_new_port (xine_t *xine, vo_driver_t *driver, int grabon
      * osd when not playing a stream
      */
 
-    this->video_loop_running   = 1;
-    this->video_opened         = 0;
-    this->grab_only            = 0;
+    this->video_loop_running = 1;
 
     /* render thread needs no display queue signals */
     this->display_img_buf_queue.locked_for_read = 1000;
