@@ -771,7 +771,7 @@ static int read_flv_packet(demux_flv_t *this, int preview) {
       normpos = (int64_t)this->input->get_current_pos (this->input) * 65535 / size;
     }
     while (remaining_bytes) {
-      buf       = fifo->buffer_pool_alloc (fifo);
+      buf       = fifo->buffer_pool_size_alloc (fifo, remaining_bytes);
       buf->type = buf_type;
       buf->pts  = buf_pts + ptsoffs;
       buf->extra_info->input_time = pts;

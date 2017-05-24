@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2000-2016 the xine project
+ * Copyright (C) 2000-2017 the xine project
  *
  * This file is part of xine, a free video player.
  *
@@ -643,6 +643,11 @@ struct fifo_buffer_s
   void            *alloc_cb_data[BUF_MAX_CALLBACKS];
   void            *put_cb_data[BUF_MAX_CALLBACKS];
   void            *get_cb_data[BUF_MAX_CALLBACKS];
+
+  /* get a buffer large enough for given byte size.
+   * result may still be smaller, do check buf->max_size.
+   */
+  buf_element_t *(*buffer_pool_size_alloc) (fifo_buffer_t *self, size_t size);
 } ;
 
 /**

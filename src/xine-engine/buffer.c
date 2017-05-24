@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2000-2016 the xine project
+ * Copyright (C) 2000-2017 the xine project
  *
  * This file is part of xine, a free video player.
  *
@@ -47,24 +47,77 @@
 #include <xine/xineutils.h>
 #include <xine/xine_internal.h>
 
+/* The large buffer feature.
+ * If we have enough contigous memory, and if we can afford to hand if out,
+ * provide an oversize item there. The buffers covering that extra space will
+ * hide inside our buffer array, and buffer_pool_free () will reappear them
+ * mysteriously later.
+ * Small bufs are requested frequently, so we dont do a straightforward
+ * heap manager. Instead, we keep bufs in pool sorted by address, and
+ * buf->decoder_info[0] holds the count of contigous bufs when this is the
+ * first of such a group.
+ */
+
+typedef struct {
+  buf_element_t elem;
+  extra_info_t  ei;
+} be_ei_t;
+
 /*
  * put a previously allocated buffer element back into the buffer pool
  */
 static void buffer_pool_free (buf_element_t *element) {
-
   fifo_buffer_t *this = (fifo_buffer_t *) element->source;
+  be_ei_t *newhead, *newtail, *nexthead;
+  int n;
 
   pthread_mutex_lock (&this->buffer_pool_mutex);
 
-  element->next = this->buffer_pool_top;
-  this->buffer_pool_top = element;
-
-  this->buffer_pool_num_free++;
+  n = (element->content != element->mem) ? 1 /* custom buffer */
+    : (element->max_size + this->buffer_pool_buf_size - 1) / this->buffer_pool_buf_size;
+  this->buffer_pool_num_free += n;
   if (this->buffer_pool_num_free > this->buffer_pool_capacity) {
     fprintf(stderr, _("xine-lib: buffer.c: There has been a fatal error: TOO MANY FREE's\n"));
     _x_abort();
   }
 
+  /* we might be a new chunk */
+  newhead = (be_ei_t *)element;
+  newhead->elem.decoder_info[0] = n;
+  newtail = newhead;
+  while (--n > 0) {
+    newtail[0].elem.next = &newtail[1].elem;
+    newtail++;
+  }
+
+  nexthead = (be_ei_t *)this->buffer_pool_top;
+  if (!nexthead || (nexthead > newtail)) {
+    /* add head */
+    this->buffer_pool_top = &newhead->elem;
+    newtail->elem.next = &nexthead->elem;
+    /* merge with next chunk if no gap */
+    if (newtail + 1 == nexthead)
+      newhead->elem.decoder_info[0] += nexthead->elem.decoder_info[0];
+  } else {
+    /* Keep the pool sorted, elem1 > elem2 implies elem1->mem > elem2->mem. */
+    be_ei_t *prevhead, *prevtail;
+    while (1) {
+      prevhead = nexthead;
+      prevtail = prevhead + prevhead->elem.decoder_info[0] - 1;
+      nexthead = (be_ei_t *)prevtail->elem.next;
+      if (!nexthead || (nexthead > newtail))
+        break;
+    }
+    prevtail->elem.next = &newhead->elem;
+    newtail->elem.next = &nexthead->elem;
+    /* merge with next chunk if no gap */
+    if (newtail + 1 == nexthead)
+      newhead->elem.decoder_info[0] += nexthead->elem.decoder_info[0];
+    /* merge with prev chunk if no gap */
+    if (prevtail + 1 == newhead)
+      prevhead->elem.decoder_info[0] += newhead->elem.decoder_info[0];
+  }
+    
   pthread_cond_signal (&this->buffer_pool_cond_not_empty);
 
   pthread_mutex_unlock (&this->buffer_pool_mutex);
@@ -74,9 +127,90 @@ static void buffer_pool_free (buf_element_t *element) {
  * allocate a buffer from buffer pool
  */
 
-static buf_element_t *buffer_pool_alloc (fifo_buffer_t *this) {
+static buf_element_t *buffer_pool_size_alloc (fifo_buffer_t *this, size_t size) {
 
-  buf_element_t *buf;
+  int i, n;
+  be_ei_t *buf;
+
+  n = size ? ((int)size + this->buffer_pool_buf_size - 1) / this->buffer_pool_buf_size : 1;
+  if (n > (this->buffer_pool_capacity >> 2))
+    n = this->buffer_pool_capacity >> 2;
+  if (n < 1)
+    n = 1;
+
+  pthread_mutex_lock (&this->buffer_pool_mutex);
+
+  for (i = 0; this->alloc_cb[i]; i++)
+    this->alloc_cb[i] (this, this->alloc_cb_data[i]);
+
+  /* we always keep one free buffer for emergency situations like
+   * decoder flushes that would need a buffer in buffer_pool_try_alloc() */
+  while (this->buffer_pool_num_free < n + 2) {
+    pthread_cond_wait (&this->buffer_pool_cond_not_empty, &this->buffer_pool_mutex);
+  }
+
+  buf = (be_ei_t *)this->buffer_pool_top;
+  if (n == 1) {
+
+    this->buffer_pool_top = buf->elem.next;
+    i = buf->elem.decoder_info[0] - 1;
+    if (i > 0)
+      buf[1].elem.decoder_info[0] = i;
+    this->buffer_pool_num_free--;
+
+  } else {
+
+    be_ei_t *beststart = buf, *bestprev = NULL, *bestnext = NULL, *prev = NULL, *next;
+    int bestsize = 0, l;
+    do {
+      l = buf->elem.decoder_info[0];
+      next = (be_ei_t *)buf[l - 1].elem.next;
+      if (l >= n)
+        break;
+      if (l > bestsize) {
+        bestsize = l;
+        bestprev = prev;
+        beststart = buf;
+        bestnext = next;
+      }
+      prev = buf + l - 1;
+      buf = next;
+    } while (buf);
+    if (!buf) {
+      prev = bestprev;
+      buf = beststart;
+      next = bestnext;
+      l = n = bestsize;
+    }
+    if (n < l) {
+      next = buf + n;
+      next->elem.decoder_info[0] = l - n;
+    }
+    if (prev)
+      prev->elem.next = &next->elem;
+    else
+      this->buffer_pool_top = &next->elem;
+    this->buffer_pool_num_free -= n;
+
+  }
+
+  pthread_mutex_unlock (&this->buffer_pool_mutex);
+
+  /* set sane values to the newly allocated buffer */
+  buf->elem.content = buf->elem.mem; /* 99% of demuxers will want this */
+  buf->elem.pts = 0;
+  buf->elem.size = 0;
+  buf->elem.max_size = n * this->buffer_pool_buf_size;
+  buf->elem.decoder_flags = 0;
+  memset (buf->elem.decoder_info, 0, sizeof (buf->elem.decoder_info));
+  memset (buf->elem.decoder_info_ptr, 0, sizeof (buf->elem.decoder_info_ptr));
+  _x_extra_info_reset (buf->elem.extra_info);
+
+  return &buf->elem;
+}
+
+static buf_element_t *buffer_pool_alloc (fifo_buffer_t *this) {
+  be_ei_t *buf;
   int i;
 
   pthread_mutex_lock (&this->buffer_pool_mutex);
@@ -90,22 +224,26 @@ static buf_element_t *buffer_pool_alloc (fifo_buffer_t *this) {
     pthread_cond_wait (&this->buffer_pool_cond_not_empty, &this->buffer_pool_mutex);
   }
 
-  buf = this->buffer_pool_top;
-  this->buffer_pool_top = this->buffer_pool_top->next;
+  buf = (be_ei_t *)this->buffer_pool_top;
+  this->buffer_pool_top = buf->elem.next;
+  i = buf->elem.decoder_info[0] - 1;
+  if (i > 0)
+    buf[1].elem.decoder_info[0] = i;
   this->buffer_pool_num_free--;
 
   pthread_mutex_unlock (&this->buffer_pool_mutex);
 
   /* set sane values to the newly allocated buffer */
-  buf->content = buf->mem; /* 99% of demuxers will want this */
-  buf->pts = 0;
-  buf->size = 0;
-  buf->decoder_flags = 0;
-  memset(buf->decoder_info, 0, sizeof(buf->decoder_info));
-  memset(buf->decoder_info_ptr, 0, sizeof(buf->decoder_info_ptr));
-  _x_extra_info_reset( buf->extra_info );
+  buf->elem.content = buf->elem.mem; /* 99% of demuxers will want this */
+  buf->elem.pts = 0;
+  buf->elem.size = 0;
+  buf->elem.max_size = this->buffer_pool_buf_size;
+  buf->elem.decoder_flags = 0;
+  memset (buf->elem.decoder_info, 0, sizeof (buf->elem.decoder_info));
+  memset (buf->elem.decoder_info_ptr, 0, sizeof (buf->elem.decoder_info_ptr));
+  _x_extra_info_reset (buf->elem.extra_info);
 
-  return buf;
+  return &buf->elem;
 }
 
 /*
@@ -113,36 +251,34 @@ static buf_element_t *buffer_pool_alloc (fifo_buffer_t *this) {
  */
 
 static buf_element_t *buffer_pool_try_alloc (fifo_buffer_t *this) {
-
-  buf_element_t *buf;
+  be_ei_t *buf;
+  int i;
 
   pthread_mutex_lock (&this->buffer_pool_mutex);
-
-  if (this->buffer_pool_top) {
-
-    buf = this->buffer_pool_top;
-    this->buffer_pool_top = this->buffer_pool_top->next;
-    this->buffer_pool_num_free--;
-
-  } else {
-
-    buf = NULL;
-
+  buf = (be_ei_t *)this->buffer_pool_top;
+  if (!buf) {
+    pthread_mutex_unlock (&this->buffer_pool_mutex);
+    return NULL;
   }
 
+  this->buffer_pool_top = buf->elem.next;
+  i = buf->elem.decoder_info[0] - 1;
+  if (i > 0)
+    buf[1].elem.decoder_info[0] = i;
+  this->buffer_pool_num_free--;
   pthread_mutex_unlock (&this->buffer_pool_mutex);
 
   /* set sane values to the newly allocated buffer */
-  if( buf ) {
-    buf->content = buf->mem; /* 99% of demuxers will want this */
-    buf->pts = 0;
-    buf->size = 0;
-    buf->decoder_flags = 0;
-    memset(buf->decoder_info, 0, sizeof(buf->decoder_info));
-    memset(buf->decoder_info_ptr, 0, sizeof(buf->decoder_info_ptr));
-    _x_extra_info_reset( buf->extra_info );
-  }
-  return buf;
+  buf->elem.content = buf->elem.mem; /* 99% of demuxers will want this */
+  buf->elem.pts = 0;
+  buf->elem.size = 0;
+  buf->elem.max_size = this->buffer_pool_buf_size;
+  buf->elem.decoder_flags = 0;
+  memset (buf->elem.decoder_info, 0, sizeof (buf->elem.decoder_info));
+  memset (buf->elem.decoder_info_ptr, 0, sizeof (buf->elem.decoder_info_ptr));
+  _x_extra_info_reset (buf->elem.extra_info);
+
+  return &buf->elem;
 }
 
 
@@ -150,6 +286,7 @@ static buf_element_t *buffer_pool_try_alloc (fifo_buffer_t *this) {
  * append buffer element to fifo buffer
  */
 static void fifo_buffer_put (fifo_buffer_t *fifo, buf_element_t *element) {
+  fifo_buffer_t *this = (fifo_buffer_t *) element->source;
   int i;
 
   pthread_mutex_lock (&fifo->mutex);
@@ -164,7 +301,8 @@ static void fifo_buffer_put (fifo_buffer_t *fifo, buf_element_t *element) {
 
   fifo->last = element;
   element->next = NULL;
-  fifo->fifo_size++;
+  fifo->fifo_size += (element->content != element->mem) ? 1 /* custom buffer */
+                   : (element->max_size + this->buffer_pool_buf_size - 1) / this->buffer_pool_buf_size;
   fifo->fifo_data_size += element->size;
 
   pthread_cond_signal (&fifo->not_empty);
@@ -192,6 +330,7 @@ static void dummy_fifo_buffer_put (fifo_buffer_t *fifo, buf_element_t *element) 
  * insert buffer element to fifo buffer (demuxers MUST NOT call this one)
  */
 static void fifo_buffer_insert (fifo_buffer_t *fifo, buf_element_t *element) {
+  fifo_buffer_t *this = (fifo_buffer_t *) element->source;
 
   pthread_mutex_lock (&fifo->mutex);
 
@@ -201,7 +340,8 @@ static void fifo_buffer_insert (fifo_buffer_t *fifo, buf_element_t *element) {
   if( !fifo->last )
     fifo->last = element;
 
-  fifo->fifo_size++;
+  fifo->fifo_size += (element->content != element->mem) ? 1 /* custom buffer */
+                   : (element->max_size + this->buffer_pool_buf_size - 1) / this->buffer_pool_buf_size;
   fifo->fifo_data_size += element->size;
 
   pthread_cond_signal (&fifo->not_empty);
@@ -236,7 +376,8 @@ static buf_element_t *fifo_buffer_get (fifo_buffer_t *fifo) {
   if (fifo->first==NULL)
     fifo->last = NULL;
 
-  fifo->fifo_size--;
+  fifo->fifo_size -= (buf->content != buf->mem) ? 1 /* custom buffer */
+                   : (buf->max_size + fifo->buffer_pool_buf_size - 1) / fifo->buffer_pool_buf_size;
   fifo->fifo_data_size -= buf->size;
 
   for(i = 0; fifo->get_cb[i]; i++)
@@ -251,35 +392,57 @@ static buf_element_t *fifo_buffer_get (fifo_buffer_t *fifo) {
  * clear buffer (put all contained buffer elements back into buffer pool)
  */
 static void fifo_buffer_clear (fifo_buffer_t *fifo) {
-
-  buf_element_t *buf, *next, *prev;
+  be_ei_t *buf, *prev;
+  int s = 0;
 
   pthread_mutex_lock (&fifo->mutex);
 
-  buf = fifo->first;
+  buf = (be_ei_t *)fifo->first;
   prev = NULL;
 
-  while (buf != NULL) {
+  if (buf) {
+    fifo_buffer_t *this = buf->elem.source;
+    s = this->buffer_pool_buf_size;
+  }
 
-    next = buf->next;
+  while (buf) {
+    be_ei_t *start = buf, *next;
+    int n;
 
-    if ((buf->type & BUF_MAJOR_MASK) !=  BUF_CONTROL_BASE) {
-      /* remove this buffer */
-
-      if (prev)
-	prev->next = next;
-      else
-	fifo->first = next;
-
-      if (!next)
-	fifo->last = prev;
-
-      fifo->fifo_size--;
-      fifo->fifo_data_size -= buf->size;
-
-      buf->free_buffer(buf);
-    } else
+    /* keep control bufs (flush, ...) */
+    if ((buf->elem.type & BUF_MAJOR_MASK) == BUF_CONTROL_BASE) {
       prev = buf;
+      buf = (be_ei_t *)buf->elem.next;
+      continue;
+    }
+
+    /* get contiguous chunk */
+    n = 0;
+    while (1) {
+      int i = (buf->elem.content != buf->elem.mem) ? 1
+            : (buf->elem.max_size + s - 1) / s;
+      n += i;
+      next = (be_ei_t *)buf->elem.next;
+      fifo->fifo_data_size -= buf->elem.size;
+      if (buf + i != next)
+        break;
+      if ((next->elem.type & BUF_MAJOR_MASK) == BUF_CONTROL_BASE)
+        break;
+      buf = next;
+    }
+
+    /* remove this chunk */
+    if (prev)
+      prev->elem.next = &next->elem;
+    else
+      fifo->first = &next->elem;
+    if (!next)
+      fifo->last = &prev->elem;
+    fifo->fifo_size -= n;
+
+    /* free it */
+    start->elem.max_size = n * s;
+    start->elem.free_buffer (&start->elem);
 
     buf = next;
   }
@@ -331,32 +494,6 @@ static int fifo_buffer_num_free (fifo_buffer_t *this) {
  * Destroy the buffer
  */
 static void fifo_buffer_dispose (fifo_buffer_t *this) {
-
-  buf_element_t *buf, *next;
-  int received = 0;
-
-  this->clear( this );
-  buf = this->buffer_pool_top;
-
-  while (buf != NULL) {
-
-    next = buf->next;
-
-    free (buf->extra_info);
-    free (buf);
-    received++;
-
-    buf = next;
-  }
-
-  while (received < this->buffer_pool_capacity) {
-
-    buf = this->get(this);
-
-    free(buf->extra_info);
-    free(buf);
-    received++;
-  }
 
   xine_free_aligned (this->buffer_pool_base);
   pthread_mutex_destroy(&this->mutex);
@@ -497,9 +634,19 @@ fifo_buffer_t *_x_fifo_buffer_new (int num_buffers, uint32_t buf_size) {
 
   fifo_buffer_t *this;
   int            i;
-  unsigned char *multi_buffer = NULL;
+  unsigned char *multi_buffer;
+  be_ei_t       *beei;
 
   this = calloc(1, sizeof(fifo_buffer_t));
+  if (!this)
+    return NULL;
+
+  /* printf ("Allocating %d buffers of %ld bytes in one chunk\n", num_buffers, (long int) buf_size); */
+  multi_buffer = xine_mallocz_aligned (num_buffers * (buf_size + sizeof (be_ei_t)));
+  if (!multi_buffer) {
+    free (this);
+    return NULL;
+  }
 
   this->first               = NULL;
   this->last                = NULL;
@@ -521,43 +668,36 @@ fifo_buffer_t *_x_fifo_buffer_new (int num_buffers, uint32_t buf_size) {
   pthread_mutex_init (&this->mutex, NULL);
   pthread_cond_init (&this->not_empty, NULL);
 
-  /*
-   * init buffer pool, allocate nNumBuffers of buf_size bytes each
-   */
-
-
-  /*
-  printf ("Allocating %d buffers of %ld bytes in one chunk\n",
-	  num_buffers, (long int) buf_size);
-	  */
-  multi_buffer = this->buffer_pool_base = xine_mallocz_aligned (num_buffers * buf_size);
-
-  this->buffer_pool_top = NULL;
+  /* init buffer pool */
 
   pthread_mutex_init (&this->buffer_pool_mutex, NULL);
   pthread_cond_init (&this->buffer_pool_cond_not_empty, NULL);
 
-  this->buffer_pool_num_free  = 0;
-  this->buffer_pool_capacity  = num_buffers;
-  this->buffer_pool_buf_size  = buf_size;
-  this->buffer_pool_alloc     = buffer_pool_alloc;
-  this->buffer_pool_try_alloc = buffer_pool_try_alloc;
+  this->buffer_pool_num_free   =
+  this->buffer_pool_capacity   = num_buffers;
+  this->buffer_pool_buf_size   = buf_size;
+  this->buffer_pool_alloc      = buffer_pool_alloc;
+  this->buffer_pool_try_alloc  = buffer_pool_try_alloc;
+  this->buffer_pool_size_alloc = buffer_pool_size_alloc;
 
-  for (i = 0; i<num_buffers; i++) {
-    buf_element_t *buf;
+  this->buffer_pool_base = multi_buffer;
+  beei = (be_ei_t *)(multi_buffer + num_buffers * buf_size);
+  this->buffer_pool_top  = &beei->elem;
+  beei->elem.decoder_info[0] = num_buffers;
 
-    buf = calloc(1, sizeof(buf_element_t));
-
-    buf->mem = multi_buffer;
-    multi_buffer += buf_size;
-
-    buf->max_size    = buf_size;
-    buf->free_buffer = buffer_pool_free;
-    buf->source      = this;
-    buf->extra_info  = malloc(sizeof(extra_info_t));
-
-    buffer_pool_free (buf);
+  for (i = 0; i < num_buffers; i++) {
+    beei->elem.mem         = multi_buffer;
+    multi_buffer          += buf_size;
+    beei->elem.max_size    = buf_size;
+    beei->elem.free_buffer = buffer_pool_free;
+    beei->elem.source      = this;
+    beei->elem.extra_info  = &beei->ei;
+    beei->elem.next        = &(beei + 1)->elem;
+    beei++;
   }
+
+  (beei - 1)->elem.next = NULL;
+
   this->alloc_cb[0]              = NULL;
   this->get_cb[0]                = NULL;
   this->put_cb[0]                = NULL;

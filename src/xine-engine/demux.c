@@ -659,7 +659,7 @@ void _x_demux_send_data(fifo_buffer_t *fifo, uint8_t *data, int size,
   _x_assert(size > 0);
   while (fifo && size > 0) {
 
-    buf = fifo->buffer_pool_alloc (fifo);
+    buf = fifo->buffer_pool_size_alloc (fifo, size);
 
     if ( size > buf->max_size ) {
       buf->size          = buf->max_size;
@@ -705,7 +705,7 @@ int _x_demux_read_send_data(fifo_buffer_t *fifo, input_plugin_t *input,
   _x_assert(size > 0);
   while (fifo && size > 0) {
 
-    buf = fifo->buffer_pool_alloc (fifo);
+    buf = fifo->buffer_pool_size_alloc (fifo, size);
 
     if ( size > buf->max_size ) {
       buf->size          = buf->max_size;

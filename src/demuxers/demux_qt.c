@@ -2846,7 +2846,7 @@ static int demux_qt_send_chunk(demux_plugin_t *this_gen) {
       trak->frames[i].pts);
 
     while (remaining_sample_bytes) {
-      buf = this->video_fifo->buffer_pool_alloc (this->video_fifo);
+      buf = this->video_fifo->buffer_pool_size_alloc (this->video_fifo, remaining_sample_bytes);
       buf->type = trak->properties->video.codec_buftype;
       if( this->data_size )
         buf->extra_info->input_normpos = (int)( (double) (trak->frames[i].offset - this->data_start)
@@ -2905,7 +2905,7 @@ static int demux_qt_send_chunk(demux_plugin_t *this_gen) {
 
     first_buf = 1;
     while (remaining_sample_bytes) {
-      buf = this->audio_fifo->buffer_pool_alloc (this->audio_fifo);
+      buf = this->audio_fifo->buffer_pool_size_alloc (this->audio_fifo, remaining_sample_bytes);
       buf->type = trak->properties->audio.codec_buftype;
       if( this->data_size )
         buf->extra_info->input_normpos = (int)( (double) (trak->frames[i].offset - this->data_start)
@@ -2932,10 +2932,9 @@ static int demux_qt_send_chunk(demux_plugin_t *this_gen) {
       }
 
       /* 24-bit audio doesn't fit evenly into the default 8192-byte buffers */
+      frame_aligned_buf_size = buf->max_size;
       if (trak->properties->audio.bits == 24)
-        frame_aligned_buf_size = 8184;
-      else
-        frame_aligned_buf_size = buf->max_size;
+        frame_aligned_buf_size = (frame_aligned_buf_size / 8184) * 8184;
 
       if (remaining_sample_bytes > frame_aligned_buf_size)
         buf->size = frame_aligned_buf_size;
