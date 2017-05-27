@@ -474,10 +474,42 @@ static VADisplay vaapi_get_display(Display *display, int opengl_render)
     ret = vaGetDisplay(display);
   }
 
-  if(vaDisplayIsValid(ret))
+  if (vaDisplayIsValid(ret))
     return ret;
-  else
-    return 0;
+
+  return NULL;
+}
+
+static VAStatus vaapi_terminate(ff_vaapi_context_t *va_context)
+{
+  VAStatus vaStatus = VA_STATUS_ERROR_UNKNOWN;
+
+  if (va_context->va_display) {
+    vaStatus = vaTerminate(va_context->va_display);
+    va_context->va_display = NULL;
+  }
+
+  return vaStatus;
+}
+
+static VAStatus vaapi_initialize(ff_vaapi_context_t *va_context, Display *display, int opengl_render)
+{
+  VAStatus vaStatus;
+  int      maj, min;
+
+  va_context->va_display = vaapi_get_display(display, opengl_render);
+  if (!va_context->va_display) {
+    return VA_STATUS_ERROR_UNKNOWN;
+  }
+
+  vaStatus = vaInitialize(va_context->va_display, &maj, &min);
+  if (vaStatus != VA_STATUS_SUCCESS) {
+    vaapi_terminate(va_context);
+    return vaStatus;
+  }
+
+  lprintf("libva: %d.%d\n", maj, min);
+  return vaStatus;
 }
 
 typedef struct {
@@ -1142,25 +1174,12 @@ static int profile_from_imgfmt(vo_frame_t *frame_gen, unsigned format)
   ff_vaapi_context_t  *va_context = this->va_context;
   VAStatus            vaStatus;
   int                 profile     = -1;
-  int                 maj, min;
   int                 i;
   int                 va_num_profiles;
   int                 max_profiles;
   VAProfile           *va_profiles = NULL;
-  int                 inited = 0;
 
-  if(va_context->va_display == NULL) {
-    lprintf("profile_from_imgfmt vaInitialize\n");
-    inited = 1;
-    va_context->va_display = vaapi_get_display(this->display, this->opengl_render);
-    if(!va_context->va_display)
-      goto out;
-
-    vaStatus = vaInitialize(va_context->va_display, &maj, &min);
-    if(!vaapi_check_status(this_gen, vaStatus, "vaInitialize()"))
-      goto out;
-
-  }
+  _x_assert(va_context->va_display);
 
   max_profiles = vaMaxNumProfiles(va_context->va_display);
   va_profiles = calloc(max_profiles, sizeof(*va_profiles));
@@ -1237,11 +1256,6 @@ static int profile_from_imgfmt(vo_frame_t *frame_gen, unsigned format)
 
 out:
   free(va_profiles);
-  if(inited) {
-    vaStatus = vaTerminate(va_context->va_display);
-    vaapi_check_status(this_gen, vaStatus, "vaTerminate()");
-    va_context->va_display = NULL;
-  }
   return profile;
 }
 
@@ -1359,10 +1373,6 @@ static void vaapi_close(vo_driver_t *this_gen) {
     vaapi_check_status(this_gen, vaStatus, "vaDestroyConfig()");
     va_context->va_config_id = VA_INVALID_ID;
   }
-
-  vaStatus = vaTerminate(va_context->va_display);
-  vaapi_check_status(this_gen, vaStatus, "vaTerminate()");
-  va_context->va_display = NULL;
 
   free(va_context->va_image_formats);
   va_context->va_image_formats      = NULL;
@@ -2089,22 +2099,17 @@ static VAStatus vaapi_init_internal(vo_driver_t *this_gen, int va_profile, int w
   vaapi_driver_t      *this = (vaapi_driver_t *)this_gen;
   ff_vaapi_context_t  *va_context = this->va_context;
   VAConfigAttrib      va_attrib;
-  int                 maj, min, i;
+  int                 i;
   VAStatus            vaStatus;
 
   vaapi_close(this_gen);
   vaapi_init_va_context(this->va_context);
 
-  this->va_context->va_display = vaapi_get_display(this->display, this->opengl_render);
-
-  if(!this->va_context->va_display)
-    goto error;
-
-  vaStatus = vaInitialize(this->va_context->va_display, &maj, &min);
-  if(!vaapi_check_status((vo_driver_t *)this, vaStatus, "vaInitialize()"))
-    goto error;
-
-  lprintf("libva: %d.%d\n", maj, min);
+  if (!this->va_context->va_display) {
+    vaStatus = vaapi_initialize(va_context, this->display, this->opengl_render);
+    if(!vaapi_check_status((vo_driver_t *)this, vaStatus, "vaInitialize()"))
+      goto error;
+  }
 
   va_context->valid_context = 1;
 
@@ -3838,6 +3843,8 @@ static void vaapi_dispose_locked (vo_driver_t *this_gen) {
   DO_LOCKDISPLAY;
 
   vaapi_close(this_gen);
+
+  vaapi_terminate(va_context);
 
   _x_freep(&va_context->va_surface_ids);
   _x_freep(&va_context->va_render_surfaces);
