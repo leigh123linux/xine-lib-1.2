@@ -176,6 +176,8 @@ typedef struct {
   int                       step;
   pthread_cond_t            done_stepping;
 
+  int                       keyframe_mode;
+
   /* frame stream refs */
   vo_frame_t              **frames;
   xine_stream_t           **img_streams;
@@ -1074,6 +1076,25 @@ static int vo_frame_draw (vo_frame_t *img, xine_stream_t *stream) {
     vo_reref (this, img);
     _x_extra_info_merge( img->extra_info, stream->video_decoder_extra_info );
     stream->metronom->got_video_frame (stream->metronom, img);
+#if 0
+    if (FIXME: IS_KEYFRAME (img)) {
+      if (this->keyframe_mode == 0) {
+        if (!stream->index_array && stream->input_plugin && INPUT_IS_SEEKABLE (stream->input_plugin)) {
+          xprintf (stream->xine, XINE_VERBOSITY_DEBUG,
+            "video_out: no keyframe index found, lets do it from this side.\n");
+          this->keyframe_mode = 1;
+        } else {
+          this->keyframe_mode = -1;
+        }
+      }
+      if (this->keyframe_mode > 0) {
+        xine_keyframes_entry_t entry;
+        entry.msecs = img->extra_info->input_time;
+        entry.normpos = img->extra_info->input_normpos;
+        _x_keyframes_add (stream, &entry);
+      }
+    }
+#endif
   }
   this->current_width = img->width;
   this->current_height = img->height;
