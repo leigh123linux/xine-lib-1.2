@@ -482,7 +482,10 @@ static VADisplay vaapi_get_display(Display *display, int opengl_render)
 
 static VAStatus vaapi_terminate(ff_vaapi_context_t *va_context)
 {
-  VAStatus vaStatus = VA_STATUS_ERROR_UNKNOWN;
+  VAStatus vaStatus = VA_STATUS_SUCCESS;
+
+  _x_freep(&va_context->va_image_formats);
+  va_context->va_num_image_formats  = 0;
 
   if (va_context->va_display) {
     vaStatus = vaTerminate(va_context->va_display);
@@ -496,6 +499,7 @@ static VAStatus vaapi_initialize(ff_vaapi_context_t *va_context, Display *displa
 {
   VAStatus vaStatus;
   int      maj, min;
+  int      fmt_count = 0;
 
   va_context->va_display = vaapi_get_display(display, opengl_render);
   if (!va_context->va_display) {
@@ -504,11 +508,27 @@ static VAStatus vaapi_initialize(ff_vaapi_context_t *va_context, Display *displa
 
   vaStatus = vaInitialize(va_context->va_display, &maj, &min);
   if (vaStatus != VA_STATUS_SUCCESS) {
-    vaapi_terminate(va_context);
-    return vaStatus;
+    goto fail;
   }
 
   lprintf("libva: %d.%d\n", maj, min);
+
+  fmt_count = vaMaxNumImageFormats(va_context->va_display);
+  va_context->va_image_formats = calloc(fmt_count, sizeof(*va_context->va_image_formats));
+  if (!va_context->va_image_formats) {
+    goto fail;
+  }
+
+  vaStatus = vaQueryImageFormats(va_context->va_display, va_context->va_image_formats, &va_context->va_num_image_formats);
+  if (vaStatus != VA_STATUS_SUCCESS) {
+    goto fail;
+  }
+
+  return vaStatus;
+
+fail:
+  _x_freep(&va_context->va_image_formats);
+  vaapi_terminate(va_context);
   return vaStatus;
 }
 
@@ -1340,9 +1360,6 @@ static void vaapi_init_va_context(ff_vaapi_context_t *va_context) {
 
     va_context->va_surface_ids[i]       = VA_INVALID_SURFACE;
   }
-
-  va_context->va_image_formats      = NULL;
-  va_context->va_num_image_formats  = 0;
 }
 
 /* Close vaapi  */
@@ -1373,10 +1390,6 @@ static void vaapi_close(vo_driver_t *this_gen) {
     vaapi_check_status(this_gen, vaStatus, "vaDestroyConfig()");
     va_context->va_config_id = VA_INVALID_ID;
   }
-
-  free(va_context->va_image_formats);
-  va_context->va_image_formats      = NULL;
-  va_context->va_num_image_formats  = 0;
 
   _x_freep(&this->va_subpic_formats);
   this->va_num_subpic_formats = 0;
@@ -2114,13 +2127,6 @@ static VAStatus vaapi_init_internal(vo_driver_t *this_gen, int va_profile, int w
   va_context->valid_context = 1;
 
   int fmt_count = 0;
-  fmt_count = vaMaxNumImageFormats( va_context->va_display );
-  va_context->va_image_formats = calloc( fmt_count, sizeof(*va_context->va_image_formats) );
-
-  vaStatus = vaQueryImageFormats(va_context->va_display, va_context->va_image_formats, &va_context->va_num_image_formats);
-  if(!vaapi_check_status(this_gen, vaStatus, "vaQueryImageFormats()"))
-    goto error;
-
   fmt_count = vaMaxNumSubpictureFormats( va_context->va_display );
   this->va_subpic_formats = calloc( fmt_count, sizeof(*this->va_subpic_formats) );
 
