@@ -273,7 +273,11 @@ typedef union {
 
 } properties_t;
 
+typedef struct qt_info_s qt_info;
+
 typedef struct {
+
+  qt_info *info;
 
   /* trak description */
   media_type type;
@@ -326,6 +330,9 @@ typedef struct {
   /* sync samples, a.k.a., keyframes */
   unsigned int sync_sample_count;
   unsigned char *sync_sample_table;
+  xine_keyframes_entry_t *keyframes_list;
+  unsigned int keyframes_used;
+  unsigned int keyframes_size;
 
   /* sample to chunk table */
   unsigned int sample_to_chunk_count;
@@ -355,7 +362,12 @@ typedef struct {
   int fragment_frames;
 } qt_trak;
 
-typedef struct {
+typedef struct demux_qt_s demux_qt_t;
+
+struct qt_info_s {
+
+  demux_qt_t *demux;
+
   int compressed_header;  /* 1 if there was a compressed moov; just FYI */
 
   unsigned int creation_time;  /* in ms since Jan-01-1904 */
@@ -399,9 +411,9 @@ typedef struct {
   char              *base_mrl;
 
   qt_error last_error;
-} qt_info;
+};
 
-typedef struct {
+struct demux_qt_s {
 
   demux_plugin_t       demux_plugin;
 
@@ -426,7 +438,7 @@ typedef struct {
 
   int64_t              bandwidth;
 
-} demux_qt_t;
+};
 
 typedef struct {
 
@@ -645,7 +657,7 @@ static void find_moov_atom(input_plugin_t *input, off_t *moov_offset,
 }
 
 /* create a qt_info structure or return NULL if no memory */
-static qt_info *create_qt_info(void) {
+static qt_info *create_qt_info (demux_qt_t *demux) {
   qt_info *info;
 
   info = (qt_info *)calloc(1, sizeof(qt_info));
@@ -653,6 +665,7 @@ static qt_info *create_qt_info(void) {
   if (!info)
     return NULL;
 
+  info->demux = demux;
   info->compressed_header = 0;
 
   info->creation_time = 0;
@@ -961,6 +974,9 @@ static qt_error parse_trak_atom (qt_trak *trak,
   trak->sample_size_table = NULL;
   trak->sync_sample_count = 0;
   trak->sync_sample_table = NULL;
+  trak->keyframes_list = NULL;
+  trak->keyframes_size = 0;
+  trak->keyframes_used = 0;
   trak->sample_to_chunk_count = 0;
   trak->sample_to_chunk_table = NULL;
   trak->time_to_sample_count = 0;
@@ -1686,6 +1702,23 @@ static qt_error parse_reference_atom (qt_info *info,
   return QT_OK;
 }
 
+#define KEYFRAMES_SIZE 1024
+static void qt_keyframes_add (qt_trak *trak, qt_frame *f) {
+  xine_keyframes_entry_t *e = trak->keyframes_list;
+  off_t filesize;
+  if (trak->keyframes_used + 1 > trak->keyframes_size) {
+    e = realloc (e, (trak->keyframes_size + KEYFRAMES_SIZE) * sizeof (*e));
+    if (!e)
+      return;
+    trak->keyframes_list = e;
+    trak->keyframes_size += KEYFRAMES_SIZE;
+  }
+  e += trak->keyframes_used++;
+  e->msecs = f->pts / 90;
+  filesize = trak->info->demux->data_size;
+  e->normpos = filesize > 0 ? (int64_t)f->offset * 0xffff / filesize : 0;
+}
+
 static qt_error build_frame_table(qt_trak *trak,
 				  unsigned int global_timescale) {
 
@@ -1966,6 +1999,8 @@ static qt_error build_frame_table(qt_trak *trak,
         trak->frames[i].ptsoffs = t / (int)trak->timescale;
       }
       debug_edit_list("  final pts for sample %d = %"PRId64"\n", i, trak->frames[i].pts);
+      if (trak->frames[i].keyframe && trak->sync_sample_table)
+        qt_keyframes_add (trak, &trak->frames[i]);
     }
 
     /* decide which video properties atom to use */
@@ -2261,6 +2296,8 @@ static int parse_traf_atom (qt_info *info, unsigned char *traf_atom, int trafsiz
             frame->ptsoffs = (int64_t)((int32_t)o) * (int32_t)90000 / (int32_t)trak->timescale;
           } else
             frame->ptsoffs = 0;
+          if (frame->keyframe)
+            qt_keyframes_add (trak, frame);
           frame++;
           (trak->frame_count)++;
         }
@@ -2431,6 +2468,7 @@ static void parse_moov_atom(qt_info *info, unsigned char *moov_atom,
     /* create a new trak structure */
     info->trak_count++;
     info->traks = realloc (info->traks, info->trak_count * sizeof (qt_trak));
+    info->traks[info->trak_count - 1].info = info;
     info->last_error = parse_trak_atom (&info->traks[info->trak_count - 1], atoms[i]);
     if (info->last_error != QT_OK) {
       info->trak_count--;
@@ -2501,12 +2539,19 @@ static void parse_moov_atom(qt_info *info, unsigned char *moov_atom,
       info->video_trak = i;
       max_video_frames = info->traks[i].frame_count;
 
+      if (info->traks[i].keyframes_list)
+        _x_keyframes_set (info->demux->stream, info->traks[i].keyframes_list, info->traks[i].keyframes_used);
+
     } else if ((info->traks[i].type == MEDIA_AUDIO) &&
                (info->traks[i].frame_count > max_audio_frames)) {
 
       info->audio_trak = i;
       max_audio_frames = info->traks[i].frame_count;
     }
+
+    free (info->traks[i].keyframes_list);
+    info->traks[i].keyframes_list = NULL;
+    info->traks[i].keyframes_size = 0;
   }
 
   /* check for references */
@@ -3498,7 +3543,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
       free (this);
       return NULL;
     }
-    if ((this->qt = create_qt_info()) == NULL) {
+    if ((this->qt = create_qt_info (this)) == NULL) {
       free (this);
       return NULL;
     }
@@ -3526,7 +3571,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
       free (this);
       return NULL;
     }
-    if ((this->qt = create_qt_info()) == NULL) {
+    if ((this->qt = create_qt_info (this)) == NULL) {
       free (this);
       return NULL;
     }
