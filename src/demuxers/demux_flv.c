@@ -770,6 +770,12 @@ static int read_flv_packet(demux_flv_t *this, int preview) {
       this->size = size;
       normpos = (int64_t)this->input->get_current_pos (this->input) * 65535 / size;
     }
+    if (buf_flags & BUF_FLAG_KEYFRAME) {
+      xine_keyframes_entry_t entry;
+      entry.msecs = pts;
+      entry.normpos = normpos;
+      _x_keyframes_add (this->stream, &entry);
+    }
     while (remaining_bytes) {
       buf       = fifo->buffer_pool_size_alloc (fifo, remaining_bytes);
       buf->type = buf_type;
