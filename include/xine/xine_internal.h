@@ -364,6 +364,10 @@ struct xine_stream_s {
   broadcaster_t             *broadcaster;
 
   refcounter_t              *refcounter;
+
+  xine_keyframes_entry_t        *index_array;
+  int                        index_size, index_used, index_lastadd;
+  pthread_mutex_t            index_mutex;
 #endif
 };
 
@@ -420,6 +424,23 @@ void _x_extra_info_reset( extra_info_t *extra_info ) XINE_PROTECTED;
 void _x_extra_info_merge( extra_info_t *dst, extra_info_t *src ) XINE_PROTECTED;
 
 void _x_get_current_info (xine_stream_t *stream, extra_info_t *extra_info, int size) XINE_PROTECTED;
+
+
+/** @brief Register a list of stream keyframes.
+    @param stream The stream that index is for.
+    @param list   The array of entries to add.
+    @param size   The count of entries.
+    @return 0 (OK), 1 (Fail).
+*/
+int _x_keyframes_set (xine_stream_t *stream, xine_keyframes_entry_t *list, int size) XINE_PROTECTED;
+
+/** @brief Register a stream keyframe to seek index.
+    @note  This will try not to duplicate already registered frames.
+    @param stream The stream that index is for.
+    @param pos    The frame time AND normpos.
+    @return  The index *g* into the index where that frame has been added, or -1.
+*/
+int _x_keyframes_add (xine_stream_t *stream, xine_keyframes_entry_t *pos) XINE_PROTECTED;
 
 
 /* demuxer helper functions from demux.c */

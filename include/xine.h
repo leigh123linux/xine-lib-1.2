@@ -230,6 +230,35 @@ int xine_stream_master_slave(xine_stream_t *master, xine_stream_t *slave,
  */
 int xine_open (xine_stream_t *stream, const char *mrl) XINE_PROTECTED;
 
+/** The keyframe seek index feature. */
+
+#define XINE_KEYFRAMES 1 /**<< Check this for feature available. */
+
+typedef struct {
+  int msecs;   /**<< Milliseconds from beginning of stream. */
+  int normpos; /**<< Size based stream position (beginning == 0, end == 64k - 1). */
+} xine_keyframes_entry_t;
+
+/** @brief Query stream keyframe seek index.
+    @note  We dont do an expensive file scan. We will only find keyframes listed in
+           container or already seen while playing.
+    @param stream The stream that index is for.
+    @param pos    On call, the start time or normpos.
+                  On return, the found time and normpos.
+    @param offs   0 gets nearest keyframe, other values step from exact given pos.
+    @return  0: Found.
+             1: Search truncated to first or last known keyframe.
+             2: Failure.
+*/
+int xine_keyframes_find (xine_stream_t *stream, xine_keyframes_entry_t *pos, int offs) XINE_PROTECTED;
+
+/** @brief Get a private stream keyframe seek index copy, free () it when done.
+    @param stream The stream that index is for.
+    @param size   On return, the count of entries there are.
+    @return The entry array or NULL.
+*/
+xine_keyframes_entry_t *xine_keyframes_get (xine_stream_t *stream, int *size) XINE_PROTECTED;
+
 /*
  * play a stream from a given position
  *

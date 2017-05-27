@@ -581,6 +581,7 @@ static void close_internal (xine_stream_t *stream) {
   stream->audio_track_map_entries = 0;
   stream->spu_track_map_entries = 0;
 
+  _x_keyframes_set (stream, NULL, 0);
 }
 
 void xine_close (xine_stream_t *stream) {
@@ -752,6 +753,7 @@ xine_stream_t *xine_stream_new (xine_t *this,
   pthread_cond_init  (&stream->first_frame_reached, NULL);
   pthread_mutex_init (&stream->current_extra_info_lock, NULL);
   pthread_mutex_init (&stream->speed_change_lock, NULL);
+  pthread_mutex_init (&stream->index_mutex, NULL);
 
   /* warning: frontend_lock is a recursive mutex. it must NOT be
    * used with neither pthread_cond_wait() or pthread_cond_timedwait()
@@ -1646,6 +1648,7 @@ static void xine_dispose_internal (xine_stream_t *stream) {
   pthread_mutex_destroy (&stream->demux_lock);
   pthread_mutex_destroy (&stream->first_frame_lock);
   pthread_cond_destroy  (&stream->first_frame_reached);
+  pthread_mutex_destroy (&stream->index_mutex);
 
   stream->metronom->exit (stream->metronom);
 
@@ -1656,6 +1659,7 @@ static void xine_dispose_internal (xine_stream_t *stream) {
   free (stream->current_extra_info);
   free (stream->video_decoder_extra_info);
   free (stream->audio_decoder_extra_info);
+  free (stream->index_array);
   free (stream);
 }
 
@@ -2670,3 +2674,178 @@ void _x_reset_relaxed_frame_drop_mode(xine_stream_t *stream)
   stream->first_frame_flag = 1;
   pthread_mutex_unlock (&stream->first_frame_lock);
 }
+
+
+#define KF_BITS 10
+#define KF_SIZE (1 << KF_BITS)
+#define KF_MASK (KF_SIZE - 1)
+
+int xine_keyframes_find (xine_stream_t *stream, xine_keyframes_entry_t *pos, int offs) {
+  if (!stream || (stream == XINE_ANON_STREAM) || !pos)
+    return 2;
+
+  pthread_mutex_lock (&stream->index_mutex);
+  if (!stream->index_array || !stream->index_used) {
+    pthread_mutex_unlock (&stream->index_mutex);
+    return 2;
+  }
+  /* binary search the index */
+  {
+    xine_keyframes_entry_t *t = stream->index_array;
+    int d, a = 0, e = stream->index_used, m = e >> 1, l;
+    if ((pos->normpos > 0) && (pos->normpos < 0x10000)) {
+      do {
+        d = t[m].normpos - pos->normpos;
+        if (d == 0)
+          break;
+        if (d > 0)
+          e = m;
+        else
+          a = m;
+        l = m;
+        m = (a + e) >> 1;
+      } while (m != l);
+      if ((offs == 0) && (m + 1 < stream->index_used) &&
+        (pos->normpos >= ((t[m].normpos + t[m + 1].normpos) >> 1)))
+        m++;
+    } else {
+      do {
+        d = t[m].msecs - pos->msecs;
+        if (d == 0)
+          break;
+        if (d > 0)
+          e = m;
+        else
+          a = m;
+        l = m;
+        m = (a + e) >> 1;
+      } while (m != l);
+      if ((offs == 0) && (m + 1 < stream->index_used) &&
+        (pos->msecs >= ((t[m].msecs + t[m + 1].msecs) >> 1)))
+        m++;
+    }
+    e = 0;
+    if ((offs < 0) && (d != 0))
+      offs++;
+    m += offs;
+    if (m < 0) {
+      m = 0;
+      e = 1;
+    } else if (m >= stream->index_used) {
+      m = stream->index_used - 1;
+      e = 1;
+    }
+    *pos = t[m];
+    pthread_mutex_unlock (&stream->index_mutex);
+    return e;
+  }
+}
+
+int _x_keyframes_add (xine_stream_t *stream, xine_keyframes_entry_t *pos) {
+  xine_keyframes_entry_t *t;
+  pthread_mutex_lock (&stream->index_mutex);
+  /* first ever entry */
+  t = stream->index_array;
+  if (!t) {
+    t = calloc (KF_SIZE, sizeof (*t));
+    if (!t) {
+      pthread_mutex_unlock (&stream->index_mutex);
+      return -1;
+    }
+    t[0] = *pos;
+    stream->index_array = t;
+    stream->index_lastadd = 0;
+    stream->index_used = 1;
+    stream->index_size = KF_SIZE;
+    pthread_mutex_unlock (&stream->index_mutex);
+    xprintf (stream->xine, XINE_VERBOSITY_DEBUG,
+      "keyframes: build index while playing.\n");
+    return 0;
+  }
+  /* enlarge buf */
+  if (stream->index_used + 1 >= stream->index_size) {
+    t = realloc (stream->index_array, (stream->index_size + KF_SIZE) * sizeof (*t));
+    if (!t) {
+      pthread_mutex_unlock (&stream->index_mutex);
+      return -1;
+    }
+    stream->index_array = t;
+    stream->index_size += KF_SIZE;
+  }
+  /* binary search seek target */
+  {
+    /* fast detect the most common "progressive" case */
+    int d, a = 0, m = stream->index_lastadd, l, e = stream->index_used;
+    if (m + 1 < e)
+      m++;
+    do {
+      d = t[m].msecs - pos->msecs;
+      if (abs (d) < 10) {
+        t[m] = *pos; /* already known */
+        pthread_mutex_unlock (&stream->index_mutex);
+        return m;
+      }
+      if (d > 0)
+        e = m;
+      else
+        a = m;
+      l = m;
+      m = (a + e) >> 1;
+    } while (m != l);
+    if (d < 0)
+      m++;
+    if (m < stream->index_used) /* insert */
+      memmove (&t[m + 1], &t[m], (stream->index_used - m) * sizeof (*t));
+    stream->index_used++;
+    stream->index_lastadd = m;
+    t[m] = *pos;
+    pthread_mutex_unlock (&stream->index_mutex);
+    return m;
+  }
+}
+
+xine_keyframes_entry_t *xine_keyframes_get (xine_stream_t *stream, int *size) {
+  xine_keyframes_entry_t *ret;
+  if (!stream || (stream == XINE_ANON_STREAM) || !size)
+    return NULL;
+  pthread_mutex_lock (&stream->index_mutex);
+  if (stream->index_array && stream->index_used) {
+    ret = malloc (stream->index_used * sizeof (xine_keyframes_entry_t));
+    if (ret) {
+      memcpy (ret, stream->index_array, stream->index_used * sizeof (xine_keyframes_entry_t));
+      *size = stream->index_used;
+    }
+  } else {
+    ret = NULL;
+    *size = 0;
+  }
+  pthread_mutex_unlock (&stream->index_mutex);
+  return ret;
+}
+
+int _x_keyframes_set (xine_stream_t *stream, xine_keyframes_entry_t *list, int size) {
+  int n = (size + KF_MASK) & ~KF_MASK;
+  pthread_mutex_lock (&stream->index_mutex);
+  free (stream->index_array);
+  stream->index_lastadd = 0;
+  stream->index_array = (list && (n > 0)) ? malloc (n * sizeof (xine_keyframes_entry_t)) : NULL;
+  if (!stream->index_array) {
+    stream->index_used = 0;
+    stream->index_size = 0;
+    pthread_mutex_unlock (&stream->index_mutex);
+    xprintf (stream->xine, XINE_VERBOSITY_DEBUG,
+      "keyframes: deleting index.\n");
+    return 1;
+  }
+  memcpy (stream->index_array, list, size * sizeof (xine_keyframes_entry_t));
+  stream->index_used = size;
+  stream->index_size = n;
+  n -= size;
+  if (n > 0)
+    memset (stream->index_array + size, 0, n * sizeof (xine_keyframes_entry_t));
+  pthread_mutex_unlock (&stream->index_mutex);
+  xprintf (stream->xine, XINE_VERBOSITY_DEBUG,
+    "keyframes: got %d of them.\n", stream->index_used);
+  return 0;
+}
+
