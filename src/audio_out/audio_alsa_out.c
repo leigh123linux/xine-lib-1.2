@@ -105,6 +105,7 @@ typedef struct alsa_driver_s {
 
   struct {
     pthread_t          thread;
+    int                thread_created;
     pthread_mutex_t    mutex;
     char              *name;
     snd_mixer_t       *handle;
@@ -933,7 +934,7 @@ static void ao_alsa_exit(ao_driver_t *this_gen) {
    * (i.e. xscreensaver).
    */
 
-  if(this->mixer.handle && this->mixer.thread != 0) {
+  if(this->mixer.handle && this->mixer.thread_created) {
     this->mixer.running = 0;
     pthread_join(this->mixer.thread, NULL);
     snd_mixer_close(this->mixer.handle);
@@ -1356,11 +1357,10 @@ static void ao_alsa_mixer_init(ao_driver_t *this_gen) {
     pthread_attr_setschedparam(&pth_attrs, &pth_params);
     if (pthread_create(&this->mixer.thread, &pth_attrs, ao_alsa_handle_event_thread, (void *) this)) {
       xprintf (this->class->xine, XINE_VERBOSITY_LOG, LOG_MODULE ": pthread_create() failed\n");
-      this->mixer.thread = 0;
+    } else {
+      this->mixer.thread_created = 1;
     }
     pthread_attr_destroy(&pth_attrs);
-  } else {
-    this->mixer.thread = 0;
   }
 }
 
