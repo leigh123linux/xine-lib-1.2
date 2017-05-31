@@ -262,6 +262,7 @@ static buf_element_t* v4l2_input_read_block(input_plugin_t *this_gen, fifo_buffe
 static uint32_t v4l2_input_blocksize(input_plugin_t *this_gen) {
     /* HACK */
     return 0;
+#if 0
     v4l2_input_plugin_t *this = (v4l2_input_plugin_t*)this_gen;
     if (this->video->headerSent) {
         lprintf("Returning block size of %zu\n",this->video->buffers[0].length);
@@ -270,6 +271,7 @@ static uint32_t v4l2_input_blocksize(input_plugin_t *this_gen) {
         lprintf("Returning block size of %zu\n",sizeof(xine_bmiheader));
         return sizeof(xine_bmiheader);
     }
+#endif
 }
 
 static int v4l2_input_dequeue_video_buffer(v4l2_input_plugin_t *this, buf_element_t *output)
