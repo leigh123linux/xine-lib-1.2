@@ -578,7 +578,7 @@ static void _register_plugins_internal(xine_t *this, plugin_file_t *file,
 
   while ( info && info->type != PLUGIN_NONE ) {
     const char *fn;
-    if (file && file->filename) {
+    if (file) {
       fn = file->filename;
     } else {
       int n = info->type & PLUGIN_TYPE_MASK;
