@@ -126,7 +126,7 @@ static void nbc_set_speed_normal (nbc_t *this) {
 
 static void dvbspeed_init (nbc_t *this) {
   const char *mrl;
-  if (this->stream && this->stream->input_plugin) {
+  if (this->stream->input_plugin) {
     mrl = this->stream->input_plugin->get_mrl (this->stream->input_plugin);
     if (mrl) {
       /* detect Kaffeine: fifo://~/.kde4/share/apps/kaffeine/dvbpipe.m2t */
@@ -141,7 +141,6 @@ static void dvbspeed_init (nbc_t *this) {
         xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG, "net_buf_ctrl: dvbspeed mode\n");
 #if 1
         /* somewhat rude but saves user a lot of frustration */
-        if (this->stream) {
           xine_t *xine = this->stream->xine;
           config_values_t *config = xine->config;
           xine_cfg_entry_t entry;
@@ -155,7 +154,6 @@ static void dvbspeed_init (nbc_t *this) {
             config->update_num (config, "engine.buffers.video_num_buffers", 800);
             xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG, "net_buf_ctrl: enlarged video fifo to 800 buffers\n");
           }
-        }
 #endif
       }
     }
@@ -163,7 +161,7 @@ static void dvbspeed_init (nbc_t *this) {
 }
 
 static void dvbspeed_close (nbc_t *this) {
-  if (((0xec >> this->dvbspeed) & 1) && this->stream)
+  if ((0xec >> this->dvbspeed) & 1)
     _x_set_fine_speed (this->stream, XINE_FINE_SPEED_NORMAL);
   if (this->dvbspeed)
     xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG, "net_buf_ctrl: dvbspeed OFF\n");
@@ -714,6 +712,8 @@ static void nbc_get_cb (fifo_buffer_t *fifo,
 }
 
 nbc_t *nbc_init (xine_stream_t *stream) {
+
+  _x_assert(stream);
 
   nbc_t *this = calloc(1, sizeof (nbc_t));
   fifo_buffer_t *video_fifo = stream->video_fifo;
