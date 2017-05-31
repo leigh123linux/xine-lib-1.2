@@ -534,6 +534,7 @@ AC_DEFUN([XINE_VIDEO_OUT_PLUGINS], [
         PKG_CHECK_MODULES([LIBVA], [libva], [have_vaapi=yes], [have_vaapi=no])
         AC_CHECK_HEADERS([va/va.h], , [have_vaapi=no])
         AC_CHECK_HEADERS([va/va_x11.h], , [have_vaapi=no])
+        AC_CHECK_HEADERS([va/va_glx.h])
     fi
     AM_CONDITIONAL([ENABLE_VAAPI], test x"$have_vaapi" = x"yes")
 
