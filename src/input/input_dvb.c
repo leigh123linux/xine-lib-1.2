@@ -1554,7 +1554,7 @@ static void load_epg_data(dvb_input_plugin_t *this)
               /*int desc_len;*/
 	      xine_cfg_entry_t language;
 
-              /*desc_len =*/ getbits(eit, 0, 8);
+              /*desc_len = getbits(eit, 0, 8); */
 
 	      /* Let's get the EPG data only in the wanted language. */
 
