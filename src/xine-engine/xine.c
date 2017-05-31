@@ -158,7 +158,7 @@ static int ticket_acquire_internal(xine_ticket_t *this, int irrevocable, int non
       return 0;
     }
     /* add */
-    if (((i & 31) == 31) && (this->holder_threads[i].count = -1000)) {
+    if (((i & 31) == 31) && (this->holder_threads[i].count == -1000)) {
       /* enlarge list */
       void *new = realloc (this->holder_threads, sizeof (*this->holder_threads) * (i + 33));
       if (!new) {
