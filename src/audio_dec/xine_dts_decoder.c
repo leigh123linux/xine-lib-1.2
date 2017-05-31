@@ -157,9 +157,11 @@ static void dts_decode_frame (dts_decoder_t *this, const int64_t pts) {
         return;
 
       data_out=(uint8_t *) audio_buffer->mem;
-      if (this->ac5_length > 8191) {
+      if (this->ac5_length > MAX_AC5_FRAME) {
+        /* XXX is this even possible ? ac5_length is checked in dts_decode_data() */
         xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG, "libdts: ac5_length too long\n");
         this->ac5_pcm_length = 0;
+        return;
       }
 
       switch (this->ac5_pcm_length) {
