@@ -1528,6 +1528,8 @@ static int play_internal (xine_stream_t *stream, int start_pos, int start_time) 
       stream->audio_out->set_property(stream->audio_out, AO_PROP_DISCARD_BUFFERS, 0);
     if (stream->video_out)
       stream->video_out->set_property(stream->video_out, VO_PROP_DISCARD_FRAMES, 0);
+  } else {
+    stream->metronom->handle_audio_discontinuity (stream->metronom, DISC_GAPLESS, 0);
   }
 
   stream->xine->port_ticket->release(stream->xine->port_ticket, 1);

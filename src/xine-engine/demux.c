@@ -263,7 +263,7 @@ void _x_demux_control_headers_done (xine_stream_t *stream) {
 void _x_demux_control_start( xine_stream_t *stream ) {
 
   buf_element_t *buf;
-  uint32_t flags = (stream->gapless_switch) ? BUF_FLAG_GAPLESS_SW : 0;
+  uint32_t flags = (stream->gapless_switch || stream->finished_naturally) ? BUF_FLAG_GAPLESS_SW : 0;
 
   pthread_mutex_lock(&stream->demux_mutex);
 

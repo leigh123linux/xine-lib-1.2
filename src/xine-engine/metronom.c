@@ -363,6 +363,34 @@ static void metronom_handle_discontinuity (metronom_t *this, int type,
   cur_time = this->xine->clock->get_current_time(this->xine->clock);
 
   switch (type) {
+    /* When switching streams gaplessly, a paradox situation may happen:
+     * Engine was very fast and filled output buffers with more than
+     * this->prebuffer of yet to be played frames from the end of previous
+     * stream. The DISC_STREAMSTART code below will then set back vpts
+     * a few frames, and the engine will drop them later.
+     * We could try to fix this by increasing this->prebuffer, but that
+     * would cumulate over large playlists, and finally blow out queue
+     * sizes.
+     * Instead, we wait here a bit.
+     */
+    case DISC_GAPLESS:
+      {
+        int64_t t;
+        int speed = this->xine->clock->speed;
+        if (speed <= 0)
+          break;
+        pthread_mutex_lock (&this->lock);
+        t = this->video_vpts > this->audio_vpts ? this->video_vpts : this->audio_vpts;
+        t -= this->prebuffer + cur_time;
+        pthread_mutex_unlock (&this->lock);
+        if ((t <= 0) || (t > 90000))
+          break;
+        xprintf (this->xine, XINE_VERBOSITY_DEBUG,
+          "metronom: gapless switch: wait %"PRId64" pts.\n", t);
+        xine_usec_sleep ((int)((t * XINE_FINE_SPEED_NORMAL) / (speed * 90)) * 1000);
+      }
+      break;
+
     case DISC_STREAMSTART:
     case DISC_STREAMSEEK:
       this->video_vpts = this->prebuffer + cur_time;
@@ -621,6 +649,11 @@ static void metronom_got_video_frame (metronom_t *this, vo_frame_t *img) {
 
 static void metronom_handle_audio_discontinuity (metronom_t *this, int type,
 						 int64_t disc_off) {
+
+  if (type == DISC_GAPLESS) {
+    metronom_handle_discontinuity (this, type, disc_off);
+    return;
+  }
 
   pthread_mutex_lock (&this->lock);
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2000-2012 the xine project
+ * Copyright (C) 2000-2017 the xine project
  *
  * This file is part of xine, a free video player.
  *
@@ -66,6 +66,7 @@ typedef struct scr_plugin_s scr_plugin_t;
 #define DISC_RELATIVE    1
 #define DISC_ABSOLUTE    2
 #define DISC_STREAMSEEK  3
+#define DISC_GAPLESS     4
 
 struct metronom_s {
 
@@ -138,6 +139,8 @@ struct metronom_s {
    *                    applies the necessary vpts offset for the seek in
    *                    metronom, but keeps the vpts difference between
    *                    audio and video, so that metronom doesn't cough
+   * DISC_GAPLESS     : wait until it is safe to start next gapless stream.
+   *                    used internally by xine_play ().
    */
   void (*handle_audio_discontinuity) (metronom_t *self, int type, int64_t disc_off);
   void (*handle_video_discontinuity) (metronom_t *self, int type, int64_t disc_off);
