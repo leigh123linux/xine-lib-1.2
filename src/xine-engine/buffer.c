@@ -54,12 +54,17 @@
  * mysteriously later.
  * Small bufs are requested frequently, so we dont do a straightforward
  * heap manager. Instead, we keep bufs in pool sorted by address, and
- * buf->decoder_info[0] holds the count of contigous bufs when this is the
+ * be_ei_t.nbufs holds the count of contigous bufs when this is the
  * first of such a group.
+ * Although not used by xine-lib-1.2 itself, API permits using bufs in a
+ * different fifo than their pool origin. Thats why we test buf->source.
+ * It is also possible to supply fully custom bufs. We detect these by
+ * buf->free_buffer != buffer_pool_free.
  */
 
 typedef struct {
-  buf_element_t elem;
+  buf_element_t elem; /* needs to be first */
+  int nbufs;          /* # of contigous bufs */
   extra_info_t  ei;
 } be_ei_t;
 
@@ -73,8 +78,8 @@ static void buffer_pool_free (buf_element_t *element) {
 
   pthread_mutex_lock (&this->buffer_pool_mutex);
 
-  n = (element->content != element->mem) ? 1 /* custom buffer */
-    : (element->max_size + this->buffer_pool_buf_size - 1) / this->buffer_pool_buf_size;
+  newhead = (be_ei_t *)element;
+  n = newhead->nbufs;
   this->buffer_pool_num_free += n;
   if (this->buffer_pool_num_free > this->buffer_pool_capacity) {
     fprintf(stderr, _("xine-lib: buffer.c: There has been a fatal error: TOO MANY FREE's\n"));
@@ -82,8 +87,6 @@ static void buffer_pool_free (buf_element_t *element) {
   }
 
   /* we might be a new chunk */
-  newhead = (be_ei_t *)element;
-  newhead->elem.decoder_info[0] = n;
   newtail = newhead;
   while (--n > 0) {
     newtail[0].elem.next = &newtail[1].elem;
@@ -97,13 +100,13 @@ static void buffer_pool_free (buf_element_t *element) {
     newtail->elem.next = &nexthead->elem;
     /* merge with next chunk if no gap */
     if (newtail + 1 == nexthead)
-      newhead->elem.decoder_info[0] += nexthead->elem.decoder_info[0];
+      newhead->nbufs += nexthead->nbufs;
   } else {
     /* Keep the pool sorted, elem1 > elem2 implies elem1->mem > elem2->mem. */
     be_ei_t *prevhead, *prevtail;
     while (1) {
       prevhead = nexthead;
-      prevtail = prevhead + prevhead->elem.decoder_info[0] - 1;
+      prevtail = prevhead + prevhead->nbufs - 1;
       nexthead = (be_ei_t *)prevtail->elem.next;
       if (!nexthead || (nexthead > newtail))
         break;
@@ -112,10 +115,10 @@ static void buffer_pool_free (buf_element_t *element) {
     newtail->elem.next = &nexthead->elem;
     /* merge with next chunk if no gap */
     if (newtail + 1 == nexthead)
-      newhead->elem.decoder_info[0] += nexthead->elem.decoder_info[0];
+      newhead->nbufs += nexthead->nbufs;
     /* merge with prev chunk if no gap */
     if (prevtail + 1 == newhead)
-      prevhead->elem.decoder_info[0] += newhead->elem.decoder_info[0];
+      prevhead->nbufs += newhead->nbufs;
   }
     
   pthread_cond_signal (&this->buffer_pool_cond_not_empty);
@@ -153,9 +156,9 @@ static buf_element_t *buffer_pool_size_alloc (fifo_buffer_t *this, size_t size) 
   if (n == 1) {
 
     this->buffer_pool_top = buf->elem.next;
-    i = buf->elem.decoder_info[0] - 1;
+    i = buf->nbufs - 1;
     if (i > 0)
-      buf[1].elem.decoder_info[0] = i;
+      buf[1].nbufs = i;
     this->buffer_pool_num_free--;
 
   } else {
@@ -163,7 +166,7 @@ static buf_element_t *buffer_pool_size_alloc (fifo_buffer_t *this, size_t size) 
     be_ei_t *beststart = buf, *bestprev = NULL, *bestnext = NULL, *prev = NULL, *next;
     int bestsize = 0, l;
     do {
-      l = buf->elem.decoder_info[0];
+      l = buf->nbufs;
       next = (be_ei_t *)buf[l - 1].elem.next;
       if (l >= n)
         break;
@@ -184,7 +187,7 @@ static buf_element_t *buffer_pool_size_alloc (fifo_buffer_t *this, size_t size) 
     }
     if (n < l) {
       next = buf + n;
-      next->elem.decoder_info[0] = l - n;
+      next->nbufs = l - n;
     }
     if (prev)
       prev->elem.next = &next->elem;
@@ -202,6 +205,7 @@ static buf_element_t *buffer_pool_size_alloc (fifo_buffer_t *this, size_t size) 
   buf->elem.size = 0;
   buf->elem.max_size = n * this->buffer_pool_buf_size;
   buf->elem.decoder_flags = 0;
+  buf->nbufs = n;
   memset (buf->elem.decoder_info, 0, sizeof (buf->elem.decoder_info));
   memset (buf->elem.decoder_info_ptr, 0, sizeof (buf->elem.decoder_info_ptr));
   _x_extra_info_reset (buf->elem.extra_info);
@@ -226,9 +230,9 @@ static buf_element_t *buffer_pool_alloc (fifo_buffer_t *this) {
 
   buf = (be_ei_t *)this->buffer_pool_top;
   this->buffer_pool_top = buf->elem.next;
-  i = buf->elem.decoder_info[0] - 1;
+  i = buf->nbufs - 1;
   if (i > 0)
-    buf[1].elem.decoder_info[0] = i;
+    buf[1].nbufs = i;
   this->buffer_pool_num_free--;
 
   pthread_mutex_unlock (&this->buffer_pool_mutex);
@@ -239,6 +243,7 @@ static buf_element_t *buffer_pool_alloc (fifo_buffer_t *this) {
   buf->elem.size = 0;
   buf->elem.max_size = this->buffer_pool_buf_size;
   buf->elem.decoder_flags = 0;
+  buf->nbufs = 1;
   memset (buf->elem.decoder_info, 0, sizeof (buf->elem.decoder_info));
   memset (buf->elem.decoder_info_ptr, 0, sizeof (buf->elem.decoder_info_ptr));
   _x_extra_info_reset (buf->elem.extra_info);
@@ -262,9 +267,9 @@ static buf_element_t *buffer_pool_try_alloc (fifo_buffer_t *this) {
   }
 
   this->buffer_pool_top = buf->elem.next;
-  i = buf->elem.decoder_info[0] - 1;
+  i = buf->nbufs - 1;
   if (i > 0)
-    buf[1].elem.decoder_info[0] = i;
+    buf[1].nbufs = i;
   this->buffer_pool_num_free--;
   pthread_mutex_unlock (&this->buffer_pool_mutex);
 
@@ -274,6 +279,7 @@ static buf_element_t *buffer_pool_try_alloc (fifo_buffer_t *this) {
   buf->elem.size = 0;
   buf->elem.max_size = this->buffer_pool_buf_size;
   buf->elem.decoder_flags = 0;
+  buf->nbufs = 1;
   memset (buf->elem.decoder_info, 0, sizeof (buf->elem.decoder_info));
   memset (buf->elem.decoder_info_ptr, 0, sizeof (buf->elem.decoder_info_ptr));
   _x_extra_info_reset (buf->elem.extra_info);
@@ -286,7 +292,6 @@ static buf_element_t *buffer_pool_try_alloc (fifo_buffer_t *this) {
  * append buffer element to fifo buffer
  */
 static void fifo_buffer_put (fifo_buffer_t *fifo, buf_element_t *element) {
-  fifo_buffer_t *this = (fifo_buffer_t *) element->source;
   int i;
 
   pthread_mutex_lock (&fifo->mutex);
@@ -301,8 +306,13 @@ static void fifo_buffer_put (fifo_buffer_t *fifo, buf_element_t *element) {
 
   fifo->last = element;
   element->next = NULL;
-  fifo->fifo_size += (element->content != element->mem) ? 1 /* custom buffer */
-                   : (element->max_size + this->buffer_pool_buf_size - 1) / this->buffer_pool_buf_size;
+
+  if (element->free_buffer == buffer_pool_free) {
+    be_ei_t *beei = (be_ei_t *)element;
+    fifo->fifo_size += beei->nbufs;
+  } else {
+    fifo->fifo_size += 1;
+  }
   fifo->fifo_data_size += element->size;
 
   pthread_cond_signal (&fifo->not_empty);
@@ -311,7 +321,7 @@ static void fifo_buffer_put (fifo_buffer_t *fifo, buf_element_t *element) {
 }
 
 /*
- * append buffer element to fifo buffer
+ * simulate append buffer element to fifo buffer
  */
 static void dummy_fifo_buffer_put (fifo_buffer_t *fifo, buf_element_t *element) {
   int i;
@@ -330,8 +340,6 @@ static void dummy_fifo_buffer_put (fifo_buffer_t *fifo, buf_element_t *element) 
  * insert buffer element to fifo buffer (demuxers MUST NOT call this one)
  */
 static void fifo_buffer_insert (fifo_buffer_t *fifo, buf_element_t *element) {
-  fifo_buffer_t *this = (fifo_buffer_t *) element->source;
-
   pthread_mutex_lock (&fifo->mutex);
 
   element->next = fifo->first;
@@ -340,8 +348,12 @@ static void fifo_buffer_insert (fifo_buffer_t *fifo, buf_element_t *element) {
   if( !fifo->last )
     fifo->last = element;
 
-  fifo->fifo_size += (element->content != element->mem) ? 1 /* custom buffer */
-                   : (element->max_size + this->buffer_pool_buf_size - 1) / this->buffer_pool_buf_size;
+  if (element->free_buffer == buffer_pool_free) {
+    be_ei_t *beei = (be_ei_t *)element;
+    fifo->fifo_size += beei->nbufs;
+  } else {
+    fifo->fifo_size += 1;
+  }
   fifo->fifo_data_size += element->size;
 
   pthread_cond_signal (&fifo->not_empty);
@@ -361,8 +373,8 @@ static void dummy_fifo_buffer_insert (fifo_buffer_t *fifo, buf_element_t *elemen
  * get element from fifo buffer
  */
 static buf_element_t *fifo_buffer_get (fifo_buffer_t *fifo) {
-  int i;
   buf_element_t *buf;
+  int i;
 
   pthread_mutex_lock (&fifo->mutex);
 
@@ -376,8 +388,12 @@ static buf_element_t *fifo_buffer_get (fifo_buffer_t *fifo) {
   if (fifo->first==NULL)
     fifo->last = NULL;
 
-  fifo->fifo_size -= (buf->content != buf->mem) ? 1 /* custom buffer */
-                   : (buf->max_size + fifo->buffer_pool_buf_size - 1) / fifo->buffer_pool_buf_size;
+  if (buf->free_buffer == buffer_pool_free) {
+    be_ei_t *beei = (be_ei_t *)buf;
+    fifo->fifo_size -= beei->nbufs;
+  } else {
+    fifo->fifo_size -= 1;
+  }
   fifo->fifo_data_size -= buf->size;
 
   for(i = 0; fifo->get_cb[i]; i++)
@@ -392,62 +408,109 @@ static buf_element_t *fifo_buffer_get (fifo_buffer_t *fifo) {
  * clear buffer (put all contained buffer elements back into buffer pool)
  */
 static void fifo_buffer_clear (fifo_buffer_t *fifo) {
-  be_ei_t *buf, *prev;
-  int s = 0;
+  be_ei_t *start;
 
   pthread_mutex_lock (&fifo->mutex);
 
-  buf = (be_ei_t *)fifo->first;
-  prev = NULL;
+  /* take out all at once */
+  start = (be_ei_t *)fifo->first;
+  fifo->first = fifo->last = NULL;
+  fifo->fifo_size = 0;
+  fifo->fifo_data_size = 0;
 
-  if (buf) {
-    fifo_buffer_t *this = buf->elem.source;
-    s = this->buffer_pool_buf_size;
-  }
-
-  while (buf) {
-    be_ei_t *start = buf, *next;
+  while (start) {
+    be_ei_t *buf, *next;
     int n;
 
     /* keep control bufs (flush, ...) */
-    if ((buf->elem.type & BUF_MAJOR_MASK) == BUF_CONTROL_BASE) {
-      prev = buf;
-      buf = (be_ei_t *)buf->elem.next;
+    if ((start->elem.type & BUF_MAJOR_MASK) == BUF_CONTROL_BASE) {
+      if (!fifo->first)
+        fifo->first = &start->elem;
+      else
+        fifo->last->next = &start->elem;
+      fifo->last = &start->elem;
+      fifo->fifo_size += 1;
+      fifo->fifo_data_size += start->elem.size;
+      buf = (be_ei_t *)start->elem.next;
+      start->elem.next = NULL;
+      start = buf;
       continue;
     }
 
-    /* get contiguous chunk */
+    /* free custom buf */
+    if (start->elem.free_buffer != buffer_pool_free) {
+      buf = (be_ei_t *)start->elem.next;
+      start->elem.next = NULL;
+      start->elem.free_buffer (&start->elem);
+      start = buf;
+      continue;
+    }
+
+    /* optimize: get contiguous chunk */
+    buf = start;
     n = 0;
     while (1) {
-      int i = (buf->elem.content != buf->elem.mem) ? 1
-            : (buf->elem.max_size + s - 1) / s;
-      n += i;
+      int i = buf->nbufs;
       next = (be_ei_t *)buf->elem.next;
-      fifo->fifo_data_size -= buf->elem.size;
-      if (buf + i != next)
+      n += i;
+      if (buf + i != next) /* includes next == NULL et al ;-) */
         break;
       if ((next->elem.type & BUF_MAJOR_MASK) == BUF_CONTROL_BASE)
         break;
       buf = next;
     }
-
-    /* remove this chunk */
-    if (prev)
-      prev->elem.next = &next->elem;
-    else
-      fifo->first = &next->elem;
-    if (!next)
-      fifo->last = &prev->elem;
-    fifo->fifo_size -= n;
-
-    /* free it */
-    start->elem.max_size = n * s;
+    start->nbufs = n;
     start->elem.free_buffer (&start->elem);
-
-    buf = next;
+    start = next;
   }
 
   /* printf("Free buffers after clear: %d\n", fifo->buffer_pool_num_free); */
+  pthread_mutex_unlock (&fifo->mutex);
+}
+
+static void fifo_buffer_all_clear (fifo_buffer_t *fifo) {
+  be_ei_t *start;
+
+  pthread_mutex_lock (&fifo->mutex);
+
+  /* take out all at once */
+  start = (be_ei_t *)fifo->first;
+  fifo->first = fifo->last = NULL;
+  fifo->fifo_size = 0;
+  fifo->fifo_data_size = 0;
+
+  while (start) {
+    be_ei_t *buf, *next;
+    int n;
+
+    /* free custom buf */
+    if (start->elem.free_buffer != buffer_pool_free) {
+      buf = (be_ei_t *)start->elem.next;
+      start->elem.next = NULL;
+      start->elem.free_buffer (&start->elem);
+      start = buf;
+      continue;
+    }
+
+    /* optimize: get contiguous chunk */
+    buf = start;
+    n = 0;
+    while (1) {
+      int i = buf->nbufs;
+      next = (be_ei_t *)buf->elem.next;
+      n += i;
+      if (buf + i != next) /* includes next == NULL ;-) */
+        break;
+      buf = next;
+    }
+    /* free just sibling bufs */
+    if (start->elem.source != (void *)fifo) {
+      start->nbufs = n;
+      start->elem.free_buffer (&start->elem);
+    }
+    start = next;
+  }
+
   pthread_mutex_unlock (&fifo->mutex);
 }
 
@@ -494,7 +557,7 @@ static int fifo_buffer_num_free (fifo_buffer_t *this) {
  * Destroy the buffer
  */
 static void fifo_buffer_dispose (fifo_buffer_t *this) {
-
+  fifo_buffer_all_clear (this);
   xine_free_aligned (this->buffer_pool_base);
   pthread_mutex_destroy(&this->mutex);
   pthread_cond_destroy(&this->not_empty);
@@ -683,7 +746,7 @@ fifo_buffer_t *_x_fifo_buffer_new (int num_buffers, uint32_t buf_size) {
   this->buffer_pool_base = multi_buffer;
   beei = (be_ei_t *)(multi_buffer + num_buffers * buf_size);
   this->buffer_pool_top  = &beei->elem;
-  beei->elem.decoder_info[0] = num_buffers;
+  beei->nbufs = num_buffers;
 
   for (i = 0; i < num_buffers; i++) {
     beei->elem.mem         = multi_buffer;
