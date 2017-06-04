@@ -271,10 +271,7 @@ static void segbuf_fill(segment_buffer_t *buf, uint8_t *data, size_t len)
 {
   if (buf->len + len > buf->data_size) {
     buf->data_size = buf->len + len;
-    if (buf->buf)
-      buf->buf = realloc(buf->buf, buf->data_size);
-    else
-      buf->buf = malloc(buf->data_size);
+    buf->buf = realloc(buf->buf, buf->data_size);
   }
 
   memcpy(buf->buf + buf->len, data, len);
