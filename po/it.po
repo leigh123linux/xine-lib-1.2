@@ -2073,7 +2073,7 @@ msgid "device used for BluRay playback"
 msgstr "dispositivo utilizzato per la riproduzione BluRay"
 
 #: src/input/input_bluray.c:1936
-msgid "The path to the device which you intend to use for playing BluRy discs."
+msgid "The path to the device which you intend to use for playing BluRay discs."
 msgstr ""
 "Il percorso al dispositivo, solitamente un lettore BluRay, che si intende "
 "usare per riprodurre BluRay."

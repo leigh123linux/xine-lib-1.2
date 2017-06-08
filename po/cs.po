@@ -2034,7 +2034,7 @@ msgid "device used for BluRay playback"
 msgstr "zařízení použité pro přehrávání BluRay"
 
 #: src/input/input_bluray.c:1936
-msgid "The path to the device which you intend to use for playing BluRy discs."
+msgid "The path to the device which you intend to use for playing BluRay discs."
 msgstr ""
 "Cesta k zařízení, obvykle BluRay mechanice, které chcete používat pro "
 "přehrávání BluRay."

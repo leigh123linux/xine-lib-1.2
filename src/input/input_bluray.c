@@ -1931,10 +1931,10 @@ static void *bluray_init_plugin (xine_t *xine, void *data)
                               0, mountpoint_change_cb, (void *) this);
   this->device =
     config->register_filename(config, "media.bluray.device",
-                              BLURAY_PATH, XINE_CONFIG_STRING_IS_DIRECTORY_NAME,
+                              BLURAY_PATH, XINE_CONFIG_STRING_IS_DEVICE_NAME,
                               _("device used for BluRay playback"),
                               _("The path to the device "
-                                "which you intend to use for playing BluRy discs."),
+                                "which you intend to use for playing BluRay discs."),
                               0, device_change_cb, (void *) this);
 
   /* Player settings */
