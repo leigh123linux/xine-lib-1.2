@@ -32,7 +32,7 @@ Standards-Version: 3.7.2
 Package: libxine2-dev
 Architecture: any
 Section: libdevel
-Depends: libxine2 (= ${Source-Version}), pkg-config
+Depends: libxine2 (= ${source:Version}), pkg-config
 Conflicts: xine-ui (<< 0.9.10), libxine-dev
 Replaces: libxine-dev (>= 1.1.90)
 Description: the xine video player library, development packages
@@ -91,7 +91,7 @@ Description: the xine video/media player library, binary files
 Package: libxine2-dbg
 Priority: extra
 Architecture: any
-Depends: libxine2 (= ${Source-Version})
+Depends: libxine2 (= ${source:Version})
 Description: the xine video/media player library, debug data
  This is the xine media player library (libxine).
  .
