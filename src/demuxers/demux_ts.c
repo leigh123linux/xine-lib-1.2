@@ -1346,15 +1346,22 @@ static void demux_ts_buffer_pes(demux_ts_t*this, unsigned char *ts,
   }
 
   if (!m->corrupted_pes) {
+    int room = m->buf->max_size - m->buf->size;
 
-    if ((m->buf->size + len) > m->buf->max_size) {
-      m->pes_bytes_left -= m->buf->size;
-      demux_ts_send_buffer(m, 0);
-      m->buf = m->fifo->buffer_pool_alloc(m->fifo);
+    if (len > room) {
+      if (room > 0)
+        memcpy (m->buf->mem + m->buf->size, ts, room);
+      m->pes_bytes_left -= m->buf->max_size;
+      m->buf->size = m->buf->max_size;
+      demux_ts_send_buffer (m, 0);
+      m->buf = m->fifo->buffer_pool_alloc (m->fifo);
+      m->buf->decoder_flags = BUF_FLAG_MERGE;
+      memcpy (m->buf->mem, ts + room, len - room);
+      m->buf->size = len - room;
+    } else {
+      memcpy (m->buf->mem + m->buf->size, ts, len);
+      m->buf->size += len;
     }
-
-    memcpy(m->buf->mem + m->buf->size, ts, len);
-    m->buf->size += len;
 
     if (m->pes_bytes_left > 0 && m->buf->size >= m->pes_bytes_left) {
       /* PES payload complete */
