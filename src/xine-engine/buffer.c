@@ -296,6 +296,23 @@ static void fifo_buffer_put (fifo_buffer_t *fifo, buf_element_t *element) {
 
   pthread_mutex_lock (&fifo->mutex);
 
+  if (element->decoder_flags & BUF_FLAG_MERGE) {
+    be_ei_t *new = (be_ei_t *)element, *prev = (be_ei_t *)fifo->last;
+    new->elem.decoder_flags &= ~BUF_FLAG_MERGE;
+    if (prev && (prev + prev->nbufs == new)
+      && (prev->elem.type == new->elem.type)
+      && (prev->nbufs < (fifo->buffer_pool_capacity >> 3))) {
+      fifo->fifo_size += new->nbufs;
+      fifo->fifo_data_size += new->elem.size;
+      prev->nbufs += new->nbufs;
+      prev->elem.max_size += new->elem.max_size;
+      prev->elem.size += new->elem.size;
+      prev->elem.decoder_flags |= new->elem.decoder_flags;
+      pthread_mutex_unlock (&fifo->mutex);
+      return;
+    }
+  }
+
   for(i = 0; fifo->put_cb[i]; i++)
     fifo->put_cb[i](fifo, element, fifo->put_cb_data[i]);
 

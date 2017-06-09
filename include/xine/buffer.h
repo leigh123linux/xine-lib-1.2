@@ -417,6 +417,11 @@ struct buf_element_s {
   * Valid until revoked or next stream.                               */
 #define BUF_FLAG_COLOR_MATRIX 0x4000
 
+/** Optimization: try to merge this buf with previous one still in fifo.
+  * This is for demuxers that dont know a frame's size before sending it
+  * (mpeg-ts). Decoders will never see this. */
+#define BUF_FLAG_MERGE 0x8000
+
 /**
  * \defgroup buffer_special Special buffer types:
  * Sometimes there is a need to relay special information from a demuxer
