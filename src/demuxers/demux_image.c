@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2012 the xine project
+ * Copyright (C) 2003-2017 the xine project
  *
  * This file is part of xine, a free video player.
  *
@@ -53,6 +53,7 @@ typedef struct demux_image_s {
   input_plugin_t       *input;
   int                   status;
   int                   buf_type;
+  int                   bytes_left;
 } demux_image_t ;
 
 typedef struct {
@@ -68,11 +69,15 @@ static int demux_image_get_status (demux_plugin_t *this_gen) {
 
 static int demux_image_next (demux_plugin_t *this_gen, int preview, int first_fragment) {
   demux_image_t *this = (demux_image_t *) this_gen;
-  buf_element_t *buf = this->video_fifo->buffer_pool_alloc (this->video_fifo);
+  buf_element_t *buf = this->video_fifo->buffer_pool_size_alloc (this->video_fifo, this->bytes_left);
 
   buf->content = buf->mem;
 
-  buf->size = this->input->read (this->input, (char *)buf->mem, buf->max_size-1);
+  buf->size = this->input->read (this->input, (char *)buf->mem, buf->max_size);
+
+  this->bytes_left -= buf->size;
+  if (this->bytes_left < 0)
+    this->bytes_left = 0;
 
   if (buf->size <= 0) {
     buf->size = 0;
@@ -109,6 +114,9 @@ static void demux_image_send_headers (demux_plugin_t *this_gen) {
   _x_demux_control_start(this->stream);
 
   this->input->seek (this->input, 0, SEEK_SET);
+  this->bytes_left = this->input->get_length (this->input);
+  if (this->bytes_left < 0)
+    this->bytes_left = 0;
 
   /* we can send everything here. this makes image decoder a lot easier */
   demux_image_next(this_gen, 1, 1);
