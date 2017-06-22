@@ -1685,6 +1685,10 @@ void xine_dispose (xine_stream_t *stream) {
   if(stream->broadcaster)
     _x_close_broadcaster(stream->broadcaster);
 
+  /* Demuxers mpeg, mpeg_block and yuv_frames may send video pool buffers
+   * to audio fifo. Fifos should be empty at this point. For safety,
+   * shut down audio first anyway.
+   */
   xprintf (stream->xine, XINE_VERBOSITY_DEBUG, "shutdown audio\n");
   _x_audio_decoder_shutdown (stream);
 

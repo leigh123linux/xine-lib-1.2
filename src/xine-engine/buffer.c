@@ -56,8 +56,8 @@
  * heap manager. Instead, we keep bufs in pool sorted by address, and
  * be_ei_t.nbufs holds the count of contigous bufs when this is the
  * first of such a group.
- * Although not used by xine-lib-1.2 itself, API permits using bufs in a
- * different fifo than their pool origin. Thats why we test buf->source.
+ * API permits using bufs in a different fifo than their pool origin
+ * (see demux_mpeg_block). Thats why we test buf->source.
  * It is also possible to supply fully custom bufs. We detect these by
  * buf->free_buffer != buffer_pool_free.
  */
