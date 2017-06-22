@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2000-2016 the xine project
+ * Copyright (C) 2000-2017 the xine project
  *
  * This file is part of xine, a free video player.
  *
@@ -267,7 +267,7 @@ static int demux_yuv4mpeg2_send_chunk(demux_plugin_t *this_gen) {
   }
 
   while(bytes_remaining) {
-    buf_element_t *buf = this->video_fifo->buffer_pool_alloc (this->video_fifo);
+    buf_element_t *buf = this->video_fifo->buffer_pool_size_alloc (this->video_fifo, bytes_remaining);
     buf->type = BUF_VIDEO_I420;
     if( this->data_size )
       buf->extra_info->input_normpos = (int)((double) current_file_pos * 65535 / this->data_size);
