@@ -53,6 +53,7 @@
 
 #include "pnm.h"
 #include "net_buf_ctrl.h"
+#include "group_network.h"
 
 #define BUFSIZE 4096
 
@@ -277,7 +278,7 @@ static input_plugin_t *pnm_class_get_instance (input_class_t *cls_gen, xine_stre
  * pnm input plugin class stuff
  */
 
-static void *init_class (xine_t *xine, void *data) {
+void *input_pnm_init_class (xine_t *xine, void *data) {
 
   pnm_input_class_t  *this;
 
@@ -295,14 +296,4 @@ static void *init_class (xine_t *xine, void *data) {
 
   return this;
 }
-
-/*
- * exported plugin catalog entry
- */
-
-const plugin_info_t xine_plugin_info[] EXPORTED = {
-  /* type, API, "name", version, special_info, init_function */
-  { PLUGIN_INPUT, 18, "pnm", XINE_VERSION_CODE, NULL, init_class },
-  { PLUGIN_NONE, 0, "", 0, NULL, NULL }
-};
 

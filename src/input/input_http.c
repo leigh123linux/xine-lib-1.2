@@ -56,6 +56,7 @@
 #include <xine/xineutils.h>
 #include <xine/input_plugin.h>
 #include "net_buf_ctrl.h"
+#include "group_network.h"
 #include "http_helper.h"
 
 #define BUFSIZE                 1024
@@ -1048,7 +1049,7 @@ static void http_class_dispose (input_class_t *this_gen) {
   free (this);
 }
 
-static void *init_class (xine_t *xine, void *data) {
+void *input_http_init_class (xine_t *xine, void *data) {
   http_input_class_t  *this;
   config_values_t     *config;
   char                *proxy_env;
@@ -1123,12 +1124,4 @@ static void *init_class (xine_t *xine, void *data) {
   return this;
 }
 
-/*
- * exported plugin catalog entry
- */
 
-const plugin_info_t xine_plugin_info[] EXPORTED = {
-  /* type, API, "name", version, special_info, init_function */
-  { PLUGIN_INPUT | PLUGIN_MUST_PRELOAD, 18, "http", XINE_VERSION_CODE, NULL, init_class },
-  { PLUGIN_NONE, 0, "", 0, NULL, NULL }
-};

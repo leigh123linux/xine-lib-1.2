@@ -75,6 +75,7 @@
 #include <xine/xineutils.h>
 #include <xine/input_plugin.h>
 #include "net_buf_ctrl.h"
+#include "group_network.h"
 
 #define NET_BS_LEN 2324
 #define BUFSIZE                 1024
@@ -528,7 +529,7 @@ static input_plugin_t *net_class_get_instance (input_class_t *cls_gen, xine_stre
  *  net plugin class
  */
 
-static void *init_class (xine_t *xine, void *data) {
+void *input_net_init_class (xine_t *xine, void *data) {
 
   net_input_class_t  *this;
 
@@ -546,14 +547,4 @@ static void *init_class (xine_t *xine, void *data) {
 
   return this;
 }
-
-/*
- * exported plugin catalog entry
- */
-
-const plugin_info_t xine_plugin_info[] EXPORTED = {
-  /* type, API, "name", version, special_info, init_function */
-  { PLUGIN_INPUT, 18, "tcp", XINE_VERSION_CODE, NULL, init_class },
-  { PLUGIN_NONE, 0, "", 0, NULL, NULL }
-};
 
