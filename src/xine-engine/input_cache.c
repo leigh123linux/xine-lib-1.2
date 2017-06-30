@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2000-2009 the xine project
+ * Copyright (C) 2000-2017 the xine project
  *
  * This file is part of xine, a free video player.
  *
@@ -37,7 +37,7 @@
 #include "xine_private.h"
 #include <assert.h>
 
-#define DEFAULT_BUFFER_SIZE 1024
+#define DEFAULT_BUFFER_SIZE 8192
 
 typedef struct {
   input_plugin_t    input_plugin;      /* inherited structure */
@@ -65,8 +65,6 @@ typedef struct {
 static off_t cache_plugin_read(input_plugin_t *this_gen, void *buf_gen, off_t len) {
   cache_input_plugin_t *this = (cache_input_plugin_t *)this_gen;
   char *buf = (char *)buf_gen;
-  off_t read_len = 0;
-  off_t main_read;
 
   lprintf("cache_plugin_read: len=%"PRId64"\n", len);
   this->read_call++;
@@ -110,9 +108,11 @@ static off_t cache_plugin_read(input_plugin_t *this_gen, void *buf_gen, off_t le
         xine_fast_memcpy(buf, this->buf + this->buf_pos, len);
     }
     this->buf_pos += len;
-    read_len += len;
-
-  } else {
+    return len;
+  }
+  
+  {
+    off_t read_len = 0;
     int in_buf_len;
 
     /* copy internal buffer bytes */
@@ -120,7 +120,7 @@ static off_t cache_plugin_read(input_plugin_t *this_gen, void *buf_gen, off_t le
     if (in_buf_len > 0) {
       xine_fast_memcpy(buf, this->buf + this->buf_pos, in_buf_len);
       len -= in_buf_len;
-      read_len += in_buf_len;
+      read_len = in_buf_len;
     }
     this->buf_len = 0;
     this->buf_pos = 0;
@@ -128,38 +128,41 @@ static off_t cache_plugin_read(input_plugin_t *this_gen, void *buf_gen, off_t le
     /* read the rest */
     if (len < this->buf_size) {
       /* readahead bytes */
-      main_read = this->main_input_plugin->read(this->main_input_plugin, this->buf, this->buf_size);
-      this->main_read_call++;
-
-      if( main_read >= 0 ) {
-        this->buf_len = main_read;
-
-        if (len > this->buf_len)
+      do {
+        int main_read;
+        this->main_read_call++;
+        main_read = this->main_input_plugin->read (this->main_input_plugin,
+          this->buf + this->buf_len, this->buf_size - this->buf_len);
+        if (main_read == 0) { /* EOF */
           len = this->buf_len;
-
-        if (len) {
-          xine_fast_memcpy(buf + read_len, this->buf, len);
-          this->buf_pos = len;
-          read_len += len;
+          break;
         }
-      } else {
-        /* read error: report return value to caller */
-        read_len = main_read;
+        if (main_read < 0) /* read error: report return value to caller */
+          return main_read;
+        this->buf_len += main_read;
+      } while (this->buf_len < (int)len);
+      if (len) {
+        xine_fast_memcpy (buf + read_len, this->buf, len);
+        this->buf_pos = len;
+        read_len += len;
       }
-    } else {
-      /* direct read */
-      main_read = this->main_input_plugin->read(this->main_input_plugin, buf + read_len, len);
-      this->main_read_call++;
-
-      if( main_read >= 0 )
-        read_len += main_read;
-      else
-        /* read error: report return value to caller */
-        read_len = main_read;
+      return read_len;
     }
-  }
 
-  return read_len;
+    do {
+      /* direct read */
+      off_t main_read;
+      this->main_read_call++;
+      main_read = this->main_input_plugin->read (this->main_input_plugin, buf + read_len, len);
+      if (main_read == 0) /* EOF */
+        break;
+      if (main_read < 0) /* read error: report return value to caller */
+        return main_read;
+      read_len += main_read;
+      len -= main_read;
+    } while (len > 0);
+    return read_len;
+  }
 }
 
 /*
