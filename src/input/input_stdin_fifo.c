@@ -51,20 +51,23 @@
 typedef struct {
   input_plugin_t   input_plugin;
 
+  xine_t          *xine;
   xine_stream_t   *stream;
+  nbc_t           *nbc;
+  char            *mrl;
 
   int              fh;
-  char            *mrl;
   off_t            curpos;
 
-  char             preview[MAX_PREVIEW_SIZE];
-  off_t            preview_size;
+  int              num_reads, num_waits;
+  long int         old_mode, mode;
+  int              nonblock;
+  int              timeout, requery_timeout;
 
-  nbc_t           *nbc;
+  off_t            preview_size;
+  char             preview[MAX_PREVIEW_SIZE];
 
   char             seek_buf[BUFSIZE];
-
-  xine_t          *xine;
 } stdin_input_plugin_t;
 
 typedef struct {
@@ -77,44 +80,108 @@ typedef struct {
 static off_t stdin_plugin_get_current_pos (input_plugin_t *this_gen);
 
 
+static int stdin_plugin_wait (stdin_input_plugin_t *this) {
+  int ret;
+  if (this->requery_timeout <= 0) {
+    xine_cfg_entry_t cfgentry;
+    this->requery_timeout = 1 << 20;
+    if (xine_config_lookup_entry (this->xine, "media.network.timeout", &cfgentry))
+      this->timeout = cfgentry.num_value * 1000;
+  }
+  ret = _x_io_select (this->stream, this->fh, XIO_READ_READY, this->timeout);
+  if (ret != XIO_READY) {
+    if (ret == XIO_ABORTED) {
+      xprintf (this->xine, XINE_VERBOSITY_DEBUG, LOG_MODULE ": interrupting for pending demux action.\n");
+    } else {
+      if (ret == XIO_TIMEOUT)
+        xprintf (this->xine, XINE_VERBOSITY_LOG, LOG_MODULE ": wait timeout.\n");
+      else
+        xprintf (this->xine, XINE_VERBOSITY_LOG, LOG_MODULE ": wait error.\n");
+      _x_message (this->stream, XINE_MSG_READ_ERROR, this->mrl, NULL);
+    }
+  }
+  return ret;
+}
 
-static off_t stdin_plugin_read (input_plugin_t *this_gen,
-				void *buf_gen, off_t len) {
+static off_t stdin_plugin_read (input_plugin_t *this_gen, void *buf_gen, off_t len) {
 
   stdin_input_plugin_t  *this = (stdin_input_plugin_t *) this_gen;
   char *buf = (char *)buf_gen;
-  off_t n, total;
+  long int n, rest = len, done;
+  int waited, e;
 
   lprintf ("reading %"PRId64" bytes...\n", len);
-  if (len < 0)
-    return -1;
+  if (rest <= 0)
+    return 0;
 
-  total=0;
-  if (this->curpos < this->preview_size) {
+  this->num_reads ++;
+
+  done = 0;
+
+  if (this->preview_size > this->curpos) {
     n = this->preview_size - this->curpos;
-    if (n > (len - total))
-      n = len - total;
-    lprintf ("%"PRId64" bytes from preview (which has %"PRId64" bytes)\n", n, this->preview_size);
-
-    memcpy (&buf[total], &this->preview[this->curpos], n);
-    this->curpos += n;
-    total += n;
-  }
-
-  if( (len-total) > 0 ) {
-    n = _x_io_file_read (this->stream, this->fh, &buf[total], len - total);
-
-    lprintf ("got %"PRId64" bytes (%"PRId64"/%"PRId64" bytes read)\n", n,total,len);
-
-    if (n < 0) {
-      _x_message(this->stream, XINE_MSG_READ_ERROR, NULL);
-      return 0;
+    if (n >= rest) {
+      lprintf ("%ld bytes from preview (which has %"PRId64" bytes)\n", rest, this->preview_size);
+      memcpy (buf, this->preview + this->curpos, rest);
+      this->curpos += rest;
+      return rest;
     }
-
+    lprintf ("%ld bytes from preview (which has %"PRId64" bytes)\n", n, this->preview_size);
+    memcpy (buf, this->preview + this->curpos, n);
     this->curpos += n;
-    total += n;
+    done = n;
+    rest -= n;
   }
-  return total;
+
+  /* Let input_cache handle the demux_len <= done <= cache_fill_len case without wait */
+  waited = 0;
+  if (this->nonblock) {
+    while (1) {
+      n = read (this->fh, buf + done, rest);
+      if (n >= 0) {
+        this->curpos += n;
+        done += n;
+        lprintf ("got %ld bytes (%ld/%"PRId64" bytes read)\n", n, done, len);
+        if (this->requery_timeout > 0)
+          this->requery_timeout -= n;
+        this->num_waits += waited;
+        return done;
+      }
+      e = errno;
+      if (e != EAGAIN)
+        break;
+      waited = 1;
+      if (stdin_plugin_wait (this) != XIO_READY)
+        return done;
+    }
+  } else {
+    waited = 1;
+    if (stdin_plugin_wait (this) != XIO_READY)
+      return done;
+    n = read (this->fh, buf + done, rest);
+    if (n >= 0) {
+      this->curpos += n;
+      done += n;
+      lprintf ("got %ld bytes (%ld/%"PRId64" bytes read)\n", n, done, len);
+      if (this->requery_timeout > 0)
+        this->requery_timeout -= n;
+      this->num_waits += waited;
+      return done;
+    }
+    e = errno;
+  }
+
+  {
+    const char *m = strerror (e);
+    if (e == EACCES)
+      _x_message (this->stream, XINE_MSG_PERMISSION_ERROR, this->mrl, NULL);
+    else if (e == ENOENT)
+      _x_message (this->stream, XINE_MSG_FILE_NOT_FOUND, this->mrl, NULL);
+    else
+      _x_message (this->stream, XINE_MSG_READ_ERROR, this->mrl, m, NULL);
+    xprintf (this->xine, XINE_VERBOSITY_LOG, LOG_MODULE ": %s: %s (%d).\n", this->mrl, m, e);
+  }
+  return done;
 }
 
 static buf_element_t *stdin_plugin_read_block (input_plugin_t *this_gen, fifo_buffer_t *fifo,
@@ -219,11 +286,22 @@ static const char* stdin_plugin_get_mrl (input_plugin_t *this_gen) {
 static void stdin_plugin_dispose (input_plugin_t *this_gen ) {
   stdin_input_plugin_t *this = (stdin_input_plugin_t *) this_gen;
 
+  xprintf (this->xine, XINE_VERBOSITY_DEBUG, LOG_MODULE ": waited %d of %d reads.\n",
+    this->num_waits, this->num_reads);
+
   if (this->nbc)
     nbc_close (this->nbc);
 
-  if ((this->fh != STDIN_FILENO) && (this->fh != -1))
-    close(this->fh);
+  if (this->fh >= 0) {
+    if (this->fh != STDIN_FILENO) {
+      close (this->fh);
+    } else {
+#ifndef WIN32
+      if (this->old_mode != -1)
+        fcntl (this->fh, F_SETFL, this->old_mode);
+#endif
+    }
+  }
 
   free (this->mrl);
   free (this);
@@ -265,15 +343,16 @@ static int stdin_plugin_open (input_plugin_t *this_gen ) {
   }
 #ifdef WIN32
   else setmode(this->fh, FILE_FLAGS);
+#else
+  this->old_mode = fcntl (this->fh, F_GETFL);
+  if (this->old_mode != -1) {
+    fcntl (this->fh, F_SETFL, this->old_mode | O_NONBLOCK);
+    this->mode = fcntl (this->fh, F_GETFL);
+    this->nonblock = !!(this->mode & O_NONBLOCK);
+  }
 #endif
 
-
-  /*
-   * mrl accepted and opened successfully at this point
-   *
-   * => create plugin instance
-   */
-
+  /* mrl accepted and opened successfully at this point */
   /*
    * fill preview buffer
    */
@@ -293,23 +372,15 @@ static input_plugin_t *stdin_class_get_instance (input_class_t *class_gen,
 
   stdin_input_class_t  *class = (stdin_input_class_t *) class_gen;
   stdin_input_plugin_t *this;
-  char                 *mrl = strdup(data);
   int                   fh;
 
 
-  if (!strncasecmp(mrl, "stdin:/", 7)
-      || !strncmp(mrl, "-", 1)
-      || !strncmp(mrl, "fd://0", 6)) {
-
+  if (!strncasecmp (data, "stdin:/", 7) || !strncmp (data, "-", 1) || !strncmp (data, "fd://0", 6)) {
     fh = STDIN_FILENO;
-
-  } else if (!strncasecmp (mrl, "fifo:/", 6)) {
+  } else if (!strncasecmp (data, "fifo:/", 6)) {
     fh = -1;
-
-    lprintf("filename '%s'\n", mrl + 5);
-
+    lprintf("filename '%s'\n", data + 5);
   } else {
-    free (mrl);
     return NULL;
   }
 
@@ -320,13 +391,28 @@ static input_plugin_t *stdin_class_get_instance (input_class_t *class_gen,
    * => create plugin instance
    */
 
-  this       = calloc(1, sizeof(stdin_input_plugin_t));
+  this = calloc (1, sizeof (*this));
+  if (!this)
+    return NULL;
 
-  this->stream = stream;
-  this->curpos = 0;
-  this->mrl    = mrl;
-  this->fh     = fh;
-  this->xine   = class->xine;
+  /*
+   * buffering control
+   */
+  this->nbc = nbc_init (stream);
+  if (!this->nbc) {
+    free (this);
+    return NULL;
+  }
+
+  this->stream          = stream;
+  this->mrl             = strdup (data);
+  this->fh              = fh;
+  this->xine            = class->xine;
+  this->curpos          = 0;
+  this->num_reads       = 0;
+  this->num_waits       = 0;
+  this->timeout         = 30000;
+  this->requery_timeout = 0;
 
   this->input_plugin.open              = stdin_plugin_open;
   this->input_plugin.get_capabilities  = stdin_plugin_get_capabilities;
@@ -340,11 +426,6 @@ static input_plugin_t *stdin_class_get_instance (input_class_t *class_gen,
   this->input_plugin.dispose           = stdin_plugin_dispose;
   this->input_plugin.get_optional_data = stdin_plugin_get_optional_data;
   this->input_plugin.input_class       = class_gen;
-
-  /*
-   * buffering control
-   */
-  this->nbc    = nbc_init (this->stream);
 
   return &this->input_plugin;
 }
