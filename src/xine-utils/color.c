@@ -316,7 +316,7 @@ static void yuv444_to_yuy2_c(const yuv_planes_t *yuv_planes, unsigned char *yuy2
  */
 static void yuv444_to_yuy2_mmx(const yuv_planes_t *yuv_planes, unsigned char *yuy2_map,
   int pitch) {
-#if defined(ARCH_X86) || defined(ARCH_X86_64)
+#if defined(ARCH_X86) || defined(ARCH_X86_X32) || defined(ARCH_X86_64)
   unsigned int i;
   int h, j, k;
   int width_div_8 = yuv_planes->row_width / 8;
@@ -806,7 +806,7 @@ static void yv12_to_yuy2_c
 }
 
 
-#if defined(ARCH_X86) || defined(ARCH_X86_64)
+#if defined(ARCH_X86) || defined(ARCH_X86_X32) || defined(ARCH_X86_64)
 static const int64_t __attribute__((__used__)) byte_one = 0x0101010101010101ll;
 
 #define MMX_YUV420_YUYV_PROGRESSIVE(p_y1,p_y2,p_u,p_ut,p_ub,p_v,p_vt,p_vb,p_line1,p_line2)  \
@@ -1133,7 +1133,7 @@ static void yv12_to_yuy2_mmxext
    const unsigned char *v_src, int v_src_pitch,
    unsigned char *yuy2_map, int yuy2_pitch,
    int width, int height, int progressive ) {
-#if defined(ARCH_X86) || defined(ARCH_X86_64)
+#if defined(ARCH_X86) || defined(ARCH_X86_X32) || defined(ARCH_X86_64)
     uint8_t *p_line1, *p_line2 = yuy2_map;
     const uint8_t *p_y1, *p_y2 = y_src;
     const uint8_t *p_u = u_src;
@@ -1260,7 +1260,7 @@ static void yv12_to_yuy2_sse2
    const unsigned char *v_src, int v_src_pitch,
    unsigned char *yuy2_map, int yuy2_pitch,
    int width, int height, int progressive ) {
-#if defined(ARCH_X86) || defined(ARCH_X86_64)
+#if defined(ARCH_X86) || defined(ARCH_X86_X32) || defined(ARCH_X86_64)
 
     /* check alignment */
     if (((uintptr_t)y_src | (uintptr_t)yuy2_map | yuy2_pitch | y_src_pitch) & 15) {
@@ -1395,7 +1395,7 @@ static void yv12_to_yuy2_mmx
    const unsigned char *v_src, int v_src_pitch,
    unsigned char *yuy2_map, int yuy2_pitch,
    int width, int height, int progressive ) {
-#if defined(ARCH_X86) || defined(ARCH_X86_64)
+#if defined(ARCH_X86) || defined(ARCH_X86_X32) || defined(ARCH_X86_64)
     uint8_t *p_line1, *p_line2 = yuy2_map;
     const uint8_t *p_y1, *p_y2 = y_src;
     const uint8_t *p_u = u_src;
@@ -1581,7 +1581,7 @@ static void yuy2_to_yv12_c
 }
 
 
-#if defined(ARCH_X86) || defined(ARCH_X86_64)
+#if defined(ARCH_X86) || defined(ARCH_X86_X32) || defined(ARCH_X86_64)
 
 /* yuy2->yv12 with subsampling (some ideas from mplayer's yuy2toyv12) */
 #define MMXEXT_YUYV_YUV420( )                                                      \
@@ -1636,7 +1636,7 @@ static void yuy2_to_yv12_mmxext
    unsigned char *u_dst, int u_dst_pitch,
    unsigned char *v_dst, int v_dst_pitch,
    int width, int height) {
-#if defined(ARCH_X86) || defined(ARCH_X86_64)
+#if defined(ARCH_X86) || defined(ARCH_X86_X32) || defined(ARCH_X86_64)
     const uint8_t *p_line1, *p_line2 = yuy2_map;
     uint8_t *p_y1, *p_y2 = y_dst;
     uint8_t *p_u = u_dst;

@@ -121,7 +121,7 @@ quote of the day:
 */
 
 
-#if defined(ARCH_X86) || defined(ARCH_X86_64)
+#if defined(ARCH_X86) || defined(ARCH_X86_X32) || defined(ARCH_X86_64)
 
 #ifndef _MSC_VER
 /* for small memory blocks (<256 bytes) this version is faster */
@@ -144,7 +144,7 @@ static __inline__ void *linux_kernel_memcpy_impl (void *to, const void *from, si
       small_memcpy (to, from, n);
   } else {
     size_t d;
-#ifdef ARCH_X86_64
+#if defined(ARCH_X86_X32) || defined(ARCH_X86_64)
     __asm__ __volatile__ (
       "movq\t%1, %3\n\t"
       "testb\t$1, %b3\n\t"
@@ -583,7 +583,7 @@ static const struct {
 {
   { "", NULL, 0 },
   { "libc", memcpy, 0 },
-#if (defined(ARCH_X86) || defined(ARCH_X86_64)) && !defined(_MSC_VER)
+#if (defined(ARCH_X86) || defined(ARCH_X86_X32) || defined(ARCH_X86_64)) && !defined(_MSC_VER)
   { "linux kernel", linux_kernel_memcpy, 0 },
   { "MMX ", mmx_memcpy, MM_MMX },
   { "MMXEXT", mmx2_memcpy, MM_MMXEXT },
@@ -722,7 +722,7 @@ void xine_probe_fast_memcpy(xine_t *xine)
   unsigned int      method;
   static const char *const memcpy_methods[] = {
     "probe", "libc",
-#if (defined(ARCH_X86) || defined(ARCH_X86_64)) && !defined(_MSC_VER)
+#if (defined(ARCH_X86) || defined(ARCH_X86_X32) || defined(ARCH_X86_64)) && !defined(_MSC_VER)
     "kernel", "mmx", "mmxext", "sse",
 # ifdef HAVE_AVX
     "avx",

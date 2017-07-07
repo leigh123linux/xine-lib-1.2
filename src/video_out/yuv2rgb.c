@@ -2529,7 +2529,7 @@ static void yuv2rgb_set_csc_levels (yuv2rgb_factory_t *this_gen,
 			 entry_size * div_round (cbu * (i-128), ygain));
   }
 
-#if defined(ARCH_X86) || defined(ARCH_X86_64)
+#if defined(ARCH_X86) || defined(ARCH_X86_X32) || defined(ARCH_X86_64)
   mmx_yuv2rgb_set_csc_levels (this_gen, brightness, contrast, saturation, colormatrix);
 #endif
 }
@@ -3333,7 +3333,7 @@ yuv2rgb_factory_t* yuv2rgb_factory_init (int mode, int swapped,
    */
 
   this->yuv2rgb_fun = NULL;
-#if defined(ARCH_X86) || defined(ARCH_X86_64)
+#if defined(ARCH_X86) || defined(ARCH_X86_X32) || defined(ARCH_X86_64)
   if ((this->yuv2rgb_fun == NULL) && (mm & MM_ACCEL_X86_MMXEXT)) {
 
     yuv2rgb_init_mmxext (this);

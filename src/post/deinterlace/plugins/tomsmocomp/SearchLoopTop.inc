@@ -86,12 +86,12 @@ long		dst_pitchw = dst_pitch; // local stor so asm can ref
             (
              // Loop general reg usage
              //
-             // XAX - pBobP, then pDest 
-             // XDX - pBob
-             // XCX - src_pitch2
+             // ax - pBobP, then pDest 
+             // dx - pBob
+             // cx - src_pitch2
              // _olddx - current offset
-             // XDI - prev weave pixels, 1 line up
-             // XSI - next weave pixels, 1 line up
+             // di - prev weave pixels, 1 line up
+             // si - next weave pixels, 1 line up
 
 #ifdef IS_SSE2
              
@@ -99,63 +99,63 @@ long		dst_pitchw = dst_pitch; // local stor so asm can ref
 
 #else
              // simple bob first 8 bytes
-             MOVX"	"_pBob",        %%"XDX"\n\t"
-             MOVX"	"_src_pitch2",  %%"XCX"\n\t"
+             MEMREG ("mov", _pBob, "dx")
+             MEMREG ("mov", _src_pitch2, "cx")
 
 #ifdef USE_VERTICAL_FILTER
-             "movq	    (%%"XDX"),        %%mm0\n\t"
-             "movq	    (%%"XDX", %%"XCX"), %%mm1\n\t" //, qword ptr["XDX"+"XCX"]
-             "movq	    %%mm0,          %%mm2\n\t"
+             "movq "MEMREF1("dx")",       %%mm0\n\t"
+             "movq "MEMREF2("dx", "cx")", %%mm1\n\t" //, qword ptr["XDX"+"XCX"]
+             "movq %%mm0,                 %%mm2\n\t"
              V_PAVGB ("%%mm2", "%%mm1", "%%mm3", _ShiftMask)		// halfway between
              V_PAVGB ("%%mm0", "%%mm2", "%%mm3", _ShiftMask)		// 1/4 way
              V_PAVGB ("%%mm1", "%%mm2", "%%mm3", _ShiftMask)		// 3/4 way
-             MOVX"		"_pDest",       %%"XDI"\n\t"
-             MOVX"		"_dst_pitchw",  %%"XAX"\n\t"
-             V_MOVNTQ	("(%%"XDI")", "%%mm0")
-             V_MOVNTQ	("(%%"XDI", %%"XAX")", "%%mm1") // qword ptr["XDI"+"XAX"], mm1
+             MEMREG ("mov", _pDest, "di")
+             MEMREG ("mov", _dst_pitchw, "ax")
+             V_MOVNTQ (MEMREF1("di"), "%%mm0")
+             V_MOVNTQ (MEMREF2("di","ax"), "%%mm1") // qword ptr["XDI"+"XAX"], mm1
 
              // simple bob last 8 bytes
-             MOVX"		"_Last8", %%"XSI"\n\t"
-             MOVX"		%%"XSI", "_olddx"\n\t"
-             ADDX"		%%"XDX", %%"XSI"\n\t"  // ["XDX"+"_olddx"]
-             "movq	    (%%"XSI"), %%mm0\n\t"
-             "movq	    (%%"XSI", %%"XCX"), %%mm1\n\t"    // qword ptr["XSI"+"XCX"]
-             "movq	    %%mm0, %%mm2\n\t"
+             MEMREG ("mov", _Last8, "si")
+             REGMEM ("mov", "si", _olddx)
+             REG2 ("add", "dx", "si") // ["XDX"+"_olddx"]
+             "movq "MEMREF1("si")",       %%mm0\n\t"
+             "movq "MEMREF2("si", "cx")", %%mm1\n\t"    // qword ptr["XSI"+"XCX"]
+             "movq %%mm0,                 %%mm2\n\t"
              V_PAVGB ("%%mm2", "%%mm1", "%%mm3", _ShiftMask)		// halfway between
              V_PAVGB ("%%mm0", "%%mm2", "%%mm3", _ShiftMask)		// 1/4 way
              V_PAVGB ("%%mm1", "%%mm2", "%%mm3", _ShiftMask)		// 3/4 way
-             ADDX"		"_olddx", %%"XDI"\n\t"						// last 8 bytes of dest
-             V_MOVNTQ	("%%"XDI"", "%%mm0")
-             V_MOVNTQ	("(%%"XDI", %%"XAX")", "%%mm1") // qword ptr["XDI"+"XAX"], mm1)
+             MEMREG ("add", _olddx, "di") // last 8 bytes of dest
+             V_MOVNTQ (MEMREF1("di"),       "%%mm0")
+             V_MOVNTQ (MEMREF2("di", "ax"), "%%mm1") // qword ptr["XDI"+"XAX"], mm1)
 
 #else
-             "movq	(%%"XDX"), %%mm0\n\t"
+             "movq "MEMREF1("dx")", %%mm0\n\t"
              //		pavgb	mm0, qword ptr["XDX"+"XCX"]
-             V_PAVGB ("%%mm0", "(%%"XDX", %%"XCX")", "%%mm2", _ShiftMask) // qword ptr["XDX"+"XCX"], mm2, ShiftMask)
-             MOVX"		"_pDest", %%"XDI"\n\t"
-             V_MOVNTQ	("(%%"XDI")", "%%mm0")
+             V_PAVGB ("%%mm0", MEMREF2("dx","cx"), "%%mm2", _ShiftMask) // qword ptr["XDX"+"XCX"], mm2, ShiftMask)
+             MEMREG ("mov", _pDest, "di")
+             V_MOVNTQ (MEMREF1("di"), "%%mm0")
 
              // simple bob last 8 bytes
-             MOVX"		"_Last8", %%"XSI"\n\t"
-             MOVX"		%%"XSI", "_olddx"\n\t"
-             ADDX"		%%"XDX", %%"XSI"\n\t" //"XSI", ["XDX"+"_olddx"]
-             "movq	    (%%"XSI"), %%mm0\n\t"
+             MEMREG ("mov", _Last8, "si")
+             REGMEM ("mov", "si", _olddx)
+             REG2 ("add", "dx", "si") //"XSI", ["XDX"+"_olddx"]
+             "movq "MEMREF1("si")", %%mm0\n\t"
              //		pavgb	mm0, qword ptr["XSI"+"XCX"]
-             V_PAVGB	("%%mm0", "(%%"XSI", %%"XCX")", "%%mm2", _ShiftMask) // qword ptr["XSI"+"XCX"], mm2, ShiftMask)
-             ADDX"		"_olddx", %%"XDI"\n\t"
-             V_MOVNTQ	("(%%"XDI")", "%%mm0") // qword ptr["XDI"+"_olddx"], mm0)
+             V_PAVGB ("%%mm0", MEMREF2("si","cx"), "%%mm2", _ShiftMask) // qword ptr["XSI"+"XCX"], mm2, ShiftMask)
+             MEMREG ("add", _olddx, "di")
+             V_MOVNTQ (MEMREF1("di"), "%%mm0") // qword ptr["XDI"+"_olddx"], mm0)
 #endif
              // now loop and get the middle qwords
-             MOVX"		"_pSrc", %%"XSI"\n\t"
-             MOVX"		"_pSrcP", %%"XDI"\n\t"
-             MOVX"		$8, "_olddx"\n\t"				// curr offset longo all lines
+             MEMREG ("mov", _pSrc, "si")
+             MEMREG ("mov", _pSrcP, "di")
+             CONSTMEM ("mov", "8", _olddx)  // curr offset longo all lines
 
              "1:\n\t"	
-             MOVX"		"_pBobP", %%"XAX"\n\t"
-             ADDX"		$8, %%"XDI"\n\t"
-             ADDX"		$8, %%"XSI"\n\t"
-             ADDX"		$8, %%"XDX"\n\t"
-             ADDX"		"_olddx", %%"XAX"\n\t"
+             MEMREG ("mov", _pBobP, "ax")
+             BUMPPTR ("8", "di", "di")
+             BUMPPTR ("8", "si", "si")
+             BUMPPTR ("8", "dx", "dx")
+             MEMREG ("add", _olddx, "ax")
 
 #ifdef USE_STRANGE_BOB
 #include "StrangeBob.inc"

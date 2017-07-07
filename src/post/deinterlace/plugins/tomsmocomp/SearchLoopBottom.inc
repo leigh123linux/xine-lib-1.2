@@ -49,30 +49,30 @@
 #endif
 
 
-            MOVX"     "_pDest", %%"XAX"\n\t"
-            ADDX"     "_olddx", %%"XAX"\n\t"
+            MEMREG ("mov", _pDest, "ax")
+            MEMREG ("add", _olddx, "ax")
 
 #ifdef USE_VERTICAL_FILTER
             "movq    %%mm0, %%mm1\n\t"
             //      pavgb   mm0, qword ptr["XDX"]
-            V_PAVGB ("%%mm0", "(%%"XDX")", "%%mm2", _ShiftMask)
+            V_PAVGB ("%%mm0", MEMREF1("dx"), "%%mm2", _ShiftMask)
             //      movntq  qword ptr["XAX"+"_olddx"], mm0
-            V_MOVNTQ ("(%"XAX")", "%%mm0")
+            V_MOVNTQ (MEMREF1("ax"), "%%mm0")
             //      pavgb   mm1, qword ptr["XDX"+"XCX"]
-            V_PAVGB ("%%mm1", "(%%"XDX", %%"XCX")", "%%mm2", _ShiftMask)
-            "addq   "_dst_pitchw", %%"XDX
+            V_PAVGB ("%%mm1", MEMREF2("dx","cx"), "%%mm2", _ShiftMask)
+            MEMREG ("add", _dst_pitchw, "dx")
             //      movntq  qword ptr["XAX"+"_olddx"], mm1
-            V_MOVNTQ ("(%%"XAX")", "%%mm1")
+            V_MOVNTQ (MEMREF1("ax"), "%%mm1")
 #else
                 
             //      movntq  qword ptr["XAX"+"_olddx"], mm0
-                V_MOVNTQ ("(%%"XAX")", "%%mm0")
+            V_MOVNTQ (MEMREF1("ax"), "%%mm0")
 #endif
                 
-           ADDX"    $8, "_olddx"\n\t"       // bump offset pointer
-           MOVX"    "_olddx", %%"XAX"\n\t"
-           CMPX"    "_Last8", %%"XAX"\n\t"       // done with line?
-           "jb      1b\n\t"                    // y
+            CONSTMEM ("add", "8", _olddx)   // bump offset pointer
+            MEMREG ("mov", _olddx, "ax")
+            MEMREG ("cmp", _Last8, "ax")    // done with line?
+            "jb      1b\n\t"         // y
 #endif
 
         : /* no outputs */
@@ -97,15 +97,16 @@
           "m"(ONES),
           "m"(DiffThres)
 
-        : XAX, XCX, XDX, XSI, XDI,
-#ifdef ARCH_X86
-          "st", "st(1)", "st(2)", "st(3)", "st(4)", "st(5)", "st(6)", "st(7)",
-#endif
-#ifdef ARCH_X86_64
+        :
+#if defined(ARCH_X86_64) || defined(ARCH_X86_X32)
+          "rax", "rcx", "rdx", "rsi", "rdi",
 /* the following clobber list causes trouble for gcc 2.95. it shouldn't be
  * an issue as, afaik, mmx registers map to the existing fp registers.
  */
           "mm0", "mm1", "mm2", "mm3", "mm4", "mm5", "mm6", "mm7",
+#elif defined(ARCH_X86)
+          "eax", "ecx", "edx", "esi", "edi",
+          "st", "st(1)", "st(2)", "st(3)", "st(4)", "st(5)", "st(6)", "st(7)",
 #endif
           "memory", "cc"
         );

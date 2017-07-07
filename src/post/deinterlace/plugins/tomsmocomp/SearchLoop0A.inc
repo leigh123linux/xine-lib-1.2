@@ -12,4 +12,6 @@
 		"paddusb "_ONES", %%mm7\n\t" 				// bias toward no motion
 #endif
 
-        MERGE4PIXavg("(%%"XDI", %%"XCX")", "(%%"XSI", %%"XCX")")  // center, in old and new
+MERGE4PIXavg (MEMREF2("di","cx"), MEMREF2("si","cx"))  // center, in old and new
+
+

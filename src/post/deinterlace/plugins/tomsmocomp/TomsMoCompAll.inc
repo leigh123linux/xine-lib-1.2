@@ -245,7 +245,7 @@ static void FUNCT_NAME(uint8_t *output, int outstride,
 	}
 
 end:
-#if defined(ARCH_X86) || defined(ARCH_X86_64)
+#if defined(ARCH_X86) || defined(ARCH_X86_X32) || defined(ARCH_X86_64)
     __asm__ __volatile__("emms");
 #endif
     return;

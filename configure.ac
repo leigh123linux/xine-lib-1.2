@@ -678,6 +678,14 @@ case "$host_or_hostalias" in
         AC_DEFINE([ARCH_SPARC], [], [Define this if you're running SPARC architecture])
         ;;
 
+    x86_64-*-gnux32)
+        # optional build with fast 64 bit code but usable by 32 bit applications directly.
+        # requires x86 64bit, x32 kernel support, gcc 4.7+ and x32 system headers. should we test for these first?
+        arch_x86=x32
+        cpuflags="$cpuflags -mx32"
+        AC_DEFINE([ARCH_X86_X32], [], [Define this if you're running x86 architecture 64 bits with 32 bit ABI])
+        ;;
+
     x86_64-*)
         arch_x86=64
         AC_DEFINE([ARCH_X86_64], [], [Define this if you're running x86 architecture 64 bits])
@@ -856,6 +864,7 @@ fi
 AM_CONDITIONAL([ARCH_PPC], test x"$arch_ppc" = x"yes")
 AM_CONDITIONAL([ARCH_X86], test x"$arch_x86" != x"no")
 AM_CONDITIONAL([ARCH_X86_32], test x"$arch_x86" = x"32")
+AM_CONDITIONAL([ARCH_X86_X32], test x"$arch_x86" = x"x32")
 AM_CONDITIONAL([ARCH_X86_64], test x"$arch_x86" = x"64")
 AM_CONDITIONAL([HAVE_MMX], test x"$arch_x86" != x"no")
 AM_CONDITIONAL([HOST_OS_DARWIN], test x"$HOST_OS_DARWIN" = x"1")

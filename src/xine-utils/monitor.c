@@ -66,7 +66,7 @@ static __inline__ uint64_t rdtsc(void)
   __asm__ volatile ("rdtsc\n\t" : "=A" (x));
   return x;
 }
-#elif defined(ARCH_X86_64)
+#elif defined(ARCH_X86_X32) || defined(ARCH_X86_64)
 static __inline__ uint64_t rdtsc(void)
 {
   unsigned long long int a, d;
@@ -78,7 +78,7 @@ static __inline__ uint64_t rdtsc(void)
 void xine_profiler_start_count (int id) {
   if ( id >= MAX_ID || id < 0 ) return;
 
-#if defined(ARCH_X86) || defined(ARCH_X86_64)
+#if defined(ARCH_X86) || defined(ARCH_X86_X32) || defined(ARCH_X86_64)
   profiler[id].p_start = rdtsc();
 #endif
 }
@@ -86,7 +86,7 @@ void xine_profiler_start_count (int id) {
 void xine_profiler_stop_count (int id) {
   if ( id >= MAX_ID || id < 0 ) return;
 
-#if defined(ARCH_X86) || defined(ARCH_X86_64)
+#if defined(ARCH_X86) || defined(ARCH_X86_X32) || defined(ARCH_X86_64)
   profiler[id].p_times += rdtsc() - profiler[id].p_start;
 #endif
   profiler[id].p_calls++;
@@ -95,7 +95,7 @@ void xine_profiler_stop_count (int id) {
 void xine_profiler_print_results (void) {
   int i;
 
-#if defined(ARCH_X86) || defined(ARCH_X86_64)
+#if defined(ARCH_X86) || defined(ARCH_X86_X32) || defined(ARCH_X86_64)
   static uint64_t cpu_speed;	/* cpu cyles/usec */
 
   if (!cpu_speed) {
@@ -126,7 +126,7 @@ void xine_profiler_print_results (void) {
 	      i, profiler[i].p_label, profiler[i].p_times, profiler[i].p_calls);
       if (profiler[i].p_calls) {
           printf(" %12" PRIu64, profiler[i].p_times / (uint64_t)profiler[i].p_calls);
-#if defined(ARCH_X86) || defined(ARCH_X86_64)
+#if defined(ARCH_X86) || defined(ARCH_X86_X32) || defined(ARCH_X86_64)
 	  printf(" %9" PRIu64, profiler[i].p_times / ((uint64_t)cpu_speed * profiler[i].p_calls));
 #endif
       }

@@ -30,7 +30,7 @@
 
 #include "config.h"
 
-#if defined(ARCH_X86) || defined(ARCH_X86_64)
+#if defined(ARCH_X86) || defined(ARCH_X86_X32) || defined(ARCH_X86_64)
 
 #include <stdio.h>
 #include <stdlib.h>

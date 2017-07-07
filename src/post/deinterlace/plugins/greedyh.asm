@@ -132,25 +132,25 @@ static void FUNCT_NAME(uint8_t *output, int outstride,
         temp = L2P;
         __asm__ __volatile__
             (
-             MOVX"  "asmL1",          %%"XAX"\n\t"
-             LEAX"  8(%%"XAX"),     %%"XDX"\n\t"    // next qword needed by DJR
-             MOVX"  "asmL3",          %%"XCX"\n\t"
-             SUBX"  %%"XAX",        %%"XCX"\n\t"    // carry L3 addr as an offset
-             MOVX"  "asmL2",          %%"XSI"\n\t"
-             MOVX"  "asmDest",        %%"XDI"\n\t"    // DL1 if Odd or DL2 if Even
+             MEMREG ("mov", asmL1, "ax")
+             BUMPPTR ("8", "ax", "dx")      // next qword needed by DJR
+             MEMREG ("mov", asmL3, "cx")
+             REG2 ("sub", "ax", "cx")       // carry L3 addr as an offset
+             MEMREG ("mov", asmL2, "si")
+             MEMREG ("mov", asmDest, "di")  // DL1 if Odd or DL2 if Even
 
              ".align 8\n\t"
              "1:\n\t"
 
-             "movq  (%%"XSI"),      %%mm0\n\t"      // L2 - the newest weave pixel value
-             "movq  (%%"XAX"),      %%mm1\n\t"      // L1 - the top pixel
-             PUSHX" %%"XDX              "\n\t"
-             MOVX"  "asmtemp",    %%"XDX"\n\t"
-             "movq  (%%"XDX"),      %%mm2\n\t"      // L2P - the prev weave pixel
-             POPX" %%"XDX               "\n\t"
-             "movq  (%%"XAX", %%"XCX"), %%mm3\n\t"  // L3, next odd row
-             "movq  %%mm1,          %%mm6\n\t"      // L1 - get simple single pixel interp
-             //	pavgb   mm6, mm3                    // use macro below
+             "movq  "MEMREF1("si")",  %%mm0\n\t"     // L2 - the newest weave pixel value
+             "movq  "MEMREF1("ax")",  %%mm1\n\t"     // L1 - the top pixel
+             REG1 ("push", "dx")
+             MEMREG ("mov", asmtemp, "dx")
+             "movq  "MEMREF1("dx")",  %%mm2\n\t"     // L2P - the prev weave pixel
+             REG1 ("pop", "dx")
+             "movq  "MEMREF2("ax","cx")", %%mm3\n\t" // L3, next odd row
+             "movq  %%mm1,            %%mm6\n\t"     // L1 - get simple single pixel interp
+             // pavgb   mm6, mm3                     // use macro below
              V_PAVGB ("%%mm6", "%%mm3", "%%mm4", "%8")
 
              // DJR - Diagonal Jaggie Reduction
@@ -165,9 +165,9 @@ static void FUNCT_NAME(uint8_t *output, int outstride,
              "psllq $16,            %%mm7\n\t"      // left justify 3 pixels
              "por   %%mm7,          %%mm4\n\t"      // and combine
 
-             "movq  (%%"XDX"),      %%mm5\n\t"      // next horiz qword from L1
+             "movq  "MEMREF1("dx")",  %%mm5\n\t"    // next horiz qword from L1
              //			pavgb   mm5, qword ptr[ebx+ecx] // next horiz qword from L3, use macro below
-             V_PAVGB ("%%mm5", "(%%"XDX",%%"XCX")", "%%mm7", "%8")
+             V_PAVGB ("%%mm5", MEMREF2("dx","cx"), "%%mm7", "%8")
              "psllq $48,            %%mm5\n\t"      // left just 1 pixel
              "movq  %%mm6,          %%mm7\n\t"      // another copy of simple bob pixel
              "psrlq $16,            %%mm7\n\t"      // right just 3 pixels
@@ -265,19 +265,20 @@ static void FUNCT_NAME(uint8_t *output, int outstride,
              "pand    %15,          %%mm2\n\t"      // keep chroma
              "por     %%mm4,        %%mm2\n\t"      // and combine
 
-             V_MOVNTQ ("(%%"XDI")", "%%mm2")        // move in our clipped best, use macro
+             V_MOVNTQ (MEMREF1("di"), "%%mm2")     // move in our clipped best, use macro
 
              // bump ptrs and loop
-             LEAX"    8(%%"XAX"),   %%"XAX"\n\t"
-             LEAX"    8(%%"XDX"),   %%"XDX"\n\t"
-             ADDX"    $8,         "asmtemp"\n\t"
-             LEAX"    8(%%"XDI"),   %%"XDI"\n\t"
-             LEAX"    8(%%"XSI"),   %%"XSI"\n\t"
-             DECX"    "asmLoopCtr"\n\t"
+             BUMPPTR ("8", "ax", "ax")
+             BUMPPTR ("8", "dx", "dx")
+             CONSTMEM ("add", "8", asmtemp)
+             BUMPPTR ("8", "di", "di")
+             BUMPPTR ("8", "si", "si")
+             CONSTMEM ("sub", "1", asmLoopCtr)
              "jg      1b\n\t"                       // loop if not to last line
                                                     // note P-III default assumes backward branches taken
              "jl      1f\n\t"                       // done
-             MOVX"    %%"XAX",      %%"XDX"\n\t"  // sharpness lookahead 1 byte only, be wrong on 1
+
+             REG2 ("mov", "ax", "dx")  // sharpness lookahead 1 byte only, be wrong on 1
              "jmp     1b\n\t"
 
              "1:\n\t"
@@ -301,15 +302,16 @@ static void FUNCT_NAME(uint8_t *output, int outstride,
                "m"(YMask),
                "m"(UVMask)
 
-             : XAX, XCX, XDX, XSI, XDI,
-#ifdef ARCH_X86
-               "st", "st(1)", "st(2)", "st(3)", "st(4)", "st(5)", "st(6)", "st(7)",
-#endif
-#ifdef ARCH_X86_64
+             :
+#if defined(ARCH_X86_X32) || defined(ARCH_X86_64)
+               "rax", "rcx", "rdx", "rsi", "rdi",
 /* the following clobber list causes trouble for gcc 2.95. it shouldn't be
  * an issue as, afaik, mmx registers map to the existing fp registers.
  */
                "mm0", "mm1", "mm2", "mm3", "mm4", "mm5", "mm6", "mm7",
+#elif defined(ARCH_X86)
+               "eax", "ecx", "edx", "esi", "edi",
+               "st", "st(1)", "st(2)", "st(3)", "st(4)", "st(5)", "st(6)", "st(7)",
 #endif
                "memory", "cc"
             );
@@ -329,7 +331,7 @@ static void FUNCT_NAME(uint8_t *output, int outstride,
     }
 
     // clear out the MMX registers ready for doing floating point again
-#if defined(ARCH_X86) || defined(ARCH_X86_64)
+#if defined(ARCH_X86) || defined(ARCH_X86_X32) || defined(ARCH_X86_64)
     __asm__ __volatile__ ("emms\n\t");
 #endif
 }

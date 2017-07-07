@@ -1,79 +1,63 @@
-/***************************************************************************
-                           KdetvDScalerFilter_x86-64.inc
-                           -----------------------------
-    begin                : Thu Sep 26 2004
-    copyright            : (C) 2004 by Dirk Ziegelmeier
-    email                : dziegel@gmx.de
- ***************************************************************************/
-
 /*
- * This library is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Library General Public
- * License as published by the Free Software Foundation; either
- * version 2 of the License, or (at your option) any later version.
+ * Copyright (C) 2017 the xine project
  *
- * This library is distributed in the hope that it will be useful,
+ * This file is part of xine, a free video player.
+ *
+ * xine is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * xine is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * Library General Public License for more details.
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU Library General Public License
- * along with this library; see the file COPYING.LIB.  If not, write to
- * the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
- * Boston, MA 02111-1307, USA.
- */
-
-/*
- * This file is copied from TVTIME's sources.
- * Original author: Achim Schneider <batchall@mordor.ch>
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA.
+ *
+ * Helper macros to size x86 memory locations and hardcoded registers properly.
+ * Registers may be: "ax" "bx" "cx" "dx" "si" "di" "bp" "sp".
  */
 
 #ifdef HAVE_CONFIG_H
-#include "config.h"
+#  include "config.h"
 #endif
 
-#ifndef XAX
+#ifndef MEMREF1
 
-#if defined (ARCH_X86) && !defined (ARCH_X86_64)
-#define XAX   "eax"
-#define XBX   "ebx"
-#define XCX   "ecx"
-#define XDX   "edx"
-#define XSI   "esi"
-#define XDI   "edi"
-#define XSP   "esp"
-#define MOVX  "movl"
-#define LEAX  "leal"
-#define DECX  "decl"
-#define PUSHX "pushl"
-#define POPX  "popl"
-#define CMPX  "cmpl"
-#define ADDX  "addl"
-#define SHLX  "shll"
-#define SHRX  "shrl"
-#define SUBX  "subl"
+/* register only stuff */
+#if defined(ARCH_X86_64) || defined(ARCH_X86_X32)
+#  define BUMPPTR(offs,src,dest)   "leaq "offs"(%%r"src"), %%r"dest"\n\t"
+#  define REG1(what,reg)           what"q %%r"reg"\n\t"
+#  define REG2(what,reg1,reg2)     what"q %%r"reg1", %%r"reg2"\n\t"
+#  define MEMREF1(reg)             "(%%r"reg")"
+#  define MEMREF2(base,offs)       "(%%r"base", %%r"offs")"
+#  define MEMREF3(base,index,mult) "(%%r"base", %%r"index", "mult")"
+#elif defined(ARCH_X86)
+#  define BUMPPTR(offs,src,dest)   "leal "offs"(%%e"src"), %%e"dest"\n\t"
+#  define REG1(what,reg)           what"l %%e"reg"\n\t"
+#  define REG2(what,reg1,reg2)     what"l %%e"reg1", %%e"reg2"\n\t"
+#  define MEMREF1(reg)             "(%%e"reg")"
+#  define MEMREF2(base,offs)       "(%%e"base", %%e"offs")"
+#  define MEMREF3(base,index,mult) "(%%e"base", %%e"index", "mult")"
+#endif
 
-#elif defined (ARCH_X86_64)
-#define XAX   "rax"
-#define XBX   "rbx"
-#define XCX   "rcx"
-#define XDX   "rdx"
-#define XSI   "rsi"
-#define XDI   "rdi"
-#define XSP   "rsp"
-#define MOVX  "movq"
-#define LEAX  "leaq"
-#define DECX  "decq"
-#define PUSHX "pushq"
-#define POPX  "popq"
-#define CMPX  "cmpq"
-#define ADDX  "addq"
-#define SHLX  "shlq"
-#define SHRX  "shrq"
-#define SUBX  "subq"
+/* memory location or constant + register */
+#if defined(ARCH_X86_64)
+#  define MEMREG(what,addr,reg)   what"q "addr", %%r"reg"\n\t"
+#  define REGMEM(what,reg,addr)   what"q %%r"reg", "addr"\n\t"
+#  define CONSTMEM(what,val,addr) what"q $"val", "addr"\n\t"
+#elif defined(ARCH_X86_X32) || defined (ARCH_X86)
+#  define MEMREG(what,addr,reg)   what"l "addr", %%e"reg"\n\t"
+#  define REGMEM(what,reg,addr)   what"l %%e"reg", "addr"\n\t"
+#  define CONSTMEM(what,val,addr) what"l $"val", "addr"\n\t"
+#endif
 
-#else
-#error Undefined architecture. Define either ARCH_X86 or ARCH_X86_64.
+#ifndef MEMREF1
+#  error Undefined architecture. Define either ARCH_X86, ARCH_X86_X32 or ARCH_X86_64.
 #endif
 
 #endif
+

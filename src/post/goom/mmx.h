@@ -75,7 +75,7 @@ mm_support(void)
 		 13 if AMD Extended MMX, &3dNow supported
 	   0 if hardware does not support any of these
 	*/
-#ifdef ARCH_X86_64
+#if defined(ARCH_X86_X32) || defined(ARCH_X86_64)
 	return 13;
 #else
 	register int rval = 0;
