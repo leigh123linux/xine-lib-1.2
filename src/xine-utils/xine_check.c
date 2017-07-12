@@ -128,7 +128,7 @@ static xine_health_check_t* _x_health_check_kernel (xine_health_check_t* hc) {
   return hc;
 }
 
-#if defined(ARCH_X86) || defined(ARCH_X86_64)
+#if defined(ARCH_X86)
 static xine_health_check_t* _x_health_check_mtrr (xine_health_check_t* hc) {
   FILE *fd;
 

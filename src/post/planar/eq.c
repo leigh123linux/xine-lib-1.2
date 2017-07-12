@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2000-2009 the xine project
+ * Copyright (C) 2000-2017 the xine project
  *
  * This file is part of xine, a free video player.
  *
@@ -31,7 +31,7 @@
 #include <pthread.h>
 
 
-#if defined(ARCH_X86) || defined(ARCH_X86_64)
+#if defined(ARCH_X86)
 static void process_MMX(unsigned char *dest, int dstride, unsigned char *src, int sstride,
 		    int w, int h, int brightness, int contrast)
 {
@@ -259,7 +259,7 @@ static post_plugin_t *eq_open_plugin(post_class_t *class_gen, int inputs,
   }
 
   process = process_C;
-#if defined(ARCH_X86) || defined(ARCH_X86_64)
+#if defined(ARCH_X86)
   if( xine_mm_accel() & MM_ACCEL_X86_MMX )
     process = process_MMX;
 #endif

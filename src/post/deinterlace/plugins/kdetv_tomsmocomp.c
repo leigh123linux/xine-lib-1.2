@@ -38,7 +38,7 @@
 #include "speedy.h"
 #include "plugins.h"
 
-#if defined (ARCH_X86) || defined (ARCH_X86_64)
+#if defined (ARCH_X86)
 
 static int Fieldcopy(void *dest, const void *src, size_t count,
                      int rows, int dst_pitch, int src_pitch)
@@ -97,7 +97,7 @@ static void deinterlace_frame_di_tomsmocomp( uint8_t *output, int outstride,
                                              int bottom_field, int second_field,
                                              int width, int height )
 {
-#if defined (ARCH_X86) || defined (ARCH_X86_64)
+#if defined (ARCH_X86)
 
     if( xine_mm_accel() & MM_ACCEL_X86_MMXEXT ) {
         tomsmocomp_filter_sse( output, outstride, data,

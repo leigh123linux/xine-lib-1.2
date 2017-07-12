@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2000-2013 the xine project
+ * Copyright (C) 2000-2017 the xine project
  *
  * This file is part of xine, a free video player.
  *
@@ -20,7 +20,7 @@
 #ifndef XINE_MMX_H
 #define XINE_MMX_H
 
-#if defined(ARCH_X86) || defined(ARCH_X86_64)
+#if defined(ARCH_X86)
 
 #include <xine/attributes.h>
 

@@ -59,7 +59,7 @@
 
 #include "ffmpeg_compat.h"
 
-#if (defined(ARCH_X86) || defined(ARCH_X86_64)) && defined(HAVE_MMX)
+#if defined(ARCH_X86) && defined(HAVE_MMX)
 # include "xine_mmx.h"
 # define ENABLE_EMMS
 #endif

@@ -38,7 +38,7 @@
 #include "speedy.h"
 #include "plugins.h"
 
-#if defined (ARCH_X86) || defined (ARCH_X86_64)
+#if defined (ARCH_X86)
 
 #include "greedyhmacros.h"
 
@@ -82,7 +82,7 @@ static void deinterlace_frame_di_greedyh( uint8_t *output, int outstride,
                                           int bottom_field, int second_field,
                                           int width, int height )
 {
-#if defined (ARCH_X86) || defined (ARCH_X86_64)
+#if defined (ARCH_X86)
     if( xine_mm_accel() & MM_ACCEL_X86_MMXEXT ) {
         greedyh_filter_sse( output, outstride, data,
                             bottom_field, second_field,

@@ -42,7 +42,7 @@ void mpeg2_mc_init (uint32_t mm_accel)
     }
 #endif
 
-#if defined(ARCH_X86) || defined(ARCH_X86_64)
+#if defined(ARCH_X86)
     if (mm_accel & MM_ACCEL_X86_MMXEXT) {
 #ifdef LOG
 	fprintf (stderr, "Using MMXEXT for motion compensation\n");

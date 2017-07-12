@@ -54,7 +54,7 @@ static void deinterlace_scanline_linear_blend( uint8_t *output,
     uint8_t *t0 = data->t0;
     uint8_t *b0 = data->b0;
     uint8_t *m1 = data->m1;
-#if defined(ARCH_X86) || defined(ARCH_X86_64)
+#if defined(ARCH_X86)
     int i;
 
     // Get width in bytes.
@@ -119,7 +119,7 @@ static void deinterlace_scanline_linear_blend2( uint8_t *output,
     uint8_t *t1 = data->t1;
     uint8_t *b1 = data->b1;
 
-#if defined(ARCH_X86) || defined(ARCH_X86_64)
+#if defined(ARCH_X86)
     int i;
 
     // Get width in bytes.
@@ -176,7 +176,7 @@ static void deinterlace_scanline_linear_blend2( uint8_t *output,
 #endif
 }
 
-#if defined(ARCH_X86) || defined(ARCH_X86_64)
+#if defined(ARCH_X86)
 
 /* MMXEXT version is about 15% faster with Athlon XP [MF] */
 
@@ -337,7 +337,7 @@ static deinterlace_method_t linearblendmethod =
     "BlurTemporal",
 */
     2,
-#if defined(ARCH_X86) || defined(ARCH_X86_64)
+#if defined(ARCH_X86)
     MM_ACCEL_X86_MMX,
 #else
     0,
@@ -353,7 +353,7 @@ static deinterlace_method_t linearblendmethod =
 
 deinterlace_method_t *linearblend_get_method( void )
 {
-#if defined(ARCH_X86) || defined(ARCH_X86_64)
+#if defined(ARCH_X86)
     if( xine_mm_accel() & MM_ACCEL_X86_MMXEXT )
       return &linearblendmethod_mmxext;
     else

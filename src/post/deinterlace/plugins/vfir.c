@@ -52,7 +52,7 @@ static void deinterlace_line( uint8_t *dst, uint8_t *lum_m4,
                               uint8_t *lum_m3, uint8_t *lum_m2,
                               uint8_t *lum_m1, uint8_t *lum, int size )
 {
-#if defined(ARCH_X86) || defined(ARCH_X86_64)
+#if defined(ARCH_X86)
     mmx_t rounder;
 
     rounder.uw[0]=4;
@@ -138,7 +138,7 @@ static deinterlace_method_t vfirmethod =
     "BlurVertical",
 */
     1,
-#if defined(ARCH_X86) || defined(ARCH_X86_64)
+#if defined(ARCH_X86)
     MM_ACCEL_X86_MMXEXT,
 #else
     0,

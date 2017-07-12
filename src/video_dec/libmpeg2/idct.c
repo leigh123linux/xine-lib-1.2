@@ -282,7 +282,7 @@ void mpeg2_idct_init (uint32_t mm_accel)
 {
     mpeg2_zero_block = mpeg2_zero_block_c;
 
-#if defined(ARCH_X86) || defined(ARCH_X86_64)
+#if defined(ARCH_X86)
     if (mm_accel & MM_ACCEL_X86_MMXEXT) {
 #ifdef LOG
 	fprintf (stderr, "Using MMXEXT for IDCT transform\n");

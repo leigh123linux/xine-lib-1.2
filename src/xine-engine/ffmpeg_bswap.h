@@ -36,7 +36,7 @@
 #  define LEGACY_REGS "=q"
 #endif
 
-#if defined(ARCH_X86) || defined(ARCH_X86_X32) || defined(ARCH_X86_64)
+#if defined(ARCH_X86)
 static always_inline uint16_t bswap_16(uint16_t x)
 {
   __asm("rorw $8, %0"   :

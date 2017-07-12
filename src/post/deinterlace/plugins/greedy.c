@@ -65,7 +65,7 @@ static void deinterlace_greedy_packed422_scanline_mmxext( uint8_t *output,
                                                           deinterlace_scanline_data_t *data,
                                                           int width )
 {
-#if defined(ARCH_X86) || defined(ARCH_X86_64)
+#if defined(ARCH_X86)
     mmx_t MaxComb;
     uint8_t *m0 = data->m0;
     uint8_t *t1 = data->t1;

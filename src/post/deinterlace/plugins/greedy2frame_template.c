@@ -86,7 +86,7 @@
 */
 
 
-#if defined(ARCH_X86) || defined(ARCH_X86_64)
+#if defined(ARCH_X86)
 #if !defined(MASKS_DEFINED)
 #define MASKS_DEFINED
 static const mmx_t Mask = { uq: 0x7f7f7f7f7f7f7f7fll };
@@ -110,7 +110,7 @@ static void DeinterlaceGreedy2Frame_MMX(uint8_t *output, int outstride,
                                  int bottom_field, int second_field, int width, int height )
 #endif
 {
-#if defined(ARCH_X86) || defined(ARCH_X86_64)
+#if defined(ARCH_X86)
     int Line;
     int stride = width * 2;
     register uint8_t* M1;

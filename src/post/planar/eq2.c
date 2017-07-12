@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2000-2014 the xine project
+ * Copyright (C) 2000-2017 the xine project
  *
  * This file is part of xine, a free video player.
  *
@@ -103,7 +103,7 @@ void create_lut (eq2_param_t *par)
 }
 
 
-#if defined(ARCH_X86) || defined(ARCH_X86_64)
+#if defined(ARCH_X86)
 static
 void affine_1d_MMX (eq2_param_t *par, unsigned char *dst, unsigned char *src,
   unsigned w, unsigned h, unsigned dstride, unsigned sstride)
@@ -205,7 +205,7 @@ void check_values (eq2_param_t *par)
   if ((par->c == 1.0) && (par->b == 0.0) && (par->g == 1.0)) {
     par->adjust = NULL;
   }
-#if defined(ARCH_X86) || defined(ARCH_X86_64)
+#if defined(ARCH_X86)
   else if (par->g == 1.0 && (xine_mm_accel() & MM_ACCEL_X86_MMX) ) {
     par->adjust = &affine_1d_MMX;
   }

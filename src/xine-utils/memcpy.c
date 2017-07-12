@@ -121,7 +121,7 @@ quote of the day:
 */
 
 
-#if defined(ARCH_X86) || defined(ARCH_X86_X32) || defined(ARCH_X86_64)
+#if defined(ARCH_X86)
 
 #ifndef _MSC_VER
 /* for small memory blocks (<256 bytes) this version is faster */
@@ -583,7 +583,7 @@ static const struct {
 {
   { "", NULL, 0 },
   { "libc", memcpy, 0 },
-#if (defined(ARCH_X86) || defined(ARCH_X86_X32) || defined(ARCH_X86_64)) && !defined(_MSC_VER)
+#if defined(ARCH_X86) && !defined(_MSC_VER)
   { "linux kernel", linux_kernel_memcpy, 0 },
   { "MMX ", mmx_memcpy, MM_MMX },
   { "MMXEXT", mmx2_memcpy, MM_MMXEXT },
@@ -618,7 +618,7 @@ static int64_t _x_gettime(void)
 }
 #  define rdtsc(x) _x_gettime()
 
-#elif (defined(ARCH_X86) || defined(ARCH_X86_64)) && defined(HAVE_SYS_TIMES_H)
+#elif defined(ARCH_X86) && defined(HAVE_SYS_TIMES_H)
 static int64_t rdtsc(int config_flags)
 {
   int64_t x;
@@ -722,7 +722,7 @@ void xine_probe_fast_memcpy(xine_t *xine)
   unsigned int      method;
   static const char *const memcpy_methods[] = {
     "probe", "libc",
-#if (defined(ARCH_X86) || defined(ARCH_X86_X32) || defined(ARCH_X86_64)) && !defined(_MSC_VER)
+#if defined(ARCH_X86) && !defined(_MSC_VER)
     "kernel", "mmx", "mmxext", "sse",
 # ifdef HAVE_AVX
     "avx",

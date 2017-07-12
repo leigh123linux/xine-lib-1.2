@@ -59,7 +59,7 @@ static void DeinterlaceGreedy2Frame(uint8_t *output, int outstride,
                                     int bottom_field, int second_field, int width, int height )
 
 {
-#if defined(ARCH_X86) || defined(ARCH_X86_64)
+#if defined(ARCH_X86)
 
     if (xine_mm_accel() & MM_ACCEL_X86_SSE2) {
         if (((uintptr_t)output & 15) || (outstride & 15) ||
