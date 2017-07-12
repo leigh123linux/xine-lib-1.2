@@ -24,12 +24,7 @@
 #include "goom_graphic.h"
 
 int xmmx_supported (void) {
-#ifdef ARCH_X86_64
-	return 0; /* Haven't yet converted zoom_filter_xmmx 
-                     to support 64-bit memory index registers (rsi,rax) */
-#else
 	return (mm_support()&0x8)>>3;
-#endif
 }
 
 void zoom_filter_xmmx (int prevX, int prevY,
@@ -37,7 +32,6 @@ void zoom_filter_xmmx (int prevX, int prevY,
                        int *lbruS, int *lbruD, int buffratio,
                        int precalCoef[16][16])
 {
-#ifndef ARCH_X86_64
 	int bufsize = prevX * prevY; /* taille du buffer */
 	volatile int loop;                    /* variable de boucle */
 
@@ -56,140 +50,169 @@ void zoom_filter_xmmx (int prevX, int prevY,
 	ratiox.d[0] = buffratio;
 	ratiox.d[1] = buffratio;
 
-  asm volatile
-    ("\n\t movq  %0, %%mm6"
-     "\n\t pslld $16,      %%mm6" /* mm6 = [rat16=buffratio<<16 | rat16=buffratio<<16] */
-     "\n\t pxor  %%mm7,    %%mm7" /* mm7 = 0 */
-     ::"m"(ratiox));
+  asm volatile (
+    "\n\t movq  %0,    %%mm6"
+    "\n\t pslld $16,   %%mm6" /* mm6 = [rat16=buffratio<<16 | rat16=buffratio<<16] */
+    "\n\t pxor  %%mm7, %%mm7" /* mm7 = 0 */
+    ::"m"(ratiox));
 
-	loop=0;
+    loop = 0;
 
-	/*
-	 * NOTE : mm6 et mm7 ne sont pas modifies dans la boucle.
-	 */
-	while (loop < bufsize)
-	{
-		/* Thread #1
-		 * pre :  mm6 = [rat16|rat16]
-		 * post : mm0 = S + ((D-S)*rat16 format [X|Y]
-		 * modified = mm0,mm1,mm2
-		 */
+    /*
+     * NOTE : mm6 et mm7 ne sont pas modifies dans la boucle.
+     */
+    while (loop < bufsize) {
+      /* Thread #1
+       * pre :  mm6 = [rat16|rat16]
+       * post : mm0 = S + ((D-S)*rat16 format [X|Y]
+       * modified = mm0,mm1,mm2
+       */
 
-		asm volatile
-      ("#1 \n\t movq       %0, %%mm0"
-       "#1 \n\t movq       %1, %%mm1"
-       "#1 \n\t psubd   %%mm0, %%mm1" /* mm1 = D - S */
-       "#1 \n\t movq    %%mm1, %%mm2" /* mm2 = D - S */
-       "#1 \n\t pslld     $16, %%mm1"
-		   "#1 \n\t pmullw  %%mm6, %%mm2"
-       "#1 \n\t pmulhuw %%mm6, %%mm1"
+      asm volatile (
+        "#1 \n\t movq       %0, %%mm0"
+        "#1 \n\t movq       %1, %%mm1"
+        "#1 \n\t psubd   %%mm0, %%mm1" /* mm1 = D - S */
+        "#1 \n\t movq    %%mm1, %%mm2" /* mm2 = D - S */
+        "#1 \n\t pslld     $16, %%mm1"
+        "#1 \n\t pmullw  %%mm6, %%mm2"
+        "#1 \n\t pmulhuw %%mm6, %%mm1"
 
-       "#1 \n\t pslld   $16,   %%mm0"
-       "#1 \n\t paddd   %%mm2, %%mm1"  /* mm1 = (D - S) * buffratio >> 16 */
+        "#1 \n\t pslld   $16,   %%mm0"
+        "#1 \n\t paddd   %%mm2, %%mm1" /* mm1 = (D - S) * buffratio >> 16 */
 
-       "#1 \n\t paddd   %%mm1, %%mm0"  /* mm0 = S + mm1 */
-       "#1 \n\t psrld   $16,   %%mm0"
-       :
-       : "g"(brutS[loop])
-       , "g"(brutD[loop])
-      );               /* mm0 = S */
+        "#1 \n\t paddd   %%mm1, %%mm0" /* mm0 = S + mm1 */
+        "#1 \n\t psrld   $16,   %%mm0"
+        :
+        : "g" (brutS[loop]), "g" (brutD[loop])
+      ); /* mm0 = S */
 
-		/*
-		 * pre : mm0 : position vector on screen
-		 *       prevXY : coordinate of the lower-right point on screen
-		 * post : clipped mm0
-		 * modified : mm0,mm1,mm2
-		 */
-    asm volatile
-      ("#1 \n\t movq       %0, %%mm1"
-       "#1 \n\t pcmpgtd %%mm0,  %%mm1"
-       /* mm0 en X contient (idem pour Y) :
-        *   1111 si prevXY > px
-        *   0000 si prevXY <= px */
+      /*
+       * pre : mm0 : position vector on screen
+       *       prevXY : coordinate of the lower-right point on screen
+       * post : clipped mm0
+       * modified : mm0,mm1,mm2
+       */
+      asm volatile (
+        "#1 \n\t movq       %0, %%mm1"
+        "#1 \n\t pcmpgtd %%mm0, %%mm1"
+        /* mm0 en X contient (idem pour Y) :
+         *   1111 si prevXY > px
+         *   0000 si prevXY <= px */
 #ifdef STRICT_COMPAT
-       "#1 \n\t movq      %%mm1, %%mm2"
-       "#1 \n\t punpckhdq %%mm2, %%mm2"
-       "#1 \n\t punpckldq %%mm1, %%mm1"
-       "#1 \n\t pand      %%mm2, %%mm0"
+        "#1 \n\t movq      %%mm1, %%mm2"
+        "#1 \n\t punpckhdq %%mm2, %%mm2"
+        "#1 \n\t punpckldq %%mm1, %%mm1"
+        "#1 \n\t pand      %%mm2, %%mm0"
 #endif
+        "#1 \n\t pand      %%mm1, %%mm0" /* on met a zero la partie qui deborde */
+        :
+        : "m" (prevXY)
+      );
 
-       "#1 \n\t pand %%mm1, %%mm0" /* on met a zero la partie qui deborde */
-        ::"m"(prevXY));
+      /* Thread #2
+       * pre :  mm0 : clipped position on screen
+       *
+       * post : mm3 : coefs for this position
+       *        mm1 : X vector [0|X]
+       *
+       * modif : eax,esi
+       */
+      __asm__ __volatile__ (
+        "#2 \n\t movd  %%mm0, %%esi"
+        "#2 \n\t movq  %%mm0, %%mm1"
 
-		/* Thread #2
-		 * pre :  mm0 : clipped position on screen
-		 *
-		 * post : mm3 : coefs for this position
-		 *        mm1 : X vector [0|X]
-		 *
-		 * modif : eax,esi
-		 */
-		__asm__ __volatile__ (
-			"#2 \n\t movd %%mm0,%%esi"
-			"#2 \n\t movq %%mm0,%%mm1"
+        "#2 \n\t andl  $15,   %%esi"
+        "#2 \n\t psrlq $32,   %%mm1"
 
-			"#2 \n\t andl $15,%%esi"
-			"#2 \n\t psrlq $32,%%mm1"
+        "#2 \n\t shll  $6,    %%esi"
+        "#2 \n\t movd  %%mm1, %%eax"
+#if defined(ARCH_X86_64)
+        "#2 \n\t addq  %0,    %%rsi"
+        "#2 \n\t andl  $15,   %%eax"
+        "#2 \n\t movd (%%rsi,%%rax,4), %%mm3"
+#elif defined(ARCH_X86_X32)
+        "#2 \n\t addl  %0,    %%esi"
+        "#2 \n\t andl  $15,   %%eax"
+        "#2 \n\t movd (%%rsi,%%rax,4), %%mm3"
+#else
+        "#2 \n\t addl  %0,    %%esi"
+        "#2 \n\t andl  $15,   %%eax"
+        "#2 \n\t movd (%%esi,%%eax,4), %%mm3"
+#endif
+        :
+        : "g" (precalCoef)
+#if defined(ARCH_X86_64) || defined(ARCH_X86_X32)
+        : "rax", "rsi"
+#else
+        : "eax", "esi"
+#endif
+      );
 
-			"#2 \n\t shll $6,%%esi"
-			"#2 \n\t movd %%mm1,%%eax"
+      /*
+       * extraction des coefficients... (Thread #3)
+       *
+       * pre : coef dans mm3
+       *
+       * post : coef extraits dans mm3 (c1 & c2)
+       *                        et mm4 (c3 & c4)
+       *
+       * modif : mm5
+       */
 
-			"#2 \n\t addl %0,%%esi"
-			"#2 \n\t andl $15,%%eax"
+      /* (Thread #4)
+       * pre : mm0 : Y pos [*|Y]
+       *       mm1 : X pos [*|X]
+       *
+       * post : mm0 : expix1[position]
+       *        mm2 : expix1[position+largeur]
+       *
+       * modif : eax, esi
+       */
+      __asm__ __volatile__ (
+        "#2 \n\t psrld     $4,    %%mm0"
+        "#2 \n\t psrld     $4,    %%mm1" /* PERTEDEC = $4 */
 
-			"#2 \n\t movd (%%esi,%%eax,4),%%mm3"
-			::"g"(precalCoef):"eax","esi");
+        "#4 \n\t movd      %%mm1, %%eax"
+        "#3 \n\t movq      %%mm3, %%mm5" 
 
-		/*
-		 * extraction des coefficients... (Thread #3)
-		 *
-		 * pre : coef dans mm3
-		 *
-		 * post : coef extraits dans mm3 (c1 & c2)
-		 *                        et mm4 (c3 & c4)
-		 *
-		 * modif : mm5
-		 */
+        "#4 \n\t imull     %1,    %%eax"
+        "#4 \n\t movd      %%mm0, %%esi"
 
-		/* (Thread #4)
-		 * pre : mm0 : Y pos [*|Y]
-		 *       mm1 : X pos [*|X]
-		 *
-		 * post : mm0 : expix1[position]
-		 *        mm2 : expix1[position+largeur]
-		 *
-		 * modif : eax, esi
-		 */
-		__asm__ __volatile__ (
-      "#2 \n\t psrld $4, %%mm0"
-      "#2 \n\t psrld $4, %%mm1"      /* PERTEDEC = $4 */
+        "#3 \n\t punpcklbw %%mm5, %%mm3"
+        "#4 \n\t addl      %%esi, %%eax"
 
-      "#4 \n\t movd %%mm1,%%eax"
-			"#3 \n\t movq %%mm3,%%mm5" 
-
-			"#4 \n\t mull %1"
-			"#4 \n\t movd %%mm0,%%esi"
-
-      "#3 \n\t punpcklbw %%mm5, %%mm3"
-			"#4 \n\t addl %%esi, %%eax"
-
-      "#3 \n\t movq %%mm3, %%mm4"     
-      "#3 \n\t movq %%mm3, %%mm5"     
-
-      "#4 \n\t movl %0, %%esi"
-      "#3 \n\t punpcklbw %%mm5, %%mm3"
-
-      "#4 \n\t movq (%%esi,%%eax,4),%%mm0"
-      "#3 \n\t punpckhbw %%mm5, %%mm4"
-
-      "#4 \n\t addl %1,%%eax"
-      "#4 \n\t movq (%%esi,%%eax,4),%%mm2"
-
-			:
-      : "g"(expix1)
-      , "g"(prevX)
-      :"eax","esi"
-		);
+        "#3 \n\t movq      %%mm3, %%mm4"
+        "#3 \n\t movq      %%mm3, %%mm5"
+#if defined(ARCH_X86_64)
+        "#4 \n\t movq      %0,    %%rsi"
+        "#3 \n\t punpcklbw %%mm5, %%mm3"
+        "#4 \n\t movq      (%%rsi,%%rax,4), %%mm0"
+        "#3 \n\t punpckhbw %%mm5, %%mm4"
+        "#4 \n\t addl      %1,    %%eax"
+        "#4 \n\t movq      (%%rsi,%%rax,4), %%mm2"
+#elif defined(ARCH_X86_X32)
+        "#4 \n\t movl      %0,    %%esi"
+        "#3 \n\t punpcklbw %%mm5, %%mm3"
+        "#4 \n\t movq      (%%rsi,%%rax,4), %%mm0"
+        "#3 \n\t punpckhbw %%mm5, %%mm4"
+        "#4 \n\t addl      %1,    %%eax"
+        "#4 \n\t movq      (%%rsi,%%rax,4), %%mm2"
+#else
+        "#4 \n\t movl      %0,    %%esi"
+        "#3 \n\t punpcklbw %%mm5, %%mm3"
+        "#4 \n\t movq      (%%esi,%%eax,4), %%mm0"
+        "#3 \n\t punpckhbw %%mm5, %%mm4"
+        "#4 \n\t addl      %1,    %%eax"
+        "#4 \n\t movq      (%%esi,%%eax,4), %%mm2"
+#endif
+        :
+        : "g" (expix1), "g" (prevX)
+#if defined(ARCH_X86_64) || defined(ARCH_X86_X32)
+        : "rax", "rsi"
+#else
+        : "eax", "esi"
+#endif
+      );
 
 		/*
 		 * pre :       mm0 : expix1[position]
@@ -251,7 +274,6 @@ void zoom_filter_xmmx (int prevX, int prevY,
 /*#else
 	emms();
 #endif*/
-#endif /* ARCH_X86_64 */
 }
 
 #define DRAWMETHOD_PLUS_XMMX(_out,_backbuf,_col) \
