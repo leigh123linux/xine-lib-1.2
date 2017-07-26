@@ -635,7 +635,7 @@ struct fifo_buffer_s
   /*
    * private variables for buffer pool management
    */
-  buf_element_t   *buffer_pool_top;    /* a stack actually */
+  buf_element_t   *buffer_pool_top;    /* a heap actually */
   pthread_mutex_t  buffer_pool_mutex;
   pthread_cond_t   buffer_pool_cond_not_empty;
   int              buffer_pool_num_free;
@@ -653,6 +653,11 @@ struct fifo_buffer_s
    * result may still be smaller, do check buf->max_size.
    */
   buf_element_t *(*buffer_pool_size_alloc) (fifo_buffer_t *self, size_t size);
+
+  /* private */
+  int              buffer_pool_num_waiters;
+  int              buffer_pool_large_wait;
+  int              fifo_num_waiters;
 } ;
 
 /**

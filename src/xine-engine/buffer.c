@@ -68,6 +68,8 @@ typedef struct {
   extra_info_t  ei;
 } be_ei_t;
 
+#define LARGE_NUM 0x7fffffff
+
 /*
  * put a previously allocated buffer element back into the buffer pool
  */
@@ -87,41 +89,44 @@ static void buffer_pool_free (buf_element_t *element) {
   }
 
   /* we might be a new chunk */
-  newtail = newhead;
+  newtail = newhead + 1;
   while (--n > 0) {
-    newtail[0].elem.next = &newtail[1].elem;
+    newtail[-1].elem.next = &newtail[0].elem;
     newtail++;
   }
 
   nexthead = (be_ei_t *)this->buffer_pool_top;
-  if (!nexthead || (nexthead > newtail)) {
+  if (!nexthead || (nexthead >= newtail)) {
     /* add head */
     this->buffer_pool_top = &newhead->elem;
-    newtail->elem.next = &nexthead->elem;
+    newtail[-1].elem.next = &nexthead->elem;
     /* merge with next chunk if no gap */
-    if (newtail + 1 == nexthead)
+    if (newtail == nexthead)
       newhead->nbufs += nexthead->nbufs;
   } else {
     /* Keep the pool sorted, elem1 > elem2 implies elem1->mem > elem2->mem. */
     be_ei_t *prevhead, *prevtail;
     while (1) {
       prevhead = nexthead;
-      prevtail = prevhead + prevhead->nbufs - 1;
-      nexthead = (be_ei_t *)prevtail->elem.next;
-      if (!nexthead || (nexthead > newtail))
+      prevtail = prevhead + prevhead->nbufs;
+      nexthead = (be_ei_t *)prevtail[-1].elem.next;
+      if (!nexthead || (nexthead >= newtail))
         break;
     }
-    prevtail->elem.next = &newhead->elem;
-    newtail->elem.next = &nexthead->elem;
+    prevtail[-1].elem.next = &newhead->elem;
+    newtail[-1].elem.next = &nexthead->elem;
     /* merge with next chunk if no gap */
-    if (newtail + 1 == nexthead)
+    if (newtail == nexthead)
       newhead->nbufs += nexthead->nbufs;
     /* merge with prev chunk if no gap */
-    if (prevtail + 1 == newhead)
+    if (prevtail == newhead)
       prevhead->nbufs += newhead->nbufs;
   }
-    
-  pthread_cond_signal (&this->buffer_pool_cond_not_empty);
+
+  /* dont provoke useless wakeups */
+  if (this->buffer_pool_num_waiters ||
+    (this->buffer_pool_large_wait <= this->buffer_pool_num_free))
+    pthread_cond_signal (&this->buffer_pool_cond_not_empty);
 
   pthread_mutex_unlock (&this->buffer_pool_mutex);
 }
@@ -148,9 +153,24 @@ static buf_element_t *buffer_pool_size_alloc (fifo_buffer_t *this, size_t size) 
 
   /* we always keep one free buffer for emergency situations like
    * decoder flushes that would need a buffer in buffer_pool_try_alloc() */
-  while (this->buffer_pool_num_free < n + 2) {
-    pthread_cond_wait (&this->buffer_pool_cond_not_empty, &this->buffer_pool_mutex);
+  n += 2;
+  if (this->buffer_pool_num_free < n) {
+    /* Paranoia: someone else than demux calling this in parallel ?? */
+    if (this->buffer_pool_large_wait != LARGE_NUM) {
+      this->buffer_pool_num_waiters++;
+      do {
+        pthread_cond_wait (&this->buffer_pool_cond_not_empty, &this->buffer_pool_mutex);
+      } while (this->buffer_pool_num_free < n);
+      this->buffer_pool_num_waiters--;
+    } else {
+      this->buffer_pool_large_wait = n;
+      do {
+        pthread_cond_wait (&this->buffer_pool_cond_not_empty, &this->buffer_pool_mutex);
+      } while (this->buffer_pool_num_free < n);
+      this->buffer_pool_large_wait = LARGE_NUM;
+    }
   }
+  n -= 2;
 
   buf = (be_ei_t *)this->buffer_pool_top;
   if (n == 1) {
@@ -163,36 +183,33 @@ static buf_element_t *buffer_pool_size_alloc (fifo_buffer_t *this, size_t size) 
 
   } else {
 
-    be_ei_t *beststart = buf, *bestprev = NULL, *bestnext = NULL, *prev = NULL, *next;
-    int bestsize = 0, l;
-    do {
-      l = buf->nbufs;
-      next = (be_ei_t *)buf[l - 1].elem.next;
-      if (l >= n)
+    buf_element_t **link = &this->buffer_pool_top, **bestlink = link;
+    int bestsize = 0;
+    while (1) {
+      int l = buf->nbufs;
+      if (l > n) {
+        be_ei_t *next = buf + n;
+        next->nbufs = l - n;
+        *link = &next->elem;
         break;
+      } else if (l == n) {
+        *link = buf[l - 1].elem.next;
+        break;
+      }
       if (l > bestsize) {
         bestsize = l;
-        bestprev = prev;
-        beststart = buf;
-        bestnext = next;
+        bestlink = link;
       }
-      prev = buf + l - 1;
-      buf = next;
-    } while (buf);
-    if (!buf) {
-      prev = bestprev;
-      buf = beststart;
-      next = bestnext;
-      l = n = bestsize;
+      buf += l - 1;
+      link = &buf->elem.next;
+      buf = (be_ei_t *)(*link);
+      if (!buf) {
+        buf = (be_ei_t *)(*bestlink);
+        n = bestsize;
+        *bestlink = buf[n - 1].elem.next;
+        break;
+      }
     }
-    if (n < l) {
-      next = buf + n;
-      next->nbufs = l - n;
-    }
-    if (prev)
-      prev->elem.next = &next->elem;
-    else
-      this->buffer_pool_top = &next->elem;
     this->buffer_pool_num_free -= n;
 
   }
@@ -224,8 +241,12 @@ static buf_element_t *buffer_pool_alloc (fifo_buffer_t *this) {
 
   /* we always keep one free buffer for emergency situations like
    * decoder flushes that would need a buffer in buffer_pool_try_alloc() */
-  while (this->buffer_pool_num_free < 2) {
-    pthread_cond_wait (&this->buffer_pool_cond_not_empty, &this->buffer_pool_mutex);
+  if (this->buffer_pool_num_free < 2) {
+    this->buffer_pool_num_waiters++;
+    do {
+      pthread_cond_wait (&this->buffer_pool_cond_not_empty, &this->buffer_pool_mutex);
+    } while (this->buffer_pool_num_free < 2);
+    this->buffer_pool_num_waiters--;
   }
 
   buf = (be_ei_t *)this->buffer_pool_top;
@@ -332,7 +353,8 @@ static void fifo_buffer_put (fifo_buffer_t *fifo, buf_element_t *element) {
   }
   fifo->fifo_data_size += element->size;
 
-  pthread_cond_signal (&fifo->not_empty);
+  if (fifo->fifo_num_waiters)
+    pthread_cond_signal (&fifo->not_empty);
 
   pthread_mutex_unlock (&fifo->mutex);
 }
@@ -373,7 +395,8 @@ static void fifo_buffer_insert (fifo_buffer_t *fifo, buf_element_t *element) {
   }
   fifo->fifo_data_size += element->size;
 
-  pthread_cond_signal (&fifo->not_empty);
+  if (fifo->fifo_num_waiters)
+    pthread_cond_signal (&fifo->not_empty);
 
   pthread_mutex_unlock (&fifo->mutex);
 }
@@ -395,8 +418,12 @@ static buf_element_t *fifo_buffer_get (fifo_buffer_t *fifo) {
 
   pthread_mutex_lock (&fifo->mutex);
 
-  while (fifo->first==NULL) {
-    pthread_cond_wait (&fifo->not_empty, &fifo->mutex);
+  if (!fifo->first) {
+    fifo->fifo_num_waiters++;
+    do {
+      pthread_cond_wait (&fifo->not_empty, &fifo->mutex);
+    } while (!fifo->first);
+    fifo->fifo_num_waiters--;
   }
 
   buf = fifo->first;
@@ -731,6 +758,7 @@ fifo_buffer_t *_x_fifo_buffer_new (int num_buffers, uint32_t buf_size) {
   this->first               = NULL;
   this->last                = NULL;
   this->fifo_size           = 0;
+  this->fifo_num_waiters    = 0;
   this->put                 = fifo_buffer_put;
   this->insert              = fifo_buffer_insert;
   this->get                 = fifo_buffer_get;
@@ -759,6 +787,9 @@ fifo_buffer_t *_x_fifo_buffer_new (int num_buffers, uint32_t buf_size) {
   this->buffer_pool_alloc      = buffer_pool_alloc;
   this->buffer_pool_try_alloc  = buffer_pool_try_alloc;
   this->buffer_pool_size_alloc = buffer_pool_size_alloc;
+
+  this->buffer_pool_num_waiters = 0;
+  this->buffer_pool_large_wait  = LARGE_NUM;
 
   this->buffer_pool_base = multi_buffer;
   beei = (be_ei_t *)(multi_buffer + num_buffers * buf_size);
