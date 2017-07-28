@@ -531,7 +531,14 @@ AC_DEFUN([XINE_VIDEO_OUT_PLUGINS], [
     dnl VAAPI
     XINE_ARG_ENABLE([vaapi], [Disable VAAPI output plugin])
     if test x"$no_x" != x"yes" && test x"$enable_vaapi" != x"no"; then
-        PKG_CHECK_MODULES([LIBVA], [libva libva-x11], [have_vaapi=yes], [have_vaapi=no])
+        PKG_CHECK_MODULES([LIBVA], [libva libva-x11], [have_vaapi=yes],
+                          [ have_vaapi=no
+                            AS_IF([test x"$hard_enable_vaapi" = x"yes"], [
+                                AC_MSG_ERROR([${LIBVA_PKG_ERRORS}.])
+                            ], [
+                               AC_MSG_WARN([${LIBVA_PKG_ERRORS}.])
+                            ])
+                          ])
         AC_CHECK_HEADERS([va/va.h], , [have_vaapi=no])
         AC_CHECK_HEADERS([va/va_x11.h], , [have_vaapi=no])
         AC_CHECK_HEADERS([va/va_glx.h])
