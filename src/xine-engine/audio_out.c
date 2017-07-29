@@ -208,6 +208,7 @@ struct audio_fifo_s {
 
   int                num_buffers;
   int                num_buffers_max;
+  int                num_waiters;
 };
 
 typedef struct {
@@ -433,6 +434,7 @@ static void ao_fifo_open (audio_fifo_t *fifo) {
   fifo->last            = NULL;
   fifo->num_buffers     = 0;
   fifo->num_buffers_max = 0;
+  fifo->num_waiters     = 0;
 
   pthread_mutex_init (&fifo->mutex, NULL);
   pthread_cond_init  (&fifo->not_empty, NULL);
@@ -444,6 +446,7 @@ static void ao_fifo_close (audio_fifo_t *fifo) {
   fifo->last            = NULL;
   fifo->num_buffers     = 0;
   fifo->num_buffers_max = 0;
+  fifo->num_waiters     = 0;
 
   pthread_mutex_destroy (&fifo->mutex);
   pthread_cond_destroy  (&fifo->not_empty);
@@ -471,14 +474,16 @@ static void ao_fifo_append_int (audio_fifo_t *fifo, audio_buffer_t *buf) {
 static void ao_fifo_append (audio_fifo_t *fifo, audio_buffer_t *buf) {
   pthread_mutex_lock (&fifo->mutex);
   ao_fifo_append_int (fifo, buf);
-  pthread_cond_signal (&fifo->not_empty);
+  if (fifo->num_waiters)
+    pthread_cond_signal (&fifo->not_empty);
   pthread_mutex_unlock (&fifo->mutex);
 }
 
 static void ao_free_fifo_append (aos_t *this, audio_buffer_t *buf) {
   pthread_mutex_lock (&this->free_fifo.mutex);
   ao_fifo_append_int (&this->free_fifo, buf);
-  pthread_cond_signal (&this->free_fifo.not_empty);
+  if (this->free_fifo.num_waiters)
+    pthread_cond_signal (&this->free_fifo.not_empty);
   if (!this->num_streams) {
     buf->stream = NULL;
     if (ao_reref (this, buf) && (this->free_fifo.num_buffers == NUM_AUDIO_BUFFERS))
@@ -527,7 +532,8 @@ static audio_buffer_t *ao_out_fifo_get (aos_t *this, audio_buffer_t *buf) {
         n++;
       }
       if (n) {
-        pthread_cond_broadcast (&this->free_fifo.not_empty);
+        if (this->free_fifo.num_waiters)
+          pthread_cond_broadcast (&this->free_fifo.not_empty);
         pthread_mutex_unlock (&this->free_fifo.mutex);
       }
       pthread_cond_broadcast (&this->out_fifo.empty);
@@ -555,7 +561,9 @@ static audio_buffer_t *ao_out_fifo_get (aos_t *this, audio_buffer_t *buf) {
       return buf;
     }
 
+    this->out_fifo.num_waiters++;
     pthread_cond_wait (&this->out_fifo.not_empty, &this->out_fifo.mutex);
+    this->out_fifo.num_waiters--;
   }
 }
 
@@ -568,10 +576,13 @@ static audio_buffer_t *ao_fifo_get_nonblock (audio_fifo_t *fifo) {
     gettimeofday (&tv, NULL);
     ts.tv_sec  = tv.tv_sec + 1;
     ts.tv_nsec = tv.tv_usec * 1000;
+    fifo->num_waiters++;
     if (pthread_cond_timedwait (&fifo->not_empty, &fifo->mutex, &ts) != 0) {
+      fifo->num_waiters--;
       pthread_mutex_unlock (&fifo->mutex);
       return NULL;
     }
+    fifo->num_waiters--;
   }
   if (buf->next) {
     fifo->first = buf->next;
@@ -609,7 +620,7 @@ static void ao_out_fifo_flush (aos_t *this) {
       audio_buffer_t *b = ao_fifo_pop_int (&this->out_fifo);
       ao_fifo_append_int (&this->free_fifo, b);
     }
-    if (this->free_fifo.first)
+    if (this->free_fifo.first && this->free_fifo.num_waiters)
       pthread_cond_broadcast (&this->free_fifo.not_empty);
     pthread_mutex_unlock (&this->free_fifo.mutex);
   } else {
@@ -617,7 +628,8 @@ static void ao_out_fifo_flush (aos_t *this) {
     while (this->out_fifo.first) {
       /* i think it's strange to send not_empty signal here (beside the enqueue
        * function), but it should do no harm. [MF] */
-      pthread_cond_signal (&this->out_fifo.not_empty);
+      if (this->out_fifo.num_waiters)
+        pthread_cond_signal (&this->out_fifo.not_empty);
       pthread_cond_wait (&this->out_fifo.empty, &this->out_fifo.mutex);
     }
     this->discard_buffers--;
@@ -1561,7 +1573,9 @@ int xine_get_next_audio_frame (xine_audio_port_t *this_gen,
       struct timespec ts;
       ts.tv_sec = now.tv_sec;
       ts.tv_nsec = now.tv_usec * 1000;
+      this->out_fifo.num_waiters++;
       pthread_cond_timedwait (&this->out_fifo.not_empty, &this->out_fifo.mutex, &ts);
+      this->out_fifo.num_waiters--;
     }
 
   }
