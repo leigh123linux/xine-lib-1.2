@@ -383,6 +383,7 @@ static void vo_queue_read_unlock (img_buf_fifo_t *queue) {
 }
 
 static void vo_queue_append_int (img_buf_fifo_t *queue, vo_frame_t *img) {
+  int n;
 
   /* img already enqueue? (serious leak) */
   assert (img->next==NULL);
@@ -392,24 +393,58 @@ static void vo_queue_append_int (img_buf_fifo_t *queue, vo_frame_t *img) {
   if (!queue->first) {
     queue->first = img;
     queue->last  = img;
-    queue->num_buffers = 0;
-  }
-  else if (queue->last) {
+    n = 1;
+  } else if (queue->last) {
     queue->last->next = img;
-    queue->last  = img;
+    queue->last       = img;
+    n = queue->num_buffers + 1;
+  } else {
+    /* should not happen, but calm down gcc */
+    n = 1;
   }
 
-  queue->num_buffers++;
-  if (queue->num_buffers_max < queue->num_buffers)
-    queue->num_buffers_max = queue->num_buffers;
+  queue->num_buffers = n;
+  if (queue->num_buffers_max < n)
+    queue->num_buffers_max = n;
 
-  if (queue->num_buffers > queue->locked_for_read)
+  if (n > queue->locked_for_read)
     pthread_cond_signal (&queue->not_empty);
 }
 
 static void vo_queue_append (img_buf_fifo_t *queue, vo_frame_t *img) {
   pthread_mutex_lock (&queue->mutex);
   vo_queue_append_int (queue, img);
+  pthread_mutex_unlock (&queue->mutex);
+}
+
+static void vo_queue_append_list (img_buf_fifo_t *queue, vo_frame_t *img) {
+  int n;
+  if (!img)
+    return;
+  pthread_mutex_lock (&queue->mutex);
+
+  if (!queue->first) {
+    queue->first = img;
+    n = 1;
+  } else if (queue->last) {
+    queue->last->next = img;
+    n = queue->num_buffers + 1;
+  } else {
+    /* should not happen, but calm down gcc */
+    n = 1;
+  }
+  while (img->next) {
+    n++;
+    img = img->next;
+  }
+  queue->last = img;
+  queue->num_buffers = n;
+
+  if (queue->num_buffers_max < n)
+    queue->num_buffers_max = n;
+
+  if (n > queue->locked_for_read)
+    pthread_cond_broadcast (&queue->not_empty);
   pthread_mutex_unlock (&queue->mutex);
 }
 
@@ -609,6 +644,24 @@ static void vo_frame_dec_lock (vo_frame_t *img) {
   }
 
   pthread_mutex_unlock (&img->mutex);
+}
+
+static int vo_frame_dec_lock_int (vos_t *this, vo_frame_t *img) {
+  int n;
+  pthread_mutex_lock (&img->mutex);
+  n = --img->lock_counter;
+  if (n == 1) {
+    if (this->frames_extref > 0)
+      this->frames_extref--;
+  } else
+  if (!n) {
+    if (!this->num_streams) {
+      img->stream = NULL;
+      vo_reref (this, img);
+    }
+  }
+  pthread_mutex_unlock (&img->mutex);
+  return n;
 }
 
 
@@ -1073,7 +1126,6 @@ static int vo_frame_draw (vo_frame_t *img, xine_stream_t *stream) {
       }
     }
     img->stream = stream;
-    vo_reref (this, img);
     _x_extra_info_merge( img->extra_info, stream->video_decoder_extra_info );
     stream->metronom->got_video_frame (stream->metronom, img);
 #if 0
@@ -1096,6 +1148,7 @@ static int vo_frame_draw (vo_frame_t *img, xine_stream_t *stream) {
     }
 #endif
   }
+  vo_reref (this, img);
   this->current_width = img->width;
   this->current_height = img->height;
   this->current_duration = img->duration;
@@ -1462,25 +1515,52 @@ static vo_frame_t *next_frame (vos_t *this, int64_t *vpts) {
    * FIXED: by auto gapless switch.
    */
   if (this->discard_frames) {
-    vo_frame_t *first_frame = NULL, *last_frame = NULL;
+    vo_frame_t *freelist = NULL, **add = &freelist, *first_frame = NULL;
     int n = 0;
-
+    /* Take out all at once, but keep decoder blocked for now. */
+    this->display_img_buf_queue.first       = NULL;
+    this->display_img_buf_queue.last        = NULL;
+    this->display_img_buf_queue.num_buffers = 0;
+    /* Scan for stuff we want to keep. */
     while (img) {
       n++;
-      img = vo_queue_pop_int (&this->display_img_buf_queue);
       if (img->is_first != 0) {
-        if (first_frame)
-          vo_frame_dec_lock (first_frame);
+        if (first_frame && !vo_frame_dec_lock_int (this, first_frame)) {
+          *add = first_frame;
+          add = &first_frame->next;
+        }
         first_frame = img;
+        img = img->next;
       } else {
-        if (last_frame)
-          vo_frame_dec_lock (last_frame);
-        last_frame = img;
+        vo_frame_t *f = this->img_backup;
+        if (f && !vo_frame_dec_lock_int (this, f)) {
+          *add = f;
+          add = &f->next;
+        }
+        this->img_backup = img;
+        f = img->next;
+        img->next = NULL;
+        img = f;
       }
-      img = this->display_img_buf_queue.first;
     }
+    /* Override with first frame. */
+    if (first_frame) {
+      vo_frame_inc_lock (first_frame);
+      first_frame->vpts = *vpts;
+      first_frame->next = NULL;
+      first_frame->future_frame = NULL;
+      img = this->img_backup;
+      this->img_backup = first_frame;
+      if (img && !vo_frame_dec_lock_int (this, img)) {
+        *add = img;
+        add = &img->next;
+      }
+    }
+    /* Free (almost) all at once. */
+    *add = NULL;
+    vo_queue_append_list (&this->free_img_buf_queue, freelist);
     pthread_mutex_unlock (&this->display_img_buf_queue.mutex);
-
+    /* Report success. */
     if (n) {
       pthread_mutex_lock (&this->trigger_drawing_mutex);
       pthread_cond_broadcast (&this->done_flushing);
@@ -1489,27 +1569,9 @@ static vo_frame_t *next_frame (vos_t *this, int64_t *vpts) {
 #ifdef LOG_FLUSH
       printf ("video_out: flushed %d frames (now=%"PRId64", discard=%d)\n", n, *vpts, this->discard_frames);
 #endif
-
-      if (first_frame) {
-        first_frame->vpts = *vpts;
-        first_frame->future_frame = NULL;
-        if (last_frame)
-          vo_frame_dec_lock (last_frame);
-        if (this->img_backup)
-          vo_frame_dec_lock (this->img_backup);
-        vo_frame_inc_lock (first_frame);
-        this->img_backup = first_frame;
-        *vpts = 0;
-        return first_frame;
-      }
-      if (last_frame) {
-        if (this->img_backup)
-          vo_frame_dec_lock (this->img_backup);
-        this->img_backup = last_frame;
-      }
     }
     *vpts = 0;
-    return NULL;
+    return first_frame;
   }
 
   while (img) {
@@ -2546,7 +2608,7 @@ static vo_frame_t * crop_frame( xine_video_port_t *this_gen, vo_frame_t *img ) {
   dupl->is_first  = img->is_first;
 
   dupl->stream    = img->stream;
-  vo_reref ((vos_t *)this_gen, img);
+  vo_reref ((vos_t *)this_gen, dupl);
 
   memcpy( dupl->extra_info, img->extra_info, sizeof(extra_info_t) );
 
