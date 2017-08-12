@@ -614,7 +614,8 @@ if test x"$GCC" = x"yes"; then
     fi
 fi
 
-CC_CHECK_CFLAGS([-ffast-math],               [optflags="$optflags -ffast-math"])
+dnl Disabled; causes linkage failure on stretch (_ZGVbN2vv___pow_finite)
+dnl CC_CHECK_CFLAGS([-ffast-math],               [optflags="$optflags -ffast-math"])
 CC_CHECK_CFLAGS([-fexpensive-optimizations], [optflags="$optflags -fexpensive-optimizations"])
 
 dnl initialize arch_86 as it is later tested for != "no" 
