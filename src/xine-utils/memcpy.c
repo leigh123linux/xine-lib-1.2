@@ -123,98 +123,99 @@ quote of the day:
 
 #if defined(ARCH_X86)
 
+#if defined(ARCH_X86_64)
+#  define DOPTR(what,from,to) "\n\t"what"q\t"from", "to
+#  define BUMPPTR(offs,num)   "\n\tleaq\t"offs"(%"num"), %"num
+#  define MEM1(reg)           "(%"reg")"
+#  define MEM2(offs,reg)      offs"(%"reg")"
+#elif defined(ARCH_X86_X32)
+   /* Mapping a pointer to a register yields a 32bit move,
+    * which does extend to 64bit properly. Dereferencing as
+    * 32bit (%esi) will work but takes an extra 1 byte prefix,
+    * so lets use 64bit (%rsi) instead.
+    * Inserting an extra letter into operand reference modifies
+    * register size something like this:
+    * "%2, %b2, %h2, %w2, %l2, %q2" -> "%edx, %dl, %dh, %dx, %edx, %rdx"
+    * For some reason, "info gcc" silences this useful feature.
+    */
+#  define DOPTR(what,from,to) "\n\t"what"l\t"from", "to
+#  define BUMPPTR(offs,num)   "\n\tleaq\t"offs"(%q"num"), %q"num
+#  define MEM1(reg)           "(%q"reg")"
+#  define MEM2(offs,reg)      offs"(%q"reg")"
+#else
+#  define DOPTR(what,from,to) "\n\t"what"l\t"from", "to
+#  define BUMPPTR(offs,num)   "\n\tleal\t"offs"(%"num"), %"num
+#  define MEM1(reg)           "(%"reg")"
+#  define MEM2(offs,reg)      offs"(%"reg")"
+#endif
+
 #ifndef _MSC_VER
+
 /* for small memory blocks (<256 bytes) this version is faster */
-#define small_memcpy(to,from,n)\
-{\
-register uintptr_t dummy;\
-__asm__ __volatile__(\
-  "rep; movsb"\
-  :"=&D"(to), "=&S"(from), "=&c"(dummy)\
-  :"0" (to), "1" (from),"2" (n)\
-  : "memory");\
-}
+/* rep_movsb (void *, const void *, uintptr_t)                 */
+#define rep_movsb(to,from,n)\
+  __asm__ __volatile__ (\
+    "cld\n\trep movsb"\
+    : "=D" (to), "=S" (from), "=c" (n)\
+    : "0"  (to),  "1" (from), "2"  (n)\
+    : "cc", "memory"\
+  )
 
 /* idea from linux kernel __memcpy (from: /include/asm/string.h) */
 /* then, added target alignment and 64bit version.               */
 static __inline__ void *linux_kernel_memcpy_impl (void *to, const void *from, size_t n) {
   void *ret = to;
-  if (n < 16) {
-    if (n)
-      small_memcpy (to, from, n);
+  uintptr_t s = n;
+  if (s < 16) {
+    if (s)
+      rep_movsb (to, from, s);
   } else {
-    size_t d;
-#if defined(ARCH_X86_X32) || defined(ARCH_X86_64)
+    uintptr_t d;
     __asm__ __volatile__ (
-      "movq\t%1, %3\n\t"
-      "testb\t$1, %b3\n\t"
-      "je\t1f\n\t"
-      "movsb\n\t"
-      "subq\t$1, %2\n\t"
-      "movq\t%1, %3\n"
-      "1:\n\t"
-      "testb\t$2, %b3\n\t"
-      "je\t2f\n\t"
-      "movsw\n\t"
-      "subq\t$2, %2\n\t"
-      "movq\t%1, %3\n"
-      "2:\n\t"
-      "testb\t$4, %b3\n\t"
-      "je\t3f\n\t"
-      "movsl\n\t"
-      "subq\t$4, %2\n"
-      "3:\n\t"
-      "movq\t%2, %3\n\t"
-      "shrq\t$3, %2\n\t"
-      "rep\n\t"
-      "movsq\n\t"
-      "testb\t$4, %b3\n\t"
-      "je\t4f\n\t"
-      "movsl\n"
-      "4:\n\t"
-      "testb\t$2, %b3\n\t"
-      "je\t5f\n\t"
-      "movsw\n"
-      "5:\n\t"
-      "testb\t$1, %b3\n\t"
-      "je\t6f\n\t"
-      "movsb\n"
-      "6:"
-      : "=S" (from), "=D" (to), "=c" (n), "=&r" (d)
-      : "0"  (from), "1"  (to), "2"  (n)
-      : "cc", "memory"
-    );
+      "cld"
+      DOPTR("mov","%1","%3")
+      "\n\ttestb\t$1, %b3"
+      "\n\tje\t1f"
+      "\n\tmovsb"
+      DOPTR("sub","$1","%2")
+      DOPTR("mov","%1","%3")
+      "\n1:"
+      "\n\ttestb\t$2, %b3"
+      "\n\tje\t2f"
+      "\n\tmovsw"
+      DOPTR("sub","$2","%2")
+      DOPTR("mov","%1","%3")
+      "\n2:"
+#if defined(ARCH_X86_64) || defined(ARCH_X86_X32)
+      "\n\ttestb\t$4, %b3"
+      "\n\tje\t3f"
+      "\n\tmovsl"
+      DOPTR("sub","$4","%2")
+      "\n3:"
+      DOPTR("mov","%2","%3")
+      DOPTR("shr","$3","%2")
+      "\n\trep movsq"
+      "\n\ttestb\t$4, %b3"
+      "\n\tje\t4f"
+      "\n\tmovsl"
+      "\n4:"
 #else
-    __asm__ __volatile__ (
-      "movl\t%1, %3\n\t"
-      "testb\t$1, %b3\n\t"
-      "je\t1f\n\t"
-      "movsb\n\t"
-      "subl\t$1, %2\n\t"
-      "movl\t%1, %3\n"
-      "1:\n\t"
-      "testb\t$2, %b3\n\t"
-      "je\t2f\n\t"
-      "movsw\n\t"
-      "subl\t$2, %2\n"
-      "2:\n\t"
-      "movl\t%2, %3\n\t"
-      "shrl\t$2, %2\n\t"
-      "rep\n\t"
-      "movsl\n\t"
-      "testb\t$2, %b3\n\t"
-      "je\t3f\n\t"
-      "movsw\n"
-      "3:\n\t"
-      "testb\t$1, %b3\n\t"
-      "je\t4f\n\t"
-      "movsb\n"
-      "4:"
-      : "=S" (from), "=D" (to), "=c" (n), "=&q" (d)
-      : "0"  (from), "1"  (to), "2"  (n)
+      DOPTR("mov","%2","%3")
+      DOPTR("shr","$2","%2")
+      "\n\trep movsl"
+#endif
+      "\n\ttestb\t$2, %b3"
+      "\n\tje\t5f"
+      "\n\tmovsw"
+      "\n5:"
+      "\n\ttestb\t$1, %b3"
+      "\n\tje\t6f"
+      "\n\tmovsb"
+      "\n6:"
+      : "=S" (from), "=D" (to), "=c" (s), "=&q" (d)
+      : "0"  (from), "1"  (to), "2"  (s)
       : "cc", "memory"
     );
-#endif
   }
   return ret;
 }
@@ -232,67 +233,61 @@ simplicity. [MF] */
 static void * sse_memcpy(void * to, const void * from, size_t len)
 {
   const uint8_t *pf;
-  void *retval;
-  retval = to;
+  void *retval = to;
 
   /* PREFETCH has effect even for MOVSB instruction ;) */
   pf = (const uint8_t *)((uintptr_t)from & ~(uintptr_t)31);
   __asm__ __volatile__ (
-    "prefetchnta\t(%0)\n\t"
-    "prefetchnta\t32(%0)\n\t"
-    "prefetchnta\t64(%0)\n\t"
-    "prefetchnta\t96(%0)\n\t"
-    "prefetchnta\t128(%0)\n\t"
-    "prefetchnta\t160(%0)\n\t"
-    "prefetchnta\t192(%0)\n\t"
-    "prefetchnta\t224(%0)\n\t"
-    "prefetchnta\t256(%0)\n\t"
-    "prefetchnta\t288(%0)\n\t"
-    "prefetchnta\t320(%0)\n\t"
-    "prefetchnta\t352(%0)\n\t"
-    "prefetchnta\t384(%0)\n\t"
-    "prefetchnta\t416(%0)\n\t"
-    "prefetchnta\t448(%0)\n\t"
-    "prefetchnta\t480(%0)"
+    "\n\tprefetchnta\t"MEM1(      "0")
+    "\n\tprefetchnta\t"MEM2( "32","0")
+    "\n\tprefetchnta\t"MEM2( "64","0")
+    "\n\tprefetchnta\t"MEM2( "96","0")
     : : "r" (pf) );
-  pf += 512;
-
   if (len < 128)
     return linux_kernel_memcpy_impl (to, from, len);
 
+  __asm__ __volatile__ (
+    "\n\tprefetchnta\t"MEM2("128","0")
+    "\n\tprefetchnta\t"MEM2("160","0")
+    "\n\tprefetchnta\t"MEM2("192","0")
+    "\n\tprefetchnta\t"MEM2("224","0")
+    "\n\tprefetchnta\t"MEM2("256","0")
+    "\n\tprefetchnta\t"MEM2("288","0")
+    "\n\tprefetchnta\t"MEM2("320","0")
+    "\n\tprefetchnta\t"MEM2("352","0")
+    "\n\tprefetchnta\t"MEM2("384","0")
+    "\n\tprefetchnta\t"MEM2("416","0")
+    "\n\tprefetchnta\t"MEM2("448","0")
+    "\n\tprefetchnta\t"MEM2("480","0")
+    : : "r" (pf) );
+  pf += 512;
   {
-    size_t i;
+    uintptr_t i;
     /* Align destinition to MMREG_SIZE -boundary */
     i = (uintptr_t)to & 15;
     if (i) {
       i = 16 - i;
       len -= i;
-      __asm__ __volatile__ (
-        "rep\n\t"
-        "movsb"
-        : "=S" (from), "=D" (to), "=c" (i)
-        : "0"  (from), "1"  (to), "2"  (i)
-        : "memory"
-      );
+      rep_movsb (to, from, i);
     }
     i = len >> 6;
     if(((uintptr_t)from) & 15) {
       /* if SRC is misaligned */
       do {
         __asm__ __volatile__ (
-          "prefetchnta\t(%2)\n\t"
-          "prefetchnta\t32(%2)\n\t"
-          "movups\t(%0), %%xmm0\n\t"
-          "movups\t16(%0), %%xmm1\n\t"
-          "lea\t64(%2), %2\n\t"
-          "movups\t32(%0), %%xmm2\n\t"
-          "movups\t48(%0), %%xmm3\n\t"
-          "movntps\t%%xmm0, (%1)\n\t"
-          "movntps\t%%xmm1, 16(%1)\n\t"
-          "lea\t64(%0), %0\n\t"
-          "movntps\t%%xmm2, 32(%1)\n\t"
-          "movntps\t%%xmm3, 48(%1)\n\t"
-          "lea\t64(%1), %1"
+          "\n\tprefetchnta\t"MEM1(     "2")
+          "\n\tprefetchnta\t"MEM2("32","2")
+          "\n\tmovups\t"MEM1(     "0")", %%xmm0"
+          "\n\tmovups\t"MEM2("16","0")", %%xmm1"
+          BUMPPTR("64","2")
+          "\n\tmovups\t"MEM2("32","0")", %%xmm2"
+          "\n\tmovups\t"MEM2("48","0")", %%xmm3"
+          "\n\tmovntps\t%%xmm0, "MEM1(     "1")
+          "\n\tmovntps\t%%xmm1, "MEM2("16","1")
+          BUMPPTR("64","0")
+          "\n\tmovntps\t%%xmm2, "MEM2("32","1")
+          "\n\tmovntps\t%%xmm3, "MEM2("48","1")
+          BUMPPTR("64","1")
           : "=r" (from), "=r" (to), "=r" (pf)
           : "0"  (from), "1"  (to), "2"  (pf)
           : "memory"
@@ -306,19 +301,19 @@ static void * sse_memcpy(void * to, const void * from, size_t len)
       */
       do {
         __asm__ __volatile__ (
-          "prefetchnta\t(%2)\n\t"
-          "prefetchnta\t32(%2)\n\t"
-          "movaps\t(%0), %%xmm0\n\t"
-          "movaps\t16(%0), %%xmm1\n\t"
-          "lea\t64(%2), %2\n\t"
-          "movaps\t32(%0), %%xmm2\n\t"
-          "movaps\t48(%0), %%xmm3\n\t"
-          "movntps\t%%xmm0, (%1)\n\t"
-          "movntps\t%%xmm1, 16(%1)\n\t"
-          "lea\t64(%0), %0\n\t"
-          "movntps\t%%xmm2, 32(%1)\n\t"
-          "movntps\t%%xmm3, 48(%1)\n\t"
-          "lea\t64(%1), %1"
+          "\n\tprefetchnta\t"MEM1(     "2")
+          "\n\tprefetchnta\t"MEM2("32","2")
+          "\n\tmovaps\t"MEM1(     "0")", %%xmm0"
+          "\n\tmovaps\t"MEM2("16","0")", %%xmm1"
+          BUMPPTR("64","2")
+          "\n\tmovaps\t"MEM2("32","0")", %%xmm2"
+          "\n\tmovaps\t"MEM2("48","0")", %%xmm3"
+          "\n\tmovntps\t%%xmm0, "MEM1(     "1")
+          "\n\tmovntps\t%%xmm1, "MEM2("16","1")
+          BUMPPTR("64","0")
+          "\n\tmovntps\t%%xmm2, "MEM2("32","1")
+          "\n\tmovntps\t%%xmm3, "MEM2("48","1")
+          BUMPPTR("64","1")
           : "=r" (from), "=r" (to), "=r" (pf)
           : "0"  (from), "1"  (to), "2"  (pf)
           : "memory"
@@ -328,16 +323,9 @@ static void * sse_memcpy(void * to, const void * from, size_t len)
     /* since movntq is weakly-ordered, a "sfence"
      * is needed to become ordered again. */
     __asm__ __volatile__ ("sfence":::"memory");
-    len &= 63;
-    if (len) {
-      __asm__ __volatile__ (
-        "rep\n\t"
-        "movsb"
-        : "=S" (from), "=D" (to), "=c" (len)
-        : "0"  (from), "1"  (to), "2"  (len)
-        : "memory"
-      );
-    }
+    i = len & 63;
+    if (i)
+      rep_movsb (to, from, i);
   }
   return retval;
 }
@@ -345,212 +333,214 @@ static void * sse_memcpy(void * to, const void * from, size_t len)
 #ifdef HAVE_AVX
 static void * avx_memcpy(void * to, const void * from, size_t len)
 {
-  void *retval;
-  size_t i;
-  retval = to;
+  void *retval = to;
+  const uint8_t *pf;
+  uintptr_t i;
 
   /* PREFETCH has effect even for MOVSB instruction ;) */
+  pf = (const uint8_t *)((uintptr_t)from & ~(uintptr_t)31);
   __asm__ __volatile__ (
-    "   prefetchnta (%0)\n"
-    "   prefetchnta 32(%0)\n"
-    "   prefetchnta 64(%0)\n"
-    "   prefetchnta 96(%0)\n"
-    "   prefetchnta 128(%0)\n"
-    "   prefetchnta 160(%0)\n"
-    "   prefetchnta 192(%0)\n"
-    "   prefetchnta 224(%0)\n"
-    "   prefetchnta 256(%0)\n"
-    "   prefetchnta 288(%0)\n"
-    : : "r" (from) );
+    "\n\tprefetchnta\t"MEM1(      "0")
+    "\n\tprefetchnta\t"MEM2( "32","0")
+    "\n\tprefetchnta\t"MEM2( "64","0")
+    "\n\tprefetchnta\t"MEM2( "96","0")
+    "\n\tprefetchnta\t"MEM2("128","0")
+    "\n\tprefetchnta\t"MEM2("160","0")
+    "\n\tprefetchnta\t"MEM2("192","0")
+    "\n\tprefetchnta\t"MEM2("224","0")
+    "\n\tprefetchnta\t"MEM2("256","0")
+    "\n\tprefetchnta\t"MEM2("288","0")
+    : : "r" (pf));
+  pf += 320;
 
   if(len >= MIN_LEN)
   {
-    register uintptr_t delta;
     /* Align destinition to MMREG_SIZE -boundary */
-    delta = ((uintptr_t)to)&(AVX_MMREG_SIZE-1);
-    if(delta)
-    {
-      delta=AVX_MMREG_SIZE-delta;
-      len -= delta;
-      small_memcpy(to, from, delta);
+    i = ((uintptr_t)to) & 31;
+    if (i) {
+      i = 32 - i;
+      len -= i;
+      rep_movsb (to, from, i);
     }
     i = len >> 7; /* len/128 */
-    len&=127;
     if(((uintptr_t)from) & 31)
       /* if SRC is misaligned */
-      for(; i>0; i--)
-      {
+      while (i--) {
         __asm__ __volatile__ (
-        "prefetchnta 320(%0)\n"
-        "prefetchnta 352(%0)\n"
-        "prefetchnta 384(%0)\n"
-        "prefetchnta 416(%0)\n"
-        "vmovups    (%0), %%ymm0\n"
-        "vmovups  32(%0), %%ymm1\n"
-        "vmovups  64(%0), %%ymm2\n"
-        "vmovups  96(%0), %%ymm3\n"
-        "vmovntps %%ymm0,   (%1)\n"
-        "vmovntps %%ymm1, 32(%1)\n"
-        "vmovntps %%ymm2, 64(%1)\n"
-        "vmovntps %%ymm3, 96(%1)\n"
-        :: "r" (from), "r" (to) : "memory");
-        from = ((const unsigned char *)from) + 128;
-        to = ((unsigned char *)to) + 128;
+        "\n\tprefetchnta\t"MEM1(     "2")
+        "\n\tprefetchnta\t"MEM2("32","2")
+        "\n\tprefetchnta\t"MEM2("64","2")
+        "\n\tprefetchnta\t"MEM2("96","2")
+        "\n\tvmovups\t"MEM1(     "0")", %%ymm0"
+        "\n\tvmovups\t"MEM2("32","0")", %%ymm1"
+        BUMPPTR("128","2")
+        "\n\tvmovups\t"MEM2("64","0")", %%ymm2"
+        "\n\tvmovups\t"MEM2("96","0")", %%ymm3"
+        "\n\tvmovntps\t%%ymm0, "MEM1(     "1")
+        "\n\tvmovntps\t%%ymm1, "MEM2("32","1")
+        BUMPPTR("128","0")
+        "\n\tvmovntps\t%%ymm2, "MEM2("64","1")
+        "\n\tvmovntps\t%%ymm3, "MEM2("96","1")
+        BUMPPTR("128","1")
+        : "=r" (from), "=r" (to), "=r" (pf)
+        : "0"  (from), "1"  (to), "2"  (pf)
+        : "memory");
       }
     else
       /*
-         Only if SRC is aligned on 16-byte boundary.
-         It allows to use movaps instead of movups, which required data
+         Only if SRC is aligned on 32-byte boundary.
+         It allows to use vmovaps instead of vmovups, which required data
          to be aligned or a general-protection exception (#GP) is generated.
       */
-      for(; i>0; i--)
-      {
+      while (i--) {
         __asm__ __volatile__ (
-        "prefetchnta 320(%0)\n"
-        "prefetchnta 352(%0)\n"
-        "prefetchnta 384(%0)\n"
-        "prefetchnta 416(%0)\n"
-        "vmovaps    (%0), %%ymm0\n"
-        "vmovaps  32(%0), %%ymm1\n"
-        "vmovaps  64(%0), %%ymm2\n"
-        "vmovaps  96(%0), %%ymm3\n"
-        "vmovntps %%ymm0,   (%1)\n"
-        "vmovntps %%ymm1, 32(%1)\n"
-        "vmovntps %%ymm2, 64(%1)\n"
-        "vmovntps %%ymm3, 96(%1)\n"
-        :: "r" (from), "r" (to) : "memory");
-        from = ((const unsigned char *)from) + 128;
-        to = ((unsigned char *)to) + 128;
+        "\n\tprefetchnta\t"MEM1(     "2")
+        "\n\tprefetchnta\t"MEM2("32","2")
+        "\n\tprefetchnta\t"MEM2("64","2")
+        "\n\tprefetchnta\t"MEM2("96","2")
+        "\n\tvmovaps\t"MEM1(     "0")", %%ymm0"
+        "\n\tvmovaps\t"MEM2("32","0")", %%ymm1"
+        BUMPPTR("128","2")
+        "\n\tvmovaps\t"MEM2("64","0")", %%ymm2"
+        "\n\tvmovaps\t"MEM2("96","0")", %%ymm3"
+        "\n\tvmovntps\t%%ymm0, "MEM1(     "1")
+        "\n\tvmovntps\t%%ymm1, "MEM2("32","1")
+        BUMPPTR("128","0")
+        "\n\tvmovntps\t%%ymm2, "MEM2("64","1")
+        "\n\tvmovntps\t%%ymm3, "MEM2("96","1")
+        BUMPPTR("128","1")
+        : "=r" (from), "=r" (to), "=r" (pf)
+        : "0"  (from), "1"  (to), "2"  (pf)
+        : "memory");
       }
     /* since movntq is weakly-ordered, a "sfence"
      * is needed to become ordered again. */
     __asm__ __volatile__ ("sfence":::"memory");
     __asm__ __volatile__ ("vzeroupper");
+    len &= 127;
   }
   /*
    *	Now do the tail of the block
    */
-  if(len) linux_kernel_memcpy_impl(to, from, len);
+  i = len;
+  if (i)
+    rep_movsb (to, from, i);
   return retval;
 }
 #endif /* HAVE_AVX */
 
 static void * mmx_memcpy(void * to, const void * from, size_t len)
 {
-  void *retval;
-  size_t i;
-  retval = to;
+  void *retval = to;
+  uintptr_t i;
 
   if(len >= MMX1_MIN_LEN)
   {
-    register uintptr_t delta;
     /* Align destinition to MMREG_SIZE -boundary */
-    delta = ((uintptr_t)to)&(MMX_MMREG_SIZE-1);
-    if(delta)
-    {
-      delta=MMX_MMREG_SIZE-delta;
-      len -= delta;
-      small_memcpy(to, from, delta);
+    i = ((uintptr_t)to) & 7;
+    if (i) {
+      i = 8 - i;
+      len -= i;
+      rep_movsb (to, from, i);
     }
     i = len >> 6; /* len/64 */
-    len&=63;
-    for(; i>0; i--)
-    {
+    while (i--) {
       __asm__ __volatile__ (
-      "movq (%0), %%mm0\n"
-      "movq 8(%0), %%mm1\n"
-      "movq 16(%0), %%mm2\n"
-      "movq 24(%0), %%mm3\n"
-      "movq 32(%0), %%mm4\n"
-      "movq 40(%0), %%mm5\n"
-      "movq 48(%0), %%mm6\n"
-      "movq 56(%0), %%mm7\n"
-      "movq %%mm0, (%1)\n"
-      "movq %%mm1, 8(%1)\n"
-      "movq %%mm2, 16(%1)\n"
-      "movq %%mm3, 24(%1)\n"
-      "movq %%mm4, 32(%1)\n"
-      "movq %%mm5, 40(%1)\n"
-      "movq %%mm6, 48(%1)\n"
-      "movq %%mm7, 56(%1)\n"
-      :: "r" (from), "r" (to) : "memory");
-      from = ((const unsigned char *)from) + 64;
-      to = ((unsigned char *)to) + 64;
+      "\n\tmovq\t"MEM1(     "0")", %%mm0"
+      "\n\tmovq\t"MEM2( "8","0")", %%mm1"
+      "\n\tmovq\t"MEM2("16","0")", %%mm2"
+      "\n\tmovq\t"MEM2("24","0")", %%mm3"
+      "\n\tmovq\t"MEM2("32","0")", %%mm4"
+      "\n\tmovq\t"MEM2("40","0")", %%mm5"
+      "\n\tmovq\t"MEM2("48","0")", %%mm6"
+      "\n\tmovq\t"MEM2("56","0")", %%mm7"
+      "\n\tmovq\t%%mm0, "MEM1(     "1")
+      "\n\tmovq\t%%mm1, "MEM2( "8","1")
+      "\n\tmovq\t%%mm2, "MEM2("16","1")
+      "\n\tmovq\t%%mm3, "MEM2("24","1")
+      BUMPPTR("64","0")
+      "\n\tmovq\t%%mm4, "MEM2("32","1")
+      "\n\tmovq\t%%mm5, "MEM2("40","1")
+      "\n\tmovq\t%%mm6, "MEM2("48","1")
+      "\n\tmovq\t%%mm7, "MEM2("56","1")
+      BUMPPTR("64","1")
+      : "=r" (from), "=r" (to)
+      : "0"  (from), "1"  (to)
+      : "memory");
     }
     __asm__ __volatile__ ("emms":::"memory");
+    len &= 63;
   }
   /*
    *	Now do the tail of the block
    */
-  if(len) linux_kernel_memcpy_impl(to, from, len);
+  i = len;
+  if (i)
+    rep_movsb (to, from, i);
   return retval;
 }
 
 static void * mmx2_memcpy(void * to, const void * from, size_t len)
 {
   const uint8_t *pf;
-  void *retval;
-  size_t i;
-  retval = to;
+  void *retval = to;
+  uintptr_t i;
 
   /* PREFETCH has effect even for MOVSB instruction ;) */
   pf = (const uint8_t *)((uintptr_t)from & ~(uintptr_t)31);
   __asm__ __volatile__ (
-    "prefetchnta\t(%0)\n\t"
-    "prefetchnta\t32(%0)\n\t"
-    "prefetchnta\t64(%0)\n\t"
-    "prefetchnta\t96(%0)\n\t"
-    "prefetchnta\t128(%0)\n\t"
-    "prefetchnta\t160(%0)\n\t"
-    "prefetchnta\t192(%0)\n\t"
-    "prefetchnta\t224(%0)\n\t"
-    "prefetchnta\t256(%0)\n\t"
-    "prefetchnta\t288(%0)\n\t"
-    "prefetchnta\t320(%0)\n\t"
-    "prefetchnta\t352(%0)\n\t"
-    "prefetchnta\t384(%0)\n\t"
-    "prefetchnta\t416(%0)\n\t"
-    "prefetchnta\t448(%0)\n\t"
-    "prefetchnta\t480(%0)"
+    "\n\tprefetchnta\t"MEM1(      "0")
+    "\n\tprefetchnta\t"MEM2( "32","0")
+    "\n\tprefetchnta\t"MEM2( "64","0")
+    "\n\tprefetchnta\t"MEM2( "96","0")
+    "\n\tprefetchnta\t"MEM2("128","0")
+    "\n\tprefetchnta\t"MEM2("160","0")
+    "\n\tprefetchnta\t"MEM2("192","0")
+    "\n\tprefetchnta\t"MEM2("224","0")
+    "\n\tprefetchnta\t"MEM2("256","0")
+    "\n\tprefetchnta\t"MEM2("288","0")
+    "\n\tprefetchnta\t"MEM2("320","0")
+    "\n\tprefetchnta\t"MEM2("352","0")
+    "\n\tprefetchnta\t"MEM2("384","0")
+    "\n\tprefetchnta\t"MEM2("416","0")
+    "\n\tprefetchnta\t"MEM2("448","0")
+    "\n\tprefetchnta\t"MEM2("480","0")
     : : "r" (pf) );
   pf += 512;
 
   if(len >= MIN_LEN)
   {
-    register uintptr_t delta;
     /* Align destinition to MMREG_SIZE -boundary */
-    delta = ((uintptr_t)to)&(MMX_MMREG_SIZE-1);
-    if(delta)
-    {
-      delta=MMX_MMREG_SIZE-delta;
-      len -= delta;
-      small_memcpy(to, from, delta);
+    i = ((uintptr_t)to) & 7;
+    if (i) {
+      i = 8 - i;
+      len -= i;
+      rep_movsb (to, from, i);
     }
     i = len >> 6; /* len/64 */
-    len&=63;
     while (i--) {
       __asm__ __volatile__ (
-        "prefetchnta\t(%2)\n\t"
-        "prefetchnta\t32(%2)\n\t"
-        "movq\t(%0), %%mm0\n\t"
-        "movq\t8(%0), %%mm1\n\t"
-        "movq\t16(%0), %%mm2\n\t"
-        "movq\t24(%0), %%mm3\n\t"
-        "lea\t64(%2), %2\n\t"
-        "movq\t32(%0), %%mm4\n\t"
-        "movq\t40(%0), %%mm5\n\t"
-        "movq\t48(%0), %%mm6\n\t"
-        "movq\t56(%0), %%mm7\n\t"
-        "movntq\t%%mm0, (%1)\n\t"
-        "movntq\t%%mm1, 8(%1)\n\t"
-        "movntq\t%%mm2, 16(%1)\n\t"
-        "movntq\t%%mm3, 24(%1)\n\t"
-        "lea\t64(%0), %0\n\t"
-        "movntq\t%%mm4, 32(%1)\n\t"
-        "movntq\t%%mm5, 40(%1)\n\t"
-        "movntq\t%%mm6, 48(%1)\n\t"
-        "movntq\t%%mm7, 56(%1)\n\t"
-        "lea\t64(%1), %1"
+        "\n\tprefetchnta\t"MEM1(     "2")
+        "\n\tprefetchnta\t"MEM2("32","2")
+        "\n\tmovq\t"MEM1(     "0")", %%mm0"
+        "\n\tmovq\t"MEM2( "8","0")", %%mm1"
+        "\n\tmovq\t"MEM2("16","0")", %%mm2"
+        "\n\tmovq\t"MEM2("24","0")", %%mm3"
+        BUMPPTR ("64", "2")
+        "\n\tmovq\t"MEM2("32","0")", %%mm4"
+        "\n\tmovq\t"MEM2("40","0")", %%mm5"
+        "\n\tmovq\t"MEM2("48","0")", %%mm6"
+        "\n\tmovq\t"MEM2("56","0")", %%mm7"
+        "\n\tmovntq\t%%mm0, "MEM1(     "1")
+        "\n\tmovntq\t%%mm1, "MEM2( "8","1")
+        "\n\tmovntq\t%%mm2, "MEM2("16","1")
+        "\n\tmovntq\t%%mm3, "MEM2("24","1")
+        BUMPPTR ("64", "0")
+        "\n\tmovntq\t%%mm4, "MEM2("32","1")
+        "\n\tmovntq\t%%mm5, "MEM2("40","1")
+        "\n\tmovntq\t%%mm6, "MEM2("48","1")
+        "\n\tmovntq\t%%mm7, "MEM2("56","1")
+        BUMPPTR ("64", "1")
         : "=r" (from), "=r" (to), "=r" (pf)
         : "0"  (from), "1"  (to), "2"  (pf)
         : "memory"
@@ -560,11 +550,14 @@ static void * mmx2_memcpy(void * to, const void * from, size_t len)
      * is needed to become ordered again. */
     __asm__ __volatile__ ("sfence":::"memory");
     __asm__ __volatile__ ("emms":::"memory");
+    len &= 63;
   }
   /*
    *	Now do the tail of the block
    */
-  if(len) linux_kernel_memcpy_impl(to, from, len);
+  i = len;
+  if (i)
+    rep_movsb (to, from, i);
   return retval;
 }
 
@@ -734,14 +727,20 @@ void xine_probe_fast_memcpy(xine_t *xine)
     NULL
   };
 
-  method = xine->config->register_enum (xine->config, "engine.performance.memcpy_method", 0,
-				      (char **)memcpy_methods,
-				      _("memcopy method used by xine"),
-				      _("The copying of large memory blocks is one of the most "
-					"expensive operations on todays computers. Therefore xine "
-					"provides various tuned methods to do this copying. "
-					"Usually, the best method is detected automatically."),
-				      20, update_fast_memcpy, (void *) xine);
+  method = xine->config->register_enum (
+    xine->config,
+    "engine.performance.memcpy_method",
+    0, /* default to "probe" */
+    (char **)memcpy_methods,
+    _("memcopy method used by xine"),
+    _("The copying of large memory blocks is one of the most "
+      "expensive operations on todays computers. Therefore xine "
+      "provides various tuned methods to do this copying. "
+      "Usually, the best method is detected automatically."),
+    20,
+    update_fast_memcpy,
+    xine
+  );
 
   /* an earlier xine engine instance has already set this */
   if (xine_fast_memcpy)
@@ -750,3 +749,4 @@ void xine_probe_fast_memcpy(xine_t *xine)
 
   xine->config->update_num (xine->config, "engine.performance.memcpy_method", method);
 }
+

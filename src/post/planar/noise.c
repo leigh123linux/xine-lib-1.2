@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2000-2016 the xine project
+ * Copyright (C) 2000-2017 the xine project
  *
  * This file is part of xine, a free video player.
  *
@@ -30,14 +30,6 @@
 #include <xine/xineutils.h>
 #include <math.h>
 #include <pthread.h>
-
-#ifdef ARCH_X86_64
-#  define REG_a  "rax"
-#  define intarch_t int64_t
-#else
-#  define REG_a  "eax"
-#  define intarch_t int32_t
-#endif
 
 #define MAX_NOISE 4096
 #define MAX_SHIFT 1024
@@ -150,57 +142,78 @@ static inline void lineNoise_C(uint8_t *dst, uint8_t *src, int8_t *noise, int le
 }
 
 #ifdef ARCH_X86
-static inline void lineNoise_MMX(uint8_t *dst, uint8_t *src, int8_t *noise, int len, int shift){
-    intarch_t mmx_len= len&(~7);
-    noise+=shift;
 
-    asm volatile(
-        "mov %3, %%"REG_a"      \n\t"
-        "pcmpeqb %%mm7, %%mm7       \n\t"
-        "psllw $15, %%mm7       \n\t"
-        "packsswb %%mm7, %%mm7      \n\t"
-	ASMALIGN(4)
-        "1:             \n\t"
-        "movq (%0, %%"REG_a"), %%mm0    \n\t"
-        "movq (%1, %%"REG_a"), %%mm1    \n\t"
-        "pxor %%mm7, %%mm0      \n\t"
-        "paddsb %%mm1, %%mm0        \n\t"
-        "pxor %%mm7, %%mm0      \n\t"
-        "movq %%mm0, (%2, %%"REG_a")    \n\t"
-        "add $8, %%"REG_a"      \n\t"
-        " js 1b             \n\t"
-        :: "r" (src+mmx_len), "r" (noise+mmx_len), "r" (dst+mmx_len), "g" (-mmx_len)
-        : "%"REG_a
-    );
-    if(mmx_len!=len)
-        lineNoise_C(dst+mmx_len, src+mmx_len, noise+mmx_len, len-mmx_len, 0);
+#if defined(ARCH_X86_64)
+#  define TYPEA int64_t
+#  define REGA "%rax"
+#  define MOVA(val) "\n\tmovq\t"val", %%rax"
+#  define MEMA(reg) "(%"reg", %%rax)"
+#  define ADDA(val) "\n\taddq\t"val", %%rax"
+#elif defined(ARCH_X86_X32)
+#  define TYPEA int64_t
+#  define REGA "%rax"
+#  define MOVA(val) "\n\tmovq\t"val", %%rax"
+#  define MEMA(reg) "(%q"reg", %%rax)"
+#  define ADDA(val) "\n\taddq\t"val", %%rax"
+#else
+#  define TYPEA int32_t
+#  define REGA "%eax"
+#  define MOVA(val) "\n\tmovl\t"val", %%eax"
+#  define MEMA(reg) "(%"reg", %%eax)"
+#  define ADDA(val) "\n\taddl\t"val", %%eax"
+#endif
+
+static inline void lineNoise_MMX(uint8_t *dst, uint8_t *src, int8_t *noise, int len, int shift){
+  TYPEA mmx_len = len & (~7);
+  noise += shift;
+
+  __asm__ __volatile__ (
+    MOVA("%3")
+    "\n\tpcmpeqb\t%%mm7, %%mm7"
+    "\n\tpsllw\t$15, %%mm7"
+    "\n\tpacksswb\t%%mm7, %%mm7"
+    "\n\t"ASMALIGN(4)
+    "\n1:"
+    "\n\tmovq\t"MEMA("0")", %%mm0"
+    "\n\tmovq\t"MEMA("1")", %%mm1"
+    "\n\tpxor\t%%mm7, %%mm0"
+    "\n\tpaddsb\t%%mm1, %%mm0"
+    "\n\tpxor\t%%mm7, %%mm0"
+    "\n\tmovq\t%%mm0, "MEMA("2")
+    ADDA("$8")
+    "\n\tjs\t1b"
+    :: "r" (src + mmx_len), "r" (noise + mmx_len), "r" (dst + mmx_len), "g" (-mmx_len)
+    : REGA
+  );
+  if (mmx_len != len)
+    lineNoise_C (dst + mmx_len, src + mmx_len, noise + mmx_len, len - mmx_len, 0);
 }
 
 //duplicate of previous except movntq
 static inline void lineNoise_MMX2(uint8_t *dst, uint8_t *src, int8_t *noise, int len, int shift){
-    intarch_t mmx_len= len&(~7);
-    noise+=shift;
+  TYPEA mmx_len = len & (~7);
+  noise += shift;
 
-    asm volatile(
-        "mov %3, %%"REG_a"      \n\t"
-        "pcmpeqb %%mm7, %%mm7       \n\t"
-        "psllw $15, %%mm7       \n\t"
-        "packsswb %%mm7, %%mm7      \n\t"
-	ASMALIGN(4)
-        "1:             \n\t"
-        "movq (%0, %%"REG_a"), %%mm0    \n\t"
-        "movq (%1, %%"REG_a"), %%mm1    \n\t"
-        "pxor %%mm7, %%mm0      \n\t"
-        "paddsb %%mm1, %%mm0        \n\t"
-        "pxor %%mm7, %%mm0      \n\t"
-        "movntq %%mm0, (%2, %%"REG_a")  \n\t"
-        "add $8, %%"REG_a"      \n\t"
-        " js 1b             \n\t"
-        :: "r" (src+mmx_len), "r" (noise+mmx_len), "r" (dst+mmx_len), "g" (-mmx_len)
-        : "%"REG_a
-    );
-    if(mmx_len!=len)
-        lineNoise_C(dst+mmx_len, src+mmx_len, noise+mmx_len, len-mmx_len, 0);
+  __asm__ __volatile__ (
+    MOVA("%3")
+    "\n\tpcmpeqb\t%%mm7, %%mm7"
+    "\n\tpsllw\t$15, %%mm7"
+    "\n\tpacksswb\t%%mm7, %%mm7"
+    "\n\t"ASMALIGN(4)
+    "\n1:"
+    "\n\tmovq\t"MEMA("0")", %%mm0"
+    "\n\tmovq\t"MEMA("1")", %%mm1"
+    "\n\tpxor\t%%mm7, %%mm0"
+    "\n\tpaddsb\t%%mm1, %%mm0"
+    "\n\tpxor\t%%mm7, %%mm0"
+    "\n\tmovntq\t%%mm0, "MEMA("2")
+    ADDA("$8")
+    "\n\tjs\t1b"
+    :: "r" (src + mmx_len), "r" (noise + mmx_len), "r" (dst + mmx_len), "g" (-mmx_len)
+    : REGA
+  );
+  if (mmx_len != len)
+    lineNoise_C (dst + mmx_len, src + mmx_len, noise + mmx_len, len - mmx_len, 0);
 }
 
 #endif
@@ -221,43 +234,43 @@ static inline void lineNoiseAvg_C(uint8_t *dst, uint8_t *src, int len, int8_t **
 #ifdef ARCH_X86
 
 static inline void lineNoiseAvg_MMX(uint8_t *dst, uint8_t *src, int len, int8_t **shift){
-    intarch_t mmx_len= len&(~7);
+  TYPEA mmx_len = len & (~7);
 
-    asm volatile(
-        "mov %5, %%"REG_a"      \n\t"
-	ASMALIGN(4)
-        "1:             \n\t"
-        "movq (%1, %%"REG_a"), %%mm1    \n\t"
-        "movq (%0, %%"REG_a"), %%mm0    \n\t"
-        "paddb (%2, %%"REG_a"), %%mm1   \n\t"
-        "paddb (%3, %%"REG_a"), %%mm1   \n\t"
-        "movq %%mm0, %%mm2      \n\t"
-        "movq %%mm1, %%mm3      \n\t"
-        "punpcklbw %%mm0, %%mm0     \n\t"
-        "punpckhbw %%mm2, %%mm2     \n\t"
-        "punpcklbw %%mm1, %%mm1     \n\t"
-        "punpckhbw %%mm3, %%mm3     \n\t"
-        "pmulhw %%mm0, %%mm1        \n\t"
-        "pmulhw %%mm2, %%mm3        \n\t"
-        "paddw %%mm1, %%mm1     \n\t"
-        "paddw %%mm3, %%mm3     \n\t"
-        "paddw %%mm0, %%mm1     \n\t"
-        "paddw %%mm2, %%mm3     \n\t"
-        "psrlw $8, %%mm1        \n\t"
-        "psrlw $8, %%mm3        \n\t"
-                "packuswb %%mm3, %%mm1      \n\t"
-        "movq %%mm1, (%4, %%"REG_a")    \n\t"
-        "add $8, %%"REG_a"      \n\t"
-        " js 1b             \n\t"
-        :: "r" (src+mmx_len), "r" (shift[0]+mmx_len), "r" (shift[1]+mmx_len), "r" (shift[2]+mmx_len),
-                   "r" (dst+mmx_len), "g" (-mmx_len)
-        : "%"REG_a
-    );
+  __asm__ __volatile__ (
+    MOVA("%5")
+    "\n\t"ASMALIGN(4)
+    "\n1:"
+    "\n\tmovq\t"MEMA("1")", %%mm1"
+    "\n\tmovq\t"MEMA("0")", %%mm0"
+    "\n\tpaddb\t"MEMA("2")", %%mm1"
+    "\n\tpaddb\t"MEMA("3")", %%mm1"
+    "\n\tmovq\t%%mm0, %%mm2"
+    "\n\tmovq\t%%mm1, %%mm3"
+    "\n\tpunpcklbw\t%%mm0, %%mm0"
+    "\n\tpunpckhbw\t%%mm2, %%mm2"
+    "\n\tpunpcklbw\t%%mm1, %%mm1"
+    "\n\tpunpckhbw\t%%mm3, %%mm3"
+    "\n\tpmulhw\t%%mm0, %%mm1"
+    "\n\tpmulhw\t%%mm2, %%mm3"
+    "\n\tpaddw\t%%mm1, %%mm1"
+    "\n\tpaddw\t%%mm3, %%mm3"
+    "\n\tpaddw\t%%mm0, %%mm1"
+    "\n\tpaddw\t%%mm2, %%mm3"
+    "\n\tpsrlw\t$8, %%mm1"
+    "\n\tpsrlw\t$8, %%mm3"
+    "\n\tpackuswb\t%%mm3, %%mm1"
+    "\n\tmovq\t%%mm1, "MEMA("4")
+    ADDA("$8")
+    "\n\tjs\t1b"
+    :: "r" (src + mmx_len), "r" (shift[0] + mmx_len), "r" (shift[1] + mmx_len), "r" (shift[2] + mmx_len),
+       "r" (dst + mmx_len), "g" (-mmx_len)
+    : REGA
+  );
 
-    if(mmx_len!=len){
-        int8_t *shift2[3]={shift[0]+mmx_len, shift[1]+mmx_len, shift[2]+mmx_len};
-        lineNoiseAvg_C(dst+mmx_len, src+mmx_len, len-mmx_len, shift2);
-    }
+  if (mmx_len != len) {
+    int8_t *shift2[3] = {shift[0] + mmx_len, shift[1] + mmx_len, shift[2] + mmx_len};
+    lineNoiseAvg_C (dst + mmx_len, src + mmx_len, len - mmx_len, shift2);
+  }
 }
 #endif
 

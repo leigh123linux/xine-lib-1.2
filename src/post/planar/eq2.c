@@ -104,6 +104,19 @@ void create_lut (eq2_param_t *par)
 
 
 #if defined(ARCH_X86)
+
+#if defined(ARCH_X86_64)
+#  define MEM1(reg) "(%"reg")"
+#  define BUMPPTR(offs,reg) "\n\tleaq\t"offs"(%"reg"), %"reg
+#elif defined(ARCH_X86_X32)
+#  define MEM1(reg) "(%q"reg")"
+#  define BUMPPTR(offs,reg) "\n\tleaq\t"offs"(%q"reg"), %q"reg
+#else
+#  define MEM1(reg) "(%"reg")"
+#  define BUMPPTR(offs,reg) "\n\tleal\t"offs"(%"reg"), %"reg
+#endif
+
+
 static
 void affine_1d_MMX (eq2_param_t *par, unsigned char *dst, unsigned char *src,
   unsigned w, unsigned h, unsigned dstride, unsigned sstride)
@@ -124,37 +137,37 @@ void affine_1d_MMX (eq2_param_t *par, unsigned char *dst, unsigned char *src,
   sstep = sstride - w;
   dstep = dstride - w;
 
-  asm volatile (
-    "movq (%0), %%mm3 \n\t"
-    "movq (%1), %%mm4 \n\t"
-    "pxor %%mm0, %%mm0 \n\t"
+  __asm__ __volatile__ (
+    "\n\tmovq\t"MEM1("0")", %%mm3"
+    "\n\tmovq\t"MEM1("1")", %%mm4"
+    "\n\tpxor\t%%mm0, %%mm0"
     :
     : "r" (brvec), "r" (contvec)
   );
 
   while (h-- > 0) {
-    asm volatile (
-      "movl %4, %%eax\n\t"
-      ASMALIGN(4)
-      "1: \n\t"
-      "movq (%0), %%mm1 \n\t"
-      "movq (%0), %%mm2 \n\t"
-      "punpcklbw %%mm0, %%mm1 \n\t"
-      "punpckhbw %%mm0, %%mm2 \n\t"
-      "psllw $4, %%mm1 \n\t"
-      "psllw $4, %%mm2 \n\t"
-      "pmulhw %%mm4, %%mm1 \n\t"
-      "pmulhw %%mm4, %%mm2 \n\t"
-      "paddw %%mm3, %%mm1 \n\t"
-      "paddw %%mm3, %%mm2 \n\t"
-      "packuswb %%mm2, %%mm1 \n\t"
-      "add $8, %0 \n\t"
-      "movq %%mm1, (%1) \n\t"
-      "add $8, %1 \n\t"
-      "decl %%eax \n\t"
-      "jnz 1b \n\t"
+    __asm__ __volatile__ (
+      "\n\tmovl\t%4, %%eax"
+      "\n\t"ASMALIGN(4)
+      "\n1:"
+      "\n\tmovq\t"MEM1("0")", %%mm1"
+      "\n\tmovq\t"MEM1("0")", %%mm2"
+      "\n\tpunpcklbw\t%%mm0, %%mm1"
+      "\n\tpunpckhbw\t%%mm0, %%mm2"
+      "\n\tpsllw\t$4, %%mm1"
+      "\n\tpsllw\t$4, %%mm2"
+      "\n\tpmulhw\t%%mm4, %%mm1"
+      "\n\tpmulhw\t%%mm4, %%mm2"
+      "\n\tpaddw\t%%mm3, %%mm1"
+      "\n\tpaddw\t%%mm3, %%mm2"
+      "\n\tpackuswb\t%%mm2, %%mm1"
+      BUMPPTR("8","0")
+      "\n\tmovq\t%%mm1, "MEM1("1")
+      BUMPPTR("8","1")
+      "\n\tdecl\t%%eax"
+      "\n\tjnz\t1b"
       : "=r" (src), "=r" (dst)
-      : "0" (src), "1" (dst), "r" (w >> 3)
+      : "0"  (src), "1"  (dst), "r" (w >> 3)
       : "%eax"
     );
 
@@ -170,7 +183,7 @@ void affine_1d_MMX (eq2_param_t *par, unsigned char *dst, unsigned char *src,
     dst += dstep;
   }
 
-  asm volatile ( "emms \n\t" ::: "memory" );
+  __asm__ __volatile__ ( "emms \n\t" ::: "memory" );
 }
 #endif
 
