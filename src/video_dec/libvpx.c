@@ -175,7 +175,7 @@ static void vpx_decode_data (video_decoder_t *this_gen, buf_element_t *buf)
 
   if (vpx_img->fmt != VPX_IMG_FMT_I420) {
     xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
-            LOG_MODULE": Unsupported color space %d\n", vpx_img->fmt);
+            LOG_MODULE": Unsupported colour space %d\n", vpx_img->fmt);
     return;
   }
 

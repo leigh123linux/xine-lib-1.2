@@ -1039,7 +1039,7 @@ static int vaapi_glx_config_tfp(vo_driver_t *this_gen, unsigned int width, unsig
   }
 
   if (depth != 24 && depth != 32) {
-    xprintf(this->xine, XINE_VERBOSITY_LOG, LOG_MODULE " vaapi_glx_config_tfp : color depth wrong.\n");
+    xprintf(this->xine, XINE_VERBOSITY_LOG, LOG_MODULE " vaapi_glx_config_tfp : colour depth wrong.\n");
     return 0;
   }
 
@@ -1650,7 +1650,7 @@ static void vaapi_update_csc (vaapi_driver_t *that, vaapi_frame_t *frame) {
       i = CSC_MODE_FLAGS;
     if (i != that->csc_mode) {
       xprintf (that->xine, XINE_VERBOSITY_LOG,
-        _("video_out_vaapi: driver does not support \"%s\" colorspace conversion mode\n"),
+        _("video_out_vaapi: driver does not support \"%s\" colourspace conversion mode\n"),
         vaapi_csc_mode_labels[that->csc_mode]);
       vaapi_set_csc_mode (that, i);
     }
@@ -4236,11 +4236,11 @@ static vo_driver_t *vaapi_open_plugin (video_driver_class_t *class_gen, const vo
 
   this->csc_mode = this->xine->config->register_enum (this->xine->config, "video.output.vaapi_csc_mode", 3,
     (char **)vaapi_csc_mode_labels,
-    _("VAAPI color conversion method"),
-    _("How to handle color conversion in VAAPI:\n\n"
+    _("VAAPI colour conversion method"),
+    _("How to handle colour conversion in VAAPI:\n\n"
       "user_matrix: The best way - if your driver supports it.\n"
-      "simple:      Switch SD/HD colorspaces, and let decoders convert fullrange video.\n"
-      "simple+2:    Switch SD/HD colorspaces, and emulate fullrange color by modifying\n"
+      "simple:      Switch SD/HD colour spaces, and let decoders convert fullrange video.\n"
+      "simple+2:    Switch SD/HD colour spaces, and emulate full-range colour by modifying\n"
       "             brightness/contrast settings.\n"
       "simple+3:    Like above, but adjust saturation as well.\n\n"
       "Hint: play \"test://rgb_levels.bmp\" while trying this.\n"),

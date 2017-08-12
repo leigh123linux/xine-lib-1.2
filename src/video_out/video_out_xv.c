@@ -1548,8 +1548,8 @@ static vo_driver_t *open_plugin_2 (video_driver_class_t *class_gen, const void *
       "video.output.xv_fullrange",
       0,
       (char **)xv_fullrange_conf_labels,
-      _("Fullrange color emulation"),
-      _("Emulate fullrange color by modifying brightness/contrast/saturation settings.\n\n"
+      _("Fullrange colour emulation"),
+      _("Emulate fullrange colour by modifying brightness/contrast/saturation settings.\n\n"
         "Off:    Let decoders convert such video.\n"
         "        Works with all graphics cards, but needs a bit more CPU power.\n\n"
         "Normal: Fast and better quality. Should work at least with some newer cards\n"

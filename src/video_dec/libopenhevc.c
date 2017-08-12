@@ -111,7 +111,7 @@ static void hevc_decode_data (video_decoder_t *this_gen, buf_element_t *buf)
     }
     if (info->chromat_format != YUV420) {
       xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
-              LOG_MODULE": Unsupported color space %d\n", info->chromat_format);
+              LOG_MODULE": Unsupported colour space %d\n", info->chromat_format);
       return;
     }
 

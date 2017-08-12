@@ -533,7 +533,7 @@ static int test_make (test_input_plugin_t * this) {
   /* add readable title */
   {
     char *test_titles[5] = {
-      _("Color Circle"),
+      _("Colour Circle"),
       _("RGB Levels"),
       _("Saturation Levels"),
       _("UV Square"),

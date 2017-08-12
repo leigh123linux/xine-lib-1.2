@@ -229,7 +229,7 @@ static void ff_check_colorspace (ff_video_decoder_t *this) {
 
     if (!(caps & VO_CAP_COLOR_MATRIX)) {
       xprintf (this->stream->xine, XINE_VERBOSITY_LOG,
-        "ffmpeg_video_dec: video out plugin does not support color matrix switching\n");
+        "ffmpeg_video_dec: video out plugin does not support colour matrix switching\n");
       cm &= 1;
     }
 

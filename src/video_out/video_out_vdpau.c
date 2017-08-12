@@ -3151,8 +3151,8 @@ static vo_driver_t *vdpau_open_plugin (video_driver_class_t *class_gen, const vo
 
   if ( this->background_is_supported ) {
     this->background = config->register_num( config, "video.output.vdpau_background_color", 0,
-        _("vdpau: color of none video area in output window"),
-        _("Displaying 4:3 images on 16:9 plasma TV sets lets the inactive pixels outside the video age slower than the pixels in the active area. Setting a different background color (e. g. 8421504) makes all pixels age similarly. The number to enter for a certain color can be derived from its 6 digit hexadecimal RGB value.\n\n"),
+        _("vdpau: colour of none video area in output window"),
+        _("Displaying 4:3 images on 16:9 plasma TV sets lets the inactive pixels outside the video age slower than the pixels in the active area. Setting a different background colour (e. g. 8421504) makes all pixels age similarly. The number to enter for a certain colour can be derived from its 6 digit hexadecimal RGB value.\n\n"),
         10, vdpau_set_background, this );
   }
 

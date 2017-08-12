@@ -193,12 +193,12 @@ static void cm_init (CM_DRIVER_T *this) {
     CM_CONFIG_NAME,
     CM_CONFIG_SIZE,
     (char **)cm_conf_labels,
-    _("Output color matrix"),
-    _("Tell how output colors should be calculated.\n\n"
+    _("Output colour matrix"),
+    _("Tell how output colours should be calculated.\n\n"
       "Signal: Do as current stream suggests.\n"
       "        This may be wrong sometimes.\n\n"
       "Signal+Size: Same as above,\n"
-      "        but assume HD color for unmarked HD streams.\n\n"
+      "        but assume HD colour for unmarked HD streams.\n\n"
       "SD:     Force SD video standard ITU-R 470/601.\n"
       "        Try this if you get too little green.\n\n"
       "HD:     Force HD video standard ITU-R 709.\n"
@@ -212,13 +212,13 @@ static void cm_init (CM_DRIVER_T *this) {
     CR_CONFIG_NAME,
     CR_CONFIG_AUTO,
     (char **)cr_conf_labels,
-    _("Output color range"),
-    _("Tell how output colors should be ranged.\n\n"
+    _("Output colour range"),
+    _("Tell how output colours should be ranged.\n\n"
       "Auto: Do as current stream suggests.\n"
       "      This may be wrong sometimes.\n\n"
-      "MPEG: Force MPEG color range (16..235) / studio swing / video mode.\n"
+      "MPEG: Force MPEG colour range (16..235) / studio swing / video mode.\n"
       "      Try if image looks dull (no real black or white in it).\n\n"
-      "FULL: Force FULL color range (0..255) / full swing / PC mode.\n"
+      "FULL: Force FULL colour range (0..255) / full swing / PC mode.\n"
       "      Try when flat black and white spots appear.\n\n"),
     10,
     cr_cb_config,
