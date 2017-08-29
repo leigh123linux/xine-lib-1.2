@@ -614,8 +614,6 @@ if test x"$GCC" = x"yes"; then
     fi
 fi
 
-dnl Disabled; causes linkage failure on stretch (_ZGVbN2vv___pow_finite)
-dnl CC_CHECK_CFLAGS([-ffast-math],               [optflags="$optflags -ffast-math"])
 CC_CHECK_CFLAGS([-fexpensive-optimizations], [optflags="$optflags -fexpensive-optimizations"])
 
 dnl initialize arch_86 as it is later tested for != "no" 
@@ -633,7 +631,7 @@ case "$host_or_hostalias" in
 
     armv4l-*-linux*)
         cpuflags="-mcpu=strongarm1100 -ffast-math -fsigned-char $cpuflags"
-        DEFAULT_OCFLAGS='$(O2_CFLAGS)'
+        DEFAULT_OCFLAGS="O2_CFLAGS"
         AC_DEFINE([ARCH_ARM], [], [Define this if you're running ARM architecture])
         ;;
 
@@ -830,7 +828,7 @@ AC_ARG_ENABLE([optimizations],
               [], [test x"$enable_debug" != x"no" && enable_optimizations="no"])
 AM_CONDITIONAL([DISABLE_OPTIMIZATIONS], [test x"$enable_optimizations" = x"no"])
 if test x"$enable_optimizations" = x"no"; then
-    DEFAULT_OCFLAGS='$(O0_CFLAGS)'
+    DEFAULT_OCFLAGS="O0_CFLAGS"
 else
     dnl For multi-pass compilation: never when cross-compiling
     if test x"$cross_compiling" != x"yes"; then
@@ -848,14 +846,55 @@ else
     fi
 fi
 AC_SUBST(O0_CFLAGS)
-AC_SUBST(O1_CFLAGS)
-AC_SUBST(O2_CFLAGS)
-AC_SUBST(O3_CFLAGS)
 
 AC_SUBST(PASS1_CFLAGS)
 AC_SUBST(PASS2_CFLAGS)
 
-test x"$DEFAULT_OCFLAGS" = x"" && DEFAULT_OCFLAGS='$(O3_CFLAGS)'
+test x"$DEFAULT_OCFLAGS" = x"" && DEFAULT_OCFLAGS="O3_CFLAGS"
+
+dnl -ffast-math fails in broken build environments due to missing stuff like _foo_pow_finite ().
+dnl We dont want to kill that feature generally either because stuff like faad will benefit a
+dnl lot from inlined fsin/fcos instructions. -Ox affects that code as well, so test it this late
+dnl when we know the final optimization level.
+have_fast_math="no"
+libm_is_fast_math_safe="no"
+CC_CHECK_CFLAGS([-ffast-math], [have_fast_math="yes"])
+if test x"$have_fast_math" = x"yes" ; then
+    AC_MSG_CHECKING([whether libm supports -ffast-math])
+    ac_save_CFLAGS="$CFLAGS"
+    ac_save_LIBS="$LIBS"
+    dnl ugly but "$$DEFAULT_OCFLAGS" wont work here I guess.
+    test x"$DEFAULT_OCFLAGS" = x"O0_CFLAGS" && CFLAGS="$CFLAGS $O0_CFLAGS -ffast-math"
+    test x"$DEFAULT_OCFLAGS" = x"O1_CFLAGS" && CFLAGS="$CFLAGS $O1_CFLAGS -ffast-math"
+    test x"$DEFAULT_OCFLAGS" = x"O2_CFLAGS" && CFLAGS="$CFLAGS $O2_CFLAGS -ffast-math"
+    test x"$DEFAULT_OCFLAGS" = x"O3_CFLAGS" && CFLAGS="$CFLAGS $O3_CFLAGS -ffast-math"
+    LIBS="$LIBS -lm"
+    dnl Make sure gcc does not optimize away all this.
+    AC_LINK_IFELSE([AC_LANG_PROGRAM([[
+        #include <stdlib.h>
+        #include <stdio.h>
+        #include <math.h>
+    ]],[[
+        double a, b;
+        a = 0.88 * rand ();
+        b = 0.99 * rand ();
+        a = pow (sin (a), cos (sqrt (b)));
+        printf ("%lf\n", a);
+    ]])], [libm_is_fast_math_safe="yes"])
+    CFLAGS="$ac_save_CFLAGS"
+    LIBS="$ac_save_LIBS"
+    AC_MSG_RESULT([$libm_is_fast_math_safe])
+fi
+if test x"$libm_is_fast_math_safe" = x"yes" ; then
+    O1_CFLAGS="$O1_CFLAGS -ffast-math"
+    O2_CFLAGS="$O2_CFLAGS -ffast-math"
+    O3_CFLAGS="$O3_CFLAGS -ffast-math"
+fi
+
+AC_SUBST(O1_CFLAGS)
+AC_SUBST(O2_CFLAGS)
+AC_SUBST(O3_CFLAGS)
+DEFAULT_OCFLAGS='$('$DEFAULT_OCFLAGS')'
 AC_SUBST(DEFAULT_OCFLAGS)
 
 if test x"$arch_x86" != x"no" && test x"$enable_macosx_universal" = x"no"; then
