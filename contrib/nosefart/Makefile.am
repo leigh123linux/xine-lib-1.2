@@ -21,6 +21,8 @@ libnosefart_la_SOURCES = \
 libnosefart_la_CFLAGS = $(AM_CFLAGS) -fno-strict-aliasing
 libnosefart_la_CPPFLAGS = $(AM_CPPFLAGS) -DNSF_PLAYER
 
+libnosefart_la_LIBADD = -lm
+
 noinst_HEADERS = \
 	dis6502.h \
 	fmopl.h \

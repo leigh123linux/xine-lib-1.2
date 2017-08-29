@@ -113,3 +113,5 @@ libfaad_la_SOURCES = \
 	codebook/hcb_sf.h 
 
 libfaad_la_CFLAGS = $(AM_CFLAGS)
+
+libfaad_la_LIBADD = -lm
