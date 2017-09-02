@@ -1612,8 +1612,12 @@ static void ff_handle_preview_buffer (ff_video_decoder_t *this, buf_element_t *b
       return;
 
     init_video_codec(this, codec_type);
-    init_postprocess(this);
     this->decoder_init_mode = 0;
+
+    if (!this->decoder_ok)
+      return;
+
+    init_postprocess(this);
   }
 }
 
@@ -2113,11 +2117,12 @@ static void ff_handle_buffer (ff_video_decoder_t *this, buf_element_t *buf) {
 
     /* init ffmpeg decoder */
     init_video_codec(this, codec_type);
-    init_postprocess(this);
     this->decoder_init_mode = 0;
 
     if (!this->decoder_ok)
       return;
+
+    init_postprocess(this);
   }
 
   if (buf->decoder_flags & BUF_FLAG_FRAME_START) {
