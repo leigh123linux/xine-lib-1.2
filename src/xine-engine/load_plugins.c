@@ -985,7 +985,7 @@ static void save_plugin_list(xine_t *this, FILE *fp, xine_sarray_t *list) {
         /* now serialize the config key */
         char *key_value = this->config->get_serialized_entry(this->config, key);
 
-        lprintf("  config key: %s, serialization: %d bytes\n", key, strlen(key_value));
+        lprintf("  config key: %s, serialization: %zu bytes\n", key, strlen(key_value));
         fprintf(fp, "config_key=%s\n", key_value);
 
         free (key_value);
