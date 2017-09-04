@@ -1401,7 +1401,7 @@ fprintf(stderr, "C =============================================\n");
   {
     off_t skip = this->cur_size - this->cur_done;
 
-    lprintf("func: %d, skipping: %lld\n", this->cur_func, skip);
+    lprintf("func: %d, skipping: %" PRId64 "\n", this->cur_func, (int64_t)skip);
 
     while (skip > BUF_SIZE)
     {
@@ -1687,8 +1687,8 @@ static off_t vdr_plugin_seek(input_plugin_t *this_gen, off_t offset, int origin)
 {
   vdr_input_plugin_t *this = (vdr_input_plugin_t *)this_gen;
 
-  lprintf("seek %lld offset, %d origin...\n",
-          offset, origin);
+  lprintf("seek %" PRId64 " offset, %d origin...\n",
+          (int64_t)offset, origin);
 
   if ((origin == SEEK_CUR) && (offset >= 0))
   {
@@ -1708,7 +1708,8 @@ static off_t vdr_plugin_seek(input_plugin_t *this_gen, off_t offset, int origin)
       if (this->curpos <= this->preview_size)
         this->curpos = offset;
       else
-        lprintf("cannot seek back! (%lld > %lld)\n", this->curpos, offset);
+        lprintf("cannot seek back! (%" PRId64 " > %" PRId64 ")\n",
+                (int64_t)this->curpos, (int64_t)offset);
     }
     else
     {
@@ -2636,9 +2637,9 @@ static input_plugin_t *vdr_class_get_instance(input_class_t *cls_gen, xine_strea
   char               *mrl = strdup(data);
 
   if (!strncasecmp(mrl, "vdr:/", 5))
-    lprintf("filename '%s'\n", mrl_to_path (mrl));
+    lprintf("filename '%s'\n", mrl_to_fifo (mrl));
   else if (!strncasecmp(mrl, "netvdr:/", 5))
-    lprintf("host '%s'\n", mrl_to_socket (mrl));
+    lprintf("host '%s'\n", mrl_to_host (mrl));
   else
   {
     free(mrl);
