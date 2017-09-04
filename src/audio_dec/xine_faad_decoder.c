@@ -383,7 +383,7 @@ static int faad_open_dec (faad_decoder_t *this) {
     return 1;
   }
 
-  lprintf ("NeAACDecInit() returned rate=%lu channels=%d (used=%d)\n", this->rate, this->num_channels, used);
+  lprintf ("NeAACDecInit() returned rate=%lu channels=%d (res=%d)\n", this->rate, this->num_channels, res);
   return 0;
 }
 
