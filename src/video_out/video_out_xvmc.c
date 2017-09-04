@@ -486,10 +486,10 @@ static void xvmc_render_macro_blocks(vo_frame_t *current_image,
   int           flags;
 
   lprintf ("xvmc_render_macro_blocks\n");
-  lprintf ("slices %d 0x%08lx 0x%08lx 0x%08lx\n",
+  lprintf ("slices %d %p %p %p\n",
 	   macroblocks->slices,
-	   (long) current_frame, (long) backward_frame,
-	   (long) forward_frame);
+           (void *) current_frame, (void *) backward_frame,
+           (void *) forward_frame);
   /* lprintf ("slices %d 0x%08lx 0x%08lx 0x%08lx\n",macroblocks->slices,
 	   (long) current_frame->surface, (long) backward_frame->surface,
 	   (long) forward_frame->surface);
@@ -592,8 +592,8 @@ static cxid_t *xvmc_set_context (xvmc_driver_t *this,
     macroblocks->blocks       = calloc(1, sizeof(XvMCBlockArray));
     macroblocks->macro_blocks = calloc(1, sizeof(XvMCMacroBlockArray));
 
-    lprintf("macroblocks->blocks %lx ->macro_blocks %lx\n",
-	    macroblocks->blocks,macroblocks->macro_blocks);
+    lprintf("macroblocks->blocks %p ->macro_blocks %p\n",
+            (void *)macroblocks->blocks, (void *)macroblocks->macro_blocks);
   }
 
   if((this->context_id.xid != NULL)   &&
@@ -919,7 +919,7 @@ static void xvmc_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen) {
   xvmc_driver_t  *this  = (xvmc_driver_t *) this_gen;
   xvmc_frame_t   *frame = (xvmc_frame_t *) frame_gen;
 
-  lprintf ("xvmc_display_frame %d %x\n",frame_gen->id,frame_gen);
+  lprintf ("xvmc_display_frame %d %p\n", frame_gen->id, (void *)frame_gen);
 
   /*
    * queue frames (deinterlacing)
