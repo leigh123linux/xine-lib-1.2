@@ -776,7 +776,7 @@ static void asf_send_buffer_nodefrag (demux_asf_t *this, asf_demux_stream_t *str
       lprintf("packet done: offset=%d, payload=%d\n", stream->frag_offset, stream->payload_size);
     }
 
-    lprintf ("buffer type %08x %8d bytes, %8lld pts\n",
+    lprintf ("buffer type %08x %8d bytes, %8" PRId64 " pts\n",
              buf->type, buf->size, buf->pts);
 
     stream->fifo->put (stream->fifo, buf);
@@ -857,7 +857,7 @@ static void asf_send_buffer_defrag (demux_asf_t *this, asf_demux_stream_t *strea
       buf->type       = stream->buf_type;
       buf->size       = bufsize;
 
-      lprintf ("buffer type %08x %8d bytes, %8lld pts\n",
+      lprintf ("buffer type %08x %8d bytes, %8" PRId64 " pts\n",
 	       buf->type, buf->size, buf->pts);
 
       stream->frag_offset -= bufsize;
@@ -1041,13 +1041,13 @@ static int asf_parse_packet_payload_header(demux_asf_t *this, uint32_t p_hdr_siz
 #ifdef LOG
   timestamp = get_le32(this); p_hdr_size += 4;
   duration  = get_le16(this); p_hdr_size += 2;
+
+  lprintf ("timestamp=%"PRId64", duration=%"PRId64"\n", timestamp, duration);
 #else
   /* skip the above bytes */
   this->input->seek (this->input, 6, SEEK_CUR);
   p_hdr_size += 6;
 #endif
-
-  lprintf ("timestamp=%"PRId64", duration=%"PRId64"\n", timestamp, duration);
 
   if ((this->packet_len_flags >> 5) & 3) {
     /* absolute data size */

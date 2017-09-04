@@ -110,7 +110,7 @@ static int open_dts_file(demux_dts_t *this) {
       return 0;
   }
 
-  lprintf("peak size: %d\n", peak_size);
+  lprintf("peak size: %zu\n", peak_size);
 
   /* Check for wav header, as we'll handle DTS with a wav header shoved
    * on the front for CD burning */

@@ -160,7 +160,7 @@ static int open_ac3_file(demux_ac3_t *this) {
       return 0;
   }
 
-  lprintf("peak size: %d\n", peak_size);
+  lprintf("peak size: %zu\n", peak_size);
 
   /* Check for wav header, as we'll handle AC3 with a wav header shoved
   * on the front for CD burning */
