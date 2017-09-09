@@ -28,6 +28,212 @@
 #include <xine/post.h>
 #include <stdarg.h>
 
+#define HARD_DEBUG
+#ifdef HARD_DEBUG
+#  define NAILS_S(struct,nail) memset (struct, nail, sizeof (*(struct)))
+#else
+#  define NAILS_S(struct,nail)
+#endif
+
+/* TJ. O dear. It was intended that post plugins inside vo_frame.draw () did
+   call either
+     _x_post_frame_copy_down (f, f->next);
+     f->next->draw (f->next, stream);
+     _x_post_frame_copy_up (f, f->next);
+   or
+     _x_post_frame_u_turn (f, stream);
+   to set vo_frame.stream, and to lock that stream until the frame gets unreferenced
+   completely. Unfortunately,
+     - Most post plugins dont do that.
+     - It does not strictly guarantee a stream lock long enough.
+     - Somebody might change vo_frame.stream without proper relocking.
+   So lets do safe hidden locking when vo_frame.free () uses default post_frame_free ().
+*/
+typedef struct {
+  vo_frame_t     frame;
+  xine_stream_t *stream;
+} vf_alias_t;
+
+static void post_frame_lock       (vo_frame_t *vo_img);
+static void post_frame_proc_slice (vo_frame_t *vo_img, uint8_t **src);
+static void post_frame_proc_frame (vo_frame_t *vo_img);
+static void post_frame_field      (vo_frame_t *vo_img, int which_field);
+static int  post_frame_draw       (vo_frame_t *vo_img, xine_stream_t *stream);
+static void post_frame_free       (vo_frame_t *vo_img);
+static void post_frame_dispose    (vo_frame_t *vo_img);
+
+static vo_frame_t *post_intercept_video_frame (vo_frame_t *frame, post_video_port_t *port, int usage) {
+  vf_alias_t *new_frame;
+
+  if (usage && port->frame_lock)
+    pthread_mutex_lock (port->frame_lock);
+  /* get a free frame slot */
+  pthread_mutex_lock (&port->usage_lock);
+  if (port->free_frame_slots) {
+    new_frame = (vf_alias_t *)port->free_frame_slots;
+    port->free_frame_slots = new_frame->frame.next;
+  } else {
+    new_frame = calloc (1, sizeof (vf_alias_t));
+  }
+  if (usage)
+    port->usage_count++;
+  pthread_mutex_unlock (&port->usage_lock);
+
+  /* make a copy and attach the original */
+  xine_fast_memcpy (&new_frame->frame, frame, sizeof (vo_frame_t));
+  new_frame->frame.next = frame;
+
+  /* modify the frame with the intercept functions */
+  new_frame->frame.port       = &port->new_port;
+  new_frame->frame.proc_frame = port->new_frame->proc_frame ? port->new_frame->proc_frame : NULL;
+  new_frame->frame.proc_slice = port->new_frame->proc_slice ? port->new_frame->proc_slice : NULL;
+  new_frame->frame.field      = port->new_frame->field      ? port->new_frame->field      : post_frame_field;
+  new_frame->frame.draw       = port->new_frame->draw       ? port->new_frame->draw       : post_frame_draw;
+  new_frame->frame.lock       = port->new_frame->lock       ? port->new_frame->lock       : post_frame_lock;
+  new_frame->frame.free       = port->new_frame->free       ? port->new_frame->free       : post_frame_free;
+  new_frame->frame.dispose    = port->new_frame->dispose    ? port->new_frame->dispose    : post_frame_dispose;
+
+  /* Optimization: dont NULL stream ref, will often be reused later */
+  if ((new_frame->frame.free == post_frame_free) &&
+    new_frame->frame.stream && (new_frame->stream != new_frame->frame.stream)) {
+    _x_refcounter_inc (new_frame->frame.stream->refcounter);
+    if (new_frame->stream)
+      _x_refcounter_dec (new_frame->stream->refcounter);
+    new_frame->stream = new_frame->frame.stream;
+  }
+
+  if (!port->new_frame->draw || (port->route_preprocessing_procs && port->route_preprocessing_procs(port, frame))) {
+    /* draw will most likely modify the frame, so the decoder
+     * should only request preprocessing when there is no new draw
+     * but route_preprocessing_procs() can override this decision */
+    if (frame->proc_frame && !new_frame->frame.proc_frame)
+      new_frame->frame.proc_frame = post_frame_proc_frame;
+    if (frame->proc_slice && !new_frame->frame.proc_slice)
+      new_frame->frame.proc_slice = post_frame_proc_slice;
+  }
+
+  if (usage && port->frame_lock)
+    pthread_mutex_unlock (port->frame_lock);
+
+  return &new_frame->frame;
+}
+
+static vo_frame_t *post_restore_video_frame (vo_frame_t *frame, post_video_port_t *port, int usage) {
+  /* the first attched context is the original frame */
+  vo_frame_t *original = frame->next;
+
+  /* propagate any changes */
+  _x_post_frame_copy_down(frame, original);
+
+  if (usage && port->frame_lock)
+    pthread_mutex_unlock (port->frame_lock);
+
+  /* put the now free slot into the free frames list */
+  pthread_mutex_lock (&port->usage_lock);
+  frame->next = port->free_frame_slots;
+  port->free_frame_slots = frame;
+  /* Unref stream when already closed. */
+  if ((frame->free == post_frame_free) && !port->stream) {
+    vf_alias_t *f = (vf_alias_t *)frame;
+    if (f->stream) {
+      _x_refcounter_dec (f->stream->refcounter);
+       f->stream = NULL;
+    }
+  }
+  if (usage) {
+    port->usage_count--;
+    if (port->usage_count || !port->post->dispose_pending)
+      usage = 0;
+  }
+  pthread_mutex_unlock (&port->usage_lock);
+
+  if (usage)
+    port->post->dispose (port->post);
+
+  return original;
+}
+
+/* (Un)ref intercepted post ports as well. This prevents nasty writes after free
+   with live filter chain editors like xine-ui. A generic port->open works but
+   raises a similar issue later when output is discarded before post.
+*/
+static uint32_t post_video_get_capabilities (xine_video_port_t *port_gen);
+static vo_frame_t *post_video_get_frame (xine_video_port_t *port_gen, uint32_t width,
+  uint32_t height, double ratio, int format, int flags);
+static void post_video_enable_ovl (xine_video_port_t *port_gen, int ovl_enable);
+static video_overlay_manager_t *post_video_get_overlay_manager (xine_video_port_t *port_gen);
+
+static void post_video_port_ref (xine_video_port_t *port_gen) {
+  post_video_port_t *port = (post_video_port_t *)port_gen;
+  if (!port)
+    return;
+  if  ((port->new_port.get_capabilities    == post_video_get_capabilities)
+    || (port->new_port.get_frame           == post_video_get_frame)
+    || (port->new_port.enable_ovl          == post_video_enable_ovl)
+    || (port->new_port.get_overlay_manager == post_video_get_overlay_manager)) {
+    pthread_mutex_lock (&port->usage_lock);
+    port->usage_count++;
+    pthread_mutex_unlock (&port->usage_lock);
+  }
+}
+
+static void post_video_port_unref (xine_video_port_t *port_gen) {
+  post_video_port_t *port = (post_video_port_t *)port_gen;
+  if (!port)
+    return;
+  if  ((port->new_port.get_capabilities    == post_video_get_capabilities)
+    || (port->new_port.get_frame           == post_video_get_frame)
+    || (port->new_port.enable_ovl          == post_video_enable_ovl)
+    || (port->new_port.get_overlay_manager == post_video_get_overlay_manager)) {
+    pthread_mutex_lock (&port->usage_lock);
+    port->usage_count--;
+    if (port->usage_count || !port->post->dispose_pending) {
+      pthread_mutex_unlock (&port->usage_lock);
+    } else {
+      pthread_mutex_unlock (&port->usage_lock);
+      port->post->dispose (port->post);
+    }
+  }
+}
+
+static uint32_t post_audio_get_capabilities (xine_audio_port_t *port_gen);
+static audio_buffer_t *post_audio_get_buffer (xine_audio_port_t *port_gen);
+static int post_audio_control (xine_audio_port_t *port_gen, int cmd, ...);
+static void post_audio_put_buffer (xine_audio_port_t *port_gen, audio_buffer_t *buf,
+  xine_stream_t *stream);
+
+static void post_audio_port_ref (xine_audio_port_t *port_gen) {
+  post_audio_port_t *port = (post_audio_port_t *)port_gen;
+  if (!port)
+    return;
+  if  ((port->new_port.get_capabilities == post_audio_get_capabilities)
+    || (port->new_port.get_buffer       == post_audio_get_buffer)
+    || (port->new_port.control          == post_audio_control)
+    || (port->new_port.put_buffer       == post_audio_put_buffer)) {
+    pthread_mutex_lock (&port->usage_lock);
+    port->usage_count++;
+    pthread_mutex_unlock (&port->usage_lock);
+  }
+}
+
+static void post_audio_port_unref (xine_audio_port_t *port_gen) {
+  post_audio_port_t *port = (post_audio_port_t *)port_gen;
+  if (!port)
+    return;
+  if  ((port->new_port.get_capabilities == post_audio_get_capabilities)
+    || (port->new_port.get_buffer       == post_audio_get_buffer)
+    || (port->new_port.control          == post_audio_control)
+    || (port->new_port.put_buffer       == post_audio_put_buffer)) {
+    pthread_mutex_lock (&port->usage_lock);
+    port->usage_count--;
+    if (port->usage_count || !port->post->dispose_pending) {
+      pthread_mutex_unlock (&port->usage_lock);
+    } else {
+      pthread_mutex_unlock (&port->usage_lock);
+      port->post->dispose (port->post);
+    }
+  }
+}
 
 void _x_post_init(post_plugin_t *post, int num_audio_inputs, int num_video_inputs) {
   post->input  = xine_list_new();
@@ -35,7 +241,6 @@ void _x_post_init(post_plugin_t *post, int num_audio_inputs, int num_video_input
   post->xine_post.audio_input = calloc(num_audio_inputs + 1, sizeof(xine_audio_port_t *));
   post->xine_post.video_input = calloc(num_video_inputs + 1, sizeof(xine_video_port_t *));
 }
-
 
 /* dummy intercept functions that just pass the call on to the original port */
 static uint32_t post_video_get_capabilities(xine_video_port_t *port_gen) {
@@ -56,7 +261,8 @@ static void post_video_open(xine_video_port_t *port_gen, xine_stream_t *stream) 
   if (port->port_lock) pthread_mutex_lock(port->port_lock);
   (port->original_port->open) (port->original_port, stream);
   if (port->port_lock) pthread_mutex_unlock(port->port_lock);
-  port->stream = stream;
+  if (stream)
+    port->stream = stream;
 }
 
 static vo_frame_t *post_video_get_frame(xine_video_port_t *port_gen, uint32_t width,
@@ -71,10 +277,7 @@ static vo_frame_t *post_video_get_frame(xine_video_port_t *port_gen, uint32_t wi
   if (port->port_lock) pthread_mutex_unlock(port->port_lock);
 
   if (frame && (!port->intercept_frame || port->intercept_frame(port, frame))) {
-    _x_post_inc_usage(port);
-    if (port->frame_lock) pthread_mutex_lock(port->frame_lock);
-    frame = _x_post_intercept_video_frame(frame, port);
-    if (port->frame_lock) pthread_mutex_unlock(port->frame_lock);
+    frame = post_intercept_video_frame (frame, port, 1);
   }
 
   return frame;
@@ -110,12 +313,26 @@ static void post_video_enable_ovl(xine_video_port_t *port_gen, int ovl_enable) {
 
 static void post_video_close(xine_video_port_t *port_gen, xine_stream_t *stream) {
   post_video_port_t *port = (post_video_port_t *)port_gen;
+  vf_alias_t *f;
 
   if (port->port_lock) pthread_mutex_lock(port->port_lock);
   port->original_port->close(port->original_port, stream);
   if (port->port_lock) pthread_mutex_unlock(port->port_lock);
-  port->stream = NULL;
-  _x_post_dec_usage(port);
+  if (stream) {
+    /* XXX: do a real stream database like video_out ? */
+    port->stream = NULL;
+    pthread_mutex_lock (&port->usage_lock);
+    f = (vf_alias_t *)port->free_frame_slots;
+    while (f) {
+      if ((f->frame.free == post_frame_free) && f->stream) {
+        _x_refcounter_dec (f->stream->refcounter);
+        f->stream = NULL;
+      }
+      f = (vf_alias_t *)f->frame.next;
+    }
+    pthread_mutex_unlock (&port->usage_lock);
+  }
+  _x_post_dec_usage (port);
 }
 
 static void post_video_exit(xine_video_port_t *port_gen) {
@@ -208,10 +425,19 @@ static int post_video_rewire(xine_post_out_t *output_gen, void *data) {
   this->running_ticket->lock_port_rewiring(this->running_ticket, -1);
   this->running_ticket->revoke(this->running_ticket, 1);
 
-  if (input_port->original_port->status(input_port->original_port, input_port->stream,
-      &width, &height, &img_duration)) {
-    (new_port->open) (new_port, input_port->stream);
-    input_port->original_port->close(input_port->original_port, input_port->stream);
+  if (new_port) {
+    /* The wiring itself. */
+    post_video_port_ref (new_port);
+    /* The user stuff. */
+    if (input_port->stream)
+      new_port->open (new_port, input_port->stream);
+  }
+  if (input_port->original_port) {
+    if (input_port->stream &&
+      input_port->original_port->status (input_port->original_port, input_port->stream,
+      &width, &height, &img_duration))
+      input_port->original_port->close (input_port->original_port, input_port->stream);
+    post_video_port_unref (input_port->original_port);
   }
   input_port->original_port = new_port;
 
@@ -245,6 +471,7 @@ post_video_port_t *_x_post_intercept_video_port(post_plugin_t *post, xine_video_
   port->new_port.set_property        = post_video_set_property;
   port->new_port.driver              = original->driver;
 
+  post_video_port_ref (original);
   port->original_port                = original;
   port->new_frame                    = &port->frame_storage;
   port->new_manager                  = &port->manager_storage;
@@ -279,17 +506,16 @@ post_video_port_t *_x_post_intercept_video_port(post_plugin_t *post, xine_video_
 }
 
 
-/* dummy intercept functions for frames */
+/* Default intercept functions for frames. */
 static void post_frame_free(vo_frame_t *vo_img) {
   post_video_port_t *port = _x_post_video_frame_to_port(vo_img);
 
   if (port->frame_lock) pthread_mutex_lock(port->frame_lock);
   if (--vo_img->lock_counter == 0) {
     /* this frame is free */
-    vo_img = _x_post_restore_video_frame(vo_img, port);
+    vo_img = post_restore_video_frame (vo_img, port, 1);
+    /* unlock (port->frame_lock) already done above */
     vo_img->free(vo_img);
-    if (port->frame_lock) pthread_mutex_unlock(port->frame_lock);
-    _x_post_dec_usage(port);
   } else if (vo_img->next) {
     /* this frame is still in use */
     _x_post_frame_copy_down(vo_img, vo_img->next);
@@ -358,88 +584,32 @@ static void post_frame_dispose(vo_frame_t *vo_img) {
   post_video_port_t *port = _x_post_video_frame_to_port(vo_img);
 
   if (port->frame_lock) pthread_mutex_lock(port->frame_lock);
-  vo_img = _x_post_restore_video_frame(vo_img, port);
+  vo_img = post_restore_video_frame (vo_img, port, 1);
+  /* unlock (port->frame_lock) already done above */
   vo_img->dispose(vo_img);
-  if (port->frame_lock) pthread_mutex_unlock(port->frame_lock);
-  _x_post_dec_usage(port);
 }
 
 
 vo_frame_t *_x_post_intercept_video_frame(vo_frame_t *frame, post_video_port_t *port) {
-  vo_frame_t *new_frame;
-
-  /* get a free frame slot */
-  pthread_mutex_lock(&port->free_frames_lock);
-  if (port->free_frame_slots) {
-    new_frame = port->free_frame_slots;
-    port->free_frame_slots = new_frame->next;
-  } else {
-    new_frame = calloc(1, sizeof(vo_frame_t));
-  }
-  pthread_mutex_unlock(&port->free_frames_lock);
-
-  /* make a copy and attach the original */
-  xine_fast_memcpy(new_frame, frame, sizeof(vo_frame_t));
-  new_frame->next = frame;
-
-  if (new_frame->stream)
-    _x_refcounter_inc(new_frame->stream->refcounter);
-
-  /* modify the frame with the intercept functions */
-  new_frame->port             = &port->new_port;
-  new_frame->proc_frame       =
-    port->new_frame->proc_frame       ? port->new_frame->proc_frame       : NULL;
-  new_frame->proc_slice       =
-    port->new_frame->proc_slice       ? port->new_frame->proc_slice       : NULL;
-  new_frame->field            =
-    port->new_frame->field            ? port->new_frame->field            : post_frame_field;
-  new_frame->draw             =
-    port->new_frame->draw             ? port->new_frame->draw             : post_frame_draw;
-  new_frame->lock             =
-    port->new_frame->lock             ? port->new_frame->lock             : post_frame_lock;
-  new_frame->free             =
-    port->new_frame->free             ? port->new_frame->free             : post_frame_free;
-  new_frame->dispose          =
-    port->new_frame->dispose          ? port->new_frame->dispose          : post_frame_dispose;
-
-  if (!port->new_frame->draw || (port->route_preprocessing_procs && port->route_preprocessing_procs(port, frame))) {
-    /* draw will most likely modify the frame, so the decoder
-     * should only request preprocessing when there is no new draw
-     * but route_preprocessing_procs() can override this decision */
-    if (frame->proc_frame       && !new_frame->proc_frame)
-      new_frame->proc_frame       = post_frame_proc_frame;
-    if (frame->proc_slice       && !new_frame->proc_slice)
-      new_frame->proc_slice       = post_frame_proc_slice;
-  }
-
-  return new_frame;
+  return post_intercept_video_frame (frame, port, 0);
 }
 
 vo_frame_t *_x_post_restore_video_frame(vo_frame_t *frame, post_video_port_t *port) {
-  /* the first attched context is the original frame */
-  vo_frame_t *original = frame->next;
-
-  /* propagate any changes */
-  _x_post_frame_copy_down(frame, original);
-
-  if (frame->stream)
-    _x_refcounter_dec(frame->stream->refcounter);
-
-  /* put the now free slot into the free frames list */
-  pthread_mutex_lock(&port->free_frames_lock);
-  frame->next = port->free_frame_slots;
-  port->free_frame_slots = frame;
-  pthread_mutex_unlock(&port->free_frames_lock);
-
-  return original;
+  return post_restore_video_frame (frame, port, 0);
 }
 
 void _x_post_frame_copy_down(vo_frame_t *from, vo_frame_t *to) {
   /* propagate changes downwards (from decoders to video out) */
-  if (from->stream)
-    _x_refcounter_inc(from->stream->refcounter);
-  if (to->stream)
-    _x_refcounter_dec(to->stream->refcounter);
+  if (to->free == post_frame_free) {
+    vf_alias_t *f = (vf_alias_t *)to;
+    f->frame.stream = from->stream;
+    if (f->frame.stream && (f->frame.stream != f->stream)) {
+      _x_refcounter_inc (f->frame.stream->refcounter);
+      if (f->stream)
+        _x_refcounter_dec (f->stream->refcounter);
+      f->stream = f->frame.stream;
+    }
+  }
 
   to->pts                 = from->pts;
   to->bad_frame           = from->bad_frame;
@@ -449,7 +619,6 @@ void _x_post_frame_copy_down(vo_frame_t *from, vo_frame_t *to) {
   to->progressive_frame   = from->progressive_frame;
   to->picture_coding_type = from->picture_coding_type;
   to->drawn               = from->drawn;
-  to->stream              = from->stream;
   to->crop_left           = from->crop_left;
   to->crop_right          = from->crop_right;
   to->crop_top            = from->crop_top;
@@ -462,14 +631,19 @@ void _x_post_frame_copy_down(vo_frame_t *from, vo_frame_t *to) {
 
 void _x_post_frame_copy_up(vo_frame_t *to, vo_frame_t *from) {
   /* propagate changes upwards (from video out to decoders) */
-  if (from->stream)
-    _x_refcounter_inc(from->stream->refcounter);
-  if (to->stream)
-    _x_refcounter_dec(to->stream->refcounter);
+  if (to->free == post_frame_free) {
+    vf_alias_t *f = (vf_alias_t *)to;
+    f->frame.stream = from->stream;
+    if (f->frame.stream && (f->frame.stream != f->stream)) {
+      _x_refcounter_inc (f->frame.stream->refcounter);
+      if (f->stream)
+        _x_refcounter_dec (f->stream->refcounter);
+      f->stream = f->frame.stream;
+    }
+  }
 
   to->vpts     = from->vpts;
   to->duration = from->duration;
-  to->stream   = from->stream;
 
   if (to->extra_info != from->extra_info)
     _x_extra_info_merge(to->extra_info, from->extra_info);
@@ -477,12 +651,17 @@ void _x_post_frame_copy_up(vo_frame_t *to, vo_frame_t *from) {
 
 void _x_post_frame_u_turn(vo_frame_t *frame, xine_stream_t *stream) {
   /* frame's travel will end here => do the housekeeping */
-  if (stream)
-    _x_refcounter_inc(stream->refcounter);
-  if (frame->stream)
-    _x_refcounter_dec(frame->stream->refcounter);
+  if (frame->free == post_frame_free) {
+    vf_alias_t *f = (vf_alias_t *)frame;
+    f->frame.stream = stream;
+    if (f->frame.stream && (f->frame.stream != f->stream)) {
+      _x_refcounter_inc (f->frame.stream->refcounter);
+      if (f->stream)
+        _x_refcounter_dec (f->stream->refcounter);
+      f->stream = f->frame.stream;
+    }
+  }
 
-  frame->stream = stream;
   if (stream) {
     _x_extra_info_merge(frame->extra_info, stream->video_decoder_extra_info);
     stream->metronom->got_video_frame(stream->metronom, frame);
@@ -724,11 +903,13 @@ static int post_audio_rewire(xine_post_out_t *output_gen, void *data) {
   this->running_ticket->lock_port_rewiring(this->running_ticket, -1);
   this->running_ticket->revoke(this->running_ticket, 1);
 
+  post_audio_port_ref (new_port);
   if (input_port->original_port->status(input_port->original_port, input_port->stream,
       &bits, &rate, &mode)) {
     (new_port->open) (new_port, input_port->stream, bits, rate, mode);
     input_port->original_port->close(input_port->original_port, input_port->stream);
   }
+  post_audio_port_unref (input_port->original_port);
   input_port->original_port = new_port;
 
   this->running_ticket->issue(this->running_ticket, 1);
@@ -756,6 +937,7 @@ post_audio_port_t *_x_post_intercept_audio_port(post_plugin_t *post, xine_audio_
   port->new_port.flush            = post_audio_flush;
   port->new_port.status           = post_audio_status;
 
+  post_audio_port_ref (original);
   port->original_port             = original;
   port->post                      = post;
 
@@ -788,47 +970,35 @@ post_audio_port_t *_x_post_intercept_audio_port(post_plugin_t *post, xine_audio_
 
 
 int _x_post_dispose(post_plugin_t *this) {
-  int i, in_use = 0;
+  int i, j, in_use = 0;
 
-  /* acquire all usage locks */
+  /* acquire all usage locks, and check counters. */
   for (i = 0; this->xine_post.audio_input[i]; i++) {
     post_audio_port_t *port = (post_audio_port_t *)this->xine_post.audio_input[i];
     pthread_mutex_lock(&port->usage_lock);
+    in_use += port->usage_count;
   }
-  for (i = 0; this->xine_post.video_input[i]; i++) {
-    post_video_port_t *port = (post_video_port_t *)this->xine_post.video_input[i];
+  for (j = 0; this->xine_post.video_input[j]; j++) {
+    post_video_port_t *port = (post_video_port_t *)this->xine_post.video_input[j];
     pthread_mutex_lock(&port->usage_lock);
+    in_use += port->usage_count;
   }
 
   /* we can set this witout harm, because it is always checked with
    * usage lock held */
   this->dispose_pending = 1;
 
-  /* check counters */
-  for (i = 0; this->xine_post.audio_input[i]; i++) {
-    post_audio_port_t *port = (post_audio_port_t *)this->xine_post.audio_input[i];
-    if (port->usage_count > 0) {
-      in_use = 1;
-      break;
-    }
+  /* free the locks */
+  for (j--; j >= 0; j--) {
+    post_video_port_t *port = (post_video_port_t *)this->xine_post.video_input[j];
+    pthread_mutex_unlock(&port->usage_lock);
   }
-  for (i = 0; this->xine_post.video_input[i]; i++) {
-    post_video_port_t *port = (post_video_port_t *)this->xine_post.video_input[i];
-    if (port->usage_count > 0) {
-      in_use = 1;
-      break;
-    }
+  for (i--; i >= 0; i--) {
+    post_audio_port_t *port = (post_audio_port_t *)this->xine_post.audio_input[i];
+    pthread_mutex_unlock(&port->usage_lock);
   }
 
-  /* free the locks */
-  for (i = 0; this->xine_post.audio_input[i]; i++) {
-    post_audio_port_t *port = (post_audio_port_t *)this->xine_post.audio_input[i];
-    pthread_mutex_unlock(&port->usage_lock);
-  }
-  for (i = 0; this->xine_post.video_input[i]; i++) {
-    post_video_port_t *port = (post_video_port_t *)this->xine_post.video_input[i];
-    pthread_mutex_unlock(&port->usage_lock);
-  }
+  xprintf (this->xine, XINE_VERBOSITY_DEBUG, "post: _x_post_dispose (%p): %d refs.\n", this, in_use);
 
   if (!in_use) {
     xine_post_in_t  *input;
@@ -850,17 +1020,30 @@ int _x_post_dispose(post_plugin_t *this) {
       case XINE_POST_DATA_VIDEO:
 	{
 	  post_video_port_t *port = (post_video_port_t *)input->data;
-	  vo_frame_t *first, *second;
+          vf_alias_t *f;
+
+          post_video_port_unref (port->original_port);
 
 	  pthread_mutex_destroy(&port->usage_lock);
 	  pthread_mutex_destroy(&port->free_frames_lock);
 
-	  second = NULL;
-	  for (first = port->free_frame_slots; first;
-	      second = first, first = first->next)
-	    free(second);
-	  free(second);
+          f = (vf_alias_t *)port->free_frame_slots;
+          if (f) {
+            int n = 0;
+            do {
+              vf_alias_t *next = (vf_alias_t *)f->frame.next;
+              if ((f->frame.free == post_frame_free) && f->stream)
+                _x_refcounter_dec (f->stream->refcounter);
+              free (f);
+              n++;
+              f = next;
+            } while (f);
+            port->free_frame_slots = NULL;
+            xprintf (this->xine, XINE_VERBOSITY_DEBUG, "post: freed %d video frame aliases.\n", n);
+          }
 
+          NAILS_S (port, 0x53);
+          NAILS_S (input, 0x54);
 	  free(port);
 	  free(input);
 	}
@@ -869,8 +1052,12 @@ int _x_post_dispose(post_plugin_t *this) {
 	{
 	  post_audio_port_t *port = (post_audio_port_t *)input->data;
 
+          post_audio_port_unref (port->original_port);
+
 	  pthread_mutex_destroy(&port->usage_lock);
 
+          NAILS_S (port, 0x53);
+          NAILS_S (input, 0x54);
 	  free(port);
 	  free(input);
 	}
@@ -882,14 +1069,18 @@ int _x_post_dispose(post_plugin_t *this) {
       output = xine_list_get_value(this->output, ite);
       switch (output->type) {
       case XINE_POST_DATA_VIDEO:
-	if (output->rewire == post_video_rewire)
+	if (output->rewire == post_video_rewire) {
 	  /* we allocated it, we free it */
+          NAILS_S (output, 0x52);
 	  free(output);
+        }
 	break;
       case XINE_POST_DATA_AUDIO:
-	if (output->rewire == post_audio_rewire)
+	if (output->rewire == post_audio_rewire) {
 	  /* we allocated it, we free it */
+          NAILS_S (output, 0x52);
 	  free(output);
+        }
 	break;
       }
     }
@@ -903,6 +1094,7 @@ int _x_post_dispose(post_plugin_t *this) {
     this->node->ref--;
     pthread_mutex_unlock(&this->xine->plugin_catalog->lock);
 
+    NAILS_S (this, 0x55);
     return 1;
   }
 
