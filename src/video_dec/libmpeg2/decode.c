@@ -865,7 +865,7 @@ void mpeg2_close (mpeg2dec_t * mpeg2dec)
     }
 
     xine_freep_aligned(&mpeg2dec->chunk_buffer);
-    xine_freep_aligned(&mpeg2dec->picture_base);
+    xine_freep_aligned(&mpeg2dec->picture);
    
     if ( mpeg2dec->cc_dec) {
       /* dispose the closed caption decoder */
