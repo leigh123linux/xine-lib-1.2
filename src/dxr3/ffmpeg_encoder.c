@@ -201,7 +201,7 @@ static int lavc_on_update_format(dxr3_driver_t *drv, dxr3_frame_t *frame)
     10, NULL, NULL);
   }
 
-  lprintf("lavc -> bitrate %d  \n", this->context->bit_rate);
+  lprintf("lavc -> bitrate %" PRId64 "  \n", (int64_t)this->context->bit_rate);
 
   this->context->width  = frame->vo_frame.pitches[0];
   this->context->height = frame->oheight;

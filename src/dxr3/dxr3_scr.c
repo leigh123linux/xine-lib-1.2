@@ -126,7 +126,7 @@ static void dxr3_scr_start(scr_plugin_t *scr, int64_t vpts)
   this->offset = vpts - ((int64_t)vpts32 << 1);
   if (ioctl(this->fd_control, EM8300_IOCTL_SCR_SET, &vpts32))
     xprintf(this->xine, XINE_VERBOSITY_DEBUG, "dxr3_scr: start failed (%s)\n", strerror(errno));
-  lprintf("started with vpts %lld\n", vpts);
+  lprintf("started with vpts %" PRId64 "\n", vpts);
   /* mis-use vpts32 to set the clock speed to 0x900, which is normal speed */
   vpts32 = 0x900;
   ioctl(this->fd_control, EM8300_IOCTL_SCR_SETSPEED, &vpts32);
@@ -176,7 +176,7 @@ static void dxr3_scr_adjust(scr_plugin_t *scr, int64_t vpts)
     this->last_pts = vpts32;
     this->offset = vpts - ((int64_t)vpts32 << 1);
   }
-  lprintf("adjusted to vpts %lld\n", vpts);
+  lprintf("adjusted to vpts %" PRId64 "\n", vpts);
   pthread_mutex_unlock(&this->mutex);
 }
 
