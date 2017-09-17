@@ -2246,9 +2246,9 @@ static const demuxer_info_t demux_info_ogg = {
   10                       /* priority */
 };
 
-extern const demuxer_info_t dec_info_vorbis;
-extern const demuxer_info_t dec_info_speex;
-extern const demuxer_info_t dec_info_theora;
+extern const decoder_info_t dec_info_vorbis;
+extern const decoder_info_t dec_info_speex;
+extern const decoder_info_t dec_info_theora;
 
 const plugin_info_t xine_plugin_info[] EXPORTED = {
   /* type, API, "name", version, special_info, init_function */
