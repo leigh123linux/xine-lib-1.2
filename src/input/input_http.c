@@ -613,6 +613,7 @@ static void http_plugin_dispose (input_plugin_t *this_gen ) {
   _x_freep (&this->user);
   _x_freep (&this->password);
   _x_freep (&this->uri);
+  _x_freep (&this->mime_type);
   free (this);
 }
 
