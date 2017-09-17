@@ -32,8 +32,7 @@ typedef struct mpeg2dec_s {
 
     /* this is where we keep the state of the decoder */
     struct picture_s * picture;
-    void *picture_base;
-    
+
     uint32_t shift;
     int new_sequence;
     int is_sequence_needed;
@@ -47,7 +46,6 @@ typedef struct mpeg2dec_s {
     /* (we make no pretenses of decoding anything more than that) */
     /* allocated in init - gcc has problems allocating such big structures */
     uint8_t * chunk_buffer;
-    void *chunk_base;
     /* pointer to current position in chunk_buffer */
     uint8_t * chunk_ptr;
     /* last start code ? */
