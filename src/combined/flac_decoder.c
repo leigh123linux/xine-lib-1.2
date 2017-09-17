@@ -289,7 +289,7 @@ flac_decode_data (audio_decoder_t *this_gen, buf_element_t *buf)
         {
             this->buf_size += 2 * buf->size;
             this->buf = realloc (this->buf, this->buf_size);
-            lprintf("reallocating buffer to %d\n", this->buf_size);
+            lprintf("reallocating buffer to %zu\n", this->buf_size);
         }
 
         xine_fast_memcpy (&this->buf[this->buf_pos], buf->content, buf->size);

@@ -984,6 +984,7 @@ static void decode_video_header (demux_ogg_t *this, const int stream_num, ogg_pa
   this->si[stream_num]->buf_types |= channel;
   this->si[stream_num]->headers = 0; /* header is sent below */
 
+#ifdef LOG
   lprintf ("subtype          %.4s\n", (char*)&locsubtype);
   lprintf ("time_unit        %" PRId64 "\n", loctime_unit);
   lprintf ("samples_per_unit %" PRId64 "\n", locsamples_per_unit);
@@ -993,6 +994,7 @@ static void decode_video_header (demux_ogg_t *this, const int stream_num, ogg_pa
   lprintf ("width            %d\n", locwidth);
   lprintf ("height           %d\n", locheight);
   lprintf ("buf_type         %08x\n",this->si[stream_num]->buf_types);
+#endif
 
   bih.biSize=sizeof(xine_bmiheader);
   bih.biWidth = locwidth;
@@ -1077,6 +1079,7 @@ static void decode_audio_header (demux_ogg_t *this, const int stream_num, ogg_pa
       /*break;*/
     }
 
+#ifdef LOG
     lprintf ("subtype          0x%x\n", codec);
     lprintf ("time_unit        %" PRId64 "\n", loctime_unit);
     lprintf ("samples_per_unit %" PRId64 "\n", locsamples_per_unit);
@@ -1087,6 +1090,7 @@ static void decode_audio_header (demux_ogg_t *this, const int stream_num, ogg_pa
     lprintf ("blockalign       %d\n", locblockalign);
     lprintf ("avgbytespersec   %d\n", locavgbytespersec);
     lprintf ("buf_type         %08x\n",this->si[stream_num]->buf_types);
+#endif
 
     buf = this->audio_fifo->buffer_pool_alloc (this->audio_fifo);
     buf->type = this->si[stream_num]->buf_types;

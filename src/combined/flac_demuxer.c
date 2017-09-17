@@ -127,7 +127,7 @@ flac_read_callback (const FLAC__SeekableStreamDecoder *decoder,
 
     offset = input->read (input, buffer, offset);
 
-    lprintf("Read %lld / %u bytes into buffer\n", offset, *bytes);
+    lprintf("Read %" PRId64 " / %zu bytes into buffer\n", (int64_t)offset, *bytes);
 
     /* This is the way to detect EOF with xine input plugins */
     if ( offset <= 0 && *bytes != 0 )
@@ -492,7 +492,7 @@ demux_flac_seek (demux_plugin_t *this_gen, off_t start_pos, int start_time, int 
 
         start_pos += this->data_start;
         this->input->seek (this->input, start_pos, SEEK_SET);
-        lprintf ("Seek to position: %lld\n", start_pos);
+        lprintf ("Seek to position: %" PRId64 "\n", (int64_t)start_pos);
 
     } else {
 

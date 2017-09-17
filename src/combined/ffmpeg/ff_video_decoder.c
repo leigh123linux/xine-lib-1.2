@@ -498,7 +498,7 @@ static int get_buffer_vaapi_vld (AVCodecContext *context, AVFrame *av_frame)
     ffsf->va_surface = va_surface;
   }
 
-  lprintf("1: 0x%08x\n", av_frame->data[3]);
+  lprintf("1: 0x%08x\n", (unsigned int)(intptr_t)av_frame->data[3]);
 
   av_frame->linesize[0] = 0;
   av_frame->linesize[1] = 0;
