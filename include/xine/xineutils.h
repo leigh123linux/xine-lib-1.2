@@ -506,7 +506,12 @@ void xine_hexdump (const void *buf, int length) XINE_PROTECTED;
   #endif /* __GNUC__ */
 #else /* LOG */
   #ifdef __GNUC__
-    #define lprintf(fmt, args...)     do {} while(0)
+    #ifdef DEBUG
+      #define lprintf(fmt, args...)                                           \
+        do { if (0) { printf(fmt, ##args); } } while(0)  /* silence unused warnings, check format, ... */
+    #else
+      #define lprintf(fmt, args...)     do {} while(0)
+    #endif
   #else
   #ifdef _MSC_VER
 void __inline lprintf(const char * fmt, ...) {}
