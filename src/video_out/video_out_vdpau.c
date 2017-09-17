@@ -1695,7 +1695,7 @@ static void vdpau_update_skip_chroma( vdpau_driver_t *this_gen )
   if ( st != VDP_STATUS_OK )
     fprintf(stderr, "vo_vdpau: error, can't set skip_chroma !!\n" );
   else
-    lprintf(stderr, "vo_vdpau: skip_chroma = %d\n", this_gen->skip_chroma );
+    lprintf("vo_vdpau: skip_chroma = %d\n", this_gen->skip_chroma );
 }
 
 
