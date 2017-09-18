@@ -1029,7 +1029,7 @@ static int open_internal (xine_stream_t *stream, const char *mrl) {
 	return 0;
       default:
 	xine_log (stream->xine, XINE_LOG_MSG, _("xine: input plugin cannot open MRL [%s]\n"),mrl);
-	stream->input_plugin->dispose(stream->input_plugin);
+        _x_free_input_plugin(stream, stream->input_plugin);
 	stream->input_plugin = NULL;
 	stream->err = XINE_ERROR_INPUT_FAILED;
       }
