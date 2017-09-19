@@ -51,6 +51,8 @@
 #include <xine/xineutils.h>
 #include <yuv2rgb.h>
 
+#include "xine_private.h"
+
 #define NUM_FRAME_BUFFERS          15
 /* 24/25/30 fps are most common, do these in a single wait */
 #define MAX_USEC_TO_SLEEP       42000
@@ -2444,7 +2446,7 @@ static void vo_exit (xine_video_port_t *this_gen) {
   vo_force_unref_all (this);
   vo_free_img_buffers (this);
 
-  this->driver->dispose (this->driver);
+  _x_free_video_driver(this->xine, &this->driver);
 
   free (this->frames);
 

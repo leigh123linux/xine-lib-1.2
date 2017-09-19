@@ -94,6 +94,8 @@
 #include <xine/resample.h>
 #include <xine/metronom.h>
 
+#include "xine_private.h"
+
 
 #define NUM_AUDIO_BUFFERS       32
 #define AUDIO_BUF_SIZE       32768
@@ -1480,7 +1482,7 @@ static void *ao_loop (void *this_gen) {
         if(this->driver_open) {
           this->driver->close(this->driver);
           this->driver_open = 0;
-          this->driver->exit(this->driver);
+          _x_free_audio_driver(this->xine, &this->driver);
           this->driver = _x_load_audio_output_plugin (this->xine, "none");
           if (this->driver && !in_buf->stream->emergency_brake &&
               ao_change_settings(this,
@@ -1891,7 +1893,7 @@ static void ao_exit(xine_audio_port_t *this_gen) {
     this->xine->config->update_num(this->xine->config, "audio.volume.mixer_volume", vol);
     if(this->driver_open)
       this->driver->close(this->driver);
-    this->driver->exit(this->driver);
+    _x_free_audio_driver(this->xine, &this->driver);
     pthread_mutex_unlock( &this->driver_lock );
   }
 

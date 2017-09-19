@@ -2076,6 +2076,40 @@ xine_audio_port_t *xine_new_framegrab_audio_port (xine_t *this) {
   return port;
 }
 
+void _x_free_audio_driver (xine_t *xine, ao_driver_t **pdriver) {
+
+  ao_driver_t      *driver = *pdriver;
+  plugin_catalog_t *catalog = xine->plugin_catalog;
+  plugin_node_t    *node = driver->node;
+
+  *pdriver = NULL;
+
+  driver->exit(driver);
+
+  if (node) {
+    pthread_mutex_lock(&catalog->lock);
+    dec_node_ref(node);
+    pthread_mutex_unlock(&catalog->lock);
+  }
+}
+
+void _x_free_video_driver (xine_t *xine, vo_driver_t **pdriver) {
+
+  vo_driver_t      *driver = *pdriver;
+  plugin_catalog_t *catalog = xine->plugin_catalog;
+  plugin_node_t    *node = driver->node;
+
+  *pdriver = NULL;
+
+  driver->dispose (driver);
+
+  if (node) {
+    pthread_mutex_lock(&catalog->lock);
+    dec_node_ref(node);
+    pthread_mutex_unlock(&catalog->lock);
+  }
+}
+
 void xine_close_audio_driver (xine_t *this, xine_audio_port_t  *ao_port) {
 
   if( ao_port )

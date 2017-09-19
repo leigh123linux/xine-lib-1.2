@@ -71,6 +71,9 @@ void _x_scan_plugins (xine_t *this) INTERNAL;
  */
 void _x_dispose_plugins (xine_t *this) INTERNAL;
 
+void _x_free_video_driver (xine_t *xine, vo_driver_t **driver) INTERNAL;
+void _x_free_audio_driver (xine_t *xine, ao_driver_t **driver) INTERNAL;
+
 ///@{
 /**
  * @defgroup
