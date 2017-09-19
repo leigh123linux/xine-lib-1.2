@@ -150,7 +150,9 @@ void _x_real_codecs_init(xine_t *const xine) {
 				       "how to install the codecs."),
 				     10, NULL, NULL);
 
+#ifdef LOG
   lprintf ("real codecs path : %s\n", real_codecs_path);
+#endif
 }
 
 void *_x_real_codec_open(xine_stream_t *const stream, const char *const path,

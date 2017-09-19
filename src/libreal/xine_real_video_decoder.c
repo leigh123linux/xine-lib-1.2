@@ -259,7 +259,9 @@ static int init_codec (realdec_decoder_t *this, buf_element_t *buf) {
 #endif
     this->rvyuv_init (&init_data, &this->context);
 
+#ifdef LOG
   lprintf ("init result: %d\n", result);
+#endif
 
   /* setup rv30 codec (codec sub-type and image dimensions): */
   if ((init_data.format>=0x20200002) && (buf->type != BUF_VIDEO_RV40)) {
@@ -402,9 +404,9 @@ static void realdec_decode_data (video_decoder_t *this_gen, buf_element_t *buf) 
                                         &transform_out,
                                         this->context);
 
+#ifdef LOG
         lprintf ("transform result: %08x\n", result);
         lprintf ("transform_out:\n");
-#ifdef LOG
         xine_hexdump ((uint8_t *) &transform_out, 5 * 4);
 #endif
 

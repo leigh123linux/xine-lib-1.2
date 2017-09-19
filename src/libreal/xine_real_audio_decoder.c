@@ -417,7 +417,9 @@ static void realdec_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) 
 				   this->block_align,
 				   (char *) audio_buffer->mem, &len, -1);
 
+#ifdef LOG
 	  lprintf ("raDecode result %d, len=%d\n", result, len);
+#endif
 
 	  audio_buffer->vpts       = this->pts;
 

@@ -582,10 +582,10 @@ int real_get_rdt_chunk(rtsp_t *rtsp_session, unsigned char **buffer) {
   n=rtsp_read_data(rtsp_session, header, 6);
   if (n<6) return 0;
   ts=_X_BE_32(header);
-
+#ifdef LOG
   lprintf("ts: %u size: %u, flags: 0x%02x, unknown values: %u 0x%02x 0x%02x\n",
           ts, size, flags1, unknown1, header[4], header[5]);
-
+#endif
   size+=2;
 
   ph.object_version=0;
