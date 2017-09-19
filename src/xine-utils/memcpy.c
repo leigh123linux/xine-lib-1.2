@@ -29,6 +29,8 @@
  *
  */
 
+#define XINE_ENGINE_INTERNAL
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
