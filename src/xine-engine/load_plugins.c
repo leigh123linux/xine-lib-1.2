@@ -141,6 +141,7 @@ static void inc_file_ref(plugin_file_t *file) {
 
 static void dec_file_ref(plugin_file_t *file) {
   _x_assert(file);
+  _x_assert(file->ref > 0);
 
   file->ref--;
   lprintf("file %s referenced %d time(s)\n", file->filename, file->ref);
@@ -153,6 +154,7 @@ static void inc_node_ref(plugin_node_t *node) {
 
 static void dec_node_ref(plugin_node_t *node) {
   _x_assert(node);
+  _x_assert(node->ref > 0);
 
   node->ref--;
   lprintf("node %s referenced %d time(s)\n", node->info->id, node->ref);
