@@ -46,8 +46,6 @@
 #define LOG
 */
 
-#define XINE_ENGINE_INTERNAL
-
 #include <xine/xine_internal.h>
 #include "xine-engine/bswap.h"
 #include <xine/xineutils.h>

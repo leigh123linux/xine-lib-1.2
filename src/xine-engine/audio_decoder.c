@@ -31,8 +31,6 @@
 #include <sched.h>
 #include <unistd.h>
 
-#define XINE_ENGINE_INTERNAL
-
 #define LOG_MODULE "audio_decoder"
 #define LOG_VERBOSE
 /*

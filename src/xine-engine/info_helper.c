@@ -33,8 +33,6 @@
 #  include <iconv.h>
 #endif
 
-#define XINE_ENGINE_INTERNAL
-
 #include <xine/info_helper.h>
 
 /* *******************  Stream Info  *************************** */

@@ -34,8 +34,6 @@
 #include <unistd.h>
 #include <errno.h>
 
-#define XINE_ENGINE_INTERNAL
-
 #define LOG_MODULE "demux"
 #define LOG_VERBOSE
 /*

@@ -37,7 +37,6 @@
 #include <errno.h>
 
 #define XINE_ENABLE_EXPERIMENTAL_FEATURES
-#define XINE_ENGINE_INTERNAL
 
 #define LOG_MODULE "video_out"
 #define LOG_VERBOSE

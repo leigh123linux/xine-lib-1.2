@@ -51,7 +51,7 @@
 */
 
 #define XINE_ENABLE_EXPERIMENTAL_FEATURES 1
-#define XINE_ENGINE_INTERNAL
+
 #include <xine/xine_internal.h>
 #include <xine/xine_plugin.h>
 #include <xine/plugin_catalog.h>

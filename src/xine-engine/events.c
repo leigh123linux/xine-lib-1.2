@@ -24,8 +24,6 @@
 #include "config.h"
 #endif
 
-#define XINE_ENGINE_INTERNAL
-
 #include <xine/xine_internal.h>
 
 xine_event_t *xine_event_get  (xine_event_queue_t *queue) {

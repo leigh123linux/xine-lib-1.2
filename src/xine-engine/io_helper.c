@@ -42,8 +42,6 @@
 #include <string.h>
 #include <assert.h>
 
-#define XINE_ENGINE_INTERNAL
-
 #include <xine/io_helper.h>
 
 /* private constants */

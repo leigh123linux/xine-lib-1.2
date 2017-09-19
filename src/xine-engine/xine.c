@@ -57,7 +57,7 @@
 */
 
 #define XINE_ENABLE_EXPERIMENTAL_FEATURES
-#define XINE_ENGINE_INTERNAL
+#define METRONOM_INTERNAL
 #define METRONOM_CLOCK_INTERNAL
 
 #include <xine/xine_internal.h>

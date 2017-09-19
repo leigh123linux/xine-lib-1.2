@@ -38,8 +38,6 @@
 #include <machine/endian.h>
 #endif
 
-#define XINE_ENGINE_INTERNAL
-
 #include <xine/xine_internal.h>
 #include <xine/audio_out.h>
 #include <xine/video_out.h>
