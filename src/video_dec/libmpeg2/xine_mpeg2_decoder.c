@@ -52,7 +52,6 @@ typedef struct {
 typedef struct mpeg2dec_decoder_s {
   video_decoder_t  video_decoder;
   mpeg2dec_t       mpeg2;
-  mpeg2_class_t   *class;
   xine_stream_t   *stream;
 } mpeg2dec_decoder_t;
 
@@ -129,7 +128,6 @@ static video_decoder_t *open_plugin (video_decoder_class_t *class_gen, xine_stre
   this->video_decoder.discontinuity       = mpeg2dec_discontinuity;
   this->video_decoder.dispose             = mpeg2dec_dispose;
   this->stream                            = stream;
-  this->class                             = (mpeg2_class_t *) class_gen;
   this->mpeg2.stream = stream;
 
   mpeg2_init (&this->mpeg2, stream->video_out);
