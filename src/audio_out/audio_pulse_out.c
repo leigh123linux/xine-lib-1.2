@@ -988,6 +988,7 @@ static ao_driver_t *open_plugin (audio_driver_class_t *class_gen, const void *da
     }
   }
 
+  _x_assert(!this->mainloop);
   this->mainloop = pa_threaded_mainloop_new();
   _x_assert(this->mainloop);
   pa_threaded_mainloop_start(this->mainloop);
