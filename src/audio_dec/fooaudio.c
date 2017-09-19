@@ -302,7 +302,7 @@ static void *init_plugin (xine_t *xine, void *data) {
 
   fooaudio_class_t *this ;
 
-  this = (fooaudio_class_t *) xine_malloc (sizeof (fooaudio_class_t));
+  this = (fooaudio_class_t *) calloc (1, sizeof (fooaudio_class_t));
 
   this->decoder_class.open_plugin     = open_plugin;
   this->decoder_class.identifier      = "fooaudio";
