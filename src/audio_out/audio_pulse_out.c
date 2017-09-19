@@ -349,6 +349,7 @@ static int connect_context(pulse_driver_t *this) {
      return -1;
   }
 
+  pa_operation_unref(operation);
   return 0;
 }
 
