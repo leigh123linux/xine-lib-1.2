@@ -1558,9 +1558,17 @@ static void uninit_log_handler (vcd_log_level_t level, const char message[]) {
 static void
 vcd_class_dispose (input_class_t *this_gen) {
   vcd_input_class_t  *class = (vcd_input_class_t *) this_gen;
+  config_values_t    *config = class->xine->config;
 
-  class->xine->config->unregister_callback(class->xine->config,
-					   "media.vcd.device");
+  config->unregister_callback(config, "media.vcd.autoplay");
+  config->unregister_callback(config, "media.vcd.device");
+  config->unregister_callback(config, "media.vcd.length_reporting");
+  config->unregister_callback(config, "media.vcd.autoadvance");
+  config->unregister_callback(config, "media.vcd.show_rejected");
+  config->unregister_callback(config, "media.vcd.title_format");
+  config->unregister_callback(config, "media.vcd.comment_format");
+  config->unregister_callback(config, "media.vcd.debug");
+
   gl_default_vcd_log_handler  = vcd_log_set_handler (uninit_log_handler);
   gl_default_cdio_log_handler =
     cdio_log_set_handler ((cdio_log_handler_t) uninit_log_handler);

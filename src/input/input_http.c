@@ -124,14 +124,14 @@ typedef struct {
   xine_t           *xine;
   config_values_t  *config;
 
-  char             *proxyhost;
+  const char       *proxyhost;
   char             *proxyhost_env;
   int               proxyport;
   int               proxyport_env;
 
-  char             *proxyuser;
-  char             *proxypassword;
-  char             *noproxylist;
+  const char       *proxyuser;
+  const char       *proxypassword;
+  const char       *noproxylist;
 } http_input_class_t;
 
 static void proxy_host_change_cb (void *this_gen, xine_cfg_entry_t *cfg) {
@@ -1044,6 +1044,13 @@ static input_plugin_t *http_class_get_instance (input_class_t *cls_gen, xine_str
 
 static void http_class_dispose (input_class_t *this_gen) {
   http_input_class_t  *this = (http_input_class_t *) this_gen;
+  config_values_t     *config = this->config;
+
+  config->unregister_callback(config, "media.network.http_proxy_host");
+  config->unregister_callback(config, "media.network.http_proxy_port");
+  config->unregister_callback(config, "media.network.http_proxy_user");
+  config->unregister_callback(config, "media.network.http_proxy_password");
+  config->unregister_callback(config, "media.network.http_no_proxy");
 
   _x_freep(&this->proxyhost_env);
 

@@ -943,6 +943,7 @@ static void file_input_class_dispose (input_class_t *this_gen) {
   config_values_t     *config = this->xine->config;
 
   config->unregister_callback(config, "media.files.origin_path");
+  config->unregister_callback(config, "media.files.show_hidden_files");
 
   while(this->mrls_allocated_entries) {
     MRL_ZERO(this->mrls[this->mrls_allocated_entries - 1]);
