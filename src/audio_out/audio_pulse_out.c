@@ -563,8 +563,6 @@ static int ao_pulse_open(ao_driver_t *this_gen,
   }
 #endif
 
-  pa_threaded_mainloop_unlock(this->mainloop);
-
   /* Now we must handle a problem: at init time, xine might have tried to set the default volume value
    * This won't work with pulseaudio, because, at that time, pulseaudio doesn't have a stream.
    * As a workaround, we re-do the volume thingie here */
@@ -602,6 +600,8 @@ static int ao_pulse_open(ao_driver_t *this_gen,
   }
 
   pa_operation_unref(operation);
+
+  pa_threaded_mainloop_unlock(this->mainloop);
 
   return this->sample_rate;
 
