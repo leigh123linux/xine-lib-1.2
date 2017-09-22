@@ -154,7 +154,7 @@ static void caca_update_frame_format (vo_driver_t *this_gen, vo_frame_t *img,
     xine_freep_aligned (&frame->vo_frame.base[1]);
     xine_freep_aligned (&frame->vo_frame.base[2]);
 
-    free (frame->pixmap_d); frame->pixmap_d = NULL;
+    _x_freep (&frame->pixmap_d);
 
     if (frame->pixmap_s) {
       cucul_free_dither (frame->pixmap_s);

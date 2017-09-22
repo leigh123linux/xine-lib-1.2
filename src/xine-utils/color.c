@@ -175,12 +175,9 @@ void init_yuv_planes(yuv_planes_t *yuv_planes, int width, int height) {
  * This frees the memory used by the YUV planes.
  */
 void free_yuv_planes(yuv_planes_t *yuv_planes) {
-  if (yuv_planes->y)
-    free(yuv_planes->y);
-  if (yuv_planes->u)
-    free(yuv_planes->u);
-  if (yuv_planes->v)
-    free(yuv_planes->v);
+  _x_freep(&yuv_planes->y);
+  _x_freep(&yuv_planes->u);
+  _x_freep(&yuv_planes->v);
 }
 
 /*

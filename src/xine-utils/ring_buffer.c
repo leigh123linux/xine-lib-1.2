@@ -133,7 +133,7 @@ void xine_ring_buffer_delete(xine_ring_buffer_t *ring_buffer) {
   xine_list_delete(ring_buffer->get_list);
   xine_pool_delete(ring_buffer->chunk_pool);
   pthread_mutex_destroy(&ring_buffer->lock);
-  free (ring_buffer->buffer);
+  _x_freep (&ring_buffer->buffer);
   free (ring_buffer);
 }
 

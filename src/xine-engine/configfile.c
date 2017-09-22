@@ -1213,10 +1213,8 @@ static void config_dispose (config_values_t *this) {
     last = entry;
     entry = entry->next;
 
-    if (last->key)
-      free (last->key);
-    if (last->unknown_value)
-      free (last->unknown_value);
+    _x_freep (&last->key);
+    _x_freep (&last->unknown_value);
 
     config_reset_value(last);
 

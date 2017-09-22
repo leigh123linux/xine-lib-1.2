@@ -1386,13 +1386,9 @@ static void pvr_plugin_dispose (input_plugin_t *this_gen ) {
 
   pvr_finish_recording(this);
 
-  free (this->mrl);
-
-  if (this->tmp_prefix)
-    free (this->tmp_prefix);
-
-  if (this->save_prefix)
-    free (this->save_prefix);
+  _x_freep (&this->mrl);
+  _x_freep (&this->tmp_prefix);
+  _x_freep (&this->save_prefix);
 
   ite = xine_list_front (this->saved_shows);
   while (ite) {

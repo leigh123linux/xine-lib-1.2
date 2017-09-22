@@ -69,9 +69,7 @@ xine_array_t *xine_array_new(size_t initial_size) {
 
 /* Destructor */
 void xine_array_delete(xine_array_t *array) {
-  if (array->chunk) {
-    free(array->chunk);
-  }
+  _x_freep(&array->chunk);
   free(array);
 }
 

@@ -135,7 +135,7 @@ struct lexer *lexer_init_r(const char * buf, int size) {
 
 void lexer_finalize_r(struct lexer * lexer)
 {
-  free(lexer->lex_malloc);
+  _x_freep(&lexer->lex_malloc);
   free(lexer);
 }
 

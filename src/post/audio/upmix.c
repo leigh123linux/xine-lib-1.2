@@ -196,8 +196,7 @@ static int upmix_port_open(xine_audio_port_t *port_gen, xine_stream_t *stream,
        (float)rate, &this->sub->k, this->sub->w[0])) ||
        (-1 == szxform(s_param[1].a, s_param[1].b, Q, this->sub->fc,
        (float)rate, &this->sub->k, this->sub->w[1]))) {
-    free(this->sub);
-    this->sub=NULL;
+    _x_freep(&this->sub);
     pthread_mutex_unlock (&this->lock);
     return 0;
   }
@@ -373,7 +372,7 @@ static void upmix_dispose(post_plugin_t *this_gen)
   post_plugin_upmix_t *this = (post_plugin_upmix_t *)this_gen;
 
   if (_x_post_dispose(this_gen)) {
-    if (this->sub) free(this->sub);
+    _x_freep(&this->sub);
     free(this);
   }
 }

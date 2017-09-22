@@ -651,8 +651,8 @@ static void rtp_plugin_dispose (input_plugin_t *this_gen ) {
 
   if (this->fh != -1) close(this->fh);
 
-  free(this->buffer);
-  free(this->mrl);
+  _x_freep(&this->buffer);
+  _x_freep(&this->mrl);
   free(this);
 }
 

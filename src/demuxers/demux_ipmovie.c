@@ -269,7 +269,7 @@ static int process_ipmovie_chunk(demux_ipmovie_t *this) {
 
       case OPCODE_INIT_VIDEO_BUFFERS:
         lprintf("initialize video buffers\n");
-        if (this->decode_map) free(this->decode_map);
+        _x_freep(&this->decode_map);
         if ((opcode_version > 2) || (opcode_size > 8)) {
           lprintf("bad init_video_buffers opcode\n");
           chunk_type = CHUNK_BAD;
@@ -644,7 +644,7 @@ static int demux_ipmovie_seek (demux_plugin_t *this_gen,
 static void demux_ipmovie_dispose (demux_plugin_t *this_gen) {
   demux_ipmovie_t *this = (demux_ipmovie_t *) this_gen;
 
-  free(this->decode_map);
+  _x_freep(&this->decode_map);
   free(this);
 }
 

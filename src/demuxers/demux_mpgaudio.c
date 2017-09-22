@@ -432,7 +432,7 @@ static void _free_vbri_header(vbri_header_t **pp)
 {
   if (*pp) {
     vbri_header_t *p = *pp;
-    _x_freep(p->toc);
+    _x_freep(&p->toc);
     _x_freep(pp);
   }
 }

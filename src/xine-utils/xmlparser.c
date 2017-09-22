@@ -90,8 +90,8 @@ static const char cdata[] = CDATA_MARKER;
 
 static void free_xml_node(xml_node_t * node) {
   if (node->name != cdata)
-    free (node->name);
-  free (node->data);
+    _x_freep (&node->name);
+  _x_freep (&node->data);
   free(node);
 }
 
@@ -106,8 +106,8 @@ static xml_property_t *XINE_MALLOC new_xml_property(void) {
 }
 
 static void free_xml_property(xml_property_t * property) {
-  free (property->name);
-  free (property->value);
+  _x_freep (&property->name);
+  _x_freep (&property->value);
   free(property);
 }
 

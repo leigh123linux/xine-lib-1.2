@@ -428,8 +428,7 @@ static void fftscope_dispose(post_plugin_t *this_gen)
 
     this->metronom->exit(this->metronom);
 
-    if(this->buf.mem)
-      free(this->buf.mem);
+    _x_freep(&this->buf.mem);
     free(this);
   }
 }

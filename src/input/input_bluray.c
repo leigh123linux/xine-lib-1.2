@@ -1427,9 +1427,9 @@ static void bluray_plugin_dispose (input_plugin_t *this_gen)
   osd_buf_destroy(&this->osd_buf);
 #endif
 
-  free (this->mrl);
-  free (this->disc_root);
-  free (this->disc_name);
+  _x_freep (&this->mrl);
+  _x_freep (&this->disc_root);
+  _x_freep (&this->disc_name);
 
   free (this);
 }
@@ -1819,10 +1819,9 @@ static void free_xine_playlist(bluray_input_class_t *this)
     int i;
     for (i = 0; i < this->xine_playlist_size; i++) {
       MRL_ZERO(this->xine_playlist[i]);
-      free(this->xine_playlist[i]);
+      _x_freep(&this->xine_playlist[i]);
     }
-    free(this->xine_playlist);
-    this->xine_playlist = NULL;
+    _x_freep (&this->xine_playlist);
   }
 
   this->xine_playlist_size = 0;

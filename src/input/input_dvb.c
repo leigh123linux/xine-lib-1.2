@@ -558,8 +558,8 @@ static void tuner_dispose(tuner_t * this)
       if (this->fd_subfilter[x] >= 0)
         close(this->fd_subfilter[x]);
 
-    free(this->dvr_device);
-    free(this->demux_device);
+    _x_freep(&this->dvr_device);
+    _x_freep(&this->demux_device);
     free(this);
 }
 
@@ -595,7 +595,7 @@ static tuner_t *XINE_MALLOC tuner_init(xine_t * xine, int adapter)
       this = NULL;
       goto exit;
     }
-    free(frontend_device); frontend_device = NULL;
+    _x_freep(&frontend_device);
 
     if ((ioctl(this->fd_frontend, FE_GET_INFO, &this->feinfo)) < 0) {
       xprintf(this->xine, XINE_VERBOSITY_DEBUG, "FE_GET_INFO: %s\n", strerror(errno));
@@ -870,7 +870,7 @@ static int extract_channel_from_string(channel_t *channel, char *str, fe_type_t 
   channel->name = NULL;
   if (!extract_channel_from_string_internal(channel, str, fe_type))
     return 0;
-  free (channel->name); /* without this, we have a possible memleak */
+  _x_freep (&channel->name); /* without this, we have a possible memleak */
   return -1;
 }
 
@@ -954,7 +954,7 @@ static void free_channel_list (channel_t *channels, int num_channels)
 {
   if (channels)
     while (--num_channels >= 0)
-      free(channels[num_channels].name);
+      _x_freep(&channels[num_channels].name);
   free(channels);
 }
 
@@ -2218,8 +2218,7 @@ static void do_record (dvb_input_plugin_t *this) {
 
     time(t);
     tma=localtime(t);
-    free(t);
-    t = NULL;
+    _x_freep(&t);
     strftime(dates,63,"%Y-%m-%d_%H%M",tma);
 
     if (xine_config_lookup_entry(this->stream->xine, "media.capture.save_dir", &savedir)
@@ -2684,21 +2683,15 @@ static void dvb_plugin_dispose (input_plugin_t *this_gen) {
   if (this->event_queue)
     xine_event_dispose_queue (this->event_queue);
 
-  if(this->mrl)
-    free (this->mrl);
+  _x_freep (&this->mrl);
 
   /* Free the EPG data. */
   for (i = 0; i < this->num_channels; ++i) {
       for (j = 0; j < MAX_EPG_ENTRIES_PER_CHANNEL && this->channels[i].epg[j]; ++j) {
-        if(this->channels[i].epg[j]->description)
-	  free(this->channels[i].epg[j]->description);
-        if(this->channels[i].epg[j]->progname)
-	  free(this->channels[i].epg[j]->progname);
-	if(this->channels[i].epg[j]->content)
-          free(this->channels[i].epg[j]->content);
-	if(this->channels[i].epg[j])
-          free(this->channels[i].epg[j]);
-	this->channels[i].epg[j] = NULL;
+        _x_freep(&this->channels[i].epg[j]->description);
+        _x_freep(&this->channels[i].epg[j]->progname);
+        _x_freep(&this->channels[i].epg[j]->content);
+        _x_freep(&this->channels[i].epg[j]);
       }
   }
   if (this->channels)
@@ -3180,7 +3173,7 @@ static void dvb_class_dispose(input_class_t * this_gen)
     int x;
 
     for(x=0;x<class->numchannels;x++)
-       free(class->autoplaylist[x]);
+       _x_freep(&class->autoplaylist[x]);
 
     free(class);
 }

@@ -321,20 +321,9 @@ static void stretch_port_close(xine_audio_port_t *port_gen, xine_stream_t *strea
     this->scr->scr.exit(&this->scr->scr);
   }
 
-  if(this->audiofrag) {
-    free(this->audiofrag);
-    this->audiofrag = NULL;
-  }
-
-  if(this->outfrag) {
-    free(this->outfrag);
-    this->outfrag = NULL;
-  }
-
-  if(this->w) {
-    free(this->w);
-    this->w = NULL;
-  }
+  _x_freep(&this->audiofrag);
+  _x_freep(&this->outfrag);
+  _x_freep(&this->w);
 
   port->stream = NULL;
 

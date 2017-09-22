@@ -762,7 +762,7 @@ static void xxmc_dispose_context(xxmc_driver_t *driver)
 
     xprintf(driver->xine, XINE_VERBOSITY_LOG,
 	    LOG_MODULE ": Freeing up XvMC Surfaces and subpictures.\n");
-    if (driver->xvmc_palette) free(driver->xvmc_palette);
+    _x_freep(&driver->xvmc_palette);
     _x_dispose_xx44_palette( &driver->palette );
     xxmc_xvmc_destroy_subpictures( driver );
     xxmc_xvmc_destroy_surfaces( driver );
@@ -1113,7 +1113,7 @@ static void dispose_ximage (xxmc_driver_t *this,
 
   }
   else {
-    if (myimage->data) free(myimage->data);
+    _x_freep(&myimage->data);
     XFree (myimage);
   }
 
