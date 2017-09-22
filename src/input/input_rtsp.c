@@ -58,13 +58,6 @@
 #define BUFSIZE 1025
 
 typedef struct {
-
-  input_class_t     input_class;
-
-  xine_t           *xine;
-} rtsp_input_class_t;
-
-typedef struct {
   input_plugin_t   input_plugin;
 
   rtsp_session_t  *rtsp;
@@ -299,19 +292,17 @@ static input_plugin_t *rtsp_class_get_instance (input_class_t *cls_gen, xine_str
  */
 void *input_rtsp_init_class (xine_t *xine, void *data) {
 
-  rtsp_input_class_t  *this;
+  input_class_t  *this;
 
-  this = calloc(1, sizeof (rtsp_input_class_t));
+  this = calloc(1, sizeof (input_class_t));
 
-  this->xine   = xine;
-
-  this->input_class.get_instance       = rtsp_class_get_instance;
-  this->input_class.identifier         = "rtsp";
-  this->input_class.description        = N_("rtsp streaming input plugin");
-  this->input_class.get_dir            = NULL;
-  this->input_class.get_autoplay_list  = NULL;
-  this->input_class.dispose            = default_input_class_dispose;
-  this->input_class.eject_media        = NULL;
+  this->get_instance       = rtsp_class_get_instance;
+  this->identifier         = "rtsp";
+  this->description        = N_("rtsp streaming input plugin");
+  this->get_dir            = NULL;
+  this->get_autoplay_list  = NULL;
+  this->dispose            = default_input_class_dispose;
+  this->eject_media        = NULL;
 
   return this;
 }

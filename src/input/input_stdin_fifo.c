@@ -70,13 +70,6 @@ typedef struct {
   char             seek_buf[BUFSIZE];
 } stdin_input_plugin_t;
 
-typedef struct {
-
-  input_class_t     input_class;
-
-  xine_t           *xine;
-} stdin_input_class_t;
-
 static off_t stdin_plugin_get_current_pos (input_plugin_t *this_gen);
 
 
@@ -370,7 +363,6 @@ static int stdin_plugin_open (input_plugin_t *this_gen ) {
 static input_plugin_t *stdin_class_get_instance (input_class_t *class_gen,
 						 xine_stream_t *stream, const char *data) {
 
-  stdin_input_class_t  *class = (stdin_input_class_t *) class_gen;
   stdin_input_plugin_t *this;
   int                   fh;
 
@@ -407,7 +399,7 @@ static input_plugin_t *stdin_class_get_instance (input_class_t *class_gen,
   this->stream          = stream;
   this->mrl             = strdup (data);
   this->fh              = fh;
-  this->xine            = class->xine;
+  this->xine            = stream->xine;
   this->curpos          = 0;
   this->num_reads       = 0;
   this->num_waits       = 0;
@@ -435,19 +427,17 @@ static input_plugin_t *stdin_class_get_instance (input_class_t *class_gen,
  */
 static void *stdin_plugin_init_class (xine_t *xine, void *data) {
 
-  stdin_input_class_t  *this;
+  input_class_t  *this;
 
-  this = calloc(1, sizeof (stdin_input_class_t));
+  this = calloc(1, sizeof (input_class_t));
 
-  this->xine   = xine;
-
-  this->input_class.get_instance       = stdin_class_get_instance;
-  this->input_class.identifier         = "stdin_fifo";
-  this->input_class.description        = N_("stdin streaming input plugin");
-  this->input_class.get_dir            = NULL;
-  this->input_class.get_autoplay_list  = NULL;
-  this->input_class.dispose            = default_input_class_dispose;
-  this->input_class.eject_media        = NULL;
+  this->get_instance       = stdin_class_get_instance;
+  this->identifier         = "stdin_fifo";
+  this->description        = N_("stdin streaming input plugin");
+  this->get_dir            = NULL;
+  this->get_autoplay_list  = NULL;
+  this->dispose            = default_input_class_dispose;
+  this->eject_media        = NULL;
 
   return this;
 }

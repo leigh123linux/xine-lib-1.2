@@ -387,10 +387,6 @@ static off_t v4l2_input_length(input_plugin_t *this_gen) {
     return -1;
 }
 
-typedef struct {
-    input_class_t input_class;
-} v4l2_input_class_t;
-
 static input_plugin_t *v4l2_class_get_instance(input_class_t *gen_cls, xine_stream_t *stream, const char *mrl) {
     v4l2_input_plugin_t *this;
     if (strncasecmp (mrl, "v4l2:/", 6))
@@ -434,16 +430,19 @@ static input_plugin_t *v4l2_class_get_instance(input_class_t *gen_cls, xine_stre
 }
 
 static void *v4l2_init_class(xine_t *xine, void *data) {
-    v4l2_input_class_t *this;
-    this = calloc(1, sizeof(v4l2_input_class_t));
-    this->input_class.get_instance = v4l2_class_get_instance;
-    this->input_class.description = N_("v4l2 input plugin");
-    this->input_class.identifier = "v4l2";
-    this->input_class.get_dir = NULL;
-    this->input_class.get_autoplay_list = NULL;
-    this->input_class.dispose = default_input_class_dispose;
-    this->input_class.eject_media = NULL;
-    return &this->input_class;
+    input_class_t *this;
+
+    this = calloc(1, sizeof(input_class_t));
+
+    this->get_instance      = v4l2_class_get_instance;
+    this->description       = N_("v4l2 input plugin");
+    this->identifier        = "v4l2";
+    this->get_dir           = NULL;
+    this->get_autoplay_list = NULL;
+    this->dispose           = default_input_class_dispose;
+    this->eject_media       = NULL;
+
+    return this;
 }
 
 const input_info_t input_info_v4l2 = {

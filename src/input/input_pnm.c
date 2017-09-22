@@ -58,13 +58,6 @@
 #define BUFSIZE 4096
 
 typedef struct {
-
-  input_class_t     input_class;
-
-  xine_t           *xine;
-} pnm_input_class_t;
-
-typedef struct {
   input_plugin_t   input_plugin;
 
   xine_stream_t   *stream;
@@ -280,19 +273,17 @@ static input_plugin_t *pnm_class_get_instance (input_class_t *cls_gen, xine_stre
 
 void *input_pnm_init_class (xine_t *xine, void *data) {
 
-  pnm_input_class_t  *this;
+  input_class_t  *this;
 
-  this = calloc(1, sizeof (pnm_input_class_t));
+  this = calloc(1, sizeof (input_class_t));
 
-  this->xine   = xine;
-
-  this->input_class.get_instance       = pnm_class_get_instance;
-  this->input_class.identifier         = "pnm";
-  this->input_class.description        = N_("pnm streaming input plugin");
-  this->input_class.get_dir            = NULL;
-  this->input_class.get_autoplay_list  = NULL;
-  this->input_class.dispose            = default_input_class_dispose;
-  this->input_class.eject_media        = NULL;
+  this->get_instance       = pnm_class_get_instance;
+  this->identifier         = "pnm";
+  this->description        = N_("pnm streaming input plugin");
+  this->get_dir            = NULL;
+  this->get_autoplay_list  = NULL;
+  this->dispose            = default_input_class_dispose;
+  this->eject_media        = NULL;
 
   return this;
 }

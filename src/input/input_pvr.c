@@ -169,10 +169,7 @@ typedef struct {
 
   input_class_t     input_class;
 
-  xine_t           *xine;
-  config_values_t  *config;
-
-  char             *devname;
+  const char       *devname;
 
 } pvr_input_class_t;
 
@@ -1557,10 +1554,7 @@ static void *init_plugin (xine_t *xine, void *data) {
 
   this = calloc(1, sizeof (pvr_input_class_t));
 
-  this->xine   = xine;
-  this->config = xine->config;
-
-  this->devname = this->config->register_filename(this->config,
+  this->devname = xine->config->register_filename(xine->config,
 				    "media.wintv_pvr.device",
 				    PVR_DEVICE, XINE_CONFIG_STRING_IS_DEVICE_NAME,
 				    _("device used for WinTV-PVR 250/350 (pvr plugin)"),
