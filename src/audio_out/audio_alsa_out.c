@@ -282,12 +282,16 @@ static void error_callback(const char *file, int line,
 #ifdef DEBUG
   va_list   args;
   char     *buf = NULL;
+  int       result;
 
   va_start(args, fmt);
-  vasprintf(&buf, fmt, args);
+  result = vasprintf(&buf, fmt, args);
   va_end(args);
-  printf("%s: %s() %s.\n", file, function, buf);
-  free(buf);
+
+  if (result >= 0) {
+    printf("%s: %s() %s.\n", file, function, buf);
+    free(buf);
+  }
 #endif
 }
 
