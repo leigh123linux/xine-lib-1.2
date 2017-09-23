@@ -40,21 +40,31 @@ typedef struct {
 } xine_profiler_t;
 
 static xine_profiler_t profiler[MAX_ID];
+static pthread_mutex_t profiler_lock = PTHREAD_MUTEX_INITIALIZER;
 
 void xine_profiler_init () {
+  pthread_mutex_lock(&profiler_lock);
   memset(profiler, 0, sizeof(profiler));
+  pthread_mutex_unlock(&profiler_lock);
 }
 
 int xine_profiler_allocate_slot (const char *label) {
   int id;
 
+  pthread_mutex_lock(&profiler_lock);
+
   for (id = 0; id < MAX_ID && profiler[id].p_label != NULL; id++)
     ;
 
-  if (id >= MAX_ID)
+  if (id >= MAX_ID) {
+    pthread_mutex_unlock(&profiler_lock);
     return -1;
+  }
 
   profiler[id].p_label = label;
+
+  pthread_mutex_unlock(&profiler_lock);
+
   return id;
 }
 
