@@ -50,13 +50,13 @@ int _x_parse_url (char *url, char **proto, char** host, int *port,
   char   *end        = NULL;
   char   *strtol_err = NULL;
 
-  if (!url)      _x_abort();
-  if (!proto)    _x_abort();
-  if (!user)     _x_abort();
-  if (!password) _x_abort();
-  if (!host)     _x_abort();
-  if (!port)     _x_abort();
-  if (!uri)      _x_abort();
+  _x_assert (url);
+  _x_assert (proto);
+  _x_assert (user);
+  _x_assert (password);
+  _x_assert (host);
+  _x_assert (port);
+  _x_assert (uri);
 
   *proto    = NULL;
   *port     = 0;
