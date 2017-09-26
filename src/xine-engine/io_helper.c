@@ -348,8 +348,11 @@ static off_t xio_rw_abort(xine_stream_t *stream, int fd, int cmd, void *buf_gen,
 
   if ((cmd == XIO_TCP_READ) || (cmd == XIO_FILE_READ)) {
     state = XIO_READ_READY;
-  } else {
+  } else if ((cmd == XIO_TCP_WRITE) || (cmd == XIO_FILE_WRITE)) {
     state = XIO_WRITE_READY;
+  } else {
+    errno = EINVAL;
+    return -1;
   }
 
   if (xine_config_lookup_entry (stream->xine, "media.network.timeout", &cfgentry)) {
@@ -378,8 +381,6 @@ static off_t xio_rw_abort(xine_stream_t *stream, int fd, int cmd, void *buf_gen,
       case XIO_TCP_WRITE:
         ret = send(fd, &buf[total], todo - total, 0);
         break;
-      default:
-        assert(1);
     }
     /* check EOF */
     if (!ret)
