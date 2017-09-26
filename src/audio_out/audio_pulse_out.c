@@ -307,7 +307,10 @@ static int connect_context(pulse_driver_t *this) {
       p = "Xine";
 
     this->context = pa_context_new(pa_threaded_mainloop_get_api(this->mainloop), p);
-    _x_assert(this->context);
+    if (!this->context) {
+      xprintf (this->xine, XINE_VERBOSITY_DEBUG, "audio_pulse_out: pa_context_new() failed\n");
+      return -1;
+    }
 
     pa_context_set_state_callback(this->context, __xine_pa_context_state_callback, this);
 
@@ -410,7 +413,8 @@ static int ao_pulse_open(ao_driver_t *this_gen,
       ss.format = PA_SAMPLE_FLOAT32NE;
       break;
     default:
-      _x_assert(!"Should not be reached");
+      xprintf (this->xine, XINE_VERBOSITY_DEBUG, "audio_pulse_out: unsupported bit depth %u\n", bits);
+      goto fail;
   }
 
 #if PA_CHECK_VERSION(1,0,0)
@@ -463,7 +467,8 @@ static int ao_pulse_open(ao_driver_t *this_gen,
       cm.channels = 6;
       break;
     default:
-      _x_assert(!"Should not be reached");
+      xprintf (this->xine, XINE_VERBOSITY_DEBUG, "audio_pulse_out: unsupported mode %08x\n", mode);
+      goto fail;
   }
 
   if (!pa_channel_map_valid(&cm)) {
@@ -503,7 +508,6 @@ static int ao_pulse_open(ao_driver_t *this_gen,
 
   _x_assert(!this->stream);
   this->stream = pa_stream_new_extended(this->context, "Audio Stream", formatv, formatc, proplist);
-  _x_assert(this->stream);
 
   if (proplist != NULL)
     pa_proplist_free(proplist);
@@ -514,8 +518,12 @@ static int ao_pulse_open(ao_driver_t *this_gen,
 #else
   _x_assert(!this->stream);
   this->stream = pa_stream_new(this->context, "Audio Stream", &ss, &cm);
-  _x_assert(this->stream);
 #endif
+
+  if (!this->stream) {
+    xprintf (this->xine, XINE_VERBOSITY_DEBUG, "audio_pulse_out: pa_Stream_new() failed\n");
+    goto fail;
+  }
 
   pa_stream_set_state_callback(this->stream, __xine_pa_stream_state_callback, this);
   pa_stream_set_write_callback(this->stream, __xine_pa_stream_request_callback, this);
@@ -545,11 +553,12 @@ static int ao_pulse_open(ao_driver_t *this_gen,
   if (encoding != PA_ENCODING_INVALID) {
     const pa_format_info *info = pa_stream_get_format_info(this->stream);
 
-    _x_assert(info);
-    if (pa_format_info_is_pcm (info)) {
-      xprintf (this->xine, XINE_VERBOSITY_DEBUG, "digital pass-through not available\n");
-    } else {
-      xprintf (this->xine, XINE_VERBOSITY_DEBUG, "digital pass-through enabled\n");
+    if (info) {
+      if (pa_format_info_is_pcm (info)) {
+        xprintf (this->xine, XINE_VERBOSITY_DEBUG, "digital pass-through not available\n");
+      } else {
+        xprintf (this->xine, XINE_VERBOSITY_DEBUG, "digital pass-through enabled\n");
+      }
     }
   }
 #endif
@@ -990,7 +999,11 @@ static ao_driver_t *open_plugin (audio_driver_class_t *class_gen, const void *da
 
   _x_assert(!this->mainloop);
   this->mainloop = pa_threaded_mainloop_new();
-  _x_assert(this->mainloop);
+  if (!this->mainloop) {
+    xprintf (this->xine, XINE_VERBOSITY_DEBUG, "audio_pulse_out: pa_threaded_mainloop_new() failed\n");
+    ao_pulse_exit((ao_driver_t *) this);
+    return NULL;
+  }
   pa_threaded_mainloop_start(this->mainloop);
 
   /*
