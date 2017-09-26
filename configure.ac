@@ -485,6 +485,7 @@ CC_ATTRIBUTE_DEPRECATED
 CC_ATTRIBUTE_UNUSED
 CC_ATTRIBUTE_MALLOC
 CC_ATTRIBUTE_WEAK
+CC_ATTRIBUTE_WARN_UNUSED_RESULT
 
 CC_ATTRIBUTE_PACKED([],
   [AC_MSG_WARN([Your compiler doesn't support __attribute__((packed)); xine might not work as expected.])])

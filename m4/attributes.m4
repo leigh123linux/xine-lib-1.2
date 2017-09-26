@@ -211,6 +211,13 @@ AC_DEFUN([CC_ATTRIBUTE_UNUSED], [
     [$1], [$2])
 ])
 
+AC_DEFUN([CC_ATTRIBUTE_WARN_UNUSED_RESULT], [
+  CC_CHECK_ATTRIBUTE(
+    [warn_unused_result], ,
+    [void *some_function(void) __attribute__((warn_unused_result));],
+    [$1], [$2])
+])
+
 AC_DEFUN([CC_ATTRIBUTE_SENTINEL], [
   CC_CHECK_ATTRIBUTE(
     [sentinel], ,

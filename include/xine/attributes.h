@@ -40,6 +40,7 @@
 #  define SUPPORT_ATTRIBUTE_MALLOC 1
 #  define SUPPORT_ATTRIBUTE_UNUSED 1
 #  define SUPPORT_ATTRIBUTE_CONST 1
+#  define SUPPORT_ATTRIBUTE_WARN_UNUSED_RESULT 1
 # endif
 
 # if __GNUC__ >= 4
@@ -51,6 +52,11 @@
 # endif
 #endif
 
+#if defined(SUPPORT_ATTRIBUTE_WARN_UNUSED_RESULT)
+#  define XINE_USED  __attribute__((warn_unused_result))
+#else
+#  define XINE_USED
+#endif
 
 #ifdef ATTRIBUTE_ALIGNED_MAX
 #define ATTR_ALIGN(align) __attribute__ ((__aligned__ ((ATTRIBUTE_ALIGNED_MAX < align) ? ATTRIBUTE_ALIGNED_MAX : align)))
