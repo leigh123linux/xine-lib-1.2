@@ -39,7 +39,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
-#include <assert.h>
 
 #if defined(__FreeBSD__)
 #include <machine/param.h>

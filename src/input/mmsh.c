@@ -50,7 +50,6 @@
 #include <errno.h>
 #include <stdlib.h>
 #include <time.h>
-#include <assert.h>
 
 #define LOG_MODULE "mmsh"
 #define LOG_VERBOSE

@@ -40,7 +40,6 @@
 #endif
 #include <errno.h>
 #include <string.h>
-#include <assert.h>
 
 #include <xine/io_helper.h>
 

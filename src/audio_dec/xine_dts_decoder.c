@@ -43,7 +43,6 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-#include <assert.h>
 
 #define LOG_MODULE "libdts"
 #define LOG_VERBOSE

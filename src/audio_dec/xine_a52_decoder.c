@@ -35,7 +35,6 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-#include <assert.h>
 
 #define LOG_MODULE "a52_decoder"
 #define LOG_VERBOSE

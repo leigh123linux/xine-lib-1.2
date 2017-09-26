@@ -30,7 +30,6 @@
 #include <string.h>
 #include <pthread.h>
 #include <math.h>
-#include <assert.h>
 #include <theora/theora.h>
 
 #define LOG_MODULE "theora_decoder"
