@@ -1385,6 +1385,7 @@ static vo_driver_t *open_plugin_2 (video_driver_class_t *class_gen, const void *
         _("%s: Xv extension is present but I couldn't find a usable yuv12 port.\n"
           "\tLooks like your graphics hardware driver doesn't support Xv?!\n"), LOG_MODULE);
       /* XvFreeAdaptorInfo (adaptor_info); this crashed on me (gb)*/
+      XvFreeAdaptorInfo (adaptor_info);
       UNLOCK_DISPLAY (this);
       free (this);
       return NULL;
