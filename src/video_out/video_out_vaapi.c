@@ -768,8 +768,10 @@ static int vaapi_opengl_verify_direct (const x11_visual_t *vis) {
   if (! (visinfo = glXChooseVisual (vis->display, vis->screen, gl_visual_attr)))
     return 0;
 
-  if (! (ctx = glXCreateContext (vis->display, visinfo, NULL, 1)))
+  if (! (ctx = glXCreateContext (vis->display, visinfo, NULL, 1))) {
+    XFree(visinfo);
     return 0;
+  }
 
   memset (&xattr, 0, sizeof (xattr));
   xattr.colormap = XCreateColormap(vis->display, root, visinfo->visual, AllocNone);
@@ -791,6 +793,7 @@ static int vaapi_opengl_verify_direct (const x11_visual_t *vis) {
   }
   glXDestroyContext (vis->display, ctx);
   XFreeColormap     (vis->display, xattr.colormap);
+  XFree(visinfo);
 
   return ret;
 }
