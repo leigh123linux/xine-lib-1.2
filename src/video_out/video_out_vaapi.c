@@ -3474,6 +3474,9 @@ static void vaapi_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen) {
    * ratio from the previous one
    */
 
+  pthread_mutex_lock(&this->vaapi_lock);
+  DO_LOCKDISPLAY;
+
   if ( (frame->width != this->sc.delivered_width)
        || (frame->height != this->sc.delivered_height)
        || (frame->ratio != this->sc.delivered_ratio)
@@ -3497,9 +3500,6 @@ static void vaapi_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen) {
   this->sc.crop_right       = frame->vo_frame.crop_right;
   this->sc.crop_top         = frame->vo_frame.crop_top;
   this->sc.crop_bottom      = frame->vo_frame.crop_bottom;
-
-  pthread_mutex_lock(&this->vaapi_lock);
-  DO_LOCKDISPLAY;
 
   lprintf("vaapi_display_frame %s frame->width %d frame->height %d va_context->sw_width %d va_context->sw_height %d valid_context %d\n",
         (frame->format == XINE_IMGFMT_VAAPI) ? "XINE_IMGFMT_VAAPI" : ((frame->format == XINE_IMGFMT_YV12) ? "XINE_IMGFMT_YV12" : "XINE_IMGFMT_YUY2") ,
@@ -3670,11 +3670,10 @@ static void vaapi_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen) {
     }
   }
 
+  pthread_mutex_unlock(&this->vaapi_lock);
   DO_UNLOCKDISPLAY;
 
-  frame->vo_frame.free( frame_gen );
-
-  pthread_mutex_unlock(&this->vaapi_lock);
+  frame_gen->free( frame_gen );
 
   /*
   elapse_time = end_time - start_time;
