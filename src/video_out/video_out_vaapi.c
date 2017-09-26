@@ -743,14 +743,15 @@ static void vaapi_get_functions(vo_driver_t *this_gen, void *(*getProcAddress)(c
   free(allexts);
 }
 
-static const int gl_visual_attr[] = {
-  GLX_RGBA,
-  GLX_RED_SIZE, 1,
-  GLX_GREEN_SIZE, 1,
-  GLX_BLUE_SIZE, 1,
-  GLX_DOUBLEBUFFER,
-  GL_NONE
-};
+#define VAAPI_GLX_VISUAL_ATTR \
+  {                           \
+    GLX_RGBA,                 \
+    GLX_RED_SIZE, 1,          \
+    GLX_GREEN_SIZE, 1,        \
+    GLX_BLUE_SIZE, 1,         \
+    GLX_DOUBLEBUFFER,         \
+    GL_NONE                   \
+  }                           \
 
 /* Check if opengl indirect/software rendering is used */
 static int vaapi_opengl_verify_direct (const x11_visual_t *vis) {
@@ -759,6 +760,7 @@ static int vaapi_opengl_verify_direct (const x11_visual_t *vis) {
   GLXContext    ctx;
   XSetWindowAttributes xattr;
   int           ret = 0;
+  int           gl_visual_attr[] = VAAPI_GLX_VISUAL_ATTR;
 
   if (!vis || !vis->display || ! (root = RootWindow (vis->display, vis->screen))) {
     lprintf ("vaapi_opengl_verify_direct: Don't have a root window to verify\n");
@@ -1075,6 +1077,7 @@ static int vaapi_glx_config_glx(vo_driver_t *this_gen, unsigned int width, unsig
 {
   vaapi_driver_t        *this = (vaapi_driver_t *) this_gen;
   ff_vaapi_context_t    *va_context = this->va_context;
+  int                    gl_visual_attr[] = VAAPI_GLX_VISUAL_ATTR;
 
   this->gl_vinfo = glXChooseVisual(this->display, this->screen, gl_visual_attr);
   if(!this->gl_vinfo) {
