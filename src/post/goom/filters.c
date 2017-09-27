@@ -731,7 +731,11 @@ static void zoomFilterVisualFXWrapper_init (struct _VISUAL_FX *_this, PluginInfo
 
 static void zoomFilterVisualFXWrapper_free (struct _VISUAL_FX *_this)
 {
-    free(_this->fx_data);
+    ZoomFilterFXWrapperData *data = _this->fx_data;
+    if (data) {
+        free (data->params.params);
+        free (data);
+    }
 }
 
 static void zoomFilterVisualFXWrapper_apply (struct _VISUAL_FX *_this, Pixel *src, Pixel *dest, PluginInfo *info)

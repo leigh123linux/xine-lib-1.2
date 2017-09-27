@@ -129,7 +129,12 @@ static void fs_init(VisualFX *_this, PluginInfo *info) {
 }
 
 static void fs_free(VisualFX *_this) {
-	free (_this->fx_data);
+  FSData *data = _this->fx_data;
+  if (data) {
+    free (data->params.params);
+    free (data->stars);
+    free (data);
+  }
 }
 
 

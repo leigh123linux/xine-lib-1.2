@@ -4,6 +4,12 @@
 #include <stdio.h>
 #include <string.h>
 
+void grid3d_free (grid3d *g) {
+  free (g->surf.vertex);
+  free (g->surf.svertex);
+  free (g);
+}
+
 grid3d *grid3d_new (int sizex, int defx, int sizez, int defz, v3d center) {
 	int x = defx;
 	int y = defz;

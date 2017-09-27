@@ -107,7 +107,11 @@ static void convolve_init(VisualFX *_this, PluginInfo *info) {
 }
 
 static void convolve_free(VisualFX *_this) {
-  free (_this->fx_data);
+  ConvData *data = (ConvData*)_this->fx_data;
+  if (_this->fx_data) {
+    free (data->params.params);
+    free (data);
+  }
 }
 
 static void create_output_with_brightness(VisualFX *_this, Pixel *src, Pixel *dest,

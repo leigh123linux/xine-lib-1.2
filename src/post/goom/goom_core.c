@@ -772,7 +772,16 @@ void goom_close (PluginInfo *goomInfo)
     goomInfo->star_fx.free(&goomInfo->star_fx);
     goomInfo->tentacles_fx.free(&goomInfo->tentacles_fx);
     goomInfo->zoomFilter_fx.free(&goomInfo->zoomFilter_fx);
-    
+
+    if (goomInfo->scanner)
+      gsl_free(goomInfo->scanner);
+    if (goomInfo->main_scanner)
+      gsl_free(goomInfo->main_scanner);
+
+    free(goomInfo->params);
+    free(goomInfo->visuals);
+    free(goomInfo->sound.params.params);
+
     free(goomInfo);
 }
 

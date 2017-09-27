@@ -93,6 +93,7 @@ static void iflow_execute(FastInstructionFlow *_this, GoomSL *gsl);
 void iflow_free(InstructionFlow *_this)
 { /* {{{ */
   goom_hash_free(_this->labels);
+  free(_this->instr);
   free(_this); /*TODO: finir cette fonction */
 } /* }}} */
 
@@ -1425,9 +1426,21 @@ int gsl_is_compiled(GoomSL *gss)
 
 void gsl_free(GoomSL *gss)
 { /* {{{ */
-  iflow_free(gss->iflow);
-  free(gss->vars);
-  free(gss->functions);
+  if (gss->iflow)
+    iflow_free(gss->iflow);
+  if (gss->vars)
+    goom_hash_free(gss->vars);
+  if (gss->functions)
+    goom_hash_free(gss->functions);
+
+  free(gss->gsl_struct);
+  free(gss->ptrArray);
+
+  if (gss->data_heap)
+    goom_heap_delete(gss->data_heap);
+  if (gss->structIDS)
+    goom_hash_free(gss->structIDS);
+
   free(gss);
 } /* }}} */
 

@@ -90,8 +90,12 @@ static void tentacle_fx_apply(VisualFX *_this, Pixel *src, Pixel *dest, PluginIn
 }
 
 static void tentacle_fx_free(VisualFX *_this) {
-	tentacle_free((TentacleFXData*)_this->fx_data);
-	free(_this->fx_data);
+  TentacleFXData *data = _this->fx_data;
+  if (data) {
+    tentacle_free (data);
+    free (data->params.params);
+    free (data);
+  }
 }
 
 VisualFX tentacle_fx_create(void) {
@@ -106,6 +110,9 @@ VisualFX tentacle_fx_create(void) {
 
 static void tentacle_free (TentacleFXData *data) {
 	/* TODO : un vrai FREE GRID!! */
+	int i;
+	for (i = 0; i < nbgrid; i++)
+          grid3d_free (data->grille[i]);
 	free (data->vals);
 }
 
