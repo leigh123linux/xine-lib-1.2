@@ -85,23 +85,13 @@ set_hc_result(xine_health_check_t* hc, int state, const char *format, ...)
   va_list   args;
   char     *buf = NULL;
 
-  if (!hc) {
-    printf ("xine_check: GASP, hc is NULL\n");
-    _x_abort();
-  }
-
-  if (!format) {
-    printf ("xine_check: GASP, format is NULL\n");
-    _x_abort();
-  }
+  _x_assert (hc);
+  _x_assert (format);
 
   va_start(args, format);
   if (vasprintf (&buf, format, args) < 0)
     buf = NULL;
   va_end(args);
-
-  if (!buf)
-    _x_abort();
 
   hc->msg         = buf;
   hc->status      = state;
@@ -476,6 +466,10 @@ static xine_health_check_t* _x_health_check_xv (xine_health_check_t* hc) {
 }
 
 xine_health_check_t* xine_health_check (xine_health_check_t* hc, int check_num) {
+
+  if (!hc) {
+    return NULL;
+  }
 
   switch(check_num) {
     case CHECK_KERNEL:
