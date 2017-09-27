@@ -330,10 +330,23 @@ static void _insert_node (xine_t *this,
 
   _x_assert(list);
   _x_assert(info);
+
+  if (!info->id) {
+    xprintf (this, XINE_VERBOSITY_LOG,
+             "load_plugins: plugin from %s is broken: id = NULL\n",
+             file ? file->filename : "xine-lib");
+    return;
+  }
   if (info->API != api_version) {
     xprintf(this, XINE_VERBOSITY_LOG,
 	    _("load_plugins: ignoring plugin %s, wrong iface version %d (should be %d)\n"),
 	    info->id, info->API, api_version);
+    return;
+  }
+  if (!node_cache && !info->init) {
+    xprintf (this, XINE_VERBOSITY_LOG,
+             "load_plugins: plugin %s from %s is broken: init = NULL\n",
+             info->id, file ? file->filename : "xine-lib");
     return;
   }
 
