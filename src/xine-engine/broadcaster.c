@@ -346,7 +346,8 @@ broadcaster_t *_x_init_broadcaster(xine_stream_t *stream, int port)
 
   pthread_mutex_init (&this->lock, NULL);
 
-  stream->video_fifo->register_put_cb(stream->video_fifo, video_put_cb, this);
+  if (stream->video_fifo)
+    stream->video_fifo->register_put_cb(stream->video_fifo, video_put_cb, this);
 
   if(stream->audio_fifo)
     stream->audio_fifo->register_put_cb(stream->audio_fifo, audio_put_cb, this);
