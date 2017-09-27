@@ -2557,12 +2557,13 @@ static int demux_ts_seek (demux_plugin_t *this_gen,
 static int demux_ts_get_stream_length (demux_plugin_t *this_gen) {
 
   demux_ts_t*this = (demux_ts_t*)this_gen;
+  int rate = this->rate;
 
-  if (this->rate)
+  if (rate)
     return (int)((int64_t) this->input->get_length (this->input)
-                 * 1000 / this->rate);
-  else
-    return 0;
+                 * 1000 / rate);
+
+  return 0;
 }
 
 
