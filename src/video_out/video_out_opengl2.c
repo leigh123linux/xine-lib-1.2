@@ -1883,8 +1883,10 @@ static int opengl2_check_platform( opengl2_class_t *this_gen, const x11_visual_t
   if ( !( visinfo = glXChooseVisual( vis->display, vis->screen, attribs ) ) )
     return 0;
   
-  if ( !( ctx = glXCreateContext( vis->display, visinfo, NULL, GL_TRUE  ) ) )
+  if ( !( ctx = glXCreateContext( vis->display, visinfo, NULL, GL_TRUE  ) ) ) {
+    XFree( visinfo );
     return 0;
+  }
   
   if ( glXMakeCurrent( vis->display, root, ctx ) ) {
     if ( !glXIsDirect( vis->display, ctx ) )
@@ -1911,6 +1913,8 @@ static int opengl2_check_platform( opengl2_class_t *this_gen, const x11_visual_t
     glXDestroyContext( vis->display, ctx );
   else
     this_gen->ctx = ctx;    
+
+  XFree( visinfo );
 
   return ret;
 }
