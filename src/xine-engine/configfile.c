@@ -1577,8 +1577,8 @@ config_values_t *_x_config_init (void) {
 
   if (!(this = calloc(1, sizeof(config_values_t)))) {
 
-    printf ("configfile: could not allocate config object\n");
-    _x_abort();
+    fprintf (stderr, "configfile: could not allocate config object\n");
+    return NULL;
   }
 
   this->first = NULL;

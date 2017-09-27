@@ -1771,6 +1771,10 @@ xine_t *xine_new (void) {
    */
 
   this->config = _x_config_init ();
+  if (!this->config) {
+    free(this);
+    return NULL;
+  }
 
   /*
    * log buffers
