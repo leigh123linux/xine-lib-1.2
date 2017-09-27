@@ -319,10 +319,14 @@ static void parse_pls (demux_playlist_t *this, char *data, int length) {
 static void parse_asx (demux_playlist_t *this, char *data, int length) {
   xml_node_t *root, *node, *tmp;
   int         is_asx = 0;
+  xml_parser_t *parser;
 
-  xml_parser_init (data, length, XML_PARSER_CASE_INSENSITIVE);
+  parser = xml_parser_init_r (data, length, XML_PARSER_CASE_INSENSITIVE);
+  if (!parser) {
+    return;
+  }
 
-  if (xml_parser_build_tree (&root) >= 0) {
+  if (xml_parser_build_tree_r (parser, &root) >= 0) {
     if (!strcasecmp (root->name, "asx")) {
       is_asx = 1;
 
@@ -359,6 +363,7 @@ static void parse_asx (demux_playlist_t *this, char *data, int length) {
 
     xml_parser_free_tree (root);
   }
+  xml_parser_finalize_r (parser);
 
   if (!is_asx) {
     /* No tags found? Might be a references list. */
@@ -369,10 +374,14 @@ static void parse_asx (demux_playlist_t *this, char *data, int length) {
 static void parse_smi (demux_playlist_t *this, char *data, int length) {
   xml_node_t *root, *node, *tmp;
   int         is_smi = 0;
+  xml_parser_t *parser;
 
-  xml_parser_init (data, length, XML_PARSER_CASE_SENSITIVE);
+  parser = xml_parser_init_r (data, length, XML_PARSER_CASE_SENSITIVE);
+  if (!parser) {
+    return;
+  }
 
-  if (xml_parser_build_tree (&root) >= 0) {
+  if (xml_parser_build_tree_r (parser, &root) >= 0) {
     for (node = root; node; node = node->next) {
       if (!strcmp (node->name, "smil"))
         break;
@@ -408,6 +417,7 @@ static void parse_smi (demux_playlist_t *this, char *data, int length) {
 
     xml_parser_free_tree (root);
   }
+  xml_parser_finalize_r (parser);
 
   if (!is_smi) {
     /* No tags found? Might be a RAM playlist. */
@@ -417,10 +427,14 @@ static void parse_smi (demux_playlist_t *this, char *data, int length) {
 
 static void parse_qtl (demux_playlist_t *this, char *data, int length) {
   xml_node_t *root, *node;
+  xml_parser_t *parser;
 
-  xml_parser_init (data, length, XML_PARSER_CASE_SENSITIVE);
+  parser = xml_parser_init_r (data, length, XML_PARSER_CASE_SENSITIVE);
+  if (!parser) {
+    return;
+  }
 
-  if (xml_parser_build_tree (&root) >= 0) {
+  if (xml_parser_build_tree_r (parser, &root) >= 0) {
     for (node = root; node; node = node->next) {
       if (!strcmp (node->name, "embed")) {
         const char *src;
@@ -435,14 +449,20 @@ static void parse_qtl (demux_playlist_t *this, char *data, int length) {
 
     xml_parser_free_tree (root);
   }
+
+  xml_parser_finalize_r (parser);
 }
 
 static void parse_xspf (demux_playlist_t *this, char *data, int length) {
   xml_node_t *root, *node, *tmp;
+  xml_parser_t *parser;
 
-  xml_parser_init (data, length, XML_PARSER_CASE_SENSITIVE);
+  parser = xml_parser_init_r (data, length, XML_PARSER_CASE_SENSITIVE);
+  if (!parser) {
+    return;
+  }
 
-  if (xml_parser_build_tree (&root) >= 0) {
+  if (xml_parser_build_tree_r (parser, &root) >= 0) {
     for (node = root; node; node = node->next) {
       if (!strcmp (node->name, "playlist"))
         break;
@@ -478,14 +498,20 @@ static void parse_xspf (demux_playlist_t *this, char *data, int length) {
 
     xml_parser_free_tree (root);
   }
+
+  xml_parser_finalize_r (parser);
 }
 
 static void parse_rss (demux_playlist_t *this, char *data, int length) {
   xml_node_t *root, *node, *item, *tmp;
+  xml_parser_t *parser;
 
-  xml_parser_init (data, length, XML_PARSER_CASE_SENSITIVE);
+  parser = xml_parser_init_r (data, length, XML_PARSER_CASE_SENSITIVE);
+  if (!parser) {
+    return;
+  }
 
-  if (xml_parser_build_tree (&root) >= 0) {
+  if (xml_parser_build_tree_r (parser, &root) >= 0) {
     for (node = root; node; node = node->next) {
       if (!strcmp (node->name, "rss"))
         break;
@@ -521,6 +547,8 @@ static void parse_rss (demux_playlist_t *this, char *data, int length) {
 
     xml_parser_free_tree (root);
   }
+
+  xml_parser_finalize_r (parser);
 }
 
 
