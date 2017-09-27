@@ -327,6 +327,7 @@ static void _insert_node (xine_t *this,
   uint32_t             *types;
   char                  key[80];
   int                   i;
+  int                   plugin_type = info->type & PLUGIN_TYPE_MASK;
 
   _x_assert(list);
   _x_assert(info);
@@ -349,6 +350,19 @@ static void _insert_node (xine_t *this,
              info->id, file ? file->filename : "xine-lib");
     return;
   }
+  if (!info->special_info) {
+    if (plugin_type != PLUGIN_INPUT && plugin_type != PLUGIN_DEMUX) {
+      if (file)
+        xprintf (this, XINE_VERBOSITY_LOG,
+                 "load_plugins: plugin %s from %s is broken: special_info = NULL\n",
+                 info->id, file->filename);
+      else
+        xprintf (this, XINE_VERBOSITY_LOG,
+                 "load_plugins: statically linked plugin %s is broken: special_info = NULL\n",
+                 info->id);
+      return;
+    }
+  }
 
   entry = calloc(1, sizeof(plugin_node_t));
   entry->info         = calloc(1, sizeof(plugin_info_t));
@@ -361,7 +375,7 @@ static void _insert_node (xine_t *this,
   entry->priority     = 0; /* default priority */
   entry->config_entry_list = (node_cache) ? node_cache->config_entry_list : NULL;
 
-  switch (info->type & PLUGIN_TYPE_MASK){
+  switch (plugin_type) {
 
   case PLUGIN_VIDEO_OUT:
     vo_old = info->special_info;
@@ -383,17 +397,6 @@ static void _insert_node (xine_t *this,
   case PLUGIN_SPU_DECODER:
     decoder_old = info->special_info;
     decoder_new = calloc(1, sizeof(decoder_info_t));
-    if (decoder_old == NULL) {
-      if (file)
-	xprintf (this, XINE_VERBOSITY_DEBUG,
-		 "load_plugins: plugin %s from %s is broken: special_info = NULL\n",
-		 info->id, entry->file->filename);
-      else
-	xprintf (this, XINE_VERBOSITY_DEBUG,
-		 "load_plugins: statically linked plugin %s is broken: special_info = NULL\n",
-		 info->id);
-      _x_abort();
-    }
     {
       size_t supported_types_size;
       for (supported_types_size=0; decoder_old->supported_types[supported_types_size] != 0; ++supported_types_size);
