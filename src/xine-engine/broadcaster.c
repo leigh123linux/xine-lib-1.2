@@ -334,11 +334,20 @@ broadcaster_t *_x_init_broadcaster(xine_stream_t *stream, int port)
     return NULL;
   }
 
-  listen(msock,QLEN);
+  if (listen(msock,QLEN) < 0) {
+    xprintf(stream->xine, XINE_VERBOSITY_DEBUG, "broadcaster: error listening port %d\n", port);
+    close(msock);
+    return NULL;
+  }
 
   signal( SIGPIPE, SIG_IGN );
 
   this = calloc(1, sizeof(broadcaster_t));
+  if (!this) {
+    close(msock);
+    return NULL;
+  }
+
   this->port = port;
   this->stream = stream;
   this->msock = msock;
