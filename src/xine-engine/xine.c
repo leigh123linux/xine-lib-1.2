@@ -1748,9 +1748,9 @@ xine_t *xine_new (void) {
     int i_err;
 #endif
 
-    this = calloc(1, sizeof (xine_t));
+  this = calloc(1, sizeof (xine_t));
   if (!this)
-    _x_abort();
+    return NULL;
 
   this->plugin_catalog = NULL;
   this->save_path      = NULL;
