@@ -356,7 +356,10 @@ broadcaster_t *_x_init_broadcaster(xine_stream_t *stream, int port)
                              NULL, manager_loop, (void *)this)) != 0) {
     xprintf (stream->xine, XINE_VERBOSITY_NONE,
 	     "broadcaster: can't create new thread (%s)\n", strerror(err));
-    _x_abort();
+
+    this->running = 0;
+    _x_close_broadcaster(this);
+    return NULL;
   }
 
   return this;
@@ -364,9 +367,11 @@ broadcaster_t *_x_init_broadcaster(xine_stream_t *stream, int port)
 
 void _x_close_broadcaster(broadcaster_t *this_gen)
 {
-  this_gen->running = 0;
-  pthread_cancel(this_gen->manager_thread);
-  pthread_join(this_gen->manager_thread,NULL);
+  if (this_gen->running) {
+    this_gen->running = 0;
+    pthread_cancel(this_gen->manager_thread);
+    pthread_join(this_gen->manager_thread,NULL);
+  }
   close(this_gen->msock);
 
   if (this_gen->stream->video_fifo)
