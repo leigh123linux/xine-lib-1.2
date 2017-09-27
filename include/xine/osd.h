@@ -130,6 +130,8 @@ struct osd_renderer_s {
 
   /*
    * set palette (color and transparency)
+   *
+   * NOTE: both color and trans arrays must hold OVL_PALETTE_SIZE entries !
    */
   void (*set_palette) (osd_object_t *osd, const uint32_t *color, const uint8_t *trans );
 
