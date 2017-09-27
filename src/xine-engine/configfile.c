@@ -679,6 +679,18 @@ static int config_register_range (config_values_t *this,
   else
     entry->num_value = def_value;
 
+  /* validate value (config files can be edited ...) */
+  if (entry->num_value > max) {
+    printf("configfile: WARNING: value %d for %s is larger than max (%d)\n",
+            entry->num_value, key, max);
+    entry->num_value = max;
+  }
+  if (entry->num_value < min) {
+    printf("configfile: WARNING: value %d for %s is smaller than min (%d)\n",
+            entry->num_value, key, max);
+    entry->num_value = min;
+  }
+
   /* fill out rest of struct */
 
   entry->num_default   = def_value;
