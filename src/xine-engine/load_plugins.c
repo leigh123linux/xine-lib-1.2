@@ -801,7 +801,8 @@ static int _load_plugin_class(xine_t *this,
 	  /* the callback is called for each entry registered by this plugin */
           lprintf("plugin init %s\n", node->info->id);
 	  config->set_new_entry_callback(config, _new_entry_cb, node);
-	  node->plugin_class = info->init(this, data);
+          if (info->init)
+            node->plugin_class = info->init(this, data);
 	  config->unset_new_entry_callback(config);
 
 	  if (node->plugin_class) {
