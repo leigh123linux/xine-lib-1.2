@@ -4038,7 +4038,7 @@ static vo_driver_t *vaapi_open_plugin (video_driver_class_t *class_gen, const vo
        _("The default number of video frames to request "
          "from xine video out driver. Some drivers will "
          "override this setting with their own values."),
-      20, NULL, this);
+      20, NULL, NULL);
 
   /* now make sure we have at least 22 frames, to prevent
    * locks with vdpau_h264 */
@@ -4162,7 +4162,7 @@ static vo_driver_t *vaapi_open_plugin (video_driver_class_t *class_gen, const vo
   this->guarded_render = config->register_num( config, "video.output.vaapi_guarded_render", 1,
         _("vaapi: set vaapi_guarded_render to 0 ( no ) 1 ( yes )"),
         _("vaapi: set vaapi_guarded_render to 0 ( no ) 1 ( yes )"),
-        10, NULL, this );
+        10, NULL, NULL );
 
   this->scaling_level_enum = config->register_enum(config, "video.output.vaapi_scaling_level", 0,
     (char **)scaling_level_enum_names,
