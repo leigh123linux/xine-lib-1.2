@@ -3889,6 +3889,14 @@ static int vaapi_gui_data_exchange (vo_driver_t *this_gen,
 static void vaapi_dispose_locked (vo_driver_t *this_gen) {
   vaapi_driver_t      *this = (vaapi_driver_t *) this_gen;
   ff_vaapi_context_t  *va_context = this->va_context;
+  config_values_t     *config = this->xine->config;
+
+  config->unregister_callback(config, "video.output.vaapi_csc_mode");
+  config->unregister_callback(config, "video.output.vaapi_deinterlace");
+  config->unregister_callback(config, "video.output.vaapi_scaling_level");
+  config->unregister_callback(config, "video.output.vaapi_swap_uv_planes");
+  config->unregister_callback(config, "video.output.vaapi_vdr_osd_height");
+  config->unregister_callback(config, "video.output.vaapi_vdr_osd_width");
 
   // vaapi_lock is locked at this point, either from vaapi_dispose or vaapi_open_plugin
 
