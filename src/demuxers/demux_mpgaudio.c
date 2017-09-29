@@ -158,17 +158,6 @@ typedef struct {
 
 } demux_mpgaudio_t ;
 
-/* demuxer class struct */
-typedef struct {
-
-  demux_class_t     demux_class;
-
-  /* class-wide, global variables here */
-
-  xine_t           *xine;
-
-} demux_mpgaudio_class_t;
-
 /*
  * Parse a mp3 frame
  * return 1 on success
@@ -1222,16 +1211,15 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
  */
 void *demux_mpgaudio_init_class (xine_t *xine, void *data) {
 
-  demux_mpgaudio_class_t     *this;
+  demux_class_t     *this;
 
-  this         = calloc(1, sizeof(demux_mpgaudio_class_t));
-  this->xine   = xine;
+  this         = calloc(1, sizeof(demux_class_t));
 
-  this->demux_class.open_plugin     = open_plugin;
-  this->demux_class.description     = N_("MPEG audio demux plugin");
-  this->demux_class.identifier      = "MPEGAUDIO";
-  if( _x_decoder_available(this->xine, BUF_AUDIO_MPEG) ) {
-    this->demux_class.mimetypes =
+  this->open_plugin     = open_plugin;
+  this->description     = N_("MPEG audio demux plugin");
+  this->identifier      = "MPEGAUDIO";
+  if( _x_decoder_available(xine, BUF_AUDIO_MPEG) ) {
+    this->mimetypes =
       "audio/mpeg2: mp2: MPEG audio;"
       "audio/x-mpeg2: mp2: MPEG audio;"
       "audio/mpeg3: mp3: MPEG audio;"
@@ -1242,12 +1230,12 @@ void *demux_mpgaudio_init_class (xine_t *xine, void *data) {
       "audio/mpegurl: mp3: MPEG audio;"
       "audio/mp3: mp3: MPEG audio;"
       "audio/x-mp3: mp3: MPEG audio;";
-    this->demux_class.extensions    = "mp3 mp2 mpa mpega";
+    this->extensions    = "mp3 mp2 mpa mpega";
   } else {
-    this->demux_class.mimetypes     = NULL;
-    this->demux_class.extensions    = NULL;
+    this->mimetypes     = NULL;
+    this->extensions    = NULL;
   }
-  this->demux_class.dispose         = default_demux_class_dispose;
+  this->dispose         = default_demux_class_dispose;
 
   return this;
 }
