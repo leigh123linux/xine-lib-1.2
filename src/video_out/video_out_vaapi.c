@@ -3409,23 +3409,25 @@ static VAStatus vaapi_hardware_render_frame (vo_driver_t *this_gen, vo_frame_t *
 
 #ifdef ENABLE_VA_GLX
     if(this->opengl_render) {
+      const char *msg;
       vaapi_x11_trap_errors();
 
       if(this->opengl_use_tfp) {
         lprintf("opengl render tfp\n");
         vaStatus = vaPutSurface(va_context->va_display, va_surface_id, this->gl_image_pixmap,
                  0, 0, width, height, 0, 0, width, height, NULL, 0, flags);
-        if(!vaapi_check_status(this_gen, vaStatus, "vaPutSurface()"))
-          return vaStatus;
+        msg = "vaPutSurface()";
       } else {
         lprintf("opengl render\n");
         vaStatus = vaCopySurfaceGLX(va_context->va_display, this->gl_surface, va_surface_id, flags);
-        if(!vaapi_check_status(this_gen, vaStatus, "vaCopySurfaceGLX()"))
-          return vaStatus;
+        msg = "vaCopySurfaceGLX()";
       }
+
       if(vaapi_x11_untrap_errors())
         return VA_STATUS_ERROR_UNKNOWN;
-      
+      if(!vaapi_check_status(this_gen, vaStatus, msg))
+        return vaStatus;
+
       vaapi_glx_flip_page(frame_gen, 0, 0, va_context->width, va_context->height);
 
     } else
