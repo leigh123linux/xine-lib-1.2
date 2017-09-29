@@ -3922,7 +3922,15 @@ static void vaapi_dispose_locked (vo_driver_t *this_gen) {
   _x_freep(&this->va_soft_surface_ids);
   _x_freep(&this->va_soft_images);
 
-  XDestroyWindow(this->display, this->window);
+  if (this->window != None) {
+    vaapi_x11_trap_errors();
+    XDestroyWindow(this->display, this->window);
+    XSync(this->display, False);
+    if (vaapi_x11_untrap_errors()) {
+      xprintf(this->xine, XINE_VERBOSITY_LOG, LOG_MODULE " XDestroyWindow() failed\n");
+    }
+  }
+
   DO_UNLOCKDISPLAY;
 
   pthread_mutex_unlock(&this->vaapi_lock);
@@ -4025,6 +4033,9 @@ static vo_driver_t *vaapi_open_plugin (video_driver_class_t *class_gen, const vo
   if (!this)
     return NULL;
 
+  pthread_mutex_init(&this->vaapi_lock, NULL);
+  pthread_mutex_lock(&this->vaapi_lock);
+
   this->config                  = config;
   this->xine                    = class->xine;
 
@@ -4120,12 +4131,15 @@ static vo_driver_t *vaapi_open_plugin (video_driver_class_t *class_gen, const vo
   xswa.background_pixel = black_pixel;
   xswa.colormap         = CopyFromParent;
 
+  vaapi_x11_trap_errors();
   this->window = XCreateWindow(this->display, this->drawable,
                              0, 0, 1, 1, 0, depth,
                              InputOutput, vi->visual, xswa_mask, &xswa);
-
-  if(this->window == None) {
+  XSync(this->display, False);
+  if (vaapi_x11_untrap_errors() || this->window == None) {
     DO_UNLOCKDISPLAY;
+    xprintf(this->xine, XINE_VERBOSITY_LOG, LOG_MODULE " XCreateWindow() failed\n");
+    vaapi_dispose_locked((vo_driver_t *)this);
     return NULL;
   }
 
@@ -4194,10 +4208,6 @@ static vo_driver_t *vaapi_open_plugin (video_driver_class_t *class_gen, const vo
     10, vaapi_swap_uv_planes, this);
 
 
-  pthread_mutex_init(&this->vaapi_lock, NULL);
-
-  pthread_mutex_lock(&this->vaapi_lock);
-
   for (i = 0; i < VO_NUM_PROPERTIES; i++) {
     this->props[i].value = 0;
     this->props[i].min   = 0;
@@ -4224,8 +4234,6 @@ static vo_driver_t *vaapi_open_plugin (video_driver_class_t *class_gen, const vo
   this->va_context->valid_context = 0;
   this->va_context->driver        = (vo_driver_t *)this;
 
-  pthread_mutex_unlock(&this->vaapi_lock);
-
   this->csc_mode = this->xine->config->register_enum (this->xine->config, "video.output.vaapi_csc_mode", 3,
     (char **)vaapi_csc_mode_labels,
     _("VAAPI color conversion method"),
@@ -4245,6 +4253,8 @@ static vo_driver_t *vaapi_open_plugin (video_driver_class_t *class_gen, const vo
 #ifdef ENABLE_VA_GLX
   xprintf(this->xine, XINE_VERBOSITY_LOG, LOG_MODULE " vaapi_open: Opengl render : %d\n", this->opengl_render);
 #endif
+
+  pthread_mutex_unlock(&this->vaapi_lock);
 
   return &this->vo_driver;
 }
