@@ -60,11 +60,13 @@
 #include <xine/xineutils.h>
 #include <xine/vo_scale.h>
 
+#ifdef HAVE_VA_VA_GLX_H
 #include <GL/glu.h>
 #include <GL/glx.h>
 #include <GL/glext.h>
 #include <GL/gl.h>
 #include <dlfcn.h>
+#endif
 
 #include <va/va_x11.h>
 #ifdef HAVE_VA_VA_GLX_H
@@ -305,6 +307,7 @@ static void yv12_to_nv12(const uint8_t *y_src, int y_src_pitch,
                          uint8_t *uv_dst, int uv_dst_pitch,
                          int width, int height);
 
+#ifdef ENABLE_VA_GLX
 void (GLAPIENTRY *mpglGenTextures)(GLsizei, GLuint *);
 void (GLAPIENTRY *mpglBindTexture)(GLenum, GLuint);
 void (GLAPIENTRY *mpglXBindTexImage)(Display *, GLXDrawable, int, const int *);
@@ -313,6 +316,7 @@ GLXPixmap (GLAPIENTRY *mpglXCreatePixmap)(Display *, GLXFBConfig, Pixmap, const 
 void (GLAPIENTRY *mpglXDestroyPixmap)(Display *, GLXPixmap);
 const GLubyte *(GLAPIENTRY *mpglGetString)(GLenum);
 void (GLAPIENTRY *mpglGenPrograms)(GLsizei, GLuint *);
+#endif
 
 #ifdef LOG
 static const char *string_of_VAImageFormat(VAImageFormat *imgfmt)
@@ -619,8 +623,6 @@ static void vaapi_x11_wait_event(Display *dpy, Window w, int type)
     delay_usec(10);
 }
 
-#ifdef ENABLE_VA_GLX
-
 /* X11 Error handler and error functions */
 static int vaapi_x11_error_code = 0;
 static int (*vaapi_x11_old_error_handler)(Display *, XErrorEvent *);
@@ -642,6 +644,8 @@ static int vaapi_x11_untrap_errors(void)
     XSetErrorHandler(vaapi_x11_old_error_handler);
     return vaapi_x11_error_code;
 }
+
+#ifdef ENABLE_VA_GLX
 
 static void vaapi_appendstr(char **dst, const char *str)
 {
