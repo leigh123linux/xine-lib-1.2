@@ -683,12 +683,16 @@ static int config_register_range (config_values_t *this,
   if (entry->num_value > max) {
     printf("configfile: WARNING: value %d for %s is larger than max (%d)\n",
             entry->num_value, key, max);
-    entry->num_value = max;
+    // allow default to be out of range.
+    // (xine-ui uses this for brightness, ...)
+    if (entry->num_value != def_value)
+      entry->num_value = max;
   }
   if (entry->num_value < min) {
     printf("configfile: WARNING: value %d for %s is smaller than min (%d)\n",
             entry->num_value, key, max);
-    entry->num_value = min;
+    if (entry->num_value != def_value)
+      entry->num_value = min;
   }
 
   /* fill out rest of struct */
