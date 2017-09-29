@@ -427,6 +427,16 @@ exit_error:
  * Parse a Vbri header
  * return the Vbri header or NULL on error
  */
+
+static void _free_vbri_header(vbri_header_t **pp)
+{
+  if (*pp) {
+    vbri_header_t *p = *pp;
+    _x_freep(p->toc);
+    _x_freep(pp);
+  }
+}
+
 static vbri_header_t *XINE_MALLOC parse_vbri_header(mpg_audio_frame_t *frame,
 						    uint8_t *buf, int bufsize) {
 
@@ -601,6 +611,7 @@ static int parse_frame_payload(demux_mpgaudio_t *this,
   if (this->check_vbr_header) {
     this->check_vbr_header = 0;
     this->mpg_frame_start = frame_pos;
+    free(this->xing_header);
     this->xing_header = parse_xing_header(&this->cur_frame, buf->content, this->cur_frame.size);
     if (this->xing_header) {
       buf->free_buffer(buf);
@@ -608,6 +619,7 @@ static int parse_frame_payload(demux_mpgaudio_t *this,
               LOG_MODULE ": found Xing header at offset %"PRId64"\n", frame_pos);
       return 1;
     }
+    _free_vbri_header(&this->vbri_header);
     this->vbri_header = parse_vbri_header(&this->cur_frame, buf->content, this->cur_frame.size);
     if (this->vbri_header) {
       buf->free_buffer(buf);
@@ -1156,6 +1168,15 @@ static int demux_mpgaudio_get_optional_data(demux_plugin_t *this_gen,
   return DEMUX_OPTIONAL_UNSUPPORTED;
 }
 
+static void demux_mpgaudio_dispose (demux_plugin_t *this_gen) {
+
+  demux_mpgaudio_t *this = (demux_mpgaudio_t *) this_gen;
+
+  _free_vbri_header(&this->vbri_header);
+  _x_freep(&this->xing_header);
+  free(this);
+}
+
 static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *stream,
                                     input_plugin_t *input) {
 
@@ -1186,7 +1207,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
   this->demux_plugin.send_headers      = demux_mpgaudio_send_headers;
   this->demux_plugin.send_chunk        = demux_mpgaudio_send_chunk;
   this->demux_plugin.seek              = demux_mpgaudio_seek;
-  this->demux_plugin.dispose           = default_demux_plugin_dispose;
+  this->demux_plugin.dispose           = demux_mpgaudio_dispose;
   this->demux_plugin.get_status        = demux_mpgaudio_get_status;
   this->demux_plugin.get_stream_length = demux_mpgaudio_get_stream_length;
   this->demux_plugin.get_capabilities  = demux_mpgaudio_get_capabilities;
