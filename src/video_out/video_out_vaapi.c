@@ -4064,11 +4064,14 @@ static vo_driver_t *vaapi_open_plugin (video_driver_class_t *class_gen, const vo
         _("vaapi: opengl rendering tfp"),
         20, vaapi_opengl_use_tfp, this );
 
+
+  DO_LOCKDISPLAY;
   if(this->opengl_render) {
       this->opengl_render = vaapi_opengl_verify_direct (visual);
       if(!this->opengl_render)
         xprintf (this->xine, XINE_VERBOSITY_LOG, LOG_MODULE " vaapi_open: Opengl indirect/software rendering does not work. Fallback to plain VAAPI output !!!!\n");
   }
+  DO_UNLOCKDISPLAY;
 
   this->valid_opengl_context            = 0;
   this->gl_vinfo                        = NULL;
@@ -4099,6 +4102,8 @@ static vo_driver_t *vaapi_open_plugin (video_driver_class_t *class_gen, const vo
   this->sc.user_data            = visual->user_data;
   this->sc.user_ratio           = XINE_VO_ASPECT_AUTO;
 
+  DO_LOCKDISPLAY;
+
   black_pixel         = BlackPixel(this->display, this->screen);
 
   XGetWindowAttributes(this->display, this->drawable, &wattr);
@@ -4119,13 +4124,17 @@ static vo_driver_t *vaapi_open_plugin (video_driver_class_t *class_gen, const vo
                              0, 0, 1, 1, 0, depth,
                              InputOutput, vi->visual, xswa_mask, &xswa);
 
-  if(this->window == None)
+  if(this->window == None) {
+    DO_UNLOCKDISPLAY;
     return NULL;
+  }
 
   XSelectInput(this->display, this->window, x11_event_mask);
 
   XMapWindow(this->display, this->window);
   vaapi_x11_wait_event(this->display, this->window, MapNotify);
+
+  DO_UNLOCKDISPLAY;
 
   if(vi != &visualInfo)
     XFree(vi);
