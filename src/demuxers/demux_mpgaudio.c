@@ -1203,6 +1203,8 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
   }
 
   this = calloc(1, sizeof(demux_mpgaudio_t));
+  if (!this)
+    return NULL;
 
   this->demux_plugin.send_headers      = demux_mpgaudio_send_headers;
   this->demux_plugin.send_chunk        = demux_mpgaudio_send_chunk;
@@ -1235,6 +1237,8 @@ void *demux_mpgaudio_init_class (xine_t *xine, void *data) {
   demux_class_t     *this;
 
   this         = calloc(1, sizeof(demux_class_t));
+  if (!this)
+    return NULL;
 
   this->open_plugin     = open_plugin;
   this->description     = N_("MPEG audio demux plugin");
