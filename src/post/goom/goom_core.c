@@ -103,7 +103,7 @@ PluginInfo *goom_init (guint32 resx, guint32 resy)
                                          GML_HLINE, 0, GML_BLACK,
                                          GML_CIRCLE, 0.2f * (float) goomInfo->screen.height, GML_RED);
     
-    gfont_load ();
+    goomInfo->font = gfont_load ();
  
     /* goom_set_main_script(goomInfo, goomInfo->main_script_str); */
     
@@ -618,7 +618,7 @@ guint32 *goom_update (PluginInfo *goomInfo, gint16 data[2][512],
             
             if (fps > 0) {
                 sprintf (text, "%2.0f fps", fps);
-                goom_draw_text (goomInfo->p1,goomInfo->screen.width,goomInfo->screen.height,
+                goom_draw_text (goomInfo->font, goomInfo->p1,goomInfo->screen.width,goomInfo->screen.height,
                                 10, 24, text, 1, 0);
             }
             
@@ -632,12 +632,12 @@ guint32 *goom_update (PluginInfo *goomInfo, gint16 data[2][512],
             }
             
             if (goomInfo->update.timeOfTitleDisplay) {
-                goom_draw_text (goomInfo->p1,goomInfo->screen.width,goomInfo->screen.height,
+                goom_draw_text (goomInfo->font, goomInfo->p1,goomInfo->screen.width,goomInfo->screen.height,
                                 goomInfo->screen.width / 2, goomInfo->screen.height / 2 + 7, goomInfo->update.titleText,
                                 ((float) (190 - goomInfo->update.timeOfTitleDisplay) / 10.0f), 1);
                 goomInfo->update.timeOfTitleDisplay--;
                 if (goomInfo->update.timeOfTitleDisplay < 4)
-                    goom_draw_text (goomInfo->p2,goomInfo->screen.width,goomInfo->screen.height,
+                    goom_draw_text (goomInfo->font, goomInfo->p2,goomInfo->screen.width,goomInfo->screen.height,
                                     goomInfo->screen.width / 2, goomInfo->screen.height / 2 + 7, goomInfo->update.titleText,
                                     ((float) (190 - goomInfo->update.timeOfTitleDisplay) / 10.0f), 1);
             }
@@ -778,6 +778,8 @@ void goom_close (PluginInfo *goomInfo)
     if (goomInfo->main_scanner)
       gsl_free(goomInfo->main_scanner);
 
+    gfont_unload(&goomInfo->font);
+
     free(goomInfo->params);
     free(goomInfo->visuals);
     free(goomInfo->sound.params.params);
@@ -890,7 +892,7 @@ void update_message (PluginInfo *goomInfo, char *message) {
                 pos = (int)goomInfo->screen.height / 2;
             pos += 7;
             
-            goom_draw_text(goomInfo->p1,goomInfo->screen.width,goomInfo->screen.height,
+            goom_draw_text(goomInfo->font, goomInfo->p1,goomInfo->screen.width,goomInfo->screen.height,
                            goomInfo->screen.width/2, pos,
                            message,
                            ecart,

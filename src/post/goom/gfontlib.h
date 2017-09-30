@@ -3,8 +3,12 @@
 
 #include "goom_graphic.h"
 
-void gfont_load (void);
-void goom_draw_text (Pixel * buf,int resolx,int resoly, int x, int y,
-		const char *str, float chspace, int center);
+typedef struct goomfont_s goomfont_t;
+
+goomfont_t *gfont_load (void);
+void gfont_unload (goomfont_t **);
+
+void goom_draw_text (goomfont_t *, Pixel * buf, int resolx, int resoly, int x, int y,
+                     const char *str, float chspace, int center);
 
 #endif

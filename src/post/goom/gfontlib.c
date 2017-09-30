@@ -4,22 +4,61 @@
 #include <string.h>
 #include <stdlib.h>
 
-static Pixel  ***font_chars;
-static int    *font_width;
-static int    *font_height;
-static Pixel  ***small_font_chars;
-static int    *small_font_width;
-static int    *small_font_height;
+struct goomfont_s {
+    Pixel  ***font_chars;
+    int    *font_width;
+    int    *font_height;
+    Pixel  ***small_font_chars;
+    int    *small_font_width;
+    int    *small_font_height;
+};
 
-void gfont_load (void) {
+void gfont_unload(goomfont_t **pp)
+{
+    if (*pp) {
+        goomfont_t *p = *pp;
+        int i, y;
+
+        for (i = 0; i < 256; i++) {
+          if (p->font_chars[i] && (i == 42 || p->font_chars[i] != p->font_chars[42])) {
+            for (y = 0; y < p->font_height[i]; y++) {
+              free(p->font_chars[i][y]);
+            }
+            free(p->font_chars[i]);
+          }
+          if (p->small_font_chars[i] && (i == 42 || p->small_font_chars[i] != p->small_font_chars[42])) {
+            for (y = 0; y < p->font_height[i]/2; y++) {
+              free(p->small_font_chars[i][y]);
+            }
+            free(p->small_font_chars[i]);
+          }
+        }
+
+        free(p->font_chars);
+        free(p->small_font_chars);
+        free(p->font_width);
+        free(p->small_font_width);
+        free(p->font_height);
+        free(p->small_font_height);
+        memset(p, 0, sizeof(*p));
+
+        free(p);
+        *pp = NULL;
+    }
+}
+
+goomfont_t *gfont_load (void) {
 	unsigned char *gfont;
 	unsigned int i = 0, j = 0;
 	unsigned int nba = 0;
 	unsigned int current = 32;
         int    *font_pos;
+        goomfont_t *p;
 	/* decompress le rle */
 
-        
+        p = calloc(1, sizeof(*p));
+        if (!p)
+          return NULL;
         
 	gfont = malloc (the_font.width*the_font.height*the_font.bytes_per_pixel);
 	while (i<the_font.rle_size) {
@@ -35,12 +74,12 @@ void gfont_load (void) {
 
 	/* determiner les positions de chaque lettre. */
 
-        font_height = calloc (256,sizeof(int));
-        small_font_height = calloc (256,sizeof(int));
-        font_width = calloc (256,sizeof(int));
-        small_font_width = calloc (256,sizeof(int));
-        font_chars = calloc (256,sizeof(int**));
-        small_font_chars = calloc (256,sizeof(int**));
+        p->font_height = calloc (256,sizeof(int));
+        p->small_font_height = calloc (256,sizeof(int));
+        p->font_width = calloc (256,sizeof(int));
+        p->small_font_width = calloc (256,sizeof(int));
+        p->font_chars = calloc (256,sizeof(int**));
+        p->small_font_chars = calloc (256,sizeof(int**));
         font_pos = calloc (256,sizeof(int));
 
 	for (i=0;i<the_font.width;i++) {
@@ -50,38 +89,38 @@ void gfont_load (void) {
 		else
 			nba = 0;
 		if (nba == 2) {
-                    font_width [current] = i - font_pos [current];
-                    small_font_width [current] = font_width [current]/2;
-                        font_pos [++current] = i;
-                        font_height [current] = the_font.height - 2;
-                        small_font_height [current] = font_height [current]/2;
+                    p->font_width [current] = i - font_pos [current];
+                    p->small_font_width [current] = p->font_width [current]/2;
+                    font_pos [++current] = i;
+                    p->font_height [current] = the_font.height - 2;
+                    p->small_font_height [current] = p->font_height [current]/2;
 		}
 	}
 	font_pos [current] = 0;
-        font_height [current] = 0;
-        small_font_height [current] = 0;
+        p->font_height [current] = 0;
+        p->small_font_height [current] = 0;
 	
 	/* charger les lettres et convertir au format de la machine */
 	
 	for (i=33;i<current;i++) {
 		int x; int y;
-                font_chars [i] = malloc (font_height[i]*sizeof(int *));
-                small_font_chars [i] = malloc (font_height[i]*sizeof(int *)/2);
-                for (y = 0; y < font_height[i]; y++) {
-                    font_chars [i][y] = malloc (font_width[i]*sizeof(int));
-                    for (x = 0; x < font_width[i]; x++) {
+                p->font_chars [i] = malloc (p->font_height[i]*sizeof(int *));
+                p->small_font_chars [i] = malloc (p->font_height[i]*sizeof(int *)/2);
+                for (y = 0; y < p->font_height[i]; y++) {
+                    p->font_chars [i][y] = malloc (p->font_width[i]*sizeof(int));
+                    for (x = 0; x < p->font_width[i]; x++) {
                         unsigned int r,g,b,a;
                         r = gfont[(y+2)*(the_font.width*4)+(x*4+font_pos[i]*4)];
                         g = gfont[(y+2)*(the_font.width*4)+(x*4+font_pos[i]*4+1)];
                         b = gfont[(y+2)*(the_font.width*4)+(x*4+font_pos[i]*4+2)];
                         a = gfont[(y+2)*(the_font.width*4)+(x*4+font_pos[i]*4+3)];
-                        font_chars [i][y][x].val =
+                        p->font_chars [i][y][x].val =
                             (r<<(ROUGE*8))|(g<<(VERT*8))|(b<<(BLEU*8))|(a<<(ALPHA*8));
                     }
                 }
-                for (y = 0; y < font_height[i]/2; y++) {
-                    small_font_chars [i][y] = malloc (font_width[i]*sizeof(int)/2);
-                    for (x = 0; x < font_width[i]/2; x++) {
+                for (y = 0; y < p->font_height[i]/2; y++) {
+                    p->small_font_chars [i][y] = malloc (p->font_width[i]*sizeof(int)/2);
+                    for (x = 0; x < p->font_width[i]/2; x++) {
                         unsigned int r1,g1,b1,a1,r2,g2,b2,a2,r3,g3,b3,a3,r4,g4,b4,a4;
                         r1 = gfont[2*(y+1)*(the_font.width*4)+(x*8+font_pos[i]*4)];
                         g1 = gfont[2*(y+1)*(the_font.width*4)+(x*8+font_pos[i]*4+1)];
@@ -99,7 +138,7 @@ void gfont_load (void) {
                         g4 = gfont[2*(y+1)*(the_font.width*4)+(x*8+font_pos[i]*4+5)];
                         b4 = gfont[2*(y+1)*(the_font.width*4)+(x*8+font_pos[i]*4+6)];
                         a4 = gfont[2*(y+1)*(the_font.width*4)+(x*8+font_pos[i]*4+7)];
-                        small_font_chars [i][y][x].val =
+                        p->small_font_chars [i][y][x].val =
                             (((r1 + r2 + r3 + r4)>>2)<<(ROUGE*8))|
                             (((g1 + g2 + g3 + g4)>>2)<<(VERT*8))|
                             (((b1 + b2 + b3 + b4)>>2)<<(BLEU*8))|
@@ -111,28 +150,31 @@ void gfont_load (void) {
 	/* definir les lettres restantes */ 
 	
 	for (i=0;i<256;i++) {
-		if (font_chars[i]==0) {
-                    font_chars[i]=font_chars[42];
-                    small_font_chars[i]=small_font_chars[42];
-                    font_width[i]=font_width[42];
-                    font_pos[i]=font_pos[42];
-                    font_height[i]=font_height[42];
-                    small_font_width[i]=small_font_width[42];
-                    small_font_height[i]=small_font_height[42];
-                }
+          if (p->font_chars[i] == 0) {
+            p->font_chars[i]        = p->font_chars[42];
+            p->small_font_chars[i]  = p->small_font_chars[42];
+            p->font_width[i]        = p->font_width[42];
+            font_pos[i]             = font_pos[42];
+            p->font_height[i]       = p->font_height[42];
+            p->small_font_width[i]  = p->small_font_width[42];
+            p->small_font_height[i] = p->small_font_height[42];
+          }
 	}
 
-        font_width [32] = (the_font.height / 2) - 1;
-        small_font_width [32] = font_width [32]/2;
-        font_chars [32] = 0;
-        small_font_chars [32] = 0;
+        // XXX free it ???
+        p->font_width [32] = (the_font.height / 2) - 1;
+        p->small_font_width [32] = p->font_width [32]/2;
+        p->font_chars [32] = 0;
+        p->small_font_chars [32] = 0;
 	free(font_pos);
 	free(gfont);
+
+        return p;
 }
 
-void    goom_draw_text (Pixel * buf,int resolx,int resoly,
-												int x, int y,
-												const char *str, float charspace, int center) {
+void    goom_draw_text (goomfont_t *p, Pixel * buf,int resolx,int resoly,
+                        int x, int y,
+                        const char *str, float charspace, int center) {
 	float   fx = (float) x;
 	int     fin = 0;
 
@@ -143,16 +185,16 @@ void    goom_draw_text (Pixel * buf,int resolx,int resoly,
         if (resolx>320)
         {
             /* printf("use big\n"); */
-            cur_font_chars = font_chars;
-            cur_font_width = font_width;
-            cur_font_height = font_height;
+            cur_font_chars = p->font_chars;
+            cur_font_width = p->font_width;
+            cur_font_height = p->font_height;
         }
         else
         {
             /* printf ("use small\n"); */
-            cur_font_chars = small_font_chars;
-            cur_font_width = small_font_width;
-            cur_font_height = small_font_height;
+            cur_font_chars = p->small_font_chars;
+            cur_font_width = p->small_font_width;
+            cur_font_height = p->small_font_height;
         }
 
         if (cur_font_chars == NULL)

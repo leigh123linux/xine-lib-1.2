@@ -99,6 +99,8 @@ struct _PLUGIN_INFO {
 	VisualFX tentacles_fx;
 	VisualFX ifs_fx;
 
+        struct goomfont_s *font;
+
 	/** image buffers */
 	guint32 *pixel;
 	guint32 *back;
