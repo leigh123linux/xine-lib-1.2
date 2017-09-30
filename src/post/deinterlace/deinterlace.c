@@ -59,6 +59,9 @@ void register_deinterlace_method( deinterlace_methods_t *methodlist, const deint
     methodlist_item_t **dest = methodlist;
     methodlist_item_t *cur = *methodlist;
 
+    if (!method)
+      return;
+
     while( cur ) {
         if( cur->method == method ) return;
         dest = &(cur->next);
