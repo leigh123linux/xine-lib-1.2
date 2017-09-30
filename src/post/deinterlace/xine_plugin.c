@@ -111,6 +111,13 @@ END_PARAM_DESCR( param_descr )
 #define FPS_24_DURATION    3754
 #define FRAMES_TO_SYNC     20
 
+typedef struct post_class_deinterlace_s {
+  post_class_t class;
+  deinterlace_parameters_t init_param;
+
+  deinterlace_methods_t    methods;
+} post_class_deinterlace_t;
+
 /* plugin structure */
 struct post_plugin_deinterlace_s {
   post_plugin_t      post;
@@ -136,13 +143,10 @@ struct post_plugin_deinterlace_s {
   vo_frame_t        *recent_frame[NUM_RECENT_FRAMES];
 
   pthread_mutex_t    lock;
+
+  post_class_deinterlace_t *class;
 };
 
-
-typedef struct post_class_deinterlace_s {
-  post_class_t class;
-  deinterlace_parameters_t init_param;
-} post_class_deinterlace_t;
 
 static void _flush_frames(post_plugin_deinterlace_t *this)
 {
@@ -316,19 +320,20 @@ static void *deinterlace_init_plugin(xine_t *xine, void *data)
 
   setup_speedy_calls(xine_mm_accel(),0);
 
-  register_deinterlace_method( linear_get_method() );
-  register_deinterlace_method( linearblend_get_method() );
-  register_deinterlace_method( greedy_get_method() );
-  register_deinterlace_method( greedy2frame_get_method() );
-  register_deinterlace_method( weave_get_method() );
-  register_deinterlace_method( double_get_method() );
-  register_deinterlace_method( vfir_get_method() );
-  register_deinterlace_method( scalerbob_get_method() );
-  register_deinterlace_method( dscaler_greedyh_get_method() );
-  register_deinterlace_method( dscaler_tomsmocomp_get_method() );
+ 
+  register_deinterlace_method( &class->methods, linear_get_method() );
+  register_deinterlace_method( &class->methods, linearblend_get_method() );
+  register_deinterlace_method( &class->methods, greedy_get_method() );
+  register_deinterlace_method( &class->methods, greedy2frame_get_method() );
+  register_deinterlace_method( &class->methods, weave_get_method() );
+  register_deinterlace_method( &class->methods, double_get_method() );
+  register_deinterlace_method( &class->methods, vfir_get_method() );
+  register_deinterlace_method( &class->methods, scalerbob_get_method() );
+  register_deinterlace_method( &class->methods, dscaler_greedyh_get_method() );
+  register_deinterlace_method( &class->methods, dscaler_tomsmocomp_get_method() );
 
-  filter_deinterlace_methods( config_flags, 5 /*fieldsavailable*/ );
-  if( !get_num_deinterlace_methods() ) {
+  filter_deinterlace_methods( &class->methods, config_flags, 5 /*fieldsavailable*/ );
+  if( !get_num_deinterlace_methods( class->methods ) ) {
       xprintf(xine, XINE_VERBOSITY_LOG,
 	      _("tvtime: No deinterlacing methods available, exiting.\n"));
       free(class);
@@ -339,10 +344,10 @@ static void *deinterlace_init_plugin(xine_t *xine, void *data)
   xine_buffer_strcat( help_string, get_static_help() );
 
   enum_methods[0] = "use_vo_driver";
-  for(i = 0; i < get_num_deinterlace_methods(); i++ ) {
+  for(i = 0; i < get_num_deinterlace_methods( class->methods ); i++ ) {
     const deinterlace_method_t *method;
 
-    method = get_deinterlace_method(i);
+    method = get_deinterlace_method( class->methods, i );
 
     enum_methods[i+1] = method->short_name;
     xine_buffer_strcat( help_string, "[" );
@@ -393,6 +398,7 @@ static post_plugin_t *deinterlace_open_plugin(post_class_t *class_gen, int input
   this->tvtime = tvtime_new_context();
   this->tvtime_changed++;
   this->tvtime_last_filmmode = 0;
+  this->class = (post_class_deinterlace_t *)class_gen;
 
   pthread_mutex_init (&this->lock, NULL);
 
@@ -426,7 +432,13 @@ static post_plugin_t *deinterlace_open_plugin(post_class_t *class_gen, int input
 
 static void deinterlace_class_dispose(post_class_t *class_gen)
 {
+  post_class_deinterlace_t  *class = (post_class_deinterlace_t *)class_gen;
+
   xine_buffer_free(help_string);
+  help_string = NULL;
+
+  free_deinterlace_methods( &class->methods );
+
   free(class_gen);
 }
 
@@ -702,7 +714,7 @@ static int deinterlace_draw(vo_frame_t *frame, xine_stream_t *stream)
     tvtime_reset_context(this->tvtime);
 
     if( this->cur_method )
-      this->tvtime->curmethod = get_deinterlace_method( this->cur_method-1 );
+      this->tvtime->curmethod = get_deinterlace_method( this->class->methods, this->cur_method-1 );
     else
       this->tvtime->curmethod = NULL;
 

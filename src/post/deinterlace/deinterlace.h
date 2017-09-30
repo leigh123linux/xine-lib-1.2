@@ -133,25 +133,30 @@ struct deinterlace_method_s
     const char *description;
 };
 
+
+typedef struct methodlist_item_s * deinterlace_methods_t;
+
 /**
  * Registers a new deinterlace method.
  */
-void register_deinterlace_method( const deinterlace_method_t *method );
+void register_deinterlace_method( deinterlace_methods_t *, const deinterlace_method_t *method );
 
 /**
  * Returns how many deinterlacing methods are available.
  */
-int get_num_deinterlace_methods( void );
+int get_num_deinterlace_methods( deinterlace_methods_t );
 
 /**
  * Returns the specified method in the list.
  */
-const deinterlace_method_t *get_deinterlace_method( int i );
+const deinterlace_method_t *get_deinterlace_method( deinterlace_methods_t, int i );
 
 /**
  * Builds the usable method list.
  */
-void filter_deinterlace_methods( int accel, int fieldsavailable );
+void filter_deinterlace_methods( deinterlace_methods_t *, int accel, int fieldsavailable );
+
+void free_deinterlace_methods( deinterlace_methods_t * );
 
 #ifdef __cplusplus
 };

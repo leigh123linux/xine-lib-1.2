@@ -41,12 +41,23 @@ struct methodlist_item_s
     methodlist_item_t *next;
 };
 
-static methodlist_item_t *methodlist = 0;
-
-void register_deinterlace_method( const deinterlace_method_t *method )
+void free_deinterlace_methods( deinterlace_methods_t *methodlist )
 {
-    methodlist_item_t **dest = &methodlist;
-    methodlist_item_t *cur = methodlist;
+    methodlist_item_t *cur = *methodlist;
+
+    *methodlist = NULL;
+
+    while (cur) {
+      methodlist_item_t *next = cur->next;
+      free(cur);
+      cur = next;
+  }
+}
+
+void register_deinterlace_method( deinterlace_methods_t *methodlist, const deinterlace_method_t *method )
+{
+    methodlist_item_t **dest = methodlist;
+    methodlist_item_t *cur = *methodlist;
 
     while( cur ) {
         if( cur->method == method ) return;
@@ -63,7 +74,7 @@ void register_deinterlace_method( const deinterlace_method_t *method )
     }
 }
 
-int get_num_deinterlace_methods( void )
+int get_num_deinterlace_methods( deinterlace_methods_t methodlist )
 {
     methodlist_item_t *cur = methodlist;
     int count = 0;
@@ -74,7 +85,7 @@ int get_num_deinterlace_methods( void )
     return count;
 }
 
-const deinterlace_method_t *get_deinterlace_method( int i )
+const deinterlace_method_t *get_deinterlace_method( deinterlace_methods_t methodlist, int i )
 {
     methodlist_item_t *cur = methodlist;
 
@@ -87,10 +98,10 @@ const deinterlace_method_t *get_deinterlace_method( int i )
     return cur->method;
 }
 
-void filter_deinterlace_methods( int accel, int fields_available )
+void filter_deinterlace_methods( deinterlace_methods_t *methodlist, int accel, int fields_available )
 {
     methodlist_item_t *prev = 0;
-    methodlist_item_t *cur = methodlist;
+    methodlist_item_t *cur = *methodlist;
 
     while( cur ) {
         methodlist_item_t *next = cur->next;
@@ -114,7 +125,7 @@ void filter_deinterlace_methods( int accel, int fields_available )
             if( prev ) {
                 prev->next = next;
             } else {
-                methodlist = next;
+                *methodlist = next;
             }
             free( cur );
         } else {
