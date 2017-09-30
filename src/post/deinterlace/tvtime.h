@@ -54,7 +54,7 @@ typedef struct {
   /**
    * Current deinterlacing method.
    */
-  deinterlace_method_t *curmethod;
+  const deinterlace_method_t *curmethod;
 
   /**
    * This is how many frames to wait until deciding if the pulldown phase

@@ -328,7 +328,7 @@ static deinterlace_method_t linearblendmethod_mmxext =
 
 #endif
 
-static deinterlace_method_t linearblendmethod =
+static const deinterlace_method_t linearblendmethod =
 {
     "Linear Blend (mplayer)",
     "LinearBlend",
@@ -351,7 +351,7 @@ static deinterlace_method_t linearblendmethod =
     linearblendmethod_help
 };
 
-deinterlace_method_t *linearblend_get_method( void )
+const deinterlace_method_t *linearblend_get_method( void )
 {
 #if defined(ARCH_X86)
     if( xine_mm_accel() & MM_ACCEL_X86_MMXEXT )

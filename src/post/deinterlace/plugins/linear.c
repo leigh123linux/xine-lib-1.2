@@ -48,7 +48,7 @@ static void copy_scanline( uint8_t *output,
 }
 
 
-static deinterlace_method_t linearmethod =
+static const deinterlace_method_t linearmethod =
 {
     "Linear Interpolation",
     "Linear",
@@ -72,7 +72,7 @@ static deinterlace_method_t linearmethod =
     "fullscreen use."
 };
 
-deinterlace_method_t *linear_get_method( void )
+const deinterlace_method_t *linear_get_method( void )
 {
     return &linearmethod;
 }

@@ -36,7 +36,7 @@
 #include "speedy.h"
 #include "deinterlace.h"
 
-static deinterlace_method_t scalerbobmethod =
+static const deinterlace_method_t scalerbobmethod =
 {
     "Scaler Bob",
     "ScalerBob",
@@ -60,7 +60,7 @@ static deinterlace_method_t scalerbobmethod =
     "in a small window."
 };
 
-deinterlace_method_t *scalerbob_get_method( void )
+const deinterlace_method_t *scalerbob_get_method( void )
 {
     return &scalerbobmethod;
 }

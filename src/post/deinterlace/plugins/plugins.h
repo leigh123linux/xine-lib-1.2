@@ -28,19 +28,19 @@
 
 #include <deinterlace.h>
 
-deinterlace_method_t *greedy_get_method( void );
-deinterlace_method_t *greedy2frame_get_method( void );
-deinterlace_method_t *weave_get_method( void );
-deinterlace_method_t *double_get_method( void );
-deinterlace_method_t *linear_get_method( void );
-deinterlace_method_t *scalerbob_get_method( void );
-deinterlace_method_t *linearblend_get_method( void );
-deinterlace_method_t *vfir_get_method( void );
-deinterlace_method_t *dscaler_tomsmocomp_get_method( void );
-deinterlace_method_t *dscaler_greedyh_get_method( void );
-deinterlace_method_t *greedy_get_method( void );
-deinterlace_method_t *weave_get_method( void );
-deinterlace_method_t *weavetff_get_method( void );
-deinterlace_method_t *weavebff_get_method( void );
+const deinterlace_method_t *greedy_get_method( void );
+const deinterlace_method_t *greedy2frame_get_method( void );
+const deinterlace_method_t *weave_get_method( void );
+const deinterlace_method_t *double_get_method( void );
+const deinterlace_method_t *linear_get_method( void );
+const deinterlace_method_t *scalerbob_get_method( void );
+const deinterlace_method_t *linearblend_get_method( void );
+const deinterlace_method_t *vfir_get_method( void );
+const deinterlace_method_t *dscaler_tomsmocomp_get_method( void );
+const deinterlace_method_t *dscaler_greedyh_get_method( void );
+const deinterlace_method_t *greedy_get_method( void );
+const deinterlace_method_t *weave_get_method( void );
+const deinterlace_method_t *weavetff_get_method( void );
+const deinterlace_method_t *weavebff_get_method( void );
 
 #endif /* TVTIME_PLUGINS_H_INCLUDED */

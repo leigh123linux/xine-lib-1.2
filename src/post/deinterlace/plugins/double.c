@@ -49,7 +49,7 @@ static void copy_scanline( uint8_t *output,
 }
 
 
-static deinterlace_method_t doublemethod =
+static const deinterlace_method_t doublemethod =
 {
     "Line Doubler",
     "LineDoubler",
@@ -64,7 +64,7 @@ static deinterlace_method_t doublemethod =
     NULL
 };
 
-deinterlace_method_t *double_get_method( void )
+const deinterlace_method_t *double_get_method( void )
 {
     return &doublemethod;
 }

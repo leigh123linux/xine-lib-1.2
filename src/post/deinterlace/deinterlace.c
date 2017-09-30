@@ -37,13 +37,13 @@ typedef struct methodlist_item_s methodlist_item_t;
 
 struct methodlist_item_s
 {
-    deinterlace_method_t *method;
+    const deinterlace_method_t *method;
     methodlist_item_t *next;
 };
 
 static methodlist_item_t *methodlist = 0;
 
-void register_deinterlace_method( deinterlace_method_t *method )
+void register_deinterlace_method( const deinterlace_method_t *method )
 {
     methodlist_item_t **dest = &methodlist;
     methodlist_item_t *cur = methodlist;
@@ -74,7 +74,7 @@ int get_num_deinterlace_methods( void )
     return count;
 }
 
-deinterlace_method_t *get_deinterlace_method( int i )
+const deinterlace_method_t *get_deinterlace_method( int i )
 {
     methodlist_item_t *cur = methodlist;
 

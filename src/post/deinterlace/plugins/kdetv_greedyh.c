@@ -100,7 +100,7 @@ static void deinterlace_frame_di_greedyh( uint8_t *output, int outstride,
 }
 
 
-static deinterlace_method_t greedymethod =
+static const deinterlace_method_t greedymethod =
 {
     "Greedy - High Motion (DScaler)",
     "GreedyH",
@@ -125,7 +125,7 @@ static deinterlace_method_t greedymethod =
     "deinterlacer from DScaler."
 };
 
-deinterlace_method_t *dscaler_greedyh_get_method( void )
+const deinterlace_method_t *dscaler_greedyh_get_method( void )
 {
     return &greedymethod;
 }

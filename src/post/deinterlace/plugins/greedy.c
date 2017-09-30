@@ -173,7 +173,7 @@ static void deinterlace_greedy_packed422_scanline_mmxext( uint8_t *output,
  * work is done in deinterlace_method_t's copy_scanline function.
  */
 
-static deinterlace_method_t greedymethod =
+static const deinterlace_method_t greedymethod =
 {
     "Greedy - Low motion (DScaler)",
     "Greedy",
@@ -198,7 +198,7 @@ static deinterlace_method_t greedymethod =
     "from DScaler."
 };
 
-deinterlace_method_t *greedy_get_method( void )
+const deinterlace_method_t *greedy_get_method( void )
 {
     return &greedymethod;
 }

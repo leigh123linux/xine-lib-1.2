@@ -340,7 +340,7 @@ static void *deinterlace_init_plugin(xine_t *xine, void *data)
 
   enum_methods[0] = "use_vo_driver";
   for(i = 0; i < get_num_deinterlace_methods(); i++ ) {
-    deinterlace_method_t *method;
+    const deinterlace_method_t *method;
 
     method = get_deinterlace_method(i);
 

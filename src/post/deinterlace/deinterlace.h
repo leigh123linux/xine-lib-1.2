@@ -136,7 +136,7 @@ struct deinterlace_method_s
 /**
  * Registers a new deinterlace method.
  */
-void register_deinterlace_method( deinterlace_method_t *method );
+void register_deinterlace_method( const deinterlace_method_t *method );
 
 /**
  * Returns how many deinterlacing methods are available.
@@ -146,7 +146,7 @@ int get_num_deinterlace_methods( void );
 /**
  * Returns the specified method in the list.
  */
-deinterlace_method_t *get_deinterlace_method( int i );
+const deinterlace_method_t *get_deinterlace_method( int i );
 
 /**
  * Builds the usable method list.

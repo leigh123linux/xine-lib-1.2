@@ -50,7 +50,7 @@ static void copy_scanline( uint8_t *output,
 }
 
 
-static deinterlace_method_t weavemethod =
+static const deinterlace_method_t weavemethod =
 {
     "Weave Last Field",
     "Weave",
@@ -65,7 +65,7 @@ static deinterlace_method_t weavemethod =
     "Only updates the most recent field."
 };
 
-deinterlace_method_t *weave_get_method( void )
+const deinterlace_method_t *weave_get_method( void )
 {
     return &weavemethod;
 }

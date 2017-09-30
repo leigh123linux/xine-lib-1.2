@@ -116,7 +116,7 @@ static void deinterlace_frame_di_tomsmocomp( uint8_t *output, int outstride,
 #endif
 }
 
-static deinterlace_method_t tomsmocompmethod =
+static const deinterlace_method_t tomsmocompmethod =
 {
     "Tom's Motion Compensated (DScaler)",
     "TomsMoComp",
@@ -140,7 +140,7 @@ static deinterlace_method_t tomsmocompmethod =
     "interpolation.  This is the TomsMoComp deinterlacer from DScaler."
 };
 
-deinterlace_method_t *dscaler_tomsmocomp_get_method( void )
+const deinterlace_method_t *dscaler_tomsmocomp_get_method( void )
 {
     return &tomsmocompmethod;
 }

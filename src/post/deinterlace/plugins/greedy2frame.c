@@ -88,7 +88,7 @@ static void DeinterlaceGreedy2Frame(uint8_t *output, int outstride,
 }
 
 
-static deinterlace_method_t greedy2framemethod =
+static const deinterlace_method_t greedy2framemethod =
 {
     "Greedy 2-frame (DScaler)",
     "Greedy2Frame",
@@ -103,7 +103,7 @@ static deinterlace_method_t greedy2framemethod =
     NULL
 };
 
-deinterlace_method_t *greedy2frame_get_method( void )
+const deinterlace_method_t *greedy2frame_get_method( void )
 {
     return &greedy2framemethod;
 }

@@ -129,7 +129,7 @@ static void copy_scanline( uint8_t *output,
 }
 
 
-static deinterlace_method_t vfirmethod =
+static const deinterlace_method_t vfirmethod =
 {
     "Vertical Blend (ffmpeg)",
     "Vertical",
@@ -157,7 +157,7 @@ static deinterlace_method_t vfirmethod =
     "trails.  From the deinterlacer filter in ffmpeg."
 };
 
-deinterlace_method_t *vfir_get_method( void )
+const deinterlace_method_t *vfir_get_method( void )
 {
     return &vfirmethod;
 }
