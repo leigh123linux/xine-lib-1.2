@@ -123,6 +123,13 @@ static vo_frame_t *caca_alloc_frame(vo_driver_t *this_gen) {
   if (!frame)
     return NULL;
 
+  /* colorspace converter for this frame */
+  frame->yuv2rgb = this->yuv2rgb_factory->create_converter (this->yuv2rgb_factory);
+  if (!frame->yuv2rgb) {
+    free(frame);
+    return NULL;
+  }
+
   pthread_mutex_init(&frame->vo_frame.mutex, NULL);
 
   frame->vo_frame.proc_slice = NULL;
@@ -130,10 +137,6 @@ static vo_frame_t *caca_alloc_frame(vo_driver_t *this_gen) {
   frame->vo_frame.field = caca_frame_field;
   frame->vo_frame.dispose = caca_dispose_frame;
   frame->vo_frame.driver = this_gen;
-
-  /* colorspace converter for this frame */
-  frame->yuv2rgb =
-    this->yuv2rgb_factory->create_converter (this->yuv2rgb_factory);
 
   return (vo_frame_t*) frame;
 }

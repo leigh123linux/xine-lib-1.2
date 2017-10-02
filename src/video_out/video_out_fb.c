@@ -224,6 +224,13 @@ static vo_frame_t *fb_alloc_frame(vo_driver_t *this_gen)
   if(!frame)
     return NULL;
 
+  /* colorspace converter for this frame */
+  frame->yuv2rgb = this->yuv2rgb_factory->create_converter(this->yuv2rgb_factory);
+  if (!frame->yuv2rgb) {
+    free(frame);
+    return NULL;
+  }
+
   memcpy(&frame->sc, &this->sc, sizeof(vo_scale_t));
 
   pthread_mutex_init(&frame->vo_frame.mutex, NULL);
@@ -236,10 +243,6 @@ static vo_frame_t *fb_alloc_frame(vo_driver_t *this_gen)
   frame->vo_frame.driver     = this_gen;
 
   frame->this = this;
-
-  /* colorspace converter for this frame */
-  frame->yuv2rgb =
-    this->yuv2rgb_factory->create_converter(this->yuv2rgb_factory);
 
   if(this->use_zero_copy)
   {

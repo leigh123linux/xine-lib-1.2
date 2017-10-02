@@ -235,6 +235,15 @@ static vo_frame_t *raw_alloc_frame (vo_driver_t *this_gen)
   if (!frame)
     return NULL;
 
+  /*
+   * colorspace converter for this frame
+   */
+  frame->yuv2rgb = this->yuv2rgb_factory->create_converter (this->yuv2rgb_factory);
+  if (!frame->yuv2rgb) {
+    free(frame);
+    return NULL;
+  }
+
   frame->vo_frame.base[0] = frame->vo_frame.base[1] = frame->vo_frame.base[2] = frame->rgb = NULL;
   frame->width = frame->height = frame->format = frame->flags = 0;
 
@@ -248,11 +257,6 @@ static vo_frame_t *raw_alloc_frame (vo_driver_t *this_gen)
   frame->vo_frame.field      = raw_frame_field;
   frame->vo_frame.dispose    = raw_frame_dispose;
   frame->vo_frame.driver     = this_gen;
-
-  /*
-   * colorspace converter for this frame
-   */
-  frame->yuv2rgb = this->yuv2rgb_factory->create_converter (this->yuv2rgb_factory);
 
   return (vo_frame_t *) frame;
 }

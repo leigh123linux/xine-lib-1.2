@@ -1302,6 +1302,10 @@ static vo_driver_t *open_plugin (video_driver_class_t *class_gen, const void *wi
     return NULL;
   }
   win32_driver->yuv2rgb = win32_driver->yuv2rgb_factory->create_converter(win32_driver->yuv2rgb_factory);
+  if (!win32_driver->yuv2rgb) {
+      Destroy( win32_driver );
+      return NULL;
+  }
 
   return ( vo_driver_t * ) win32_driver;
 }
