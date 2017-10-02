@@ -45,7 +45,6 @@ static int prof_scale_line = -1;
 
 static scale_line_func_t find_scale_line_func(int step);
 
-
 const int32_t Inverse_Table_6_9[8][4] = {
   {117504, 138453, 13954, 34903}, /* no sequence_display_extension */
   {117504, 138453, 13954, 34903}, /* ITU-R Rec. 709 (1990) */

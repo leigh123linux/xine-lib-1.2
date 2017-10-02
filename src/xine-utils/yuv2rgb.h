@@ -29,6 +29,8 @@
 
 #include <inttypes.h>
 
+#include <xine/attributes.h>
+
 typedef struct yuv2rgb_s yuv2rgb_t;
 
 typedef struct yuv2rgb_factory_s yuv2rgb_factory_t;
@@ -128,7 +130,7 @@ struct yuv2rgb_factory_s {
   void (*dispose) (yuv2rgb_factory_t *this);
 };
 
-yuv2rgb_factory_t *yuv2rgb_factory_init (int mode, int swapped, uint8_t *colormap);
+yuv2rgb_factory_t *yuv2rgb_factory_init (int mode, int swapped, uint8_t *colormap) XINE_PROTECTED XINE_MALLOC;
 
 
 #endif /* XINE_YUV2RGB_H */

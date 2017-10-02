@@ -251,7 +251,16 @@ typedef struct {
 #define CM_DRIVER_T opengl_driver_t
 #include "color_matrix.c"
 
-extern const int32_t Inverse_Table_6_9[8][4]; /* from yuv2rgb.c */
+static const int32_t Inverse_Table_6_9[8][4] = {
+  {117504, 138453, 13954, 34903}, /* no sequence_display_extension */
+  {117504, 138453, 13954, 34903}, /* ITU-R Rec. 709 (1990) */
+  {104597, 132201, 25675, 53279}, /* unspecified */
+  {104597, 132201, 25675, 53279}, /* reserved */
+  {104448, 132798, 24759, 53109}, /* FCC */
+  {104597, 132201, 25675, 53279}, /* ITU-R Rec. 624-4 System B, G */
+  {104597, 132201, 25675, 53279}, /* SMPTE 170M */
+  {117579, 136230, 16907, 35559}  /* SMPTE 240M (1987) */
+};
 
 /*
  * Render functions
