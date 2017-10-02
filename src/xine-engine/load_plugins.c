@@ -160,6 +160,21 @@ static void dec_node_ref(plugin_node_t *node) {
   lprintf("node %s referenced %d time(s)\n", node->info->id, node->ref);
 }
 
+static void _free_string_list(xine_list_t **plist) {
+  xine_list_t *list = *plist;
+
+  if (list) {
+    xine_list_iterator_t ite = xine_list_front (list);
+    while (ite) {
+      char *key = xine_list_get_value (list, ite);
+      free (key);
+      ite = xine_list_next (list, ite);
+    }
+    xine_list_delete(list);
+    *plist = NULL;
+  }
+}
+
 /*
  * plugin list/catalog management functions
  */
@@ -2921,16 +2936,7 @@ static void dispose_plugin_list (xine_sarray_t *list, int is_cache) {
 
       /* don't free the entry list if the node is cache */
       if (!is_cache) {
-        if (node->config_entry_list) {
-          xine_list_iterator_t ite = xine_list_front (node->config_entry_list);
-          while (ite) {
-            char *key = xine_list_get_value (node->config_entry_list, ite);
-            free (key);
-            ite = xine_list_next (node->config_entry_list, ite);
-          }
-          xine_list_delete(node->config_entry_list);
-          node->config_entry_list = NULL;
-        }
+      _free_string_list(&node->config_entry_list);
       }
       free (node);
     }
