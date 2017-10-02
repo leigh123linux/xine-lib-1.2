@@ -148,7 +148,6 @@ typedef struct fb_driver_s
 typedef struct
 {
   video_driver_class_t driver_class;
-  config_values_t     *config;
   xine_t              *xine;
 } fb_class_t;
 
@@ -978,7 +977,7 @@ static vo_driver_t *fb_open_plugin(video_driver_class_t *class_gen,
   const fb_visual_t *visual = (const fb_visual_t *)visual_gen;
 
   class = (fb_class_t *)class_gen;
-  config = class->config;
+  config = class->xine->config;
 
   /* allocate plugin struct */
   this = calloc(1, sizeof(fb_driver_t));
@@ -1068,7 +1067,6 @@ static void *fb_init_class(xine_t *xine, void *visual_gen)
   this->driver_class.description     = N_("Xine video output plugin using the Linux frame buffer device");
   this->driver_class.dispose         = default_video_driver_class_dispose;
 
-  this->config          = xine->config;
   this->xine            = xine;
 
   return this;
