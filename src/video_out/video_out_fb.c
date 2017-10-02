@@ -206,6 +206,8 @@ static void fb_frame_dispose(vo_frame_t *vo_img)
 {
   fb_frame_t *frame = (fb_frame_t *)vo_img;
 
+  frame->yuv2rgb->dispose (frame->yuv2rgb);
+
   if(!frame->this->use_zero_copy)
      free(frame->data);
   free(frame);

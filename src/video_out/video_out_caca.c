@@ -252,9 +252,10 @@ static void caca_get_property_min_max (vo_driver_t *this_gen,
 static void caca_dispose_driver (vo_driver_t *this_gen) {
   caca_driver_t *this = (caca_driver_t*) this_gen;
   this->yuv2rgb_factory->dispose (this->yuv2rgb_factory);
-     caca_free_display(this->dp);
-    cucul_free_canvas(this->cv);
+  caca_free_display(this->dp);
+  cucul_free_canvas(this->cv);
 
+  free(this);
 }
 
 static int caca_redraw_needed (vo_driver_t *this_gen) {

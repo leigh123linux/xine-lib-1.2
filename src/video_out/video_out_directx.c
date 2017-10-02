@@ -436,6 +436,12 @@ static void Destroy( win32_driver_t * win32_driver )
   if( win32_driver->ddobj )
     IDirectDraw_Release( win32_driver->ddobj );
 
+  if (win32_driver->yuv2rgb)
+    win32_driver->yuv2rgb->free(win32_driver->yuv2rgb);
+
+  if (win32_driver->yuv2rgb_factory)
+    win32_driver->yuv2rgb_factory->free(win32_driver->yuv2rgb_factory);
+
   _x_alphablend_free(&win32_driver->alphablend_extra_data);
 
   free( win32_driver );
