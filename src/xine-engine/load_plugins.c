@@ -388,7 +388,10 @@ static void _insert_node (xine_t *this,
   entry->file         = file;
   entry->ref          = 0;
   entry->priority     = 0; /* default priority */
-  entry->config_entry_list = (node_cache) ? node_cache->config_entry_list : NULL;
+  if (node_cache) {
+    entry->config_entry_list = node_cache->config_entry_list;
+    node_cache->config_entry_list = NULL;
+  }
 
   switch (plugin_type) {
 
@@ -2934,10 +2937,8 @@ static void dispose_plugin_list (xine_sarray_t *list, int is_cache) {
       _x_freep (&node->info->id);
       _x_freep (&node->info);
 
-      /* don't free the entry list if the node is cache */
-      if (!is_cache) {
       _free_string_list(&node->config_entry_list);
-      }
+
       free (node);
     }
     xine_sarray_delete(list);
