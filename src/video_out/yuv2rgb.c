@@ -2372,6 +2372,8 @@ static int _yuv2rgb_set_csc_levels (yuv2rgb_factory_t *this_gen,
   case MODE_32_BGR:
     if (this->table_base == NULL) {
       this->table_base = malloc ((197 + 2*682 + 256 + 132) * sizeof (uint32_t));
+      if (!this->table_base)
+        return -1;
     }
     table_32 = this->table_base;
 
@@ -2404,6 +2406,8 @@ static int _yuv2rgb_set_csc_levels (yuv2rgb_factory_t *this_gen,
   case MODE_24_BGR:
     if (this->table_base == NULL) {
       this->table_base = malloc ((256 + 2*232) * sizeof (uint8_t));
+      if (!this->table_base)
+        return -1;
     }
     table_8 = this->table_base;
 
@@ -2420,6 +2424,8 @@ static int _yuv2rgb_set_csc_levels (yuv2rgb_factory_t *this_gen,
   case MODE_16_RGB:
     if (this->table_base == NULL) {
       this->table_base = malloc ((197 + 2*682 + 256 + 132) * sizeof (uint16_t));
+      if (!this->table_base)
+        return -1;
     }
     table_16 = this->table_base;
 
@@ -2463,6 +2469,8 @@ static int _yuv2rgb_set_csc_levels (yuv2rgb_factory_t *this_gen,
   case MODE_8_BGR:
     if (this->table_base == NULL) {
       this->table_base = malloc ((197 + 2*682 + 256 + 132) * sizeof (uint8_t));
+      if (!this->table_base)
+        return -1;
     }
     table_8 = this->table_base;
 
@@ -2490,6 +2498,8 @@ static int _yuv2rgb_set_csc_levels (yuv2rgb_factory_t *this_gen,
   case MODE_PALETTE:
     if (this->table_base == NULL) {
       this->table_base = malloc ((197 + 2*682 + 256 + 132) * sizeof (uint16_t));
+      if (!this->table_base)
+        return -1;
     }
     table_16 = this->table_base;
 
@@ -2538,7 +2548,7 @@ static int _yuv2rgb_set_csc_levels (yuv2rgb_factory_t *this_gen,
 static void yuv2rgb_set_csc_levels (yuv2rgb_factory_t *this_gen,
   int brightness, int contrast, int saturation, int colormatrix)
 {
-  /* ignore error code (mode was checked in init) */
+  /* ignore error code (errors were checked in init) */
   _yuv2rgb_set_csc_levels (this_gen, brightness, contrast, saturation, colormatrix);
 }
 
