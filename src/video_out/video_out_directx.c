@@ -1296,6 +1296,11 @@ static vo_driver_t *open_plugin (video_driver_class_t *class_gen, const void *wi
     }
 
   win32_driver->yuv2rgb_factory = yuv2rgb_factory_init( win32_driver->mode, 0, 0 );
+  if (!win32_driver->yuv2rgb_factory) {
+    xprintf (win32_driver->xine, XINE_VERBOSITY_LOG, LOG_MODULE ": yuv2rgb initialization failed\n");
+    Destroy (win32_driver);
+    return NULL;
+  }
   win32_driver->yuv2rgb = win32_driver->yuv2rgb_factory->create_converter(win32_driver->yuv2rgb_factory);
 
   return ( vo_driver_t * ) win32_driver;

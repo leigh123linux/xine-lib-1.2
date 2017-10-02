@@ -1050,7 +1050,8 @@ static void xshm_dispose (vo_driver_t *this_gen) {
   if (this->cur_frame)
     this->cur_frame->vo_frame.dispose (&this->cur_frame->vo_frame);
 
-  this->yuv2rgb_factory->dispose (this->yuv2rgb_factory);
+  if (this->yuv2rgb_factory)
+    this->yuv2rgb_factory->dispose (this->yuv2rgb_factory);
 
   cm_close (this);
 
@@ -1366,6 +1367,11 @@ static vo_driver_t *xshm_open_plugin(video_driver_class_t *class_gen, const void
   this->saturation = 128;
 
   this->yuv2rgb_factory = yuv2rgb_factory_init (mode, swapped, this->yuv2rgb_cmap);
+  if (!this->yuv2rgb_factory) {
+    xprintf (this->xine, XINE_VERBOSITY_LOG, LOG_MODULE ": yuv2rgb initialization failed\n");
+    xshm_dispose(&this->vo_driver);
+    return NULL;
+  }
 
   this->xoverlay = xcbosd_create(this->xine, this->connection, this->screen,
                                  this->window, XCBOSD_SHAPED);

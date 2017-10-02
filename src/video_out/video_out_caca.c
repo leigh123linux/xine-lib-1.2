@@ -283,6 +283,11 @@ static vo_driver_t *open_plugin (video_driver_class_t *class_gen, const void *vi
   this->vo_driver.dispose              = caca_dispose_driver;
 
   this->yuv2rgb_factory = yuv2rgb_factory_init(MODE_32_RGB, 0, NULL);
+  if (!this->yuv2rgb_factory) {
+    xprintf (this->xine, XINE_VERBOSITY_LOG, LOG_MODULE ": yuv2rgb initialization failed\n");
+    free(this);
+    return NULL;
+  }
   this->yuv2rgb_factory->set_csc_levels(this->yuv2rgb_factory, 0, 128, 128, CM_DEFAULT);
 
   if (dp) {

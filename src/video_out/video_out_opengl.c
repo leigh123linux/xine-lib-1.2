@@ -1958,6 +1958,13 @@ static vo_driver_t *opengl_open_plugin (video_driver_class_t *class_gen, const v
   if (!this)
     return NULL;
 
+  this->yuv2rgb_factory = yuv2rgb_factory_init (YUV_FORMAT, YUV_SWAP_MODE, NULL);
+  if (!this->yuv2rgb_factory) {
+    xprintf (this->xine, XINE_VERBOSITY_LOG, LOG_MODULE ": yuv2rgb initialization failed\n");
+    free(this);
+    return NULL;
+  }
+
   this->display		    = visual->display;
   this->screen		    = visual->screen;
 
@@ -1998,8 +2005,6 @@ static vo_driver_t *opengl_open_plugin (video_driver_class_t *class_gen, const v
   this->saturation = 128;
 
   cm_init (this);
-
-  this->yuv2rgb_factory = yuv2rgb_factory_init (YUV_FORMAT, YUV_SWAP_MODE, NULL);
 
   XLockDisplay (this->display);
   this->xoverlay = x11osd_create (this->xine, this->display, this->screen,

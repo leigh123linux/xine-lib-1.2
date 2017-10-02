@@ -487,6 +487,11 @@ static vo_driver_t *raw_open_plugin (video_driver_class_t *class_gen, const void
   this->vo_driver.redraw_needed        = raw_redraw_needed;
 
   this->yuv2rgb_factory = yuv2rgb_factory_init (MODE_24_BGR, 1, NULL); /* converts to rgb */
+  if (!this->yuv2rgb_factory) {
+    xprintf (this->xine, XINE_VERBOSITY_LOG, LOG_MODULE ": yuv2rgb initialization failed\n");
+    free(this);
+    return NULL;
+  }
 
   for (i = 0; i < NUM_FRAMES_BACKLOG; i++)
     this->frame[i] = 0;

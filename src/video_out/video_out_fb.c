@@ -686,6 +686,9 @@ static void fb_dispose(vo_driver_t *this_gen)
 
   _x_alphablend_free(&this->alphablend_extra_data);
 
+  if (this->yuv2rgb_factory)
+    this->yuv2rgb_factory->dispose (this->yuv2rgb_factory);
+
   free(this);
 }
 
@@ -891,6 +894,8 @@ static int setup_yuv2rgb(fb_driver_t *this, config_values_t *config,
   this->yuv2rgb_factory = yuv2rgb_factory_init(this->yuv2rgb_mode,
 					       this->yuv2rgb_swap,
 					       this->yuv2rgb_cmap);
+  if (!this->yuv2rgb_factory)
+    return 0;
   this->yuv2rgb_factory->set_csc_levels (this->yuv2rgb_factory,
                                          this->yuv2rgb_brightness,
                                          this->yuv2rgb_contrast,
