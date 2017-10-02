@@ -1882,19 +1882,28 @@ static void ao_exit(xine_audio_port_t *this_gen) {
   }
 
   if (!this->grab_only) {
+    ao_driver_t *driver;
+
     pthread_mutex_lock( &this->driver_lock );
 
-    if((this->driver->get_capabilities(this->driver)) & AO_CAP_MIXER_VOL)
+    driver = this->driver;
+
+    if ((driver->get_capabilities(driver)) & AO_CAP_MIXER_VOL)
       prop = AO_PROP_MIXER_VOL;
-    else if((this->driver->get_capabilities(this->driver)) & AO_CAP_PCM_VOL)
+    else if ((driver->get_capabilities(driver)) & AO_CAP_PCM_VOL)
       prop = AO_PROP_PCM_VOL;
 
-    vol = this->driver->get_property(this->driver, prop);
-    this->xine->config->update_num(this->xine->config, "audio.volume.mixer_volume", vol);
-    if(this->driver_open)
-      this->driver->close(this->driver);
-    _x_free_audio_driver(this->xine, &this->driver);
+    vol = driver->get_property(driver, prop);
+    if (this->driver_open)
+      driver->close(driver);
+
+    this->driver_open = 0;
+    this->driver = NULL;
     pthread_mutex_unlock( &this->driver_lock );
+
+    this->xine->config->update_num(this->xine->config, "audio.volume.mixer_volume", vol);
+
+    _x_free_audio_driver(this->xine, &driver);
   }
 
   pthread_mutex_destroy(&this->driver_lock);
