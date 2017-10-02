@@ -2897,6 +2897,18 @@ char *xine_get_demux_for_mime_type (xine_t *self, const char *mime_type) {
   return id;
 }
 
+static void _dispose_file_entry(plugin_file_t **pfile)
+{
+  if (*pfile) {
+    plugin_file_t *file = *pfile;
+
+    _x_assert(file->lib_handle == NULL);
+    _x_assert(file->ref == 0);
+
+    _x_freep (&file->filename);
+    _x_freep(pfile);
+  }
+}
 
 static void dispose_plugin_list (xine_sarray_t *list, int is_cache) {
 
@@ -2938,6 +2950,12 @@ static void dispose_plugin_list (xine_sarray_t *list, int is_cache) {
       _x_freep (&node->info);
 
       _free_string_list(&node->config_entry_list);
+
+      /* file entries in cache list are "dummies" (do not refer to opened files) */
+      /* those are not in file list, so free here */
+      if (is_cache) {
+        _dispose_file_entry(&node->file);
+      }
 
       free (node);
     }
