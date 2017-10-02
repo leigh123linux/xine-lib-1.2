@@ -2316,7 +2316,7 @@ static int div_round (int dividend, int divisor)
     return -((-dividend + (divisor>>1)) / divisor);
 }
 
-static void yuv2rgb_set_csc_levels (yuv2rgb_factory_t *this_gen,
+static int _yuv2rgb_set_csc_levels (yuv2rgb_factory_t *this_gen,
   int brightness, int contrast, int saturation, int colormatrix)
 {
   yuv2rgb_factory_impl_t *this = (yuv2rgb_factory_impl_t*)this_gen;
@@ -2485,7 +2485,7 @@ static void yuv2rgb_set_csc_levels (yuv2rgb_factory_t *this_gen,
     break;
 
   case MODE_8_GRAY:
-    return;
+    return 0;
 
   case MODE_PALETTE:
     if (this->table_base == NULL) {
@@ -2513,10 +2513,9 @@ static void yuv2rgb_set_csc_levels (yuv2rgb_factory_t *this_gen,
 
     break;
 
-
   default:
     lprintf ("mode %d not supported by yuv2rgb\n", mode);
-    _x_abort();
+    return -1;
   }
 
   for (i = 0; i < 256; i++) {
@@ -2532,6 +2531,15 @@ static void yuv2rgb_set_csc_levels (yuv2rgb_factory_t *this_gen,
 #if defined(ARCH_X86)
   mmx_yuv2rgb_set_csc_levels (this_gen, brightness, contrast, saturation, colormatrix);
 #endif
+
+  return 0;
+}
+
+static void yuv2rgb_set_csc_levels (yuv2rgb_factory_t *this_gen,
+  int brightness, int contrast, int saturation, int colormatrix)
+{
+  /* ignore error code (mode was checked in init) */
+  _yuv2rgb_set_csc_levels (this_gen, brightness, contrast, saturation, colormatrix);
 }
 
 static uint32_t yuv2rgb_single_pixel_32 (yuv2rgb_t *this_gen, uint8_t y, uint8_t u, uint8_t v)
@@ -2616,7 +2624,7 @@ static uint32_t yuv2rgb_single_pixel_palette (yuv2rgb_t *this_gen, uint8_t y, ui
 }
 
 
-static void yuv2rgb_c_init (yuv2rgb_factory_impl_t *this)
+static int yuv2rgb_c_init (yuv2rgb_factory_impl_t *this)
 {
   switch (this->mode) {
   case MODE_32_RGB:
@@ -2654,14 +2662,16 @@ static void yuv2rgb_c_init (yuv2rgb_factory_impl_t *this)
 
   default:
     lprintf ("mode %d not supported by yuv2rgb\n", this->mode);
-    _x_abort();
+    return -1;
   }
 
+  return 0;
 }
 
-static void yuv2rgb_single_pixel_init (yuv2rgb_factory_impl_t *this) {
+static int yuv2rgb_single_pixel_init (yuv2rgb_factory_impl_t *this) {
 
   switch (this->mode) {
+
   case MODE_32_RGB:
   case MODE_32_BGR:
     this->yuv2rgb_single_pixel_fun = yuv2rgb_single_pixel_32;
@@ -2697,8 +2707,10 @@ static void yuv2rgb_single_pixel_init (yuv2rgb_factory_impl_t *this) {
 
   default:
     lprintf ("mode %d not supported by yuv2rgb\n", this->mode);
-    _x_abort();
+    return -1;
   }
+
+  return 0;
 }
 
 
@@ -3209,7 +3221,7 @@ static void yuy22rgb_c_palette (yuv2rgb_t *this_gen, uint8_t * _dst, uint8_t * _
   }
 }
 
-static void yuy22rgb_c_init (yuv2rgb_factory_impl_t *this)
+static int yuy22rgb_c_init (yuv2rgb_factory_impl_t *this)
 {
   switch (this->mode) {
   case MODE_32_RGB:
@@ -3246,7 +3258,10 @@ static void yuy22rgb_c_init (yuv2rgb_factory_impl_t *this)
 
   default:
     lprintf ("mode %d not supported for yuy2\n", this->mode);
+    return -1;
   }
+
+  return 0;
 }
 
 static yuv2rgb_t *yuv2rgb_create_converter (yuv2rgb_factory_t *this_gen) {
@@ -3298,8 +3313,8 @@ static void yuv2rgb_factory_dispose (yuv2rgb_factory_t *this_gen) {
 
   yuv2rgb_factory_impl_t *this = (yuv2rgb_factory_impl_t*)this_gen;
 
-  free (this->table_base);
-  xine_free_aligned(this->table_mmx);
+  _x_freep (&this->table_base);
+  xine_freep_aligned(&this->table_mmx);
   free (this);
 }
 
@@ -3326,7 +3341,9 @@ yuv2rgb_factory_t* yuv2rgb_factory_init (int mode, int swapped,
   this->table_mmx           = NULL;
 
 
-  yuv2rgb_set_csc_levels (intf, 0, 128, 128, CM_DEFAULT);
+  if (_yuv2rgb_set_csc_levels (intf, 0, 128, 128, CM_DEFAULT) < 0) {
+    goto failed;
+  }
 
   /*
    * auto-probe for the best yuv2rgb function
@@ -3368,7 +3385,9 @@ yuv2rgb_factory_t* yuv2rgb_factory_init (int mode, int swapped,
   if (this->yuv2rgb_fun == NULL) {
     lprintf ("no accelerated colour space conversion found\n");
 
-    yuv2rgb_c_init (this);
+    if (yuv2rgb_c_init (this) < 0) {
+      goto failed;
+    }
   }
 
   /*
@@ -3376,13 +3395,21 @@ yuv2rgb_factory_t* yuv2rgb_factory_init (int mode, int swapped,
    */
 
   /* FIXME: implement mmx/mlib functions */
-  yuy22rgb_c_init (this);
+  if (yuy22rgb_c_init (this) < 0) {
+    goto failed;
+  }
 
   /*
    * set up single pixel function
    */
 
-  yuv2rgb_single_pixel_init (this);
+  if (yuv2rgb_single_pixel_init (this) < 0) {
+    goto failed;
+  }
 
   return intf;
+
+ failed:
+  yuv2rgb_factory_dispose(&this->intf);
+  return NULL;
 }
