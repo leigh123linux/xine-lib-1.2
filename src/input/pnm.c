@@ -222,11 +222,16 @@ static unsigned int pnm_get_chunk(pnm_t *p,
     return -1;
 
   /* get first PREAMBLE_SIZE bytes and ignore checksum */
-  _x_io_tcp_read (p->stream, p->s, data, CHECKSUM_SIZE);
-  if (data[0] == 0x72)
-    _x_io_tcp_read (p->stream, p->s, data, PREAMBLE_SIZE);
-  else
-    _x_io_tcp_read (p->stream, p->s, data+CHECKSUM_SIZE, PREAMBLE_SIZE-CHECKSUM_SIZE);
+  if (_x_io_tcp_read (p->stream, p->s, data, CHECKSUM_SIZE) != CHECKSUM_SIZE)
+    return -1;
+  if (data[0] == 0x72) {
+    if (_x_io_tcp_read (p->stream, p->s, data, PREAMBLE_SIZE) != PREAMBLE_SIZE)
+      return -1;
+  } else {
+    const int sz = PREAMBLE_SIZE - CHECKSUM_SIZE;
+    if (_x_io_tcp_read (p->stream, p->s, data+CHECKSUM_SIZE, sz) != sz)
+      return -1;
+  }
 
   max -= PREAMBLE_SIZE;
 
@@ -240,7 +245,8 @@ static unsigned int pnm_get_chunk(pnm_t *p,
 
       if( max < 1 )
         return -1;
-      _x_io_tcp_read (p->stream, p->s, ptr++, 1);
+      if (_x_io_tcp_read (p->stream, p->s, ptr++, 1) != 1)
+        return -1;
       max -= 1;
 
       while(1) {
@@ -256,7 +262,8 @@ static unsigned int pnm_get_chunk(pnm_t *p,
 
         if( max < 2 )
           return -1;
-        _x_io_tcp_read (p->stream, p->s, ptr, 2);
+        if (_x_io_tcp_read (p->stream, p->s, ptr, 2) != 2)
+          return -1;
         max -= 2;
 
 	if (*ptr == 'X') /* checking for server message */
@@ -264,7 +271,8 @@ static unsigned int pnm_get_chunk(pnm_t *p,
 	  xprintf(p->stream->xine, XINE_VERBOSITY_DEBUG, "input_pnm: got a message from server:\n");
           if( max < 1 )
             return -1;
-	  _x_io_tcp_read (p->stream, p->s, ptr+2, 1);
+          if (_x_io_tcp_read (p->stream, p->s, ptr+2, 1) != 1)
+            return -1;
           max -= 1;
 
 	  /* two bytes of message length*/
@@ -273,7 +281,8 @@ static unsigned int pnm_get_chunk(pnm_t *p,
 	  /* message itself */
           if( max < n )
             return -1;
-	  _x_io_tcp_read (p->stream, p->s, ptr+3, n);
+          if (_x_io_tcp_read (p->stream, p->s, ptr+3, n) != n)
+            return -1;
           max -= n;
           if( max < 1 )
             return -1;
@@ -298,14 +307,16 @@ static unsigned int pnm_get_chunk(pnm_t *p,
 	n=ptr[1];
         if( max < n )
           return -1;
-        _x_io_tcp_read (p->stream, p->s, ptr+2, n);
+        if (_x_io_tcp_read (p->stream, p->s, ptr+2, n) != n)
+          return -1;
 	ptr+=(n+2);
         max-=n;
       }
       /* the checksum of the next chunk is ignored here */
       if( max < 1 )
         return -1;
-      _x_io_tcp_read (p->stream, p->s, ptr+2, 1);
+      if (_x_io_tcp_read (p->stream, p->s, ptr+2, 1) != 1)
+        return -1;
       ptr+=3;
       chunk_size=ptr-data;
       break;
@@ -323,7 +334,9 @@ static unsigned int pnm_get_chunk(pnm_t *p,
 #endif
         return -1;
       }
-      _x_io_tcp_read (p->stream, p->s, &data[PREAMBLE_SIZE], chunk_size-PREAMBLE_SIZE);
+      if (_x_io_tcp_read (p->stream, p->s, &data[PREAMBLE_SIZE], chunk_size-PREAMBLE_SIZE)
+          != chunk_size-PREAMBLE_SIZE)
+        return -1;
       break;
     default:
       *chunk_type = 0;
@@ -361,7 +374,7 @@ static int pnm_write_chunk(uint16_t chunk_id, uint16_t length,
  * constructs a request and sends it
  */
 
-static void pnm_send_request(pnm_t *p, uint32_t bandwidth) {
+static int pnm_send_request(pnm_t *p, uint32_t bandwidth) {
 
   uint16_t i16;
   int c=PNM_HEADER_SIZE;
@@ -415,14 +428,17 @@ static void pnm_send_request(pnm_t *p, uint32_t bandwidth) {
   p->buffer[c]='y';
   p->buffer[c+1]='B';
 
-  _x_io_tcp_write(p->stream,p->s,p->buffer,c+2);
+  if (_x_io_tcp_write(p->stream,p->s,p->buffer,c+2) != c+2)
+    return 0;
+
+  return 1;
 }
 
 /*
  * pnm_send_response sends a response of a challenge
  */
 
-static void pnm_send_response(pnm_t *p, const char *response) {
+static int pnm_send_response(pnm_t *p, const char *response) {
   /** @TODO should check that sze is always < 256 */
   size_t size=strlen(response);
 
@@ -432,8 +448,9 @@ static void pnm_send_response(pnm_t *p, const char *response) {
 
   memcpy(&p->buffer[3], response, size);
 
-  _x_io_tcp_write(p->stream, p->s, p->buffer, size+3);
-
+  if (_x_io_tcp_write(p->stream, p->s, p->buffer, size+3) != size+3)
+    return 0;
+  return 1;
 }
 
 /*
@@ -495,7 +512,8 @@ static int pnm_get_headers(pnm_t *p, int *need_response) {
 
   /* read challenge */
   memcpy (p->buffer, ptr, PREAMBLE_SIZE);
-  _x_io_tcp_read (p->stream, p->s, &p->buffer[PREAMBLE_SIZE], 64);
+  if (_x_io_tcp_read (p->stream, p->s, &p->buffer[PREAMBLE_SIZE], 64) != 64)
+    return 0;
 
   /* now write a data header */
   memcpy(ptr, pnm_data_header, PNM_DATA_HEADER_SIZE);
@@ -596,7 +614,8 @@ static int pnm_get_stream_chunk(pnm_t *p) {
   /* realplayer seems to do that every 43th package */
   if ((p->packet%43) == 42)
   {
-    _x_io_tcp_write(p->stream,p->s,&keepalive,1);
+    if (_x_io_tcp_write(p->stream,p->s,&keepalive,1) != 1)
+      return 0;
   }
 
   /* data chunks begin with: 'Z' <o> <o> <i1> 'Z' <i2>
@@ -621,7 +640,8 @@ static int pnm_get_stream_chunk(pnm_t *p) {
   {
     int size=_X_BE_16 (&p->buffer[1]);
 
-    _x_io_tcp_read (p->stream, p->s, &p->buffer[8], size-5);
+    if (_x_io_tcp_read (p->stream, p->s, &p->buffer[8], size-5) != size-5)
+      return 0;
     p->buffer[size+3]=0;
     xprintf(p->stream->xine, XINE_VERBOSITY_LOG,
 	    _("input_pnm: got message from server while reading stream:\n%s\n"), &p->buffer[3]);
@@ -640,7 +660,8 @@ static int pnm_get_stream_chunk(pnm_t *p) {
   n=0;
   while (p->buffer[0] != 0x5a) {
     memmove(p->buffer, &p->buffer[1], 8);
-    _x_io_tcp_read (p->stream, p->s, &p->buffer[7], 1);
+    if (_x_io_tcp_read (p->stream, p->s, &p->buffer[7], 1) != 1)
+      return 0;
     n++;
   }
 
@@ -767,17 +788,15 @@ pnm_t *pnm_connect(xine_stream_t *stream, const char *mrl) {
   }
   p->s=fd;
 
-  pnm_send_request(p,pnm_available_bandwidths[10]);
-  if (!pnm_get_headers(p, &need_response)) {
-    xprintf (p->stream->xine, XINE_VERBOSITY_LOG, _("input_pnm: failed to set up stream\n"));
-    free(p->path);
-    free(p->host);
-    free(p->url);
-    free(p);
-    return NULL;
-  }
+  if (!pnm_send_request(p,pnm_available_bandwidths[10]))
+    goto fail;
+  if (!pnm_get_headers(p, &need_response))
+    goto fail;
+
   if (need_response)
-    pnm_send_response(p, pnm_response);
+    if (!pnm_send_response(p, pnm_response))
+      goto fail;
+ 
   p->ts_last[0]=0;
   p->ts_last[1]=0;
 
@@ -788,6 +807,14 @@ pnm_t *pnm_connect(xine_stream_t *stream, const char *mrl) {
   p->recv_read = 0;
 
   return p;
+
+ fail:
+  xprintf (p->stream->xine, XINE_VERBOSITY_LOG, _("input_pnm: failed to set up stream\n"));
+  free(p->path);
+  free(p->host);
+  free(p->url);
+  free(p);
+  return NULL;
 }
 
 int pnm_read (pnm_t *this, char *data, int len) {
