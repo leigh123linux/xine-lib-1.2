@@ -852,7 +852,7 @@ static void decode_render( vdpau_mpeg4_decoder_t *vd, vdpau_accel_t *accel, uint
   if ( st!=VDP_STATUS_OK )
     fprintf(stderr, "vdpau_mpeg4: decoder failed : %d!! %s\n", st, accel->vdp_get_error_string( st ) );
   else {
-    lprintf( "DECODER SUCCESS : vop_coding_type=%d, bytes=%d, current=%d, forwref:%d, backref:%d, pts:%lld\n",
+    lprintf( "DECODER SUCCESS : vop_coding_type=%d, bytes=%d, current=%d, forwref:%d, backref:%d, pts:%" PRId64 "\n",
               pic->vdp_infos.vop_coding_type, vbit.bitstream_bytes, accel->surface, pic->vdp_infos.forward_reference, pic->vdp_infos.backward_reference, seq->seq_pts );
   }
 }

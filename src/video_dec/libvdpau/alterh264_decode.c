@@ -945,8 +945,8 @@ pic_parameter_set (vdpau_h264_alter_decoder_t * this_gen)
 	   pic->redundant_pic_cnt_present_flag);
 
   uint32_t more = more_rbsp_data (&seq->br);
-  lprintf ("more bits = %u (buflen = %d) (still = %d)\n", more,
-	   seq->br.length, seq->br.start + seq->br.length - seq->br.buffer);
+  lprintf ("more bits = %u (buflen = %d) (still = %zd)\n", more,
+           seq->br.length, (ssize_t)(seq->br.start + seq->br.length - seq->br.buffer));
   if (more)
   {
     pic->transform_8x8_mode_flag = read_bits (&seq->br, 1);

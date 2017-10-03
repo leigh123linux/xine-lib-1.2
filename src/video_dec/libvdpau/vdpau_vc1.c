@@ -314,7 +314,7 @@ static void sequence_header_advanced( vdpau_vc1_decoder_t *this_gen, uint8_t *bu
           default: dr = 1000;
         }
         sequence->video_step = 90000/(nr/dr);
-        lprintf("framerate = %f video_step = %d\n", nr/dr, sequence->video_step);
+        lprintf("framerate = %f video_step = %" PRId64 "\n", nr/dr, sequence->video_step);
       }
     }
     if ( read_bits( &sequence->br, 1 ) ) {
@@ -667,7 +667,7 @@ static void decode_render( vdpau_vc1_decoder_t *vd, vdpau_accel_t *accel, uint8_
   if ( st!=VDP_STATUS_OK )
     fprintf(stderr, "vdpau_vc1: decoder failed : %d!! %s\n", st, accel->vdp_get_error_string( st ) );
   else {
-    lprintf( "DECODER SUCCESS : slices=%d, slices_bytes=%d, current=%d, forwref:%d, backref:%d, pts:%lld\n",
+    lprintf( "DECODER SUCCESS : slices=%d, slices_bytes=%d, current=%d, forwref:%d, backref:%d, pts:%" PRId64 "\n",
               pic->vdp_infos.slice_count, vbit.bitstream_bytes, accel->surface, pic->vdp_infos.forward_reference, pic->vdp_infos.backward_reference, seq->seq_pts );
   }
 #ifdef LOG
@@ -709,7 +709,7 @@ static void decode_render( vdpau_vc1_decoder_t *vd, vdpau_accel_t *accel, uint8_
     if ( st!=VDP_STATUS_OK )
       fprintf(stderr, "vdpau_vc1: decoder failed : %d!! %s\n", st, accel->vdp_get_error_string( st ) );
     else {
-      lprintf( "DECODER SUCCESS (second field): slices=%d, slices_bytes=%d, current=%d, forwref:%d, backref:%d, pts:%lld\n",
+      lprintf( "DECODER SUCCESS (second field): slices=%d, slices_bytes=%d, current=%d, forwref:%d, backref:%d, pts:%" PRId64 "\n",
                 pic->vdp_infos.slice_count, vbit.bitstream_bytes, accel->surface, pic->vdp_infos.forward_reference, pic->vdp_infos.backward_reference, seq->seq_pts );
     }
 #ifdef LOG

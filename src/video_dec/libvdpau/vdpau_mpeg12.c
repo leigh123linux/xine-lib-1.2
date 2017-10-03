@@ -746,7 +746,7 @@ static void decode_render( vdpau_mpeg12_decoder_t *vd, vdpau_accel_t *accel )
     if ( st!=VDP_STATUS_OK )
       lprintf( "decoder failed : %d!! %s\n", st, accel->vdp_get_error_string( st ) );
     else
-      lprintf( "DECODER SUCCESS : frame_type:%d, slices=%d, current=%d, forwref:%d, backref:%d, pts:%lld\n",
+      lprintf( "DECODER SUCCESS : frame_type:%d, slices=%d, current=%d, forwref:%d, backref:%d, pts:%" PRId64 "\n",
         pic->vdp_infos2.picture_coding_type, pic->vdp_infos2.slice_count, accel->surface, pic->vdp_infos2.forward_reference, pic->vdp_infos2.backward_reference, seq->cur_pts );
   }
 }
