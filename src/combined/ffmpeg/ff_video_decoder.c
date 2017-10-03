@@ -2885,6 +2885,24 @@ static video_decoder_t *ff_video_open_plugin (video_decoder_class_t *class_gen, 
   return &this->video_decoder;
 }
 
+static void dispose_video_class (video_decoder_class_t *this_gen) {
+
+  ff_video_class_t *this = (ff_video_class_t *)this_gen;
+  config_values_t *config = this->xine->config;
+
+  config->unregister_callback (config, "video.processing.ffmpeg_pp_quality");
+  config->unregister_callback (config, "video.processing.ffmpeg_thread_count");
+  config->unregister_callback (config, "video.processing.ffmpeg_skip_loop_filter");
+  config->unregister_callback (config, "video.processing.ffmpeg_choose_speed_over_accuracy");
+  config->unregister_callback (config, "video.processing.ffmpeg_direct_rendering");
+#ifdef ENABLE_VAAPI
+  config->unregister_callback (config, "video.processing.vaapi_mpeg_softdec");
+  config->unregister_callback (config, "video.processing.ffmpeg_enable_vaapi");
+#endif
+
+  free (this);
+}
+
 void *init_video_plugin (xine_t *xine, void *data) {
 
   ff_video_class_t *this;
@@ -2898,7 +2916,7 @@ void *init_video_plugin (xine_t *xine, void *data) {
   this->decoder_class.open_plugin     = ff_video_open_plugin;
   this->decoder_class.identifier      = "ffmpeg video";
   this->decoder_class.description     = N_("ffmpeg based video decoder plugin");
-  this->decoder_class.dispose         = default_video_decoder_class_dispose;
+  this->decoder_class.dispose         = dispose_video_class;
   this->xine                          = xine;
 
   pthread_once( &once_control, init_once_routine );
