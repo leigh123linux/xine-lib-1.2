@@ -673,7 +673,7 @@ static xine_mrl_t **file_input_class_get_dir (input_class_t *this_gen, const cha
   if(strcasecmp(current_dir, "/"))
     snprintf(current_dir_slashed, sizeof(current_dir_slashed), "%s/", current_dir);
   else
-    sprintf(current_dir_slashed, "/");
+    strcpy(current_dir_slashed, "/");
 
   /*
    * Ooch!
