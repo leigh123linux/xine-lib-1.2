@@ -1239,6 +1239,27 @@ static void config_unregister_cb (config_values_t *this, const char *key) {
   }
 }
 
+void _x_config_unregister_cb_class(config_values_t *this, void *callback_data) {
+
+  cfg_entry_t *entry;
+
+  _x_assert(this);
+  _x_assert(callback_data);
+
+  pthread_mutex_lock(&this->config_lock);
+
+  entry = this->first;
+  while (entry) {
+    if (entry->callback && entry->callback_data == callback_data) {
+      entry->callback = NULL;
+      entry->callback_data = NULL;
+    }
+    entry = entry->next;
+  }
+
+  pthread_mutex_unlock(&this->config_lock);
+}
+
 static void config_set_new_entry_callback (config_values_t *this, xine_config_cb_t new_entry_cb, void* cbdata) {
   pthread_mutex_lock(&this->config_lock);
   this->new_entry_cb = new_entry_cb;
