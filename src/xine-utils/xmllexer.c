@@ -652,19 +652,20 @@ char *lexer_decode_entities (const char *tok)
       /* entity is a number
        * (note: strtol() allows "0x" prefix for hexadecimal, but we don't)
        */
+      char *end;
       if (*tp == 'x' && tp[1] && tp[2] != 'x')
-	i = strtol (tp + 1, (char **)&tp, 16);
+	i = strtol (tp + 1, &end, 16);
       else
-	i = strtol (tp, (char **)&tp, 10);
+	i = strtol (tp, &end, 10);
 
-      if (*tp != ';' || i < 1)
+      if (*end != ';' || i < 1)
       {
         /* out of range, or format error */
 	*bp++ = '&';
 	continue;
       }
 
-      tok = tp + 1;
+      tok = end + 1;
 
       if (i < 128)
         /* ASCII - store as-is */
