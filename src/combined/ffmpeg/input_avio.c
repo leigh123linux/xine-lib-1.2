@@ -311,6 +311,10 @@ static input_plugin_t *input_avio_get_instance (input_class_t *cls_gen, xine_str
   }
 
   this = calloc(1, sizeof(avio_input_plugin_t));
+  if (!this) {
+    return NULL;
+  }
+
   this->stream = stream;
   this->mrl    = _x_mrl_remove_auth(mrl);
   this->mrl_private = strdup(mrl);
@@ -345,6 +349,9 @@ void *init_avio_input_plugin (xine_t *xine, void *data) {
   }
 
   this = calloc(1, sizeof(input_class_t));
+  if (!this) {
+    return NULL;
+  }
 
   pthread_once( &once_control, init_once_routine );
 

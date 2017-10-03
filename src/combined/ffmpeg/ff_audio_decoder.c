@@ -1256,6 +1256,9 @@ static audio_decoder_t *ff_audio_open_plugin (audio_decoder_class_t *class_gen, 
   ff_audio_decoder_t *this ;
 
   this = calloc(1, sizeof (ff_audio_decoder_t));
+  if (!this) {
+    return NULL;
+  }
 
   this->class = (ff_audio_class_t *)class_gen;
 
@@ -1293,6 +1296,9 @@ void *init_audio_plugin (xine_t *xine, void *data) {
   ff_audio_class_t *this ;
 
   this = calloc(1, sizeof (ff_audio_class_t));
+  if (!this) {
+    return NULL;
+  }
 
   this->decoder_class.open_plugin     = ff_audio_open_plugin;
   this->decoder_class.identifier      = "ffmpeg audio";

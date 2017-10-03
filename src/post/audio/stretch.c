@@ -160,6 +160,9 @@ static stretchscr_t *XINE_MALLOC stretchscr_init (double *stretch_factor) {
   stretchscr_t *this;
 
   this = calloc(1, sizeof(stretchscr_t));
+  if (!this) {
+    return NULL;
+  }
 
   this->scr.interface_version = 3;
   this->scr.get_priority      = stretchscr_get_priority;
@@ -302,8 +305,10 @@ static int stretch_port_open(xine_audio_port_t *port_gen, xine_stream_t *stream,
   /* register our own scr provider */
   time = port->stream->xine->clock->get_current_time(port->stream->xine->clock);
   this->scr = stretchscr_init(&this->params.factor);
-  this->scr->scr.start(&this->scr->scr, time);
-  port->stream->xine->clock->register_scr(port->stream->xine->clock, &this->scr->scr);
+  if (this->scr) {
+    this->scr->scr.start(&this->scr->scr, time);
+    port->stream->xine->clock->register_scr(port->stream->xine->clock, &this->scr->scr);
+  }
 
   /* force updating on stretch_port_put_buffer */
   this->params_changed = 1;
@@ -655,7 +660,7 @@ static post_plugin_t *stretch_open_plugin(post_class_t *class_gen, int inputs,
 /* plugin class initialization function */
 void *stretch_init_plugin(xine_t *xine, void *data)
 {
-  post_class_stretch_t *class = (post_class_stretch_t *)xine_xmalloc(sizeof(post_class_stretch_t));
+  post_class_stretch_t *class = calloc(1, sizeof(post_class_stretch_t));
 
   if (!class)
     return NULL;

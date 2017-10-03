@@ -41,10 +41,11 @@
 ebml_parser_t *new_ebml_parser (xine_t *xine, input_plugin_t *input) {
   ebml_parser_t *ebml;
 
-  ebml = xine_xmalloc(sizeof(ebml_parser_t));
-  ebml->xine                 = xine;
-  ebml->input                = input;
-
+  ebml = calloc(1, sizeof(ebml_parser_t));
+  if (ebml) {
+    ebml->xine                 = xine;
+    ebml->input                = input;
+  }
   return ebml;
 }
 

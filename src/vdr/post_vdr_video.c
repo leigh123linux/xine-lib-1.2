@@ -94,7 +94,7 @@ static int            vdr_video_draw(vo_frame_t *frame, xine_stream_t *stream);
 
 void *vdr_video_init_plugin(xine_t *xine, void *data)
 {
-  post_class_t *class = (post_class_t *)xine_xmalloc(sizeof (post_class_t));
+  post_class_t *class = calloc(1, sizeof (post_class_t));
 
   if (!class)
     return NULL;
@@ -111,7 +111,7 @@ static post_plugin_t *vdr_video_open_plugin(post_class_t *class_gen, int inputs,
                                             xine_audio_port_t **audio_target,
                                             xine_video_port_t **video_target)
 {
-  vdr_video_post_plugin_t *this = (vdr_video_post_plugin_t *)xine_xmalloc(sizeof (vdr_video_post_plugin_t));
+  vdr_video_post_plugin_t *this = calloc(1, sizeof (vdr_video_post_plugin_t));
   post_in_t               *input;
   post_out_t              *output;
   post_video_port_t       *port;

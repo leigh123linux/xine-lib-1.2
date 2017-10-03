@@ -1673,7 +1673,7 @@ static qt_error parse_reference_atom (qt_info *info,
 
     /* otherwise, append relative URL to base MRL */
     string_size += url_offset;
-    ref.url = xine_xmalloc (string_size + 1);
+    ref.url = calloc (1, string_size + 1);
     if (url_offset)
       sprintf (ref.url, "%s%s", http ? "qt" : "", base_mrl);
     memcpy (ref.url + url_offset, &atoms[0][12], _X_BE_32 (&atoms[0][8]));

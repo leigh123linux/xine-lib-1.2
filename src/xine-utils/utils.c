@@ -307,12 +307,18 @@ void *xine_xcalloc(size_t nmemb, size_t size) {
 void *xine_memdup (const void *src, size_t length)
 {
   void *dst = malloc (length);
+  if (!dst) {
+    return NULL;
+  }
   return xine_fast_memcpy (dst, src, length);
 }
 
 void *xine_memdup0 (const void *src, size_t length)
 {
-  char *dst = xine_xmalloc (length + 1);
+  char *dst = malloc (length + 1);
+  if (!dst) {
+    return NULL;
+  }
   dst[length] = 0;
   return xine_fast_memcpy (dst, src, length);
 }

@@ -75,6 +75,10 @@ static xine_list_chunk_t *XINE_MALLOC xine_list_alloc_chunk(size_t size) {
   chunk_mem_size += sizeof(xine_list_elem_t) * size;
 
   new_chunk = (xine_list_chunk_t *)malloc(chunk_mem_size);
+  if (!new_chunk) {
+    return NULL;
+  }
+
   new_chunk->elem_array = (xine_list_elem_t*)(new_chunk + 1);
   new_chunk->next_chunk = NULL;
   new_chunk->current_elem_id = 0;
@@ -114,6 +118,9 @@ static xine_list_elem_t *xine_list_alloc_elem(xine_list_t *list) {
         chunk_size = MAX_CHUNK_SIZE;
 
       new_chunk = xine_list_alloc_chunk(chunk_size);
+      if (!new_chunk) {
+        return NULL;
+      }
 
       list->last_chunk->next_chunk = new_chunk;
       list->last_chunk = new_chunk;
@@ -140,7 +147,16 @@ xine_list_t *xine_list_new(void) {
   xine_list_t *new_list;
 
   new_list = (xine_list_t*)malloc(sizeof(xine_list_t));
+  if (!new_list) {
+    return NULL;
+  }
+
   new_list->chunk_list = xine_list_alloc_chunk(MIN_CHUNK_SIZE);
+  if (!new_list->chunk_list) {
+    free(new_list);
+    return NULL;
+  }
+
   new_list->chunk_list_size = 1;
   new_list->last_chunk = new_list->chunk_list;
   new_list->free_elem_list = NULL;
@@ -297,6 +313,10 @@ xine_list_iterator_t xine_list_insert(xine_list_t *list,
       new_position = list->elem_list_front;
     } else {
       xine_list_elem_t *new_elem = xine_list_alloc_elem(list);
+      if (!new_elem) {
+        return NULL;
+      }
+
       xine_list_elem_t *prev = elem->prev;
 
       new_elem->next = elem;

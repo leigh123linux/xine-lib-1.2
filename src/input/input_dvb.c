@@ -573,9 +573,10 @@ static tuner_t *XINE_MALLOC tuner_init(xine_t * xine, int adapter)
     char *video_device = NULL;
     char *frontend_device = NULL;
 
-    this = (tuner_t *) xine_xmalloc(sizeof(tuner_t));
-
-    _x_assert(this != NULL);
+    this = calloc(1, sizeof(tuner_t));
+    if (!this) {
+      return NULL;
+    }
 
     xprintf(this->xine, XINE_VERBOSITY_DEBUG, "tuner_init adapter=%d\n", adapter);
     this->fd_frontend = -1;

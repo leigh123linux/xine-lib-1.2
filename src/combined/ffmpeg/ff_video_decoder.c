@@ -2891,6 +2891,9 @@ void *init_video_plugin (xine_t *xine, void *data) {
   config_values_t  *config;
 
   this = calloc(1, sizeof (ff_video_class_t));
+  if (!this) {
+    return NULL;
+  }
 
   this->decoder_class.open_plugin     = ff_video_open_plugin;
   this->decoder_class.identifier      = "ffmpeg video";

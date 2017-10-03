@@ -565,12 +565,10 @@ break;
 */
       if (this->osd_buffer_size < this->cur_size)
       {
-        if (this->osd_buffer)
-          free(this->osd_buffer);
-
+        free(this->osd_buffer);
         this->osd_buffer_size = 0;
 
-        this->osd_buffer = xine_xmalloc(this->cur_size);
+        this->osd_buffer = calloc(1, this->cur_size);
         if (!this->osd_buffer)
           return -1;
 
@@ -2398,7 +2396,8 @@ fprintf(stderr, "A =============================================\n");
     if (!this->vpts_offset_queue
       || this->vpts_offset_queue_tail->vpts < vpts)
     {
-      vdr_vpts_offset_t *curr = (vdr_vpts_offset_t *)calloc(1, sizeof (vdr_vpts_offset_t));
+      vdr_vpts_offset_t *curr = calloc(1, sizeof (vdr_vpts_offset_t));
+      if (curr) {
       curr->vpts = vpts;
       curr->offset = vpts_offset;
 
@@ -2408,6 +2407,7 @@ fprintf(stderr, "A =============================================\n");
       {
         this->vpts_offset_queue_tail->next = curr;
         this->vpts_offset_queue_tail = curr;
+      }
       }
     }
   }
@@ -2652,7 +2652,10 @@ static input_plugin_t *vdr_class_get_instance(input_class_t *cls_gen, xine_strea
    * => create plugin instance
    */
 
-  this = (vdr_input_plugin_t *)xine_xmalloc(sizeof (vdr_input_plugin_t));
+  this = calloc(1, sizeof (vdr_input_plugin_t));
+  if (!this) {
+    return NULL;
+  }
 
   this->stream     = stream;
   this->curpos     = 0;
@@ -2768,7 +2771,10 @@ void *vdr_input_init_plugin(xine_t *xine, void *data)
 
   lprintf("init_class\n");
 
-  this = (vdr_input_class_t *)xine_xmalloc(sizeof (vdr_input_class_t));
+  this = calloc(1, sizeof (vdr_input_class_t));
+  if (!this) {
+    return NULL;
+  }
 
   this->xine = xine;
 

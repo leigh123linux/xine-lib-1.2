@@ -74,15 +74,11 @@ static char * strtoupper(char * str) {
   return str;
 }
 
-static xml_node_t * new_xml_node(void) {
+static xml_node_t *XINE_MALLOC new_xml_node(void) {
   xml_node_t * new_node;
 
-  new_node = (xml_node_t*) malloc(sizeof(xml_node_t));
-  new_node->name  = NULL;
-  new_node->data  = NULL;
-  new_node->props = NULL;
-  new_node->child = NULL;
-  new_node->next  = NULL;
+  new_node = (xml_node_t*) calloc(1, sizeof(xml_node_t));
+
   return new_node;
 }
 
@@ -98,10 +94,8 @@ static void free_xml_node(xml_node_t * node) {
 static xml_property_t *XINE_MALLOC new_xml_property(void) {
   xml_property_t * new_property;
 
-  new_property = (xml_property_t*) malloc(sizeof(xml_property_t));
-  new_property->name  = NULL;
-  new_property->value = NULL;
-  new_property->next  = NULL;
+  new_property = (xml_property_t*) calloc(1, sizeof(xml_property_t));
+
   return new_property;
 }
 
@@ -121,8 +115,19 @@ void xml_parser_init(const char * buf, int size, int mode) {
 
 xml_parser_t *xml_parser_init_r(const char * buf, int size, int mode) {
   xml_parser_t *xml_parser = malloc(sizeof(*xml_parser));
+
+  if (!xml_parser) {
+    return NULL;
+  }
+
   xml_parser->lexer = lexer_init_r(buf, size);
+  if (!xml_parser->lexer) {
+    free(xml_parser);
+    return NULL;
+  }
+
   xml_parser->mode = mode;
+
   return xml_parser;
 }
 

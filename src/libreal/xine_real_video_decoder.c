@@ -512,6 +512,9 @@ static video_decoder_t *open_plugin (video_decoder_class_t *class_gen,
   realdec_decoder_t *this ;
 
   this = (realdec_decoder_t *) calloc(1, sizeof(realdec_decoder_t));
+  if (!this) {
+    return NULL;
+  }
 
   this->video_decoder.decode_data         = realdec_decode_data;
   this->video_decoder.flush               = realdec_flush;
@@ -537,6 +540,9 @@ void *init_realvdec (xine_t *xine, void *data) {
   real_class_t       *this;
 
   this = (real_class_t *) calloc(1, sizeof(real_class_t));
+  if (!this) {
+    return NULL;
+  }
 
   this->decoder_class.open_plugin     = open_plugin;
   this->decoder_class.identifier      = "realvdec";

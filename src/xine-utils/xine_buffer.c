@@ -125,6 +125,10 @@ void *xine_buffer_init(int chunk_size) {
   uint8_t *data=calloc(1, chunk_size+XINE_BUFFER_HEADER_SIZE);
   xine_buffer_header_t *header=(xine_buffer_header_t*)data;
 
+  if (!data) {
+    return NULL;
+  }
+
   header->size=chunk_size;
   header->chunk_size=chunk_size;
   header->magic=XINE_BUFFER_MAGIC;
@@ -168,6 +172,9 @@ void *xine_buffer_dup(const void *buf) {
 #endif
 
   new = malloc(GET_HEADER_CONST(buf)->size+XINE_BUFFER_HEADER_SIZE);
+  if (!new) {
+    return NULL;
+  }
 
   xine_fast_memcpy(new, ((const uint8_t*)buf)-XINE_BUFFER_HEADER_SIZE,
       GET_HEADER_CONST(buf)->size+XINE_BUFFER_HEADER_SIZE);

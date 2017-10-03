@@ -347,7 +347,7 @@ static void update_region (dvb_spu_decoder_t * this, int region_id, int region_w
   }
 
   if ( !reg->img ) {
-    if ( !(reg->img=xine_xmalloc(region_width*region_height)) ) {
+    if ( !(reg->img = calloc(1, region_width * region_height)) ) {
       lprintf( "can't allocate mem for region %d\n", region_id );
       return;
     }

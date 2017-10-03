@@ -1053,7 +1053,7 @@ static post_plugin_t *tdaan_open_plugin (
 /* plugin class initialization function */
 void *tdaan_init_plugin (xine_t *xine, void *data) {
 
-  post_class_tdaan_t *class = (post_class_tdaan_t *)xine_xmalloc (sizeof (post_class_tdaan_t));
+  post_class_tdaan_t *class = calloc (1, sizeof (post_class_tdaan_t));
 
   if (!class)
     return NULL;

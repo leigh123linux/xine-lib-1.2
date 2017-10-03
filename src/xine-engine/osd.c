@@ -1871,14 +1871,15 @@ osd_renderer_t *_x_osd_renderer_init( xine_stream_t *stream ) {
     if ( data_dirs )
       while( (*data_dirs) && *(*data_dirs) ) {
 	/* sizeof("") takes care of the final NUL byte */
-	char *fontpath = xine_xmalloc( strlen(*data_dirs) + sizeof("/"PACKAGE"/fonts/") );
-	strcpy(fontpath, *data_dirs);
-	strcat(fontpath, "/"PACKAGE"/fonts/");
+        char *fontpath = malloc( strlen(*data_dirs) + sizeof("/"PACKAGE"/fonts/") );
+        if (fontpath) {
+          strcpy(fontpath, *data_dirs);
+          strcat(fontpath, "/"PACKAGE"/fonts/");
 
-	osd_preload_fonts(this, fontpath);
+          osd_preload_fonts(this, fontpath);
 
-	free(fontpath);
-
+          free(fontpath);
+        }
 	data_dirs++;
       }
   }

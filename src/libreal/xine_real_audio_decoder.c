@@ -474,8 +474,7 @@ static void realdec_dispose (audio_decoder_t *this_gen) {
   if (this->output_open)
      this->stream->audio_out->close (this->stream->audio_out, this->stream);
 
-  if (this->frame_buffer)
-    free (this->frame_buffer);
+  _x_freep (&this->frame_buffer);
 
   free (this);
 
@@ -489,6 +488,9 @@ static audio_decoder_t *open_plugin (audio_decoder_class_t *class_gen,
   realdec_decoder_t *this ;
 
   this = (realdec_decoder_t *) calloc(1, sizeof(realdec_decoder_t));
+  if (!this) {
+    return NULL;
+  }
 
   this->audio_decoder.decode_data         = realdec_decode_data;
   this->audio_decoder.reset               = realdec_reset;
@@ -510,6 +512,9 @@ void *init_realadec (xine_t *xine, void *data) {
   real_class_t       *this;
 
   this = (real_class_t *) calloc(1, sizeof(real_class_t));
+  if (!this) {
+    return NULL;
+  }
 
   this->decoder_class.open_plugin     = open_plugin;
   this->decoder_class.identifier      = "realadec";

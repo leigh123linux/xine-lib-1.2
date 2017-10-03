@@ -217,7 +217,7 @@ static void oscope_port_close(xine_audio_port_t *port_gen, xine_stream_t *stream
 }
 
 static void oscope_port_put_buffer (xine_audio_port_t *port_gen,
-                             audio_buffer_t *buf, xine_stream_t *stream) {
+                                    audio_buffer_t *buf, xine_stream_t *stream) {
 
   post_audio_port_t    *port = (post_audio_port_t *)port_gen;
   post_plugin_oscope_t *this = (post_plugin_oscope_t *)port->post;
@@ -361,7 +361,7 @@ static post_plugin_t *oscope_open_plugin(post_class_t *class_gen, int inputs,
 /* plugin class initialization function */
 void *oscope_init_plugin(xine_t *xine, void *data)
 {
-  post_class_oscope_t *class = (post_class_oscope_t *)xine_xmalloc(sizeof(post_class_oscope_t));
+  post_class_oscope_t *class = calloc(1, sizeof(post_class_oscope_t));
 
   if (!class)
     return NULL;

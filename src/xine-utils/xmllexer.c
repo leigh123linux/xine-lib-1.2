@@ -45,6 +45,8 @@
 
 #include "bswap.h"
 
+#include "xine_private.h"
+
 /* private constants*/
 
 /* private global variables */
@@ -107,6 +109,10 @@ struct lexer *lexer_init_r(const char * buf, int size) {
   static const char boms[] = { 0xFF, 0xFE, 0, 0, 0xFE, 0xFF },
 		    bom_utf8[] = { 0xEF, 0xBB, 0xBF };
   struct lexer * lexer = calloc (1, sizeof (*lexer));
+
+  if (!lexer) {
+    return NULL;
+  }
 
   lexer->lexbuf      = buf;
   lexer->lexbuf_size = size;

@@ -204,6 +204,10 @@ static input_plugin_t *input_avformat_get_instance (input_class_t *cls_gen, xine
   avformat_input_plugin_t *this;
 
   this = calloc(1, sizeof(avformat_input_plugin_t));
+  if (!this) {
+    return NULL;
+  }
+
   this->mrl           = _x_mrl_remove_auth(mrl);
   this->fmt_ctx       = fmt_ctx;
 
@@ -231,6 +235,9 @@ void *init_avformat_input_plugin (xine_t *xine, void *data) {
   input_class_t  *this;
 
   this = calloc(1, sizeof(input_class_t));
+  if (!this) {
+    return NULL;
+  }
 
   pthread_once( &once_control, init_once_routine );
 

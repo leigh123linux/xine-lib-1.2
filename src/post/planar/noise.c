@@ -457,7 +457,7 @@ static int            noise_draw(vo_frame_t *frame, xine_stream_t *stream);
 
 void *noise_init_plugin(xine_t *xine, void *data)
 {
-    post_class_t *class = (post_class_t *)xine_xmalloc(sizeof(post_class_t));
+    post_class_t *class = calloc(1, sizeof(post_class_t));
 
     if (!class)
         return NULL;
@@ -533,8 +533,8 @@ static void noise_dispose(post_plugin_t *this_gen)
 
     if (_x_post_dispose(this_gen)) {
         pthread_mutex_destroy(&this->lock);
-	xine_free_aligned(this->params[0].noise);
-	xine_free_aligned(this->params[1].noise);
+        xine_freep_aligned(&this->params[0].noise);
+        xine_freep_aligned(&this->params[1].noise);
         free(this);
     }
 }
