@@ -137,13 +137,10 @@ void xml_parser_finalize_r(xml_parser_t *xml_parser) {
 }
 
 static void xml_parser_free_props(xml_property_t *current_property) {
-  if (current_property) {
-    if (!current_property->next) {
-      free_xml_property(current_property);
-    } else {
-      xml_parser_free_props(current_property->next);
-      free_xml_property(current_property);
-    }
+  while (current_property) {
+    xml_property_t *next = current_property->next;
+    free_xml_property(current_property);
+    current_property = next;
   }
 }
 
