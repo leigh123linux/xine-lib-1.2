@@ -1373,11 +1373,8 @@ void _x_scan_plugins (xine_t *this) {
 
   lprintf("_x_scan_plugins()\n");
 
-  if (this == NULL || this->config == NULL) {
-    fprintf(stderr, "%s(%s@%d): parameter should be non null, exiting\n",
-	    __FILE__, __XINE_FUNCTION__, __LINE__);
-    _x_abort();
-  }
+  _x_assert(this);
+  _x_assert(this->config);
 
   homedir = strdup(xine_get_homedir());
   this->plugin_catalog = _new_catalog();
