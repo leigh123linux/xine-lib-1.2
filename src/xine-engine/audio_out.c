@@ -222,7 +222,6 @@ typedef struct {
 
   uint32_t             driver_open:1;
   uint32_t             audio_loop_running:1;
-  uint32_t             audio_thread_created:1;
   uint32_t             grab_only:1; /* => do not start thread, frontend will consume samples */
   uint32_t             do_resample:1;
   uint32_t             do_compress:1;
@@ -1878,7 +1877,6 @@ static void ao_exit(xine_audio_port_t *this_gen) {
     pthread_mutex_unlock (&this->out_fifo.mutex);
 
     pthread_join (this->audio_thread, &p);
-    this->audio_thread_created = 0;
   }
 
   if (!this->grab_only) {
@@ -2514,7 +2512,6 @@ xine_audio_port_t *_x_ao_new_port (xine_t *xine, ao_driver_t *driver,
     pthread_attr_setscope(&pth_attrs, PTHREAD_SCOPE_SYSTEM);
 #endif
 
-    this->audio_thread_created = 1;
     if ((err = pthread_create (&this->audio_thread,
 			       &pth_attrs, ao_loop, this)) != 0) {
 
