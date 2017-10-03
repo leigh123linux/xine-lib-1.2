@@ -682,7 +682,10 @@ static int rtp_plugin_open (input_plugin_t *this_gen ) {
   if ((err = pthread_create(&this->reader_thread, NULL,
 		            input_plugin_read_loop, (void *)this)) != 0) {
     LOG_MSG(this->stream->xine, _("input_rtp: can't create new thread (%s)\n"), strerror(err));
-    _x_abort();
+    close(this->fh);
+    this->fh = -1;
+    this->rtp_running = 0;
+    return 0;
   }
 
   return 1;

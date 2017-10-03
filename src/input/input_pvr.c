@@ -1465,7 +1465,12 @@ static int pvr_plugin_open (input_plugin_t *this_gen ) {
 			     NULL, pvr_loop, this)) != 0) {
     xprintf (this->stream->xine, XINE_VERBOSITY_NONE,
 	     "input_pvr: can't create new thread (%s)\n", strerror(err));
-    _x_abort();
+
+    this->pvr_running = 0;
+    close(this->dev_fd);
+    this->dev_fd = -1;
+
+    return 0;
   }
 
   return 1;
