@@ -239,11 +239,11 @@ gnomevfs_plugin_dispose (input_plugin_t *this_gen )
 	}
 	if (this->fh)
 		gnome_vfs_close (this->fh);
-	if (this->mrl)
-		g_free (this->mrl);
-	if (this->uri)
-		gnome_vfs_uri_unref (this->uri);
-	g_free (this);
+
+        _x_freep (&this->mrl);
+        /* can't be null */
+        gnome_vfs_uri_unref (this->uri);
+        free (this);
 }
 
 static int
@@ -295,7 +295,7 @@ gnomevfs_klass_dispose (input_class_t *this_gen)
 {
 	gnomevfs_input_class_t *this = (gnomevfs_input_class_t *) this_gen;
 
-	g_free (this);
+        free (this);
 }
 
 static const char ignore_scheme[][8] = { "cdda", "file", "http" };
@@ -325,10 +325,15 @@ gnomevfs_klass_get_instance (input_class_t *klass_gen, xine_stream_t *stream,
 		return NULL;
 
 	D("Creating the structure for stream '%s'", mrl);
-	this = g_new0 (gnomevfs_input_t, 1);
+	this = calloc(1, sizeof(gnomevfs_input_t));
+        if (!this) {
+          gnome_vfs_uri_unref(uri);
+          return NULL;
+        }
+
 	this->stream = stream;
 	this->fh = NULL;
-	this->mrl = g_strdup (mrl);
+	this->mrl = strdup (mrl);
 	this->uri = uri;
 	this->nbc = nbc_init (this->stream);
 
@@ -368,7 +373,10 @@ static void
 		g_thread_init (NULL);
 #endif
 
-	this = g_new0 (gnomevfs_input_class_t, 1);
+        this = calloc(1, sizeof(gnomevfs_input_class_t));
+        if (!this) {
+          return NULL;
+        }
 	this->xine = xine;
 
 	this->input_class.get_instance       = gnomevfs_klass_get_instance;
