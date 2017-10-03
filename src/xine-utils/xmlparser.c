@@ -679,7 +679,9 @@ static int xml_parser_get_node (xml_parser_t *xml_parser, xml_node_t *current_no
   char *pname_buffer = calloc(1, pname_buffer_size);
   char *nname_buffer = calloc(1, nname_buffer_size);
   char *root_names[MAX_RECURSION + 1];
-  root_names[0] = (char *)"";
+  char  tmp_name[] = "";
+
+  root_names[0] = tmp_name;
 
   res = xml_parser_get_node_internal (xml_parser,
 			     &token_buffer, &token_buffer_size,
