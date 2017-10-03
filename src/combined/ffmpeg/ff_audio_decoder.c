@@ -51,6 +51,7 @@
 typedef struct {
   audio_decoder_class_t   decoder_class;
 
+  xine_t                 *xine;
   float                   gain;
 } ff_audio_class_t;
 
@@ -1291,6 +1292,16 @@ static void ff_gain_cb (void *user_data, xine_cfg_entry_t *entry) {
   class->gain = (float)0x7fff * powf ((float)10, (float)entry->num_value / (float)20);
 }
 
+static void dispose_audio_class (audio_decoder_class_t *this_gen) {
+
+  ff_audio_class_t *this = (ff_audio_class_t *)this_gen;
+  config_values_t *config = this->xine->config;
+
+  config->unregister_callback (config, "audio.processing.ffmpeg_gain_dB");
+
+  free (this);
+}
+
 void *init_audio_plugin (xine_t *xine, void *data) {
 
   ff_audio_class_t *this ;
@@ -1303,7 +1314,9 @@ void *init_audio_plugin (xine_t *xine, void *data) {
   this->decoder_class.open_plugin     = ff_audio_open_plugin;
   this->decoder_class.identifier      = "ffmpeg audio";
   this->decoder_class.description     = N_("ffmpeg based audio decoder plugin");
-  this->decoder_class.dispose         = default_audio_decoder_class_dispose;
+  this->decoder_class.dispose         = dispose_audio_class;
+
+  this->xine = xine;
 
   pthread_once( &once_control, init_once_routine );
 
