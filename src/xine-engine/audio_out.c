@@ -2512,9 +2512,10 @@ xine_audio_port_t *_x_ao_new_port (xine_t *xine, ao_driver_t *driver,
     pthread_attr_setscope(&pth_attrs, PTHREAD_SCOPE_SYSTEM);
 #endif
 
-    if ((err = pthread_create (&this->audio_thread,
-			       &pth_attrs, ao_loop, this)) != 0) {
+    err = pthread_create (&this->audio_thread, &pth_attrs, ao_loop, this);
+    pthread_attr_destroy(&pth_attrs);
 
+    if (err != 0) {
       xprintf (this->xine, XINE_VERBOSITY_NONE,
 	       "audio_out: can't create thread (%s)\n", strerror(err));
       xprintf (this->xine, XINE_VERBOSITY_LOG,
@@ -2524,7 +2525,6 @@ xine_audio_port_t *_x_ao_new_port (xine_t *xine, ao_driver_t *driver,
     } else
       xprintf (this->xine, XINE_VERBOSITY_DEBUG, "audio_out: thread created\n");
 
-    pthread_attr_destroy(&pth_attrs);
   }
 
   return &this->ao;
