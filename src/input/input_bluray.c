@@ -324,13 +324,15 @@ static void draw_bitmap(xine_osd_t *osd, const BD_OVERLAY * const ov)
     size_t pixels = (size_t)ov->w * ov->h;
     uint8_t *img = malloc(pixels);
 
-    for (i = 0; i < pixels; i += rlep->len, rlep++) {
-      memset(img + i, rlep->color, rlep->len);
+    if (img) {
+      for (i = 0; i < pixels; i += rlep->len, rlep++) {
+        memset(img + i, rlep->color, rlep->len);
+      }
+
+      xine_osd_draw_bitmap(osd, img, ov->x, ov->y, ov->w, ov->h, NULL);
+
+      free(img);
     }
-
-    xine_osd_draw_bitmap(osd, img, ov->x, ov->y, ov->w, ov->h, NULL);
-
-    free(img);
   }
 }
 
