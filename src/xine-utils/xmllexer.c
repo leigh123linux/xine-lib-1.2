@@ -599,7 +599,7 @@ int lexer_get_token_d_r(struct lexer * lexer, char ** _tok, int * _tok_size, int
 /* for ABI compatibility */
 int lexer_get_token (char *tok, int tok_size)
 {
-  return lexer_get_token_d (&tok, &tok_size, 1);
+  return lexer_get_token_d_r (static_lexer, &tok, &tok_size, 1);
 }
 
 static struct {
