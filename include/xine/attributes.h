@@ -79,7 +79,7 @@
 # define XINE_SENTINEL
 #endif
 
-#if defined(SUPPORT_ATTRIBUTE_DEPRECATED) && !defined(XINE_COMPILE)
+#if defined(SUPPORT_ATTRIBUTE_DEPRECATED) && (!defined(XINE_COMPILE) || defined(DEBUG))
 # define XINE_DEPRECATED __attribute__((__deprecated__))
 #else
 # define XINE_DEPRECATED
