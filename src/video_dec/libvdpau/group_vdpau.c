@@ -55,7 +55,7 @@ const plugin_info_t xine_plugin_info[] EXPORTED = {
   /* { type, API, "name", version, special_info, init_function } */
   { PLUGIN_VIDEO_DECODER,
     19, "vdpau_h264_alter", XINE_VERSION_CODE, &dec_info_video_alterh264, h264_alter_init_plugin },
-  { PLUGIN_VIDEO_DECODER | PLUGIN_MUST_PRELOAD,
+  { PLUGIN_VIDEO_DECODER,
     19, "vdpau_h264",       XINE_VERSION_CODE, &dec_info_video_h264,      h264_init_plugin },
   { PLUGIN_VIDEO_DECODER,
     19, "vdpau_vc1",        XINE_VERSION_CODE, &dec_info_video_vc1,       vc1_init_plugin },
