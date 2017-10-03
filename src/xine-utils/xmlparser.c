@@ -889,13 +889,9 @@ void xml_parser_dump_tree (const xml_node_t *node) {
 #include <sys/stat.h>
 #include <fcntl.h>
 
-void *xine_xmalloc (size_t size)
-{
-  return malloc (size);
-}
-
 int main (int argc, char **argv)
 {
+  xml_parser_t *parser;
   int i, ret = 0;
   for (i = 1; argv[i]; ++i)
   {
@@ -933,8 +929,8 @@ int main (int argc, char **argv)
       continue;
     }
 
-    xml_parser_init (buf, st.st_size, 0);
-    if (!xml_parser_build_tree (&tree))
+    parser = xml_parser_init_r (buf, st.st_size, 0);
+    if (parser && !xml_parser_build_tree_r (parser, &tree))
     {
       puts (argv[i]);
       xml_parser_dump_tree (tree);
@@ -942,6 +938,9 @@ int main (int argc, char **argv)
     }
     else
       printf ("%s: parser failure\n", argv[i]);
+
+    if (parser)
+      xml_parser_finalize_r(parser);
 
     if (close (fd))
     {
