@@ -660,6 +660,9 @@ static int rtp_plugin_open (input_plugin_t *this_gen ) {
   rtp_input_plugin_t *this = (rtp_input_plugin_t *) this_gen;
   int                 err;
 
+  _x_assert(this->fh == -1);
+  _x_assert(this->rtp_running == 0);
+
   LOG_MSG(this->stream->xine,
 	  _("Opening >filename:%s port:%d interface:%s<\n"),
 	  this->filename,

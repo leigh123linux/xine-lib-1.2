@@ -1407,6 +1407,9 @@ static int pvr_plugin_open (input_plugin_t *this_gen ) {
   int                  err;
   struct ivtv_ioctl_codec codec;
 
+  _x_assert(this->dev_fd == -1);
+  _x_assert(this->pvr_running == 0);
+
   this->session = 0;
   this->rec_fd = -1;
   this->play_fd = -1;
@@ -1443,12 +1446,14 @@ static int pvr_plugin_open (input_plugin_t *this_gen ) {
   }
 
   /* register our own scr provider */
+  _x_assert(this->scr == NULL);
   time = this->stream->xine->clock->get_current_time(this->stream->xine->clock);
   this->scr = pvrscr_init();
   this->scr->scr.start(&this->scr->scr, time);
   this->stream->xine->clock->register_scr(this->stream->xine->clock, &this->scr->scr);
   this->scr_tunning = 0;
 
+  _x_assert(this->event_queue == NULL);
   this->event_queue = xine_event_new_queue (this->stream);
 
   /* enable resample method */
