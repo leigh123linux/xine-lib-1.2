@@ -1006,11 +1006,11 @@ int _x_post_dispose(post_plugin_t *this) {
 
     /* we can really dispose it */
 
-    free(this->xine_post.audio_input);
-    free(this->xine_post.video_input);
+    _x_freep(&this->xine_post.audio_input);
+    _x_freep(&this->xine_post.video_input);
     /* these were allocated in the plugin loader */
-    free(this->input_ids);
-    free(this->output_ids);
+    _x_freep(&this->input_ids);
+    _x_freep(&this->output_ids);
 
     for (ite = xine_list_front(this->input); ite;
          ite = xine_list_next(this->input, ite)) {

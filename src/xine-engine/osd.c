@@ -221,8 +221,7 @@ static void osd_free_ft2 (osd_object_t *osd)
       FT_Done_Face (osd->ft2->face);
     if ( osd->ft2->library )
       FT_Done_FreeType(osd->ft2->library);
-    free( osd->ft2 );
-    osd->ft2 = NULL;
+    _x_freep( &osd->ft2 );
   }
 }
 #else
@@ -985,13 +984,13 @@ static int osd_renderer_unload_font(osd_renderer_t *this, char *fontname ) {
   while( font ) {
     if ( !strcasecmp(font->name,fontname) ) {
 
-      free( font->filename );
+      _x_freep( &font->filename );
 
       if( font->loaded ) {
         for( i = 0; i < font->num_fontchars; i++ ) {
-          free( font->fontchar[i].bmp );
+          _x_freep( &font->fontchar[i].bmp );
         }
-        free( font->fontchar );
+        _x_freep( &font->fontchar );
       }
 
       if( last )
@@ -1106,8 +1105,7 @@ static int osd_set_font_freetype2( osd_object_t *osd, const char *fontname, int 
     if(FT_Init_FreeType( &osd->ft2->library )) {
       xprintf(osd->renderer->stream->xine, XINE_VERBOSITY_LOG,
 	      _("osd: cannot initialize ft2 library\n"));
-      free(osd->ft2);
-      osd->ft2 = NULL;
+      _x_freep(&osd->ft2);
       return 0;
     }
   }
@@ -1275,10 +1273,7 @@ static void osd_free_encoding(osd_object_t *osd) {
     iconv_close(osd->cd);
     osd->cd = (iconv_t)-1;
   }
-  if (osd->encoding) {
-    free(osd->encoding);
-    osd->encoding = NULL;
-  }
+  _x_freep(&osd->encoding);
 #endif
 }
 
@@ -1713,7 +1708,7 @@ static void osd_free_object (osd_object_t *osd_to_close) {
   osd = this->osds;
   while( osd ) {
     if ( osd == osd_to_close ) {
-      free( osd->area );
+      _x_freep( &osd->area );
 
       osd_free_ft2 (osd);
       osd_free_encoding(osd);
@@ -1742,7 +1737,7 @@ static void osd_renderer_close (osd_renderer_t *this) {
 
   pthread_mutex_destroy (&this->osd_mutex);
 
-  free(this->event.object.overlay);
+  _x_freep(&this->event.object.overlay);
   free(this);
 }
 

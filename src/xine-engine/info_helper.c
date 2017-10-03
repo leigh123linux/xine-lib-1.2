@@ -174,8 +174,7 @@ static int meta_valid(int info) {
 static void meta_info_set_unlocked_utf8(xine_stream_t *stream, int info, const char *value) {
   if(meta_valid(info)) {
 
-    if(stream->meta_info[info])
-      free(stream->meta_info[info]);
+    free(stream->meta_info[info]);
 
     stream->meta_info[info] = (value) ? strdup(value) : NULL;
 
@@ -299,10 +298,8 @@ void _x_meta_info_reset(xine_stream_t *stream, int info) {
  * Reset (nullify) public info value.
  */
 static void meta_info_public_reset_unlocked(xine_stream_t *stream, int info) {
-  if(meta_valid(info)) {
-    if(stream->meta_info_public[info])
-      free(stream->meta_info_public[info]);
-    stream->meta_info_public[info] = NULL;
+  if (meta_valid(info)) {
+    _x_freep(&stream->meta_info_public[info]);
   }
 }
 void _x_meta_info_public_reset(xine_stream_t *stream, int info) {
@@ -393,9 +390,7 @@ void _x_meta_info_set_multi(xine_stream_t *stream, int info, ...) {
 
       *meta = '\0';
 
-      if(stream->meta_info[info])
-	free(stream->meta_info[info]);
-
+      free(stream->meta_info[info]);
       stream->meta_info[info] = p;
 
       if(stream->meta_info[info] && strlen(stream->meta_info[info]))

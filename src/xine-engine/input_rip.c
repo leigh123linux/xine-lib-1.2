@@ -509,7 +509,7 @@ static void rip_plugin_dispose(input_plugin_t *this_gen) {
 
   _x_free_input_plugin(this->stream, this->main_input_plugin);
   fclose(this->file);
-  if (this->preview) free(this->preview);
+  _x_freep(&this->preview);
   free(this);
 }
 

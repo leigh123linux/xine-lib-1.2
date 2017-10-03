@@ -64,7 +64,7 @@ xine_event_t *xine_event_wait (xine_event_queue_t *queue) {
 }
 
 void xine_event_free (xine_event_t *event) {
-  if (event->data && event->data_length > 0) free (event->data);
+  _x_freep (&event->data);
   free (event);
 }
 
@@ -183,7 +183,7 @@ void xine_event_dispose_queue (xine_event_queue_t *queue) {
   if (queue->listener_thread) {
     void *p;
     pthread_join (*queue->listener_thread, &p);
-    free (queue->listener_thread);
+    _x_freep (&queue->listener_thread);
   }
 
   _x_refcounter_dec(stream->refcounter);

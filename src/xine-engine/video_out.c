@@ -211,8 +211,7 @@ static int vo_streams_open (vos_t *this) {
 
 static void vo_streams_close (vos_t *this) {
   pthread_mutex_destroy (&this->streams_lock);
-  free (this->streams);
-  this->streams          = NULL;
+  _x_freep (&this->streams);
   this->num_null_streams = 0;
   this->num_anon_streams = 0;
   this->num_streams      = 0;
@@ -683,8 +682,8 @@ static void vo_dispose_grab_video_frame(xine_grab_video_frame_t *frame_gen)
   if (frame->yuv2rgb_factory)
     frame->yuv2rgb_factory->dispose(frame->yuv2rgb_factory);
 
-  free(frame->img);
-  free(frame->grab_frame.img);
+  _x_freep(&frame->img);
+  _x_freep(&frame->grab_frame.img);
   free(frame);
 }
 
@@ -854,8 +853,7 @@ static int vo_grab_grab_video_frame (xine_grab_video_frame_t *frame_gen) {
 
   /* allocate grab frame image buffer */
   if (frame->grab_frame.width != frame->grab_width || frame->grab_frame.height != frame->grab_height) {
-    free(frame->grab_frame.img);
-    frame->grab_frame.img = NULL;
+    _x_freep(&frame->grab_frame.img);
   }
   if (frame->grab_frame.img == NULL) {
     frame->grab_frame.img = (uint8_t *) calloc(frame->grab_frame.width * frame->grab_frame.height, 3);
@@ -2419,7 +2417,7 @@ static void vo_free_img_buffers (vos_t *this) {
   vo_queue_dispose_all (&this->free_img_buf_queue);
   vo_queue_dispose_all (&this->display_img_buf_queue);
 
-  free (this->extra_info_base);
+  _x_freep (&this->extra_info_base);
 }
 
 static void vo_exit (xine_video_port_t *this_gen) {
@@ -2448,7 +2446,7 @@ static void vo_exit (xine_video_port_t *this_gen) {
 
   _x_free_video_driver(this->xine, &this->driver);
 
-  free (this->frames);
+  _x_freep (&this->frames);
 
   if (this->overlay_source) {
     this->overlay_source->dispose (this->overlay_source);

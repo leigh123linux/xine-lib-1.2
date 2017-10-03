@@ -334,8 +334,7 @@ static int ao_streams_open (aos_t *this) {
 
 static void ao_streams_close (aos_t *this) {
   pthread_mutex_destroy (&this->streams_lock);
-  free (this->streams);
-  this->streams          = NULL;
+  _x_freep (&this->streams);
   this->num_null_streams = 0;
   this->num_anon_streams = 0;
   this->num_streams      = 0;
@@ -1910,7 +1909,7 @@ static void ao_exit(xine_audio_port_t *this_gen) {
 
   ao_streams_close (this);
 
-  free (this->zero_space);
+  _x_freep (&this->zero_space);
 
   pthread_mutex_destroy(&this->current_speed_lock);
 
@@ -1920,11 +1919,11 @@ static void ao_exit(xine_audio_port_t *this_gen) {
   ao_fifo_close (&this->free_fifo);
   ao_fifo_close (&this->out_fifo);
 
-  free (this->frame_buf[0]->mem);
-  free (this->frame_buf[1]->mem);
-  free (this->base_buf);
-  free (this->base_ei);
-  xine_free_aligned (this->base_samp);
+  _x_freep (&this->frame_buf[0]->mem);
+  _x_freep (&this->frame_buf[1]->mem);
+  _x_freep (&this->base_buf);
+  _x_freep (&this->base_ei);
+  xine_freep_aligned (&this->base_samp);
 
   free (this);
 }

@@ -90,12 +90,12 @@ static void scratch_dispose (scratch_buffer_t *this) {
   pthread_mutex_lock (&this->lock);
 
   for(i = 0; i < this->num_lines; i++ ) {
-    free(this->ordered[i]);
-    free(this->lines[i]);
+    _x_freep(&this->ordered[i]);
+    _x_freep(&this->lines[i]);
   }
 
-  free (this->lines);
-  free (this->ordered);
+  _x_freep (&this->lines);
+  _x_freep (&this->ordered);
 
   pthread_mutex_unlock (&this->lock);
   pthread_mutex_destroy (&this->lock);

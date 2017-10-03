@@ -267,8 +267,7 @@ static void config_insert(config_values_t *this, cfg_entry_t *new_entry) {
   cur_base = NULL;
   for (cur = this->first, prev = NULL; cur; prev = cur, cur = cur->next) {
     /* extract parts of the cur key */
-    if (cur_base)
-      free(cur_base);
+    _x_freep(&cur_base);
     config_key_split(cur->key, &cur_base, &cur_section, &cur_subsect, &cur_name);
 
     /* sort by section name */
@@ -305,10 +304,8 @@ static void config_insert(config_values_t *this, cfg_entry_t *new_entry) {
 
     break;
   }
-  if (new_base)
-    free(new_base);
-  if (cur_base)
-    free(cur_base);
+  free(new_base);
+  free(cur_base);
 
   new_entry->next = cur;
   if (!cur)
@@ -928,8 +925,7 @@ static void config_update_string (config_values_t *this,
     entry->callback (entry->callback_data, &cb_entry);
   }
 
-  if (str_free)
-    free(str_free);
+  free(str_free);
   pthread_mutex_unlock(&this->config_lock);
 }
 

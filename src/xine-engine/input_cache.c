@@ -341,7 +341,7 @@ static void cache_plugin_dispose(input_plugin_t *this_gen) {
 	  LOG_MODULE": seek_calls: %d, main input seek calls: %d\n", this->seek_call, this->main_seek_call);
 
   _x_free_input_plugin(this->stream, this->main_input_plugin);
-  free(this->buf);
+  _x_freep(&this->buf);
   free(this);
 }
 
