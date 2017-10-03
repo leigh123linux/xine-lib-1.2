@@ -96,10 +96,10 @@ typedef struct {
   int             xine_playlist_size;
 
   /* config */
-  char           *mountpoint;
-  char           *device;
-  char           *language;
-  char           *country;
+  const char     *mountpoint;
+  const char     *device;
+  const char     *language;
+  const char     *country;
   int             region;
   int             parental;
 } bluray_input_class_t;
