@@ -2898,7 +2898,6 @@ static int dvb_plugin_open(input_plugin_t * this_gen)
 	_x_assert(channels != NULL);
 	if (extract_channel_from_string(channels, ptr, tuner->feinfo.type) < 0) {
           free(channels);
-	  channels = NULL;
 	  tuner_dispose(tuner);
 	  return 0;
 	}
@@ -2918,7 +2917,6 @@ static int dvb_plugin_open(input_plugin_t * this_gen)
 	   _x_assert(channels != NULL);
 	   if (extract_channel_from_string(channels, ptr, tuner->feinfo.type) < 0) {
               free(channels);
-	      channels = NULL;
               tuner_dispose(tuner);
               return 0;
 	   }
@@ -2942,7 +2940,6 @@ static int dvb_plugin_open(input_plugin_t * this_gen)
       if (extract_channel_from_string(channels, ptr, tuner->feinfo.type) < 0)
       {
         free(channels);
-	channels = NULL;
         tuner_dispose(tuner);
         return 0;
       }
@@ -2969,7 +2966,6 @@ static int dvb_plugin_open(input_plugin_t * this_gen)
       {
 	fprintf(stderr,"input_dvb: FAILED 2\n");
         free(channels);
-	channels = NULL;
         tuner_dispose(tuner);
         return 0;
       }
