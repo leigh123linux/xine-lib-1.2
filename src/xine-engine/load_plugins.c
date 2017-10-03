@@ -1365,19 +1365,31 @@ static void push_if_dir (xine_list_t *plugindirs, void *path)
 /*
  *  initialize catalog, load all plugins into new catalog
  */
-void _x_scan_plugins (xine_t *this) {
+int _x_scan_plugins (xine_t *this) {
 
-  char *homedir, *pluginpath;
-  xine_list_t *plugindirs = xine_list_new ();
+  char *homedir = NULL, *pluginpath = NULL;
+  xine_list_t *plugindirs = NULL;
   xine_list_iterator_t iter;
+  int result = -1;
 
   lprintf("_x_scan_plugins()\n");
 
   _x_assert(this);
   _x_assert(this->config);
+  _x_assert(!this->plugin_catalog);
 
   homedir = strdup(xine_get_homedir());
+  plugindirs = xine_list_new ();
+
+  if (!homedir || !plugindirs) {
+    goto fail;
+  }
+
   this->plugin_catalog = _new_catalog();
+  if (!this->plugin_catalog) {
+    goto fail;
+  }
+
   XINE_PROFILE(load_cached_catalog (this));
 
 #ifdef XINE_MAKE_BUILTINS
@@ -1423,8 +1435,6 @@ void _x_scan_plugins (xine_t *this) {
     collect_plugins(this, dir);
     free (dir);
   }
-  xine_list_delete (plugindirs);
-  free(homedir);
 
   load_required_plugins (this);
 
@@ -1432,6 +1442,15 @@ void _x_scan_plugins (xine_t *this) {
     XINE_PROFILE(save_catalog (this));
 
   map_decoders (this);
+
+  result = 0;
+
+ fail:
+  if (plugindirs)
+    xine_list_delete (plugindirs);
+  free(homedir);
+
+  return result;
 }
 
 /*

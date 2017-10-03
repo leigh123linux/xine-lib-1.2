@@ -62,7 +62,7 @@ extern "C" {
  * Decoder plugins are loaded on demand. Video/audio output plugins
  * have special load/probe functions
  */
-void _x_scan_plugins (xine_t *this) INTERNAL;
+int _x_scan_plugins (xine_t *this) INTERNAL;
 
 /**
  * @ingroup load_plugins
