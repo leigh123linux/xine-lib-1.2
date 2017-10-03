@@ -143,14 +143,16 @@ static void xdgFreeStringList(char** list)
 /** Free all data in the cache and set pointers to null. */
 static void xdgFreeData(xdgCachedData *cache)
 {
-	if (cache->dataHome);
+	if (cache->dataHome)
+          ;
 	{
 		/* the first element of the directory lists is usually the home directory */
 		if (cache->searchableDataDirectories[0] != cache->dataHome)
 			free(cache->dataHome);
 		cache->dataHome = 0;
 	}
-	if (cache->configHome);
+	if (cache->configHome)
+          ;
 	{
 		if (cache->searchableConfigDirectories[0] != cache->configHome)
 			free(cache->configHome);
@@ -280,7 +282,8 @@ static char** xdgGetPathListEnv(const char* name, const char ** strings)
 	else
 	{
 		if (!strings) return NULL;
-		for (size = 0; strings[size]; ++size) ; ++size;
+		for (size = 0; strings[size]; ++size) ;
+                ++size;
 		if (!(itemlist = (char**)malloc(sizeof(char*)*size))) return NULL;
 		xdgZeroMemory(itemlist, sizeof(char*)*(size));
 
