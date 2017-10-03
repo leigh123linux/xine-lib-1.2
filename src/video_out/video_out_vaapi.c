@@ -318,7 +318,7 @@ const GLubyte *(GLAPIENTRY *mpglGetString)(GLenum);
 void (GLAPIENTRY *mpglGenPrograms)(GLsizei, GLuint *);
 #endif
 
-#ifdef LOG
+#if defined(LOG) || defined(DEBUG)
 static const char *string_of_VAImageFormat(VAImageFormat *imgfmt)
 {
   static char str[5];
