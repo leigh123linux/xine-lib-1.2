@@ -21,9 +21,9 @@
 #include "config.h"
 #endif
 
-#include <assert.h>
 #include <xine/attributes.h>
 #include <xine/pool.h>
+#include <xine/xineutils.h>
 #include <xine/array.h>
 
 #define MIN_CHUNK_SIZE    32
@@ -59,8 +59,8 @@ static xine_pool_chunk_t *XINE_MALLOC xine_pool_alloc_chunk(size_t object_size, 
   xine_pool_chunk_t *new_chunk;
   size_t chunk_mem_size;;
 
-  assert(object_size > 0);
-  assert(object_count > 0);
+  _x_assert(object_size > 0);
+  _x_assert(object_count > 0);
   chunk_mem_size  = sizeof(xine_pool_chunk_t);
   chunk_mem_size += object_size * object_count;
 
@@ -74,7 +74,7 @@ static xine_pool_chunk_t *XINE_MALLOC xine_pool_alloc_chunk(size_t object_size, 
 
 /* Delete a chunk */
 static void xine_pool_delete_chunk(xine_pool_chunk_t *chunk) {
-  assert(chunk);
+  _x_assert(chunk);
   free(chunk);
 }
 
@@ -84,7 +84,7 @@ xine_pool_t *xine_pool_new(size_t object_size,
                            void (*return_object)(void *object),
                            void (*delete_object)(void *object)) {
   xine_pool_t *new_pool;
-  assert(object_size > 0);
+  _x_assert(object_size > 0);
 
   new_pool = malloc(sizeof(xine_pool_t));
   new_pool->object_size = object_size;
@@ -103,7 +103,7 @@ xine_pool_t *xine_pool_new(size_t object_size,
 void xine_pool_delete(xine_pool_t *pool) {
   int list_id, list_size;
 
-  assert(pool);
+  _x_assert(pool);
   list_size = xine_array_size(pool->chunk_list);
 
   for (list_id = 0; list_id < list_size; list_id++) {
@@ -127,7 +127,7 @@ void *xine_pool_get(xine_pool_t *pool) {
   void *object = NULL;
   int free_count;
 
-  assert(pool);
+  _x_assert(pool);
 
   /* check the free list */
   free_count = xine_array_size(pool->free_list);
@@ -168,8 +168,8 @@ void *xine_pool_get(xine_pool_t *pool) {
 }
 
 void xine_pool_put(xine_pool_t *pool, void *object) {
-  assert(pool);
-  assert(object);
+  _x_assert(pool);
+  _x_assert(object);
   if (pool->return_object) {
     pool->return_object(object);
   }

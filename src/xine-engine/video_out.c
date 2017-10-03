@@ -33,7 +33,6 @@
 #include <zlib.h>
 #include <pthread.h>
 #include <inttypes.h>
-#include <assert.h>
 #include <errno.h>
 
 #define XINE_ENABLE_EXPERIMENTAL_FEATURES
@@ -386,7 +385,7 @@ static void vo_queue_append_int (img_buf_fifo_t *queue, vo_frame_t *img) {
   int n;
 
   /* img already enqueue? (serious leak) */
-  assert (img->next==NULL);
+  _x_assert (img->next==NULL);
 
   img->next = NULL;
 

@@ -24,7 +24,6 @@
 #include <pthread.h>
 #include <stdlib.h>
 #include <inttypes.h>
-#include <assert.h>
 #include <stdio.h>
 #include <string.h>
 #include <xine/attributes.h>
@@ -171,7 +170,7 @@ void *xine_ring_buffer_alloc(xine_ring_buffer_t *ring_buffer, size_t size) {
   int ok = 0;
   xine_ring_buffer_chunk_t *chunk;
 
-  assert(ring_buffer);
+  _x_assert(ring_buffer);
 
   pthread_mutex_lock(&ring_buffer->lock);
 
@@ -227,8 +226,8 @@ void xine_ring_buffer_put(xine_ring_buffer_t *ring_buffer, void *buffer) {
       break;
     prev_chunk = chunk;
   }
-  assert(ite);
-  assert(chunk);
+  _x_assert(ite);
+  _x_assert(chunk);
   /* found associated chunk, is it the first in the list ? */
   if (!prev_chunk) {
     if (ring_buffer->head == ring_buffer->buffer_end) {
@@ -257,8 +256,8 @@ void *xine_ring_buffer_get(xine_ring_buffer_t *ring_buffer, size_t size, size_t 
   size_t continuous_size;
   uint8_t *mem_chunk;
 
-  assert(ring_buffer);
-  assert(rsize);
+  _x_assert(ring_buffer);
+  _x_assert(rsize);
   pthread_mutex_lock(&ring_buffer->lock);
   while ((size > ring_buffer->full_size) && !ring_buffer->EOS) {
     /* we need more free room */
@@ -322,8 +321,8 @@ void xine_ring_buffer_release(xine_ring_buffer_t *ring_buffer, void *buffer) {
       break;
     prev_chunk = chunk;
   }
-  assert(ite);
-  assert(chunk);
+  _x_assert(ite);
+  _x_assert(chunk);
   /* found associated chunk, is it the first in the list ? */
   if (!prev_chunk) {
     size_t continuous_size;

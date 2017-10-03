@@ -34,7 +34,6 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <assert.h>
 
 /********** logging **********/
 #define LOG_MODULE "buffer"
