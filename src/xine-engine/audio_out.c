@@ -2520,11 +2520,13 @@ xine_audio_port_t *_x_ao_new_port (xine_t *xine, ao_driver_t *driver,
 	       "audio_out: can't create thread (%s)\n", strerror(err));
       xprintf (this->xine, XINE_VERBOSITY_LOG,
 	       _("audio_out: sorry, this should not happen. please restart xine.\n"));
-      _x_abort();
 
-    } else
-      xprintf (this->xine, XINE_VERBOSITY_DEBUG, "audio_out: thread created\n");
+      this->audio_loop_running = 0;
+      ao_exit(&this->ao);
+      return NULL;
+     }
 
+    xprintf (this->xine, XINE_VERBOSITY_DEBUG, "audio_out: thread created\n");
   }
 
   return &this->ao;
