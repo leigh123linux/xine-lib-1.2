@@ -43,6 +43,7 @@
 #include <xine/xine_internal.h>
 #include <xine/demux.h>
 #include <xine/buffer.h>
+#include "xine_private.h"
 
 #ifdef WIN32
 #include <winsock.h>
@@ -746,7 +747,9 @@ void _x_demux_send_mrl_reference (xine_stream_t *stream, int alternative,
   xine_event_t event;
   union {
     xine_mrl_reference_data_ext_t *e;
+    XINE_DISABLE_DEPRECATION_WARNINGS
     xine_mrl_reference_data_t *b;
+    XINE_ENABLE_DEPRECATION_WARNINGS
   } data;
   const size_t mrl_len = strlen (mrl);
 
@@ -771,7 +774,9 @@ void _x_demux_send_mrl_reference (xine_stream_t *stream, int alternative,
 
   /* plain MRL reference event */
 
+  XINE_DISABLE_DEPRECATION_WARNINGS
   event.data_length = offsetof (xine_mrl_reference_data_t, mrl) + mrl_len + 1;
+  XINE_ENABLE_DEPRECATION_WARNINGS
 
   /*data.b->alternative = alternative;*/
   strcpy (data.b->mrl, mrl);
