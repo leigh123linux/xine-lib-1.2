@@ -24,6 +24,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <xine/attributes.h>
+#include <xine/xineutils.h>
 #include <xine/array.h>
 
 #define MIN_CHUNK_SIZE    32

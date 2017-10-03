@@ -28,6 +28,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <xine/attributes.h>
+#include <xine/xineutils.h>
 #include <xine/pool.h>
 #include <xine/list.h>
 #include <xine/ring_buffer.h>
