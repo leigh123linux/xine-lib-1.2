@@ -146,8 +146,12 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <string.h>
+
 #ifdef HAVE_ARPA_INET_H
-#include <arpa/inet.h>
+#include <arpa/inet.h>  /* htonl */
+#endif
+#ifdef _WIN32
+#include <winsock.h>    /* htonl */
 #endif
 
 #define LOG_MODULE "demux_ts"
