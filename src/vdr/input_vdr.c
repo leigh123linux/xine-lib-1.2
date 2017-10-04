@@ -142,6 +142,7 @@ struct vdr_input_plugin_s
   pthread_cond_t      trick_speed_mode_cond;
 
   pthread_t           rpc_thread;
+  int                 rpc_thread_created;
   int                 rpc_thread_shutdown;
   pthread_mutex_t     rpc_thread_shutdown_lock;
   pthread_cond_t      rpc_thread_shutdown_cond;
@@ -150,6 +151,7 @@ struct vdr_input_plugin_s
   pthread_t           metronom_thread;
   pthread_mutex_t     metronom_thread_lock;
   int64_t             metronom_thread_request;
+  int                 metronom_thread_created;
   int                 metronom_thread_reply;
   pthread_cond_t      metronom_thread_request_cond;
   pthread_cond_t      metronom_thread_reply_cond;
@@ -1765,7 +1767,7 @@ static void vdr_plugin_dispose(input_plugin_t *this_gen)
   if (this->event_queue)
     xine_event_dispose_queue(this->event_queue);
 
-  if (this->rpc_thread)
+  if (this->rpc_thread_created)
   {
     struct timespec abstime;
     int ms_to_time_out = 10000;
@@ -1809,7 +1811,7 @@ static void vdr_plugin_dispose(input_plugin_t *this_gen)
   pthread_cond_destroy(&this->rpc_thread_shutdown_cond);
   pthread_mutex_destroy(&this->rpc_thread_shutdown_lock);
 
-  if (this->metronom_thread)
+  if (this->metronom_thread_created)
   {
     xprintf(this->stream->xine, XINE_VERBOSITY_LOG, _("%s: joining metronom thread ...\n"), LOG_MODULE);
 
@@ -2204,6 +2206,7 @@ static int vdr_plugin_open(input_plugin_t *this_gen)
 
       return 0;
     }
+    this->metronom_thread_created = 1;
 
     this->rpc_thread_shutdown = 0;
 
@@ -2221,6 +2224,7 @@ static int vdr_plugin_open(input_plugin_t *this_gen)
 
       return 0;
     }
+    this->rpc_thread_created = 1;
   }
 
   /*
