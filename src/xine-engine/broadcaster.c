@@ -341,8 +341,9 @@ broadcaster_t *_x_init_broadcaster(xine_stream_t *stream, int port)
     return NULL;
   }
 
+#ifndef _WIN32
   signal( SIGPIPE, SIG_IGN );
-
+#endif
   this = calloc(1, sizeof(broadcaster_t));
   if (!this) {
     close(msock);
