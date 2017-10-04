@@ -951,6 +951,9 @@ AC_CHECK_FUNCS([bzero])
 dnl src/libfaad/common.h
 AC_CHECK_FUNCS([memcpy])
 
+dnl src/xine-engine/scratch.c
+AC_CHECK_FUNCS([localtime_r])
+
 dnl src/input/input_file.c
 AC_ARG_ENABLE([mmap],
               AS_HELP_STRING([--enable-mmap], [Enable mmap() file loading (default: no)]))
