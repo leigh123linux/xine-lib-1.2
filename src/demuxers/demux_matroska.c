@@ -3236,7 +3236,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
       return NULL;
     input->seek(input, 0, SEEK_SET);
     ebml = new_ebml_parser(stream->xine, input);
-    if (ebml)
+    if (!ebml)
       goto error;
     if (!ebml_check_header(ebml))
       goto error;
