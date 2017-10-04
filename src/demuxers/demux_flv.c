@@ -104,6 +104,9 @@ typedef struct {
   int                  audiodelay;   /* fine tune a/v sync */
 
   unsigned int         zero_pts_count;
+
+#define TEMPBUFSIZE 4096
+  uint8_t             *tempbuf;
 } demux_flv_t ;
 
 typedef struct {
@@ -804,10 +807,9 @@ static int read_flv_packet(demux_flv_t *this, int preview) {
 }
 
 static void seek_flv_file (demux_flv_t *this, off_t seek_pos, int seek_pts) {
-  int i;
   /* we start where we are */
-  off_t pos1, pos2, size, used, found;
-  unsigned char buf[4096], *p1, *p2;
+  off_t pos2, size, used, found;
+  uint8_t *buf = this->tempbuf;
   unsigned int now = 0, fpts = this->cur_pts, try;
 
   size = this->input->get_length (this->input);
@@ -868,88 +870,102 @@ static void seek_flv_file (demux_flv_t *this, off_t seek_pos, int seek_pts) {
     seek_pts = 0;
   }
 
-  /* step 1: phonebook search. Estimate file position, find next tag header,
-     check time, make better estimation, repeat */
+  /* Step 1: phonebook search. Estimate file position, find next tag header,
+     check time, make better estimation, repeat. */
   for (try = 4; try && (!seek_pts || abs ((int)seek_pts - (int)fpts) > 800); try--) {
-    pos1 = found;
-    found = 0;
+    int i;
     this->input->seek (this->input, pos2, SEEK_SET);
-    used = this->input->read (this->input, (char *)buf + 4096 - 12, 12);
-    for (i = 0; !found && (i < 50); i++) {
-      memcpy (buf, buf + 4096 - 12, 12);
-      used = this->input->read (this->input, (char *)buf + 12, 4096 - 12);
+    used = this->input->read (this->input, (char *)buf + TEMPBUFSIZE - 32, 32);
+    for (i = 256; i; i--) {
+      uint8_t *p1, *p2;
+      memcpy (buf, buf + TEMPBUFSIZE - 32, 32);
+      used = this->input->read (this->input, (char *)buf + 32, TEMPBUFSIZE - 32);
       if (used <= 0) break;
-      p1 = buf;
-      p2 = buf + used + 12;
-      while (!found && (p1 + 11 < p2)) switch (*p1++) {
-        case FLV_TAG_TYPE_AUDIO:
-          if (p1[7] || p1[8] || p1[9] || ((p1[10] >> 4) != this->audiocodec)) continue;
-          found = pos2 + (p1 - 1 - buf);
-        break;
-        case FLV_TAG_TYPE_VIDEO:
-          if (p1[7] || p1[8] || p1[9] || ((p1[10] & 0x0f) != this->videocodec)) continue;
-          found = pos2 + (p1 - 1 - buf);
+      p1 = buf + 4;
+      p2 = buf + used + 4;
+      while (p1 < p2) {
+        if (p1[0] == FLV_TAG_TYPE_AUDIO) {
+          /* prev_size < 2^24; size < 2^20; stream == 0; codec_match; */
+          if (!p1[-4] && !(p1[1] & 0xf0) && !p1[8] && !p1[9] && !p1[10] && ((p1[11] >> 4) == this->audiocodec))
+            break;
+        } else if (p1[0] == FLV_TAG_TYPE_VIDEO) {
+          /* prev_size < 2^24; stream == 0; codec_match; */
+          if (!p1[-4] && !p1[8] && !p1[9] && !p1[10] && ((p1[11] & 0x0f) == this->videocodec))
+            break;
+        }
+        p1++;
+      }
+      if (p1 < p2) {
+        fpts = gettimestamp (p1, 4);
+        found = pos2 + (p1 - buf);
+        if (seek_pts && fpts) pos2 = (uint64_t)found * seek_pts / fpts;
+        else try = 1;
+        xprintf (this->xine, XINE_VERBOSITY_DEBUG,
+          "demux_flv: seek_quick (%u.%03u, %"PRId64")\n", fpts / 1000, fpts % 1000, (int64_t)found);
         break;
       }
-      pos2 += 4096 - 12;
+      pos2 += TEMPBUFSIZE - 32;
     }
-    if (found) {
-      fpts = gettimestamp (p1, 3);
-      if (seek_pts && fpts) pos2 = (uint64_t)found * seek_pts / fpts;
-      else try = 1;
-      xprintf (this->xine, XINE_VERBOSITY_DEBUG,
-        "demux_flv: seek_quick (%u.%03u, %"PRId64")\n",
-        fpts / 1000, fpts % 1000, (int64_t)found);
-    } else found = pos1;
   }
 
-  /* step 2: Traverse towards the desired time */
+  /* Step 2: Traverse towards the desired time. */
   if (seek_pts) {
-    pos1 = 0;
-    pos2 = found;
-    i = 0;
+    off_t keypos = 0, pos = found;
+    int i = 0;
     while (1) {
-      if (pos2 < this->start + 4) break;
-      this->input->seek (this->input, pos2 - 4, SEEK_SET);
+      if (pos < this->start + 4) break;
+      this->input->seek (this->input, pos - 4, SEEK_SET);
       if (this->input->read (this->input, (char *)buf, 16) != 16) break;
-      if ((buf[4] == FLV_TAG_TYPE_VIDEO) && ((buf[15] >> 4) == 1)) pos1 = pos2;
-      if ((now = gettimestamp (buf, 8)) == 0) break;
-      if (now >= seek_pts) {
+      now = gettimestamp (buf, 8);
+      if ((buf[4] == FLV_TAG_TYPE_VIDEO) && ((buf[15] >> 4) == 1)) {
+        keypos = pos;
+        /* Shortcut xine_keyframes users. */
+        if (now == seek_pts) break;
+      }
+      /* Non seekable file ?? */
+      if (now == 0) break;
+      /* Stop at reversal of direction, dont slow when tags are not sorted by pts properly. */
+      /* Stop at latest tag at, or at first tag right after seek_pts to make step 3 work.   */
+      if (now > seek_pts) {
+        found = pos;
         if (i > 0) break;
+        /* Traverse backwards. */
         if ((i = _X_BE_32 (buf)) == 0) break;
-        found = pos2;
-        pos2 -= i + 4;
+        pos -= i + 4;
         i = -1;
       } else {
+        /* If there is video, dont mark this as found, so step 3 dont traverse it again. */
+        if (!this->videocodec) found = pos;
         if (i < 0) break;
-        pos2 += _X_BE_24 (&buf[5]) + 15;
+        /* Traverse forward. */
+        pos += _X_BE_24 (&buf[5]) + 15;
         i = 1;
       }
     }
-    if (pos1) found = pos1;
+    /* Stay at closest already found keyframe. */
+    if (keypos) found = keypos;
     xprintf (this->xine, XINE_VERBOSITY_DEBUG,
-      "demux_flv: seek_traverse (%u.%03u, %"PRId64")\n",
-      now / 1000, now % 1000, (int64_t)(pos2));
+      "demux_flv: seek_traverse (%u.%03u, %"PRId64")\n", now / 1000, now % 1000, (int64_t)pos);
   }
 
-  /* Go back to previous keyframe */
+  /* Go back to previous keyframe. */
   if (this->videocodec) {
-    pos1 = pos2 = found;
-    found = 0;
+    off_t pos = found;
     while (1) {
-      if (pos2 < this->start + 4) break;
-      this->input->seek (this->input, pos2 - 4, SEEK_SET);
+      int i;
+      if (pos < this->start + 4) break;
+      this->input->seek (this->input, pos - 4, SEEK_SET);
       if (this->input->read (this->input, (char *)buf, 16) != 16) break;
-      if ((buf[4] == FLV_TAG_TYPE_VIDEO) && ((buf[15] >> 4) == 1)) {found = pos2; break;}
+      if ((buf[4] == FLV_TAG_TYPE_VIDEO) && ((buf[15] >> 4) == 1)) {
+        found = pos;
+        now = gettimestamp (buf, 8);
+        xprintf (this->xine, XINE_VERBOSITY_DEBUG,
+          "demux_flv: seek_keyframe (%u.%03u, %"PRId64")\n", now / 1000, now % 1000, (int64_t)found);
+        break;
+      }
       if ((i = _X_BE_32 (buf)) == 0) break;
-      pos2 -= i + 4;
+      pos -= i + 4;
     }
-    if (found) {
-      now = gettimestamp (buf, 8);
-      xprintf (this->xine, XINE_VERBOSITY_DEBUG,
-        "demux_flv: seek_keyframe (%u.%03u, %"PRId64")\n",
-        now / 1000, now % 1000, (int64_t)found);
-    } else found = pos1;
   }
 
   /* we are there!! */
@@ -1086,7 +1102,10 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
                                     input_plugin_t *input) {
   demux_flv_t *this;
 
-  this         = calloc(1, sizeof (demux_flv_t));
+  this         = calloc (1, sizeof (demux_flv_t) + 32 + TEMPBUFSIZE);
+  if (!this)
+    return NULL;
+  this->tempbuf = (uint8_t *)(((uintptr_t)this + sizeof (demux_flv_t) + 31) & ~(uintptr_t)31);
   this->xine   = stream->xine;
   this->stream = stream;
   this->input  = input;
