@@ -47,9 +47,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <inttypes.h>
-#include <sys/stat.h>
 #include <sys/types.h>
-#include <fcntl.h>
 
 #include <xine/xine_internal.h>
 #include <xine/xineutils.h>

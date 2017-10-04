@@ -30,7 +30,6 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
-#include <zlib.h>
 #include <pthread.h>
 #include <inttypes.h>
 #include <errno.h>

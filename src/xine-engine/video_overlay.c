@@ -26,14 +26,12 @@
 #include <unistd.h>
 #include <string.h>
 #include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
 
 #include <xine/buffer.h>
 #include <xine/xine_internal.h>
-#include "bswap.h"
 #include <xine/xineutils.h>
 #include <xine/video_overlay.h>
+#include "bswap.h"
 
 /*
 #define LOG_DEBUG
