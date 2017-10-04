@@ -333,8 +333,9 @@ int _x_io_tcp_connect_finish(xine_stream_t *stream, int fd, int timeout_msec) {
 }
 
 
-static off_t xio_rw_abort(xine_stream_t *stream, int fd, int cmd, void *buf_gen, off_t todo) {
+static off_t xio_rw_abort(xine_stream_t *stream, int fd, int cmd, void *buf_gen, const void *wbuf_gen, off_t todo) {
   uint8_t *buf = buf_gen;
+  const uint8_t *wbuf = wbuf_gen;
 
   off_t ret = -1;
   off_t total = 0;
@@ -343,11 +344,11 @@ static off_t xio_rw_abort(xine_stream_t *stream, int fd, int cmd, void *buf_gen,
   xine_cfg_entry_t cfgentry;
   unsigned int timeout;
 
-  _x_assert(buf != NULL);
-
   if ((cmd == XIO_TCP_READ) || (cmd == XIO_FILE_READ)) {
+    _x_assert(buf != NULL);
     state = XIO_READ_READY;
   } else if ((cmd == XIO_TCP_WRITE) || (cmd == XIO_FILE_WRITE)) {
+    _x_assert(wbuf != NULL);
     state = XIO_WRITE_READY;
   } else {
     errno = EINVAL;
@@ -372,13 +373,13 @@ static off_t xio_rw_abort(xine_stream_t *stream, int fd, int cmd, void *buf_gen,
         ret = read(fd, &buf[total], todo - total);
         break;
       case XIO_FILE_WRITE:
-        ret = write(fd, &buf[total], todo - total);
+        ret = write(fd, &wbuf[total], todo - total);
         break;
       case XIO_TCP_READ:
         ret = recv(fd, &buf[total], todo - total, 0);
         break;
       case XIO_TCP_WRITE:
-        ret = send(fd, &buf[total], todo - total, 0);
+        ret = send(fd, &wbuf[total], todo - total, 0);
         break;
     }
     /* check EOF */
@@ -423,19 +424,19 @@ static off_t xio_rw_abort(xine_stream_t *stream, int fd, int cmd, void *buf_gen,
 }
 
 off_t _x_io_tcp_read (xine_stream_t *stream, int s, void *buf, off_t todo) {
-  return xio_rw_abort (stream, s, XIO_TCP_READ, buf, todo);
+  return xio_rw_abort (stream, s, XIO_TCP_READ, buf, NULL, todo);
 }
 
-off_t _x_io_tcp_write (xine_stream_t *stream, int s, void *buf, off_t todo) {
-  return xio_rw_abort (stream, s, XIO_TCP_WRITE, buf, todo);
+off_t _x_io_tcp_write (xine_stream_t *stream, int s, const void *buf, off_t todo) {
+  return xio_rw_abort (stream, s, XIO_TCP_WRITE, NULL, buf, todo);
 }
 
 off_t _x_io_file_read (xine_stream_t *stream, int s, void *buf, off_t todo) {
-  return xio_rw_abort (stream, s, XIO_FILE_READ, buf, todo);
+  return xio_rw_abort (stream, s, XIO_FILE_READ, buf, NULL, todo);
 }
 
-off_t _x_io_file_write (xine_stream_t *stream, int s, void *buf, off_t todo) {
-  return xio_rw_abort (stream, s, XIO_FILE_WRITE, buf, todo);
+off_t _x_io_file_write (xine_stream_t *stream, int s, const void *buf, off_t todo) {
+  return xio_rw_abort (stream, s, XIO_FILE_WRITE, NULL, buf, todo);
 }
 
 /*
@@ -451,7 +452,7 @@ int _x_io_tcp_read_line(xine_stream_t *stream, int sock, char *str, int size) {
   if( size <= 0 )
     return 0;
 
-  while ((r = xio_rw_abort(stream, sock, XIO_TCP_READ, &c, 1)) != -1) {
+  while ((r = xio_rw_abort(stream, sock, XIO_TCP_READ, &c, NULL, 1)) != -1) {
     if (c == '\r' || c == '\n')
       break;
     if (i+1 == size)
@@ -462,7 +463,7 @@ int _x_io_tcp_read_line(xine_stream_t *stream, int sock, char *str, int size) {
   }
 
   if (r != -1 && c == '\r')
-    r = xio_rw_abort(stream, sock, XIO_TCP_READ, &c, 1);
+    r = xio_rw_abort(stream, sock, XIO_TCP_READ, &c, NULL, 1);
 
   str[i] = '\0';
 
