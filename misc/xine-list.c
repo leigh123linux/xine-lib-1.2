@@ -115,7 +115,8 @@ to the extent permitted by law.\n",
       (major == 1 && minor == 2 && sub > 0) ||
       (major == 1 && minor > 2) ||
       (major > 1))
-    xine_set_flags (xine, XINE_FLAG_NO_WRITE_CACHE);
+    if (xine_set_flags)
+      xine_set_flags (xine, XINE_FLAG_NO_WRITE_CACHE);
 
   xine_init (xine);
 
