@@ -119,6 +119,7 @@ typedef struct {
   struct timeval            now;
 
   pthread_cond_t            done_flushing;
+  vo_frame_t               *last_flushed;
 
   vo_frame_t               *img_backup;
 
@@ -1529,12 +1530,17 @@ static vo_frame_t *next_frame (vos_t *this, int64_t *vpts) {
         first_frame = img;
         img = img->next;
       } else {
-        vo_frame_t *f = this->img_backup;
+        vo_frame_t *f;
+        if (!this->img_backup) {
+          vo_frame_inc_lock (img);
+          this->img_backup = img;
+        }
+        f = this->last_flushed;
         if (f && !vo_frame_dec_lock_int (this, f)) {
           *add = f;
           add = &f->next;
         }
-        this->img_backup = img;
+        this->last_flushed = img;
         f = img->next;
         img->next = NULL;
         img = f;
@@ -1599,6 +1605,18 @@ static vo_frame_t *next_frame (vos_t *this, int64_t *vpts) {
       img->is_first--;
       *vpts += FIRST_FRAME_POLL_DELAY;
       pthread_mutex_unlock (&this->display_img_buf_queue.mutex);
+      /* At forward seek, fill the gap with last flushed frame if any. */
+      if (this->last_flushed && img->pts && this->last_flushed->pts && (this->last_flushed->pts < img->pts)) {
+        img = this->last_flushed;
+        this->last_flushed = NULL;
+        vo_frame_inc_lock (img);
+        if (this->img_backup)
+          vo_frame_dec_lock (this->img_backup);
+        this->img_backup = img;
+        img->vpts = *vpts;
+        *vpts = img->vpts + (img->duration ? img->duration : DEFAULT_FRAME_DURATION);
+        return img;
+      }
       this->wakeups_early++;
       return NULL;
     }
@@ -1656,6 +1674,11 @@ static vo_frame_t *next_frame (vos_t *this, int64_t *vpts) {
     img->future_frame = img->next;
     img = vo_queue_pop_int (&this->display_img_buf_queue);
     pthread_mutex_unlock (&this->display_img_buf_queue.mutex);
+    /* we dont need that filler anymore */
+    if (this->last_flushed) {
+      vo_frame_dec_lock (this->last_flushed);
+      this->last_flushed = NULL;
+    }
     /* reuse as still frame */
     vo_frame_inc_lock (img);
     if (this->img_backup)
@@ -2031,6 +2054,10 @@ static void *video_out_loop (void *this_gen) {
     pthread_cond_broadcast (&this->done_stepping);
   }
 
+  if (this->last_flushed) {
+    vo_frame_dec_lock (this->last_flushed);
+    this->last_flushed = NULL;
+  }
   if (this->img_backup) {
     vo_frame_dec_lock( this->img_backup );
     this->img_backup = NULL;
