@@ -685,8 +685,11 @@ static void fb_dispose(vo_driver_t *this_gen)
 {
   fb_driver_t *this = (fb_driver_t *)this_gen;
 
-  munmap(this->video_mem_base, this->mem_size);
-  close(this->fd);
+  if (this->video_mem_base != (void *)-1)
+    munmap(this->video_mem_base, this->mem_size);
+
+  if (this->fd >= 0)
+    close(this->fd);
 
   _x_alphablend_free(&this->alphablend_extra_data);
 
@@ -984,6 +987,8 @@ static vo_driver_t *fb_open_plugin(video_driver_class_t *class_gen,
   if(!this)
     return NULL;
 
+  this->video_mem_base = (void*)-1;
+
   _x_alphablend_init(&this->alphablend_extra_data, class->xine);
 
   register_callbacks(this);
@@ -1048,13 +1053,16 @@ static vo_driver_t *fb_open_plugin(video_driver_class_t *class_gen,
   /* mmap whole video memory */
   this->mem_size = this->fb_fix.smem_len;
   this->video_mem_base = mmap(0, this->mem_size, PROT_READ | PROT_WRITE,
-			      MAP_SHARED, this->fd, 0);
+                              MAP_SHARED, this->fd, 0);
+  if (this->video_mem_base == (void*)-1)
+    goto error;
+
   return &this->vo_driver;
+
 error:
   xprintf(class->xine, XINE_VERBOSITY_DEBUG,
           "video_out_fb: Unable to configure fb device, aborting: %s\n", strerror(errno));
-
-  free(this);
+  fb_dispose(&this->vo_driver);
   return 0;
 }
 
