@@ -46,6 +46,7 @@ extern "C" {
 #endif
 
 #include <stdarg.h>
+#include <sys/time.h>
 #include <sys/types.h>
 
 #ifdef WIN32
