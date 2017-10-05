@@ -45,14 +45,11 @@
 extern "C" {
 #endif
 
-#include <sys/types.h>
-#include <sys/time.h>
-#include <time.h>
 #include <stdarg.h>
+#include <sys/types.h>
 
 #ifdef WIN32
 #include <windows.h>
-#include <windowsx.h>
 #endif
 
 #include <xine/os_types.h>
