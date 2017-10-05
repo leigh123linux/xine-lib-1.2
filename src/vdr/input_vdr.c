@@ -42,6 +42,9 @@
 #ifdef HAVE_NETDB_H
 #include <netdb.h>
 #endif
+#ifdef WIN32
+#include <winsock.h>
+#endif
 
 #define LOG_MODULE "input_vdr"
 #define LOG_VERBOSE

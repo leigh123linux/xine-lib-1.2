@@ -30,7 +30,6 @@ extern "C" {
 #include <pthread.h>
 
 #ifdef WIN32
-#  include <winsock.h>
 #else
 #  include <sys/time.h>
 #endif

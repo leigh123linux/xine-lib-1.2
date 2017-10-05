@@ -39,10 +39,11 @@
 #include <netdb.h>
 #endif
 #include <ctype.h>
-
-#ifndef WIN32
 #include <errno.h>
-#endif /* WIN32 */
+
+#ifdef WIN32
+#include <winsock.h>
+#endif
 
 #include <sys/time.h>
 

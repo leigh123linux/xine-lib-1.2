@@ -39,6 +39,10 @@
 #include <netdb.h>
 #endif
 #include <errno.h>
+#ifdef _WIN32
+#include <winsock.h>
+#endif
+
 #include <string.h>
 
 #include <xine/io_helper.h>

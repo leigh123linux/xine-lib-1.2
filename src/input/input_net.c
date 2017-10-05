@@ -62,6 +62,10 @@
 #include <netdb.h>
 #endif
 
+#ifdef WIN32
+#include <winsock.h>
+#endif
+
 #include <errno.h>
 #include <sys/time.h>
 
