@@ -64,6 +64,9 @@
 #ifdef HAVE_SYS_IOCTL_H
 #include <sys/ioctl.h>
 #endif
+#ifdef WIN32
+#include <ws2tcpip.h>  // socklen_t
+#endif
 
 #include <dlfcn.h>
 #include <pthread.h>

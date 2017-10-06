@@ -228,12 +228,22 @@ AC_DEFUN([AC_CHECK_SOCKLEN_T], [
     AC_LANG_PUSH([C])
     AC_CACHE_VAL([ac_cv_socklen_t],
                  [AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <sys/types.h>
-                                                       #include <sys/socket.h>]],
+                                                       #ifdef _WIN32
+                                                       # include <winsock2.h>
+                                                       # include <ws2tcpip.h>
+                                                       #else
+                                                       # include <sys/socket.h>
+                                                       #endif]],
                                                      [[socklen_t a=0; getsockname(0,(struct sockaddr*)0, &a)]])],
                                     [ac_cv_socklen_t=socklen_t], [ac_cv_socklen_t=''])
                   if test x"$ac_cv_socklen_t" = x""; then
                       AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <sys/types.h>
-                                                           #include <sys/socket.h>]],
+                                                           #ifdef _WIN32
+                                                           # include <winsock2.h>
+                                                           # include <ws2tcpip.h>
+                                                           #else
+                                                           # include <sys/socket.h>
+                                                           #endif]],
                                                          [[int a=0; getsockname(0,(struct sockaddr*)0, &a);]])],
                                         [ac_cv_socklen_t=int], [ac_cv_socklen_t=size_t])
                   fi])

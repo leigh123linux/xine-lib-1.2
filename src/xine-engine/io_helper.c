@@ -40,7 +40,8 @@
 #endif
 #include <errno.h>
 #ifdef _WIN32
-#include <winsock.h>
+#include <winsock2.h>
+#include <ws2tcpip.h>
 #endif
 
 #include <string.h>
