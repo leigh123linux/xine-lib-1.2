@@ -1928,20 +1928,18 @@ static void *init_video_class (xine_t *xine, void *data)
 
 static void *init_radio_class (xine_t *xine, void *data)
 {
-  v4l_input_class_t  *this;
-  config_values_t    *config = xine->config;
+  input_class_t *this;
+  config_values_t *config = xine->config;
 
-  this = calloc(1, sizeof (v4l_input_class_t));
+  this = calloc (1, sizeof (input_class_t));
 
-  this->xine                           = xine;
-
-  this->input_class.get_instance       = v4l_class_get_radio_instance;
-  this->input_class.identifier         = "v4l";
-  this->input_class.description        = N_("v4l radio input plugin");
-  this->input_class.get_dir            = NULL;
-  this->input_class.get_autoplay_list  = NULL;
-  this->input_class.dispose            = default_input_class_dispose;
-  this->input_class.eject_media        = NULL;
+  this->get_instance       = v4l_class_get_radio_instance;
+  this->identifier         = "v4l";
+  this->description        = N_("v4l radio input plugin");
+  this->get_dir            = NULL;
+  this->get_autoplay_list  = NULL;
+  this->dispose            = default_input_class_dispose;
+  this->eject_media        = NULL;
 
   config->register_filename (config, "media.video4linux.radio_device",
 			   RADIO_DEV, XINE_CONFIG_STRING_IS_DEVICE_NAME,
