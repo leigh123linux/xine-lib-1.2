@@ -115,7 +115,10 @@ typedef enum {
 
 typedef struct {
   vo_driver_t              vo_driver;
-  win32_visual_t          *win32_visual;
+
+  const win32_visual_t    *win32_visual;
+  HWND                     WndHnd;
+  RECT                     WndRect;
 
   xine_t                  *xine;
 
@@ -170,19 +173,32 @@ static void Error( HWND hwnd, LPCSTR szfmt, ... )
 /* Update our drivers current knowledge
  * of our windows video out posistion */
 
-static void UpdateRect( win32_visual_t * win32_visual )
+static void UpdateRect( HWND WndHnd, RECT *rect, const win32_visual_t * win32_visual )
 {
   if( win32_visual->FullScreen )
     {
-      SetRect( &win32_visual->WndRect, 0, 0,
+      SetRect( rect, 0, 0,
                GetSystemMetrics( SM_CXSCREEN ),
                GetSystemMetrics( SM_CYSCREEN ) );
     }
   else
     {
-      GetClientRect( win32_visual->WndHnd, &win32_visual->WndRect );
-      ClientToScreen( win32_visual->WndHnd, ( POINT * ) &win32_visual->WndRect );
-      ClientToScreen( win32_visual->WndHnd, ( POINT * ) &win32_visual->WndRect + 1 );
+      POINT p0, p1;
+
+      GetClientRect( WndHnd, rect );
+
+      p0.x = rect->left;
+      p0.y = rect->top;
+      p1.x = rect->right;
+      p1.y = rect->bottom;
+
+      ClientToScreen( WndHnd, &p0);
+      ClientToScreen( WndHnd, &p1);
+
+      rect->left   = p0.x;
+      rect->top    = p0.y;
+      rect->right  = p1.x;
+      rect->bottom = p1.y;
     }
 }
 
@@ -212,7 +228,7 @@ static boolean CreatePrimary( win32_driver_t * win32_driver )
 
   /* set cooperative level */
 
-  result = IDirectDraw_SetCooperativeLevel( ddobj, win32_driver->win32_visual->WndHnd, DDSCL_NORMAL );
+  result = IDirectDraw_SetCooperativeLevel( ddobj, win32_driver->WndHnd, DDSCL_NORMAL );
   if( result != DD_OK )
     {
       Error( 0, "SetCooperativeLevel : error 0x%lx", result );
@@ -257,7 +273,7 @@ static boolean CreatePrimary( win32_driver_t * win32_driver )
 
   /* associate our clipper with our window */
 
-  result = IDirectDrawClipper_SetHWnd( win32_driver->ddclipper, 0, win32_driver->win32_visual->WndHnd );
+  result = IDirectDrawClipper_SetHWnd( win32_driver->ddclipper, 0, win32_driver->WndHnd );
   if( result != DD_OK )
     {
       Error( 0, "ddclipper->SetHWnd : error 0x%lx", result );
@@ -275,7 +291,7 @@ static boolean CreatePrimary( win32_driver_t * win32_driver )
 
   /* store our objects in our visual struct */
 
-  UpdateRect( win32_driver->win32_visual );
+  UpdateRect( win32_driver->WndHnd, &win32_driver->WndRect, win32_driver->win32_visual );
 
   return 1;
 }
@@ -437,10 +453,10 @@ static void Destroy( win32_driver_t * win32_driver )
     IDirectDraw_Release( win32_driver->ddobj );
 
   if (win32_driver->yuv2rgb)
-    win32_driver->yuv2rgb->free(win32_driver->yuv2rgb);
+    win32_driver->yuv2rgb->dispose(win32_driver->yuv2rgb);
 
   if (win32_driver->yuv2rgb_factory)
-    win32_driver->yuv2rgb_factory->free(win32_driver->yuv2rgb_factory);
+    win32_driver->yuv2rgb_factory->dispose(win32_driver->yuv2rgb_factory);
 
   _x_alphablend_free(&win32_driver->alphablend_extra_data);
 
@@ -710,8 +726,8 @@ static boolean DisplayFrame( win32_driver_t * win32_driver )
 
   /* TODO : account for screen ratio as well */
 
-  view_width    = win32_driver->win32_visual->WndRect.right - win32_driver->win32_visual->WndRect.left;
-  view_height   = win32_driver->win32_visual->WndRect.bottom - win32_driver->win32_visual->WndRect.top;
+  view_width    = win32_driver->WndRect.right - win32_driver->WndRect.left;
+  view_height   = win32_driver->WndRect.bottom - win32_driver->WndRect.top;
 
   if( view_width / win32_driver->ratio < view_height )
     {
@@ -726,9 +742,9 @@ static boolean DisplayFrame( win32_driver_t * win32_driver )
 
   /* center our overlay in our view frame */
 
-  centered.left = ( view_width - scaled_width ) / 2 + win32_driver->win32_visual->WndRect.left;
+  centered.left = ( view_width - scaled_width ) / 2 + win32_driver->WndRect.left;
   centered.right = centered.left + scaled_width;
-  centered.top = ( view_height - scaled_height ) / 2 + win32_driver->win32_visual->WndRect.top;
+  centered.top = ( view_height - scaled_height ) / 2 + win32_driver->WndRect.top;
   centered.bottom = centered.top + scaled_height;
 
   /* clip our overlay if it is off screen */
@@ -1192,7 +1208,7 @@ static int win32_gui_data_exchange( vo_driver_t * vo_driver, int data_type, void
     {
 
     case GUI_WIN32_MOVED_OR_RESIZED:
-      UpdateRect( win32_driver->win32_visual );
+      UpdateRect( win32_driver->WndHnd, &win32_driver->WndRect, win32_driver->win32_visual );
       DisplayFrame( win32_driver );
       break;
     case XINE_GUI_SEND_DRAWABLE_CHANGED:
@@ -1215,9 +1231,9 @@ static int win32_gui_data_exchange( vo_driver_t * vo_driver, int data_type, void
         return 0;
       }
       /* store our objects in our visual struct */
-          win32_driver->win32_visual->WndHnd = newWndHnd;
-          /* update video area and redraw current frame */
-      UpdateRect( win32_driver->win32_visual );
+      win32_driver->WndHnd = newWndHnd;
+      /* update video area and redraw current frame */
+      UpdateRect( win32_driver->WndHnd, &win32_driver->WndRect, win32_driver->win32_visual );
       DisplayFrame( win32_driver );
       break;
     }
@@ -1251,22 +1267,32 @@ static void win32_exit( vo_driver_t * vo_driver )
   Destroy( win32_driver );
 }
 
-static vo_driver_t *open_plugin (video_driver_class_t *class_gen, const void *win32_visual)
+static vo_driver_t *open_plugin (video_driver_class_t *class_gen, const void *visual)
      /*vo_driver_t *init_video_out_plugin( config_values_t * config, void * win32_visual )*/
 {
-  directx_class_t *class = (directx_class_t *)class_gen;
-  win32_driver_t  *win32_driver = calloc(1, sizeof(win32_driver_t));
-
   static const char * const config_hwaccel_values[] = {"full", "scale", "none", NULL };
+  const win32_visual_t *win32_visual = visual;
+  directx_class_t      *class = (directx_class_t *)class_gen;
+  win32_driver_t       *win32_driver;
+
+  win32_driver = calloc(1, sizeof(win32_driver_t));
+  if (!win32_driver || !visual)
+    return NULL;
 
   _x_alphablend_init(&win32_driver->alphablend_extra_data, class->xine);
 
   win32_driver->xine = class->xine;
 
+  win32_driver->WndHnd         = win32_visual->WndHnd;
+  win32_driver->WndRect.left   = win32_visual->WndRect.left;
+  win32_driver->WndRect.right  = win32_visual->WndRect.right;
+  win32_driver->WndRect.top    = win32_visual->WndRect.top;
+  win32_driver->WndRect.bottom = win32_visual->WndRect.bottom;
+
   /* Make sure that the DirectX drivers are available and present! */
   /* Not complete yet */
 
-  win32_driver->win32_visual                    = (win32_visual_t *)win32_visual;
+  win32_driver->win32_visual                    = win32_visual;
   win32_driver->vo_driver.get_capabilities      = win32_get_capabilities;
   win32_driver->vo_driver.alloc_frame           = win32_alloc_frame ;
   win32_driver->vo_driver.update_frame_format   = win32_update_frame_format;
@@ -1322,6 +1348,8 @@ static void *init_class (xine_t *xine, void *visual_gen) {
    * from this point on, nothing should go wrong anymore
    */
   directx = calloc(1, sizeof (directx_class_t));
+  if (!directx)
+    return NULL;
 
   directx->driver_class.open_plugin     = open_plugin;
   directx->driver_class.identifier      = "DirectX";
