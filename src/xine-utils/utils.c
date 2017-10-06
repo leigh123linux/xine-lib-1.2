@@ -442,11 +442,39 @@ const char *xine_get_homedir(void) {
 
 #if defined(WIN32) || defined(__CYGWIN__)
 static void xine_get_rootdir(char *rootdir, size_t maxlen) {
+# if defined(__CYGWIN__)
   char *s;
 
   strncpy(rootdir, xine_get_homedir(), maxlen - 1);
   rootdir[maxlen - 1] = '\0';
   if ((s = strrchr(rootdir, XINE_DIRECTORY_SEPARATOR_CHAR))) *s = '\0';
+# else /* WIN32 */
+  /* use location of libxine.dll */
+  static char marker;
+  HMODULE hModule;
+  wchar_t wpath[MAX_PATH];
+
+  rootdir[0] = 0;
+
+  if (GetModuleHandleEx(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS |
+                        GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
+                        (LPCTSTR)&marker, &hModule)) {
+
+    DWORD dw = GetModuleFileNameW(hModule, wpath, MAX_PATH);
+    if (dw > 0 && dw < MAX_PATH) {
+      WideCharToMultiByte(CP_UTF8, 0, wpath, -1, rootdir, maxlen, NULL, NULL);
+      /* cut library name from path */
+      char *p = strrchr(rootdir, '\\');
+      if (p) {
+        *p = 0;
+      }
+      lprintf("xine library dir is %s\n", rootdir);
+      return;
+    }
+  }
+
+  fprintf(stderr, "Can't determine libxine.dll install path\n");
+# endif
 }
 
 const char *xine_get_pluginroot(void) {
@@ -492,7 +520,7 @@ const char *xine_get_localedir(void) {
 
   return localedir;
 }
-#endif
+#endif /* _WIN32 || __CYGWIN__ */
 
 char *xine_chomp(char *str) {
   char *pbuf;
