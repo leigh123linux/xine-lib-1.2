@@ -63,6 +63,7 @@
 
 #if defined(WIN32)
 #include <windows.h>
+#include <shlobj.h>
 #endif
 
 #ifndef O_CLOEXEC
@@ -323,7 +324,7 @@ void *xine_memdup0 (const void *src, size_t length)
   return xine_fast_memcpy (dst, src, length);
 }
 
-#ifdef WIN32
+#ifdef __CYGWIN__
 /*
  * Parse command line with Windows XP syntax and copy the command (argv[0]).
  */
@@ -377,7 +378,8 @@ static size_t xine_strcpy_command(const char *cmdline, char *cmd, size_t maxlen)
 #endif
 
 const char *xine_get_homedir(void) {
-#ifdef WIN32
+#if defined(__CYGWIN__)
+
   static char homedir[1024] = {0, };
   char *s;
 
@@ -389,7 +391,25 @@ const char *xine_get_homedir(void) {
     *s = '\0';
 
   return homedir;
-#else
+
+#elif defined (WIN32)
+
+  static char homedir[MAX_PATH] = {0, };
+  wchar_t wdir[MAX_PATH];
+
+  /* Get the "Application Data" folder for the user */
+  if (!homedir[0]) {
+    if (S_OK == SHGetFolderPathW(NULL, CSIDL_APPDATA | CSIDL_FLAG_CREATE,
+                                 NULL, SHGFP_TYPE_CURRENT, wdir)) {
+      WideCharToMultiByte (CP_UTF8, 0, wdir, -1, homedir, MAX_PATH, NULL, NULL);
+    } else {
+      fprintf(stderr, "Can't find user configuration directory !\n");
+    }
+  }
+  return homedir;
+
+#else /* __CYGWIN__ , WIN32 */
+
   struct passwd pwd, *pw = NULL;
   static char homedir[BUFSIZ] = {0,};
 
@@ -417,7 +437,7 @@ const char *xine_get_homedir(void) {
   }
 
   return homedir;
-#endif /* WIN32 */
+#endif /* __CYGWIN__ , WIN32 */
 }
 
 #if defined(WIN32) || defined(__CYGWIN__)
