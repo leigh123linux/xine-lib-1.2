@@ -67,6 +67,17 @@
  */
 #define EXPERIMENTAL_FRAME_QUEUE_OPTIMIZATION 1
 
+#ifndef timeradd
+#  define timeradd(a, b, result)                   \
+  (result)->tv_sec = (a)->tv_sec + (b)->tv_sec;    \
+  (result)->tv_usec = (a)->tv_usec + (b)->tv_usec; \
+  if ((result)->tv_usec >= 1000000)                \
+    {                                              \
+      ++(result)->tv_sec;                          \
+      (result)->tv_usec -= 1000000;                \
+    }
+#endif
+
 static vo_frame_t * crop_frame( xine_video_port_t *this_gen, vo_frame_t *img );
 
 typedef struct vos_grab_video_frame_s vos_grab_video_frame_t;
