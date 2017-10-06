@@ -759,7 +759,7 @@ int _x_set_socket_close_on_exec(int s)
 #ifndef WIN32
   return fcntl(s, F_SETFD, FD_CLOEXEC);
 #else
-  return SetHandleInformation((HANDLE)s, HANDLE_FLAG_INHERIT, 0);
+  return SetHandleInformation((HANDLE)(intptr_t)s, HANDLE_FLAG_INHERIT, 0);
 #endif
 }
 
@@ -975,9 +975,9 @@ uint32_t xine_crc32_ieee (uint32_t crc, const uint8_t *data, size_t len) {
     }
   }
   {
-    unsigned long int u;
+    size_t u;
     const uint32_t *d32;
-    u = (~3ul - (unsigned long int)data) & 3;
+    u = (~(uintptr_t)3 - (uintptr_t)data) & 3;
     if (u > len)
       u = len;
     len -= u;
@@ -1042,10 +1042,10 @@ uint32_t xine_crc16_ansi (uint32_t crc, const uint8_t *data, size_t len) {
     }
   }
   {
-    unsigned long int u;
+    size_t u;
     const uint32_t *d32;
     crc &= 0xffff;
-    u = (~3ul - (unsigned long int)data) & 3;
+    u = (~(uintptr_t)3 - (uintptr_t)data) & 3;
     if (u > len)
       u = len;
     len -= u;
