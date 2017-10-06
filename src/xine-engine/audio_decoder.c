@@ -30,6 +30,7 @@
 #include <string.h>
 #include <sched.h>
 #include <unistd.h>
+#include <sys/time.h>
 
 #define LOG_MODULE "audio_decoder"
 #define LOG_VERBOSE

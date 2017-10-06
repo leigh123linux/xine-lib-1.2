@@ -77,6 +77,7 @@
 #include <unistd.h>
 #include <inttypes.h>
 #include <math.h>
+#include <sys/time.h>
 
 #define XINE_ENABLE_EXPERIMENTAL_FEATURES
 

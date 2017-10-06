@@ -33,6 +33,7 @@
 #include <pthread.h>
 #include <inttypes.h>
 #include <errno.h>
+#include <sys/time.h>
 
 #define XINE_ENABLE_EXPERIMENTAL_FEATURES
 

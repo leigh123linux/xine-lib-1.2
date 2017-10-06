@@ -19,8 +19,10 @@
  *
  */
 
+#include <xine/configfile.h>
 #include <xine/xine_internal.h>
 #include <xine/spu.h>
+#include <xine.h>
 
 #define BLACK_OPACITY   67
 #define COLOUR_OPACITY 100
