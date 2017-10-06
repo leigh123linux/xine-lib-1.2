@@ -1248,8 +1248,6 @@ static void win32_exit( vo_driver_t * vo_driver )
 {
   win32_driver_t  *win32_driver = ( win32_driver_t * ) vo_driver;
 
-  free(win32_driver->win32_visual);
-
   Destroy( win32_driver );
 }
 
