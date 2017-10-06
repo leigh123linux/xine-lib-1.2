@@ -188,6 +188,7 @@ static void rtsp_send_request(rtsp_t *s, const char *type, const char *what) {
 
   buf = _x_asprintf("%s %s %s",type, what, rtsp_protocol_version);
   rtsp_put(s,buf);
+  free(buf);
 
   if (s->auth) {
     rtsp_put(s, s->auth);
@@ -217,6 +218,7 @@ static void rtsp_schedule_standard(rtsp_t *s) {
     char *buf;
     buf = _x_asprintf("Session: %s", s->session);
     rtsp_schedule_field(s, buf);
+    free(buf);
   }
 }
 /*
@@ -263,6 +265,7 @@ static int rtsp_get_answers(rtsp_t *s) {
         if (strcmp(tmp, s->session)) {
           xprintf(s->stream->xine, XINE_VERBOSITY_DEBUG,
 		  "rtsp: warning: setting NEW session: %s\n", tmp);
+          free(s->session);
           s->session=strdup(tmp);
         }
       } else
@@ -574,11 +577,11 @@ rtsp_t *rtsp_connect(xine_stream_t *stream, const char *mrl, const char *user_ag
 void rtsp_close(rtsp_t *s) {
 
   if (s->server_state) close(s->s); /* TODO: send a TEAROFF */
-  if (s->path) free(s->path);
-  if (s->host) free(s->host);
-  if (s->mrl) free(s->mrl);
-  if (s->session) free(s->session);
-  if (s->user_agent) free(s->user_agent);
+  free(s->path);
+  free(s->host);
+  free(s->mrl);
+  free(s->session);
+  free(s->user_agent);
   free(s->auth);
   rtsp_free_answers(s);
   rtsp_unschedule_all(s);
@@ -618,8 +621,7 @@ const char *rtsp_search_answers(rtsp_t *s, const char *tag) {
 
 void rtsp_set_session(rtsp_t *s, const char *id) {
 
-  if (s->session) free(s->session);
-
+  free(s->session);
   s->session=strdup(id);
 
 }
