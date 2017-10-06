@@ -25,6 +25,8 @@
 #include "config.h"
 #endif
 
+#define XINE_NEED_WIN32_VISUAL
+
 typedef unsigned char boolean;
 
 #include <windows.h>

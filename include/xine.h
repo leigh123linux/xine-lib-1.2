@@ -49,7 +49,7 @@ extern "C" {
 #include <sys/time.h>
 #include <sys/types.h>
 
-#ifdef WIN32
+#if defined(WIN32) && !defined(XINE_COMPILE)
 #include <windows.h>
 #endif
 
@@ -1480,7 +1480,7 @@ typedef struct {
 
 } fb_visual_t;
 
-#ifdef WIN32
+#if defined(WIN32) && (!defined(XINE_COMPILE) || defined(XINE_NEED_WIN32_VISUAL))
 /*
  * this is the visual data struct any win32 gui should supply
  * (pass this to init_video_out_plugin or the xine_load_video_output_plugin
