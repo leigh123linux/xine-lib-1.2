@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset: 2; indent-tabs-mode: nil -*- */
 
 /*
- * Copyright (C) 2000-2012 the xine project
+ * Copyright (C) 2000-2017 the xine project
  *
  * This file is part of xine, a free video player.
  *
