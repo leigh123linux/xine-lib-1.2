@@ -45,8 +45,9 @@
 
 #ifdef HAVE_SYS_IOCTL_H
 #  include <sys/ioctl.h>
-#else
-/* for WIN32 */
+#endif
+#ifdef WIN32
+#  include <windows.h>
 #  include <windef.h>
 #  include <winioctl.h>
 #endif
