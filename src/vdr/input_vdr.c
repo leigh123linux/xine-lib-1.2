@@ -2661,6 +2661,7 @@ static input_plugin_t *vdr_class_get_instance(input_class_t *cls_gen, xine_strea
 
   this = calloc(1, sizeof (vdr_input_plugin_t));
   if (!this) {
+    free(mrl);
     return NULL;
   }
 
