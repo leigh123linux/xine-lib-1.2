@@ -100,6 +100,7 @@ typedef struct demux_sputext_class_s {
 
   demux_class_t      demux_class;
 
+  xine_t            *xine;
   int                max_timeout;  /* default timeout of hidding subtitles */
 
 } demux_sputext_class_t;
@@ -1471,6 +1472,15 @@ static void config_timeout_cb(void *this_gen, xine_cfg_entry_t *entry) {
   this->max_timeout = entry->num_value;
 }
 
+static void sputext_demux_class_dispose(demux_class_t *this_gen)
+{
+  demux_sputext_class_t *this = (demux_sputext_class_t *)this_gen;
+
+  this->xine->config->unregister_callback(this->xine->config, "subtitles.separate.timeout");
+
+  free(this);
+}
+
 void *init_sputext_demux_class (xine_t *xine, void *data) {
 
   demux_sputext_class_t *this ;
@@ -1486,7 +1496,9 @@ void *init_sputext_demux_class (xine_t *xine, void *data) {
   /* "text/plain: asc txt sub srt: VIDEO subtitles;" */
   this->demux_class.mimetypes       = NULL;
   this->demux_class.extensions      = "asc txt sub srt smi ssa ass";
-  this->demux_class.dispose         = default_demux_class_dispose;
+  this->demux_class.dispose         = sputext_demux_class_dispose;
+
+  this->xine = xine;
 
   /*
    * Some subtitling formats, namely AQT and Subrip09, define the end of a
