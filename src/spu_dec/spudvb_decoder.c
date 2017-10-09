@@ -1263,8 +1263,12 @@ static void spudec_dispose (spu_decoder_t * this_gen)
 
 static spu_decoder_t *dvb_spu_class_open_plugin (spu_decoder_class_t * class_gen, xine_stream_t * stream)
 {
-  dvb_spu_decoder_t *this = calloc(1, sizeof (dvb_spu_decoder_t));
   dvb_spu_class_t *class = (dvb_spu_class_t *)class_gen;
+  dvb_spu_decoder_t *this;
+
+  this = calloc(1, sizeof (dvb_spu_decoder_t));
+  if (!this)
+    return NULL;
 
 #define YUVA(r, g, b, a) (clut_t) { COMPUTE_V(r, g, b), COMPUTE_U(r, g, b), COMPUTE_V(r, g, b), a }
 #define GETBIT(s, v1, v2, tr) \
@@ -1304,10 +1308,16 @@ static spu_decoder_t *dvb_spu_class_open_plugin (spu_decoder_class_t * class_gen
   this->class = class;
   this->stream = stream;
 
-  this->pes_pkt = calloc(65, 1024);
-  this->spu_descriptor = calloc(1, sizeof(spu_dvb_descriptor_t));
+  pthread_mutex_init(&this->dvbsub_osd_mutex, NULL);
+  pthread_cond_init(&this->dvbsub_restart_timeout, NULL);
 
-  this->dvbsub = calloc(1, sizeof (dvbsub_func_t));
+  this->pes_pkt        = calloc(65, 1024);
+  this->spu_descriptor = calloc(1, sizeof(spu_dvb_descriptor_t));
+  this->dvbsub         = calloc(1, sizeof (dvbsub_func_t));
+  if (!this->pes_pkt || !this->spu_descriptor || !this->dvbsub) {
+    spudec_dispose_internal(this, 0);
+    return NULL;
+  }
 
   int i;
   for (i = 0; i < MAX_REGIONS; i++) {
@@ -1331,8 +1341,6 @@ static spu_decoder_t *dvb_spu_class_open_plugin (spu_decoder_class_t * class_gen
 
   sparse_array_new (&this->dvbsub->object_pos);
 
-  pthread_mutex_init(&this->dvbsub_osd_mutex, NULL);
-  pthread_cond_init(&this->dvbsub_restart_timeout, NULL);
   this->dvbsub_hide_timeout.tv_nsec = 0;
   this->dvbsub_hide_timeout.tv_sec = time(NULL);
 
@@ -1359,6 +1367,8 @@ static void *init_spu_decoder_plugin (xine_t * xine, void *data)
 
   dvb_spu_class_t *this;
   this = calloc(1, sizeof (dvb_spu_class_t));
+  if (!this)
+    return NULL;
 
   this->class.open_plugin = dvb_spu_class_open_plugin;
   this->class.identifier  = "spudvb";

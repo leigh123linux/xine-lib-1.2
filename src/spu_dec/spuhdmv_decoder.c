@@ -342,6 +342,7 @@ static uint32_t segbuf_get_u24(segment_buffer_t *buf)
 
 static subtitle_clut_t *segbuf_decode_palette(segment_buffer_t *buf)
 {
+  subtitle_clut_t *clut;
   uint8_t palette_id             = segbuf_get_u8 (buf);
   uint8_t palette_version_number = segbuf_get_u8 (buf);
 
@@ -361,7 +362,11 @@ static subtitle_clut_t *segbuf_decode_palette(segment_buffer_t *buf)
                   entries, palette_id, palette_version_number);
 
   /* convert to xine-lib clut */
-  subtitle_clut_t *clut = calloc(1, sizeof(subtitle_clut_t));
+
+  clut = calloc(1, sizeof(subtitle_clut_t));
+  if (!clut)
+    return NULL;
+
   clut->id = palette_id;
 
   for (i = 0; i < entries; i++) {
@@ -458,9 +463,13 @@ static subtitle_object_t *segbuf_decode_object(segment_buffer_t *buf, subtitle_o
                   object_id, version, seq_desc);
 
   if (seq_desc & 0x80) {
+    subtitle_object_t *obj;
+
     /* new object (first-in-sequence flag set) */
 
-    subtitle_object_t *obj = calloc(1, sizeof(subtitle_object_t));
+    obj = calloc(1, sizeof(subtitle_object_t));
+    if (!obj)
+      return NULL;
 
     obj->id       = object_id;
     obj->data_len = segbuf_get_u24(buf);
@@ -548,9 +557,13 @@ static subtitle_object_t *segbuf_decode_object(segment_buffer_t *buf, subtitle_o
 
 static window_def_t *segbuf_decode_window_definition(segment_buffer_t *buf)
 {
-  window_def_t *wnd = calloc(1, sizeof(window_def_t));
+  window_def_t *wnd;
+  uint8_t a;
+  wnd = calloc(1, sizeof(window_def_t));
+  if (!wnd)
+    return NULL;
 
-  uint8_t a   = segbuf_get_u8 (buf);
+  a           = segbuf_get_u8 (buf);
   wnd->id     = segbuf_get_u8 (buf);
   wnd->xpos   = segbuf_get_u16 (buf);
   wnd->ypos   = segbuf_get_u16 (buf);
@@ -590,11 +603,16 @@ static int segbuf_decode_composition_descriptor(segment_buffer_t *buf, compositi
 
 static composition_object_t *segbuf_decode_composition_object(segment_buffer_t *buf)
 {
-  composition_object_t *cobj = calloc(1, sizeof(composition_object_t));
+  composition_object_t *cobj;
+  uint8_t tmp;
+
+  cobj = calloc(1, sizeof(composition_object_t));
+  if (!cobj)
+    return NULL;
 
   cobj->object_id_ref    = segbuf_get_u16 (buf);
   cobj->window_id_ref    = segbuf_get_u8 (buf);
-  uint8_t tmp            = segbuf_get_u8 (buf);
+  tmp                    = segbuf_get_u8 (buf);
   cobj->cropped_flag     = !!(tmp & 0x80);
   cobj->forced_flag      = !!(tmp & 0x40);
   cobj->xpos             = segbuf_get_u16 (buf);
@@ -622,8 +640,12 @@ static composition_object_t *segbuf_decode_composition_object(segment_buffer_t *
 
 static presentation_segment_t *segbuf_decode_presentation_segment(segment_buffer_t *buf)
 {
-  presentation_segment_t *seg = calloc(1, sizeof(presentation_segment_t));
+  presentation_segment_t *seg;
   int                     index;
+
+  seg = calloc(1, sizeof(presentation_segment_t));
+  if (!seg)
+    return NULL;
 
   segbuf_decode_video_descriptor (buf);
   segbuf_decode_composition_descriptor (buf, &seg->comp_descr);
@@ -656,7 +678,9 @@ static rle_elem_t *copy_crop_rle(subtitle_object_t *obj, composition_object_t *c
   /* TODO: cropping (w,h sized image from pos x,y) */
 
   rle_elem_t *rle = calloc (obj->num_rle, sizeof(rle_elem_t));
-  memcpy (rle, obj->rle, obj->num_rle * sizeof(rle_elem_t));
+  if (rle) {
+    memcpy (rle, obj->rle, obj->num_rle * sizeof(rle_elem_t));
+  }
   return rle;
 }
 
@@ -807,9 +831,12 @@ static int show_overlay(spuhdmv_decoder_t *this, composition_object_t *cobj, uns
   overlay.width     = obj->width;
   overlay.height    = obj->height;
 
-  overlay.rle       = copy_crop_rle (obj, cobj);
   overlay.num_rle   = obj->num_rle;
   overlay.data_size = obj->num_rle * sizeof(rle_elem_t);
+
+  overlay.rle       = copy_crop_rle (obj, cobj);
+  if (!overlay.rle)
+    return -1;
 
   /* */
 
@@ -1029,6 +1056,14 @@ static spu_decoder_t *open_plugin (spu_decoder_class_t *class_gen, xine_stream_t
   spuhdmv_decoder_t *this;
 
   this = (spuhdmv_decoder_t *) calloc(1, sizeof (spuhdmv_decoder_t));
+  if (!this)
+    return NULL;
+
+  this->buf = segbuf_init();
+  if (!this->buf) {
+    free(this);
+    return NULL;
+  }
 
   this->spu_decoder.decode_data         = spudec_decode_data;
   this->spu_decoder.reset               = spudec_reset;
@@ -1038,8 +1073,6 @@ static spu_decoder_t *open_plugin (spu_decoder_class_t *class_gen, xine_stream_t
   this->spu_decoder.set_button          = NULL;
   this->stream                          = stream;
   this->class                           = (spuhdmv_class_t *) class_gen;
-
-  this->buf = segbuf_init();
 
   memset(this->overlay_handles, 0xff, sizeof(this->overlay_handles)); /* --> -1 */
 
@@ -1051,6 +1084,8 @@ static void *init_plugin (xine_t *xine, void *data)
   spuhdmv_class_t *this;
 
   this = calloc(1, sizeof (spuhdmv_class_t));
+  if (!this)
+    return NULL;
 
   this->decoder_class.open_plugin = open_plugin;
   this->decoder_class.identifier  = "spuhdmv";

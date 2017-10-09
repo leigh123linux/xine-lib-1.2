@@ -451,7 +451,11 @@ static void update_osd_font(void *this_gen, xine_cfg_entry_t *entry)
 
 static spu_decoder_t *spucmml_class_open_plugin (spu_decoder_class_t *class_gen, xine_stream_t *stream) {
   spucmml_class_t *class = (spucmml_class_t *)class_gen;
-  spucmml_decoder_t *this = (spucmml_decoder_t *) calloc(1, sizeof(spucmml_decoder_t));
+  spucmml_decoder_t *this;
+
+  this = (spucmml_decoder_t *) calloc(1, sizeof(spucmml_decoder_t));
+  if (!this)
+    return NULL;
 
   this->spu_decoder.decode_data         = spudec_decode_data;
   this->spu_decoder.reset               = spudec_reset;
@@ -509,7 +513,11 @@ static void spu_decoder_class_dispose(spu_decoder_class_t *this_gen)
 }
 
 static void *init_spu_decoder_plugin (xine_t *xine, void *data) {
-  spucmml_class_t *this = (spucmml_class_t *) calloc(1, sizeof(spucmml_class_t));
+  spucmml_class_t *this;
+
+  this = (spucmml_class_t *) calloc(1, sizeof(spucmml_class_t));
+  if (!this)
+    return NULL;
 
   this->class.open_plugin      = spucmml_class_open_plugin;
   this->class.identifier       = "spucmml";

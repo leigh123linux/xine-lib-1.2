@@ -315,6 +315,8 @@ static spu_decoder_t *open_plugin (spu_decoder_class_t *class_gen, xine_stream_t
   spudec_decoder_t *this ;
 
   this = (spudec_decoder_t *) calloc(1, sizeof (spudec_decoder_t));
+  if (!this)
+    return NULL;
 
   this->spu_decoder.decode_data         = spudec_decode_data;
   this->spu_decoder.reset               = spudec_reset;
@@ -328,6 +330,10 @@ static spu_decoder_t *open_plugin (spu_decoder_class_t *class_gen, xine_stream_t
   this->menu_handle = -1;
   this->buttonN = 1;
   this->event.object.overlay = calloc(1, sizeof(vo_overlay_t));
+  if (!this->event.object.overlay) {
+    free(this);
+    return NULL;
+  }
 
   pthread_mutex_init(&this->nav_pci_lock, NULL);
   this->pci_cur.pci.hli.hl_gi.hli_ss  = 0;
@@ -356,6 +362,8 @@ static void *init_plugin (xine_t *xine, void *data) {
   spudec_class_t *this;
 
   this = calloc(1, sizeof (spudec_class_t));
+  if (!this)
+    return NULL;
 
   this->decoder_class.open_plugin     = open_plugin;
   this->decoder_class.identifier      = "spudec";

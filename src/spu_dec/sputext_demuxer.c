@@ -1401,6 +1401,9 @@ static demux_plugin_t *open_demux_plugin (demux_class_t *class_gen, xine_stream_
   lprintf("open_plugin() called\n");
 
   this = calloc(1, sizeof (demux_sputext_t));
+  if (!this)
+    return NULL;
+
   this->stream = stream;
   this->input  = input;
 
@@ -1488,6 +1491,8 @@ void *init_sputext_demux_class (xine_t *xine, void *data) {
   lprintf("initializing\n");
 
   this = calloc(1, sizeof (demux_sputext_class_t));
+  if (!this)
+    return NULL;
 
   this->demux_class.open_plugin     = open_demux_plugin;
   this->demux_class.description     = N_("sputext demuxer plugin");

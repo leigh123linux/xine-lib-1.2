@@ -312,6 +312,8 @@ static spu_decoder_t *spudec_open_plugin (spu_decoder_class_t *class, xine_strea
   spucc_decoder_t *this ;
 
   this = (spucc_decoder_t *) calloc(1, sizeof(spucc_decoder_t));
+  if (!this)
+    return NULL;
 
   this->spu_decoder.decode_data         = spudec_decode_data;
   this->spu_decoder.reset               = spudec_reset;
@@ -334,6 +336,8 @@ static void *init_spu_decoder_plugin (xine_t *xine, void *data) {
   spucc_class_t *this ;
 
   this = (spucc_class_t *) calloc(1, sizeof(spucc_class_t));
+  if (!this)
+    return NULL;
 
   this->spu_class.open_plugin      = spudec_open_plugin;
   this->spu_class.identifier       = "spucc";
