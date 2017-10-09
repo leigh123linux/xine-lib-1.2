@@ -416,6 +416,10 @@ static void spudec_discontinuity (spu_decoder_t *this_gen) {
 
 static void spudec_dispose (spu_decoder_t *this_gen) {
   spucmml_decoder_t *this = (spucmml_decoder_t *) this_gen;
+  config_values_t   *config = this->class->xine->config;
+
+  config->unregister_callback(config, "subtitles.separate.font");
+  config->unregister_callback(config, "subtitles.separate.vertical_offset");
 
   if (this->event_queue)
     xine_event_dispose_queue (this->event_queue);
@@ -495,13 +499,22 @@ static void update_src_encoding(void *this_gen, xine_cfg_entry_t *entry)
   printf("libspucmml: spu_src_encoding = %s\n", this->src_encoding );
 }
 
+static void spu_decoder_class_dispose(spu_decoder_class_t *this_gen)
+{
+  spucmml_class_t *this = (spucmml_class_t *)this_gen;
+
+  this->xine->config->unregister_callback(this->xine->config, "subtitles.separate.src_encoding");
+
+  free(this);
+}
+
 static void *init_spu_decoder_plugin (xine_t *xine, void *data) {
   spucmml_class_t *this = (spucmml_class_t *) calloc(1, sizeof(spucmml_class_t));
 
   this->class.open_plugin      = spucmml_class_open_plugin;
   this->class.identifier       = "spucmml";
   this->class.description      = N_("CMML subtitle decoder plugin");
-  this->class.dispose          = default_spu_decoder_class_dispose;
+  this->class.dispose          = spu_decoder_class_dispose;
 
   this->xine                   = xine;
 
