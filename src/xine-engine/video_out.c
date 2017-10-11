@@ -1580,10 +1580,9 @@ static vo_frame_t *next_frame (vos_t *this, int64_t *vpts) {
       pthread_mutex_lock (&this->trigger_drawing_mutex);
       pthread_cond_broadcast (&this->done_flushing);
       pthread_mutex_unlock (&this->trigger_drawing_mutex);
-
-#ifdef LOG_FLUSH
-      printf ("video_out: flushed %d frames (now=%"PRId64", discard=%d)\n", n, *vpts, this->discard_frames);
-#endif
+      xprintf (this->xine, XINE_VERBOSITY_DEBUG,
+        "video_out: flushed out %d frames (now=%"PRId64", discard=%d).\n",
+        n, *vpts, this->discard_frames);
     }
     *vpts = 0;
     return first_frame;
@@ -2325,6 +2324,16 @@ static int vo_set_property (xine_video_port_t *this_gen, int property, int value
       pthread_mutex_unlock (&this->display_img_buf_queue.mutex);
     } else if (this->discard_frames) {
       pthread_mutex_lock (&this->display_img_buf_queue.mutex);
+      if ((this->discard_frames == 1) && this->video_loop_running && this->display_img_buf_queue.num_buffers) {
+        /* Usually, render thread already did that in the meantime. Anyway, make sure display queue
+           is empty, and more importantly, there are free frames for decoding when discard gets lifted. */
+        pthread_mutex_lock (&this->trigger_drawing_mutex);
+        this->trigger_drawing = 1;
+        pthread_cond_signal (&this->trigger_drawing_cond);
+        pthread_mutex_unlock (&this->trigger_drawing_mutex);
+        do pthread_cond_wait (&this->done_flushing, &this->display_img_buf_queue.mutex);
+        while (this->display_img_buf_queue.num_buffers);
+      }
       this->discard_frames--;
       pthread_mutex_unlock (&this->display_img_buf_queue.mutex);
     } else

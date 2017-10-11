@@ -710,7 +710,8 @@ xine_stream_t *xine_stream_new (xine_t *this,
   stream->delay_finish_event     = 0;
   stream->gapless_switch         = 0;
   stream->keep_ao_driver_open    = 0;
-  stream->finished_naturally     = 0;
+  /* Do not flush output when opening/closing yet unused streams (eg subtitle). */
+  stream->finished_naturally     = 1;
 
   stream->video_out              = vo;
   if (vo)
