@@ -22,6 +22,8 @@
 
 #include <pthread.h>
 
+#include <xine/attributes.h>
+
 typedef struct {
   pthread_mutex_t   lock;
   void*             object;               /* referenced object */

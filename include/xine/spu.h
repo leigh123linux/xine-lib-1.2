@@ -22,9 +22,7 @@
 #ifndef XINE_UTILS_SPU_H
 #define XINE_UTILS_SPU_H
 
-#ifndef XINE_PROTECTED
-#define XINE_PROTECTED
-#endif
+#include <xine/attributes.h>
 
 typedef struct xine_spu_opacity_s xine_spu_opacity_t;
 

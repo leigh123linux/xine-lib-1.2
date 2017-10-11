@@ -50,6 +50,7 @@
 #ifndef HAVE_XINE_BUFFER_H
 #define HAVE_XINE_BUFFER_H
 
+#include <xine/attributes.h>
 #include <xine/os_types.h>
 
 /*

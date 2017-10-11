@@ -54,6 +54,8 @@
 #ifndef XINE_SORTED_ARRAY_H
 #define XINE_SORTED_ARRAY_H
 
+#include <xine/attributes.h>
+
 #include "array.h"
 
 /* Array type */

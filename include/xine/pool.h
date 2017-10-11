@@ -23,6 +23,8 @@
 #include <stdlib.h>
 #include <inttypes.h>
 
+#include <xine/attributes.h>
+
 typedef struct xine_pool_s xine_pool_t;
 
 /* Creates a new pool

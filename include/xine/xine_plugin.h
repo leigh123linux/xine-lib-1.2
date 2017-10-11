@@ -23,6 +23,8 @@
 #ifndef XINE_PLUGIN_H
 #define XINE_PLUGIN_H
 
+#include <xine/attributes.h>
+
 #define PLUGIN_NONE	      0
 #define PLUGIN_INPUT	      1
 #define PLUGIN_DEMUX	      2

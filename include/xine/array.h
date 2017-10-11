@@ -23,6 +23,8 @@
 #ifndef XINE_ARRAY_H
 #define XINE_ARRAY_H
 
+#include <xine/attributes.h>
+
 /* Array type */
 typedef struct xine_array_s xine_array_t;
 

@@ -19,6 +19,9 @@
  *
  * Fifo + Ring Buffer
  */
+
+#include <xine/attributes.h>
+
 typedef struct xine_ring_buffer_s xine_ring_buffer_t;
 
 /* Creates a new ring buffer */

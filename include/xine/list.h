@@ -41,6 +41,8 @@
 #ifndef XINE_LIST_H
 #define XINE_LIST_H
 
+#include <xine/attributes.h>
+
 /* Doubly-linked list type */
 typedef struct xine_list_s xine_list_t;
 

@@ -21,7 +21,6 @@
 #ifndef __VDR_H
 #define __VDR_H
 
-
 #define XINE_VDR_VERSION 901
 
 

@@ -26,6 +26,8 @@
 #include <stdarg.h>
 #include <pthread.h>
 
+#include <xine/attributes.h>
+
 typedef struct scratch_buffer_s scratch_buffer_t;
 
 #define SCRATCH_LINE_LEN_MAX  1024
