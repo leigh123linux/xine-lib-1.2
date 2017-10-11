@@ -23,6 +23,7 @@
 #ifndef XINE_ARRAY_H
 #define XINE_ARRAY_H
 
+#include <stddef.h> /* size_t */
 #include <xine/attributes.h>
 
 /* Array type */

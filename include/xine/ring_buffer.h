@@ -20,6 +20,7 @@
  * Fifo + Ring Buffer
  */
 
+#include <stddef.h> /* size_t */
 #include <xine/attributes.h>
 
 typedef struct xine_ring_buffer_s xine_ring_buffer_t;
