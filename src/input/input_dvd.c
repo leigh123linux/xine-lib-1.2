@@ -46,6 +46,7 @@
 #include <sys/stat.h>
 
 #include <unistd.h>
+#include <pthread.h>
 #include <fcntl.h>
 #include <time.h>
 #include <string.h>

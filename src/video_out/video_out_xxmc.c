@@ -36,6 +36,7 @@
 
 #include "xxmc.h"
 #include <unistd.h>
+#include <pthread.h>
 #include "xv_common.h"
 
 

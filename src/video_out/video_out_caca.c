@@ -28,6 +28,7 @@
 #include <stdlib.h>
 #include <stdarg.h>
 #include <unistd.h>
+#include <pthread.h>
 #include <string.h>
 #include <fcntl.h>
 #include <errno.h>

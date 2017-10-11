@@ -30,6 +30,7 @@
 #include <stdio.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <pthread.h>
 #include <errno.h>
 
 #define LOG_MODULE "dxr3_scr"

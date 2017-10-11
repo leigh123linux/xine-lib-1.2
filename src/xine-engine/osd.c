@@ -27,6 +27,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+#include <pthread.h>
 #include <zlib.h>
 #include <sys/types.h>
 #ifdef HAVE_DIRENT_H

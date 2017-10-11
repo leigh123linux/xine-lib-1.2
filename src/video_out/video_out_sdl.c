@@ -45,6 +45,7 @@
 #include <string.h>
 #include <inttypes.h>
 #include <math.h>
+#include <pthread.h>
 
 #ifdef HAVE_SDL11_SDL_H
 # include <SDL11/SDL.h>

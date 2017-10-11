@@ -24,6 +24,7 @@
 #include "config.h"
 #endif
 
+#include <pthread.h>
 #include <sys/time.h>
 
 #include <xine/xine_internal.h>

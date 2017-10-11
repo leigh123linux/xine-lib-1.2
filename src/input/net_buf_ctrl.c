@@ -27,6 +27,7 @@
 
 #include <stdlib.h>
 #include <unistd.h>
+#include <pthread.h>
 
 /********** logging **********/
 #define LOG_MODULE "net_buf_ctrl"

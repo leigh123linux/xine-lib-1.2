@@ -28,6 +28,7 @@
 
 #include <stdio.h>
 #include <math.h>
+#include <pthread.h>
 
 #include <xine/xine_internal.h>
 #include <xine/xineutils.h>

@@ -29,6 +29,7 @@
 #endif
 
 #include <stdio.h>
+#include <pthread.h>
 
 #include <xine/xine_internal.h>
 #include <xine/xineutils.h>

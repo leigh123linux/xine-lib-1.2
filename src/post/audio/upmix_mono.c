@@ -28,6 +28,7 @@
 #endif
 
 #include <stdio.h>
+#include <pthread.h>
 
 #define LOG_MODULE "upmix_mono"
 #define LOG_VERBOSE

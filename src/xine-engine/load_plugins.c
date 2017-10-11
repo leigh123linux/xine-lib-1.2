@@ -29,6 +29,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <pthread.h>
 #ifdef HAVE_DIRENT_H
 #include <dirent.h>
 #endif

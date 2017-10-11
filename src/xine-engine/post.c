@@ -25,7 +25,9 @@
 #define POST_INTERNAL
 
 #include <xine/post.h>
+
 #include <stdarg.h>
+#include <pthread.h>
 
 #define HARD_DEBUG
 #ifdef HARD_DEBUG

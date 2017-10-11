@@ -26,6 +26,7 @@
 
 #include <stdio.h>
 #include <stdarg.h>
+#include <pthread.h>
 
 #define LOG_MODULE "scratch"
 #define LOG_VERBOSE

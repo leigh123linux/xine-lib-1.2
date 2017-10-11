@@ -23,6 +23,8 @@
 #ifndef XINE_POST_H
 #define XINE_POST_H
 
+#include <pthread.h>
+
 #include <xine.h>
 #include <xine/video_out.h>
 #include <xine/audio_out.h>

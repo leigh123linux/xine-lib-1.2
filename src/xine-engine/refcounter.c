@@ -22,6 +22,8 @@
 #include "config.h"
 #endif
 
+#include <pthread.h>
+
 #define LOG_MODULE "refcounter"
 #define LOG_VERBOSE
 /*

@@ -22,6 +22,8 @@
  * simple switch video post plugin
  */
 
+#include <pthread.h>
+
 #define LOG_MODULE "switch"
 #define LOG_VERBOSE
 /*

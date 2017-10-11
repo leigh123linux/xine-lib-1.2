@@ -45,6 +45,7 @@
 #include <stdlib.h>
 #include <errno.h>
 #include <unistd.h>
+#include <pthread.h>
 #include <string.h>
 #include <inttypes.h>
 #include <sys/types.h>

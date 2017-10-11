@@ -39,6 +39,7 @@
 #include <string.h>
 #include <errno.h>
 #include <math.h>
+#include <pthread.h>
 
 #include <sys/types.h>
 #if defined(__FreeBSD__)

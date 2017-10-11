@@ -68,6 +68,7 @@
 #include <fcntl.h>
 #include <math.h>
 #include <unistd.h>
+#include <pthread.h>
 #include <inttypes.h>
 #include <math.h>
 #include <sys/time.h>

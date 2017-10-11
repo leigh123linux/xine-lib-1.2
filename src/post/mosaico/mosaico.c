@@ -26,6 +26,8 @@
 # include "config.h"
 #endif
 
+#include <pthread.h>
+
 #define LOG_MODULE "mosaico"
 #define LOG_VERBOSE
 /*

@@ -30,6 +30,7 @@
 #include <math.h>
 #include <string.h>
 #include <errno.h>
+#include <pthread.h>
 #include <sys/time.h>
 
 #define LOG_MODULE "metronom"
