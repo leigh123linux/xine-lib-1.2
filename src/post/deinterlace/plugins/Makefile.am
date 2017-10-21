@@ -55,5 +55,5 @@ libdeinterlaceplugins_la_SOURCES = double.c greedy.c linear.c linearblend.c \
 				   vfir.c weave.c scalerbob.c kdetv_tomsmocomp.c \
 				   $(nodebug_sources)
 libdeinterlaceplugins_la_LIBADD  = $(XINE_LIB) libdeinterlacepluginsO1.la
-libdeinterlaceplugins_la_CFLAGS  = $(DEFAULT_OCFLAGS) $(AM_CFLAGS) $(AVUTIL_CFLAGS)
+libdeinterlaceplugins_la_CFLAGS  = $(DEFAULT_OCFLAGS) $(AM_CFLAGS)
 libdeinterlaceplugins_la_LDFLAGS = $(AM_LDFLAGS) $(xineplug_ldflags)
