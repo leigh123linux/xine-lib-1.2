@@ -1238,7 +1238,7 @@ static void config_unregister_cb (config_values_t *this, const char *key) {
   }
 }
 
-void _x_config_unregister_cb_class(config_values_t *this, void *callback_data) {
+void _x_config_unregister_cb_class_d (config_values_t *this, void *callback_data) {
 
   cfg_entry_t *entry;
 

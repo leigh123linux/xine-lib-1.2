@@ -3005,7 +3005,7 @@ void _x_dispose_plugins (xine_t *this) {
     int i;
 
     if (this->config) {
-      _x_config_unregister_cb_class(this->config, this);
+      _x_config_unregister_cb_class_d (this->config, this);
     }
 
     for (i = 0; i < PLUGIN_TYPE_MAX; i++) {
