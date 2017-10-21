@@ -12,9 +12,19 @@ libasfheader_la_SOURCES = asfheader.c
 # ---------
 # All of xine demuxer plugins should be named like the scheme "xineplug_dmx_"
 
-noinst_HEADERS = asfheader.h qtpalette.h group_games.h group_audio.h \
-		 group_video.h id3.h ebml.h matroska.h demux_matroska.h \
-		 iff.h flacutils.h  real_common.h
+noinst_HEADERS = \
+	asfheader.h \
+	demux_matroska.h \
+	ebml.h \
+	flacutils.h \
+	group_audio.h \
+	group_games.h \
+	group_video.h \
+	id3.h \
+	iff.h \
+	matroska.h \
+	qtpalette.h \
+	real_common.h
 
 if ENABLE_ASF
 asf_module = xineplug_dmx_asf.la
@@ -37,22 +47,34 @@ xineplug_LTLIBRARIES = \
 	$(mng_module) \
 	$(image_module) \
 	$(modplug_module) \
-	xineplug_dmx_games.la \
 	xineplug_dmx_audio.la \
-	xineplug_dmx_video.la \
 	xineplug_dmx_fli.la \
+	xineplug_dmx_games.la \
+	xineplug_dmx_nsv.la \
+	xineplug_dmx_playlist.la \
 	xineplug_dmx_pva.la \
 	xineplug_dmx_slave.la \
-	xineplug_dmx_nsv.la \
-	xineplug_dmx_playlist.la
+	xineplug_dmx_video.la
 
-xineplug_dmx_video_la_SOURCES = group_video.c \
-				demux_avi.c demux_iff.c \
-				demux_elem.c demux_mpeg_block.c demux_mpeg.c \
-				demux_mpeg_pes.c demux_ts.c \
-				demux_vc1es.c demux_qt.c demux_real.c demux_flv.c \
-				demux_rawdv.c demux_yuv_frames.c demux_yuv4mpeg2.c \
-				demux_matroska.c demux_matroska-chapters.c ebml.c
+xineplug_dmx_video_la_SOURCES = \
+	group_video.c \
+	demux_avi.c \
+	demux_elem.c \
+	demux_iff.c \
+	demux_matroska.c \
+	demux_matroska-chapters.c \
+	demux_mpeg.c \
+	demux_mpeg_block.c \
+	demux_mpeg_pes.c \
+	demux_qt.c \
+	demux_rawdv.c \
+	demux_real.c \
+	demux_ts.c \
+	demux_vc1es.c \
+	demux_flv.c \
+	demux_yuv_frames.c \
+	demux_yuv4mpeg2.c \
+	ebml.c
 xineplug_dmx_video_la_CFLAGS = $(AM_CFLAGS)
 xineplug_dmx_video_la_CPPFLAGS = $(AM_CPPFLAGS) $(ZLIB_CPPFLAGS)
 xineplug_dmx_video_la_LIBADD = $(XINE_LIB) $(LTLIBINTL) $(ZLIB_LIBS)
@@ -70,20 +92,40 @@ xineplug_dmx_mng_la_CPPFLAGS = $(AM_CPPFLAGS) $(ZLIB_CPPFLAGS)
 xineplug_dmx_pva_la_SOURCES = demux_pva.c
 xineplug_dmx_pva_la_LIBADD = $(XINE_LIB)
 
-xineplug_dmx_games_la_SOURCES = group_games.c demux_eawve.c \
-				demux_idcin.c demux_ipmovie.c demux_roq.c \
-				demux_vqa.c demux_wc3movie.c demux_str.c \
-				demux_film.c demux_smjpeg.c demux_4xm.c \
-				demux_vmd.c
+xineplug_dmx_games_la_SOURCES = \
+	group_games.c \
+	demux_4xm.c \
+	demux_eawve.c \
+	demux_film.c \
+	demux_idcin.c \
+	demux_ipmovie.c \
+	demux_roq.c \
+	demux_smjpeg.c \
+	demux_str.c \
+	demux_vmd.c \
+	demux_vqa.c \
+	demux_wc3movie.c
 xineplug_dmx_games_la_LIBADD = $(XINE_LIB) $(LTLIBINTL)
 
-xineplug_dmx_audio_la_SOURCES = group_audio.c demux_aud.c demux_aiff.c \
-				demux_cdda.c demux_mpgaudio.c \
-				demux_realaudio.c demux_snd.c demux_voc.c \
-				demux_vox.c demux_wav.c demux_ac3.c id3.c \
-				demux_aac.c demux_flac.c \
-				demux_mpc.c demux_dts.c demux_shn.c \
-				demux_tta.c
+xineplug_dmx_audio_la_SOURCES = \
+	group_audio.c \
+	demux_aac.c \
+	demux_ac3.c \
+	demux_aiff.c \
+	demux_aud.c \
+	demux_cdda.c \
+	demux_dts.c \
+	demux_flac.c \
+	demux_mpc.c \
+	demux_mpgaudio.c \
+	demux_realaudio.c \
+	demux_shn.c \
+	demux_snd.c \
+	demux_tta.c \
+	demux_voc.c \
+	demux_vox.c \
+	demux_wav.c \
+	id3.c
 xineplug_dmx_audio_la_LIBADD = $(XINE_LIB) $(LTLIBINTL)
 
 xineplug_dmx_modplug_la_SOURCES = demux_mod.c
