@@ -630,6 +630,7 @@ const char *xine_guess_spu_encoding(void) XINE_PROTECTED;
  * use the best clock reference (API compatible with gettimeofday)
  * note: it will be a monotonic clock, if available.
  */
+struct timezone;
 int xine_monotonic_clock(struct timeval *tv, struct timezone *tz) XINE_PROTECTED;
 
 /**
