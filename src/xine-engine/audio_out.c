@@ -57,13 +57,6 @@
  * heavily modified by guenter bartsch 2003 for use in libxine
  */
 
-#ifndef	__sun
-/* required for swab() */
-#define _XOPEN_SOURCE 500
-#endif
-/* required for FNDELAY decl */
-#define _BSD_SOURCE 1
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
