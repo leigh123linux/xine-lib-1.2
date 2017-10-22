@@ -471,7 +471,8 @@ void *noise_init_plugin(xine_t *xine, void *data)
     if (xine_mm_accel() & MM_ACCEL_X86_MMX) {
         lineNoise = lineNoise_MMX;
         lineNoiseAvg = lineNoiseAvg_MMX;
-    } else if (xine_mm_accel() & MM_ACCEL_X86_MMXEXT) {
+    }
+    if (xine_mm_accel() & MM_ACCEL_X86_MMXEXT) {
         lineNoise = lineNoise_MMX2;
     }
 #endif
