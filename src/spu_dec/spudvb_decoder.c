@@ -25,6 +25,7 @@
  * - Implement support for teletext based subtitles
  */
 
+#include <time.h>
 #include <pthread.h>
 #include <errno.h>
 
