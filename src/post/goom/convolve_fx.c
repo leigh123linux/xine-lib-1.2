@@ -1,6 +1,6 @@
 #include "goom_fx.h"
 #include "goom_plugin_info.h"
-#include "goomsl.h"
+/*#include "goomsl.h"*/
 #include "goom_config.h"
 #include <math.h>
 #include <stdio.h>
@@ -28,7 +28,7 @@ typedef struct _CONV_DATA{
   PluginParam factor_p;
   PluginParameters params;
 
-  GoomSL *script;
+  /*GoomSL *script;*/
 
   /* rotozoom */
   int   theta;

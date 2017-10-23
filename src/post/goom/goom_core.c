@@ -24,7 +24,7 @@
 #include "sound_tester.h"
 #include "goom_plugin_info.h"
 #include "goom_fx.h"
-#include "goomsl.h"
+/*#include "goomsl.h"*/
 
 #include <xine/xine_internal.h>
 
@@ -773,10 +773,12 @@ void goom_close (PluginInfo *goomInfo)
     goomInfo->tentacles_fx.free(&goomInfo->tentacles_fx);
     goomInfo->zoomFilter_fx.free(&goomInfo->zoomFilter_fx);
 
+    /*
     if (goomInfo->scanner)
       gsl_free(goomInfo->scanner);
     if (goomInfo->main_scanner)
       gsl_free(goomInfo->main_scanner);
+    */
 
     gfont_unload(&goomInfo->font);
 

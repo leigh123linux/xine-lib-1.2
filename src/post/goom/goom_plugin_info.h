@@ -165,9 +165,11 @@ struct _PLUGIN_INFO {
 	
 	GoomRandom *gRandom;
     
+  /*
     GoomSL *scanner;
     GoomSL *main_scanner;
     const char *main_script_str;
+  */
 };
 
 void plugin_info_init(PluginInfo *p, int nbVisual); 
