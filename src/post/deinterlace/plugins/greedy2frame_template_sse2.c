@@ -158,7 +158,7 @@ static void DeinterlaceGreedy2Frame_SSE2(uint8_t *output, int outstride,
 
         /* just rely on gcc not using xmm regs... */
         do {
-          asm volatile(
+          __asm__ __volatile__(
             "movdqa  %0, %%xmm6			\n\t"     // xmm6 = Mask
             "pxor    %%xmm7, %%xmm7		\n\t"     // xmm7 = zero
             : /* no output */
@@ -167,7 +167,7 @@ static void DeinterlaceGreedy2Frame_SSE2(uint8_t *output, int outstride,
 
         count = LineLength >> 4;
         do {
-          asm volatile(
+          __asm__ __volatile__(
        /* Figure out what to do with the scanline above the one we copy.
         * See above for a description of the algorithm.
         * weave if (weave(M) AND (weave(T) OR weave(B)))
@@ -198,7 +198,7 @@ static void DeinterlaceGreedy2Frame_SSE2(uint8_t *output, int outstride,
           : "m" (GreedyTwoFrameThreshold128),
             "m" (*Destc), "r" (T1), "r" (T0), "r" ((void*)(intptr_t)Pitch) );
 
-          asm volatile (
+          __asm__ __volatile__ (
             /* calculate |B1-B0| keep B1 put result in xmm4 */
             "movdqa  %%xmm3, %%xmm4		\n\t"
             "psubusb %%xmm2, %%xmm4		\n\t"
@@ -277,7 +277,7 @@ static void DeinterlaceGreedy2Frame_SSE2(uint8_t *output, int outstride,
         T0 += PitchRest;
     }
 
-    asm("sfence\n\t");
+    __asm__ __volatile__("sfence\n\t");
 
     if( bottom_field )
     {

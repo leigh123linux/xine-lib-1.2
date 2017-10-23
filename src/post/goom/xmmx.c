@@ -50,7 +50,7 @@ void zoom_filter_xmmx (int prevX, int prevY,
 	ratiox.d[0] = buffratio;
 	ratiox.d[1] = buffratio;
 
-  asm volatile (
+  __asm__ __volatile__ (
     "\n\t movq  %0,    %%mm6"
     "\n\t pslld $16,   %%mm6" /* mm6 = [rat16=buffratio<<16 | rat16=buffratio<<16] */
     "\n\t pxor  %%mm7, %%mm7" /* mm7 = 0 */
@@ -68,7 +68,7 @@ void zoom_filter_xmmx (int prevX, int prevY,
        * modified = mm0,mm1,mm2
        */
 
-      asm volatile (
+      __asm__ __volatile__ (
         "#1 \n\t movq       %0, %%mm0"
         "#1 \n\t movq       %1, %%mm1"
         "#1 \n\t psubd   %%mm0, %%mm1" /* mm1 = D - S */
@@ -92,7 +92,7 @@ void zoom_filter_xmmx (int prevX, int prevY,
        * post : clipped mm0
        * modified : mm0,mm1,mm2
        */
-      asm volatile (
+      __asm__ __volatile__ (
         "#1 \n\t movq       %0, %%mm1"
         "#1 \n\t pcmpgtd %%mm0, %%mm1"
         /* mm0 en X contient (idem pour Y) :

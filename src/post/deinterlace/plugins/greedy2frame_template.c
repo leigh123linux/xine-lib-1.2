@@ -169,7 +169,7 @@ static void DeinterlaceGreedy2Frame_MMX(uint8_t *output, int outstride,
 
         count = LineLength >> 3;
         do {
-          asm volatile(
+          __asm__ __volatile__(
        /* Figure out what to do with the scanline above the one we just copied.
         * See above for a description of the algorithm.
         * weave if (weave(M) AND (weave(T) OR weave(B)))
@@ -186,7 +186,7 @@ static void DeinterlaceGreedy2Frame_MMX(uint8_t *output, int outstride,
               "m" (*B1), "m" (*M0), "m" (Mask) );
 
 
-          asm volatile(
+          __asm__ __volatile__(
        /* Figure out what to do with the scanline above the one we just copied.
         * See above for a description of the algorithm.
         * Average T1 and B1 so we can do interpolated bobbing if we bob onto T1
@@ -321,7 +321,7 @@ static void DeinterlaceGreedy2Frame_MMX(uint8_t *output, int outstride,
     }
 
 #ifdef IS_MMXEXT
-    asm("sfence\n\t");
+    __asm__ __volatile__("sfence\n\t");
 #endif
 
     if( bottom_field )
@@ -336,7 +336,7 @@ static void DeinterlaceGreedy2Frame_MMX(uint8_t *output, int outstride,
     }
 
     /* clear out the MMX registers ready for doing floating point again */
-    asm("emms\n\t");
+    __asm__ __volatile__("emms\n\t");
 #endif
 }
 

@@ -588,9 +588,9 @@ static int noise_draw(vo_frame_t *frame, xine_stream_t *stream)
 
 #ifdef ARCH_X86
     if (xine_mm_accel() & MM_ACCEL_X86_MMX)
-        asm volatile ("emms\n\t");
+        __asm__ __volatile__ ("emms\n\t");
     if (xine_mm_accel() & MM_ACCEL_X86_MMXEXT)
-        asm volatile ("sfence\n\t");
+        __asm__ __volatile__ ("sfence\n\t");
 #endif
 
     pthread_mutex_unlock (&this->lock);
