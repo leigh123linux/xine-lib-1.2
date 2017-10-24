@@ -92,6 +92,12 @@
 #  include "libdvdnav/nav_read.h"
 #endif
 
+#define LOG_MODULE "input_http"
+#define LOG_VERBOSE
+/*
+#define LOG
+*/
+
 /* Xine includes */
 #include <xine/xineutils.h>
 #include <xine/buffer.h>
@@ -100,12 +106,6 @@
 
 /* Print debug messages? */
 /* #define INPUT_DEBUG */
-
-/* Print trace messages? */
-/* #define INPUT_DEBUG_TRACE */
-
-/* Print debug of eject */
-/* #define LOG_DVD_EJECT */
 
 /* Current play mode (title only or menus?) */
 #define MODE_FAIL	0
@@ -136,25 +136,6 @@
 #  define DVD_BLOCK_SIZE DVD_VIDEO_LB_LEN
 #else
 #  define DVD_BLOCK_SIZE 2048
-#endif
-
-/* Debugging macros */
-#ifdef __GNUC__
-# ifdef INPUT_DEBUG_TRACE
-#  define trace_print(s, args...) printf("input_dvd: %s : " s, __FUNCTION__, ##args);
-# else
-#  define trace_print(s, args...) /* Nothing */
-# endif
-#else
-#  ifndef _MSC_VER
-#    define trace_print(s, ...) /* Nothing */
-#  else
-#    ifdef INPUT_DEBUG_TRACE
-#      define trace_print printf
-#    else
-#      define trace_print() /* Nothing */
-#    endif /* INPUT_DEBUG_TRACE */
-#  endif /* _MSC_VER */
 #endif
 
 #if defined (__FreeBSD__)
@@ -247,7 +228,7 @@ static void device_change_cb(void *data, xine_cfg_entry_t *cfg) {
 static uint32_t dvd_plugin_get_capabilities (input_plugin_t *this_gen) {
   dvd_input_plugin_t *this = (dvd_input_plugin_t*)this_gen;
 
-  trace_print("Called\n");
+  lprintf("Called\n");
 
   return INPUT_CAP_BLOCK |
   /* TODO: figure out if there is any "allow copying" flag on DVD.
@@ -443,7 +424,7 @@ static int update_title_display(dvd_input_plugin_t *this) {
 static void dvd_plugin_dispose (input_plugin_t *this_gen) {
   dvd_input_plugin_t *this = (dvd_input_plugin_t*)this_gen;
 
-  trace_print("Called\n");
+  lprintf("Called\n");
 
   if (this->event_queue)
     xine_event_dispose_queue (this->event_queue);
@@ -869,7 +850,7 @@ static off_t dvd_plugin_get_current_pos (input_plugin_t *this_gen){
   uint32_t pos=0;
   uint32_t length=1;
   /*dvdnav_status_t result;*/
-  trace_print("Called\n");
+  lprintf("Called\n");
 
   if(!this || !this->dvdnav) {
     return 0;
@@ -881,7 +862,7 @@ static off_t dvd_plugin_get_current_pos (input_plugin_t *this_gen){
 static off_t dvd_plugin_seek (input_plugin_t *this_gen, off_t offset, int origin) {
   dvd_input_plugin_t *this = (dvd_input_plugin_t*)this_gen;
 
-  trace_print("Called\n");
+  lprintf("Called\n");
 
   if(!this || !this->dvdnav) {
     return -1;
@@ -894,7 +875,7 @@ static off_t dvd_plugin_seek (input_plugin_t *this_gen, off_t offset, int origin
 static off_t dvd_plugin_seek_time (input_plugin_t *this_gen, int time_offset, int origin) {
   dvd_input_plugin_t *this = (dvd_input_plugin_t*)this_gen;
 
-  trace_print("Called\n");
+  lprintf("Called\n");
 
   if(!this || !this->dvdnav || origin != SEEK_SET) {
     return -1;
@@ -911,7 +892,7 @@ static off_t dvd_plugin_get_length (input_plugin_t *this_gen) {
   uint32_t length=1;
   /*dvdnav_status_t result;*/
 
-  trace_print("Called\n");
+  lprintf("Called\n");
 
   if(!this || !this->dvdnav) {
     return 0;
@@ -921,7 +902,7 @@ static off_t dvd_plugin_get_length (input_plugin_t *this_gen) {
 }
 
 static uint32_t dvd_plugin_get_blocksize (input_plugin_t *this_gen) {
-  trace_print("Called\n");
+  lprintf("Called\n");
 
   return DVD_BLOCK_SIZE;
 }
@@ -929,7 +910,7 @@ static uint32_t dvd_plugin_get_blocksize (input_plugin_t *this_gen) {
 static const char* dvd_plugin_get_mrl (input_plugin_t *this_gen) {
   dvd_input_plugin_t *this = (dvd_input_plugin_t*)this_gen;
 
-  trace_print("Called\n");
+  lprintf("Called\n");
 
   return this->mrl;
 }
@@ -1480,7 +1461,7 @@ static int dvd_plugin_open (input_plugin_t *this_gen) {
   char                  *title_part;
   xine_cfg_entry_t       region_entry, lang_entry, cfg_entry;
 
-  trace_print("Called\n");
+  lprintf("Called\n");
 
   /* we already checked the "dvd:/" MRL before */
   locator_orig = locator = strdup (this->mrl + (sizeof("dvd:") - 1));
@@ -1623,7 +1604,7 @@ static input_plugin_t *dvd_class_get_instance (input_class_t *class_gen, xine_st
   dvd_input_class_t     *class = (dvd_input_class_t*)class_gen;
   static const char handled_mrl[] = "dvd:/";
 
-  trace_print("Called\n");
+  lprintf("Called\n");
 
   /* Check we can handle this MRL */
   if (strncasecmp (data, handled_mrl, sizeof(handled_mrl)-1 ) != 0)
@@ -1689,7 +1670,7 @@ static xine_mrl_t **dvd_class_get_dir (input_class_t *this_gen,
 						       const char *filename, int *nFiles) {
   dvd_input_class_t *this = (dvd_input_class_t*)this_gen;
 
-  trace_print("Called\n");
+  lprintf("Called\n");
   if (filename) { *nFiles = 0; return NULL; }
 
 /*
@@ -1707,7 +1688,7 @@ static const char * const *dvd_class_get_autoplay_list (input_class_t *this_gen,
 
   static const char * const filelist[] = {"dvd:/", NULL};
 
-  trace_print("get_autoplay_list entered\n");
+  lprintf("get_autoplay_list entered\n");
 
   *num_files = 1;
 
@@ -1743,7 +1724,7 @@ static void *init_class (xine_t *xine, void *data) {
   static const char *const seek_modes[] = {"seek in program chain", "seek in program", NULL};
   static const char *const play_single_chapter_modes[] = {"entire dvd", "one chapter", NULL};
 
-  trace_print("Called\n");
+  lprintf("Called\n");
 #ifdef INPUT_DEBUG
   printf("input_dvd.c: init_class called.\n");
   printf("input_dvd.c: config = %p\n", config);
