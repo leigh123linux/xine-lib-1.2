@@ -287,7 +287,8 @@ static int segbuf_segment_complete(segment_buffer_t *buf)
 
 static void segbuf_skip_segment(segment_buffer_t *buf)
 {
-  if (segbuf_segment_complete (buf)) {
+  _x_assert (segbuf_segment_complete (buf));
+
     buf->len -= buf->segment_len + 3;
     if (buf->len > 0)
       memmove(buf->buf, buf->buf + buf->segment_len + 3, buf->len);
@@ -295,11 +296,6 @@ static void segbuf_skip_segment(segment_buffer_t *buf)
     segbuf_parse_segment_header(buf);
 
     XINE_HDMV_TRACE("  skip_segment: %zd bytes left\n", buf->len);
-  } else {
-    XINE_HDMV_ERROR("  skip_segment: ERROR - %zd bytes queued, %d required\n",
-                    buf->len, buf->segment_len);
-    segbuf_reset (buf);
-  }
 }
 
 /*
