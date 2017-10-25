@@ -99,10 +99,6 @@ typedef struct spudec_stream_state_s {
   int32_t          overlay_handle;
 } spudec_stream_state_t;
 
-typedef struct {
-  spu_decoder_class_t   decoder_class;
-} spudec_class_t;
-
 typedef struct pci_node_s pci_node_t;
 struct pci_node_s {
   pci_t         pci;
@@ -113,7 +109,6 @@ struct pci_node_s {
 typedef struct spudec_decoder_s {
   spu_decoder_t    spu_decoder;
 
-  spudec_class_t  *class;
   xine_stream_t   *stream;
   spudec_stream_state_t spudec_stream_state[MAX_STREAMS];
 

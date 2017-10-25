@@ -325,7 +325,6 @@ static spu_decoder_t *open_plugin (spu_decoder_class_t *class_gen, xine_stream_t
   this->spu_decoder.get_interact_info   = spudec_get_interact_info;
   this->spu_decoder.set_button          = spudec_set_button;
   this->stream                          = stream;
-  this->class                           = (spudec_class_t *) class_gen;
 
   this->menu_handle = -1;
   this->buttonN = 1;
@@ -359,16 +358,18 @@ static spu_decoder_t *open_plugin (spu_decoder_class_t *class_gen, xine_stream_t
 
 static void *init_plugin (xine_t *xine, void *data) {
 
-  spudec_class_t *this;
+  spu_decoder_class_t *this;
 
   this = calloc(1, sizeof (spudec_class_t));
   if (!this)
     return NULL;
 
-  this->decoder_class.open_plugin     = open_plugin;
-  this->decoder_class.identifier      = "spudec";
-  this->decoder_class.description     = N_("DVD/VOB SPU decoder plugin");
-  this->decoder_class.dispose         = default_spu_decoder_class_dispose;
+  this = calloc(1, sizeof (spu_decoder_class_t));
+
+  this->open_plugin     = open_plugin;
+  this->identifier      = "spudec";
+  this->description     = N_("DVD/VOB SPU decoder plugin");
+  this->dispose         = default_spu_decoder_class_dispose;
 
   lprintf ("libspudec:init_plugin called\n");
   return this;

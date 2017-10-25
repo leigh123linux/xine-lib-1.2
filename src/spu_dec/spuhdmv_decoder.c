@@ -689,14 +689,9 @@ static rle_elem_t *copy_crop_rle(subtitle_object_t *obj, composition_object_t *c
  * xine plugin
  */
 
-typedef struct {
-  spu_decoder_class_t decoder_class;
-} spuhdmv_class_t;
-
 typedef struct spuhdmv_decoder_s {
   spu_decoder_t    spu_decoder;
 
-  spuhdmv_class_t  *class;
   xine_stream_t    *stream;
 
   segment_buffer_t *buf;
@@ -1072,7 +1067,6 @@ static spu_decoder_t *open_plugin (spu_decoder_class_t *class_gen, xine_stream_t
   this->spu_decoder.get_interact_info   = NULL;
   this->spu_decoder.set_button          = NULL;
   this->stream                          = stream;
-  this->class                           = (spuhdmv_class_t *) class_gen;
 
   memset(this->overlay_handles, 0xff, sizeof(this->overlay_handles)); /* --> -1 */
 
@@ -1081,16 +1075,18 @@ static spu_decoder_t *open_plugin (spu_decoder_class_t *class_gen, xine_stream_t
 
 static void *init_plugin (xine_t *xine, void *data)
 {
-  spuhdmv_class_t *this;
+  spu_decoder_class_t *this;
 
   this = calloc(1, sizeof (spuhdmv_class_t));
   if (!this)
     return NULL;
 
-  this->decoder_class.open_plugin = open_plugin;
-  this->decoder_class.identifier  = "spuhdmv";
-  this->decoder_class.description = "HDMV/BluRay bitmap SPU decoder plugin";
-  this->decoder_class.dispose     = default_spu_decoder_class_dispose;
+  this = calloc(1, sizeof (spu_decoder_class_t));
+
+  this->open_plugin = open_plugin;
+  this->identifier  = "spuhdmv";
+  this->description = "HDMV/BluRay bitmap SPU decoder plugin";
+  this->dispose     = default_spu_decoder_class_dispose;
 
   return this;
 }
