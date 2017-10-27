@@ -360,7 +360,7 @@ static void *init_plugin (xine_t *xine, void *data) {
 
   spu_decoder_class_t *this;
 
-  this = calloc(1, sizeof (spudec_class_t));
+  this = calloc(1, sizeof (spu_decoder_class_t));
   if (!this)
     return NULL;
 
