@@ -516,7 +516,6 @@ void xine_stop (xine_stream_t *stream) {
 
 static void close_internal (xine_stream_t *stream) {
 
-  int i ;
   int flush = !stream->gapless_switch && !stream->finished_naturally;
 
   if( stream->slave ) {
@@ -570,13 +569,23 @@ static void close_internal (xine_stream_t *stream) {
 
   /*
    * reset / free meta info
+   * XINE_STREAM_INFO_MAX is at least 99 but the info arrays are sparsely used.
+   * Save a lot of mutex/free calls.
    */
-
-  for (i=0; i<XINE_STREAM_INFO_MAX; i++) {
-    _x_stream_info_reset(stream, i);
-    _x_stream_info_public_reset(stream, i);
-    _x_meta_info_reset(stream, i);
-    _x_meta_info_public_reset(stream, i);
+  {
+    int i;
+    pthread_mutex_lock (&stream->info_mutex);
+    for (i = 0; i < XINE_STREAM_INFO_MAX; i++)
+      stream->stream_info_public[i] = stream->stream_info[i] = 0;
+    pthread_mutex_unlock (&stream->info_mutex);
+    pthread_mutex_lock (&stream->meta_mutex);
+    for (i = 0; i < XINE_STREAM_INFO_MAX; i++) {
+      if (stream->meta_info_public[i])
+        free (stream->meta_info_public[i]), stream->meta_info_public[i] = NULL;
+      if (stream->meta_info[i])
+        free (stream->meta_info[i]), stream->meta_info[i] = NULL;
+    }
+    pthread_mutex_unlock (&stream->meta_mutex);
   }
   stream->audio_track_map_entries = 0;
   stream->spu_track_map_entries = 0;
@@ -669,7 +678,6 @@ xine_stream_t *xine_stream_new (xine_t *this,
 				xine_audio_port_t *ao, xine_video_port_t *vo) {
 
   xine_stream_t *stream;
-  int            i;
   pthread_mutexattr_t attr;
 
   xprintf (this, XINE_VERBOSITY_DEBUG, "xine_stream_new\n");
@@ -728,6 +736,7 @@ xine_stream_t *xine_stream_new (xine_t *this,
   stream->finished_count_video   = 0;
   stream->err                    = 0;
   stream->broadcaster            = NULL;
+  stream->index_array            = NULL;
 
   /*
    * initial master/slave
@@ -766,12 +775,16 @@ xine_stream_t *xine_stream_new (xine_t *this,
 
   /*
    * Clear meta/stream info
+   * XXX We did zero allocate the stream struct, including the embedded info arrays.
+   * Do we really need this below?
+   * At least we skip a flood of useless tests and mutex calls there.
    */
-  for (i = 0; i < XINE_STREAM_INFO_MAX; i++) {
-    _x_stream_info_reset(stream, i);
-    _x_stream_info_public_reset(stream, i);
-    _x_meta_info_reset(stream, i);
-    _x_meta_info_public_reset(stream, i);
+  {
+    int i;
+    for (i = 0; i < XINE_STREAM_INFO_MAX; i++) {
+      stream->stream_info_public[i] = stream->stream_info[i] = 0;
+      stream->meta_info_public[i]   = stream->meta_info[i]   = NULL;
+    }
   }
 
   /*
@@ -933,23 +946,57 @@ void _x_flush_events_queues (xine_stream_t *stream) {
   pthread_mutex_unlock (&stream->event_queues_lock);
 }
 
-static inline int _x_path_looks_like_mrl (const char *path)
-{
-  if ((*path & 0xDF) < 'A' || (*path & 0xDF) > 'Z')
+/* 0x01 (end), 0x02 (alpha), 0x04 (alnum - + .), 0x08 (:), 0x10 (;), 0x20 (#)  */
+static const uint8_t tab_parse[256] = {
+   1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+   0, 0, 0,32, 0, 0, 0, 0, 0, 0, 0, 4, 0, 4, 4, 0,
+   4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 8,16, 0, 0, 0, 0,
+   0, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6,
+   6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 0, 0, 0, 0, 0,
+   0, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6,
+   6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 0, 0, 0, 0, 0,
+   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+};
+
+/* aka "does path have a protocol prefix" */
+static inline int _x_path_looks_like_mrl (const char *path) {
+  const uint8_t *p = (const uint8_t *)path;
+  if (!(tab_parse[*p++] & 0x02))
     return 0;
-
-  for (++path; *path; ++path)
-    if ((*path != '-' && *path < '0') || (*path > '9' && *path < 'A') ||
-	(*path > 'Z' && *path < 'a') || *path > 'z')
-      break;
-
-  return path[0] == ':' && path[1] == '/';
+  while (tab_parse[*p++] & 0x04) ;
+  return (p[-1] == ':') && (p[0] == '/');
 }
 
 static int open_internal (xine_stream_t *stream, const char *mrl) {
 
-  const char *stream_setup = NULL;
-  const char *mrl_proto = NULL;
+  static const uint8_t tab_tolower[256] = {
+      0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15,
+     16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31,
+    ' ','!','"','#','$','%','&','\'','(',')','*','+',',','-','.','/',
+    '0','1','2','3','4','5','6','7','8','9',':',';','<','=','>','?',
+    '@','a','b','c','d','e','f','g','h','i','j','k','l','m','n','o',
+    'p','q','r','s','t','u','v','w','x','y','z','[','\\',']','^','_',
+    '`','a','b','c','d','e','f','g','h','i','j','k','l','m','n','o',
+    'p','q','r','s','t','u','v','w','x','y','z','{','|','}','~',127,
+    128,129,130,131,132,133,134,135,136,137,138,139,140,141,142,143,
+    144,145,146,147,148,149,150,151,152,153,154,155,156,157,158,159,
+    160,161,162,163,164,165,166,167,168,169,170,171,172,173,174,175,
+    176,177,178,179,180,181,182,183,184,185,186,187,188,189,190,191,
+    192,193,194,195,196,197,198,199,200,201,202,203,204,205,206,207,
+    208,209,210,211,212,213,214,215,216,217,218,219,220,221,222,223,
+    224,225,226,227,228,229,230,231,232,233,234,235,236,237,238,239,
+    240,241,242,243,244,245,246,247,248,249,250,251,252,253,254,255
+  };
+
+  uint8_t *buf, *name, *args;
   int no_cache = 0;
 
   if (!mrl) {
@@ -973,41 +1020,53 @@ static int open_internal (xine_stream_t *stream, const char *mrl) {
   /*
    * look for a stream_setup in MRL and try finding an input plugin
    */
-  stream_setup = strchr (mrl, '#');
-
-  if (isalpha (*mrl))
+  buf = malloc (32 + strlen (mrl) + 32);
+  if (!buf)
+    return 0;
+  name = buf + 32;
+  args = NULL;
   {
-    mrl_proto = mrl + 1;
-    while (isalnum (*mrl_proto) || *mrl_proto == '+' || *mrl_proto == '-' || *mrl_proto == '.')
-      ++mrl_proto;
-    if (!mrl_proto[0] || mrl_proto[0] != ':' || mrl_proto[1] != '/')
-      mrl_proto = NULL;
-  }
-
-  /* for raw filenames we must try every '#' checking if it is part of the filename */
-  if( !mrl_proto && stream_setup) {
-    struct stat stat_buf;
-    int res;
-
-    while( stream_setup ) {
-      char *raw_filename = strndup (mrl, stream_setup - mrl);
-
-      res = stat(raw_filename, &stat_buf);
-      free(raw_filename);
-      if( !res )
-        break;
-      stream_setup = strchr(stream_setup + 1, '#');
+    const uint8_t *p = (const uint8_t *)mrl;
+    uint8_t *prot = NULL, *q = name, z;
+    /* test protocol prefix */
+    if (tab_parse[*p] & 0x02) {
+      while (tab_parse[z = *p] & 0x04) p++, *q++ = z;
+      if ((q > name) && (z == ':') && (p[1] == '/')) prot = name;
+    }
+    if (prot) {
+      /* split off args at first hash */
+      while (!(tab_parse[z = *p] & 0x21)) p++, *q++ = z;
+      *q = 0;
+      if (z == '#') {
+        p++;
+        args = ++q;
+        while ((*q++ = *p++) != 0) ;
+      }
+    } else {
+      /* raw filename, may contain any number of hashes */
+      while (1) {
+        struct stat s;
+        while (!(tab_parse[z = *p] & 0x21)) p++, *q++ = z;
+        *q = 0;
+        /* no need to stat when no hashes found */
+        if (!args && !z) break;
+        if (!stat ((const char *)name, &s)) {
+          args = NULL;
+          /* no general break yet, beware "/foo/#bar.flv" */
+        }
+        if (!z) break;
+        p++, *q++ = z;
+        args = q;
+      }
+      if (args) args[-1] = 0;
     }
   }
-
+    
   {
-    char *input_source = strndup (mrl, stream_setup ? stream_setup - mrl : strlen (mrl));
-
     /*
      * find an input plugin
      */
-    stream->input_plugin = _x_find_input_plugin (stream, input_source);
-    free(input_source);
+    stream->input_plugin = _x_find_input_plugin (stream, (const char *)name);
 
     if ( stream->input_plugin ) {
       int res;
@@ -1044,66 +1103,61 @@ static int open_internal (xine_stream_t *stream, const char *mrl) {
     return 0;
   }
 
-  if (stream_setup) {
+  if (args) {
+    uint8_t *entry = NULL;
 
-    while (stream_setup && *stream_setup && *(++stream_setup)) {
-      if (strncasecmp(stream_setup, "demux", 5) == 0) {
-        if (*(stream_setup += 5) == ':') {
-	  /* demuxer specified by name */
-	  const char *tmp = ++stream_setup;
-	  char *demux_name;
-	  stream_setup = strchr(stream_setup, ';');
-	  if (stream_setup) {
-	    demux_name = (char *)malloc(stream_setup - tmp + 1);
-	    memcpy(demux_name, tmp, stream_setup - tmp);
-	    demux_name[stream_setup - tmp] = '\0';
-	  } else {
-	    demux_name = (char *)malloc(strlen(tmp) + 1);
-	    memcpy(demux_name, tmp, strlen(tmp));
-	    demux_name[strlen(tmp)] = '\0';
-	  }
-	  _x_mrl_unescape(demux_name);
+    while (*args) {
+      /* Turn "WhatAGreat:Bullshit[;]" into key="whatagreat" entry="WhatAGreat" value="Bullshit". */
+      uint8_t *key = buf, *value = NULL;
+      if (entry)
+        xine_log (stream->xine, XINE_LOG_MSG, _("xine: no value for \"%s\", ignoring.\n"), entry);
+      entry = args;
+      {
+        uint8_t *spos = args + 31, sval = *spos, *q = key, z;
+        *spos = 0;
+        while (!(tab_parse[z = *args] & 0x19)) *q++ = tab_tolower[z], args++;
+        *q = 0;
+        *spos = sval;
+        while (!(tab_parse[z = *args] & 0x19)) args++;
+        if (z == ':') {
+          *args++ = 0;
+          value = args;
+          while (!(tab_parse[z = *args] & 0x11)) args++;
+        }
+        if (z == ';')
+          *args++ = 0;
+      }
+
+      if (!memcmp (key, "demux", 6)) {
+        if (value) {
+          /* demuxer specified by name */
+          char *demux_name = (char *)value;
+          _x_mrl_unescape (demux_name);
 	  if (!(stream->demux_plugin = _x_find_demux_plugin_by_name(stream, demux_name, stream->input_plugin))) {
 	    xine_log(stream->xine, XINE_LOG_MSG, _("xine: specified demuxer %s failed to start\n"), demux_name);
 	    stream->err = XINE_ERROR_NO_DEMUX_PLUGIN;
 	    stream->status = XINE_STATUS_IDLE;
-	    free(demux_name);
+            free (buf);
 	    return 0;
 	  }
 
 	  _x_meta_info_set_utf8(stream, XINE_META_INFO_SYSTEMLAYER,
 				stream->demux_plugin->demux_class->identifier);
-	  free(demux_name);
-	} else {
-	  xprintf(stream->xine, XINE_VERBOSITY_LOG, _("xine: error while parsing mrl\n"));
-	  stream->err = XINE_ERROR_MALFORMED_MRL;
-	  stream->status = XINE_STATUS_IDLE;
-	  return 0;
-	}
+          entry = NULL;
+        }
 	continue;
       }
-      if (strncasecmp(stream_setup, "save", 4) == 0) {
-        if (*(stream_setup += 4) == ':') {
-	  /* filename to save */
-	  const char     *tmp = ++stream_setup;
-	  char           *filename;
+
+      if (!memcmp (key, "save", 5)) {
+        if (value) {
+          /* filename to save */
+          char *filename = (char *)value;
 	  input_plugin_t *input_saver;
 
-	  stream_setup = strchr(stream_setup, ';');
-	  if (stream_setup) {
-	    filename = (char *)malloc(stream_setup - tmp + 1);
-	    memcpy(filename, tmp, stream_setup - tmp);
-	    filename[stream_setup - tmp] = '\0';
-	  } else {
-	    filename = (char *)malloc(strlen(tmp) + 1);
-	    memcpy(filename, tmp, strlen(tmp));
-	    filename[strlen(tmp)] = '\0';
-	  }
-	  _x_mrl_unescape(filename);
+          _x_mrl_unescape (filename);
 
 	  xine_log(stream->xine, XINE_LOG_MSG, _("xine: join rip input plugin\n"));
 	  input_saver = _x_rip_plugin_get_instance (stream, filename);
-	  free(filename);
 
 	  if( input_saver ) {
 	    stream->input_plugin = input_saver;
@@ -1111,169 +1165,86 @@ static int open_internal (xine_stream_t *stream, const char *mrl) {
 	    xprintf(stream->xine, XINE_VERBOSITY_LOG, _("xine: error opening rip input plugin instance\n"));
 	    stream->err = XINE_ERROR_MALFORMED_MRL;
 	    stream->status = XINE_STATUS_IDLE;
+            free (buf);
 	    return 0;
 	  }
-
-	} else {
-	  xprintf(stream->xine, XINE_VERBOSITY_LOG, _("xine: error while parsing mrl\n"));
-	  stream->err = XINE_ERROR_MALFORMED_MRL;
-	  stream->status = XINE_STATUS_IDLE;
-	  return 0;
-	}
+          entry = NULL;
+        }
 	continue;
       }
-      if (strncasecmp(stream_setup, "lastdemuxprobe", 14) == 0) {
-        if (*(stream_setup += 14) == ':') {
-	  /* all demuxers will be probed before the specified one */
-	  const char *tmp = ++stream_setup;
-	  char *demux_name;
-	  stream_setup = strchr(stream_setup, ';');
-	  if (stream_setup) {
-	    demux_name = (char *)malloc(stream_setup - tmp + 1);
-	    memcpy(demux_name, tmp, stream_setup - tmp);
-	    demux_name[stream_setup - tmp] = '\0';
-	  } else {
-	    demux_name = (char *)malloc(strlen(tmp) + 1);
-	    memcpy(demux_name, tmp, strlen(tmp));
-	    demux_name[strlen(tmp)] = '\0';
-	  }
-	  _x_mrl_unescape(demux_name);
+
+      if (!memcmp (key, "lastdemuxprobe", 15)) {
+        if (value) {
+          /* all demuxers will be probed before the specified one */
+          char *demux_name = (char *)value;
+          _x_mrl_unescape (demux_name);
 	  if (!(stream->demux_plugin = _x_find_demux_plugin_last_probe(stream, demux_name, stream->input_plugin))) {
 	    xine_log(stream->xine, XINE_LOG_MSG, _("xine: last_probed demuxer %s failed to start\n"), demux_name);
 	    stream->err = XINE_ERROR_NO_DEMUX_PLUGIN;
 	    stream->status = XINE_STATUS_IDLE;
-	    free(demux_name);
+            free (buf);
 	    return 0;
 	  }
 	  lprintf ("demux and input plugin found\n");
 
 	  _x_meta_info_set_utf8(stream, XINE_META_INFO_SYSTEMLAYER,
 				stream->demux_plugin->demux_class->identifier);
-	  free(demux_name);
-	} else {
-	  xprintf(stream->xine, XINE_VERBOSITY_LOG, _("xine: error while parsing mrl\n"));
-	  stream->err = XINE_ERROR_MALFORMED_MRL;
-	  stream->status = XINE_STATUS_IDLE;
-	  return 0;
-	}
+          entry = NULL;
+        }
 	continue;
       }
-      if (strncasecmp(stream_setup, "novideo", 7) == 0) {
-        stream_setup += 7;
-        if (*stream_setup == ';' || *stream_setup == '\0') {
-	  _x_stream_info_set(stream, XINE_STREAM_INFO_IGNORE_VIDEO, 1);
-	} else {
-	  xprintf(stream->xine, XINE_VERBOSITY_LOG, _("xine: error while parsing mrl\n"));
-	  stream->err = XINE_ERROR_MALFORMED_MRL;
-	  stream->status = XINE_STATUS_IDLE;
-	  return 0;
-	}
-	xprintf (stream->xine, XINE_VERBOSITY_LOG, _("ignoring video\n"));
+
+      if (!memcmp (key, "novideo", 8)) {
+        _x_stream_info_set (stream, XINE_STREAM_INFO_IGNORE_VIDEO, 1);
+        xprintf (stream->xine, XINE_VERBOSITY_LOG, _("ignoring video\n"));
+        entry = NULL;
 	continue;
       }
-      if (strncasecmp(stream_setup, "noaudio", 7) == 0) {
-        stream_setup += 7;
-        if (*stream_setup == ';' || *stream_setup == '\0') {
-	  _x_stream_info_set(stream, XINE_STREAM_INFO_IGNORE_AUDIO, 1);
-	} else {
-	  xprintf(stream->xine, XINE_VERBOSITY_LOG, _("xine: error while parsing mrl\n"));
-	  stream->err = XINE_ERROR_MALFORMED_MRL;
-	  stream->status = XINE_STATUS_IDLE;
-	  return 0;
-	}
-	xprintf (stream->xine, XINE_VERBOSITY_LOG, _("ignoring audio\n"));
+
+      if (!memcmp (key, "noaudio", 8)) {
+        _x_stream_info_set (stream, XINE_STREAM_INFO_IGNORE_AUDIO, 1);
+        xprintf (stream->xine, XINE_VERBOSITY_LOG, _("ignoring audio\n"));
+        entry = NULL;
 	continue;
       }
-      if (strncasecmp(stream_setup, "nospu", 5) == 0) {
-        stream_setup += 5;
-        if (*stream_setup == ';' || *stream_setup == '\0') {
-	  _x_stream_info_set(stream, XINE_STREAM_INFO_IGNORE_SPU, 1);
-	} else {
-	  xprintf(stream->xine, XINE_VERBOSITY_LOG, _("xine: error while parsing mrl\n"));
-	  stream->err = XINE_ERROR_MALFORMED_MRL;
-	  stream->status = XINE_STATUS_IDLE;
-	  return 0;
-	}
-	xprintf (stream->xine, XINE_VERBOSITY_LOG, _("ignoring subpicture\n"));
+
+      if (!memcmp (key, "nospu", 6)) {
+        _x_stream_info_set (stream, XINE_STREAM_INFO_IGNORE_SPU, 1);
+        xprintf (stream->xine, XINE_VERBOSITY_LOG, _("ignoring subpicture\n"));
+        entry = NULL;
 	continue;
       }
-      if (strncasecmp(stream_setup, "nocache", 7) == 0) {
-        stream_setup += 7;
-        if (*stream_setup == ';' || *stream_setup == '\0') {
-	  no_cache = 1;
-	} else {
-	  xprintf(stream->xine, XINE_VERBOSITY_LOG, _("xine: error while parsing mrl\n"));
-	  stream->err = XINE_ERROR_MALFORMED_MRL;
-	  stream->status = XINE_STATUS_IDLE;
-	  return 0;
-	}
-	xprintf (stream->xine, XINE_VERBOSITY_LOG, _("input cache plugin disabled\n"));
+
+      if (!memcmp (key, "nocache", 8)) {
+        no_cache = 1;
+        xprintf (stream->xine, XINE_VERBOSITY_LOG, _("input cache plugin disabled\n"));
+        entry = NULL;
 	continue;
       }
-      if (strncasecmp(stream_setup, "volume", 6) == 0) {
-        if (*(stream_setup += 6) == ':') {
-	  const char *tmp = ++stream_setup;
-	  char *volume;
-	  stream_setup = strchr(stream_setup, ';');
-	  if (stream_setup) {
-	    volume = (char *)malloc(stream_setup - tmp + 1);
-	    memcpy(volume, tmp, stream_setup - tmp);
-	    volume[stream_setup - tmp] = '\0';
-	  } else {
-	    volume = (char *)malloc(strlen(tmp) + 1);
-	    memcpy(volume, tmp, strlen(tmp));
-	    volume[strlen(tmp)] = '\0';
-	  }
-	  _x_mrl_unescape(volume);
+
+      if (!memcmp (key, "volume", 7)) {
+        if (value) {
+          char *volume = (char *)value;
+          _x_mrl_unescape (volume);
 	  xine_set_param(stream, XINE_PARAM_AUDIO_VOLUME, atoi(volume));
-	  free(volume);
-	} else {
-	  xprintf(stream->xine, XINE_VERBOSITY_LOG, _("xine: error while parsing mrl\n"));
-	  stream->err = XINE_ERROR_MALFORMED_MRL;
-	  stream->status = XINE_STATUS_IDLE;
-	  return 0;
-	}
+          entry = NULL;
+        }
 	continue;
       }
-      if (strncasecmp(stream_setup, "compression", 11) == 0) {
-        if (*(stream_setup += 11) == ':') {
-	  const char *tmp = ++stream_setup;
-	  char *compression;
-	  stream_setup = strchr(stream_setup, ';');
-	  if (stream_setup) {
-	    compression = (char *)malloc(stream_setup - tmp + 1);
-	    memcpy(compression, tmp, stream_setup - tmp);
-	    compression[stream_setup - tmp] = '\0';
-	  } else {
-	    compression = (char *)malloc(strlen(tmp) + 1);
-	    memcpy(compression, tmp, strlen(tmp));
-	    compression[strlen(tmp)] = '\0';
-	  }
-	  _x_mrl_unescape(compression);
+
+      if (!memcmp (key, "compression", 12)) {
+        if (value) {
+          char *compression = (char *)value;
+          _x_mrl_unescape (compression);
 	  xine_set_param(stream, XINE_PARAM_AUDIO_COMPR_LEVEL, atoi(compression));
-	  free(compression);
-	} else {
-	  xprintf(stream->xine, XINE_VERBOSITY_LOG, _("xine: error while parsing mrl\n"));
-	  stream->err = XINE_ERROR_MALFORMED_MRL;
-	  stream->status = XINE_STATUS_IDLE;
-	  return 0;
-	}
+          entry = NULL;
+        }
 	continue;
       }
-      if (strncasecmp(stream_setup, "subtitle", 8) == 0) {
-        if (*(stream_setup += 8) == ':') {
-	  const char *tmp = ++stream_setup;
-	  char *subtitle_mrl;
-	  stream_setup = strchr(stream_setup, ';');
-	  if (stream_setup) {
-	    subtitle_mrl = (char *)malloc(stream_setup - tmp + 1);
-	    memcpy(subtitle_mrl, tmp, stream_setup - tmp);
-	    subtitle_mrl[stream_setup - tmp] = '\0';
-	  } else {
-	    subtitle_mrl = (char *)malloc(strlen(tmp) + 1);
-	    memcpy(subtitle_mrl, tmp, strlen(tmp));
-	    subtitle_mrl[strlen(tmp)] = '\0';
-	  }
+
+      if (!memcmp (key, "subtitle", 9)) {
+        if (value) {
+          char *subtitle_mrl = (char *)value;
 	  /* unescape for xine_open() if the MRL looks like a raw pathname */
 	  if (!_x_path_looks_like_mrl(subtitle_mrl))
 	    _x_mrl_unescape(subtitle_mrl);
@@ -1288,50 +1259,35 @@ static int open_internal (xine_stream_t *stream, const char *mrl) {
 	    xine_dispose( stream->slave );
 	    stream->slave = NULL;
 	  }
-	  free(subtitle_mrl);
-	} else {
-	  xprintf(stream->xine, XINE_VERBOSITY_LOG, _("xine: error while parsing mrl\n"));
-	  stream->err = XINE_ERROR_MALFORMED_MRL;
-	  stream->status = XINE_STATUS_IDLE;
-	  return 0;
-	}
+          entry = NULL;
+        }
 	continue;
       }
-      {
+
+      if (value) {
         /* when we got here, the stream setup parameter must be a config entry */
-	const char *tmp = stream_setup;
-	char *config_entry;
-	int retval;
-	if ((stream_setup = strchr(stream_setup, ';'))) {
-	  config_entry = (char *)malloc(stream_setup - tmp + 1);
-	  memcpy(config_entry, tmp, stream_setup - tmp);
-	  config_entry[stream_setup - tmp] = '\0';
-	} else {
-	  config_entry = (char *)malloc(strlen(tmp) + 1);
-	  memcpy(config_entry, tmp, strlen(tmp));
-	  config_entry[strlen(tmp)] = '\0';
-	}
-	_x_mrl_unescape(config_entry);
-	retval = _x_config_change_opt(stream->xine->config, config_entry);
+        int retval;
+        value[-1] = ':';
+        _x_mrl_unescape ((char *)entry);
+        retval = _x_config_change_opt (stream->xine->config, (char *)entry);
 	if (retval <= 0) {
+          value[-1] = 0;
 	  if (retval == 0) {
-	    /* the option not found */
-	    xine_log(stream->xine, XINE_LOG_MSG, _("xine: error while parsing MRL\n"));
-	    stream->err = XINE_ERROR_MALFORMED_MRL;
-	    stream->status = XINE_STATUS_IDLE;
-	    free(config_entry);
-	    return 0;
+            /* the option not found */
+            xine_log (stream->xine, XINE_LOG_MSG, _("xine: unknown config option \"%s\", ignoring.\n"), entry);
 	  } else {
             /* not permitted to change from MRL */
-            xine_log(stream->xine, XINE_LOG_MSG, _("xine: changing option '%s' from MRL isn't permitted\n"),
-	      config_entry);
+            xine_log (stream->xine, XINE_LOG_MSG, _("xine: changing option '%s' from MRL isn't permitted\n"), entry);
 	  }
 	}
-	free(config_entry);
+        entry = NULL;
       }
     }
-
+    if (entry)
+      xine_log (stream->xine, XINE_LOG_MSG, _("xine: no value for \"%s\", ignoring.\n"), entry);
   }
+
+  free (buf);
 
   no_cache = no_cache || (stream->input_plugin->get_capabilities(stream->input_plugin) & INPUT_CAP_NO_CACHE);
   if( !no_cache )
