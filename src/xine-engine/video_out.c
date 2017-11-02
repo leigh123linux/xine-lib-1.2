@@ -133,8 +133,12 @@ typedef struct {
   pthread_cond_t            done_flushing;
   vo_frame_t               *last_flushed;
 
-  vo_frame_t               *img_backup;
-
+  /* Get grab_lock when
+   *  - accessing grab queue,
+   *  - setting last_frame, and
+   *  - reading last_frame from outside the render thread.
+   */
+  int                       lf_is_duplicate;
   vo_frame_t               *last_frame;
   vos_grab_video_frame_t   *pending_grab_request;
   pthread_mutex_t           grab_lock;
@@ -573,7 +577,7 @@ static vo_frame_t *vo_queue_get_dupl (img_buf_fifo_t *queue, vo_frame_t *s) {
 
   for (img = queue->first; img; img = img->next) {
     /* in free queue, this test is always true -- so what ;-) */
-    if ((img->lock_counter <= 1) && (img != s)) {
+    if ((img->lock_counter <= 2) && (img != s)) {
       if (!found) {
         found = img;
         fprev = prev;
@@ -618,18 +622,59 @@ static vo_frame_t *vo_queue_get_dupl (img_buf_fifo_t *queue, vo_frame_t *s) {
 
 
 /********************************************************************
- * frame lock_counter                                               *
+ * frame lock_counter. Basic rule:                                  *
+ * When queuing new frame, we add 2 refs.                           *
+ * 1 for rendering, and 1 for still frame backup and rgb framegrab. *
  *******************************************************************/
+
+static void vo_frame_inc2_lock (vo_frame_t *img) {
+  int n;
+
+  pthread_mutex_lock (&img->mutex);
+
+  n = (img->lock_counter += 2);
+  if ((n == 3) || (n == 4)) {
+    vos_t *this = (vos_t *)img->port;
+    if (this->frames_extref < this->frames_total)
+      this->frames_extref++;
+  }
+
+  pthread_mutex_unlock (&img->mutex);
+}
 
 static void vo_frame_inc_lock (vo_frame_t *img) {
 
   pthread_mutex_lock (&img->mutex);
 
   img->lock_counter++;
-  if (img->lock_counter == 2) {
+  if (img->lock_counter == 3) {
     vos_t *this = (vos_t *)img->port;
     if (this->frames_extref < this->frames_total)
       this->frames_extref++;
+  }
+
+  pthread_mutex_unlock (&img->mutex);
+}
+
+static void vo_frame_dec2_lock (vo_frame_t *img) {
+  int n;
+
+  pthread_mutex_lock (&img->mutex);
+
+  n = (img->lock_counter -= 2);
+  if ((n == 1) || (n == 2)) {
+    vos_t *this = (vos_t *)img->port;
+    if (this->frames_extref > 0)
+      this->frames_extref--;
+  } else
+  if (n <= 0) {
+    vos_t *this = (vos_t *) img->port;
+    img->lock_counter = 0;
+    if (!this->num_streams) {
+      img->stream = NULL;
+      vo_reref (this, img);
+    }
+    vo_queue_append (&this->free_img_buf_queue, img);
   }
 
   pthread_mutex_unlock (&img->mutex);
@@ -640,7 +685,7 @@ static void vo_frame_dec_lock (vo_frame_t *img) {
   pthread_mutex_lock (&img->mutex);
 
   img->lock_counter--;
-  if (img->lock_counter == 1) {
+  if (img->lock_counter == 2) {
     vos_t *this = (vos_t *)img->port;
     if (this->frames_extref > 0)
       this->frames_extref--;
@@ -657,15 +702,16 @@ static void vo_frame_dec_lock (vo_frame_t *img) {
   pthread_mutex_unlock (&img->mutex);
 }
 
-static int vo_frame_dec_lock_int (vos_t *this, vo_frame_t *img) {
+static int vo_frame_dec2_lock_int (vos_t *this, vo_frame_t *img) {
   int n;
   pthread_mutex_lock (&img->mutex);
-  n = --img->lock_counter;
-  if (n == 1) {
+  n = (img->lock_counter -= 2);
+  if ((n == 1) || (n == 2)) {
     if (this->frames_extref > 0)
       this->frames_extref--;
   } else
-  if (!n) {
+  if (n <= 0) {
+    img->lock_counter = n = 0;
     if (!this->num_streams) {
       img->stream = NULL;
       vo_reref (this, img);
@@ -943,12 +989,16 @@ static xine_grab_video_frame_t *vo_new_grab_video_frame(xine_video_port_t *this_
 
 static void vo_grab_current_frame (vos_t *this, vo_frame_t *vo_frame, int64_t vpts)
 {
+  if (this->lf_is_duplicate) {
+    this->lf_is_duplicate = 0;
+    return;
+  }
+
   pthread_mutex_lock(&this->grab_lock);
 
-  /* hold current frame for snapshot feature */
+  /* hold current frame for still frame generation and snapshot feature */
   if (this->last_frame)
     vo_frame_dec_lock(this->last_frame);
-  vo_frame_inc_lock(vo_frame);
   this->last_frame = vo_frame;
 
   /* process grab queue */
@@ -1246,6 +1296,7 @@ static int vo_frame_draw (vo_frame_t *img, xine_stream_t *stream) {
         img->overlay_offset_x -= img->crop_left;
         img->overlay_offset_y -= img->crop_top;
         img = crop_frame( img->port, img );
+        img->lock_counter = 2;
         img_already_locked = 1;
       } else {
 	/* noone knows how to crop this, so we can only ignore the cropping */
@@ -1294,7 +1345,7 @@ static int vo_frame_draw (vo_frame_t *img, xine_stream_t *stream) {
     }
 
     if (!img_already_locked)
-      vo_frame_inc_lock( img );
+      vo_frame_inc2_lock (img);
     vo_queue_append (&this->display_img_buf_queue, img);
 
     if (img->is_first && (this->display_img_buf_queue.first == img)) {
@@ -1399,7 +1450,7 @@ static int vo_frame_draw (vo_frame_t *img, xine_stream_t *stream) {
  * to avoid deadlocks we don't use vo_queue_get_nonblock ()
  * but vo_queue_get_dupl () instead.
  */
-static vo_frame_t * duplicate_frame( vos_t *this, vo_frame_t *img ) {
+static vo_frame_t *duplicate_frame (vos_t *this, vo_frame_t *img) {
   vo_frame_t *dupl;
 
   dupl = vo_queue_get_dupl (&this->free_img_buf_queue, img);
@@ -1534,8 +1585,8 @@ static vo_frame_t *next_frame (vos_t *this, int64_t *vpts) {
     /* Scan for stuff we want to keep. */
     while (img) {
       n++;
-      if (img->is_first != 0) {
-        if (first_frame && !vo_frame_dec_lock_int (this, first_frame)) {
+      if (img->is_first > 0) {
+        if (first_frame && !vo_frame_dec2_lock_int (this, first_frame)) {
           *add = first_frame;
           add = &first_frame->next;
         }
@@ -1543,33 +1594,29 @@ static vo_frame_t *next_frame (vos_t *this, int64_t *vpts) {
         img = img->next;
       } else {
         vo_frame_t *f;
-        if (!this->img_backup) {
-          vo_frame_inc_lock (img);
-          this->img_backup = img;
+        if (!this->last_frame) {
+          vo_frame_dec_lock (img);
+          pthread_mutex_lock (&this->grab_lock);
+          this->last_frame = img;
+          pthread_mutex_unlock (&this->grab_lock);
+        } else {
+          f = this->last_flushed;
+          if (f && !vo_frame_dec2_lock_int (this, f)) {
+            *add = f;
+            add = &f->next;
+          }
+          this->last_flushed = img;
+          f = img->next;
+          img->next = NULL;
+          img = f;
         }
-        f = this->last_flushed;
-        if (f && !vo_frame_dec_lock_int (this, f)) {
-          *add = f;
-          add = &f->next;
-        }
-        this->last_flushed = img;
-        f = img->next;
-        img->next = NULL;
-        img = f;
       }
     }
     /* Override with first frame. */
     if (first_frame) {
-      vo_frame_inc_lock (first_frame);
       first_frame->vpts = *vpts;
       first_frame->next = NULL;
       first_frame->future_frame = NULL;
-      img = this->img_backup;
-      this->img_backup = first_frame;
-      if (img && !vo_frame_dec_lock_int (this, img)) {
-        *add = img;
-        add = &img->next;
-      }
     }
     /* Free (almost) all at once. */
     *add = NULL;
@@ -1606,7 +1653,7 @@ static vo_frame_t *next_frame (vos_t *this, int64_t *vpts) {
        * - We dont drop frames already decoded in time.
        * Finally, dont zero img->is_first so xine_play () gets woken up properly.
        */
-      if ((img->lock_counter == 1) || (img->vpts <= *vpts) || (img->is_first == 1)) {
+      if ((img->lock_counter <= 2) || (img->vpts <= *vpts) || (img->is_first == 1)) {
         img->vpts = *vpts;
         *vpts = img->vpts + (img->duration ? img->duration : DEFAULT_FRAME_DURATION);
         break;
@@ -1620,10 +1667,6 @@ static vo_frame_t *next_frame (vos_t *this, int64_t *vpts) {
       if (this->last_flushed && img->pts && this->last_flushed->pts && (this->last_flushed->pts < img->pts)) {
         img = this->last_flushed;
         this->last_flushed = NULL;
-        vo_frame_inc_lock (img);
-        if (this->img_backup)
-          vo_frame_dec_lock (this->img_backup);
-        this->img_backup = img;
         img->vpts = *vpts;
         *vpts = img->vpts + (img->duration ? img->duration : DEFAULT_FRAME_DURATION);
         return img;
@@ -1665,16 +1708,19 @@ static vo_frame_t *next_frame (vos_t *this, int64_t *vpts) {
 
     /* last frame? back it up for still frame creation */
     if (!this->display_img_buf_queue.first) {
-      if (this->img_backup) {
+      pthread_mutex_lock (&this->grab_lock);
+      if (this->last_frame) {
         lprintf ("overwriting frame backup\n");
-        vo_frame_dec_lock (this->img_backup);
+        vo_frame_dec_lock (this->last_frame);
       }
       lprintf ("possible still frame (old)\n");
-      this->img_backup = img;
+      this->last_frame = img;
+      pthread_mutex_unlock (&this->grab_lock);
+      vo_frame_dec_lock (img);
       /* wait 4 frames before drawing this one. this allow slower systems to recover. */
       this->redraw_needed = 4;
     } else {
-      vo_frame_dec_lock (img);
+      vo_frame_dec2_lock (img);
     }
 
     img = this->display_img_buf_queue.first;
@@ -1687,24 +1733,19 @@ static vo_frame_t *next_frame (vos_t *this, int64_t *vpts) {
     pthread_mutex_unlock (&this->display_img_buf_queue.mutex);
     /* we dont need that filler anymore */
     if (this->last_flushed) {
-      vo_frame_dec_lock (this->last_flushed);
+      vo_frame_dec2_lock (this->last_flushed);
       this->last_flushed = NULL;
     }
-    /* reuse as still frame */
-    vo_frame_inc_lock (img);
-    if (this->img_backup)
-      vo_frame_dec_lock (this->img_backup);
-    this->img_backup = img;
     return img;
   }
     
   pthread_mutex_unlock (&this->display_img_buf_queue.mutex);
   lprintf ("no frame\n");
   check_redraw_needed (this, *vpts);
-  if (this->img_backup && (this->redraw_needed == 1)) {
+  if (this->last_frame && (this->redraw_needed == 1)) {
     lprintf ("generating still frame (vpts = %" PRId64 ") \n", *vpts);
     /* keep playing still frames */
-    img = duplicate_frame (this, this->img_backup);
+    img = duplicate_frame (this, this->last_frame);
     if (img) {
       img->vpts = *vpts;
       /* extra info of the backup is thrown away, because it is not up to date */
@@ -1712,6 +1753,7 @@ static vo_frame_t *next_frame (vos_t *this, int64_t *vpts) {
       img->future_frame = NULL;
     }
     *vpts = 0;
+    this->lf_is_duplicate = 1;
     return img;
   } else {
     if (this->redraw_needed)
@@ -1736,7 +1778,8 @@ static void overlay_and_display_frame (vos_t *this, vo_frame_t *img, int64_t vpt
     int64_t diff;
     pthread_mutex_lock( &img->stream->current_extra_info_lock );
     diff = img->extra_info->vpts - img->stream->current_extra_info->vpts;
-    if ((diff > 3000) || (diff<-300000))
+    /* Always post first frame time to make frontend relative seek work. */
+    if ((diff > 3000) || (diff<-300000) || (img->is_first > 0))
       _x_extra_info_merge( img->stream->current_extra_info, img->extra_info );
     pthread_mutex_unlock( &img->stream->current_extra_info_lock );
   }
@@ -1745,7 +1788,7 @@ static void overlay_and_display_frame (vos_t *this, vo_frame_t *img, int64_t vpt
    * (eg an X window event handler). If it is waiting for a frame we better wake
    * it up _before_ we start displaying, or the first 10 seconds of video are lost.
    */
-  if (img->is_first) {
+  if (img->is_first > 0) {
     xine_stream_t **s;
     pthread_mutex_lock (&this->streams_lock);
     for (s = this->streams; *s; s++) {
@@ -1757,6 +1800,8 @@ static void overlay_and_display_frame (vos_t *this, vo_frame_t *img, int64_t vpt
       pthread_mutex_unlock (&(*s)->first_frame_lock);
     }
     pthread_mutex_unlock (&this->streams_lock);
+    /* Dont signal the same frame again. */
+    img->is_first = -1;
   }
 
   /* calling the frontend's frame output hook (via driver->display_frame () here)
@@ -1775,8 +1820,6 @@ static void overlay_and_display_frame (vos_t *this, vo_frame_t *img, int64_t vpt
 						  this->video_loop_running && this->overlay_enabled);
   }
 
-  vo_grab_current_frame (this, img, vpts);
-
   this->driver->display_frame (this->driver, img);
 
   this->redraw_needed = 0;
@@ -1793,13 +1836,15 @@ static void paused_loop( vos_t *this, int64_t vpts )
 
   while (this->clock->speed == XINE_SPEED_PAUSE && this->video_loop_running) {
 
-    /* set img_backup to play the same frame several times */
-    if (!this->img_backup) {
+    /* set last_frame to play the same frame several times */
+    if (!this->last_frame) {
       vo_frame_t *f;
       f = this->display_img_buf_queue.first;
       if (f) {
         vo_frame_inc_lock (f);
-        this->img_backup = f;
+        pthread_mutex_lock (&this->grab_lock);
+        this->last_frame = f;
+        pthread_mutex_unlock (&this->grab_lock);
         this->redraw_needed = 1;
       }
     }
@@ -1827,10 +1872,6 @@ static void paused_loop( vos_t *this, int64_t vpts )
         pthread_mutex_unlock (&this->trigger_drawing_mutex);
 
         if (f) {
-          if (this->img_backup)
-            vo_frame_dec_lock (this->img_backup);
-          vo_frame_inc_lock (f);
-          this->img_backup = f;
           vpts = f->vpts;
           this->clock->adjust_clock (this->clock, vpts);
           xprintf (this->xine, XINE_VERBOSITY_DEBUG,
@@ -1840,12 +1881,17 @@ static void paused_loop( vos_t *this, int64_t vpts )
 
       if (!f) {
         check_redraw_needed (this, vpts);
-        if (this->redraw_needed)
-          f = duplicate_frame (this, this->img_backup);
+        if (this->redraw_needed) {
+          f = duplicate_frame (this, this->last_frame);
+          if (f)
+            this->lf_is_duplicate = 1;
+        }
       }
       /* refresh output */
-      if (f)
+      if (f) {
         overlay_and_display_frame (this, f, vpts);
+        vo_grab_current_frame (this, f, vpts);
+      }
     }
 
     /* wait for 1/50s or wakeup */
@@ -1884,7 +1930,7 @@ static void paused_loop( vos_t *this, int64_t vpts )
       while (img) {
         n++;
         img = vo_queue_pop_int (&this->display_img_buf_queue);
-        vo_frame_dec_lock (img);
+        vo_frame_dec2_lock (img);
         img = this->display_img_buf_queue.first;
       }
       pthread_mutex_unlock (&this->display_img_buf_queue.mutex);
@@ -1952,6 +1998,7 @@ static void *video_out_loop (void *this_gen) {
       if (img) {
         lprintf ("displaying frame (id=%d)\n", img->id);
         overlay_and_display_frame (this, img, vpts);
+        vo_grab_current_frame (this, img, vpts);
       }
     }
 
@@ -2037,7 +2084,7 @@ static void *video_out_loop (void *this_gen) {
       this->trigger_drawing = 0;
       pthread_mutex_unlock (&this->trigger_drawing_mutex);
       /* honor trigger update only when a backup img is available */
-      if (!timedout && this->img_backup)
+      if (!timedout && this->last_frame)
         break;
     }
   }
@@ -2051,7 +2098,7 @@ static void *video_out_loop (void *this_gen) {
     vo_frame_t *img = this->display_img_buf_queue.first;
     while (img) {
       img = vo_queue_pop_int (&this->display_img_buf_queue);
-      vo_frame_dec_lock (img);
+      vo_frame_dec2_lock (img);
       img = this->display_img_buf_queue.first;
     }
   }
@@ -2066,12 +2113,8 @@ static void *video_out_loop (void *this_gen) {
   }
 
   if (this->last_flushed) {
-    vo_frame_dec_lock (this->last_flushed);
+    vo_frame_dec2_lock (this->last_flushed);
     this->last_flushed = NULL;
-  }
-  if (this->img_backup) {
-    vo_frame_dec_lock( this->img_backup );
-    this->img_backup = NULL;
   }
 
   pthread_mutex_lock(&this->grab_lock);
@@ -2153,7 +2196,7 @@ void xine_free_video_frame (xine_video_port_t *port,
 
   vo_frame_t *img = (vo_frame_t *) frame->xine_frame;
 
-  vo_frame_dec_lock (img);
+  vo_frame_dec2_lock (img);
 }
 
 
@@ -2353,7 +2396,7 @@ static int vo_set_property (xine_video_port_t *this_gen, int property, int value
 
         img = vo_queue_pop_int (&this->display_img_buf_queue);
 
-        vo_frame_dec_lock (img);
+        vo_frame_dec2_lock (img);
       }
       pthread_mutex_unlock(&this->display_img_buf_queue.mutex);
     }
@@ -2712,8 +2755,7 @@ xine_video_port_t *_x_vo_new_port (xine_t *xine, vo_driver_t *driver, int grabon
   this->trigger_drawing       = 0;
   this->step                  = 0;
 
-  this->img_backup            = NULL;
-
+  this->lf_is_duplicate       = 0;
   this->last_frame            = NULL;
   this->pending_grab_request  = NULL;
 
