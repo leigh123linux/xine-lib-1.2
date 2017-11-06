@@ -222,7 +222,7 @@ static void ff_audio_ensure_buffer_size(ff_audio_decoder_t *this, int size) {
     xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
             _("ffmpeg_audio_dec: increasing buffer to %d to avoid overflow.\n"),
             this->bufsize);
-    this->buf = xine_realloc_aligned (this->buf, this->bufsize + FF_INPUT_BUFFER_PADDING_SIZE);
+    this->buf = xine_realloc_aligned (this->buf, this->bufsize + AV_INPUT_BUFFER_PADDING_SIZE);
   }
 }
 
@@ -233,9 +233,9 @@ static void ff_audio_handle_special_buffer(ff_audio_decoder_t *this, buf_element
 
     free (this->context->extradata);
     this->context->extradata_size = buf->decoder_info[2];
-    this->context->extradata = malloc (buf->decoder_info[2] + FF_INPUT_BUFFER_PADDING_SIZE);
+    this->context->extradata = malloc (buf->decoder_info[2] + AV_INPUT_BUFFER_PADDING_SIZE);
     memcpy (this->context->extradata, buf->decoder_info_ptr[2], buf->decoder_info[2]);
-    memset (this->context->extradata + buf->decoder_info[2], 0, FF_INPUT_BUFFER_PADDING_SIZE);
+    memset (this->context->extradata + buf->decoder_info[2], 0, AV_INPUT_BUFFER_PADDING_SIZE);
 
     ff_aac_mode_set (this, 0);
   }
@@ -452,10 +452,10 @@ static void ff_handle_header_buffer(ff_audio_decoder_t *this, buf_element_t *buf
             this->ff_channels, this->ff_bits, this->ff_sample_rate,
             this->context->block_align);
           if (!data_len) break;
-          e = malloc (data_len + FF_INPUT_BUFFER_PADDING_SIZE);
+          e = malloc (data_len + AV_INPUT_BUFFER_PADDING_SIZE);
           if (!e) break;
           xine_fast_memcpy (e, p, data_len);
-          memset (e + data_len, 0, FF_INPUT_BUFFER_PADDING_SIZE);
+          memset (e + data_len, 0, AV_INPUT_BUFFER_PADDING_SIZE);
           this->context->extradata = e;
           this->context->extradata_size = data_len;
           break;
@@ -1009,7 +1009,7 @@ static void ff_audio_decode_data (audio_decoder_t *this_gen, buf_element_t *buf)
       offset = 0;
 
       /* pad input data */
-      memset(&this->buf[this->size], 0, FF_INPUT_BUFFER_PADDING_SIZE);
+      memset(&this->buf[this->size], 0, AV_INPUT_BUFFER_PADDING_SIZE);
 
       while (this->size>=0) {
 

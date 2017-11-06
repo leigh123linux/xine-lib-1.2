@@ -911,16 +911,18 @@ static void init_video_codec (ff_video_decoder_t *this, unsigned int codec_type)
   this->stream->video_out->open (this->stream->video_out, this->stream);
 
   this->edge = 0;
-  if(this->codec->capabilities & CODEC_CAP_DR1 && this->class->enable_dri) {
+  if(this->codec->capabilities & AV_CODEC_CAP_DR1 && this->class->enable_dri) {
     if (this->stream->video_out->get_capabilities (this->stream->video_out) & VO_CAP_CROP) {
       /* We can crop. Fine. Lets allow decoders to paint over the frame edges.
          This will be slightly faster. And it is also a workaround for buggy
          v54 who likes to ignore EMU_EDGE for wmv2 and xvid. */
       this->edge = XFF_EDGE_WIDTH ();
+#ifdef CODEC_FLAG_EMU_EDGE
     } else {
       /* Some codecs (eg rv10) copy flags in init so it's necessary to set
        * this flag here in case we are going to use direct rendering */
       this->context->flags |= CODEC_FLAG_EMU_EDGE;
+#endif
     }
   }
 
@@ -929,7 +931,7 @@ static void init_video_codec (ff_video_decoder_t *this, unsigned int codec_type)
   this->context->codec_type = this->codec->type;
 
   if (this->class->choose_speed_over_accuracy)
-    this->context->flags2 |= CODEC_FLAG2_FAST;
+    this->context->flags2 |= AV_CODEC_FLAG2_FAST;
 
   this->context->skip_loop_filter = skip_loop_filter_enum_values[this->class->skip_loop_filter_enum];
 
@@ -958,7 +960,7 @@ static void init_video_codec (ff_video_decoder_t *this, unsigned int codec_type)
   /* enable direct rendering by default */
   this->output_format = XINE_IMGFMT_YV12;
 #ifdef ENABLE_DIRECT_RENDERING
-  if( this->codec->capabilities & CODEC_CAP_DR1 && this->class->enable_dri ) {
+  if( this->codec->capabilities & AV_CODEC_CAP_DR1 && this->class->enable_dri ) {
 # ifdef XFF_AV_BUFFER
     this->context->get_buffer2 = get_buffer;
     this->context->thread_safe_callbacks = 1;
@@ -1502,7 +1504,7 @@ static void ff_check_bufsize (ff_video_decoder_t *this, int size) {
     xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
 	    _("ffmpeg_video_dec: increasing buffer to %d to avoid overflow.\n"),
 	    this->bufsize);
-    this->buf = realloc(this->buf, this->bufsize + FF_INPUT_BUFFER_PADDING_SIZE );
+    this->buf = realloc(this->buf, this->bufsize + AV_INPUT_BUFFER_PADDING_SIZE );
   }
 }
 
@@ -1513,7 +1515,7 @@ static int ff_vc1_find_header(ff_video_decoder_t *this, buf_element_t *buf)
   if (!p[0] && !p[1] && p[2] == 1 && p[3] == 0x0f) {
     int i;
 
-    this->context->extradata = calloc(1, buf->size + FF_INPUT_BUFFER_PADDING_SIZE);
+    this->context->extradata = calloc(1, buf->size + AV_INPUT_BUFFER_PADDING_SIZE);
     this->context->extradata_size = 0;
 
     for (i = 0; i < buf->size && i < 128; i++) {
@@ -1646,10 +1648,10 @@ static void ff_handle_header_buffer (ff_video_decoder_t *this, buf_element_t *bu
       if (this->bih.biSize > sizeof(xine_bmiheader)) {
       this->context->extradata_size = this->bih.biSize - sizeof(xine_bmiheader);
         this->context->extradata = malloc(this->context->extradata_size +
-                                          FF_INPUT_BUFFER_PADDING_SIZE);
+                                          AV_INPUT_BUFFER_PADDING_SIZE);
         memcpy(this->context->extradata, this->buf + sizeof(xine_bmiheader),
               this->context->extradata_size);
-        memset(this->context->extradata + this->context->extradata_size, 0, FF_INPUT_BUFFER_PADDING_SIZE);
+        memset(this->context->extradata + this->context->extradata_size, 0, AV_INPUT_BUFFER_PADDING_SIZE);
       }
 
       this->context->bits_per_sample = this->bih.biBitCount;
@@ -1670,7 +1672,7 @@ static void ff_handle_header_buffer (ff_video_decoder_t *this, buf_element_t *bu
 	if (this->context->extradata_size < 8) {
 	  this->context->extradata_size= 8;
 	  this->context->extradata = calloc(1, this->context->extradata_size +
-		                            FF_INPUT_BUFFER_PADDING_SIZE);
+                                            AV_INPUT_BUFFER_PADDING_SIZE);
           ((uint32_t *)this->context->extradata)[0] = 0;
 	  if (codec_type == BUF_VIDEO_RV10)
 	     ((uint32_t *)this->context->extradata)[1] = 0x10000000;
@@ -1678,10 +1680,10 @@ static void ff_handle_header_buffer (ff_video_decoder_t *this, buf_element_t *bu
 	     ((uint32_t *)this->context->extradata)[1] = 0x10003001;
 	} else {
           this->context->extradata = malloc(this->context->extradata_size +
-	                                    FF_INPUT_BUFFER_PADDING_SIZE);
+                                            AV_INPUT_BUFFER_PADDING_SIZE);
 	  memcpy(this->context->extradata, this->buf + 26,
 	         this->context->extradata_size);
-          memset(this->context->extradata + this->context->extradata_size, 0, FF_INPUT_BUFFER_PADDING_SIZE);
+          memset(this->context->extradata + this->context->extradata_size, 0, AV_INPUT_BUFFER_PADDING_SIZE);
 	}
 
 	xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
@@ -1713,10 +1715,10 @@ static void ff_handle_special_buffer (ff_video_decoder_t *this, buf_element_t *b
     lprintf("BUF_SPECIAL_STSD_ATOM\n");
     this->context->extradata_size = buf->decoder_info[2];
     this->context->extradata = malloc(buf->decoder_info[2] +
-				      FF_INPUT_BUFFER_PADDING_SIZE);
+                                      AV_INPUT_BUFFER_PADDING_SIZE);
     memcpy(this->context->extradata, buf->decoder_info_ptr[2],
       buf->decoder_info[2]);
-    memset(this->context->extradata + this->context->extradata_size, 0, FF_INPUT_BUFFER_PADDING_SIZE);
+    memset(this->context->extradata + this->context->extradata_size, 0, AV_INPUT_BUFFER_PADDING_SIZE);
 
   } else if (buf->decoder_info[1] == BUF_SPECIAL_DECODER_CONFIG &&
             !this->context->extradata_size) {
@@ -1724,10 +1726,10 @@ static void ff_handle_special_buffer (ff_video_decoder_t *this, buf_element_t *b
     lprintf("BUF_SPECIAL_DECODER_CONFIG\n");
     this->context->extradata_size = buf->decoder_info[2];
     this->context->extradata = malloc(buf->decoder_info[2] +
-				      FF_INPUT_BUFFER_PADDING_SIZE);
+                                      AV_INPUT_BUFFER_PADDING_SIZE);
     memcpy(this->context->extradata, buf->decoder_info_ptr[2],
       buf->decoder_info[2]);
-    memset(this->context->extradata + this->context->extradata_size, 0, FF_INPUT_BUFFER_PADDING_SIZE);
+    memset(this->context->extradata + this->context->extradata_size, 0, AV_INPUT_BUFFER_PADDING_SIZE);
   }
   else if (buf->decoder_info[1] == BUF_SPECIAL_PALETTE) {
     unsigned int i;
@@ -2140,7 +2142,7 @@ static void ff_handle_buffer (ff_video_decoder_t *this, buf_element_t *buf) {
   /* data accumulation */
   if (buf->size > 0) {
     if ((this->size == 0) &&
-	((buf->size + FF_INPUT_BUFFER_PADDING_SIZE) < buf->max_size) &&
+        ((buf->size + AV_INPUT_BUFFER_PADDING_SIZE) < buf->max_size) &&
 	(buf->decoder_flags & BUF_FLAG_FRAME_END)) {
       /* buf contains a complete frame */
       /* no memcpy needed */
@@ -2176,7 +2178,7 @@ static void ff_handle_buffer (ff_video_decoder_t *this, buf_element_t *buf) {
     /* note: bitstream, alt bitstream reader or something will cause
      * severe mpeg4 artifacts if padding is less than 32 bits.
      */
-    memset(&chunk_buf[this->size], 0, FF_INPUT_BUFFER_PADDING_SIZE);
+    memset(&chunk_buf[this->size], 0, AV_INPUT_BUFFER_PADDING_SIZE);
 
     while (this->size > 0) {
 
@@ -2822,7 +2824,7 @@ static video_decoder_t *ff_video_open_plugin (video_decoder_class_t *class_gen, 
 
   this->decoder_ok        = 0;
   this->decoder_init_mode = 1;
-  this->buf               = calloc(1, VIDEOBUFSIZE + FF_INPUT_BUFFER_PADDING_SIZE);
+  this->buf               = calloc(1, VIDEOBUFSIZE + AV_INPUT_BUFFER_PADDING_SIZE);
   this->bufsize           = VIDEOBUFSIZE;
 
   this->is_mpeg12         = 0;

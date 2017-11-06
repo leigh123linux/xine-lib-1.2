@@ -207,7 +207,9 @@ static int lavc_on_update_format(dxr3_driver_t *drv, dxr3_frame_t *frame)
   this->context->height = frame->oheight;
 
   this->context->gop_size = 0; /*intra frames only */
+#if defined(LIBAVCODEC_VERSION_MAJOR) && LIBAVCODEC_VERSION_MAJOR < 58
   this->context->me_method = ME_ZERO; /*motion estimation type*/
+#endif
 
   this->context->time_base.den = 90000;
   if (frame->vo_frame.duration > 90000 / 24)
