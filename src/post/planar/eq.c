@@ -35,12 +35,15 @@
 
 #if defined(ARCH_X86_64)
 #  define MEM1(reg) "(%"reg")"
+#  define MEM2(offs,reg)      offs"(%"reg")"
 #  define BUMPPTR(offs,reg) "\n\tleaq\t"offs"(%"reg"), %"reg
 #elif defined(ARCH_X86_X32)
 #  define MEM1(reg) "(%q"reg")"
+#  define MEM2(offs,reg)      offs"(%q"reg")"
 #  define BUMPPTR(offs,reg) "\n\tleaq\t"offs"(%q"reg"), %q"reg
 #else
 #  define MEM1(reg) "(%"reg")"
+#  define MEM2(offs,reg)      offs"(%"reg")"
 #  define BUMPPTR(offs,reg) "\n\tleal\t"offs"(%"reg"), %"reg
 #endif
 
@@ -51,20 +54,24 @@ static void process_MMX(unsigned char *dest, int dstride, unsigned char *src, in
   int pel;
   int dstep = dstride - w;
   int sstep = sstride - w;
-  short brvec[4];
-  short contvec[4];
+  short cvec[8];
 
   contrast = ((contrast + 100) * 256 * 16) / 100;
   brightness = ((brightness + 100) * 511) / 200 - 128 - contrast / 32;
 
-  brvec[0] = brvec[1] = brvec[2] = brvec[3] = brightness;
-  contvec[0] = contvec[1] = contvec[2] = contvec[3] = contrast;
+  cvec[0] = cvec[1] = cvec[2] = cvec[3] = brightness;
+  cvec[4] = cvec[5] = cvec[6] = cvec[7] = contrast;
+
+  __asm__ __volatile__ (
+    "\n\tmovq\t"MEM1(     "0")", %%mm3"
+    "\n\tmovq\t"MEM2("8", "0")", %%mm4"
+    "\n\tpxor\t%%mm0, %%mm0"
+    :
+    : "r" (cvec)
+  );
 
   while (h--) {
     __asm__ __volatile__ (
-      "\n\tmovq\t"MEM1("5")", %%mm3"
-      "\n\tmovq\t"MEM1("6")", %%mm4"
-      "\n\tpxor\t%%mm0, %%mm0"
       "\n\tmovl\t%4, %%eax"
       "\n\t"ASMALIGN(4)
       "\n1:"
@@ -85,7 +92,7 @@ static void process_MMX(unsigned char *dest, int dstride, unsigned char *src, in
       "\n\tdecl\t%%eax"
       "\n\tjnz\t1b"
       : "=r" (src), "=r" (dest)
-      : "0"  (src), "1"  (dest), "r" (w>>3), "r" (brvec), "r" (contvec)
+      : "0"  (src), "1"  (dest), "r" (w>>3)
       : "%eax"
     );
 
