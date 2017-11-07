@@ -1,4 +1,3 @@
-include $(top_srcdir)/misc/Makefile.quiet
 include $(top_srcdir)/misc/Makefile.common
 
 # Order is important be careful changing SUBDIRS

@@ -1,4 +1,3 @@
-include $(top_srcdir)/misc/Makefile.quiet
 include $(top_srcdir)/misc/Makefile.common
 
 # plugins/Makefile.am distributes the plugins that come with tvtime.

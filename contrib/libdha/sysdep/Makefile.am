@@ -1,4 +1,3 @@
-include $(top_srcdir)/misc/Makefile.quiet
 include $(top_srcdir)/misc/Makefile.common
 
 EXTRA_DIST = \
@@ -25,7 +24,7 @@ EXTRA_DIST = \
 	pci_svr4.c \
 	pci_win32.c \
 	pci_x86.c
-	
+
 noinst_HEADERS = \
 	AsmMacros_alpha.h \
 	AsmMacros_arm32.h \

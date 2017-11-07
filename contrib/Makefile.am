@@ -1,4 +1,3 @@
-include $(top_srcdir)/misc/Makefile.quiet
 SUBDIRS = libmpcdec libxdg-basedir libdca nosefart gsm610 libmad a52dec \
 	libfaad
 

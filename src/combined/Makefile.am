@@ -1,4 +1,3 @@
-include $(top_srcdir)/misc/Makefile.quiet
 SUBDIRS = ffmpeg
 
 include $(top_builddir)/misc/Makefile.plugins

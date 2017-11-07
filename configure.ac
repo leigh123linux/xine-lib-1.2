@@ -9,14 +9,14 @@ m4_esyscmd([./version.sh])
 
 dnl Initialize autoconf, autoheader, and automake
 AC_INIT([xine-lib], XINE_VERSION_SPEC, [xine-bugs@lists.sourceforge.net])
-AM_INIT_AUTOMAKE
+AM_INIT_AUTOMAKE([1.11])
 AC_CONFIG_SRCDIR([src/xine-engine/xine.c])
 AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_LIBOBJ_DIR([lib])
 AC_CONFIG_HEADERS([include/configure.h])
 AM_MAINTAINER_MODE
 
-m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES])
+AM_SILENT_RULES([yes])
 
 AH_TOP([#ifndef __XINE_LIB_CONFIG_H__
 #define __XINE_LIB_CONFIG_H__ 1
