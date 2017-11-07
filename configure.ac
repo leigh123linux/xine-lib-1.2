@@ -9,7 +9,7 @@ m4_esyscmd([./version.sh])
 
 dnl Initialize autoconf, autoheader, and automake
 AC_INIT([xine-lib], XINE_VERSION_SPEC, [xine-bugs@lists.sourceforge.net])
-AM_INIT_AUTOMAKE([1.11])
+AM_INIT_AUTOMAKE([1.11 -Wall])
 AC_CONFIG_SRCDIR([src/xine-engine/xine.c])
 AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_LIBOBJ_DIR([lib])
