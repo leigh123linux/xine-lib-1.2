@@ -8,6 +8,8 @@ xineplug_ldflags = $(LDFLAGS_NOUNDEFINED) $(GCSECTIONS) -avoid-version -module
 xinepostdir = $(XINE_PLUGINDIR)/post
 vidixdir = $(XINE_PLUGINDIR)/vidix
 
+MAINTAINERCLEANFILES = Makefile.in
+
 $(XINE_LIB):
 	$(MAKE) -C $(top_builddir)/src/xine-engine libxine.la
 
@@ -57,8 +59,3 @@ uninstall-hook:
 	  echo " rm -f $(DESTDIR)$(vidixdir)/$$p"; \
 	  rm -f $(DESTDIR)$(vidixdir)/$$p; \
 	done;
-
-maintainer-clean-generic:
-	-@echo "This command is intended for maintainers to use;"
-	-@echo "it deletes files that may require special tools to rebuild."
-	-rm -f Makefile.in

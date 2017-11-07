@@ -25,6 +25,11 @@ EXTRA_DIST = config.rpath autogen.sh \
 
 CLEANFILES = a.out
 CONFIG_CLEAN_FILES = libtool po/Makevars.extra
+MAINTAINERCLEANFILES = \
+	Makefile.in configure acinclude.m4 aclocal.m4 \
+	stamp-h.in ltconfig ltmain.sh \
+	config.guess config.sub install-sh missing mkinstalldirs \
+	depcomp config.log
 
 dist_doc_DATA = COPYING NEWS README TODO CREDITS ChangeLog
 
@@ -86,15 +91,6 @@ mostlyclean-generic:
 	-rm -f $(PACKAGE)_$(VERSION).tar.gz $(PACKAGE)_$(VERSION).tar.bz2
 	-rm -f $(distdir).tar.gz $(PACKAGE).tgz package_descriptions
 	-rm -rf $(distdir)
-
-
-maintainer-clean-generic:
-	-@echo "This command is intended for maintainers to use;"
-	-@echo "it deletes files that may require special tools to rebuild."
-	-rm -f Makefile.in configure acinclude.m4 aclocal.m4
-	-rm -f stamp-h.in ltconfig ltmain.sh
-	-rm -f config.guess config.sub install-sh missing mkinstalldirs
-	-rm -f depcomp config.log
 
 maintainer-clean-generic-hook:
 	rm -f config.status
