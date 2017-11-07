@@ -83,7 +83,6 @@ dist-hook:
 
 
 mostlyclean-generic:
-	-rm -f *~ \#* .*~ .\#*
 	-rm -f $(PACKAGE)_$(VERSION).tar.gz $(PACKAGE)_$(VERSION).tar.bz2
 	-rm -f $(distdir).tar.gz $(PACKAGE).tgz package_descriptions
 	-rm -rf $(distdir)
