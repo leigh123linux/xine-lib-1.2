@@ -138,7 +138,6 @@ typedef struct {
    *  - setting last_frame, and
    *  - reading last_frame from outside the render thread.
    */
-  int                       lf_is_duplicate;
   vo_frame_t               *last_frame;
   vos_grab_video_frame_t   *pending_grab_request;
   pthread_mutex_t           grab_lock;
@@ -987,13 +986,9 @@ static xine_grab_video_frame_t *vo_new_grab_video_frame(xine_video_port_t *this_
 }
 
 
+/* Use this after rendering a live frame (not for still frame duplicates). */
 static void vo_grab_current_frame (vos_t *this, vo_frame_t *vo_frame, int64_t vpts)
 {
-  if (this->lf_is_duplicate) {
-    this->lf_is_duplicate = 0;
-    return;
-  }
-
   pthread_mutex_lock(&this->grab_lock);
 
   /* hold current frame for still frame generation and snapshot feature */
@@ -1004,7 +999,8 @@ static void vo_grab_current_frame (vos_t *this, vo_frame_t *vo_frame, int64_t vp
   /* process grab queue */
   vos_grab_video_frame_t *frame = this->pending_grab_request;
   if (frame) {
-    while (frame) {
+    do {
+      vos_grab_video_frame_t *next;
       if (frame->vo_frame)
         vo_frame_dec_lock(frame->vo_frame);
       frame->vo_frame = NULL;
@@ -1016,10 +1012,10 @@ static void vo_grab_current_frame (vos_t *this, vo_frame_t *vo_frame, int64_t vp
       }
 
       frame->finished = 1;
-      vos_grab_video_frame_t *next = frame->next;
+      next = frame->next;
       frame->next = NULL;
       frame = next;
-    }
+    } while (frame);
 
     this->pending_grab_request = NULL;
     pthread_cond_broadcast(&this->grab_cond);
@@ -1536,7 +1532,9 @@ static vo_frame_t *duplicate_frame (vos_t *this, vo_frame_t *img) {
   dupl->duration  = img->duration;
   dupl->is_first  = 0;
 
-  memcpy( dupl->extra_info, img->extra_info, sizeof(extra_info_t) );
+  /* extra info is thrown away, because it is not up to date */
+  _x_extra_info_reset (dupl->extra_info);
+  dupl->future_frame = NULL;
 
   /* delay frame processing for now, we might not even need it (eg. frame will be discarded) */
   /* vo_frame_driver_proc(dupl); */
@@ -1593,24 +1591,22 @@ static vo_frame_t *next_frame (vos_t *this, int64_t *vpts) {
         first_frame = img;
         img = img->next;
       } else {
-        vo_frame_t *f;
-        if (!this->last_frame) {
-          vo_frame_dec_lock (img);
-          pthread_mutex_lock (&this->grab_lock);
-          this->last_frame = img;
-          pthread_mutex_unlock (&this->grab_lock);
-        } else {
-          f = this->last_flushed;
-          if (f && !vo_frame_dec2_lock_int (this, f)) {
-            *add = f;
-            add = &f->next;
-          }
-          this->last_flushed = img;
-          f = img->next;
-          img->next = NULL;
-          img = f;
+        vo_frame_t *f = this->last_flushed;
+        if (f && !vo_frame_dec2_lock_int (this, f)) {
+          *add = f;
+          add = &f->next;
         }
+        this->last_flushed = img;
+        f = img->next;
+        img->next = NULL;
+        img = f;
       }
+    }
+    if (!this->last_frame && this->last_flushed) { /* rare late setting */
+      vo_frame_inc_lock (this->last_flushed);
+      pthread_mutex_lock (&this->grab_lock);
+      this->last_frame = this->last_flushed;
+      pthread_mutex_unlock (&this->grab_lock);
     }
     /* Override with first frame. */
     if (first_frame) {
@@ -1631,6 +1627,7 @@ static vo_frame_t *next_frame (vos_t *this, int64_t *vpts) {
         "video_out: flushed out %d frames (now=%"PRId64", discard=%d).\n",
         n, *vpts, this->discard_frames);
     }
+    this->redraw_needed = 0;
     *vpts = 0;
     return first_frame;
   }
@@ -1742,26 +1739,8 @@ static vo_frame_t *next_frame (vos_t *this, int64_t *vpts) {
   pthread_mutex_unlock (&this->display_img_buf_queue.mutex);
   lprintf ("no frame\n");
   check_redraw_needed (this, *vpts);
-  if (this->last_frame && (this->redraw_needed == 1)) {
-    lprintf ("generating still frame (vpts = %" PRId64 ") \n", *vpts);
-    /* keep playing still frames */
-    img = duplicate_frame (this, this->last_frame);
-    if (img) {
-      img->vpts = *vpts;
-      /* extra info of the backup is thrown away, because it is not up to date */
-      _x_extra_info_reset (img->extra_info);
-      img->future_frame = NULL;
-    }
-    *vpts = 0;
-    this->lf_is_duplicate = 1;
-    return img;
-  } else {
-    if (this->redraw_needed)
-      this->redraw_needed--;
-    lprintf ("no frame, but no backup frame\n");
-    *vpts = 0;
-    return NULL;
-  }
+  *vpts = 0;
+  return NULL;
 }
 
 static void overlay_and_display_frame (vos_t *this, vo_frame_t *img, int64_t vpts) {
@@ -1876,21 +1855,21 @@ static void paused_loop( vos_t *this, int64_t vpts )
           this->clock->adjust_clock (this->clock, vpts);
           xprintf (this->xine, XINE_VERBOSITY_DEBUG,
             "video_out: SINGLE_STEP: vpts %"PRId64".\n", vpts);
+          overlay_and_display_frame (this, f, vpts);
+          vo_grab_current_frame (this, f, vpts);
         }
       }
 
+      /* refresh output */
       if (!f) {
         check_redraw_needed (this, vpts);
         if (this->redraw_needed) {
           f = duplicate_frame (this, this->last_frame);
-          if (f)
-            this->lf_is_duplicate = 1;
+          if (f) {
+            f->vpts = vpts;
+            overlay_and_display_frame (this, f, vpts);
+          }
         }
-      }
-      /* refresh output */
-      if (f) {
-        overlay_and_display_frame (this, f, vpts);
-        vo_grab_current_frame (this, f, vpts);
       }
     }
 
@@ -1999,6 +1978,19 @@ static void *video_out_loop (void *this_gen) {
         lprintf ("displaying frame (id=%d)\n", img->id);
         overlay_and_display_frame (this, img, vpts);
         vo_grab_current_frame (this, img, vpts);
+      } else if (this->redraw_needed) {
+        if (this->last_frame && (this->redraw_needed == 1)) {
+          lprintf ("generating still frame (vpts = %" PRId64 ") \n", vpts);
+          /* keep playing still frames */
+          img = duplicate_frame (this, this->last_frame);
+          if (img) {
+            img->vpts = vpts;
+            overlay_and_display_frame (this, img, vpts);
+          }
+        } else {
+          lprintf ("no frame, but no backup frame\n");
+          this->redraw_needed--;
+        }
       }
     }
 
@@ -2755,7 +2747,6 @@ xine_video_port_t *_x_vo_new_port (xine_t *xine, vo_driver_t *driver, int grabon
   this->trigger_drawing       = 0;
   this->step                  = 0;
 
-  this->lf_is_duplicate       = 0;
   this->last_frame            = NULL;
   this->pending_grab_request  = NULL;
 
