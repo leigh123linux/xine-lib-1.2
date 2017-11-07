@@ -8,12 +8,7 @@ EXTRA_DIST = \
 	include/msvc/inttypes.h \
 	include/msvc/stdint.h \
 	include/msvc/unistd.h \
-	include/sys/socket.h \
-	include/netinet/in.h \
-	include/sys/socket.h \
 	include/dlfcn.h \
-	include/netdb.h \
-	include/pwd.h \
 	config.h \
 	README \
 	libdvdnav.def \
