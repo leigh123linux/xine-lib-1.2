@@ -3,26 +3,40 @@ xine-lib (1.2.9) ????-??-??
   * Add auto gapless switch.
     Play clips to their very end when that is likely what the user wants.
   * Add video single step feature.
+  * Add generic keyframe index feature.
+  * Add x32 (x86 32 on 64bit) support.
   * Add some more debug logging.
-  * Again, lots of small fixes and optimizations.
-  * Fix VAAPI guarded render mode.
+  * Join 4 network input plugins into a single file.
   * Matroska fixes.
   * Build fixes.
   * Directx2 audio fixes.
-  * Win64 fixes.
+  * VAAPI fixes.
+  * Win64 and native win32 fixes.
   * XCB video fixes and optimizations.
+  * Return driver held video frames on shutdown properly.
   * FAAD audio compatibility fixes.
   * Fix VP9 playback.
+  * Fix post filtering crash.
+  * Make xml parser thread safe.
+  * More user configuration safety.
+  * Inline assembly fixes.
+  * Failed memory allocation safety fixes.
+  * Memory leak fixes.
+  * Debug and LOG build fixes.
+  * Again, lots of small fixes and optimizations.
   * Better multiengine client safety.
+  * Hide yuv2rgb implementation details.
+  * Use a single libyuv2rgb copy in both engine and plugins.
   * Minor ffmpeg optimization.
   * Lift a few video engine handbrakes.
     Less CPU load, fewer frame drops, faster seeking.
   * Optimize audio engine.
+  * Optimize demux buffering system.
   * Optimize metronom clock.
+  * Optimize port tickets.
   * Optimize sse/mmx2 memcpy.
+  * Code simplification and cleanup.
   * Update german translation.
-  * Hide yuv2rgb implementation details.
-  * Code cleanup.
 
 xine-lib (1.2.8) 2017-02-21
   * Add HEVC to QT demuxer.
