@@ -573,7 +573,7 @@ static void goom_port_put_buffer (xine_audio_port_t *port_gen,
               frame->proc_slice (frame, sptr);
             }
           }
-
+#if defined(ARCH_X86)
         } else if ((this->csc_method == 1) &&
             (xine_mm_accel() & MM_ACCEL_X86_MMX)) {
           int plane_ptr = 0;
@@ -594,7 +594,7 @@ static void goom_port_put_buffer (xine_audio_port_t *port_gen,
           }
 
           yuv444_to_yuy2(&this->yuv, frame->base[0], frame->pitches[0]);
-
+#endif /* ARCH_X86 */
         } else {
 
           while (goom_frame < goom_frame_end) {
