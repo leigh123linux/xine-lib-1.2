@@ -185,7 +185,9 @@ static post_plugin_t *pp_open_plugin(post_class_t *class_gen, int inputs,
   xine_post_in_t    *input_api;
   post_out_t        *output;
   post_video_port_t *port;
+#if defined(ARCH_X86)
   uint32_t           cpu_caps;
+#endif
 
   if (!this || !video_target || !video_target[0]) {
     free(this);
@@ -197,15 +199,17 @@ static post_plugin_t *pp_open_plugin(post_class_t *class_gen, int inputs,
   this->params.quality = 3;
   strcpy(this->params.mode, "de");
 
+  this->pp_flags = PP_FORMAT_420;
+#if defined(ARCH_X86)
   /* Detect what cpu accel we have */
   cpu_caps = xine_mm_accel();
-  this->pp_flags = PP_FORMAT_420;
   if(cpu_caps & MM_ACCEL_X86_MMX)
     this->pp_flags |= PP_CPU_CAPS_MMX;
   if(cpu_caps & MM_ACCEL_X86_MMXEXT)
     this->pp_flags |= PP_CPU_CAPS_MMX2;
   if(cpu_caps & MM_ACCEL_X86_3DNOW)
     this->pp_flags |= PP_CPU_CAPS_3DNOW;
+#endif
 
   this->our_mode = NULL;
   this->our_context = NULL;

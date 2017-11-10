@@ -1163,7 +1163,9 @@ static void pp_change_quality (ff_video_decoder_t *this) {
 }
 
 static void init_postprocess (ff_video_decoder_t *this) {
+#if defined(ARCH_X86)
   uint32_t cpu_caps;
+#endif
 
   /* Allow post processing on mpeg-4 (based) codecs */
   switch(this->codec->id) {
@@ -1180,9 +1182,11 @@ static void init_postprocess (ff_video_decoder_t *this) {
       break;
   }
 
+  this->pp_flags = PP_FORMAT_420;
+
+#if defined(ARCH_X86)
   /* Detect what cpu accel we have */
   cpu_caps = xine_mm_accel();
-  this->pp_flags = PP_FORMAT_420;
 
   if(cpu_caps & MM_ACCEL_X86_MMX)
     this->pp_flags |= PP_CPU_CAPS_MMX;
@@ -1192,6 +1196,7 @@ static void init_postprocess (ff_video_decoder_t *this) {
 
   if(cpu_caps & MM_ACCEL_X86_3DNOW)
     this->pp_flags |= PP_CPU_CAPS_3DNOW;
+#endif
 
   /* Set level */
   pp_change_quality(this);
