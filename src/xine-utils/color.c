@@ -311,9 +311,9 @@ static void yuv444_to_yuy2_c(const yuv_planes_t *yuv_planes, unsigned char *yuy2
  * enough.
  *
  */
+#if defined(ARCH_X86)
 static void yuv444_to_yuy2_mmx(const yuv_planes_t *yuv_planes, unsigned char *yuy2_map,
   int pitch) {
-#if defined(ARCH_X86)
   unsigned int i;
   int h, j, k;
   int width_div_8 = yuv_planes->row_width / 8;
@@ -458,8 +458,8 @@ static void yuv444_to_yuy2_mmx(const yuv_planes_t *yuv_planes, unsigned char *yu
 
   /* be a good MMX citizen and empty MMX state */
   emms();
-#endif
 }
+#endif
 
 static void hscale_chroma_line (unsigned char *dst, const unsigned char *src,
   int width) {
@@ -1124,13 +1124,14 @@ do {                                                                            
 
 #endif
 
+#if defined(ARCH_X86)
 static void yv12_to_yuy2_mmxext
   (const unsigned char *y_src, int y_src_pitch,
    const unsigned char *u_src, int u_src_pitch,
    const unsigned char *v_src, int v_src_pitch,
    unsigned char *yuy2_map, int yuy2_pitch,
    int width, int height, int progressive ) {
-#if defined(ARCH_X86)
+
     uint8_t *p_line1, *p_line2 = yuy2_map;
     const uint8_t *p_y1, *p_y2 = y_src;
     const uint8_t *p_u = u_src;
@@ -1247,17 +1248,16 @@ static void yv12_to_yuy2_mmxext
 
     sfence();
     emms();
-
-#endif
 }
+#endif
 
+#if defined(ARCH_X86)
 static void yv12_to_yuy2_sse2
   (const unsigned char *y_src, int y_src_pitch,
    const unsigned char *u_src, int u_src_pitch,
    const unsigned char *v_src, int v_src_pitch,
    unsigned char *yuy2_map, int yuy2_pitch,
    int width, int height, int progressive ) {
-#if defined(ARCH_X86)
 
     /* check alignment */
     if (((uintptr_t)y_src | (uintptr_t)yuy2_map | yuy2_pitch | y_src_pitch) & 15) {
@@ -1382,17 +1382,18 @@ static void yv12_to_yuy2_sse2
     }
 
     sfence();
-#endif
 }
+#endif
 
 /* identical to yv12_to_yuy2_c with the obvious exception... */
+#if defined(ARCH_X86)
 static void yv12_to_yuy2_mmx
   (const unsigned char *y_src, int y_src_pitch,
    const unsigned char *u_src, int u_src_pitch,
    const unsigned char *v_src, int v_src_pitch,
    unsigned char *yuy2_map, int yuy2_pitch,
    int width, int height, int progressive ) {
-#if defined(ARCH_X86)
+
     uint8_t *p_line1, *p_line2 = yuy2_map;
     const uint8_t *p_y1, *p_y2 = y_src;
     const uint8_t *p_u = u_src;
@@ -1524,9 +1525,8 @@ static void yv12_to_yuy2_mmx
 
     sfence();
     emms();
-
-#endif
 }
+#endif
 
 #define C_YUYV_YUV420( )                                          \
     *p_y1++ = *p_line1++; *p_y2++ = *p_line2++;                   \
@@ -1627,13 +1627,14 @@ do {                                                                            
 
 #endif
 
+#if defined(ARCH_X86)
 static void yuy2_to_yv12_mmxext
   (const unsigned char *yuy2_map, int yuy2_pitch,
    unsigned char *y_dst, int y_dst_pitch,
    unsigned char *u_dst, int u_dst_pitch,
    unsigned char *v_dst, int v_dst_pitch,
    int width, int height) {
-#if defined(ARCH_X86)
+
     const uint8_t *p_line1, *p_line2 = yuy2_map;
     uint8_t *p_y1, *p_y2 = y_dst;
     uint8_t *p_u = u_dst;
@@ -1672,8 +1673,8 @@ static void yuy2_to_yv12_mmxext
 
     sfence();
     emms();
-#endif
 }
+#endif
 
 
 /*
@@ -1686,6 +1687,9 @@ static void yuy2_to_yv12_mmxext
 void init_yuv_conversion(void) {
 
   int i;
+#if defined(ARCH_X86)
+  uint32_t accel;
+#endif
 
   /* initialize the RGB -> YUV tables */
   for (i = 0; i < 256; i++) {
@@ -1703,37 +1707,27 @@ void init_yuv_conversion(void) {
     v_b_table[i] = V_B * i;
   }
 
-  /* determine best YUV444 -> YUY2 converter to use */
-  if (xine_mm_accel() & MM_ACCEL_X86_MMX)
-    yuv444_to_yuy2 = yuv444_to_yuy2_mmx;
-  else
-    yuv444_to_yuy2 = yuv444_to_yuy2_c;
-
-  /* determine best YV12 -> YUY2 converter to use */
-  if (xine_mm_accel() & MM_ACCEL_X86_SSE2)
-    yv12_to_yuy2 = yv12_to_yuy2_sse2;
-  else if (xine_mm_accel() & MM_ACCEL_X86_MMXEXT)
-    yv12_to_yuy2 = yv12_to_yuy2_mmxext;
-  else if (xine_mm_accel() & MM_ACCEL_X86_MMX)
-    yv12_to_yuy2 = yv12_to_yuy2_mmx;
-  else
-    yv12_to_yuy2 = yv12_to_yuy2_c;
-
-  /* determine best YUY2 -> YV12 converter to use */
-  if (xine_mm_accel() & MM_ACCEL_X86_MMXEXT)
-    yuy2_to_yv12 = yuy2_to_yv12_mmxext;
-  else
-    yuy2_to_yv12 = yuy2_to_yv12_c;
-
-
-  /* determine best YUV9 -> YV12 converter to use (only the portable C
-   * version is available so far) */
+  /* determine best converters to use */
+  yuv444_to_yuy2 = yuv444_to_yuy2_c;
+  yv12_to_yuy2 = yv12_to_yuy2_c;
+  yuy2_to_yv12 = yuy2_to_yv12_c;
   yuv9_to_yv12 = yuv9_to_yv12_c;
-
-  /* determine best YUV411 -> YV12 converter to use (only the portable C
-   * version is available so far) */
   yuv411_to_yv12 = yuv411_to_yv12_c;
 
+#if defined(ARCH_X86)
+  accel = xine_mm_accel();
+  if (accel & MM_ACCEL_X86_MMX) {
+    yuv444_to_yuy2 = yuv444_to_yuy2_mmx;
+    yv12_to_yuy2   = yv12_to_yuy2_mmx;
+  }
+  if (accel & MM_ACCEL_X86_MMXEXT) {
+    yv12_to_yuy2   = yv12_to_yuy2_mmxext;
+    yuy2_to_yv12   = yuy2_to_yv12_mmxext;
+  }
+  if (accel & MM_ACCEL_X86_SSE2) {
+    yv12_to_yuy2   = yv12_to_yuy2_sse2;
+  }
+#endif
 }
 
 /* TJ. direct sliced rgb -> yuy2 conversion */
