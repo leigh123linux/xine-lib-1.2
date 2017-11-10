@@ -159,14 +159,16 @@ void (*yuy2_to_yv12)
  * and height passed to it. The width must be divisible by 2.
  */
 void init_yuv_planes(yuv_planes_t *yuv_planes, int width, int height) {
+  size_t plane_size = width * height;
+
   memset (yuv_planes, 0, sizeof (*yuv_planes));
 
   yuv_planes->row_width = width;
   yuv_planes->row_count = height;
 
-  yuv_planes->y = calloc(width, height);
-  yuv_planes->u = calloc(width, height);
-  yuv_planes->v = calloc(width, height);
+  yuv_planes->y = xine_mallocz_aligned(plane_size);
+  yuv_planes->u = xine_mallocz_aligned(plane_size);
+  yuv_planes->v = xine_mallocz_aligned(plane_size);
 }
 
 /*
@@ -175,9 +177,9 @@ void init_yuv_planes(yuv_planes_t *yuv_planes, int width, int height) {
  * This frees the memory used by the YUV planes.
  */
 void free_yuv_planes(yuv_planes_t *yuv_planes) {
-  _x_freep(&yuv_planes->y);
-  _x_freep(&yuv_planes->u);
-  _x_freep(&yuv_planes->v);
+  xine_freep_aligned(&yuv_planes->y);
+  xine_freep_aligned(&yuv_planes->u);
+  xine_freep_aligned(&yuv_planes->v);
 }
 
 /*
