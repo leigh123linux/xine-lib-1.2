@@ -690,6 +690,35 @@ xine_stream_t *xine_stream_new (xine_t *this,
   if (!stream)
     return NULL;
 
+  /* Do these first, when compiler still knows stream is all zeroed.
+   * Let it optimize away this on most systems where clear mem
+   * interpretes as 0, 0f or NULL safely.
+   */
+  stream->spu_decoder_plugin     = NULL;
+  stream->audio_decoder_plugin   = NULL;
+  stream->early_finish_event     = 0;
+  stream->delay_finish_event     = 0;
+  stream->gapless_switch         = 0;
+  stream->keep_ao_driver_open    = 0;
+  stream->video_channel          = 0;
+  stream->video_decoder_plugin   = NULL;
+  stream->header_count_audio     = 0;
+  stream->header_count_video     = 0;
+  stream->finished_count_audio   = 0;
+  stream->finished_count_video   = 0;
+  stream->err                    = 0;
+  stream->broadcaster            = NULL;
+  stream->index_array            = NULL;
+  stream->slave                  = NULL;
+  stream->slave_is_subtitle      = 0;
+  {
+    int i;
+    for (i = 0; i < XINE_STREAM_INFO_MAX; i++) {
+      stream->stream_info_public[i] = stream->stream_info[i] = 0;
+      stream->meta_info_public[i]   = stream->meta_info[i]   = NULL;
+    }
+  }
+
   pthread_mutex_lock (&this->streams_lock);
 
   stream->current_extra_info       = malloc( sizeof( extra_info_t ) );
@@ -702,22 +731,16 @@ xine_stream_t *xine_stream_new (xine_t *this,
   stream->xine                   = this;
   stream->status                 = XINE_STATUS_IDLE;
 
-  stream->spu_decoder_plugin     = NULL;
   stream->spu_decoder_streamtype = -1;
   stream->audio_out              = ao;
   stream->audio_channel_user     = -1;
   stream->audio_channel_auto     = -1;
-  stream->audio_decoder_plugin   = NULL;
   stream->audio_decoder_streamtype = -1;
   stream->spu_channel_auto       = -1;
   stream->spu_channel_letterbox  = -1;
   stream->spu_channel_pan_scan   = -1;
   stream->spu_channel_user       = -1;
   stream->spu_channel            = -1;
-  stream->early_finish_event     = 0;
-  stream->delay_finish_event     = 0;
-  stream->gapless_switch         = 0;
-  stream->keep_ao_driver_open    = 0;
   /* Do not flush output when opening/closing yet unused streams (eg subtitle). */
   stream->finished_naturally     = 1;
 
@@ -727,23 +750,12 @@ xine_stream_t *xine_stream_new (xine_t *this,
   else
     stream->video_driver           = NULL;
 
-  stream->video_channel          = 0;
-  stream->video_decoder_plugin   = NULL;
   stream->video_decoder_streamtype = -1;
-  stream->header_count_audio     = 0;
-  stream->header_count_video     = 0;
-  stream->finished_count_audio   = 0;
-  stream->finished_count_video   = 0;
-  stream->err                    = 0;
-  stream->broadcaster            = NULL;
-  stream->index_array            = NULL;
 
   /*
    * initial master/slave
    */
   stream->master                 = stream;
-  stream->slave                  = NULL;
-  stream->slave_is_subtitle      = 0;
 
   /*
    * init mutexes and conditions
@@ -772,20 +784,6 @@ xine_stream_t *xine_stream_new (xine_t *this,
   pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE);
   pthread_mutex_init (&stream->frontend_lock, &attr);
   pthread_mutexattr_destroy(&attr);
-
-  /*
-   * Clear meta/stream info
-   * XXX We did zero allocate the stream struct, including the embedded info arrays.
-   * Do we really need this below?
-   * At least we skip a flood of useless tests and mutex calls there.
-   */
-  {
-    int i;
-    for (i = 0; i < XINE_STREAM_INFO_MAX; i++) {
-      stream->stream_info_public[i] = stream->stream_info[i] = 0;
-      stream->meta_info_public[i]   = stream->meta_info[i]   = NULL;
-    }
-  }
 
   /*
    * event queues

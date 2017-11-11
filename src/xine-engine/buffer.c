@@ -747,6 +747,22 @@ fifo_buffer_t *_x_fifo_buffer_new (int num_buffers, uint32_t buf_size) {
   if (!this)
     return NULL;
 
+  /* Do these first, when compiler still knows "this" is all zeroed.
+   * Let it optimize away this on most systems where clear mem
+   * interpretes as 0, 0f or NULL safely.
+   */
+  this->first                   = NULL;
+  this->last                    = NULL;
+  this->fifo_size               = 0;
+  this->fifo_num_waiters        = 0;
+  this->buffer_pool_num_waiters = 0;
+  this->alloc_cb[0]             = NULL;
+  this->get_cb[0]               = NULL;
+  this->put_cb[0]               = NULL;
+  this->alloc_cb_data[0]        = NULL;
+  this->get_cb_data[0]          = NULL;
+  this->put_cb_data[0]          = NULL;
+
   /* printf ("Allocating %d buffers of %ld bytes in one chunk\n", num_buffers, (long int) buf_size); */
   multi_buffer = xine_mallocz_aligned (num_buffers * (buf_size + sizeof (be_ei_t)));
   if (!multi_buffer) {
@@ -754,10 +770,6 @@ fifo_buffer_t *_x_fifo_buffer_new (int num_buffers, uint32_t buf_size) {
     return NULL;
   }
 
-  this->first               = NULL;
-  this->last                = NULL;
-  this->fifo_size           = 0;
-  this->fifo_num_waiters    = 0;
   this->put                 = fifo_buffer_put;
   this->insert              = fifo_buffer_insert;
   this->get                 = fifo_buffer_get;
@@ -787,7 +799,6 @@ fifo_buffer_t *_x_fifo_buffer_new (int num_buffers, uint32_t buf_size) {
   this->buffer_pool_try_alloc  = buffer_pool_try_alloc;
   this->buffer_pool_size_alloc = buffer_pool_size_alloc;
 
-  this->buffer_pool_num_waiters = 0;
   this->buffer_pool_large_wait  = LARGE_NUM;
 
   this->buffer_pool_base = multi_buffer;
@@ -808,12 +819,6 @@ fifo_buffer_t *_x_fifo_buffer_new (int num_buffers, uint32_t buf_size) {
 
   (beei - 1)->elem.next = NULL;
 
-  this->alloc_cb[0]              = NULL;
-  this->get_cb[0]                = NULL;
-  this->put_cb[0]                = NULL;
-  this->alloc_cb_data[0]         = NULL;
-  this->get_cb_data[0]           = NULL;
-  this->put_cb_data[0]           = NULL;
   return this;
 }
 

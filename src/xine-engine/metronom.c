@@ -1146,6 +1146,26 @@ static void metronom_clock_exit (metronom_clock_t *this) {
 metronom_t * _x_metronom_init (int have_video, int have_audio, xine_t *xine) {
 
   metronom_t *this = calloc(1, sizeof (metronom_t));
+  if (!this)
+    return NULL;
+
+  /* Do these first, when compiler still knows "this" is all zeroed.
+   * Let it optimize away this on most systems where clear mem
+   * interpretes as 0, 0f or NULL safely.
+   */
+  this->master                     = NULL;
+  this->av_offset                   = 0;
+  this->spu_offset                  = 0;
+  this->vpts_offset                 = 0;
+  this->video_drift                 = 0;
+  this->video_drift_step            = 0;
+  this->video_discontinuity_count   = 0;
+  this->discontinuity_handled_count = 0;
+  this->img_cpt                     = 0;
+  this->last_video_pts              = 0;
+  this->last_audio_pts              = 0;
+  this->audio_vpts_rmndr            = 0;
+  this->audio_discontinuity_count   = 0;
 
   this->set_audio_rate             = metronom_set_audio_rate;
   this->got_video_frame            = metronom_got_video_frame;
@@ -1159,38 +1179,23 @@ metronom_t * _x_metronom_init (int have_video, int have_audio, xine_t *xine) {
   this->exit                       = metronom_exit;
 
   this->xine                       = xine;
-  this->master                     = NULL;
 
   pthread_mutex_init (&this->lock, NULL);
 
-  this->prebuffer                   = PREBUFFER_PTS_OFFSET;
-  this->av_offset                   = 0;
-  this->spu_offset                  = 0;
-  this->vpts_offset                 = 0;
+  this->prebuffer = PREBUFFER_PTS_OFFSET;
 
   /* initialize video stuff */
 
-  this->video_vpts                  = this->prebuffer;
-  this->video_drift                 = 0;
-  this->video_drift_step            = 0;
-  this->video_discontinuity_count   = 0;
-  this->discontinuity_handled_count = 0;
+  this->have_video   = have_video;
+  this->video_vpts   = this->prebuffer;
   pthread_cond_init (&this->video_discontinuity_reached, NULL);
-  this->img_duration              = 3000;
-  this->img_cpt                   = 0;
-  this->last_video_pts            = 0;
-  this->last_audio_pts            = 0;
-
+  this->img_duration = 3000;
 
   /* initialize audio stuff */
 
-  this->have_video                  = have_video;
-  this->have_audio                  = have_audio;
-  this->audio_vpts                  = this->prebuffer;
-  this->audio_vpts_rmndr            = 0;
-  this->audio_discontinuity_count   = 0;
+  this->have_audio = have_audio;
+  this->audio_vpts = this->prebuffer;
   pthread_cond_init (&this->audio_discontinuity_reached, NULL);
-
 
   return this;
 }

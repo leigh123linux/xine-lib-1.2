@@ -2711,6 +2711,25 @@ xine_video_port_t *_x_vo_new_port (xine_t *xine, vo_driver_t *driver, int grabon
   if (!this)
     return NULL;
 
+  /* Do these first, when compiler still knows "this" is all zeroed.
+   * Let it optimize away this on most systems where clear mem
+   * interpretes as 0, 0f or NULL safely.
+   */
+  this->num_frames_delivered  = 0;
+  this->num_frames_skipped    = 0;
+  this->num_frames_discarded  = 0;
+  this->grab_only             = 0;
+  this->video_opened          = 0;
+  this->video_loop_running    = 0;
+  this->trigger_drawing       = 0;
+  this->step                  = 0;
+  this->last_frame            = NULL;
+  this->pending_grab_request  = NULL;
+  this->frames_extref         = 0;
+  this->frames_peak_used      = 0;
+  this->frame_drop_cpt        = 0;
+  this->frame_drop_suggested  = 0;
+
   this->xine   = xine;
   this->clock  = xine->clock;
   this->driver = driver;
@@ -2719,6 +2738,7 @@ xine_video_port_t *_x_vo_new_port (xine_t *xine, vo_driver_t *driver, int grabon
     free (this);
     return NULL;
   }
+
 
   this->vo.open                  = vo_open;
   this->vo.get_frame             = vo_get_frame;
@@ -2735,20 +2755,6 @@ xine_video_port_t *_x_vo_new_port (xine_t *xine, vo_driver_t *driver, int grabon
   this->vo.set_property          = vo_set_property;
   this->vo.status                = vo_status;
   this->vo.driver                = driver;
-
-  /* not really needed as *this is already zeroed */ 
-  this->num_frames_delivered  = 0;
-  this->num_frames_skipped    = 0;
-  this->num_frames_discarded  = 0;
-
-  this->grab_only             = 0;
-  this->video_opened          = 0;
-  this->video_loop_running    = 0;
-  this->trigger_drawing       = 0;
-  this->step                  = 0;
-
-  this->last_frame            = NULL;
-  this->pending_grab_request  = NULL;
 
   /* default number of video frames from config */
   num_frame_buffers = xine->config->register_num (xine->config,
@@ -2771,8 +2777,6 @@ xine_video_port_t *_x_vo_new_port (xine_t *xine, vo_driver_t *driver, int grabon
 
   /* init frame usage stats */
   this->frames_total = num_frame_buffers;
-  this->frames_extref = 0;
-  this->frames_peak_used = 0;
 
   /* Choose a frame_drop_limit which matches num_frame_buffers.
    * xxmc for example supplies only 8 buffers. 2 are occupied by
@@ -2789,8 +2793,6 @@ xine_video_port_t *_x_vo_new_port (xine_t *xine, vo_driver_t *driver, int grabon
     this->frame_drop_limit_max = 3;
 
   this->frame_drop_limit      = this->frame_drop_limit_max;
-  this->frame_drop_cpt        = 0;
-  this->frame_drop_suggested  = 0;
 
   /* get some extra mem */
   this->extra_info_base = calloc (num_frame_buffers, sizeof (extra_info_t));

@@ -2277,6 +2277,32 @@ xine_audio_port_t *_x_ao_new_port (xine_t *xine, ao_driver_t *driver,
   if (!this)
     return NULL;
 
+  /* Do these first, when compiler still knows "this" is all zeroed.
+   * Let it optimize away this on most systems where clear mem
+   * interpretes as 0, 0f or NULL safely.
+   */
+  this->num_driver_actions     = 0;
+  this->audio_loop_running     = 0;
+  this->flush_audio_driver     = 0;
+  this->discard_buffers        = 0;
+  this->step                   = 0;
+  this->compression_factor_max = 0.0;
+  this->do_compress            = 0;
+  this->do_amp                 = 0;
+  this->amp_mute               = 0;
+  this->do_equ                 = 0;
+  this->eq_gain[0]             = 0;
+  this->eq_gain[1]             = 0;
+  this->eq_gain[2]             = 0;
+  this->eq_gain[3]             = 0;
+  this->eq_gain[4]             = 0;
+  this->eq_gain[5]             = 0;
+  this->eq_gain[6]             = 0;
+  this->eq_gain[7]             = 0;
+  this->eq_gain[8]             = 0;
+  this->eq_gain[9]             = 0;
+  this->eq_i                   = 0;
+
   this->driver                = driver;
   this->xine                  = xine;
   this->clock                 = xine->clock;
@@ -2323,16 +2349,11 @@ xine_audio_port_t *_x_ao_new_port (xine_t *xine, ao_driver_t *driver,
   this->ao.flush                  = ao_flush;
   this->ao.status                 = ao_status;
 
-  this->num_driver_actions     = 0;
-  this->audio_loop_running     = 0;
   this->grab_only              = grab_only;
-  this->flush_audio_driver     = 0;
-  this->discard_buffers        = 0;
   this->zero_space             = calloc (1, ZERO_BUF_SIZE * 4 * 6); /* MAX as 32bit, 6 channels. */
 
   pthread_mutex_init( &this->current_speed_lock, NULL );
 
-  this->step = 0;
   pthread_mutex_init (&this->step_mutex, NULL);
   pthread_cond_init  (&this->done_stepping, NULL);
 
@@ -2407,29 +2428,11 @@ xine_audio_port_t *_x_ao_new_port (xine_t *xine, ao_driver_t *driver,
 						     "'stretch' audio post plugin instead."), 10, NULL, NULL);
 
   this->compression_factor     = 2.0;
-  this->compression_factor_max = 0.0;
-  this->do_compress            = 0;
   this->amp_factor             = 1.0;
-  this->do_amp                 = 0;
-  this->amp_mute               = 0;
 
-  this->do_equ                 = 0;
-  this->eq_gain[0]             = 0;
-  this->eq_gain[1]             = 0;
-  this->eq_gain[2]             = 0;
-  this->eq_gain[3]             = 0;
-  this->eq_gain[4]             = 0;
-  this->eq_gain[5]             = 0;
-  this->eq_gain[6]             = 0;
-  this->eq_gain[7]             = 0;
-  this->eq_gain[8]             = 0;
-  this->eq_gain[9]             = 0;
   this->eq_preamp              = EQ_REAL(1.0);
-  this->eq_i                   = 0;
   this->eq_j                   = 2;
   this->eq_k                   = 1;
-
-  memset (this->eq_data_history, 0, sizeof(sXYData) * EQ_BANDS * EQ_CHANNELS);
 
   /*
    * pre-allocate memory for samples
@@ -2465,8 +2468,6 @@ xine_audio_port_t *_x_ao_new_port (xine_t *xine, ao_driver_t *driver,
     buf->extra_info = ei;
     this->frame_buf[1] = buf;
   }
-
-  memset (this->last_sample, 0, sizeof (this->last_sample));
 
   /*
    * Set audio volume to latest used one ?
