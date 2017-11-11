@@ -678,21 +678,29 @@ static audio_decoder_t *open_plugin (audio_decoder_class_t *class_gen, xine_stre
   lprintf ("open_plugin called\n");
 
   this = calloc(1, sizeof (a52dec_decoder_t));
+  if (!this)
+    return NULL;
 
-  this->audio_decoder.decode_data         = a52dec_decode_data;
-  this->audio_decoder.reset               = a52dec_reset;
-  this->audio_decoder.discontinuity       = a52dec_discontinuity;
-  this->audio_decoder.dispose             = a52dec_dispose;
-  this->stream                            = stream;
-  this->class                             = (a52dec_class_t *) class_gen;
-
-  this->audio_caps        = stream->audio_out->get_capabilities(stream->audio_out);
+  /* Do these first, when compiler still knows "this" is all zeroed.
+   * Let it optimize away this on most systems where clear mem
+   * interpretes as 0, 0f or NULL safely.
+   */
   this->syncword          = 0;
   this->sync_state        = 0;
   this->output_open       = 0;
   this->pts               = 0;
   this->pts_list[0]       = 0;
   this->pts_list_position = 0;
+
+  this->audio_decoder.decode_data   = a52dec_decode_data;
+  this->audio_decoder.reset         = a52dec_reset;
+  this->audio_decoder.discontinuity = a52dec_discontinuity;
+  this->audio_decoder.dispose       = a52dec_dispose;
+
+  this->stream = stream;
+  this->class  = (a52dec_class_t *)class_gen;
+
+  this->audio_caps = stream->audio_out->get_capabilities (stream->audio_out);
 
   if( !this->a52_state ) {
     this->a52_state =

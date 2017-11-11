@@ -999,14 +999,10 @@ static audio_decoder_t *open_plugin (audio_decoder_class_t *class_gen, xine_stre
   if (!this)
     return NULL;
 
-  this->class = (faad_class_t *)class_gen;
-
-  this->audio_decoder.decode_data         = faad_decode_data;
-  this->audio_decoder.reset               = faad_reset;
-  this->audio_decoder.discontinuity       = faad_discontinuity;
-  this->audio_decoder.dispose             = faad_dispose;
-
-  this->stream             = stream;
+  /* Do these first, when compiler still knows "this" is all zeroed.
+   * Let it optimize away this on most systems where clear mem
+   * interpretes as 0, 0f or NULL safely.
+   */
   this->output_open        = 0;
   this->faac_dec           = NULL;
   this->faac_failed        = 0;
@@ -1017,12 +1013,20 @@ static audio_decoder_t *open_plugin (audio_decoder_class_t *class_gen, xine_stre
   this->dec_config_size    = 0;
   this->total_time         = 0;
   this->total_data         = 0;
-
-  this->bits_per_sample    = 16;
   this->rate               = 0;
 
+  this->class  = (faad_class_t *)class_gen;
+  this->stream = stream;
+
+  this->audio_decoder.decode_data   = faad_decode_data;
+  this->audio_decoder.reset         = faad_reset;
+  this->audio_decoder.discontinuity = faad_discontinuity;
+  this->audio_decoder.dispose       = faad_dispose;
+
+  this->bits_per_sample = 16;
+
   bebf_latm_open (&this->latm);
-  this->latm_mode          = BEBF_LATM_NEED_MORE_DATA;
+  this->latm_mode = BEBF_LATM_NEED_MORE_DATA;
 
   return &this->audio_decoder;
 }

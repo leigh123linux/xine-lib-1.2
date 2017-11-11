@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2000-2010 the xine project
+ * Copyright (C) 2000-2017 the xine project
  *
  * This file is part of xine, a free video player.
  *
@@ -390,17 +390,23 @@ static audio_decoder_t *open_plugin (audio_decoder_class_t *class_gen, xine_stre
   mad_decoder_t *this ;
 
   this = (mad_decoder_t *) calloc(1, sizeof(mad_decoder_t));
+  if (!this)
+    return NULL;
 
-  this->audio_decoder.decode_data         = mad_decode_data;
-  this->audio_decoder.reset               = mad_reset;
-  this->audio_decoder.discontinuity       = mad_discontinuity;
-  this->audio_decoder.dispose             = mad_dispose;
-
+  /* Do these first, when compiler still knows "this" is all zeroed.
+   * Let it optimize away this on most systems where clear mem
+   * interpretes as 0, 0f or NULL safely.
+   */
   this->output_open     = 0;
   this->bytes_in_buffer = 0;
   this->preview_mode    = 0;
 
-  this->xstream         = stream;
+  this->audio_decoder.decode_data   = mad_decode_data;
+  this->audio_decoder.reset         = mad_reset;
+  this->audio_decoder.discontinuity = mad_discontinuity;
+  this->audio_decoder.dispose       = mad_dispose;
+
+  this->xstream = stream;
 
   mad_synth_init  (&this->synth);
   mad_stream_init (&this->stream);
