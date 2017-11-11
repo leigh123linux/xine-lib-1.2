@@ -54,7 +54,9 @@ avcodec_audio.list avcodec_video.list: $(shell \
 	  sed -e $(AV_CODECS)'! d; s/^[ \t]*//; s/[=,].*//; /^$$/ d' >$@
 
 # Generate the mappings. These are #included where needed.
-ff_%_list.h: $(srcdir)/mkcodeclist.pl avcodec_%.list $(srcdir)/xine_%.list
+ff_audio_list.h: $(srcdir)/mkcodeclist.pl avcodec_audio.list $(srcdir)/xine_audio.list
+	$(AM_V_GEN)$(PERL) $^ $@
+ff_video_list.h: $(srcdir)/mkcodeclist.pl avcodec_video.list $(srcdir)/xine_video.list
 	$(AM_V_GEN)$(PERL) $^ $@
 
 ff_audio_decoder.c: ff_audio_list.h
