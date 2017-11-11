@@ -2804,37 +2804,60 @@ static video_decoder_t *ff_video_open_plugin (video_decoder_class_t *class_gen, 
   if (!this)
     return NULL;
 
-  this->video_decoder.decode_data         = ff_decode_data;
-  this->video_decoder.flush               = ff_flush;
-  this->video_decoder.reset               = ff_reset;
-  this->video_decoder.discontinuity       = ff_discontinuity;
-  this->video_decoder.dispose             = ff_dispose;
-  this->size                              = 0;
+  /* Do these first, when compiler still knows stream is all zeroed.
+   * Let it optimize away this on most systems where clear mem
+   * interpretes as 0, 0f or NULL safely.
+   */
+  this->size            = 0;
+  this->decoder_ok      = 0;
+  this->is_mpeg12       = 0;
+  this->aspect_ratio    = 0;
+  this->pp_quality      = 0;
+  this->our_context     = NULL;
+  this->our_mode        = NULL;
+  this->mpeg_parser     = NULL;
+  this->set_stream_info = 0;
+  this->rgb2yuy2        = NULL;
+#ifdef ENABLE_VAAPI
+  this->accel           = NULL;
+  this->accel_img       = NULL;
+#endif
 
-  this->stream                            = stream;
-  this->class                             = (ff_video_class_t *) class_gen;
+  this->video_decoder.decode_data   = ff_decode_data;
+  this->video_decoder.flush         = ff_flush;
+  this->video_decoder.reset         = ff_reset;
+  this->video_decoder.discontinuity = ff_discontinuity;
+  this->video_decoder.dispose       = ff_dispose;
 
-  this->av_frame          = XFF_ALLOC_FRAME();
-  this->av_frame2         = XFF_ALLOC_FRAME();
-  this->context           = XFF_ALLOC_CONTEXT();
+  this->stream = stream;
+  this->class  = (ff_video_class_t *)class_gen;
+
+  this->bufsize = VIDEOBUFSIZE;
+  do {
+    this->buf = malloc (VIDEOBUFSIZE + AV_INPUT_BUFFER_PADDING_SIZE);
+    if (this->buf) {
+      this->av_frame = XFF_ALLOC_FRAME ();
+      if (this->av_frame) {
+        this->av_frame2 = XFF_ALLOC_FRAME ();
+        if (this->av_frame2) {
+          this->context = XFF_ALLOC_CONTEXT ();
+          if (this->context)
+            break;
+          XFF_FREE_FRAME (this->av_frame2);
+        }
+        XFF_FREE_FRAME (this->av_frame);
+      }
+      free (this->buf);
+    }
+    free (this);
+    return NULL;
+  } while (0);
+
+  this->decoder_init_mode = 1;
   this->context->opaque   = this;
 #if XFF_PALETTE == 1
   this->context->palctrl  = NULL;
 #endif
-
-  this->decoder_ok        = 0;
-  this->decoder_init_mode = 1;
-  this->buf               = calloc(1, VIDEOBUFSIZE + AV_INPUT_BUFFER_PADDING_SIZE);
-  this->bufsize           = VIDEOBUFSIZE;
-
-  this->is_mpeg12         = 0;
-  this->aspect_ratio      = 0;
-
-  this->pp_quality        = 0;
-  this->our_context       = NULL;
-  this->our_mode          = NULL;
-
-  this->mpeg_parser       = NULL;
 
 #ifdef ENABLE_DIRECT_RENDERING
   DLIST_INIT (&this->ffsf_free);
@@ -2842,26 +2865,14 @@ static video_decoder_t *ff_video_open_plugin (video_decoder_class_t *class_gen, 
   pthread_mutex_init (&this->ffsf_mutex, NULL);
 #endif
 
-  this->set_stream_info   = 0;
-
-  this->pix_fmt           = -1;
-  this->rgb2yuy2          = NULL;
-
 #ifdef ENABLE_EMMS
   this->use_emms = !!(xine_mm_accel () & (MM_ACCEL_X86_MMX | MM_ACCEL_X86_MMXEXT));
 #endif
 
+  this->pix_fmt   = -1;
 #ifdef LOG
   this->debug_fmt = -1;
 #endif
-
-#ifdef ENABLE_VAAPI
-  memset(&this->vaapi_context, 0x0 ,sizeof(struct vaapi_context));
-
-  this->accel             = NULL;
-  this->accel_img         = NULL;
-#endif
-
 
 #ifdef ENABLE_VAAPI
   if(this->class->enable_vaapi && (stream->video_driver->get_capabilities(stream->video_driver) & VO_CAP_VAAPI)) {

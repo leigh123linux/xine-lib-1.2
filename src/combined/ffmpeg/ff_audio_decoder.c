@@ -1257,29 +1257,43 @@ static audio_decoder_t *ff_audio_open_plugin (audio_decoder_class_t *class_gen, 
   ff_audio_decoder_t *this ;
 
   this = calloc(1, sizeof (ff_audio_decoder_t));
-  if (!this) {
+  if (!this)
     return NULL;
-  }
 
-  this->class = (ff_audio_class_t *)class_gen;
-
-  this->audio_decoder.decode_data         = ff_audio_decode_data;
-  this->audio_decoder.reset               = ff_audio_reset;
-  this->audio_decoder.discontinuity       = ff_audio_discontinuity;
-  this->audio_decoder.dispose             = ff_audio_dispose;
-
+  /* Do these first, when compiler still knows stream is all zeroed.
+   * Let it optimize away this on most systems where clear mem
+   * interpretes as 0, 0f or NULL safely.
+   */
   this->output_open = 0;
   this->ff_channels = 0;
+  this->size        = 0;
+  this->decoder_ok  = 0;
+
+  this->class  = (ff_audio_class_t *)class_gen;
   this->stream = stream;
-  this->buf = NULL;
-  this->size = 0;
-  this->bufsize = 0;
-  this->decoder_ok = 0;
 
-  ff_audio_ensure_buffer_size(this, AUDIOBUFSIZE);
+  this->audio_decoder.decode_data   = ff_audio_decode_data;
+  this->audio_decoder.reset         = ff_audio_reset;
+  this->audio_decoder.discontinuity = ff_audio_discontinuity;
+  this->audio_decoder.dispose       = ff_audio_dispose;
 
-  this->context = XFF_ALLOC_CONTEXT();
-  this->decode_buffer = xine_malloc_aligned (AVCODEC_MAX_AUDIO_FRAME_SIZE);
+  this->bufsize = AUDIOBUFSIZE;
+  do {
+    this->buf = xine_malloc_aligned (AUDIOBUFSIZE + AV_INPUT_BUFFER_PADDING_SIZE);
+    if (this->buf) {
+      this->context = XFF_ALLOC_CONTEXT ();
+      if (this->context) {
+        this->decode_buffer = xine_malloc_aligned (AVCODEC_MAX_AUDIO_FRAME_SIZE);
+        if (this->decode_buffer)
+          break;
+        XFF_FREE_CONTEXT (this->context);
+      }
+      xine_free_aligned (this->buf);
+    }
+    free (this);
+    return NULL;
+  } while (0);
+
 #if XFF_AUDIO > 3
   this->av_frame = NULL;
 #endif
