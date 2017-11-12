@@ -1069,6 +1069,10 @@ static void render_gfx_vinfo (opengl_driver_t *this) {
     glxAttrib[9] = GLX_DOUBLEBUFFER;
   else
     glxAttrib[9] = None;
+
+  if (this->vinfo)
+    XFree(this->vinfo);
+
   this->vinfo = glXChooseVisual (this->display, this->screen, glxAttrib);
   CHECKERR ("choosevisual");
 }
@@ -1932,6 +1936,10 @@ static void opengl_dispose_internal (opengl_driver_t *this, int thread_running) 
     XUnlockDisplay (this->display);
   }
 
+  if (this->vinfo) {
+    XFree(this->vinfo);
+  }
+
   _x_alphablend_free(&this->alphablend_extra_data);
 
   free (this);
@@ -2050,6 +2058,7 @@ static vo_driver_t *opengl_open_plugin (video_driver_class_t *class_gen, const v
 						 "Environment_Mapped_Torus\n"
 						 "Show images reflected in a spinning torus. Way cool =)"),
 					       10, opengl_cb_render_fun, this);
+  free(render_fun_names);
   this->render_min_fps = config->register_range (config,
 						 "video.output.opengl_min_fps",
 						 20, 1, 120,
@@ -2127,8 +2136,10 @@ static int opengl_verify_direct (x11_visual_t *vis) {
   }
   if (! (visinfo = glXChooseVisual (vis->display, vis->screen, attribs)))
       return 0;
-  if (! (ctx = glXCreateContext (vis->display, visinfo, NULL, 1)))
+  if (! (ctx = glXCreateContext (vis->display, visinfo, NULL, 1))) {
+      XFree(visinfo);
       return 0;
+  }
   memset (&xattr, 0, sizeof (xattr));
   xattr.colormap = XCreateColormap(vis->display, root, visinfo->visual, AllocNone);
   xattr.event_mask = StructureNotifyMask | ExposureMask;
@@ -2148,6 +2159,7 @@ static int opengl_verify_direct (x11_visual_t *vis) {
   }
   glXDestroyContext (vis->display, ctx);
   XFreeColormap     (vis->display, xattr.colormap);
+  XFree             (visinfo);
 
   return ret;
 }
