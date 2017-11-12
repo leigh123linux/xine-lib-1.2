@@ -1944,7 +1944,7 @@ static void *opengl2_init_class( xine_t *xine, void *visual_gen )
 
 
 static const vo_info_t vo_info_opengl2 = {
-  7,                    /* priority    */
+  8,                    /* priority    */
   XINE_VISUAL_TYPE_X11  /* visual type */
 };
 
