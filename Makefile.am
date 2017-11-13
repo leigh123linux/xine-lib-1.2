@@ -87,9 +87,15 @@ dist-hook:
 	cp -p $(srcdir)/version.sh $(distdir)
 
 
-mostlyclean-generic:
-	-rm -f $(PACKAGE)_$(VERSION).tar.gz $(PACKAGE)_$(VERSION).tar.bz2
-	-rm -f $(distdir).tar.gz $(PACKAGE).tgz package_descriptions
+MOSTLYCLEANFILES = \
+	$(PACKAGE)_$(VERSION).tar.gz \
+	$(PACKAGE)_$(VERSION).tar.bz2 \
+	$(PACKAGE)-$(VERSION).tar.xz
+	$(distdir).tar.gz \
+	$(PACKAGE).tgz \
+	package_descriptions
+
+mostlyclean-local:
 	-rm -rf $(distdir)
 
 maintainer-clean-generic-hook:
