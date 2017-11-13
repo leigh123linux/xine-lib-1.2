@@ -90,7 +90,7 @@ dist-hook:
 MOSTLYCLEANFILES = \
 	$(PACKAGE)_$(VERSION).tar.gz \
 	$(PACKAGE)_$(VERSION).tar.bz2 \
-	$(PACKAGE)-$(VERSION).tar.xz
+	$(PACKAGE)-$(VERSION).tar.xz \
 	$(distdir).tar.gz \
 	$(PACKAGE).tgz \
 	package_descriptions
