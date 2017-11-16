@@ -225,8 +225,9 @@ static int parse_chunk (mpeg_parser_t *parser, int code, uint8_t *buffer, int le
     if (code >= 0xb9)
       lprintf ("stream not demultiplexed ?\n");
 
-    if (code >= 0xb0)
-      break;
+    //if (code >= 0xb0)
+    //  break;
+    break;
   }
   return is_frame_done;
 }
