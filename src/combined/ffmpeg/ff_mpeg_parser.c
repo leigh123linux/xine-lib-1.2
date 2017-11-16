@@ -217,7 +217,9 @@ static int parse_chunk (mpeg_parser_t *parser, int code, uint8_t *buffer, int le
     switch (buffer[0] & 0xf0) {
     case 0x10:     /* sequence extension */
       parser->is_mpeg1 = 0;
+      break;
     }
+    break;
 
   default:
     if (code >= 0xb9)
