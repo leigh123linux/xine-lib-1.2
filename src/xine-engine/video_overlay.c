@@ -212,6 +212,7 @@ static void video_overlay_reset (video_overlay_t *this) {
   }
   pthread_mutex_unlock (&this->events_mutex);
 
+  pthread_mutex_lock( &this->showing_mutex );
   for( i = 0; i < MAX_SHOWING; i++ )
     this->showing[i].handle = -1;
 
@@ -220,6 +221,7 @@ static void video_overlay_reset (video_overlay_t *this) {
   }
 
   this->showing_changed = 0;
+  pthread_mutex_unlock( &this->showing_mutex );
 }
 
 
