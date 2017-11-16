@@ -432,10 +432,11 @@ static void dts_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) {
     case 2:  /* Filling frame_buffer with sync_info bytes */
 	  *this->frame_ptr++ = *current++;
 	  this->frame_todo--;
-	  if (this->frame_todo < 1) {
-	    this->sync_state = 3;
-          } else break;
-
+          if (this->frame_todo > 0) {
+            break;
+          }
+          this->sync_state = 3;
+          /* fall through */
     case 3:  /* Ready for decode */
 #if 0
           dtsdec_decode_frame (this, this->pts_list[0]);
