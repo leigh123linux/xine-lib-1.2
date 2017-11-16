@@ -2805,7 +2805,7 @@ static void vaapi_provide_standard_frame_data (vo_frame_t *this, xine_current_fr
   ff_vaapi_context_t  *va_context = driver->va_context;
 
   vaapi_accel_t       *accel      = (vaapi_accel_t *) this->accel_data;
-  ff_vaapi_surface_t  *va_surface = &va_context->va_render_surfaces[accel->index];
+  ff_vaapi_surface_t  *va_surface;
 
   uint32_t  pitches[3];
   uint8_t   *base[3];
@@ -2815,7 +2815,11 @@ static void vaapi_provide_standard_frame_data (vo_frame_t *this, xine_current_fr
     return;
   }
 
-  if( !accel || va_surface->va_surface_id == VA_INVALID_SURFACE )
+  if (!accel)
+    return;
+
+  va_surface = &va_context->va_render_surfaces[accel->index];
+  if (va_surface->va_surface_id == VA_INVALID_SURFACE)
     return;
 
   lprintf("vaapi_provide_standard_frame_data %s 0x%08x width %d height %d\n", 
