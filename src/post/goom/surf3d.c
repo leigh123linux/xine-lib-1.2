@@ -1,3 +1,7 @@
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "surf3d.h"
 #include "goom_plugin_info.h"
 #include <stdlib.h>

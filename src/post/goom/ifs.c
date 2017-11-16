@@ -31,6 +31,10 @@
  *              that onto the screen, to reduce flicker.
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 /* #ifdef STANDALONE */
 
 #include <math.h>

@@ -24,6 +24,8 @@
 ** $Id: vrcvisnd.c,v 1.2 2003/12/05 15:55:01 f1rmb Exp $
 */
 
+#include "config.h"
+
 #include "types.h"
 #include "vrcvisnd.h"
 #include "nes_apu.h"

@@ -1,3 +1,7 @@
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "goomsl_heap.h"
 
 #include <stdint.h>

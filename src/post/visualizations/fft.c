@@ -20,6 +20,11 @@
  * FFT code by Steve Haehnichen, originally licensed under GPL v1
  * modified by Thibaut Mattern (tmattern@noos.fr) to remove global vars
  */
+
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>

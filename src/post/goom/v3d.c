@@ -1,3 +1,7 @@
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "v3d.h"
 
 void v3d_to_v2d(v3d *v3, int nbvertex, int width, int height, float distance, v2d *v2) {

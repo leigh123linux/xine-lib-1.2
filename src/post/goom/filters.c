@@ -12,6 +12,10 @@
 *		la vitesse est maintenant comprise dans [0..128] au lieu de [0..100]
 */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 /* #define _DEBUG_PIXEL */
 
 #include <string.h>

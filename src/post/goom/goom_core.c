@@ -7,6 +7,10 @@
  * (c)2000-2003, by iOS-software.
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>

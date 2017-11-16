@@ -7,6 +7,10 @@
  *
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "cpu_info.h"
 
 #ifdef CPU_X86

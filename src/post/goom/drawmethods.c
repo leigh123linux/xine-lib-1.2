@@ -1,3 +1,7 @@
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "drawmethods.h"
 
 #define DRAWMETHOD_PLUS(_out,_backbuf,_col) \

@@ -24,6 +24,10 @@
  * real work by goom author, JC Hoelt <jeko@free.fr>.
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
@@ -43,7 +47,6 @@
 */
 //#define BENCHMARK 1
 
-#include "config.h"
 #include <xine/xine_internal.h>
 #include <xine/xineutils.h>
 #include <xine/post.h>

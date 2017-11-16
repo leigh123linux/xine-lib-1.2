@@ -1,4 +1,9 @@
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "goom_tools.h"
+
 #include <stdlib.h>
 
 GoomRandom *goom_random_init(int i) {

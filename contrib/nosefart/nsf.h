@@ -27,11 +27,11 @@
 #ifndef _NSF_H_
 #define _NSF_H_
 
+#include "config.h"
+
 #include "osd.h"
 #include "nes6502.h"
 #include "nes_apu.h"
-
-#include "config.h"
 
 #define  NSF_MAGIC   "NESM\x1A"
 
