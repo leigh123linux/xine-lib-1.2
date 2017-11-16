@@ -114,7 +114,7 @@ static int32_t parse_audio_stream(demux_mpeg_pes_t *this, uint8_t *p, buf_elemen
 static int32_t parse_ancillary_stream(demux_mpeg_pes_t *this, uint8_t *p, buf_element_t *buf);
 static int32_t parse_program_stream_system_header(demux_mpeg_pes_t *this, uint8_t *p, buf_element_t *buf);
 static int32_t parse_private_stream_1(demux_mpeg_pes_t *this, uint8_t *p, buf_element_t *buf);
-static int32_t parse_private_stream_2(demux_mpeg_pes_t *this, uint8_t *p, buf_element_t *buf);
+//static int32_t parse_private_stream_2(demux_mpeg_pes_t *this, uint8_t *p, buf_element_t *buf);
 static int32_t parse_program_stream_map(demux_mpeg_pes_t *this, uint8_t *p, buf_element_t *buf);
 static int32_t parse_padding_stream(demux_mpeg_pes_t *this, uint8_t *p, buf_element_t *buf);
 static int32_t parse_ecm_stream(demux_mpeg_pes_t *this, uint8_t *p, buf_element_t *buf);
@@ -373,7 +373,7 @@ static void demux_mpeg_pes_parse_pack (demux_mpeg_pes_t *this, int preview_mode)
   } else if (this->stream_id == 0xBF) {
     buf->free_buffer (buf);
     return;
-    result = parse_private_stream_2(this, p, buf);
+    //result = parse_private_stream_2(this, p, buf);
   } else if ((this->stream_id >= 0xC0)
              && (this->stream_id <= 0xDF)) {
     result = parse_audio_stream(this, p, buf);
@@ -641,6 +641,7 @@ static int32_t parse_program_stream_system_header(demux_mpeg_pes_t *this, uint8_
   return 6 + this->packet_len;
 }
 
+#if 0
 static int32_t parse_private_stream_2(demux_mpeg_pes_t *this, uint8_t *p, buf_element_t *buf) {
   int64_t start_pts, end_pts;
 
@@ -711,6 +712,7 @@ static int32_t parse_private_stream_2(demux_mpeg_pes_t *this, uint8_t *p, buf_el
 
   return this->packet_len;
 }
+#endif
 
 /* FIXME: Extension data is not parsed, and is also not skipped. */
 
