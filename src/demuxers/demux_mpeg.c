@@ -808,7 +808,8 @@ static uint32_t parse_pack(demux_mpeg_t *this) {
        lprintf ("mux_rate = %d\n",this->rate);
 
      } else
-       buf = read_bytes (this, 3) ;
+       /* skip rate */
+       read_bytes (this, 3) ;
   }
 
   /* system header */
@@ -854,7 +855,7 @@ static uint32_t parse_pack_preview (demux_mpeg_t *this, int *num_buffers) {
   buf = read_bytes (this, 1);
 
   if ((buf>>6) == 0x01) {
-     buf = read_bytes(this, 1);
+     read_bytes(this, 1); /* skip byte */
      mpeg_version = 2;
   } else {
      mpeg_version = 1;
@@ -883,7 +884,8 @@ static uint32_t parse_pack_preview (demux_mpeg_t *this, int *num_buffers) {
     /* lprintf("mux_rate = %d\n",this->rate); */
 
   } else
-    buf = read_bytes (this, 3) ;
+    /* skip rate */
+    read_bytes (this, 3) ;
 
   if( mpeg_version == 2 )
   {
