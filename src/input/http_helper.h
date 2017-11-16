@@ -71,11 +71,11 @@ static inline XINE_MALLOC char *_x_canonicalise_url (const char *base, const cha
 
   if (url[0] == '/') {
     /* absolute - base up to first '/' after "://", then url */
-    cut = strchr (cut + 3, '/');
+    cut = cut ? strchr (cut + 3, '/') : NULL;
   }
   else {
     /* relative - base up to & inc. last '/', then url */
-    cut = strrchr (cut, '/');
+    cut = cut ? strrchr (cut, '/') : NULL;
     if (cut)
       ++cut;
   }
