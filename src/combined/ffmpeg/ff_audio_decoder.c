@@ -121,7 +121,7 @@ static void ff_aac_mode_set (ff_audio_decoder_t *this, int reset) {
         "ffmpeg_audio_dec: looking for possible AAC ADTS syncwords...\n");
     }
     if ((this->aac_mode < 0) || (this->aac_mode == AAC_MODE_ADTS)) {
-      if (this->context && this->context->extradata_size) {
+      if (this->context->extradata_size) {
         xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG,
           "ffmpeg_audio_dec: AAC raw mode with global header\n");
         this->aac_mode = AAC_MODE_RAW;
@@ -167,7 +167,7 @@ static int ff_aac_mode_parse (ff_audio_decoder_t *this, uint8_t *buf, int size, 
         if (this->buftype == BUF_AUDIO_AAC_LATM) {
           xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG,
             "ffmpeg_audio_dec: stream says LATM but is ADTS -> switching decoders\n");
-          if (this->context && this->decoder_ok) {
+          if (this->decoder_ok) {
             pthread_mutex_lock (&ffmpeg_lock);
             avcodec_close (this->context);
             pthread_mutex_unlock (&ffmpeg_lock);
@@ -1229,7 +1229,7 @@ static void ff_audio_dispose (audio_decoder_t *this_gen) {
     pthread_mutex_unlock (&ffmpeg_lock);
   }
 
-  if( this->context && this->decoder_ok ) {
+  if( this->decoder_ok ) {
 #if XFF_AUDIO > 3
     XFF_FREE_FRAME (this->av_frame);
 #endif
@@ -1243,11 +1243,9 @@ static void ff_audio_dispose (audio_decoder_t *this_gen) {
   xine_free_aligned (this->buf);
   xine_free_aligned (this->decode_buffer);
 
-  if (this->context) {
-    _x_freep (&this->context->extradata);
-    this->context->extradata_size = 0;
-    XFF_FREE_CONTEXT (this->context);
-  }
+  _x_freep (&this->context->extradata);
+  this->context->extradata_size = 0;
+  XFF_FREE_CONTEXT (this->context);
 
   free (this_gen);
 }
