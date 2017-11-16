@@ -187,6 +187,7 @@ int _x_io_tcp_connect(xine_stream_t *stream, const char *host, int port) {
 	if (rc == SOCKET_ERROR) {
 	  _x_message(stream, XINE_MSG_CONNECTION_REFUSED, "can't put socket in non-blocking mode", strerror(errno), NULL);
           close(s);
+          freeaddrinfo(res);
 	  return -1;
 	}
 #endif
@@ -211,11 +212,13 @@ int _x_io_tcp_connect(xine_stream_t *stream, const char *host, int port) {
       continue;
     }
 
+    freeaddrinfo(res);
     return s;
   }
 
   _x_message(stream, XINE_MSG_CONNECTION_REFUSED, strerror(error), NULL);
 
+  freeaddrinfo(res);
   return -1;
 #endif
 }
