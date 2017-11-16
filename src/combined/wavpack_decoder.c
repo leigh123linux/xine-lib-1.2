@@ -89,7 +89,7 @@ static int xine_buffer_set_pos_rel(void *const this_gen, const int32_t delta,
     this->buf_pos = delta;
     return 0;
   case SEEK_CUR:
-    if ( (this->buf_pos+delta) < 0 || (this->buf_pos+delta) > this->buf_size )
+    if ( ((ssize_t)this->buf_pos+delta) < 0 || (this->buf_pos+delta) > this->buf_size )
       return -1;
 
     this->buf_pos += delta;
