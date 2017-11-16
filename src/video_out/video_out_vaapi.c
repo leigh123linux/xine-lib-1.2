@@ -3555,14 +3555,16 @@ static void vaapi_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen) {
 
   vaapi_redraw_needed (this_gen);
 
+  pthread_mutex_lock(&this->vaapi_lock);
+  DO_LOCKDISPLAY;
+
   /* posible race could happen while the lock is opened */
   if(!this->va_context || !this->va_context->valid_context) {
+    DO_UNLOCKDISPLAY;
+    pthread_mutex_unlock(&this->vaapi_lock);
     frame_gen->free (frame_gen);
     return;
   }
-
-  pthread_mutex_lock(&this->vaapi_lock);
-  DO_LOCKDISPLAY;
 
 #ifdef ENABLE_VA_GLX
   /* initialize opengl rendering */
