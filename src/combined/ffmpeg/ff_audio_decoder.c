@@ -1009,7 +1009,7 @@ static void ff_audio_decode_data (audio_decoder_t *this_gen, buf_element_t *buf)
       offset = 0;
 
       /* pad input data */
-      memset(&this->buf[this->size], 0, AV_INPUT_BUFFER_PADDING_SIZE);
+      memset(this->buf + this->size, 0, AV_INPUT_BUFFER_PADDING_SIZE);
 
       while (this->size>=0) {
 

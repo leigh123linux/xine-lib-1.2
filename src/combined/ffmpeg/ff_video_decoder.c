@@ -2183,7 +2183,7 @@ static void ff_handle_buffer (ff_video_decoder_t *this, buf_element_t *buf) {
     /* note: bitstream, alt bitstream reader or something will cause
      * severe mpeg4 artifacts if padding is less than 32 bits.
      */
-    memset(&chunk_buf[this->size], 0, AV_INPUT_BUFFER_PADDING_SIZE);
+    memset(chunk_buf + this->size, 0, AV_INPUT_BUFFER_PADDING_SIZE);
 
     while (this->size > 0) {
 
