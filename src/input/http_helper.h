@@ -67,6 +67,8 @@ static inline XINE_MALLOC char *_x_canonicalise_url (const char *base, const cha
     return strdup (url);
 
   cut = strstr (base, "://");
+  _x_assert(cut); /* base is required to be valid according to _x_parse_url */
+
   if (url[0] == '/') {
     /* absolute - base up to first '/' after "://", then url */
     cut = strchr (cut + 3, '/');
