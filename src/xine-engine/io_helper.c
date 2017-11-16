@@ -207,11 +207,9 @@ int _x_io_tcp_connect(xine_stream_t *stream, const char *host, int port) {
       close(s);
       tmpaddr = tmpaddr->ai_next;
       continue;
-    } else {
-      return s;
     }
 
-    tmpaddr = tmpaddr->ai_next;
+    return s;
   }
 
   _x_message(stream, XINE_MSG_CONNECTION_REFUSED, strerror(error), NULL);
