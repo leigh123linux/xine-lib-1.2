@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2001-2009 the xine project
+ * Copyright (C) 2001-2017 the xine project
  *
  * This file is part of xine, a free video player.
  *
@@ -23,8 +23,8 @@
 #ifndef HAVE_MPEG_PARSER_H
 #define HAVE_MPEG_PARSER_H
 
-#include <xine/xine_internal.h>
-#include "ffmpeg_decoder.h"
+#include <stdint.h>
+#include <stddef.h>
 
 #define BUFFER_SIZE (1194 * 1024) /* libmpeg2's buffer size */
 
@@ -61,7 +61,7 @@ typedef struct mpeg_parser_s {
 } mpeg_parser_t;
 
 /* parser initialization */
-void mpeg_parser_init (mpeg_parser_t *parser);
+void mpeg_parser_init (mpeg_parser_t *parser, size_t padding_size);
 
 /* parser disposal */
 void mpeg_parser_dispose (mpeg_parser_t *parser);

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2001-2012 the xine project
+ * Copyright (C) 2001-2017 the xine project
  *
  * This file is part of xine, a free video player.
  *
@@ -20,13 +20,22 @@
  * Simple MPEG-ES parser/framer by Thibaut Mattern (tmattern@noos.fr)
  *   based on libmpeg2 decoder.
  */
+
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
+#include "ff_mpeg_parser.h"
+
+#include <stdint.h>
+#include <stdlib.h>
+
 #define LOG_MODULE "mpeg_parser"
 #define LOG_VERBOSE
 /*
 #define LOG
 */
-#include "ff_mpeg_parser.h"
-#include "ffmpeg_compat.h"
+#include <xine/xine_internal.h>
 
 /* mpeg frame rate table from lavc */
 static const int frame_rate_tab[][2] = {
@@ -49,9 +58,9 @@ static const int frame_rate_tab[][2] = {
     {    0,    0},
 };
 
-void mpeg_parser_init (mpeg_parser_t *parser)
+void mpeg_parser_init (mpeg_parser_t *parser, size_t padding_size)
 {
-  parser->chunk_buffer = malloc(BUFFER_SIZE + AV_INPUT_BUFFER_PADDING_SIZE);
+  parser->chunk_buffer = malloc(BUFFER_SIZE + padding_size);
   mpeg_parser_reset(parser);
 }
 
