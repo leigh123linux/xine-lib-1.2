@@ -2254,6 +2254,7 @@ video_decoder_t *_x_get_video_decoder (xine_stream_t *stream, uint8_t stream_typ
   video_decoder_t  *vd = NULL;
 
   lprintf ("looking for video decoder for streamtype %02x\n", stream_type);
+  _x_assert(stream_type < DECODER_MAX);
 
   pthread_mutex_lock (&catalog->lock);
 
@@ -2331,6 +2332,7 @@ audio_decoder_t *_x_get_audio_decoder (xine_stream_t *stream, uint8_t stream_typ
   audio_decoder_t  *ad = NULL;
 
   lprintf ("looking for audio decoder for streamtype %02x\n", stream_type);
+  _x_assert(stream_type < DECODER_MAX);
 
   pthread_mutex_lock (&catalog->lock);
 
@@ -2402,6 +2404,8 @@ int _x_decoder_available (xine_t *xine, uint32_t buftype)
 {
   plugin_catalog_t *catalog = xine->plugin_catalog;
   int stream_type = (buftype>>16) & 0xFF;
+
+  _x_assert(stream_type < DECODER_MAX);
 
   if ( (buftype & 0xFF000000) == BUF_VIDEO_BASE ) {
     if( catalog->video_decoder_map[stream_type][0] )
@@ -2508,6 +2512,7 @@ spu_decoder_t *_x_get_spu_decoder (xine_stream_t *stream, uint8_t stream_type) {
   spu_decoder_t    *sd = NULL;
 
   lprintf ("looking for spu decoder for streamtype %02x\n", stream_type);
+  _x_assert(stream_type < DECODER_MAX);
 
   pthread_mutex_lock (&catalog->lock);
 
