@@ -176,6 +176,7 @@ int _x_io_tcp_connect(xine_stream_t *stream, const char *host, int port) {
 	if (fcntl (s, F_SETFL, fcntl (s, F_GETFL) | O_NONBLOCK) == -1) {
 	  _x_message(stream, XINE_MSG_CONNECTION_REFUSED, "can't put socket in non-blocking mode", strerror(errno), NULL);
           close(s);
+          freeaddrinfo(res);
 	  return -1;
 	}
 #else
