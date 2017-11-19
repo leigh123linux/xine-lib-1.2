@@ -26,6 +26,7 @@
  * @author James Courtier-Dutton (2001-12-09)
  */
 
+#define _DEFAULT_SOURCE 1
 #ifndef __sun
 /* required for swab() */
 #define _XOPEN_SOURCE 500

@@ -25,6 +25,7 @@
  * @date 2001-08-31 Added LPCM rate sensing
  */
 
+#define _DEFAULT_SOURCE 1
 #ifndef __sun
 #define _XOPEN_SOURCE 500
 #endif

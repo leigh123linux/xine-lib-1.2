@@ -20,6 +20,7 @@
  * stuff needed to turn liba52 into a xine decoder plugin
  */
 
+#define _DEFAULT_SOURCE 1
 #ifndef __sun
 /* required for swab() */
 #define _XOPEN_SOURCE 500
