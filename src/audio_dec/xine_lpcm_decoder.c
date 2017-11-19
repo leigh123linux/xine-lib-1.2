@@ -187,6 +187,14 @@ static void lpcm_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) {
     format_changed++;
   }
 
+  /* bail out if format was not regonized (avoid division by zero) */
+  if (!this->bits_per_sample || !this->number_of_channels || !this->rate) {
+    xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG,
+            "lpcm_decoder: unregonized format, dropped %zu bytes\n",
+            this->buffered_bytes);
+    return;
+  }
+
   /*
    * (re-)open output device
    */
