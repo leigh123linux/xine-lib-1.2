@@ -94,8 +94,6 @@
 #define NUM_AUDIO_BUFFERS       32
 #define AUDIO_BUF_SIZE       32768
 
-#define ZERO_BUF_SIZE         5000
-
 /* By adding gap errors (difference between reported and expected
  * sound card clock) into metronom's vpts_offset we can use its
  * smoothing algorithms to correct sound card clock drifts.
@@ -418,6 +416,27 @@ static void ao_unref_all (aos_t *this) {
   pthread_mutex_unlock (&this->free_fifo.mutex);
 }
 
+static void ao_force_unref_all (aos_t *this) {
+  audio_buffer_t *buf;
+  int a = 0, n = 0;
+  pthread_mutex_lock (&this->out_fifo.mutex);
+  for (buf = this->out_fifo.first; buf; buf = buf->next) {
+    buf->stream = NULL;
+    n += ao_reref (this, buf);
+    a++;
+  }
+  pthread_mutex_unlock (&this->out_fifo.mutex);
+  pthread_mutex_lock (&this->free_fifo.mutex);
+  for (buf = this->free_fifo.first; buf; buf = buf->next) {
+    buf->stream = NULL;
+    n += ao_reref (this, buf);
+    a++;
+  }
+  pthread_mutex_unlock (&this->free_fifo.mutex);
+  if (n && (a == NUM_AUDIO_BUFFERS))
+    xprintf (this->xine, XINE_VERBOSITY_DEBUG, "audio_out: unreferenced stream.\n");
+}
+
 /********************************************************************
  * frame queue (fifo)                                               *
  *******************************************************************/
@@ -631,53 +650,49 @@ static void ao_out_fifo_flush (aos_t *this) {
 }
 
 
-static void write_pause_burst(aos_t *this, uint32_t num_frames) {
-  uint16_t sbuf[4096];
-
-  sbuf[0] = 0xf872;
-  sbuf[1] = 0x4e1f;
-  /* Audio ES Channel empty, wait for DD Decoder or pause */
-  sbuf[2] = 0x0003;
-  sbuf[3] = 0x0020;
-  memset(&sbuf[4], 0, sizeof(sbuf) - 4 * sizeof(uint16_t));
-  while (num_frames > 1536) {
-    pthread_mutex_lock( &this->driver_lock );
-    if(this->driver_open)
-      this->driver->write(this->driver, sbuf, 1536);
-    pthread_mutex_unlock( &this->driver_lock );
-    num_frames -= 1536;
-  }
-}
-
-
 static void ao_fill_gap (aos_t *this, int64_t pts_len) {
-
-  int64_t num_frames ;
-
-  num_frames = pts_len * this->frames_per_kpts / 1024;
+  static const uint16_t a52_pause_head[4] = {
+    0xf872,
+    0x4e1f,
+    /* Audio ES Channel empty, wait for DD Decoder or pause */
+    0x0003,
+    0x0020
+  };
+  int64_t num_frames = pts_len * this->frames_per_kpts / 1024;
 
   xprintf (this->xine, XINE_VERBOSITY_DEBUG,
            "audio_out: inserting %" PRId64 " 0-frames to fill a gap of %" PRId64 " pts\n", num_frames, pts_len);
 
   if ((this->output.mode == AO_CAP_MODE_A52) || (this->output.mode == AO_CAP_MODE_AC5)) {
-    write_pause_burst(this,num_frames);
-    return;
-  }
 
-  while (num_frames > 0 && !this->discard_buffers) {
-    if (num_frames > ZERO_BUF_SIZE) {
-      pthread_mutex_lock( &this->driver_lock );
-      if(this->driver_open)
-        this->driver->write(this->driver, this->zero_space, ZERO_BUF_SIZE);
-      pthread_mutex_unlock( &this->driver_lock );
-      num_frames -= ZERO_BUF_SIZE;
-    } else {
-      pthread_mutex_lock( &this->driver_lock );
-      if(this->driver_open)
-        this->driver->write(this->driver, this->zero_space, num_frames);
-      pthread_mutex_unlock( &this->driver_lock );
-      num_frames = 0;
+    memcpy (this->zero_space, a52_pause_head, sizeof (a52_pause_head));
+    while (num_frames > 1536) {
+      pthread_mutex_lock (&this->driver_lock);
+      if (this->driver_open)
+        this->driver->write (this->driver, this->zero_space, 1536);
+      pthread_mutex_unlock (&this->driver_lock);
+      num_frames -= 1536;
     }
+
+  } else {
+
+    int max_frames = _x_ao_mode2channels (this->output.mode) * (this->output.bits >> 3);
+    max_frames = max_frames ? AUDIO_BUF_SIZE / max_frames : 4096;
+    memset (this->zero_space, 0, sizeof (a52_pause_head));
+    while ((num_frames >= max_frames) && !this->discard_buffers) {
+      pthread_mutex_lock (&this->driver_lock);
+      if (this->driver_open)
+        this->driver->write (this->driver, this->zero_space, max_frames);
+      pthread_mutex_unlock (&this->driver_lock);
+      num_frames -= max_frames;
+    }
+    if (num_frames && !this->discard_buffers) {
+      pthread_mutex_lock (&this->driver_lock);
+      if (this->driver_open)
+        this->driver->write (this->driver, this->zero_space, num_frames);
+      pthread_mutex_unlock (&this->driver_lock);
+    }
+
   }
 }
 
@@ -1903,13 +1918,12 @@ static void ao_exit(xine_audio_port_t *this_gen) {
 
   ao_streams_close (this);
 
-  _x_freep (&this->zero_space);
-
   pthread_mutex_destroy(&this->current_speed_lock);
 
   pthread_mutex_destroy (&this->step_mutex);
   pthread_cond_destroy  (&this->done_stepping);
 
+  ao_force_unref_all (this);
   ao_fifo_close (&this->free_fifo);
   ao_fifo_close (&this->out_fifo);
 
@@ -2314,7 +2328,7 @@ xine_audio_port_t *_x_ao_new_port (xine_t *xine, ao_driver_t *driver,
   
   this->base_buf  = calloc (NUM_AUDIO_BUFFERS + 2, sizeof (audio_buffer_t));
   this->base_ei   = calloc (EI_RING_SIZE + NUM_AUDIO_BUFFERS + 2, sizeof (extra_info_t));
-  this->base_samp = xine_mallocz_aligned (NUM_AUDIO_BUFFERS * AUDIO_BUF_SIZE);
+  this->base_samp = xine_mallocz_aligned ((NUM_AUDIO_BUFFERS + 1) * AUDIO_BUF_SIZE);
   vsbuf0          = calloc (1, 4 * AUDIO_BUF_SIZE);
   vsbuf1          = calloc (1, 4 * AUDIO_BUF_SIZE);
   if (!this->base_buf || !this->base_ei || !this->base_samp || !vsbuf0 || !vsbuf1) {
@@ -2323,6 +2337,7 @@ xine_audio_port_t *_x_ao_new_port (xine_t *xine, ao_driver_t *driver,
     xine_free_aligned (this->base_samp);
     free (vsbuf0);
     free (vsbuf1);
+    ao_streams_close (this);
     free (this);
     return NULL;
   }
@@ -2350,7 +2365,6 @@ xine_audio_port_t *_x_ao_new_port (xine_t *xine, ao_driver_t *driver,
   this->ao.status                 = ao_status;
 
   this->grab_only              = grab_only;
-  this->zero_space             = calloc (1, ZERO_BUF_SIZE * 4 * 6); /* MAX as 32bit, 6 channels. */
 
   pthread_mutex_init( &this->current_speed_lock, NULL );
 
@@ -2455,6 +2469,8 @@ xine_audio_port_t *_x_ao_new_port (xine_t *xine, ao_driver_t *driver,
       ei++;
       mem += AUDIO_BUF_SIZE;
     }
+
+    this->zero_space = (int16_t *)mem;
 
     /* buffers used for audio conversions. need to be resizable */
     buf->mem        = (int16_t *)vsbuf0;
