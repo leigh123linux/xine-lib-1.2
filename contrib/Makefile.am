@@ -14,6 +14,8 @@ endif
 SUBDIRS += vidix
 endif
 
-srcdir = $(shell cd @srcdir@; pwd)
+# Does anyone know what this is good for?
+# It just resolves full path, and triggers an automake warning...
+# srcdir = $(shell cd @srcdir@; pwd)
 
 EXTRA_DIST = README.contrib
