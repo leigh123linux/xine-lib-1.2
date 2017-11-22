@@ -1581,16 +1581,18 @@ int xine_eject (xine_stream_t *stream) {
 
 static void xine_dispose_internal (xine_stream_t *stream) {
 
+  xine_t *xine = stream->xine;
   xine_list_iterator_t *ite;
 
   lprintf("stream: %p\n", stream);
 
-  pthread_mutex_lock(&stream->xine->streams_lock);
-  ite = xine_list_find(stream->xine->streams, stream);
-  if (ite) {
-    xine_list_remove(stream->xine->streams, ite);
-  }
-  pthread_mutex_unlock(&stream->xine->streams_lock);
+  pthread_mutex_lock (&xine->streams_lock);
+  ite = xine_list_find (xine->streams, stream);
+  if (ite)
+    xine_list_remove (xine->streams, ite);
+  /* keep xine instance open for this */
+  stream->metronom->exit (stream->metronom);
+  pthread_mutex_unlock (&xine->streams_lock);
 
   pthread_mutex_destroy (&stream->info_mutex);
   pthread_mutex_destroy (&stream->meta_mutex);
@@ -1606,8 +1608,6 @@ static void xine_dispose_internal (xine_stream_t *stream) {
   pthread_mutex_destroy (&stream->first_frame_lock);
   pthread_cond_destroy  (&stream->first_frame_reached);
   pthread_mutex_destroy (&stream->index_mutex);
-
-  stream->metronom->exit (stream->metronom);
 
   xine_list_delete(stream->event_queues);
 
@@ -1657,21 +1657,57 @@ void xine_dispose (xine_stream_t *stream) {
   _x_refcounter_dec(stream->refcounter);
 }
 
+#ifdef WIN32
+static int xine_wsa_users = 0;
+#endif
+
 void xine_exit (xine_t *this) {
-  int i;
+  if (this->streams) {
+    int n = 10;
+    /* XXX: streams kill themselves via their refcounter hook. */
+    while (n--) {
+      xine_stream_t *stream = NULL;
+      xine_list_iterator_t *ite;
+
+      pthread_mutex_lock (&this->streams_lock);
+      ite = xine_list_front (this->streams);
+      while (ite) {
+        stream = xine_list_get_value (this->streams, ite);
+        if (stream && (stream != XINE_ANON_STREAM))
+          break;
+        ite = xine_list_next (this->streams, ite);
+      }
+      if (!ite) {
+        pthread_mutex_unlock (&this->streams_lock);
+        break;
+      }
+      /* stream->refcounter->lock might be taken already */
+      {
+        int i = stream->refcounter->count;
+        pthread_mutex_unlock (&this->streams_lock);
+        xprintf (this, XINE_VERBOSITY_LOG,
+          "xine_exit: BUG: stream %p still open (%d refs), waiting.\n", stream, i);
+      }
+      if (n) {
+        xine_usec_sleep (50000);
+      } else {
+#ifdef FORCE_STREAM_SHUTDOWN
+        /* might raise even more heap damage, disabled for now */
+        xprintf (this, XINE_VERBOSITY_LOG,
+          "xine_exit: closing stream %p.\n", stream);
+        stream->refcounter->count = 1;
+        xine_dispose (stream);
+        n = 1;
+#endif
+      }
+    }
+    xine_list_delete (this->streams);
+    pthread_mutex_destroy (&this->streams_lock);
+  }
 
   xprintf (this, XINE_VERBOSITY_DEBUG, "xine_exit: bye!\n");
 
-  for (i = 0; i < XINE_LOG_NUM; i++)
-    if ( this->log_buffers[i] )
-      this->log_buffers[i]->dispose (this->log_buffers[i]);
-
   _x_dispose_plugins (this);
-
-  if(this->streams) {
-    xine_list_delete(this->streams);
-    pthread_mutex_destroy(&this->streams_lock);
-  }
 
   if(this->clock)
     this->clock->exit (this->clock);
@@ -1682,12 +1718,21 @@ void xine_exit (xine_t *this) {
   if(this->port_ticket)
     this->port_ticket->dispose(this->port_ticket);
 
-  pthread_mutex_destroy(&this->log_lock);
-
   pthread_mutex_destroy (&this->pause_mutex);
 
+  {
+    int i;
+    for (i = 0; i < XINE_LOG_NUM; i++)
+      if (this->log_buffers[i])
+        this->log_buffers[i]->dispose (this->log_buffers[i]);
+  }
+  pthread_mutex_destroy(&this->log_lock);
+
 #if defined(WIN32)
-  WSACleanup();
+  if (xine_wsa_users) {
+    if (--xine_wsa_users == 0)
+      WSACleanup ();
+  }
 #endif
 
   xdgWipeHandle(&this->basedir_handle);
@@ -1697,11 +1742,6 @@ void xine_exit (xine_t *this) {
 
 xine_t *xine_new (void) {
   xine_t      *this;
-
-#ifdef WIN32
-    WSADATA Data;
-    int i_err;
-#endif
 
   this = calloc(1, sizeof (xine_t));
   if (!this)
@@ -1742,14 +1782,18 @@ xine_t *xine_new (void) {
 
 
 #ifdef WIN32
+  if (!xine_wsa_users) {
     /* WinSock Library Init. */
-    i_err = WSAStartup( MAKEWORD( 1, 1 ), &Data );
-
-    if( i_err )
-    {
-        fprintf( stderr, "error: can't initiate WinSocks, error %i\n", i_err );
+    WSADATA Data;
+    int i_err = WSAStartup (MAKEWORD (1, 1), &Data);
+    if (i_err) {
+      fprintf (stderr, "error: can't initiate WinSocks, error %i\n", i_err);
+    } else {
+      xine_wsa_users++;
     }
-
+  } else {
+    xine_wsa_users++;
+  }
 #endif /* WIN32 */
 
   this->verbosity = XINE_VERBOSITY_NONE;
