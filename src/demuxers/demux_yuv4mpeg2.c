@@ -214,11 +214,13 @@ static int open_yuv4mpeg2_file(demux_yuv4mpeg2_t *this) {
   this->frame_pts_inc = (90000 * this->fps_d) / this->fps_n;
 
   /* finally, look for the first frame */
-  char *data_start_ptr = memmem(header_ptr, Y4M_HEADER_BYTES, "FRAME", 5);
+  size_t left = (size_t)Y4M_HEADER_BYTES - (size_t)(header_ptr - header);
+  char *data_start_ptr = memmem(header_ptr, left, "FRAME", 5);
 
   /* make sure the first frame was found */
-  if ( !data_start_ptr )
+  if ( !data_start_ptr ) {
     return 0;
+  }
 
   this->data_start = data_start_ptr - header;
 
