@@ -70,63 +70,22 @@
 #include "xine_mmx.h"
 
 /*
- * In search of the perfect colorspace conversion formulae...
- * These are the conversion equations that xine currently uses
- * (before normalisation):
- *
- *      Y  =  0.29900 * R + 0.58700 * G + 0.11400 * B
- *      U  = -0.16874 * R - 0.33126 * G + 0.50000 * B + 128
- *      V  =  0.50000 * R - 0.41869 * G - 0.08131 * B + 128
- */
-
-/*
-#define Y_R (SCALEFACTOR *  0.29900 * 219.0 / 255.0)
-#define Y_G (SCALEFACTOR *  0.58700 * 219.0 / 255.0)
-#define Y_B (SCALEFACTOR *  0.11400 * 219.0 / 255.0)
-
-#define U_R (SCALEFACTOR * -0.16874 * 224.0 / 255.0)
-#define U_G (SCALEFACTOR * -0.33126 * 224.0 / 255.0)
-#define U_B (SCALEFACTOR *  0.50000 * 224.0 / 255.0)
-
-#define V_R (SCALEFACTOR *  0.50000 * 224.0 / 255.0)
-#define V_G (SCALEFACTOR * -0.41869 * 224.0 / 255.0)
-#define V_B (SCALEFACTOR * -0.08131 * 224.0 / 255.0)
-*/
-
-#define Y_R (SCALEFACTOR *  0.299         * 219.0 / 255.0)
-#define Y_G (SCALEFACTOR *  0.587         * 219.0 / 255.0)
-#define Y_B (SCALEFACTOR *  0.114         * 219.0 / 255.0)
-
-#define U_R (SCALEFACTOR * -0.299 / 1.772 * 224.0 / 255.0)
-#define U_G (SCALEFACTOR * -0.587 / 1.772 * 224.0 / 255.0)
-#define U_B (SCALEFACTOR *  0.886 / 1.772 * 224.0 / 255.0)
-
-#define V_R (SCALEFACTOR *  0.701 / 1.402 * 224.0 / 255.0)
-#define V_G (SCALEFACTOR * -0.587 / 1.402 * 224.0 / 255.0)
-#define V_B (SCALEFACTOR * -0.114 / 1.402 * 224.0 / 255.0)
-
-/*
- * With the normalisation factors above, Y needs 16 added.
- * This is done during setup, not in the macros in xineutils.h, because
- * doing it there would be an API change.
- */
-#define Y_MOD (16 * SCALEFACTOR)
-
-/*
- * Precalculate all of the YUV tables since it requires fewer than
- * 10 kilobytes to store them.
+ * Precalculate all of the YUV tables since it requires only 8 kilobytes to store them
+ * (plus 2 for backwards compatibility).
  */
 int y_r_table[256];
 int y_g_table[256];
 int y_b_table[256];
 
+int uv_br_table[256];
+
 int u_r_table[256];
 int u_g_table[256];
-int u_b_table[256];
-
-int v_r_table[256];
-int v_g_table[256];
 int v_b_table[256];
+int v_g_table[256];
+
+int u_b_table[256];
+int v_r_table[256];
 
 void (*yuv444_to_yuy2) (const yuv_planes_t *yuv_planes, unsigned char *yuy2_map, int pitch);
 void (*yuv9_to_yv12)
@@ -1693,20 +1652,39 @@ void init_yuv_conversion(void) {
   uint32_t accel;
 #endif
 
+  /* ITU-R 601 */
+  #define KB 0.114
+  #define KR 0.299
+
+  #define YR (219.0/255.0)*KR*SCALEFACTOR
+  #define YG (219.0/255.0)*(1.0-KB-KR)*SCALEFACTOR
+  #define YB (219.0/255.0)*KB*SCALEFACTOR
+
+  #define UR (112.0/255.0)*(KR/(KB-1.0))*SCALEFACTOR
+  #define UG (112.0/255.0)*((1.0-KB-KR)/(KB-1.0))*SCALEFACTOR
+  #define UB (112.0/255.0)*SCALEFACTOR
+
+  #define VR (112.0/255.0)*SCALEFACTOR
+  #define VG (112.0/255.0)*((1.0-KB-KR)/(KR-1.0))*SCALEFACTOR
+  #define VB (112.0/255.0)*(KB/(KR-1.0))*SCALEFACTOR
+
   /* initialize the RGB -> YUV tables */
   for (i = 0; i < 256; i++) {
 
-    y_r_table[i] = Y_R * i + Y_MOD;
-    y_g_table[i] = Y_G * i;
-    y_b_table[i] = Y_B * i;
+    /* fast and correctly rounded */
+    y_r_table[i] = YR * i;
+    y_g_table[i] = YG * i + 16 * SCALEFACTOR + SCALEFACTOR / 2;
+    y_b_table[i] = YB * i;
 
-    u_r_table[i] = U_R * i;
-    u_g_table[i] = U_G * i;
-    u_b_table[i] = U_B * i;
+    uv_br_table[i] = UB * i + CENTERSAMPLE * SCALEFACTOR + SCALEFACTOR / 2;
+    u_r_table[i] = UR * i;
+    u_g_table[i] = UG * i;
+    v_g_table[i] = VG * i;
+    v_b_table[i] = VB * i;
 
-    v_r_table[i] = V_R * i;
-    v_g_table[i] = V_G * i;
-    v_b_table[i] = V_B * i;
+    /* keep supporting old binaries */
+    u_b_table[i] = UB * i;
+    v_r_table[i] = VR * i;
   }
 
   /* determine best converters to use */

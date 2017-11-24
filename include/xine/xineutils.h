@@ -354,12 +354,24 @@ extern void (*yuy2_to_yv12)
    unsigned char *v_dst, int v_dst_pitch,
    int width, int height) XINE_PROTECTED;
 
-#define SCALEFACTOR 65536
+/* convert full range rgb to mpeg range yuv */
+#define SCALESHIFT 16
+#define SCALEFACTOR (1<<SCALESHIFT)
 #define CENTERSAMPLE 128
 
-/* These conversions are normalised for the MPEG Y'CbCr colourspace.
- * (Yes, we know that we call it YUV elsewhere.)
- */
+/* new fast and more accurate macros. Simply recompile to use them */
+#define COMPUTE_Y(r, g, b) \
+  (unsigned char) \
+  ((y_r_table[r] + y_g_table[g] + y_b_table[b]) >> SCALESHIFT)
+#define COMPUTE_U(r, g, b) \
+  (unsigned char) \
+  ((u_r_table[r] + u_g_table[g] + uv_br_table[b]) >> SCALESHIFT)
+#define COMPUTE_V(r, g, b) \
+  (unsigned char) \
+  ((uv_br_table[r] + v_g_table[g] + v_b_table[b]) >> SCALESHIFT)
+
+/* Binaries using these old ones keep working,
+   and get the full vs mpeg range bug fixed transparently as well.
 #define COMPUTE_Y(r, g, b) \
   (unsigned char) \
   ((y_r_table[r] + y_g_table[g] + y_b_table[b]) / SCALEFACTOR)
@@ -369,6 +381,7 @@ extern void (*yuy2_to_yv12)
 #define COMPUTE_V(r, g, b) \
   (unsigned char) \
   ((v_r_table[r] + v_g_table[g] + v_b_table[b]) / SCALEFACTOR + CENTERSAMPLE)
+*/
 
 #define UNPACK_BGR15(packed_pixel, r, g, b) \
   b = (packed_pixel & 0x7C00) >> 7; \
@@ -393,6 +406,8 @@ extern void (*yuy2_to_yv12)
 extern int y_r_table[256] XINE_PROTECTED;
 extern int y_g_table[256] XINE_PROTECTED;
 extern int y_b_table[256] XINE_PROTECTED;
+
+extern int uv_br_table[256] XINE_PROTECTED;
 
 extern int u_r_table[256] XINE_PROTECTED;
 extern int u_g_table[256] XINE_PROTECTED;
