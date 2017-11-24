@@ -544,6 +544,11 @@ static void metronom_got_video_frame (metronom_t *this, vo_frame_t *img) {
     this->video_mode = VIDEO_PTS_MODE;
   }
 
+  /* goom likes to deliver all zero pts sometimes. Give a chance to follow
+     at least sound card drift */
+  if (!pts && img->duration && !(this->img_cpt & 0x7f))
+    pts = this->last_video_pts + this->img_cpt * img->duration;
+
   if (pts && pts != this->last_video_pts) {
 
     if (!img->duration) {
