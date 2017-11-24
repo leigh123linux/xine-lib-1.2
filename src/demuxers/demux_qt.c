@@ -117,6 +117,8 @@ typedef unsigned int qt_atom;
 #define NI42_FOURCC ME_FOURCC('4', '2', 'n', 'i')
 #define AVC1_FOURCC ME_FOURCC('a', 'v', 'c', '1')
 #define HVC1_FOURCC ME_FOURCC('h', 'v', 'c', '1')
+#define HEV1_FOURCC ME_FOURCC('h', 'e', 'v', '1')
+#define HEVC_FOURCC ME_FOURCC('h', 'e', 'v', 'c')
 #define AC_3_FOURCC ME_FOURCC('a', 'c', '-', '3')
 #define EAC3_FOURCC ME_FOURCC('e', 'c', '-', '3')
 #define QCLP_FOURCC ME_FOURCC('Q', 'c', 'l', 'p')
@@ -3167,7 +3169,9 @@ static void demux_qt_send_headers(demux_plugin_t *this_gen) {
       buf->type = video_trak->properties->video.codec_buftype;
 
       if (video_trak->properties->video.codec_fourcc == AVC1_FOURCC ||
-          video_trak->properties->video.codec_fourcc == HVC1_FOURCC) {
+          video_trak->properties->video.codec_fourcc == HVC1_FOURCC ||
+          video_trak->properties->video.codec_fourcc == HEV1_FOURCC ||
+          video_trak->properties->video.codec_fourcc == HEVC_FOURCC) {
         buf->size = 0;
         buf->decoder_flags = BUF_FLAG_SPECIAL|BUF_FLAG_HEADER;
         buf->decoder_info[1] = BUF_SPECIAL_DECODER_CONFIG;

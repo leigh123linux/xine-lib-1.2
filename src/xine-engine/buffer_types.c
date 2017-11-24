@@ -812,6 +812,7 @@ static const video_db_t video_db[] = {
 {
   {
     ME_FOURCC('h','e','v','c'),
+    ME_FOURCC('h','e','v','1'),
     ME_FOURCC('h','v','c','1'),
     0
   },
