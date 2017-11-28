@@ -30,6 +30,7 @@
  */
 
 #define XINE_ENGINE_INTERNAL
+#define ARCH_WARN
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -137,8 +138,8 @@ quote of the day:
     * so lets use 64bit (%rsi) instead.
     * Inserting an extra letter into operand reference modifies
     * register size something like this:
-    * "%2, %b2, %h2, %w2, %l2, %q2" -> "%edx, %dl, %dh, %dx, %edx, %rdx"
-    * For some reason, "info gcc" silences this useful feature.
+    * "%2, %b2, %h2, %w2, %k2, %q2" -> "%edx, %dl, %dh, %dx, %edx, %rdx"
+    * For some reason, "info gcc" 4.5 silences this useful feature.
     */
 #  define DOPTR(what,from,to) "\n\t"what"l\t"from", "to
 #  define BUMPPTR(offs,num)   "\n\tleaq\t"offs"(%q"num"), %q"num
@@ -751,4 +752,3 @@ void xine_probe_fast_memcpy(xine_t *xine)
 
   xine->config->update_num (xine->config, "engine.performance.memcpy_method", method);
 }
-

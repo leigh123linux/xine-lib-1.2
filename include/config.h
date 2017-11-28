@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2007 the xine project
+ * Copyright (C) 2007-2017 the xine project
  *
  * This file is part of xine, a free video player.
  *
@@ -20,4 +20,28 @@
  */
 
 #include "configure.h"
+
+/* Ugly build time sanity guard.
+ * ./configure might mistake X32 mode as plain 64bit,
+ * but compiler itself sets __ILP32__ when in x32.
+ */
+#ifdef ARCH_X86
+#  if defined(__ILP32__) && !defined(ARCH_X86_X32)
+#    ifdef ARCH_WARN
+#        warning "configure did not detect ARCH_X86_X32!"
+#    endif
+#    undef ARCH_X86_64
+#    define ARCH_X86_X32
+#    undef ARCH_X86_32
+#  elif defined(ARCH_X86_64) && defined(ARCH_X86_X32)
+#    ifdef ARCH_WARN
+#        warning "configure did set both ARCH_X86_64 and ARCH_X86_X32!"
+#    endif
+#    undef ARCH_X86_64
+#    undef ARCH_X86_32
+#  endif
+#endif
+
 #include "os_internal.h"
+
+

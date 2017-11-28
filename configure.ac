@@ -679,7 +679,7 @@ case "$host_or_hostalias" in
         AC_DEFINE([ARCH_SPARC], [], [Define this if you're running SPARC architecture])
         ;;
 
-    x86_64-*-gnux32)
+    x86_64-*gnux32*)
         # optional build with fast 64 bit code but usable by 32 bit applications directly.
         # requires x86 64bit, x32 kernel support, gcc 4.7+ and x32 system headers. should we test for these first?
         arch_x86=x32
