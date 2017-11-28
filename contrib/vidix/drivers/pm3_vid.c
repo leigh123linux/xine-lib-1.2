@@ -50,7 +50,7 @@
 static pciinfo_t pci_info;
 
 void *pm3_reg_base;
-static void *pm3_mem;
+static uint8_t *pm3_mem;
 
 static int pm3_vidmem = PM3_VIDMEM;
 static int pm3_blank = 0;
@@ -146,7 +146,7 @@ int VIDIX_NAME(vixProbe)(int verbose, int force)
 int VIDIX_NAME(vixInit)(const char *args)
 {
     if(args != NULL){
-	char *ac = strdup(args), *s, *opt;
+	char *ac = strdup(args), *s = NULL, *opt;
 
 	opt = strtok_r(ac, ",", &s);
 	while(opt){

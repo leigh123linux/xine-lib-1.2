@@ -339,8 +339,8 @@ struct rivatv_info {
     unsigned int screen_y;            /*screen height*/
 	unsigned long buffer_size;		 /* size of the image buffer	       */
 	struct rivatv_chip chip;	 /* NV architecture structure		       */
-	void* video_base;		 /* virtual address of control region	       */
-	void* control_base;		 /* virtual address of fb region	       */
+    uint8_t* video_base;		 /* virtual address of control region	       */
+    uint8_t* control_base;		 /* virtual address of fb region	       */
 	unsigned long picture_base;	 /* direct pointer to video picture	       */
 	unsigned long picture_offset;	 /* offset of video picture in frame buffer    */
 //	struct rivatv_dma dma;           /* DMA structure                              */

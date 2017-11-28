@@ -1184,7 +1184,7 @@ int VIDIX_NAME(vixConfigPlayback)(vidix_playback_t *config)
 
     cregs.c2preload=(vsyncstart << 16) | (hsyncstart); // from
 
-    memset(config->dga_addr + config->offsets[config->num_frames], 0, config->frame_size); // clean spic area
+    memset((uint8_t *)(config->dga_addr) + config->offsets[config->num_frames], 0, config->frame_size); // clean spic area
     cregs.c2spicstartadd0=(uint32_t) mga_src_base + baseadrofs + config->num_frames*config->frame_size;
     //cregs.c2spicstartadd1=0; // not used
 

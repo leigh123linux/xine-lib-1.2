@@ -1105,9 +1105,9 @@ typedef struct radeon_info_s
 
 static rinfo_t rinfo;
 
-static char * GET_MON_NAME(int type)
+static const char * GET_MON_NAME(int type)
 {
-  char *pret;
+  const char *pret;
   switch(type)
   {
     case MT_NONE: pret = "no"; break;
@@ -2447,7 +2447,7 @@ static int radeon_vid_init_video( vidix_playback_t *config )
 {
     double V_scale_ratio;
     uint32_t i,src_w,src_h,dest_w,dest_h,pitch,left,leftUV,top,h_inc;
-    uint32_t val_OV0_P1_H_INC,val_OV0_P1_H_STEP_BY,val_OV0_P23_H_INC,val_OV0_P23_H_STEP_BY;
+    uint32_t val_OV0_P1_H_INC=0,val_OV0_P1_H_STEP_BY=0,val_OV0_P23_H_INC=0,val_OV0_P23_H_STEP_BY=0;
     uint32_t val_OV0_P1_X_START,val_OV0_P2_X_START;
     uint32_t val_OV0_P1_MAX_LN_IN_PER_LN_OUT,val_OV0_P23_MAX_LN_IN_PER_LN_OUT;
     uint32_t CRT_V_INC;
@@ -2751,10 +2751,10 @@ static int radeon_vid_init_video( vidix_playback_t *config )
     besr.v_inc <<= 8;
     {
 	int ThereIsTwoTapVerticalFiltering,DoNotUseMostRecentlyFetchedLine;
-	int P1GroupSize;
+	int P1GroupSize = 0;
 	int P23GroupSize;
-	int P1StepSize;
-	int P23StepSize;
+	int P1StepSize = 0;
+	int P23StepSize = 0;
 
 	Calc_H_INC_STEP_BY(
 	    besr.surf_id,
@@ -3005,7 +3005,7 @@ int VIDIX_NAME(vixConfigPlayback)(vidix_playback_t *info)
 	Note: probably it's ont good idea to locate them in video memory
 	but as initial release it's OK */
 	radeon_video_size -= radeon_ram_size * sizeof(bm_list_descriptor) / 4096;
-	radeon_dma_desc_base = (void *) pci_info.base0 + radeon_video_size;
+	radeon_dma_desc_base = (uint8_t *) pci_info.base0 + radeon_video_size;
   }
 #endif
   for(;nfr>0; nfr--)

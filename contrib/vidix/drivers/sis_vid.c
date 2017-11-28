@@ -103,7 +103,7 @@ static int sis_probed = 0;
 static pciinfo_t pci_info;
 unsigned int sis_verbose = 0;
 
-static void *sis_mem_base;
+static uint8_t *sis_mem_base;
 /* static void *sis_reg_base; */
 unsigned short sis_iobase;
 

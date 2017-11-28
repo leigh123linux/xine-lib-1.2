@@ -54,8 +54,8 @@
 
 pciinfo_t pci_info;
 
-void *pm2_reg_base;
-void *pm2_mem;
+uint8_t *pm2_reg_base;
+uint8_t *pm2_mem;
 
 int pm2_vidmem = PM2_VIDMEM;
 
