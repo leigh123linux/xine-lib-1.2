@@ -140,109 +140,33 @@ static void FUNCT_NAME(uint8_t *output, int outstride,
 	// then go fill in the hard part, being variously lazy depending upon
 	// SearchEffort
 
-    if(UseStrangeBob == 0) {
-		if (SearchEffort == 0)
-		{
-		        goto SEFUNC(0);
-		}
-		else if (SearchEffort <= 1)
-		{
-			goto SEFUNC(1);
-		}
-	/*	else if (SearchEffort <= 2)
-		{
-			goto SEFUNC(2);
-		}
-	*/
-		else if (SearchEffort <= 3)
-		{
-			goto SEFUNC(3);
-		}
-		else if (SearchEffort <= 5)
-		{
-			goto SEFUNC(5);
-		}
-		else if (SearchEffort <= 9)
-		{
-			goto SEFUNC(9);
-		}
-		else if (SearchEffort <= 11)
-		{
-			goto SEFUNC(11);
-		}
-		else if (SearchEffort <= 13)
-		{
-			goto SEFUNC(13);
-		}
-		else if (SearchEffort <= 15)
-		{
-			goto SEFUNC(15);
-		}
-		else if (SearchEffort <= 19)
-		{
-			goto SEFUNC(19);
-		}
-		else if (SearchEffort <= 21)
-		{
-			goto SEFUNC(21);
-		}
-		else 
-		{
-			goto SEFUNC(Max);
-		}
-	}
-	else
-	{
-		if (SearchEffort == 0)
-		{
-			goto SEFUNC(0_SB);
-		}
-		else if (SearchEffort <= 1)
-		{
-			goto SEFUNC(1_SB);
-		}
-	/*	else if (SearchEffort <= 2)
-		{
-			goto SEFUNC(2_SB);
-		}
-	*/
-		else if (SearchEffort <= 3)
-		{
-			goto SEFUNC(3_SB);
-		}
-		else if (SearchEffort <= 5)
-		{
-			goto SEFUNC(5_SB);
-		}
-		else if (SearchEffort <= 9)
-		{
-			goto SEFUNC(9_SB);
-		}
-		else if (SearchEffort <= 11)
-		{
-			goto SEFUNC(11_SB);
-		}
-		else if (SearchEffort <= 13)
-		{
-			goto SEFUNC(13_SB);
-		}
-		else if (SearchEffort <= 15)
-		{
-			goto SEFUNC(15_SB);
-		}
-		else if (SearchEffort <= 19)
-		{
-			goto SEFUNC(19_SB);
-		}
-		else if (SearchEffort <= 21)
-		{
-			goto SEFUNC(21_SB);
-		}
-		else 
-		{
-			goto SEFUNC(Max_SB);
-		}
-	}
+  if (UseStrangeBob == 0) {
+    if      (SearchEffort ==  0) goto SEFUNC (0);
+    else if (SearchEffort <=  1) goto SEFUNC (1);
+/*  else if (SearchEffort <=  2) goto SEFUNC (2); */
+    else if (SearchEffort <=  3) goto SEFUNC (3);
+    else if (SearchEffort <=  5) goto SEFUNC (5);
+    else if (SearchEffort <=  9) goto SEFUNC (9);
+    else if (SearchEffort <= 11) goto SEFUNC(11);
+    else if (SearchEffort <= 13) goto SEFUNC(13);
+    else if (SearchEffort <= 15) goto SEFUNC(15);
+    else if (SearchEffort <= 19) goto SEFUNC(19);
+    else if (SearchEffort <= 21) goto SEFUNC(21);
+    else                         goto SEFUNC(Max);
+  } else {
+    if      (SearchEffort ==  0) goto SEFUNC (0_SB);
+    else if (SearchEffort <=  1) goto SEFUNC (1_SB);
+/*  else if (SearchEffort <=  2) goto SEFUNC (2_SB); */
+    else if (SearchEffort <=  3) goto SEFUNC (3_SB);
+    else if (SearchEffort <=  5) goto SEFUNC (5_SB);
+    else if (SearchEffort <=  9) goto SEFUNC (9_SB);
+    else if (SearchEffort <= 11) goto SEFUNC(11_SB);
+    else if (SearchEffort <= 13) goto SEFUNC(13_SB);
+    else if (SearchEffort <= 15) goto SEFUNC(15_SB);
+    else if (SearchEffort <= 19) goto SEFUNC(19_SB);
+    else if (SearchEffort <= 21) goto SEFUNC(21_SB);
+    else                         goto SEFUNC(Max_SB);
+  }
 
 end:
 #if defined(ARCH_X86)
