@@ -618,6 +618,37 @@ fi
 
 CC_CHECK_CFLAGS([-fexpensive-optimizations], [optflags="$optflags -fexpensive-optimizations"])
 
+dnl MY_CHECK_CPP_DEFINED - Check for a single (pre)#defined cpp macro.
+dnl Usage: MY_CHECK_CPP_DEFINED([name], [action-if-defined], [action-if-not-defined])
+AC_DEFUN([MY_CHECK_CPP_DEFINED], [
+    AC_CACHE_CHECK(
+        [whether cpp macro $1 is defined],
+        AS_TR_SH([my_cv_cpp_defined_$1]),
+        [AC_COMPILE_IFELSE(
+            [AC_LANG_PROGRAM([
+#ifndef $1
+#error $1 is not defined!
+#endif
+            ])],
+            [eval "AS_TR_SH([my_cv_cpp_defined_$1])=yes"],
+            [eval "AS_TR_SH([my_cv_cpp_defined_$1])=no"]
+        )]
+    )
+    if eval test [x$]AS_TR_SH([my_cv_cpp_defined_$1]) = xyes; then
+        ifelse([$2], , [:], [$2])
+    else
+        ifelse([$3], , [:], [$3])
+    fi
+])
+
+dnl MY_X86_DEFAULT_ARCH - Check for compler default x86 architecture.
+dnl Sets x86_default_arch to either "32", "x32" or "64".
+AC_DEFUN([MY_X86_DEFAULT_ARCH], [
+    MY_CHECK_CPP_DEFINED([__i386],    [x86_default_arch=32],  [
+    MY_CHECK_CPP_DEFINED([__i386__],  [x86_default_arch=32],  [
+    MY_CHECK_CPP_DEFINED([__ILP32__], [x86_default_arch=x32], [x86_default_arch=64])
+])])])
+
 dnl initialize arch_86 as it is later tested for != "no" 
 arch_x86=no
 
@@ -680,16 +711,27 @@ case "$host_or_hostalias" in
         ;;
 
     x86_64-*gnux32*)
-        # optional build with fast 64 bit code but usable by 32 bit applications directly.
-        # requires x86 64bit, x32 kernel support, gcc 4.7+ and x32 system headers. should we test for these first?
+        dnl optional build with fast 64 bit code but usable by 32 bit applications directly.
+        dnl requires x86 64bit, x32 kernel support, gcc 4.7+ and x32 system headers. should we test for these first?
         arch_x86=x32
         cpuflags="$cpuflags -mx32"
         AC_DEFINE([ARCH_X86_X32], [], [Define this if you're running x86 architecture 64 bits with 32 bit ABI])
         ;;
 
     x86_64-*)
+        dnl x86_64 kernel optionally supports x32 and 32 as well. If user did not explicitly state arch,
+        dnl use compiler default. Otherwise, override it when needed.
         arch_x86=64
-        AC_DEFINE([ARCH_X86_64], [], [Define this if you're running x86 architecture 64 bits])
+        MY_X86_DEFAULT_ARCH
+        test x"$host_alias" = x && arch_x86=$x86_default_arch
+        test x"$arch_x86" != x"$x86_default_arch" && cpuflags="$cpuflags -m$arch_x86"
+        if test x"$arch_x86" = x"64" ; then
+            AC_DEFINE([ARCH_X86_64], [], [Define this if you're running x86 architecture 64 bits])
+        elif test x"$arch_x86" = x"x32" ; then
+            AC_DEFINE([ARCH_X86_X32], [], [Define this if you're running x86 architecture 64 bits with 32 bit ABI])
+        else
+            AC_DEFINE([ARCH_X86_32], [], [Define this if you're running x86 architecture 32 bits])
+        fi
         ;;
 
     *-*-darwin*)
