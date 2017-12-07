@@ -1420,6 +1420,7 @@ static void wait_first_frame (xine_stream_t *stream) {
 static int play_internal (xine_stream_t *stream, int start_pos, int start_time) {
 
   int        flush;
+  int        first_frame_flag = 3;
   int        demux_status;
   int        demux_thread_running;
 
@@ -1432,8 +1433,10 @@ static int play_internal (xine_stream_t *stream, int start_pos, int start_time) 
     return 0;
   }
 
-  if (start_pos || start_time)
+  if (start_pos || start_time) {
     stream->finished_naturally = 0;
+    first_frame_flag = 2;
+  }
   flush = (stream->master == stream) && !stream->gapless_switch && !stream->finished_naturally;
   if (!flush)
     xprintf (stream->xine, XINE_VERBOSITY_DEBUG, "xine_play: using gapless switch\n");
@@ -1491,7 +1494,7 @@ static int play_internal (xine_stream_t *stream, int start_pos, int start_time) 
 
   /* before resuming the demuxer, set first_frame_flag */
   pthread_mutex_lock (&stream->first_frame_lock);
-  stream->first_frame_flag = 2;
+  stream->first_frame_flag = first_frame_flag;
   pthread_mutex_unlock (&stream->first_frame_lock);
 
   /* before resuming the demuxer, reset current position information */

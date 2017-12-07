@@ -1164,13 +1164,14 @@ static int vo_frame_draw (vo_frame_t *img, xine_stream_t *stream) {
 
   if (stream) {
     first_frame_flag = stream->first_frame_flag;
-    if (first_frame_flag == 2) {
+    if (first_frame_flag >= 2) {
       /* Frame reordering and/or multithreaded deoders feature an initial delay.
        * Even worse: mpeg-ts does not seek to keyframes, as that would need quite some 
        * decoder knowledge. As a result, there often burst in many "bad" frames here quickly.
        * Dont let these mess up timing, generate high frames_to_skip values,
        * and kill the following keyframe seq with that.
        */
+      this->last_delivery_pts = 0;
       if (img->bad_frame) {
         this->num_frames_burst++;
         return 0;
@@ -1232,7 +1233,7 @@ static int vo_frame_draw (vo_frame_t *img, xine_stream_t *stream) {
      *   will be (-4 -> 1) when frame_drop_limit_max is only 1. This maximum value
      *   depends on the number of video buffers which the output device provides.
      */
-    if (first_frame_flag == 2)
+    if (first_frame_flag >= 2)
       this->frame_drop_cpt = 10;
 
     if (this->frame_drop_cpt) {
@@ -1317,16 +1318,36 @@ static int vo_frame_draw (vo_frame_t *img, xine_stream_t *stream) {
      * check for first frame after seek and mark it
      */
     img->is_first = 0;
+    if (first_frame_flag >= 2) {
+      /* We can always do the frame's native stream here.
+       * We know its there, and we vo_reref()ed it above.
+       */
+      xine_stream_t *s = stream;
+      pthread_mutex_lock (&s->first_frame_lock);
+      if (s->first_frame_flag >= 2) {
+        if ((s->first_frame_flag > 2) || this->grab_only) {
+          s->first_frame_flag = 0;
+          pthread_cond_broadcast (&s->first_frame_reached);
+        } else {
+          s->first_frame_flag = 1;
+        }
+        img->is_first = FIRST_FRAME_MAX_POLL;
+        lprintf ("get_next_video_frame first_frame_reached\n");
+      }
+      pthread_mutex_unlock (&s->first_frame_lock);
+    }
     /* avoid a complex deadlock situation caused by net_buf_control */
     if (!pthread_mutex_trylock (&this->streams_lock)) {
       xine_stream_t **s;
       for (s = this->streams; *s; s++) {
+        if (*s == stream)
+          continue;
         /* a little speedup */
-        if ((*s)->first_frame_flag != 2)
+        if ((*s)->first_frame_flag < 2)
           continue;
         pthread_mutex_lock (&(*s)->first_frame_lock);
-        if ((*s)->first_frame_flag == 2) {
-          if (this->grab_only) {
+        if ((*s)->first_frame_flag >= 2) {
+          if (((*s)->first_frame_flag > 2) || this->grab_only) {
             (*s)->first_frame_flag = 0;
             pthread_cond_broadcast (&(*s)->first_frame_reached);
           } else {
@@ -1761,6 +1782,18 @@ static void overlay_and_display_frame (vos_t *this, vo_frame_t *img, int64_t vpt
     if ((diff > 3000) || (diff<-300000) || (img->is_first > 0))
       _x_extra_info_merge( img->stream->current_extra_info, img->extra_info );
     pthread_mutex_unlock( &img->stream->current_extra_info_lock );
+    /* First frame's native stream is the most common case.
+     * Do it without streams lock.
+     */
+    if (img->is_first > 0) {
+      xine_stream_t *s = img->stream;
+      pthread_mutex_lock (&s->first_frame_lock);
+      if (s->first_frame_flag) {
+        s->first_frame_flag = 0;
+        pthread_cond_broadcast (&s->first_frame_reached);
+      }
+      pthread_mutex_unlock (&s->first_frame_lock);
+    }
   }
 
   /* xine_play() may be called from a thread that has the display device locked
@@ -1771,6 +1804,8 @@ static void overlay_and_display_frame (vos_t *this, vo_frame_t *img, int64_t vpt
     xine_stream_t **s;
     pthread_mutex_lock (&this->streams_lock);
     for (s = this->streams; *s; s++) {
+      if (*s == img->stream)
+        continue;
       pthread_mutex_lock (&(*s)->first_frame_lock);
       if ((*s)->first_frame_flag) {
         (*s)->first_frame_flag = 0;
@@ -2001,23 +2036,22 @@ static void *video_out_loop (void *this_gen) {
      */
 
     if ((vpts - this->last_delivery_pts > 30000) && !this->display_img_buf_queue.first) {
-      xine_stream_t **s;
-      pthread_mutex_lock(&this->streams_lock);
-      for (s = this->streams; *s; s++) {
-        if ((*s)->video_decoder_plugin && (*s)->video_fifo && !disable_decoder_flush_from_video_out) {
-          buf_element_t *buf;
-
-	  lprintf ("flushing current video decoder plugin\n");
-
-          buf = (*s)->video_fifo->buffer_pool_try_alloc ((*s)->video_fifo);
-          if( buf ) {
-            buf->type = BUF_CONTROL_FLUSH_DECODER;
-            (*s)->video_fifo->insert ((*s)->video_fifo, buf);
+      if (this->last_delivery_pts && !disable_decoder_flush_from_video_out) {
+        xine_stream_t **s;
+        pthread_mutex_lock (&this->streams_lock);
+        for (s = this->streams; *s; s++) {
+          if ((*s)->video_decoder_plugin && (*s)->video_fifo) {
+            buf_element_t *buf;
+            lprintf ("flushing current video decoder plugin\n");
+            buf = (*s)->video_fifo->buffer_pool_try_alloc ((*s)->video_fifo);
+            if (buf) {
+              buf->type = BUF_CONTROL_FLUSH_DECODER;
+              (*s)->video_fifo->insert ((*s)->video_fifo, buf);
+            }
           }
         }
+        pthread_mutex_unlock (&this->streams_lock);
       }
-      pthread_mutex_unlock(&this->streams_lock);
-
       this->last_delivery_pts = vpts;
     }
 

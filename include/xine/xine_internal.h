@@ -264,6 +264,11 @@ struct xine_stream_s {
   uint32_t                   ignore_speed_change:1;  /*< speed changes during stop can be disastrous */
   uint32_t                   video_thread_created:1;
   uint32_t                   audio_thread_created:1;
+  /* 3: wait for first frame to decode (stream start).
+   * 2: wait for first frame to display (stream seek).
+   * 1: after 2, first frame is decoded but not yet displayed.
+   * 0: waiting done.
+   */
   uint32_t                   first_frame_flag:2;
   uint32_t                   demux_action_pending:1;
   uint32_t                   demux_thread_created:1;
