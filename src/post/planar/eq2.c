@@ -29,6 +29,8 @@
 #include "config.h"
 #endif
 
+#include "planar.h"
+
 #include <xine/xine_internal.h>
 #include <xine/post.h>
 #include <xine/xineutils.h>
@@ -280,9 +282,6 @@ void set_saturation (vf_eq2_t *eq2, double s)
   check_values (&eq2->param[2]);
 }
 
-
-/* plugin class initialization function */
-void *eq2_init_plugin(xine_t *xine, void *);
 
 typedef struct post_plugin_eq2_s post_plugin_eq2_t;
 

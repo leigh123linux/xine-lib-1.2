@@ -25,6 +25,8 @@
 #include "config.h"
 #endif
 
+#include "planar.h"
+
 #include <xine/xine_internal.h>
 #include <xine/post.h>
 #include <xine/xineutils.h>
@@ -135,10 +137,6 @@ static void process_C(unsigned char *dest, int dstride, unsigned char *src, int 
 
 static void (*process)(unsigned char *dest, int dstride, unsigned char *src, int sstride,
 		       int w, int h, int brightness, int contrast);
-
-
-/* plugin class initialization function */
-void *eq_init_plugin(xine_t *xine, void *);
 
 
 typedef struct post_plugin_eq_s post_plugin_eq_t;

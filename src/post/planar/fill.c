@@ -22,11 +22,10 @@
  * based on invert.c
  */
 
+#include "planar.h"
+
 #include <xine/xine_internal.h>
 #include <xine/post.h>
-
-/* plugin class initialization function */
-void *fill_init_plugin(xine_t *xine, void *);
 
 /* plugin class functions */
 static post_plugin_t *fill_open_plugin(post_class_t *class_gen, int inputs,

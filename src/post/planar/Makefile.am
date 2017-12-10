@@ -27,6 +27,7 @@ xineplug_post_planar_la_SOURCES = \
 	fill.c \
 	invert.c \
 	planar.c \
+	planar.h \
 	unsharp.c \
 	$(pp_module_sources)
 xineplug_post_planar_la_LIBADD  = $(XINE_LIB) $(pp_module_libs) -lm $(PTHREAD_LIBS) $(LTLIBINTL) $(noinst_LTLIBRARIES)

@@ -27,6 +27,8 @@
  *
  */
 
+#include "planar.h"
+
 #include <xine/xine_internal.h>
 #include <xine/post.h>
 
@@ -60,9 +62,6 @@
  * plugin would produce otherwise for this case.
  */
 
-
-/* plugin class initialization function */
-void *expand_init_plugin(xine_t *xine, void *);
 
 /* plugin structures */
 typedef struct expand_parameters_s {

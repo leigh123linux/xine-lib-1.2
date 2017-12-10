@@ -25,6 +25,8 @@
 #include "config.h"
 #endif
 
+#include "planar.h"
+
 #include <xine/xine_internal.h>
 #include <xine/post.h>
 #include <xine/xineutils.h>
@@ -36,9 +38,6 @@
 #define PARAM3_DEFAULT 6.0
 #define MAX_LINE_WIDTH 2048
 
-
-/* plugin class initialization function */
-void *denoise3d_init_plugin(xine_t *xine, void *);
 
 typedef struct post_plugin_denoise3d_s post_plugin_denoise3d_t;
 

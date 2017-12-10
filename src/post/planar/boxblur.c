@@ -25,13 +25,12 @@
 #include "config.h"
 #endif
 
+#include "planar.h"
+
 #include <xine/xine_internal.h>
 #include <xine/post.h>
 #include <xine/xineutils.h>
 #include <pthread.h>
-
-/* plugin class initialization function */
-void *boxblur_init_plugin(xine_t *xine, void *);
 
 typedef struct post_plugin_boxblur_s post_plugin_boxblur_t;
 

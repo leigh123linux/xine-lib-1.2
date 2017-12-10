@@ -25,6 +25,8 @@
 #include "config.h"
 #endif
 
+#include "planar.h"
+
 #include <xine/xine_internal.h>
 #include <xine/post.h>
 #include <xine/xineutils.h>
@@ -318,10 +320,6 @@ static void noise(uint8_t *dst, uint8_t *src, int dstStride, int srcStride, int 
     if (fp->shiftptr == 3) fp->shiftptr = 0;
 }
 
-
-
-/* plugin class initialization function */
-void *noise_init_plugin(xine_t *xine, void *);
 
 typedef struct post_plugin_noise_s post_plugin_noise_t;
 

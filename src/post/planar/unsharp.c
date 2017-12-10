@@ -25,6 +25,8 @@
 #include "config.h"
 #endif
 
+#include "planar.h"
+
 #include <xine/xine_internal.h>
 #include <xine/post.h>
 #include <xine/xineutils.h>
@@ -116,9 +118,6 @@ static void unsharp( uint8_t *dst, uint8_t *src, int dstStride, int srcStride, i
     }
 }
 
-
-/* plugin class initialization function */
-void *unsharp_init_plugin(xine_t *xine, void *);
 
 typedef struct post_plugin_unsharp_s post_plugin_unsharp_t;
 

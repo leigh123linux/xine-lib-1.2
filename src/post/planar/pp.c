@@ -24,6 +24,8 @@
 #include "config.h"
 #endif
 
+#include "planar.h"
+
 #include <config.h>
 
 #include <xine/xine_internal.h>
@@ -43,9 +45,6 @@
 #endif
 
 #define PP_STRING_SIZE 256 /* size of pp mode string (including all options) */
-
-/* plugin class initialization function */
-void *pp_init_plugin(xine_t *xine, void *);
 
 typedef struct post_plugin_pp_s post_plugin_pp_t;
 
