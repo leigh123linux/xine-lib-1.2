@@ -127,6 +127,18 @@ typedef struct {
 
   img_buf_fifo_t            free_img_buf_queue;
   img_buf_fifo_t            display_img_buf_queue;
+  /* The flush protocol, protected by display_img_buf_queue.mutex. */
+  int                       discard_frames;
+  int                       flush_extra;
+  /* Optimization: keep video decoder from interfering with output timing.
+   * Employ a separate mutex less frame queue private to the render thread.
+   * Fetch the entire shared queue into it when flushing, or when running
+   * down to less than 2 frames. This way we can still set frame.future_frame.
+   * Also, do that after time critical stuff, if possible.
+   */
+  vo_frame_t               *ready_first;
+  vo_frame_t               *ready_last;
+  int                       ready_num;
 
   struct timeval            now;
 
@@ -154,7 +166,6 @@ typedef struct {
   uint32_t                  grab_only:1;
 
   uint32_t                  redraw_needed:3;
-  int                       discard_frames;
 
   pthread_t                 video_thread;
 
@@ -566,16 +577,131 @@ static vo_frame_t *vo_queue_pop_int (img_buf_fifo_t *queue) {
   return img;
 }
 
-static vo_frame_t *vo_queue_get_dupl (img_buf_fifo_t *queue, vo_frame_t *s) {
+static vo_frame_t *vo_free_get_dupl (vos_t *this, vo_frame_t *s) {
+  vo_frame_t *img, *prev = NULL;
+
+  if (!s)
+    return NULL;
+
+  pthread_mutex_lock (&this->free_img_buf_queue.mutex);
+
+  for (img = this->free_img_buf_queue.first; img; img = img->next) {
+    if ((img->format == s->format) && (img->width == s->width)
+      && (img->height == s->height) && (img->ratio == s->ratio))
+      break;
+    prev = img;
+  }
+  if (!img) {
+    img = this->free_img_buf_queue.first;
+    prev = NULL;
+  }
+
+  if (img) {
+    if (!prev) {
+      if (!img->next) { /* only */
+        this->free_img_buf_queue.first =
+        this->free_img_buf_queue.last  = NULL;
+        this->free_img_buf_queue.num_buffers = 0;
+      } else { /* first */
+        this->free_img_buf_queue.first = img->next;
+        img->next = NULL;
+        this->free_img_buf_queue.num_buffers--;
+      }
+    } else {
+      this->free_img_buf_queue.num_buffers--;
+      if (img->next) { /* middle */
+        prev->next = img->next;
+        img->next = NULL;
+      } else { /* last */
+        prev->next = NULL;
+        this->free_img_buf_queue.last = prev;
+      }
+    }
+  }
+
+  pthread_mutex_unlock (&this->free_img_buf_queue.mutex);
+
+  return img;
+}
+
+#define ADD_READY_FRAMES \
+  if (this->ready_num < 2) { \
+    if (!this->ready_num || this->display_img_buf_queue.first) \
+      vo_ready_refill (this); \
+  }
+
+static void vo_ready_refill (vos_t *this) {
+  vo_frame_t *first, *last;
+
+  pthread_mutex_lock (&this->display_img_buf_queue.mutex);
+  first = this->display_img_buf_queue.first;
+  if (!first) {
+    this->flush_extra = this->ready_num;
+    pthread_mutex_unlock (&this->display_img_buf_queue.mutex);
+    return;
+  }
+  last = this->display_img_buf_queue.last;
+  this->ready_num  += this->display_img_buf_queue.num_buffers;
+  this->flush_extra = this->ready_num;
+  this->display_img_buf_queue.first = NULL;
+  this->display_img_buf_queue.last = NULL;
+  this->display_img_buf_queue.num_buffers = 0;
+  pthread_mutex_unlock (&this->display_img_buf_queue.mutex);
+
+  if (this->ready_first)
+    this->ready_last->next = first;
+  else
+    this->ready_first = first;
+  this->ready_last = last;
+}
+
+static vo_frame_t *vo_ready_get_all (vos_t *this) {
+  vo_frame_t *first;
+
+  pthread_mutex_lock (&this->display_img_buf_queue.mutex);
+  first = this->display_img_buf_queue.first;
+  if (first) {
+    this->display_img_buf_queue.first = NULL;
+    this->display_img_buf_queue.last = NULL;
+    this->display_img_buf_queue.num_buffers = 0;
+    if (this->ready_first)
+      this->ready_last->next = first;
+    else 
+      this->ready_first = first;
+  }
+  this->flush_extra = 0;
+  pthread_mutex_unlock (&this->display_img_buf_queue.mutex);
+
+  first = this->ready_first;
+  this->ready_first = NULL;
+  this->ready_last  = NULL;
+  this->ready_num   = 0;
+  return first;
+}
+
+static vo_frame_t *vo_ready_pop (vos_t *this) {
+  vo_frame_t *img;
+
+  img = this->ready_first;
+  this->ready_first = img->next;
+  img->next = NULL;
+  if (!this->ready_first) {
+    this->ready_last = NULL;
+    this->ready_num  = 0;
+  } else {
+    this->ready_num--;
+  }
+
+  return img;
+}
+
+static vo_frame_t *vo_ready_get_dupl (vos_t *this, vo_frame_t *s) {
   vo_frame_t *img, *prev = NULL, *found = NULL, *fprev = NULL;
 
   if (!s)
     return NULL;
 
-  pthread_mutex_lock (&queue->mutex);
-
-  for (img = queue->first; img; img = img->next) {
-    /* in free queue, this test is always true -- so what ;-) */
+  for (img = this->ready_first; img; img = img->next) {
     if ((img->lock_counter <= 2) && (img != s)) {
       if (!found) {
         found = img;
@@ -595,26 +721,24 @@ static vo_frame_t *vo_queue_get_dupl (img_buf_fifo_t *queue, vo_frame_t *s) {
   if (img) {
     if (!prev) {
       if (!img->next) { /* only */
-        queue->first = queue->last = NULL;
-        queue->num_buffers = 0;
+        this->ready_first = this->ready_last = NULL;
+        this->ready_num = 0;
       } else { /* first */
-        queue->first = img->next;
+        this->ready_first = img->next;
         img->next = NULL;
-        queue->num_buffers--;
+        this->ready_num--;
       }
     } else {
-      queue->num_buffers--;
+      this->ready_num--;
       if (img->next) { /* middle */
         prev->next = img->next;
         img->next = NULL;
       } else { /* last */
         prev->next = NULL;
-        queue->last = prev;
+        this->ready_last = prev;
       }
     }
   }
-
-  pthread_mutex_unlock (&queue->mutex);
 
   return img;
 }
@@ -1136,6 +1260,7 @@ static vo_frame_t *vo_get_frame (xine_video_port_t *this_gen,
     frames_used = this->frames_total;
     frames_used -= this->free_img_buf_queue.num_buffers;
     frames_used -= this->display_img_buf_queue.num_buffers;
+    frames_used -= this->ready_num;
     frames_used += this->frames_extref;
     if (frames_used > this->frames_peak_used)
       this->frames_peak_used = frames_used;
@@ -1242,7 +1367,7 @@ static int vo_frame_draw (vo_frame_t *img, xine_stream_t *stream) {
     }
 
     /* do not skip decoding until output fifo frames are consumed */
-    if (this->display_img_buf_queue.num_buffers < this->frame_drop_limit) {
+    if (this->display_img_buf_queue.num_buffers + this->ready_num < this->frame_drop_limit) {
       int duration = img->duration > 0 ? img->duration : DEFAULT_FRAME_DURATION;
       frames_to_skip = (this->last_delivery_pts - img->vpts) / duration;
       frames_to_skip = (frames_to_skip + this->frame_drop_limit) * 2;
@@ -1470,11 +1595,13 @@ static int vo_frame_draw (vo_frame_t *img, xine_stream_t *stream) {
 static vo_frame_t *duplicate_frame (vos_t *this, vo_frame_t *img) {
   vo_frame_t *dupl;
 
-  dupl = vo_queue_get_dupl (&this->free_img_buf_queue, img);
-  if (!dupl)
+  dupl = vo_free_get_dupl (this, img);
+  if (!dupl) {
     /* OK we run out of free frames. Try to whistle back a frame already waiting for display.
        Search for one that is _not_ a DR1 reference frame that the decoder wants unchanged */
-    dupl = vo_queue_get_dupl (&this->display_img_buf_queue, img);
+    vo_ready_refill (this);
+    dupl = vo_ready_get_dupl (this, img);
+  }
 
   if (!dupl)
     return NULL;
@@ -1573,7 +1700,7 @@ static void check_redraw_needed (vos_t *this, int64_t vpts) {
   /* calling the frontend's frame output hook (via driver->redraw_needed () here)
    * while flushing (xine_stop ()) may freeze.
    */
-  if (this->discard_frames && this->display_img_buf_queue.first)
+  if (this->discard_frames && (this->ready_first || this->display_img_buf_queue.first))
     return;
 
   if( this->driver->redraw_needed (this->driver) )
@@ -1583,10 +1710,6 @@ static void check_redraw_needed (vos_t *this, int64_t vpts) {
 static vo_frame_t *next_frame (vos_t *this, int64_t *vpts) {
 
   vo_frame_t   *img;
-
-  pthread_mutex_lock(&this->display_img_buf_queue.mutex);
-
-  img = this->display_img_buf_queue.first;
 
   /* when flushing, drop everything now, and return latest "first" frame if any.
    * FIXME: when switching from movie to logo, somebody briefly flashes VO_PROP_DISCARD_FRAMES.
@@ -1598,9 +1721,7 @@ static vo_frame_t *next_frame (vos_t *this, int64_t *vpts) {
     vo_frame_t *freelist = NULL, **add = &freelist, *first_frame = NULL;
     int n = 0;
     /* Take out all at once, but keep decoder blocked for now. */
-    this->display_img_buf_queue.first       = NULL;
-    this->display_img_buf_queue.last        = NULL;
-    this->display_img_buf_queue.num_buffers = 0;
+    img = vo_ready_get_all (this);
     /* Scan for stuff we want to keep. */
     while (img) {
       n++;
@@ -1638,7 +1759,6 @@ static vo_frame_t *next_frame (vos_t *this, int64_t *vpts) {
     /* Free (almost) all at once. */
     *add = NULL;
     vo_queue_append_list (&this->free_img_buf_queue, freelist);
-    pthread_mutex_unlock (&this->display_img_buf_queue.mutex);
     /* Report success. */
     if (n) {
       pthread_mutex_lock (&this->trigger_drawing_mutex);
@@ -1652,6 +1772,9 @@ static vo_frame_t *next_frame (vos_t *this, int64_t *vpts) {
     *vpts = 0;
     return first_frame;
   }
+
+  ADD_READY_FRAMES;
+  img = this->ready_first;
 
   while (img) {
 
@@ -1680,7 +1803,6 @@ static vo_frame_t *next_frame (vos_t *this, int64_t *vpts) {
       lprintf ("frame still referenced %d times, is_first=%d\n", img->lock_counter, img->is_first);
       img->is_first--;
       *vpts += FIRST_FRAME_POLL_DELAY;
-      pthread_mutex_unlock (&this->display_img_buf_queue.mutex);
       /* At forward seek, fill the gap with last flushed frame if any. */
       if (this->last_flushed && img->pts && this->last_flushed->pts && (this->last_flushed->pts < img->pts)) {
         img = this->last_flushed;
@@ -1698,7 +1820,6 @@ static vo_frame_t *next_frame (vos_t *this, int64_t *vpts) {
       if (diff < 0) {
         /* still too early for this frame */
         *vpts = img->vpts;
-        pthread_mutex_unlock (&this->display_img_buf_queue.mutex);
         this->wakeups_early++;
         return NULL;
       }
@@ -1716,7 +1837,7 @@ static vo_frame_t *next_frame (vos_t *this, int64_t *vpts) {
 
     this->num_frames_discarded++;
 
-    img = vo_queue_pop_int (&this->display_img_buf_queue);
+    img = vo_ready_pop (this);
 
     if (img->stream) {
       pthread_mutex_lock (&img->stream->current_extra_info_lock);
@@ -1724,8 +1845,10 @@ static vo_frame_t *next_frame (vos_t *this, int64_t *vpts) {
       pthread_mutex_unlock (&img->stream->current_extra_info_lock);
     }
 
+    ADD_READY_FRAMES;
+
     /* last frame? back it up for still frame creation */
-    if (!this->display_img_buf_queue.first) {
+    if (!this->ready_first) {
       pthread_mutex_lock (&this->grab_lock);
       if (this->last_frame) {
         lprintf ("overwriting frame backup\n");
@@ -1741,14 +1864,13 @@ static vo_frame_t *next_frame (vos_t *this, int64_t *vpts) {
       vo_frame_dec2_lock (img);
     }
 
-    img = this->display_img_buf_queue.first;
+    img = this->ready_first;
   }
 
   if (img) {
     /* remove frame from display queue and show it */
     img->future_frame = img->next;
-    img = vo_queue_pop_int (&this->display_img_buf_queue);
-    pthread_mutex_unlock (&this->display_img_buf_queue.mutex);
+    img = vo_ready_pop (this);
     /* we dont need that filler anymore */
     if (this->last_flushed) {
       vo_frame_dec2_lock (this->last_flushed);
@@ -1757,7 +1879,6 @@ static vo_frame_t *next_frame (vos_t *this, int64_t *vpts) {
     return img;
   }
     
-  pthread_mutex_unlock (&this->display_img_buf_queue.mutex);
   lprintf ("no frame\n");
   check_redraw_needed (this, *vpts);
   *vpts = 0;
@@ -1821,7 +1942,7 @@ static void overlay_and_display_frame (vos_t *this, vo_frame_t *img, int64_t vpt
   /* calling the frontend's frame output hook (via driver->display_frame () here)
    * while flushing (xine_stop ()) may freeze.
    */
-  if (this->discard_frames && this->display_img_buf_queue.first) {
+  if (this->discard_frames && (this->ready_first || this->display_img_buf_queue.first)) {
     img->free (img);
     this->redraw_needed = 0;
     return;
@@ -1850,10 +1971,12 @@ static void paused_loop( vos_t *this, int64_t vpts )
 
   while (this->clock->speed == XINE_SPEED_PAUSE && this->video_loop_running) {
 
+    ADD_READY_FRAMES;
+
     /* set last_frame to play the same frame several times */
     if (!this->last_frame) {
       vo_frame_t *f;
-      f = this->display_img_buf_queue.first;
+      f = this->ready_first;
       if (f) {
         vo_frame_inc_lock (f);
         pthread_mutex_lock (&this->grab_lock);
@@ -1874,11 +1997,9 @@ static void paused_loop( vos_t *this, int64_t vpts )
       if (this->step) {
         pthread_mutex_lock (&this->trigger_drawing_mutex);
         if (this->step) {
-          pthread_mutex_lock (&this->display_img_buf_queue.mutex);
-          if (this->display_img_buf_queue.first)
-            f = vo_queue_pop_int (&this->display_img_buf_queue);
-          pthread_mutex_unlock (&this->display_img_buf_queue.mutex);
-          if (f) {
+          if (this->ready_first) {
+            f = vo_ready_pop (this);
+            f->future_frame = this->ready_first;
             this->step = 0;
             pthread_cond_broadcast (&this->done_stepping);
           }
@@ -1936,19 +2057,15 @@ static void paused_loop( vos_t *this, int64_t vpts )
 
     /* flush when requested */
     if (this->discard_frames) {
-      vo_frame_t *img;
       int n = 0;
-
-      pthread_mutex_lock (&this->display_img_buf_queue.mutex);
-      img = this->display_img_buf_queue.first;
+      vo_frame_t *img = vo_ready_get_all (this);
       while (img) {
+        vo_frame_t *next = img->next;
+        img->next = NULL;
         n++;
-        img = vo_queue_pop_int (&this->display_img_buf_queue);
         vo_frame_dec2_lock (img);
-        img = this->display_img_buf_queue.first;
+        img = next;
       }
-      pthread_mutex_unlock (&this->display_img_buf_queue.mutex);
-
       if (n) {
         pthread_mutex_lock (&this->trigger_drawing_mutex);
         pthread_cond_broadcast (&this->done_flushing);
@@ -2035,7 +2152,8 @@ static void *video_out_loop (void *this_gen) {
      * test display fifo empty to protect from deadlocks
      */
 
-    if ((vpts - this->last_delivery_pts > 30000) && !this->display_img_buf_queue.first) {
+    if ((vpts - this->last_delivery_pts > 30000) &&
+        !this->display_img_buf_queue.first && !this->ready_first) {
       if (this->last_delivery_pts && !disable_decoder_flush_from_video_out) {
         xine_stream_t **s;
         pthread_mutex_lock (&this->streams_lock);
@@ -2054,6 +2172,9 @@ static void *video_out_loop (void *this_gen) {
       }
       this->last_delivery_pts = vpts;
     }
+
+    /* now the time critical stuff is done */
+    ADD_READY_FRAMES;
 
     /*
      * wait until it's time to display next frame
@@ -2074,7 +2195,7 @@ static void *video_out_loop (void *this_gen) {
     while (this->video_loop_running) {
       int timedout, wait;
 
-      if (this->discard_frames && this->display_img_buf_queue.first)
+      if (this->discard_frames && (this->ready_first || this->display_img_buf_queue.first))
         break;
 
       if (this->clock->speed == XINE_SPEED_PAUSE) {
@@ -2119,16 +2240,15 @@ static void *video_out_loop (void *this_gen) {
    * throw away undisplayed frames
    */
 
-  pthread_mutex_lock(&this->display_img_buf_queue.mutex);
   {
-    vo_frame_t *img = this->display_img_buf_queue.first;
+    vo_frame_t *img = vo_ready_get_all (this);
     while (img) {
-      img = vo_queue_pop_int (&this->display_img_buf_queue);
+      vo_frame_t *next = img->next;
+      img->next = NULL;
       vo_frame_dec2_lock (img);
-      img = this->display_img_buf_queue.first;
+      img = next;
     }
   }
-  pthread_mutex_unlock(&this->display_img_buf_queue.mutex);
 
   /* dont let folks wait forever in vain */
   if (this->discard_frames)
@@ -2285,7 +2405,7 @@ static int vo_get_property (xine_video_port_t *this_gen, int property) {
     break;
 
   case VO_PROP_BUFS_IN_FIFO:
-    ret = this->video_loop_running ? this->display_img_buf_queue.num_buffers : -1;
+    ret = this->video_loop_running ? this->display_img_buf_queue.num_buffers + this->ready_num : -1;
     break;
 
   case VO_PROP_BUFS_FREE:
@@ -2393,7 +2513,8 @@ static int vo_set_property (xine_video_port_t *this_gen, int property, int value
       pthread_mutex_unlock (&this->display_img_buf_queue.mutex);
     } else if (this->discard_frames) {
       pthread_mutex_lock (&this->display_img_buf_queue.mutex);
-      if ((this->discard_frames == 1) && this->video_loop_running && this->display_img_buf_queue.num_buffers) {
+      if ((this->discard_frames == 1) && this->video_loop_running &&
+        (this->flush_extra || this->display_img_buf_queue.first)) {
         /* Usually, render thread already did that in the meantime. Anyway, make sure display queue
            is empty, and more importantly, there are free frames for decoding when discard gets lifted. */
         pthread_mutex_lock (&this->trigger_drawing_mutex);
@@ -2401,7 +2522,7 @@ static int vo_set_property (xine_video_port_t *this_gen, int property, int value
         pthread_cond_signal (&this->trigger_drawing_cond);
         pthread_mutex_unlock (&this->trigger_drawing_mutex);
         do pthread_cond_wait (&this->done_flushing, &this->display_img_buf_queue.mutex);
-        while (this->display_img_buf_queue.num_buffers);
+        while (this->flush_extra || this->display_img_buf_queue.first);
       }
       this->discard_frames--;
       pthread_mutex_unlock (&this->display_img_buf_queue.mutex);
@@ -2648,7 +2769,7 @@ static void vo_flush (xine_video_port_t *this_gen) {
     pthread_cond_signal (&this->trigger_drawing_cond);
     pthread_mutex_unlock (&this->trigger_drawing_mutex);
 
-    while (this->display_img_buf_queue.first)
+    while (this->flush_extra || this->display_img_buf_queue.first)
       pthread_cond_wait (&this->done_flushing, &this->display_img_buf_queue.mutex);
     if (this->discard_frames > 0)
       this->discard_frames--;
@@ -2763,6 +2884,11 @@ xine_video_port_t *_x_vo_new_port (xine_t *xine, vo_driver_t *driver, int grabon
   this->frames_peak_used      = 0;
   this->frame_drop_cpt        = 0;
   this->frame_drop_suggested  = 0;
+  this->discard_frames        = 0;
+  this->flush_extra           = 0;
+  this->ready_first           = NULL;
+  this->ready_last            = NULL;
+  this->ready_num             = 0;
 
   this->xine   = xine;
   this->clock  = xine->clock;
