@@ -90,8 +90,16 @@ struct xine_ring_buffer_s {
 /* Constructor */
 xine_ring_buffer_t *xine_ring_buffer_new(size_t size) {
   xine_ring_buffer_t *new_ring_buffer = malloc(sizeof(xine_ring_buffer_t));
+  if (!new_ring_buffer) {
+    return NULL;
+  }
 
   new_ring_buffer->buffer = malloc(size);
+  if (!new_ring_buffer->buffer) {
+    free(new_ring_buffer);
+    return NULL;
+  }
+
   new_ring_buffer->buffer_size = size;
 
   new_ring_buffer->alloc_list = xine_list_new();

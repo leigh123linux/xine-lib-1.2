@@ -65,6 +65,10 @@ static xine_pool_chunk_t *XINE_MALLOC xine_pool_alloc_chunk(size_t object_size, 
   chunk_mem_size += object_size * object_count;
 
   new_chunk = (xine_pool_chunk_t *)malloc(chunk_mem_size);
+  if (!new_chunk) {
+    return NULL;
+  }
+
   new_chunk->mem_base = (xine_pool_chunk_t*)(new_chunk + 1);
   new_chunk->current_id = 0;
   new_chunk->count = object_count;
@@ -87,6 +91,10 @@ xine_pool_t *xine_pool_new(size_t object_size,
   _x_assert(object_size > 0);
 
   new_pool = malloc(sizeof(xine_pool_t));
+  if (!new_pool) {
+    return NULL;
+  }
+
   new_pool->object_size = object_size;
   new_pool->create_object = create_object;
   new_pool->prepare_object = prepare_object;
@@ -152,6 +160,9 @@ void *xine_pool_get(xine_pool_t *pool) {
         new_chunk_count = MAX_CHUNK_SIZE;
       }
       new_chunk = xine_pool_alloc_chunk (pool->object_size, new_chunk_count);
+      if (!new_chunk) {
+        return NULL;
+      }
       xine_array_add(pool->chunk_list, new_chunk);
       object = new_chunk->mem_base;
       new_chunk->current_id = 1;
