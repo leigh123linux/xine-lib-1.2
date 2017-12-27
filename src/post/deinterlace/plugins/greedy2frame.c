@@ -48,11 +48,13 @@
 #define GREEDYTWOFRAMETHRESHOLD 4
 #define GREEDYTWOFRAMETHRESHOLD2 8
 
+#if defined(ARCH_X86)
 #define IS_MMXEXT 1
 #include "greedy2frame_template.c"
 #undef IS_MMXEXT
 
 #include "greedy2frame_template_sse2.c"
+#endif /* ARCH_X86 */
 
 static void DeinterlaceGreedy2Frame(uint8_t *output, int outstride,
                                     deinterlace_frame_data_t *data,
