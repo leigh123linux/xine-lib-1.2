@@ -1,5 +1,5 @@
 static const union {
-    const char  u8[sizeof(Motif)];
+    const unsigned char u8[sizeof(Motif)];
     const Motif motif;
 } CONV_MOTIF1 = {{
 	15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,

@@ -17,7 +17,7 @@
 #define CONV_MOTIF_W 128
 #define CONV_MOTIF_WMASK 0x7f
 
-typedef char Motif[CONV_MOTIF_W][CONV_MOTIF_W];
+typedef unsigned char Motif[CONV_MOTIF_W][CONV_MOTIF_W];
 
 #include "motif_goom1.h"
 #include "motif_goom2.h"
