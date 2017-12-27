@@ -177,12 +177,11 @@ static inline __attribute__ ((always_inline,const)) uint8_t clip255( int x )
     }
 }
 
-static unsigned long CombJaggieThreshold = 73;
-
 #if defined(ARCH_X86)
 static unsigned int comb_factor_packed422_scanline_mmx( uint8_t *top, uint8_t *mid,
                                                         uint8_t *bot, int width )
 {
+    const unsigned int CombJaggieThreshold = 73;
     const mmx_t qwYMask = { 0x00ff00ff00ff00ffULL };
     const mmx_t qwOnes = { 0x0001000100010001ULL };
     mmx_t qwThreshold;
