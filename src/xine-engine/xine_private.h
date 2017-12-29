@@ -122,8 +122,36 @@ int _x_set_file_close_on_exec(int fd) INTERNAL;
 
 int _x_set_socket_close_on_exec(int s) INTERNAL;
 
+
+#if defined(HAVE_PTHREAD_RWLOCK)
+#  define xine_rwlock_t                pthread_rwlock_t
+#  define xine_rwlock_init_default(l)  pthread_rwlock_init (l, NULL)
+#  define xine_rwlock_rdlock(l)        pthread_rwlock_rdlock (l)
+#  define xine_rwlock_tryrdlock(l)     pthread_rwlock_tryrdlock (l)
+#  define xine_rwlock_timedrdlock(l,t) pthread_rwlock_timedrdlock (l, t)
+#  define xine_rwlock_wrlock(l)        pthread_rwlock_wrlock (l)
+#  define xine_rwlock_trywrlock(l)     pthread_rwlock_trywrlock (l)
+#  define xine_rwlock_timedwrlock(l,t) pthread_rwlock_timedwrlock (l, t)
+#  define xine_rwlock_unlock(l)        pthread_rwlock_unlock (l)
+#  define xine_rwlock_destroy(l)       pthread_rwlock_destroy (l)
+#else
+#  define xine_rwlock_t                pthread_mutex_t
+#  define xine_rwlock_init_default(l)  pthread_mutex_init (l, NULL)
+#  define xine_rwlock_rdlock(l)        pthread_mutex_lock (l)
+#  define xine_rwlock_tryrdlock(l)     pthread_mutex_trylock (l)
+#  define xine_rwlock_timedrdlock(l,t) pthread_mutex_timedlock (l, t)
+#  define xine_rwlock_wrlock(l)        pthread_mutex_lock (l)
+#  define xine_rwlock_trywrlock(l)     pthread_mutex_trylock (l)
+#  define xine_rwlock_timedwrlock(l,t) pthread_mutex_timedlock (l, t)
+#  define xine_rwlock_unlock(l)        pthread_mutex_unlock (l)
+#  define xine_rwlock_destroy(l)       pthread_mutex_destroy (l)
+#endif
+
+
 #ifdef __cplusplus
 }
 #endif
 
 #endif
+
+

@@ -1051,6 +1051,34 @@ AC_CHECK_FUNCS([pthread_mutex_timedlock],
                [AC_LIBOBJ([timedlock])])
 LIBS="$ac_save_LIBS"
 
+AC_MSG_CHECKING([for pthread rwlock support])
+ac_save_LIBS="$LIBS" LIBS="$LIBS $PTHREAD_LIBS"
+AC_LINK_IFELSE([AC_LANG_PROGRAM([[
+#include <time.h>
+#include <pthread.h>
+]], [[
+  pthread_rwlock_t rwl;
+  struct timespec ts;
+  ts.tv_sec = 8888;
+  ts.tv_nsec = 0;
+  pthread_rwlock_init (&rwl, NULL);
+  pthread_rwlock_rdlock (&rwl);
+  pthread_rwlock_tryrdlock (&rwl);
+  pthread_rwlock_timedrdlock (&rwl, &ts);
+  pthread_rwlock_wrlock (&rwl);
+  pthread_rwlock_trywrlock (&rwl);
+  pthread_rwlock_timedwrlock (&rwl, &ts);
+  pthread_rwlock_unlock (&rwl);
+  pthread_rwlock_destroy (&rwl);
+]])], [have_pthread_rwlock="yes"], [have_pthread_rwlock="no"])
+LIBS="$ac_save_LIBS"
+AC_MSG_RESULT([$have_pthread_rwlock])
+AC_ARG_ENABLE([pthread-rwlock],
+    [AS_HELP_STRING([--disable-pthread-rwlock], [do not use pthread rwlock support even if present.])],
+    [], [enable_pthread_rwlock="$have_pthread_rwlock"])
+test x"$enable_pthread_rwlock" = x"yes" && AC_DEFINE([HAVE_PTHREAD_RWLOCK], [1], [Define to 1 if you have pthread rwlock support.])
+
+
 AC_GETOPT_LONG
 
 dnl --------------------------
