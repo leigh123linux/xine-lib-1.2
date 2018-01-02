@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2000-2017 the xine project
+ * Copyright (C) 2000-2018 the xine project
  *
  * This file is part of xine, a free video player.
  *
@@ -127,9 +127,13 @@ typedef struct {
 
   img_buf_fifo_t            free_img_buf_queue;
   img_buf_fifo_t            display_img_buf_queue;
+
   /* The flush protocol, protected by display_img_buf_queue.mutex. */
   int                       discard_frames;
   int                       flush_extra;
+  int                       num_flush_waiters;
+  pthread_cond_t            done_flushing;
+
   /* Optimization: keep video decoder from interfering with output timing.
    * Employ a separate mutex less frame queue private to the render thread.
    * Fetch the entire shared queue into it when flushing, or when running
@@ -139,11 +143,16 @@ typedef struct {
   vo_frame_t               *ready_first;
   vo_frame_t               *ready_last;
   int                       ready_num;
-
-  struct timeval            now;
-
-  pthread_cond_t            done_flushing;
+  /* More render thread private stuff. */
+  /* Output loop iterations, total and without a frame to display. */
+  int                       wakeups_total;
+  int                       wakeups_early;
+  /* Snapshot of num_flush_waiters. */
+  int                       need_flush_signal;
+  /* Filler frame during forward seek. */
   vo_frame_t               *last_flushed;
+  /* Wakeup time. */
+  struct timeval            now;
 
   /* Get grab_lock when
    *  - accessing grab queue,
@@ -212,10 +221,6 @@ typedef struct {
   int                       frames_total;
   int                       frames_extref;
   int                       frames_peak_used;
-
-  /* output loop iterations, total and without a frame to display */
-  int                       wakeups_total;
-  int                       wakeups_early;
 } vos_t;
 
 
@@ -670,6 +675,7 @@ static vo_frame_t *vo_ready_get_all (vos_t *this) {
       this->ready_first = first;
   }
   this->flush_extra = 0;
+  this->need_flush_signal = this->num_flush_waiters;
   pthread_mutex_unlock (&this->display_img_buf_queue.mutex);
 
   first = this->ready_first;
@@ -779,30 +785,6 @@ static void vo_frame_inc_lock (vo_frame_t *img) {
   pthread_mutex_unlock (&img->mutex);
 }
 
-static void vo_frame_dec2_lock (vo_frame_t *img) {
-  int n;
-
-  pthread_mutex_lock (&img->mutex);
-
-  n = (img->lock_counter -= 2);
-  if ((n == 1) || (n == 2)) {
-    vos_t *this = (vos_t *)img->port;
-    if (this->frames_extref > 0)
-      this->frames_extref--;
-  } else
-  if (n <= 0) {
-    vos_t *this = (vos_t *) img->port;
-    img->lock_counter = 0;
-    if (!this->num_streams) {
-      img->stream = NULL;
-      vo_reref (this, img);
-    }
-    vo_queue_append (&this->free_img_buf_queue, img);
-  }
-
-  pthread_mutex_unlock (&img->mutex);
-}
-
 static void vo_frame_dec_lock (vo_frame_t *img) {
 
   pthread_mutex_lock (&img->mutex);
@@ -846,6 +828,48 @@ static int vo_frame_dec2_lock_int (vos_t *this, vo_frame_t *img) {
 
 
 /********************************************************************
+* Flush helpers.                                                    *
+********************************************************************/
+
+/* have this->display_img_buf_queue.mutex locked!! */
+static void vo_wait_flush (vos_t *this) {
+  this->num_flush_waiters++;
+  pthread_mutex_lock (&this->trigger_drawing_mutex);
+  this->trigger_drawing = 1;
+  pthread_cond_signal (&this->trigger_drawing_cond);
+  pthread_mutex_unlock (&this->trigger_drawing_mutex);
+  while (this->flush_extra || this->display_img_buf_queue.first)
+    pthread_cond_wait (&this->done_flushing, &this->display_img_buf_queue.mutex);
+  this->num_flush_waiters--;
+}
+
+static void vo_list_flush (vos_t *this, vo_frame_t *f) {
+  vo_frame_t *list = NULL, **add = &list;
+  while (f) {
+    vo_frame_t *next = f->next;
+    f->next = NULL;
+    if (!vo_frame_dec2_lock_int (this, f)) {
+      *add = f;
+      add = &f->next;
+    }
+    f = next;
+  }
+  vo_queue_append_list (&this->free_img_buf_queue, list);
+}
+
+static void vo_manual_flush (vos_t *this) {
+  vo_frame_t *f;
+  pthread_mutex_lock (&this->display_img_buf_queue.mutex);
+  f = this->display_img_buf_queue.first;
+  this->display_img_buf_queue.first = NULL;
+  this->display_img_buf_queue.last = NULL;
+  this->display_img_buf_queue.num_buffers = 0;
+  pthread_mutex_unlock (&this->display_img_buf_queue.mutex);
+  vo_list_flush (this, f);
+}
+
+
+/********************************************************************
  * grabbing RGB images from displayed frames                        *
  *******************************************************************/
 
@@ -873,6 +897,7 @@ static int vo_grab_grab_video_frame (xine_grab_video_frame_t *frame_gen) {
   vos_t *this = (vos_t *) frame->video_port;
   vo_frame_t *vo_frame;
   int format, y_stride, uv_stride;
+  int width, height;
   uint8_t *base[3];
 
   if (frame->grab_frame.flags & XINE_GRAB_VIDEO_FRAME_FLAGS_WAIT_NEXT) {
@@ -940,8 +965,8 @@ static int vo_grab_grab_video_frame (xine_grab_video_frame_t *frame_gen) {
     frame->grab_frame.vpts = vo_frame->vpts;
   }
 
-  int width = vo_frame->width;
-  int height = vo_frame->height;
+  width = vo_frame->width;
+  height = vo_frame->height;
 
   if (vo_frame->format == XINE_IMGFMT_YV12 || vo_frame->format == XINE_IMGFMT_YUY2) {
     format = vo_frame->format;
@@ -968,68 +993,74 @@ static int vo_grab_grab_video_frame (xine_grab_video_frame_t *frame_gen) {
     vo_frame->proc_provide_standard_frame_data(vo_frame, &data);
     format = data.format;
     if (format == XINE_IMGFMT_YV12) {
-      y_stride = width;
-      uv_stride = width / 2;
       base[0] = data.img;
       base[1] = data.img + width * height;
-      base[2] = data.img + width * height + width * height / 4;
+      base[2] = data.img + width * height + ((width * height) >> 2);
+      y_stride  = width;
+      uv_stride = width >> 1;
     } else { // XINE_IMGFMT_YUY2
-      y_stride = width * 2;
-      uv_stride = 0;
       base[0] = data.img;
       base[1] = NULL;
       base[2] = NULL;
+      y_stride  = width * 2;
+      uv_stride = 0;
     }
   }
 
   /* take cropping parameters into account */
-  int crop_left = (vo_frame->crop_left + frame->grab_frame.crop_left) & ~1;
-  int crop_right = (vo_frame->crop_right + frame->grab_frame.crop_right) & ~1;
-  int crop_top = vo_frame->crop_top + frame->grab_frame.crop_top;
-  int crop_bottom = vo_frame->crop_bottom + frame->grab_frame.crop_bottom;
+  {
+    int crop_left   = (vo_frame->crop_left   + frame->grab_frame.crop_left)  & ~1;
+    int crop_right  = (vo_frame->crop_right  + frame->grab_frame.crop_right) & ~1;
+    int crop_top    =  vo_frame->crop_top    + frame->grab_frame.crop_top;
+    int crop_bottom =  vo_frame->crop_bottom + frame->grab_frame.crop_bottom;
 
-  if (crop_left || crop_right || crop_top || crop_bottom) {
-    if ((width - crop_left - crop_right) >= 8)
-      width = width - crop_left - crop_right;
-    else
-      crop_left = crop_right = 0;
+    if (crop_left || crop_right || crop_top || crop_bottom) {
+      if ((width - crop_left - crop_right) >= 8)
+        width = width - crop_left - crop_right;
+      else
+        crop_left = crop_right = 0;
 
-    if ((height - crop_top - crop_bottom) >= 8)
-      height = height - crop_top - crop_bottom;
-    else
-      crop_top = crop_bottom = 0;
+      if ((height - crop_top - crop_bottom) >= 8)
+        height = height - crop_top - crop_bottom;
+      else
+        crop_top = crop_bottom = 0;
 
-    if (format == XINE_IMGFMT_YV12) {
-      base[0] += crop_top * y_stride + crop_left;
-      base[1] += crop_top/2 * uv_stride + crop_left/2;
-      base[2] += crop_top/2 * uv_stride + crop_left/2;
-    } else { // XINE_IMGFMT_YUY2
-      base[0] += crop_top * y_stride + crop_left*2;
+      if (format == XINE_IMGFMT_YV12) {
+        size_t uv_offs;
+        base[0] += crop_top * y_stride + crop_left;
+        uv_offs = (crop_top >> 1) * uv_stride + (crop_left >> 1);
+        base[1] += uv_offs;
+        base[2] += uv_offs;
+      } else { // XINE_IMGFMT_YUY2
+        base[0] += crop_top * y_stride + crop_left * 2;
+      }
     }
   }
 
   /* get pixel aspect ratio */
-  double sar = 1.0;
   {
-    int sarw = vo_frame->width  - vo_frame->crop_left - vo_frame->crop_right;
-    int sarh = vo_frame->height - vo_frame->crop_top  - vo_frame->crop_bottom;
-    if ((vo_frame->ratio > 0.0) && (sarw > 0) && (sarh > 0))
-      sar = vo_frame->ratio * sarh / sarw;
-  }
-
-  /* if caller does not specify frame size we return the actual size of grabbed frame */
-  if ((frame->grab_frame.width <= 0) && (frame->grab_frame.height <= 0)) {
-    if (sar > 1.0) {
-      frame->grab_frame.width  = sar * width + 0.5;
-      frame->grab_frame.height = height;
-    } else {
-      frame->grab_frame.width  = width;
-      frame->grab_frame.height = (double)height / sar + 0.5;
+    double sar = 1.0;
+    {
+      int sarw = vo_frame->width  - vo_frame->crop_left - vo_frame->crop_right;
+      int sarh = vo_frame->height - vo_frame->crop_top  - vo_frame->crop_bottom;
+      if ((vo_frame->ratio > 0.0) && (sarw > 0) && (sarh > 0))
+        sar = vo_frame->ratio * sarh / sarw;
     }
-  } else if (frame->grab_frame.width <= 0)
-    frame->grab_frame.width = frame->grab_frame.height * width * sar / height + 0.5;
-  else if (frame->grab_frame.height <= 0)
-    frame->grab_frame.height = (frame->grab_frame.width * height) / (sar * width) + 0.5;
+
+    /* if caller does not specify frame size we return the actual size of grabbed frame */
+    if ((frame->grab_frame.width <= 0) && (frame->grab_frame.height <= 0)) {
+      if (sar > 1.0) {
+        frame->grab_frame.width  = sar * width + 0.5;
+        frame->grab_frame.height = height;
+      } else {
+        frame->grab_frame.width  = width;
+        frame->grab_frame.height = (double)height / sar + 0.5;
+      }
+    } else if (frame->grab_frame.width <= 0)
+      frame->grab_frame.width = frame->grab_frame.height * width * sar / height + 0.5;
+    else if (frame->grab_frame.height <= 0)
+      frame->grab_frame.height = (frame->grab_frame.width * height) / (sar * width) + 0.5;
+  }
 
   /* allocate grab frame image buffer */
   if (frame->grab_frame.width != frame->grab_width || frame->grab_frame.height != frame->grab_height) {
@@ -1759,11 +1790,14 @@ static vo_frame_t *next_frame (vos_t *this, int64_t *vpts) {
     /* Free (almost) all at once. */
     *add = NULL;
     vo_queue_append_list (&this->free_img_buf_queue, freelist);
+    /* Make sure clients dont miss this. */
+    if (this->need_flush_signal) {
+      pthread_mutex_lock (&this->display_img_buf_queue.mutex);
+      pthread_cond_broadcast (&this->done_flushing);
+      pthread_mutex_unlock (&this->display_img_buf_queue.mutex);
+    }
     /* Report success. */
     if (n) {
-      pthread_mutex_lock (&this->trigger_drawing_mutex);
-      pthread_cond_broadcast (&this->done_flushing);
-      pthread_mutex_unlock (&this->trigger_drawing_mutex);
       xprintf (this->xine, XINE_VERBOSITY_DEBUG,
         "video_out: flushed out %d frames (now=%"PRId64", discard=%d).\n",
         n, *vpts, this->discard_frames);
@@ -1861,7 +1895,8 @@ static vo_frame_t *next_frame (vos_t *this, int64_t *vpts) {
       /* wait 4 frames before drawing this one. this allow slower systems to recover. */
       this->redraw_needed = 4;
     } else {
-      vo_frame_dec2_lock (img);
+      if (!vo_frame_dec2_lock_int (this, img))
+        vo_queue_append (&this->free_img_buf_queue, img);
     }
 
     img = this->ready_first;
@@ -1873,7 +1908,8 @@ static vo_frame_t *next_frame (vos_t *this, int64_t *vpts) {
     img = vo_ready_pop (this);
     /* we dont need that filler anymore */
     if (this->last_flushed) {
-      vo_frame_dec2_lock (this->last_flushed);
+      if (!vo_frame_dec2_lock_int (this, this->last_flushed))
+        vo_queue_append (&this->free_img_buf_queue, this->last_flushed);
       this->last_flushed = NULL;
     }
     return img;
@@ -2057,19 +2093,12 @@ static void paused_loop( vos_t *this, int64_t vpts )
 
     /* flush when requested */
     if (this->discard_frames) {
-      int n = 0;
       vo_frame_t *img = vo_ready_get_all (this);
-      while (img) {
-        vo_frame_t *next = img->next;
-        img->next = NULL;
-        n++;
-        vo_frame_dec2_lock (img);
-        img = next;
-      }
-      if (n) {
-        pthread_mutex_lock (&this->trigger_drawing_mutex);
+      vo_list_flush (this, img);
+      if (this->need_flush_signal) {
+        pthread_mutex_lock (&this->display_img_buf_queue.mutex);
         pthread_cond_broadcast (&this->done_flushing);
-        pthread_mutex_unlock (&this->trigger_drawing_mutex);
+        pthread_mutex_unlock (&this->display_img_buf_queue.mutex);
       }
     }
   }
@@ -2242,12 +2271,7 @@ static void *video_out_loop (void *this_gen) {
 
   {
     vo_frame_t *img = vo_ready_get_all (this);
-    while (img) {
-      vo_frame_t *next = img->next;
-      img->next = NULL;
-      vo_frame_dec2_lock (img);
-      img = next;
-    }
+    vo_list_flush (this, img);
   }
 
   /* dont let folks wait forever in vain */
@@ -2259,7 +2283,8 @@ static void *video_out_loop (void *this_gen) {
   }
 
   if (this->last_flushed) {
-    vo_frame_dec2_lock (this->last_flushed);
+    if (!vo_frame_dec2_lock_int (this, this->last_flushed))
+      vo_queue_append (&this->free_img_buf_queue, this->last_flushed);
     this->last_flushed = NULL;
   }
 
@@ -2341,8 +2366,10 @@ void xine_free_video_frame (xine_video_port_t *port,
 			    xine_video_frame_t *frame) {
 
   vo_frame_t *img = (vo_frame_t *) frame->xine_frame;
+  vos_t *this = (vos_t *)img->port;
 
-  vo_frame_dec2_lock (img);
+  if (!vo_frame_dec2_lock_int (this, img))
+    vo_queue_append (&this->free_img_buf_queue, img);
 }
 
 
@@ -2517,12 +2544,7 @@ static int vo_set_property (xine_video_port_t *this_gen, int property, int value
         (this->flush_extra || this->display_img_buf_queue.first)) {
         /* Usually, render thread already did that in the meantime. Anyway, make sure display queue
            is empty, and more importantly, there are free frames for decoding when discard gets lifted. */
-        pthread_mutex_lock (&this->trigger_drawing_mutex);
-        this->trigger_drawing = 1;
-        pthread_cond_signal (&this->trigger_drawing_cond);
-        pthread_mutex_unlock (&this->trigger_drawing_mutex);
-        do pthread_cond_wait (&this->done_flushing, &this->display_img_buf_queue.mutex);
-        while (this->flush_extra || this->display_img_buf_queue.first);
+        vo_wait_flush (this);
       }
       this->discard_frames--;
       pthread_mutex_unlock (&this->display_img_buf_queue.mutex);
@@ -2532,21 +2554,8 @@ static int vo_set_property (xine_video_port_t *this_gen, int property, int value
     ret = this->discard_frames;
 
     /* discard buffers here because we have no output thread */
-    if (this->grab_only && this->discard_frames) {
-      vo_frame_t *img;
-
-      pthread_mutex_lock(&this->display_img_buf_queue.mutex);
-
-      while ((img = this->display_img_buf_queue.first)) {
-
-        lprintf ("flushing out frame\n");
-
-        img = vo_queue_pop_int (&this->display_img_buf_queue);
-
-        vo_frame_dec2_lock (img);
-      }
-      pthread_mutex_unlock(&this->display_img_buf_queue.mutex);
-    }
+    if (this->grab_only && this->discard_frames)
+      vo_manual_flush (this);
     break;
 
   /*
@@ -2760,20 +2769,15 @@ static void vo_enable_overlay (xine_video_port_t *this_gen, int overlay_enabled)
 static void vo_flush (xine_video_port_t *this_gen) {
   vos_t      *this = (vos_t *) this_gen;
 
-  if( this->video_loop_running ) {
-    pthread_mutex_lock(&this->display_img_buf_queue.mutex);
+  if (this->video_loop_running) {
+    pthread_mutex_lock (&this->display_img_buf_queue.mutex);
     this->discard_frames++;
-    /* wake up render thread */
-    pthread_mutex_lock (&this->trigger_drawing_mutex);
-    this->trigger_drawing = 1;
-    pthread_cond_signal (&this->trigger_drawing_cond);
-    pthread_mutex_unlock (&this->trigger_drawing_mutex);
-
-    while (this->flush_extra || this->display_img_buf_queue.first)
-      pthread_cond_wait (&this->done_flushing, &this->display_img_buf_queue.mutex);
+    vo_wait_flush (this);
     if (this->discard_frames > 0)
       this->discard_frames--;
-    pthread_mutex_unlock(&this->display_img_buf_queue.mutex);
+    pthread_mutex_unlock (&this->display_img_buf_queue.mutex);
+  } else {
+    vo_manual_flush (this);
   }
 }
 
@@ -2886,9 +2890,12 @@ xine_video_port_t *_x_vo_new_port (xine_t *xine, vo_driver_t *driver, int grabon
   this->frame_drop_suggested  = 0;
   this->discard_frames        = 0;
   this->flush_extra           = 0;
+  this->num_flush_waiters     = 0;
   this->ready_first           = NULL;
   this->ready_last            = NULL;
   this->ready_num             = 0;
+  this->need_flush_signal     = 0;
+  this->last_flushed          = NULL;
 
   this->xine   = xine;
   this->clock  = xine->clock;
