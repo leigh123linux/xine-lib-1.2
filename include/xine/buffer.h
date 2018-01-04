@@ -666,7 +666,7 @@ struct fifo_buffer_s
  * @param buf_size Size of each buffer.
  * @internal Only used by video and audio decoder loops.
  */
-fifo_buffer_t *_x_fifo_buffer_new (int num_buffers, uint32_t buf_size) XINE_MALLOC;
+fifo_buffer_t *_x_fifo_buffer_new (int num_buffers, uint32_t buf_size);
 
 /**
  * @brief Allocate and initialise new dummy FIFO buffers.
@@ -674,7 +674,7 @@ fifo_buffer_t *_x_fifo_buffer_new (int num_buffers, uint32_t buf_size) XINE_MALL
  * @param buf_size Size of each buffer.
  * @internal Only used by video and audio decoder loops.
  */
-fifo_buffer_t *_x_dummy_fifo_buffer_new (int num_buffers, uint32_t buf_size) XINE_MALLOC;
+fifo_buffer_t *_x_dummy_fifo_buffer_new (int num_buffers, uint32_t buf_size);
 
 
 /**

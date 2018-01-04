@@ -203,8 +203,8 @@ static inline void _x_freep(void *ptr) {
 /*
  * Copy blocks of memory.
  */
-void *xine_memdup (const void *src, size_t length) XINE_MALLOC XINE_PROTECTED;
-void *xine_memdup0 (const void *src, size_t length) XINE_MALLOC XINE_PROTECTED;
+void *xine_memdup (const void *src, size_t length) XINE_PROTECTED;
+void *xine_memdup0 (const void *src, size_t length) XINE_PROTECTED;
 
 /**
  * Get/resize/free aligned memory.
