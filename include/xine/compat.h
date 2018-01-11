@@ -29,6 +29,8 @@ extern "C" {
 
 #if   defined _MSC_VER
 #define __XINE_FUNCTION__    __FILE__
+#elif defined(__STDC_VERSION__) &&  __STDC_VERSION__ >= 199901L
+#define __XINE_FUNCTION__    __func__
 #elif defined __GNUC__
 #define __XINE_FUNCTION__    __FUNCTION__
 #else
