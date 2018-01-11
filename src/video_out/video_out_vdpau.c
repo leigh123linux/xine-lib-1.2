@@ -102,9 +102,8 @@ static const VdpOutputSurfaceRenderBlendState blend = {
   VDP_OUTPUT_SURFACE_RENDER_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,
   VDP_OUTPUT_SURFACE_RENDER_BLEND_EQUATION_ADD,
   VDP_OUTPUT_SURFACE_RENDER_BLEND_EQUATION_ADD,
-  { 0 }
+  { 0.f, 0.f, 0.f, 0.f }
 };
-
 
 
 VdpDevice vdp_device;
