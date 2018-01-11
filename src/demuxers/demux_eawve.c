@@ -192,7 +192,8 @@ static int process_header(demux_eawve_t *this){
  * !IMPORTANT! !IMPORTANT! !IMPORTANT! !IMPORTANT! !IMPORTANT!
  */
 
-static int demux_eawve_send_chunk(demux_eawve_t *this){
+static int demux_eawve_send_chunk(demux_plugin_t *this_gen){
+  demux_eawve_t *this = (demux_eawve_t *)this_gen;
   chunk_header_t header;
 
   if (this->input->read(this->input, (void*)&header, sizeof(chunk_header_t)) != sizeof(chunk_header_t)) {
@@ -300,7 +301,8 @@ static void demux_eawve_send_headers(demux_plugin_t *this_gen){
   }
 }
 
-static int demux_eawve_seek(demux_eawve_t *this, off_t start_pos, int start_time, int playing){
+static int demux_eawve_seek(demux_plugin_t *this_gen, off_t start_pos, int start_time, int playing){
+  demux_eawve_t *this = (demux_eawve_t *)this_gen;
 
   if (!this->thread_running) {
     _x_demux_control_newpts(this->stream, 0, 0);
@@ -314,11 +316,13 @@ static int demux_eawve_seek(demux_eawve_t *this, off_t start_pos, int start_time
   return this->status;
 }
 
-static int demux_eawve_get_status(demux_eawve_t *this){
+static int demux_eawve_get_status(demux_plugin_t *this_gen){
+  demux_eawve_t *this = (demux_eawve_t *)this_gen;
   return this->status;
 }
 
-static int demux_eawve_get_stream_length(demux_eawve_t *this){
+static int demux_eawve_get_stream_length(demux_plugin_t *this_gen){
+  demux_eawve_t *this = (demux_eawve_t *)this_gen;
   return (int)((int64_t)this->num_samples * 1000 / 22050);
 }
 
@@ -341,12 +345,12 @@ static demux_plugin_t* open_plugin(demux_class_t *class_gen, xine_stream_t *stre
   this->stream = stream;
   this->input  = input;
 
-  this->demux_plugin.send_headers      = (void*)demux_eawve_send_headers;
-  this->demux_plugin.send_chunk        = (void*)demux_eawve_send_chunk;
-  this->demux_plugin.seek              = (void*)demux_eawve_seek;
+  this->demux_plugin.send_headers      = demux_eawve_send_headers;
+  this->demux_plugin.send_chunk        = demux_eawve_send_chunk;
+  this->demux_plugin.seek              = demux_eawve_seek;
   this->demux_plugin.dispose           = default_demux_plugin_dispose;
-  this->demux_plugin.get_status        = (void*)demux_eawve_get_status;
-  this->demux_plugin.get_stream_length = (void*)demux_eawve_get_stream_length;
+  this->demux_plugin.get_status        = demux_eawve_get_status;
+  this->demux_plugin.get_stream_length = demux_eawve_get_stream_length;
   this->demux_plugin.get_capabilities  = demux_eawve_get_capabilities;
   this->demux_plugin.get_optional_data = demux_eawve_get_optional_data;
   this->demux_plugin.demux_class       = class_gen;

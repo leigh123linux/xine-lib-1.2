@@ -163,7 +163,8 @@ static mng_bool mymng_refresh(mng_handle mngh, mng_uint32 x, mng_uint32 y, mng_u
  * !IMPORTANT! !IMPORTANT! !IMPORTANT! !IMPORTANT! !IMPORTANT!
  */
 
-static int demux_mng_send_chunk(demux_mng_t *this){
+static int demux_mng_send_chunk(demux_plugin_t *this_gen){
+  demux_mng_t *this = (demux_mng_t *)this_gen;
   int size = this->bih.biWidth * this->bih.biHeight * 3;
   uint8_t *image_ptr = this->image;
 
@@ -210,7 +211,8 @@ static int demux_mng_send_chunk(demux_mng_t *this){
   return this->status;
 }
 
-static void demux_mng_send_headers(demux_mng_t *this){
+static void demux_mng_send_headers(demux_plugin_t *this_gen){
+  demux_mng_t *this = (demux_mng_t *)this_gen;
   buf_element_t *buf;
 
   this->video_fifo = this->stream->video_fifo;
@@ -239,11 +241,13 @@ static void demux_mng_send_headers(demux_mng_t *this){
   this->video_fifo->put(this->video_fifo, buf);
 }
 
-static int demux_mng_seek(demux_mng_t *this, off_t start_pos, int start_time, int playing){
+static int demux_mng_seek(demux_plugin_t *this_gen, off_t start_pos, int start_time, int playing){
+  demux_mng_t *this = (demux_mng_t *)this_gen;
   return this->status;
 }
 
-static void demux_mng_dispose(demux_mng_t *this){
+static void demux_mng_dispose(demux_plugin_t *this_gen){
+  demux_mng_t *this = (demux_mng_t *)this_gen;
 
   mng_cleanup(&this->mngh);
 
@@ -253,11 +257,12 @@ static void demux_mng_dispose(demux_mng_t *this){
   free(this);
 }
 
-static int demux_mng_get_status(demux_mng_t *this){
+static int demux_mng_get_status(demux_plugin_t *this_gen){
+  demux_mng_t *this = (demux_mng_t *)this_gen;
   return this->status;
 }
 
-static int demux_mng_get_stream_length(demux_mng_t *this){
+static int demux_mng_get_stream_length(demux_plugin_t *this_gen){
   return 0;
 }
 
@@ -277,12 +282,12 @@ static demux_plugin_t* open_plugin(demux_class_t *class_gen, xine_stream_t *stre
   this->stream = stream;
   this->input  = input;
 
-  this->demux_plugin.send_headers      = (void*)demux_mng_send_headers;
-  this->demux_plugin.send_chunk        = (void*)demux_mng_send_chunk;
-  this->demux_plugin.seek              = (void*)demux_mng_seek;
-  this->demux_plugin.dispose           = (void*)demux_mng_dispose;
-  this->demux_plugin.get_status        = (void*)demux_mng_get_status;
-  this->demux_plugin.get_stream_length = (void*)demux_mng_get_stream_length;
+  this->demux_plugin.send_headers      = demux_mng_send_headers;
+  this->demux_plugin.send_chunk        = demux_mng_send_chunk;
+  this->demux_plugin.seek              = demux_mng_seek;
+  this->demux_plugin.dispose           = demux_mng_dispose;
+  this->demux_plugin.get_status        = demux_mng_get_status;
+  this->demux_plugin.get_stream_length = demux_mng_get_stream_length;
   this->demux_plugin.get_capabilities  = demux_mng_get_capabilities;
   this->demux_plugin.get_optional_data = demux_mng_get_optional_data;
   this->demux_plugin.demux_class       = class_gen;
@@ -361,6 +366,6 @@ static const demuxer_info_t demux_info_mng = {
 };
 
 const plugin_info_t xine_plugin_info[] EXPORTED = {
-  { PLUGIN_DEMUX, 27, "mng", XINE_VERSION_CODE, &demux_info_mng, (void*)init_plugin},
+  { PLUGIN_DEMUX, 27, "mng", XINE_VERSION_CODE, &demux_info_mng, init_plugin},
   { PLUGIN_NONE, 0, "", 0, NULL, NULL }
 };
