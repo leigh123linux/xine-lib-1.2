@@ -292,7 +292,7 @@ static void mad_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) {
 	  mad_fixed_t const   *left_ch, *right_ch;
 	  struct mad_pcm      *pcm = &this->synth.pcm;
 	  audio_buffer_t      *audio_buffer;
-	  uint16_t            *output;
+          int16_t             *output;
           int                  bitrate;
           int                  pts_offset;
 

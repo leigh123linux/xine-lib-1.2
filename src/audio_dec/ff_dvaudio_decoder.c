@@ -64,7 +64,7 @@ typedef struct dvaudio_decoder_s {
   int               bufsize;
   int               size;
 
-  char             *decode_buffer;
+  uint8_t          *decode_buffer;
   int               decoder_ok;
 
 } dvaudio_decoder_t;
