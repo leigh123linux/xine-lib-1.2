@@ -99,8 +99,14 @@ typedef struct {
  * some macros
  */
 
-#define CHECK_MAGIC(x) if (*(((const uint8_t *)x)-1)!=XINE_BUFFER_MAGIC) \
-  {printf("xine_buffer: FATAL: xine_buffer_header not recognized!\n");exit(1);}
+#define CHECK_MAGIC(x,r)                                                \
+  do {                                                                  \
+    _x_assert ( *(((const uint8_t *)x)-1)==XINE_BUFFER_MAGIC );         \
+    if (*(((const uint8_t *)x)-1) != XINE_BUFFER_MAGIC) {               \
+      printf("xine_buffer: FATAL: xine_buffer_header not recognized!\n"); \
+      return r;                                                         \
+    }                                                                   \
+  } while (0)
 
 #define GET_HEADER(x) ((xine_buffer_header_t*)(((uint8_t*)x)-XINE_BUFFER_HEADER_SIZE))
 #define GET_HEADER_CONST(x) ((const xine_buffer_header_t *)(((const uint8_t *)x)-XINE_BUFFER_HEADER_SIZE))
@@ -148,7 +154,7 @@ void *_xine_buffer_free(void *buf) {
     lprintf("warning: got NULL pointer\n");
     return NULL;
   }
-  CHECK_MAGIC(buf);
+  CHECK_MAGIC(buf, NULL);
 #endif
 
   free(((uint8_t*)buf)-XINE_BUFFER_HEADER_SIZE);
@@ -168,7 +174,7 @@ void *xine_buffer_dup(const void *buf) {
     lprintf("warning: got NULL pointer\n");
     return NULL;
   }
-  CHECK_MAGIC(buf);
+  CHECK_MAGIC(buf, NULL);
 #endif
 
   new = malloc(GET_HEADER_CONST(buf)->size+XINE_BUFFER_HEADER_SIZE);
@@ -194,7 +200,7 @@ void *_xine_buffer_copyin(void *buf, int index, const void *data, int len) {
     lprintf("warning: got NULL pointer\n");
     return NULL;
   }
-  CHECK_MAGIC(buf);
+  CHECK_MAGIC(buf, NULL);
 #endif
 
   GROW_TO(buf, (size_t)index+len);
@@ -216,7 +222,7 @@ void xine_buffer_copyout(const void *buf, int index, void *data, int len) {
     lprintf("warning: got NULL pointer\n");
     return;
   }
-  CHECK_MAGIC(buf);
+  CHECK_MAGIC(buf, );
 #endif
 
   if (GET_HEADER_CONST(buf)->size < index+len)
@@ -241,7 +247,7 @@ void *_xine_buffer_set(void *buf, int index, uint8_t b, int len) {
     lprintf("warning: got NULL pointer\n");
     return NULL;
   }
-  CHECK_MAGIC(buf);
+  CHECK_MAGIC(buf, NULL);
 #endif
 
   GROW_TO(buf, index+len);
@@ -273,7 +279,7 @@ void *_xine_buffer_strcpy(void *buf, int index, const char *data) {
     lprintf("warning: got NULL pointer\n");
     return NULL;
   }
-  CHECK_MAGIC(buf);
+  CHECK_MAGIC(buf, NULL);
 #endif
 
   GROW_TO(buf, index+strlen(data)+1);
@@ -292,9 +298,9 @@ char *xine_buffer_strchr(const void *buf, int ch) {
 #ifdef CHECKS
   if (!buf) {
     lprintf("warning: got NULL pointer\n");
-    return 0;
+    return NULL;
   }
-  CHECK_MAGIC(buf);
+  CHECK_MAGIC(buf, NULL);
 #endif
 
   return strchr((const char *)buf, ch);
@@ -310,7 +316,7 @@ int xine_buffer_get_size(const void *buf) {
     lprintf("warning: got NULL pointer\n");
     return 0;
   }
-  CHECK_MAGIC(buf);
+  CHECK_MAGIC(buf, 0);
 #endif
 
   return GET_HEADER_CONST(buf)->size;
@@ -330,7 +336,7 @@ void *_xine_buffer_ensure_size(void *buf, int size) {
     lprintf("warning: got NULL pointer\n");
     return 0;
   }
-  CHECK_MAGIC(buf);
+  CHECK_MAGIC(buf, 0);
 #endif
 
   GROW_TO(buf, size);
