@@ -1120,22 +1120,31 @@ static bool vcd_handle_events (vcd_input_plugin_t *this) {
      */
     case XINE_EVENT_INPUT_NUMBER_9:
       digit_entered++;
+      /* fall through */
     case XINE_EVENT_INPUT_NUMBER_8:
       digit_entered++;
+      /* fall through */
     case XINE_EVENT_INPUT_NUMBER_7:
       digit_entered++;
+      /* fall through */
     case XINE_EVENT_INPUT_NUMBER_6:
       digit_entered++;
+      /* fall through */
     case XINE_EVENT_INPUT_NUMBER_5:
       digit_entered++;
+      /* fall through */
     case XINE_EVENT_INPUT_NUMBER_4:
       digit_entered++;
+      /* fall through */
     case XINE_EVENT_INPUT_NUMBER_3:
       digit_entered++;
+      /* fall through */
     case XINE_EVENT_INPUT_NUMBER_2:
       digit_entered++;
+      /* fall through */
     case XINE_EVENT_INPUT_NUMBER_1:
       digit_entered++;
+      /* fall through */
     case XINE_EVENT_INPUT_NUMBER_0:
       {
         number_addend *= 10;

@@ -350,7 +350,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
   case METHOD_BY_CONTENT:
     if (probe_mod_file(this) && open_mod_file(this))
       break;
-
+    /* fall through */
   default:
     free (this);
     return NULL;

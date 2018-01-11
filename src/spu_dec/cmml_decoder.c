@@ -176,6 +176,7 @@ static int get_width(spucmml_decoder_t *this, char* text) {
 	text += 7;
         break;
       }
+      /* fall through */
     default:
       {
 	int w, dummy;

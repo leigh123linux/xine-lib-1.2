@@ -1945,6 +1945,7 @@ void rgb2yuy2_palette (void *rgb2yuy2, const uint8_t *pal, int num_colors, int b
     break;
     case rgb_argb:
       pal++;
+      /* fall through */
     case rgb_bgra:
     case rgb_rgba:
       for (i = 0; i < num_colors; i++) {
@@ -2043,6 +2044,7 @@ void rgb2yuy2_slice (void *rgb2yuy2, const uint8_t *in, int ipitch, uint8_t *out
     break;
     case rgb_argb:
       in++;
+      /* fall through */
     case rgb_bgra:
     case rgb_rgba:
       ipad = ipitch - 4 * width;

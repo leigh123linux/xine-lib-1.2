@@ -2227,9 +2227,9 @@ static int _x_get_current_frame_data (xine_stream_t *stream,
 
     xprintf (stream->xine, XINE_VERBOSITY_DEBUG,
 	     "xine: error, snapshot function not implemented for format 0x%x\n", frame->format);
-    /* fall though and provide "green" YV12 image */
+    /* fall through and provide "green" YV12 image */
     data->format = XINE_IMGFMT_YV12;
-
+    /* fall through */
   case XINE_IMGFMT_YV12:
     required_size = frame->width * frame->height
                   + ((frame->width + 1) / 2) * ((frame->height + 1) / 2)

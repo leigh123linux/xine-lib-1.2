@@ -588,6 +588,7 @@ static int http_plugin_get_optional_data (input_plugin_t *this_gen,
 
   case INPUT_OPTIONAL_DATA_MIME_TYPE:
     *ptr = this->mime_type;
+    /* fall through */
   case INPUT_OPTIONAL_DATA_DEMUX_MIME_TYPE:
     return *this->mime_type ? INPUT_OPTIONAL_SUCCESS : INPUT_OPTIONAL_UNSUPPORTED;
   }

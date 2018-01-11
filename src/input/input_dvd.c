@@ -1199,22 +1199,31 @@ static void dvd_handle_events(dvd_input_plugin_t *this) {
       }
     case XINE_EVENT_INPUT_NUMBER_9:
       this->typed_buttonN++;
+      /* fall through */
     case XINE_EVENT_INPUT_NUMBER_8:
       this->typed_buttonN++;
+      /* fall through */
     case XINE_EVENT_INPUT_NUMBER_7:
       this->typed_buttonN++;
+      /* fall through */
     case XINE_EVENT_INPUT_NUMBER_6:
       this->typed_buttonN++;
+      /* fall through */
     case XINE_EVENT_INPUT_NUMBER_5:
       this->typed_buttonN++;
+      /* fall through */
     case XINE_EVENT_INPUT_NUMBER_4:
       this->typed_buttonN++;
+      /* fall through */
     case XINE_EVENT_INPUT_NUMBER_3:
       this->typed_buttonN++;
+      /* fall through */
     case XINE_EVENT_INPUT_NUMBER_2:
       this->typed_buttonN++;
+      /* fall through */
     case XINE_EVENT_INPUT_NUMBER_1:
       this->typed_buttonN++;
+      /* fall through */
     case XINE_EVENT_INPUT_NUMBER_0:
       {
         pci_t nav_pci;

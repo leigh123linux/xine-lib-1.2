@@ -882,6 +882,7 @@ static subtitle_t *sub_read_line_jacobsub(demux_sputext_t *this, subtitle_t *cur
 			    - strlen(line2));
 		    break;
 		}
+                /* fall through */
 	    default:
 		if (!comment) {
 		    *q = *p;
@@ -1387,6 +1388,7 @@ static int demux_sputext_get_optional_data(demux_plugin_t *this_gen,
       strcpy(data, "sub");
       return DEMUX_OPTIONAL_SUCCESS;
     }
+    /* fall through */
   default:
     return DEMUX_OPTIONAL_UNSUPPORTED;
   }
@@ -1437,7 +1439,7 @@ static demux_plugin_t *open_demux_plugin (demux_class_t *class_gen, xine_stream_
         return NULL;
       }
     }
-    /* falling through is intended */
+    /* fall through */
 
   case METHOD_EXPLICIT:
   /* case METHOD_BY_CONTENT: */

@@ -430,7 +430,7 @@ static void dxr3_spudec_decode_data(spu_decoder_t *this_gen, buf_element_t *buf)
 	  case 0x01:  /* show */
 	    /* when only forced SPUs are allowed, change show to hide */
 	    if (spu_channel & 0x80) buf->content[offset_in_buffer] = 0x02;
-	    /* falling through intended */
+	    /* fall through */
 	  case 0x02:  /* hide */
 	    state->parse++;
 	    break;

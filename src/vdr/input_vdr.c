@@ -1002,6 +1002,7 @@ break;
           case XINE_VDR_MUTE_EXECUTE:
             report_change = 1;
             xine_set_param(this->stream, param_mute, do_mute);
+            /* fall through */
 
           case XINE_VDR_MUTE_IGNORE:
             if (do_mute)

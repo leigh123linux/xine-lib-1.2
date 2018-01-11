@@ -1547,7 +1547,7 @@ static inline int slice_init (picture_t * picture, int code)
 	picture->dest[0] += picture->pitches[0];
 	picture->dest[1] += picture->pitches[1];
 	picture->dest[2] += picture->pitches[2];
-	/* follow thru */
+	/* fall through */
     case TOP_FIELD:
 	picture->pitches[0] <<= 1;
 	picture->pitches[1] <<= 1;
@@ -1793,7 +1793,7 @@ void mpeg2_slice (picture_t * picture, int code, uint8_t * buffer)
 	    } else switch (UBITS (bit_buf, 11)) {
 	    case 8:		/* macroblock_escape */
 		mba_inc += 33;
-		/* pass through */
+		/* fall through */
 	    case 15:	/* macroblock_stuffing (MPEG1 only) */
 		DUMPBITS (bit_buf, bits, 11);
 		NEEDBITS (bit_buf, bits, bit_ptr);

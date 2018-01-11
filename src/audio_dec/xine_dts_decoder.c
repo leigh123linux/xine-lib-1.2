@@ -445,6 +445,7 @@ static void dts_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) {
 #else
           dts_decode_frame (this, this->pts);
 #endif
+          /* fall through */
     case 4:  /* Clear up ready for next frame */
           this->pts = 0;
 	  this->syncdword = 0;

@@ -586,6 +586,7 @@ static int idx_grow(demux_avi_t *this, int (*stopper)(demux_avi_t *, void *),
           this->input->read(this->input, data2, 4);
           tmp = data2[3] | (data2[2]<<8) | (data2[1]<<16) | (data2[0]<<24);
           tmp = tmp << 5;
+          /* fall through */
         case BUF_VIDEO_MSMPEG4_V2:
         case BUF_VIDEO_MSMPEG4_V3:
           if (tmp & 0x40000000) flags = 0;
