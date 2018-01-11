@@ -32,6 +32,8 @@
 #include <inttypes.h>
 #include <sys/stat.h>
 
+#define LOG_MODULE "audio_file_out"
+
 #include <xine/xine_internal.h>
 #include <xine/xineutils.h>
 #include <xine/audio_out.h>
