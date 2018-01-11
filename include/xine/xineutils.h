@@ -494,7 +494,7 @@ void xine_hexdump (const void *buf, int length) XINE_PROTECTED;
 #endif /* LOG_VERBOSE */
 
 #ifdef LOG
-  #ifdef __GNUC__
+  #if defined(__GNUC__) && (!defined(__STDC_VERSION__) || __STDC_VERSION__ < 199901L)
     #define lprintf(fmt, args...)                                           \
       do {                                                                  \
         LONG_LOG_MODULE_STRING                                              \
@@ -519,23 +519,20 @@ void xine_hexdump (const void *buf, int length) XINE_PROTECTED;
     #endif  /* _MSC_VER */
   #endif /* __GNUC__ */
 #else /* LOG */
-  #ifdef __GNUC__
-    #ifdef DEBUG
-      #define lprintf(fmt, args...)                                           \
-        do { if (0) { printf(fmt, ##args); } } while(0)  /* silence unused warnings, check format, ... */
-    #else
+  #if defined(DEBUG) && defined(XINE_COMPILE)
+XINE_FORMAT_PRINTF(1, 2) static inline void lprintf(const char * fmt, ...) { (void)fmt; }
+  #elif defined(__STDC_VERSION__) &&  __STDC_VERSION__ >= 199901L
+    #define lprintf(...)              do {} while(0)
+  #elif defined(__GNUC__)
       #define lprintf(fmt, args...)     do {} while(0)
-    #endif
-  #else
-  #ifdef _MSC_VER
+  #elif defined(_MSC_VER)
 void __inline lprintf(const char * fmt, ...) {}
   #else
     #define lprintf(...)              do {} while(0)
-  #endif /* _MSC_VER */
-  #endif /* __GNUC__ */
+  #endif
 #endif /* LOG */
 
-#ifdef __GNUC__
+#if defined(__GNUC__) && (!defined(__STDC_VERSION__) || __STDC_VERSION__ < 199901L)
   #define llprintf(cat, fmt, args...)                                       \
     do{                                                                     \
       if(cat){                                                              \
@@ -563,7 +560,7 @@ void __inline lprintf(const char * fmt, ...) {}
 #endif /* _MSC_VER */
 #endif /* __GNUC__ */
 
-#ifdef  __GNUC__
+#if defined(__GNUC__) && (!defined(__STDC_VERSION__) || __STDC_VERSION__ < 199901L)
   #define xprintf(xine, verbose, fmt, args...)                              \
     do {                                                                    \
       if((xine) && (xine)->verbosity >= verbose){                           \
