@@ -467,6 +467,8 @@ static inline int parse_chunk (mpeg2dec_t * mpeg2dec, int code,
 	  printf ("libmpeg2: bad group of pictures\n");
 	  abort();
 	}
+        break;
+
     default:
         if ((code >= 0xb9) && (code != 0xe4)) {
 	  printf("Not multiplexed? 0x%x\n",code);
