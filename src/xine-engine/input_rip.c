@@ -60,8 +60,8 @@
 #  define CLR_FAIL ""
 #  define CLR_RST ""
 #else
-#  define CLR_FAIL "\e[1;31m"
-#  define CLR_RST "\e[0;39m"
+#  define CLR_FAIL "\x1b[1;31m"
+#  define CLR_RST "\x1b[0;39m"
 #endif
 
 #include <xine/xine_internal.h>
