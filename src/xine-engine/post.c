@@ -999,7 +999,7 @@ int _x_post_dispose(post_plugin_t *this) {
     pthread_mutex_unlock(&port->usage_lock);
   }
 
-  xprintf (this->xine, XINE_VERBOSITY_DEBUG, "post: _x_post_dispose (%p): %d refs.\n", this, in_use);
+  xprintf (this->xine, XINE_VERBOSITY_DEBUG, "post: _x_post_dispose (%p): %d refs.\n", (void*)this, in_use);
 
   if (!in_use) {
     xine_post_in_t  *input;

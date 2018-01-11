@@ -348,7 +348,7 @@ static void vo_force_unref_all (vos_t *this) {
       if (this->frames[i]) {
         xprintf (this->xine, XINE_VERBOSITY_DEBUG,
           "video_out: BUG: frame #%d (%p) still in use (%d refs).\n",
-          i, this->frames[i], this->frames[i]->lock_counter);
+          i, (void*)this->frames[i], this->frames[i]->lock_counter);
       }
     }
   }
@@ -2386,7 +2386,7 @@ static void vo_open (xine_video_port_t *this_gen, xine_stream_t *stream) {
 
   vos_t      *this = (vos_t *) this_gen;
 
-  xprintf (this->xine, XINE_VERBOSITY_DEBUG, "video_out: vo_open (%p)\n", stream);
+  xprintf (this->xine, XINE_VERBOSITY_DEBUG, "video_out: vo_open (%p)\n", (void*)stream);
 
   this->video_opened = 1;
   this->discard_frames = 0;
@@ -2403,7 +2403,7 @@ static void vo_close (xine_video_port_t *this_gen, xine_stream_t *stream) {
 
   vos_t      *this = (vos_t *) this_gen;
 
-  xprintf (this->xine, XINE_VERBOSITY_DEBUG, "video_out: vo_close (%p)\n", stream);
+  xprintf (this->xine, XINE_VERBOSITY_DEBUG, "video_out: vo_close (%p)\n", (void*)stream);
 
   vo_unref_all (this);
 

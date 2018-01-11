@@ -212,7 +212,7 @@ static void ticket_release_internal(xine_ticket_t *this, int irrevocable) {
   }
 
   if (i == this->holder_thread_count) {
-    lprintf ("BUG! Ticket 0x%p released by a thread that never took it! Allowing code to continue\n", this);
+    lprintf ("BUG! Ticket 0x%p released by a thread that never took it! Allowing code to continue\n", (void*)this);
     _x_assert (0);
   } else {
     this->holder_threads[i].count--;
@@ -1591,7 +1591,7 @@ static void xine_dispose_internal (xine_stream_t *stream) {
   xine_t *xine = stream->xine;
   xine_list_iterator_t *ite;
 
-  lprintf("stream: %p\n", stream);
+  lprintf("stream: %p\n", (void*)stream);
 
   pthread_mutex_lock (&xine->streams_lock);
   ite = xine_list_find (xine->streams, stream);
@@ -1693,7 +1693,8 @@ void xine_exit (xine_t *this) {
         int i = stream->refcounter->count;
         pthread_mutex_unlock (&this->streams_lock);
         xprintf (this, XINE_VERBOSITY_LOG,
-          "xine_exit: BUG: stream %p still open (%d refs), waiting.\n", stream, i);
+                 "xine_exit: BUG: stream %p still open (%d refs), waiting.\n",
+                 (void*)stream, i);
       }
       if (n) {
         xine_usec_sleep (50000);
@@ -1701,7 +1702,8 @@ void xine_exit (xine_t *this) {
 #ifdef FORCE_STREAM_SHUTDOWN
         /* might raise even more heap damage, disabled for now */
         xprintf (this, XINE_VERBOSITY_LOG,
-          "xine_exit: closing stream %p.\n", stream);
+                 "xine_exit: closing stream %p.\n",
+                 (void*)stream);
         stream->refcounter->count = 1;
         xine_dispose (stream);
         n = 1;

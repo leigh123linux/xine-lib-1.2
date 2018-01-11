@@ -1742,7 +1742,7 @@ static int ao_open(xine_audio_port_t *this_gen, xine_stream_t *stream,
   aos_t *this = (aos_t *) this_gen;
   int channels;
 
-  xprintf (this->xine, XINE_VERBOSITY_DEBUG, "audio_out: ao_open (%p)\n", stream);
+  xprintf (this->xine, XINE_VERBOSITY_DEBUG, "audio_out: ao_open (%p)\n", (void*)stream);
 
   if( !this->driver_open || bits != this->input.bits || rate != this->input.rate || mode != this->input.mode ) {
     int ret;
@@ -1856,7 +1856,7 @@ static void ao_close(xine_audio_port_t *this_gen, xine_stream_t *stream) {
   aos_t *this = (aos_t *) this_gen;
   int n;
 
-  xprintf (this->xine, XINE_VERBOSITY_DEBUG, "audio_out: ao_close (%p)\n", stream);
+  xprintf (this->xine, XINE_VERBOSITY_DEBUG, "audio_out: ao_close (%p)\n", (void*)stream);
 
   /* unregister stream */
   n = ao_streams_unregister (this, stream);
