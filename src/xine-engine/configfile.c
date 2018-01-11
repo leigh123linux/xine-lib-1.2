@@ -204,7 +204,7 @@ static const xine_config_entry_translation_t config_entry_translation[] = {
   { "video.xv_pitch_alignment",			"video.device.xv_pitch_alignment" },
   { "video.xvmc_more_frames",			"video.device.xvmc_more_frames" },
   { "video.xvmc_nvidia_color_fix",		"video.device.xvmc_nvidia_color_fix" },
-  {}
+  { NULL, NULL }
 };
 
 
