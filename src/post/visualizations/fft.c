@@ -52,7 +52,7 @@
  *  Bit reverser for unsigned ints
  *  Reverses 'bits' bits.
  */
-static inline const unsigned int
+static inline unsigned int
 reverse (unsigned int val, int bits)
 {
   unsigned int retn = 0;
