@@ -1068,10 +1068,11 @@ static int open_internal (xine_stream_t *stream, const char *mrl) {
 
     if ( stream->input_plugin ) {
       int res;
+      input_class_t *input_class = stream->input_plugin->input_class;
 
       xine_log (stream->xine, XINE_LOG_MSG, _("xine: found input plugin  : %s\n"),
-		dgettext(stream->input_plugin->input_class->text_domain ? : XINE_TEXTDOMAIN,
-			 stream->input_plugin->input_class->description));
+                dgettext(input_class->text_domain ? input_class->text_domain : XINE_TEXTDOMAIN,
+                         input_class->description));
       if (stream->input_plugin->input_class->eject_media)
         stream->eject_class = stream->input_plugin->input_class;
       _x_meta_info_set_utf8(stream, XINE_META_INFO_INPUT_PLUGIN,
@@ -1335,9 +1336,12 @@ static int open_internal (xine_stream_t *stream, const char *mrl) {
 			  stream->demux_plugin->demux_class->identifier);
   }
 
-  xine_log (stream->xine, XINE_LOG_MSG, _("xine: found demuxer plugin: %s\n"),
-	    dgettext(stream->demux_plugin->demux_class->text_domain ? : XINE_TEXTDOMAIN,
-		     stream->demux_plugin->demux_class->description));
+  {
+    demux_class_t *demux_class = stream->demux_plugin->demux_class;
+    xine_log (stream->xine, XINE_LOG_MSG, _("xine: found demuxer plugin: %s\n"),
+              dgettext(demux_class->text_domain ? demux_class->text_domain : XINE_TEXTDOMAIN,
+                       demux_class->description));
+  }
 
   _x_extra_info_reset( stream->current_extra_info );
   _x_extra_info_reset( stream->video_decoder_extra_info );
