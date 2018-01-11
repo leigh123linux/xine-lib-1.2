@@ -106,8 +106,8 @@ enum {
 };
 
 struct lexer *lexer_init_r(const char * buf, int size) {
-  static const char boms[] = { 0xFF, 0xFE, 0, 0, 0xFE, 0xFF },
-		    bom_utf8[] = { 0xEF, 0xBB, 0xBF };
+  static const uint8_t boms[]     = { 0xFF, 0xFE, 0, 0, 0xFE, 0xFF };
+  static const uint8_t bom_utf8[] = { 0xEF, 0xBB, 0xBF };
   struct lexer * lexer = calloc (1, sizeof (*lexer));
 
   if (!lexer) {

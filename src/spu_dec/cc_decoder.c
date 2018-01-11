@@ -225,7 +225,7 @@ static const int  rowdata[] = {10, -1, 0, 1, 2, 3, 11, 12, 13, 14, 4, 5, 6,
 			 7, 8, 9};
 /* FIXME: do real ™ (U+2122) */
 /* Code 182 must be mapped as a musical note ('♪', U+266A) in the caption font */
-static const char specialchar[] = {
+static const uint8_t specialchar[] = {
   174 /* ® */, 176 /* ° */, 189 /* ½ */, 191 /* ¿ */,
   'T' /* ™ */, 162 /* ¢ */, 163 /* £ */, 182 /* ¶ => ♪ */,
   224 /* à */, TRANSP_SPACE,232 /* è */, 226 /* â */,

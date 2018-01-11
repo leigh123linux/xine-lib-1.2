@@ -426,7 +426,7 @@ static uint32_t pvr_plugin_get_capabilities (input_plugin_t *this_gen) {
 
 static off_t pvr_plugin_read (input_plugin_t *this_gen, void *buf_gen, off_t len) {
   /*pvr_input_plugin_t *this = (pvr_input_plugin_t *) this_gen;*/
-  char *buf = (char *)buf_gen;
+  uint8_t *buf = buf_gen;
 
   if (len < 4)
     return -1;

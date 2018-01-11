@@ -632,7 +632,7 @@ static int render_image_fp_yuv (opengl_driver_t *this, opengl_frame_t *frame) {
   if (! ret)
     return 0;
   if (ret == 1) {
-    char *tmp = calloc (this->tex_width * this->tex_height, 1);
+    uint8_t *tmp = calloc (this->tex_width * this->tex_height, 1);
     for (i = 0; i < frame->width+3; i++) {
       tmp[this->tex_width*(frame->height+1)+i] = 128;
       tmp[this->tex_width*(frame->height+h2+2)+i] = 128;

@@ -704,7 +704,7 @@ static off_t
 vcd_plugin_read (input_plugin_t *this_gen, void *vbuf, const off_t nlen)
 {
   vcd_input_plugin_t *this = (vcd_input_plugin_t *)this_gen;
-  char *buf = vbuf;
+  uint8_t *buf = vbuf;
   dbg_print (this->class, (INPUT_DBG_CALL|INPUT_DBG_EXT),
             "Called with nlen %u\n", (unsigned int) nlen);
 

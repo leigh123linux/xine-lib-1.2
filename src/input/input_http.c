@@ -101,11 +101,11 @@ typedef struct {
   int              fh;
 
   /** Set to 1 if the stream is a NSV stream. */
-  int              is_nsv:1;
+  unsigned int     is_nsv:1;
   /** Set to 1 if the stream comes from last.fm. */
-  int              is_lastfm:1;
+  unsigned int     is_lastfm:1;
   /** Set to 1 if the stream is ShoutCast. */
-  int              shoutcast_mode:1;
+  unsigned int     shoutcast_mode:1;
 
   /* ShoutCast */
   int              shoutcast_metaint;

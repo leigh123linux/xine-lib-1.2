@@ -674,7 +674,7 @@ static int dvb_set_pidfilter(dvb_input_plugin_t * this, int filter, ushort pid, 
 }
 
 
-static int dvb_set_sectfilter(dvb_input_plugin_t * this, int filter, ushort pid, int pidtype, char table, char mask)
+static int dvb_set_sectfilter(dvb_input_plugin_t * this, int filter, ushort pid, int pidtype, uint8_t table, uint8_t mask)
 {
     tuner_t *tuner = this->tuner;
 

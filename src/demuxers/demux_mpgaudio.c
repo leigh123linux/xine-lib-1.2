@@ -148,7 +148,7 @@ typedef struct {
   xing_header_t       *xing_header;
   vbri_header_t       *vbri_header;
 
-  int                  found_next_frame:1;
+  unsigned int         found_next_frame : 1;
   int                  free_bitrate_count;
   off_t                free_bitrate_size; /* use this size if 3 free bitrate frames are encountered */
   uint8_t              next_header[4];

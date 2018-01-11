@@ -52,7 +52,7 @@ static const unsigned char xor_table[] = {
 #define _X_BE_32C(x,y) do { *(uint32_t *)(x) = be2me_32((y)); } while(0)
 #define _X_LE_32C(x,y) do { *(uint32_t *)(x) = le2me_32((y)); } while(0)
 
-static void hash(char *field, const char *param) {
+static void hash(uint8_t *field, const uint8_t *param) {
 
   uint32_t a, b, c, d;
 
@@ -214,9 +214,9 @@ static void hash(char *field, const char *param) {
   _X_LE_32C(field+12, d);
 }
 
-static void call_hash (char *key, const char *challenge, unsigned int len) {
+static void call_hash (uint8_t *key, const uint8_t *challenge, unsigned int len) {
 
-  char *ptr1, *ptr2;
+  uint8_t *ptr1, *ptr2;
   uint32_t a, b, c, d, tmp;
 
   ptr1=(key+16);
@@ -257,10 +257,10 @@ static void call_hash (char *key, const char *challenge, unsigned int len) {
   memcpy(key+b+24, challenge+c, len-c);
 }
 
-static void calc_response (char *result, char *field) {
+static void calc_response (uint8_t *result, uint8_t *field) {
 
-  char buf1[128];
-  char buf2[128];
+  uint8_t buf1[128];
+  uint8_t buf2[128];
   unsigned int i;
 
   memset (buf1, 0, 64);
@@ -285,15 +285,15 @@ static void calc_response (char *result, char *field) {
 }
 
 
-static void calc_response_string (char *result, const char *challenge) {
+static void calc_response_string (char *result, const uint8_t *challenge) {
 
-  char field[128] = {
+  uint8_t field[128] = {
     0x01, 0x23, 0x45, 0x67, 0x89, 0xAB, 0xCD, 0xEF,
     0xFE, 0xDC, 0xBA, 0x98, 0x76, 0x54, 0x32, 0x10,
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
   };
-  char zres[20];
+  uint8_t zres[20];
   int  i;
 
   /* calculate response */
@@ -316,8 +316,8 @@ void real_calc_response_and_checksum (char *response, char *chksum, char *challe
 
   size_t ch_len, resp_len;
   int   i;
-  char *ptr;
-  char  buf[128] = { 0, };
+  uint8_t *ptr;
+  uint8_t  buf[128] = { 0, };
 
   /* initialize return values */
   memset(response, 0, 64);

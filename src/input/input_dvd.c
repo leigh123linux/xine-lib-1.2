@@ -833,16 +833,16 @@ static buf_element_t *dvd_plugin_read_block (input_plugin_t *this_gen,
 
 static off_t dvd_plugin_read (input_plugin_t *this_gen, void *buf_gen, off_t len) {
 /*  dvd_input_plugin_t *this = (dvd_input_plugin_t*)this_gen; */
-  char *ch_buf = (char *)buf_gen;
+  uint8_t *buf = buf_gen;
 
   if (len < 4)
     return -1;
 
   /* FIXME: Tricking the demux_mpeg_block plugin */
-  ch_buf[0] = 0;
-  ch_buf[1] = 0;
-  ch_buf[2] = 0x01;
-  ch_buf[3] = 0xba;
+  buf[0] = 0;
+  buf[1] = 0;
+  buf[2] = 0x01;
+  buf[3] = 0xba;
   return 1;
 }
 
