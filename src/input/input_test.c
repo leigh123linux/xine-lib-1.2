@@ -564,7 +564,7 @@ static off_t test_plugin_read (input_plugin_t *this_gen, void *buf, off_t len) {
   if (len > this->filesize - this->filepos) len = this->filesize - this->filepos;
 
   if (test_is_yuv[this->index]) {
-    char *p = this->y4m_frame, *q = buf;
+    unsigned char *p = this->y4m_frame, *q = buf;
     off_t l = len, d;
     d = this->headsize - this->filepos;
     if (d > 0) {
