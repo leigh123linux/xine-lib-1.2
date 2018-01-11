@@ -557,9 +557,9 @@ static int ao_jack_write (ao_driver_t *this_gen, int16_t *frame_buffer,
   this->underrun = 0;
   /* TODO: In the future Xine should pass only floats to us, so no conversion needed */
   if (this->bits_per_sample == 16)
-    written = write_buffer_16 (this, (char *) frame_buffer, num_bytes);
+    written = write_buffer_16 (this, (unsigned char *) frame_buffer, num_bytes);
   else if (this->bits_per_sample == 32)
-    written = write_buffer_32 (this, (char *) frame_buffer, num_bytes);
+    written = write_buffer_32 (this, (unsigned char *) frame_buffer, num_bytes);
 
   /* If this fails then need to spin and keep trying until everything written */
   int spin_count = 0;
@@ -579,9 +579,9 @@ static int ao_jack_write (ao_driver_t *this_gen, int16_t *frame_buffer,
 		       100) * 1000.0 * 1000.0) / this->output_sample_rate);
 
     if (this->bits_per_sample == 16)
-      written = write_buffer_16 (this, (char *) frame_buffer, num_bytes);
+      written = write_buffer_16 (this, (unsigned char *) frame_buffer, num_bytes);
     else if (this->bits_per_sample == 32)
-      written = write_buffer_32 (this, (char *) frame_buffer, num_bytes);
+      written = write_buffer_32 (this, (unsigned char *) frame_buffer, num_bytes);
 
     if (written == 0)
       spin_count++;
