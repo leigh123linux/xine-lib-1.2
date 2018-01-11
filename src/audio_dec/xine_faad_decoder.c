@@ -164,7 +164,7 @@ static int faad_map_channels (faad_decoder_t *this) {
     "faad_audio_decoder: channel layout: %s -> %s\n",
     input_names[this->in_mode], out_names[this->out_mode]);
   return 1;
-};
+}
 
 
 static void faad_reset (audio_decoder_t *this_gen) {
