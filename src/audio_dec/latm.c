@@ -204,7 +204,7 @@ static uint32_t bebf_UNUSED bebf_tell (bebf_t *bebf) {
  */
 static int bebf_UNUSED bebf_sync (bebf_t *bebf, uint32_t pattern, uint32_t pbits) {
   uint32_t _pat = pattern << (32 - pbits);
-  uint32_t _mask = ~0 << (32 - pbits);
+  uint32_t _mask = ~0U << (32 - pbits);
   if (bebf->readbits > 31) {
     bebf->readbits -= 32;
     if (bebf->readptr < bebf->readstop) {

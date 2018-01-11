@@ -103,7 +103,7 @@ static uint32_t get_bits(uint8_t *buffer, uint32_t count, uint32_t *bit_position
 
 static int32_t get_bits_signed(uint8_t *buffer, uint32_t count, uint32_t *bit_position) {
   uint32_t value = get_bits(buffer, count, bit_position);
-  uint32_t sign_mask = (uint32_t)(-1 << (count - 1));
+  uint32_t sign_mask = (uint32_t)((uint32_t)-1 << (count - 1));
   if (value & sign_mask)
     value |= sign_mask; /* sign-extend value */
   return (int32_t)value;
