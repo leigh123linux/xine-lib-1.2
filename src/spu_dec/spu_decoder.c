@@ -365,8 +365,6 @@ static void *init_plugin (xine_t *xine, void *data) {
   if (!this)
     return NULL;
 
-  this = calloc(1, sizeof (spu_decoder_class_t));
-
   this->open_plugin     = open_plugin;
   this->identifier      = "spudec";
   this->description     = N_("DVD/VOB SPU decoder plugin");
