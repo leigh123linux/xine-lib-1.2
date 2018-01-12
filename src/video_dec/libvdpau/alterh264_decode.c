@@ -548,7 +548,7 @@ scaling_list_fallback_A (uint8_t * scaling_lists_4x4,
   case 4:
   case 5:
     memcpy (&scaling_lists_4x4[i * 16], &scaling_lists_4x4[(i - 1) * 16],
-	    6 * 16);
+	    16);
     break;
   case 6:
     {
