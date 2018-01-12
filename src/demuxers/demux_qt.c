@@ -1643,7 +1643,7 @@ static qt_error parse_reference_atom (qt_info *info,
 
   unsigned int sizes[4];
   reference_t ref;
-  unsigned char *atoms[4];
+  unsigned char *atoms[4] = { NULL, NULL, NULL, NULL };
 
   /* initialize reference atom */
   ref.url = NULL;
