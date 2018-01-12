@@ -532,17 +532,13 @@ scaling_list_fallback_A (uint8_t * scaling_lists_4x4,
   switch (i)
   {
   case 0:
-    {
       for (j = 0; j < sizeof (default_4x4_intra); j++)
 	scaling_lists_4x4[(i * 16) + zigzag_4x4[j]] = default_4x4_intra[j];
       break;
-    }
   case 3:
-    {
       for (j = 0; j < sizeof (default_4x4_inter); j++)
 	scaling_lists_4x4[(i * 16) + zigzag_4x4[j]] = default_4x4_inter[j];
       break;
-    }
   case 1:
   case 2:
   case 4:
@@ -551,20 +547,15 @@ scaling_list_fallback_A (uint8_t * scaling_lists_4x4,
 	    16);
     break;
   case 6:
-    {
       for (j = 0; j < sizeof (default_8x8_intra); j++)
 	scaling_lists_8x8[(i - 6) * 64 + zigzag_8x8[j]] =
 	  default_8x8_intra[j];
       break;
-    }
   case 7:
-    {
       for (j = 0; j < sizeof (default_8x8_inter); j++)
 	scaling_lists_8x8[(i - 6) * 64 + zigzag_8x8[j]] =
 	  default_8x8_inter[j];
       break;
-    }
-
   }
 }
 
