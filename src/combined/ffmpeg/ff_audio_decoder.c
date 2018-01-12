@@ -516,7 +516,7 @@ static void ff_map_channels (ff_audio_decoder_t *this) {
     int i, j;
     /* ff: see names[] below; xine: L R RL RR C LFE */
     const int8_t base_map[] = {0, 1, 4, 5, 2, 3, -1, -1, -1, 2, 3};
-    int8_t name_map[MAX_CHANNELS];
+    int8_t name_map[MAX_CHANNELS] = {0, 0, 0, 0, 0, 0};
     const int modes[] = {
       AO_CAP_MODE_MONO, AO_CAP_MODE_STEREO,
       AO_CAP_MODE_4CHANNEL, AO_CAP_MODE_4_1CHANNEL,
