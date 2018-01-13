@@ -23,6 +23,7 @@
 #define XINE_UTILS_SPU_H
 
 #include <xine/attributes.h>
+#include <xine/os_types.h>
 
 typedef struct xine_spu_opacity_s xine_spu_opacity_t;
 

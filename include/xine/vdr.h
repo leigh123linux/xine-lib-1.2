@@ -23,6 +23,7 @@
 
 #define XINE_VDR_VERSION 901
 
+#include <xine/os_types.h>
 
 enum funcs
 {

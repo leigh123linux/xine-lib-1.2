@@ -25,6 +25,9 @@
 #ifndef HAVE_RESAMPLE_H
 #define HAVE_RESAMPLE_H
 
+#include <xine/attributes.h>
+#include <xine/os_types.h>
+
 #define RESAMPLE_MAX_CHANNELS 6
 
 void _x_audio_out_resample_stereo(int16_t* last_sample,

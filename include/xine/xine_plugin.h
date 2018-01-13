@@ -24,6 +24,7 @@
 #define XINE_PLUGIN_H
 
 #include <xine/attributes.h>
+#include <xine/os_types.h>
 
 #define PLUGIN_NONE	      0
 #define PLUGIN_INPUT	      1
