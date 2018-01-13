@@ -3470,7 +3470,6 @@ static void vaapi_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen) {
   vaapi_frame_t      *frame         = (vaapi_frame_t *) frame_gen;
   vaapi_accel_t      *accel         = &frame->vaapi_accel_data;
   ff_vaapi_context_t *va_context    = this->va_context;
-  ff_vaapi_surface_t *va_surface    = &va_context->va_render_surfaces[accel->index];
   VASurfaceID        va_surface_id  = VA_INVALID_SURFACE;
   VAImage            *va_image      = NULL;
   VAStatus           vaStatus;
@@ -3623,6 +3622,7 @@ static void vaapi_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen) {
 #endif
     } else {
       if(frame->format == XINE_IMGFMT_VAAPI) {
+        ff_vaapi_surface_t *va_surface = &va_context->va_render_surfaces[accel->index];
         va_surface_id = va_surface->va_surface_id;
         va_image      = NULL;
       }
@@ -3630,8 +3630,8 @@ static void vaapi_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen) {
 
     lprintf("2: 0x%08x\n", va_surface_id);
 
-    VASurfaceStatus surf_status = 0;
     if(va_surface_id != VA_INVALID_SURFACE) {
+      VASurfaceStatus surf_status = 0;
 
       if(this->query_va_status) {
         vaStatus = vaQuerySurfaceStatus(va_context->va_display, va_surface_id, &surf_status);
