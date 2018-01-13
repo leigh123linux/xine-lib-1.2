@@ -3575,7 +3575,7 @@ static void vaapi_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen) {
 
 #ifdef ENABLE_VA_GLX
   /* initialize opengl rendering */
-  if(this->opengl_render && this->init_opengl_render &&  va_context->valid_context) {
+  if(this->opengl_render && this->init_opengl_render) {
     unsigned int last_sub_img_fmt = this->last_sub_image_fmt;
 
     if(last_sub_img_fmt)
@@ -3603,8 +3603,6 @@ static void vaapi_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen) {
 
   start_time = timeOfDay();
   */
-
-  if(va_context->valid_context) {
 
     if((frame->format == XINE_IMGFMT_YUY2) || (frame->format == XINE_IMGFMT_YV12)) {
       va_surface_id = this->va_soft_surface_ids[this->va_soft_head];
@@ -3669,8 +3667,6 @@ static void vaapi_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen) {
       vaapi_hardware_render_frame(this_gen, frame_gen, va_surface_id);
 
     }
-  } else {
-  }
 
   XSync(this->display, False);
 
