@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2000-2017 the xine project
+ * Copyright (C) 2000-2018 the xine project
  *
  * This file is part of xine, a free video player.
  *
@@ -235,7 +235,7 @@ typedef struct {
   int                  num_streams;
   int                  streams_size;
   xine_stream_t      **streams;
-  pthread_mutex_t      streams_lock;
+  xine_rwlock_t        streams_lock;
 
   pthread_t       audio_thread;
 
@@ -320,13 +320,13 @@ static int ao_streams_open (aos_t *this) {
   this->num_anon_streams = 0;
   this->num_streams      = 0;
   this->streams_size     = 32;
-  pthread_mutex_init (&this->streams_lock, NULL);
+  xine_rwlock_init_default (&this->streams_lock);
   this->streams = calloc (32, sizeof (void *));
   return !!this->streams;
 }
 
 static void ao_streams_close (aos_t *this) {
-  pthread_mutex_destroy (&this->streams_lock);
+  xine_rwlock_destroy (&this->streams_lock);
   _x_freep (&this->streams);
   this->num_null_streams = 0;
   this->num_anon_streams = 0;
@@ -335,7 +335,7 @@ static void ao_streams_close (aos_t *this) {
 }
 
 static void ao_streams_register (aos_t *this, xine_stream_t *s) {
-  pthread_mutex_lock (&this->streams_lock);
+  xine_rwlock_wrlock (&this->streams_lock);
   if (!s) {
     this->num_null_streams++;
   } else if (s == XINE_ANON_STREAM) {
@@ -355,12 +355,12 @@ static void ao_streams_register (aos_t *this, xine_stream_t *s) {
     a[this->num_streams++] = s;
     a[this->num_streams] = NULL;
   } while (0);
-  pthread_mutex_unlock (&this->streams_lock);
+  xine_rwlock_unlock (&this->streams_lock);
 }
 
 static int ao_streams_unregister (aos_t *this, xine_stream_t *s) {
   int n;
-  pthread_mutex_lock (&this->streams_lock);
+  xine_rwlock_wrlock (&this->streams_lock);
   if (!s) {
     this->num_null_streams--;
   } else if (s == XINE_ANON_STREAM) {
@@ -378,7 +378,7 @@ static int ao_streams_unregister (aos_t *this, xine_stream_t *s) {
     }
   }
   n = this->num_null_streams + this->num_anon_streams + this->num_streams;
-  pthread_mutex_unlock (&this->streams_lock);
+  xine_rwlock_unlock (&this->streams_lock);
   return n;
 }
 
@@ -1338,14 +1338,14 @@ static void *ao_loop (void *this_gen) {
 	xprintf(this->xine, XINE_VERBOSITY_LOG,
 		_("audio_out: delay calculation impossible with an unavailable audio device\n"));
 
-	pthread_mutex_lock(&this->streams_lock);
+        xine_rwlock_rdlock (&this->streams_lock);
         for (s = this->streams; *s; s++) {
           if (!(*s)->emergency_brake) {
             (*s)->emergency_brake = 1;
             _x_message (*s, XINE_MSG_AUDIO_OUT_UNAVAILABLE, NULL);
           }
 	}
-	pthread_mutex_unlock(&this->streams_lock);
+        xine_rwlock_unlock (&this->streams_lock);
       }
     }
 
@@ -1432,10 +1432,10 @@ static void *ao_loop (void *this_gen) {
        */
       xine_stream_t **s;
       lprintf ("audio_loop: ADJ_VPTS\n");
-      pthread_mutex_lock (&this->streams_lock);
+      xine_rwlock_rdlock (&this->streams_lock);
       for (s = this->streams; *s; s++)
         (*s)->metronom->set_option ((*s)->metronom, METRONOM_ADJ_VPTS_OFFSET, -gap/SYNC_GAP_RATE);
-      pthread_mutex_unlock (&this->streams_lock);
+      xine_rwlock_unlock (&this->streams_lock);
       next_sync_time = cur_time + SYNC_TIME_INTERVAL;
       bufs_since_sync = 0;
 
@@ -1991,9 +1991,9 @@ static int ao_get_property (xine_audio_port_t *this_gen, int property) {
     break;
 
   case AO_PROP_NUM_STREAMS:
-    pthread_mutex_lock(&this->streams_lock);
+    xine_rwlock_rdlock (&this->streams_lock);
     ret = this->num_anon_streams + this->num_streams;
-    pthread_mutex_unlock(&this->streams_lock);
+    xine_rwlock_unlock (&this->streams_lock);
     break;
 
   case AO_PROP_AMP:
@@ -2247,7 +2247,7 @@ static int ao_status (xine_audio_port_t *this_gen, xine_stream_t *stream,
     return 0;
   }
 
-  pthread_mutex_lock(&this->streams_lock);
+  xine_rwlock_rdlock (&this->streams_lock);
   for (s = this->streams; *s; s++) {
     if (*s == stream) {
       *bits = this->input.bits;
@@ -2257,7 +2257,7 @@ static int ao_status (xine_audio_port_t *this_gen, xine_stream_t *stream,
       break;
     }
   }
-  pthread_mutex_unlock(&this->streams_lock);
+  xine_rwlock_unlock (&this->streams_lock);
 
   return ret;
 }
