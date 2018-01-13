@@ -3604,65 +3604,62 @@ static void vaapi_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen) {
   */
 
   if (frame->format != XINE_IMGFMT_VAAPI) {
-      va_surface_id = this->va_soft_surface_ids[this->va_soft_head];
-      va_image = &this->va_soft_images[this->va_soft_head];
-      this->va_soft_head = (this->va_soft_head + 1) % (SOFT_SURFACES);
+    va_surface_id = this->va_soft_surface_ids[this->va_soft_head];
+    va_image = &this->va_soft_images[this->va_soft_head];
+    this->va_soft_head = (this->va_soft_head + 1) % (SOFT_SURFACES);
   } else { // (frame->format == XINE_IMGFMT_VAAPI)
-    if(this->guarded_render) {
-        ff_vaapi_surface_t *va_surface = &va_context->va_render_surfaces[accel->index];
-        if(va_surface->status == SURFACE_RENDER || va_surface->status == SURFACE_RENDER_RELEASE) {
-          va_surface_id = va_surface->va_surface_id;
-        }
-        va_image      = NULL;
+    if (this->guarded_render) {
+      ff_vaapi_surface_t *va_surface = &va_context->va_render_surfaces[accel->index];
+      if (va_surface->status == SURFACE_RENDER || va_surface->status == SURFACE_RENDER_RELEASE) {
+        va_surface_id = va_surface->va_surface_id;
+      }
+      va_image      = NULL;
 #ifdef DEBUG_SURFACE
       printf("vaapi_display_frame va_surface 0x%08x status %d index %d\n", va_surface_id, va_surface->status, accel->index);
 #endif
     } else {
-        ff_vaapi_surface_t *va_surface = &va_context->va_render_surfaces[accel->index];
-        va_surface_id = va_surface->va_surface_id;
-        va_image      = NULL;
+      ff_vaapi_surface_t *va_surface = &va_context->va_render_surfaces[accel->index];
+      va_surface_id = va_surface->va_surface_id;
+      va_image      = NULL;
     }
   }
 
-    lprintf("2: 0x%08x\n", va_surface_id);
+  lprintf("2: 0x%08x\n", va_surface_id);
 
-    if(va_surface_id != VA_INVALID_SURFACE) {
-      VASurfaceStatus surf_status = 0;
-
-      if(this->query_va_status) {
-        vaStatus = vaQuerySurfaceStatus(va_context->va_display, va_surface_id, &surf_status);
-        vaapi_check_status(this_gen, vaStatus, "vaQuerySurfaceStatus()");
-      } else {
-        surf_status = VASurfaceReady;
-      }
-
-      if(surf_status != VASurfaceReady) {
-        va_surface_id = VA_INVALID_SURFACE;
-        va_image = NULL;
-#ifdef DEBUG_SURFACE
-        printf("Surface srfc 0x%08X not ready for render\n", va_surface_id);
-#endif
-      }
+  if (va_surface_id != VA_INVALID_SURFACE) {
+    VASurfaceStatus surf_status = 0;
+    if (this->query_va_status) {
+      vaStatus = vaQuerySurfaceStatus(va_context->va_display, va_surface_id, &surf_status);
+      vaapi_check_status(this_gen, vaStatus, "vaQuerySurfaceStatus()");
     } else {
+      surf_status = VASurfaceReady;
+    }
+
+    if (surf_status != VASurfaceReady) {
+      va_surface_id = VA_INVALID_SURFACE;
+      va_image = NULL;
 #ifdef DEBUG_SURFACE
-      printf("Invalid srfc 0x%08X\n", va_surface_id);
+      printf("Surface srfc 0x%08X not ready for render\n", va_surface_id);
 #endif
     }
+  } else {
+#ifdef DEBUG_SURFACE
+    printf("Invalid srfc 0x%08X\n", va_surface_id);
+#endif
+  }
 
-    if(va_surface_id != VA_INVALID_SURFACE) {
+  if (va_surface_id != VA_INVALID_SURFACE) {
+    lprintf("vaapi_display_frame: 0x%08x %d %d\n", va_surface_id, va_context->width, va_context->height);
 
-      lprintf("vaapi_display_frame: 0x%08x %d %d\n", va_surface_id, va_context->width, va_context->height);
-    
-      vaStatus = vaSyncSurface(va_context->va_display, va_surface_id);
-      vaapi_check_status(this_gen, vaStatus, "vaSyncSurface()");
+    vaStatus = vaSyncSurface(va_context->va_display, va_surface_id);
+    vaapi_check_status(this_gen, vaStatus, "vaSyncSurface()");
 
-      /* transfer image data to a VAAPI surface */
-      if (frame->format != XINE_IMGFMT_VAAPI) {
-        vaapi_software_render_frame(this_gen, frame_gen, va_image, va_surface_id);
-      }
-      vaapi_hardware_render_frame(this_gen, frame_gen, va_surface_id);
-
+    /* transfer image data to a VAAPI surface */
+    if (frame->format != XINE_IMGFMT_VAAPI) {
+      vaapi_software_render_frame(this_gen, frame_gen, va_image, va_surface_id);
     }
+    vaapi_hardware_render_frame(this_gen, frame_gen, va_surface_id);
+  }
 
   XSync(this->display, False);
 
