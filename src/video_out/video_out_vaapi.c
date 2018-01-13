@@ -3477,6 +3477,13 @@ static void vaapi_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen) {
 
   lprintf("vaapi_display_frame\n");
 
+  if (frame->format != XINE_IMGFMT_VAAPI && frame->format != XINE_IMGFMT_YV12 && frame->format != XINE_IMGFMT_YUY2) {
+    xprintf(this->xine, XINE_VERBOSITY_LOG, LOG_MODULE " unsupported image format %x width %d height %d valid_context %d\n",
+            frame->format, frame->width, frame->height, va_context->valid_context);
+    frame_gen->free (frame_gen);
+    return;
+  }
+
   /*
   if((frame->height < 17 || frame->width < 17) && ((frame->format == XINE_IMGFMT_YV12) || (frame->format == XINE_IMGFMT_YUY2))) {
     frame->vo_frame.free( frame_gen );
@@ -3597,7 +3604,7 @@ static void vaapi_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen) {
   start_time = timeOfDay();
   */
 
-  if(va_context->valid_context && ( (frame->format == XINE_IMGFMT_VAAPI) || (frame->format == XINE_IMGFMT_YV12) || (frame->format == XINE_IMGFMT_YUY2) )) {
+  if(va_context->valid_context) {
 
     if((frame->format == XINE_IMGFMT_YUY2) || (frame->format == XINE_IMGFMT_YV12)) {
       va_surface_id = this->va_soft_surface_ids[this->va_soft_head];
@@ -3663,9 +3670,6 @@ static void vaapi_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen) {
 
     }
   } else {
-    xprintf(this->xine, XINE_VERBOSITY_LOG, LOG_MODULE " unsupported image format %s width %d height %d valid_context %d\n", 
-        (frame->format == XINE_IMGFMT_VAAPI) ? "XINE_IMGFMT_VAAPI" : ((frame->format == XINE_IMGFMT_YV12) ? "XINE_IMGFMT_YV12" : "XINE_IMGFMT_YUY2") ,
-        frame->width, frame->height, va_context->valid_context);
   }
 
   XSync(this->display, False);
