@@ -37,8 +37,8 @@ dist-hook:
 
 distclean-local: clean-docs
 
-AM_V_FAKE = $(am__v_FAKE_$(V))
-am__v_FAKE_ = $(am__v_FAKE_$(AM_DEFAULT_VERBOSITY))
+AM_V_FAKE = $(am__v_FAKE_@AM_V@)
+am__v_FAKE_ = $(am__v_FAKE_@AM_DEFAULT_V@)
 am__v_FAKE_0 = @echo "  FAKE  " $@;
 
 if HAVE_XMLTO
