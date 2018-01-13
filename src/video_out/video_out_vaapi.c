@@ -3921,9 +3921,9 @@ static void vaapi_dispose_locked (vo_driver_t *this_gen) {
   _x_freep(&va_context->va_surface_ids);
   _x_freep(&va_context->va_render_surfaces);
 
-  free(va_context);
+  _x_freep(&this->va_context);
 
-  free(this->overlay_bitmap);
+  _x_freep(&this->overlay_bitmap);
 
   _x_freep(&this->va_soft_surface_ids);
   _x_freep(&this->va_soft_images);
