@@ -3603,30 +3603,26 @@ static void vaapi_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen) {
   start_time = timeOfDay();
   */
 
-    if((frame->format == XINE_IMGFMT_YUY2) || (frame->format == XINE_IMGFMT_YV12)) {
+  if (frame->format != XINE_IMGFMT_VAAPI) {
       va_surface_id = this->va_soft_surface_ids[this->va_soft_head];
       va_image = &this->va_soft_images[this->va_soft_head];
       this->va_soft_head = (this->va_soft_head + 1) % (SOFT_SURFACES);
-    }
-
+  } else { // (frame->format == XINE_IMGFMT_VAAPI)
     if(this->guarded_render) {
-      if(frame->format == XINE_IMGFMT_VAAPI) {
         ff_vaapi_surface_t *va_surface = &va_context->va_render_surfaces[accel->index];
         if(va_surface->status == SURFACE_RENDER || va_surface->status == SURFACE_RENDER_RELEASE) {
           va_surface_id = va_surface->va_surface_id;
         }
         va_image      = NULL;
-      }
 #ifdef DEBUG_SURFACE
       printf("vaapi_display_frame va_surface 0x%08x status %d index %d\n", va_surface_id, va_surface->status, accel->index);
 #endif
     } else {
-      if(frame->format == XINE_IMGFMT_VAAPI) {
         ff_vaapi_surface_t *va_surface = &va_context->va_render_surfaces[accel->index];
         va_surface_id = va_surface->va_surface_id;
         va_image      = NULL;
-      }
     }
+  }
 
     lprintf("2: 0x%08x\n", va_surface_id);
 
@@ -3661,9 +3657,9 @@ static void vaapi_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen) {
       vaapi_check_status(this_gen, vaStatus, "vaSyncSurface()");
 
       /* transfer image data to a VAAPI surface */
-      if((frame->format == XINE_IMGFMT_YUY2 || frame->format == XINE_IMGFMT_YV12))
+      if (frame->format != XINE_IMGFMT_VAAPI) {
         vaapi_software_render_frame(this_gen, frame_gen, va_image, va_surface_id);
-
+      }
       vaapi_hardware_render_frame(this_gen, frame_gen, va_surface_id);
 
     }
