@@ -10,7 +10,6 @@ AM_CFLAGS  = $(DEFAULT_OCFLAGS) $(VISIBILITY_FLAG)
 AM_LDFLAGS = $(xineplug_ldflags)
 
 EXTRA_DIST = foovideo.c
-noinst_HEADERS = group_raw.h
 
 if ENABLE_IMAGEMAGICK
 image_module = xineplug_decode_image.la
@@ -45,7 +44,12 @@ xineplug_LTLIBRARIES = $(image_module) \
 	$(libmmal_module) \
 	xineplug_decode_rawvideo.la
 
-xineplug_decode_rawvideo_la_SOURCES = group_raw.c bitplane.c rgb.c yuv.c
+xineplug_decode_rawvideo_la_SOURCES = \
+	group_raw.c \
+	group_raw.h \
+	bitplane.c \
+	rgb.c \
+	yuv.c
 xineplug_decode_rawvideo_la_LIBADD = $(XINE_LIB) $(LTLIBINTL)
 
 xineplug_decode_image_la_SOURCES = image.c

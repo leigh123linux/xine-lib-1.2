@@ -6,10 +6,16 @@ AM_LDFLAGS = $(xineplug_ldflags)
 
 EXTRA_DIST = fooviz.c
 
-noinst_HEADERS = fft.h visualizations.h
-
 xinepost_LTLIBRARIES = xineplug_post_visualizations.la
 
 xineplug_post_visualizations_la_SOURCES = \
-        visualizations.c fft.c fftscope.c oscope.c fftgraph.c tdaudioanalyzer.c
+	fft.h \
+	fft.c \
+	fftgraph.c \
+	fftscope.c \
+	oscope.c \
+	tdaudioanalyzer.c \
+	visualizations.c \
+	visualizations.h
+
 xineplug_post_visualizations_la_LIBADD = $(XINE_LIB) $(PTHREAD_LIBS) -lm
