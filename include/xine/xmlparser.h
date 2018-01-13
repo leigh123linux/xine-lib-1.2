@@ -22,13 +22,7 @@
 #ifndef XML_PARSER_H
 #define XML_PARSER_H
 
-#ifndef XINE_DEPRECATED
-#define XINE_DEPRECATED
-#endif
-
-#ifndef XINE_PROTECTED
-#define XINE_PROTECTED
-#endif
+#include <xine/attributes.h>
 
 /* parser modes */
 #define XML_PARSER_CASE_INSENSITIVE  0

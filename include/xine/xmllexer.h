@@ -23,13 +23,7 @@
 #ifndef XML_LEXER_H
 #define XML_LEXER_H
 
-#ifndef XINE_DEPRECATED
-#define XINE_DEPRECATED
-#endif
-
-#ifndef XINE_PROTECTED
-#define XINE_PROTECTED
-#endif
+#include <xine/attributes.h>
 
 /* public constants */
 #define T_ERROR         -1   /* lexer error */
