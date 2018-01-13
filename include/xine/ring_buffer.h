@@ -20,6 +20,9 @@
  * Fifo + Ring Buffer
  */
 
+#ifndef XINE_RING_BUFFER_H
+#define XINE_RING_BUFFER_H
+
 #include <stddef.h> /* size_t */
 #include <xine/attributes.h>
 
@@ -57,3 +60,4 @@ void xine_ring_buffer_release(xine_ring_buffer_t *ring_buffer, void *chunk) XINE
 void xine_ring_buffer_close(xine_ring_buffer_t *ring_buffer) XINE_PROTECTED;
 
 
+#endif /* XINE_RING_BUFFER_H */
