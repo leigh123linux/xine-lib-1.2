@@ -470,6 +470,13 @@ static void metronom_handle_discontinuity (metronom_t *this, int type,
 static void metronom_handle_video_discontinuity (metronom_t *this, int type,
 						 int64_t disc_off) {
 
+  if (type == DISC_GAPLESS) {
+    /* this would cause deadlock in metronom_handle_discontinuity()
+       because of double pthread_mutex_lock(&this->lock) */
+    _x_assert(type != DISC_GAPLESS);
+    return;
+  }
+
   pthread_mutex_lock (&this->lock);
 
   if (this->master) {
