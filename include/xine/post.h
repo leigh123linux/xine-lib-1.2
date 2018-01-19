@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2000-2017 the xine project
+ * Copyright (C) 2000-2018 the xine project
  *
  * This file is part of xine, a free video player.
  *
@@ -340,9 +340,41 @@ post_audio_port_t *_x_post_intercept_audio_port(post_plugin_t *post, xine_audio_
 						post_in_t **input, post_out_t **output) XINE_PROTECTED;
 
 
-/* this will allow pending rewire operations, calling this at the beginning
- * of decoder-called functions like get_buffer() and open() is a good idea
- * (if you do not intercept get_buffer() or open(), this will be done automatically) */
+/* If you do intercept these decoder-called functions
+ * (that is, you do not use post defaults), please
+ * open ():
+ *   _x_post_inc_usage (port);
+ *   _x_post_rewire (port->post);
+ *   ...
+ * close ():
+ *   ...
+ *   _x_post_dec_usage (port);
+ * get_buffer ():
+ *   _x_post_inc_usage (port);
+ *   ...
+ *   port->original_port->get_buffer (port->original_port); and/or
+ *   while (not_done_yet) {
+ *     _x_post_rewire (port->post);
+ *     timed_wait (done);
+ *   }
+ *   ...
+ *   _x_post_dec_usage (port);
+ * get_frame ():
+ *   _x_post_inc_usage (port);
+ *   ...
+ *   port->original_port->get_frame (port->original_port, ...); and/or
+ *   while (not_done_yet) {
+ *     _x_post_rewire (port->post);
+ *     timed_wait (done);
+ *   }
+ *   ...
+ *   if (this_frame_is_not_intercepted)
+ *     _x_post_dec_usage (port);
+ * frame.free ():
+ *   ...
+ *   _x_post_dec_usage (port);
+ * this will allow pending rewire operations, while preventing your port from getting
+ * pulled from under your feet by the possible rewire. */
 static inline void _x_post_rewire(post_plugin_t *post) {
   if (post->running_ticket->ticket_revoked)
     post->running_ticket->renew(post->running_ticket, 1);
@@ -390,6 +422,14 @@ do {                                                               \
     pthread_mutex_unlock(&(port)->usage_lock);                     \
 } while(0)
 
+#ifdef POST_INTERNAL
+/* try to recognize post ports, do the above, return new use count.
+ * otherwise, return -1. */
+int _x_post_video_port_ref (xine_video_port_t *port_gen);
+int _x_post_video_port_unref (xine_video_port_t *port_gen);
+int _x_post_audio_port_ref (xine_audio_port_t *port_gen);
+int _x_post_audio_port_unref (xine_audio_port_t *port_gen);
+#endif
 
 /* macros to create parameter descriptors */
 

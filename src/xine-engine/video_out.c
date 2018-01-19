@@ -412,6 +412,14 @@ static void vo_queue_read_unlock (img_buf_fifo_t *queue) {
   pthread_mutex_unlock (&queue->mutex);
 }
 
+static void vo_ticket_revoked (void *user_data, int flags) {
+  vos_t *this = (vos_t *)user_data;
+  const char *s1 = (flags & XINE_TICKET_FLAG_ATOMIC) ? " atomic" : "";
+  const char *s2 = (flags & XINE_TICKET_FLAG_REWIRE) ? " port_rewire" : "";
+  pthread_cond_signal (&this->free_img_buf_queue.not_empty);
+  xprintf (this->xine, XINE_VERBOSITY_DEBUG, "video_out: port ticket revoked%s%s.\n", s1, s2);
+}
+
 static void vo_queue_append_int (img_buf_fifo_t *queue, vo_frame_t *img) {
   int n;
 
@@ -478,16 +486,85 @@ static void vo_queue_append_list (img_buf_fifo_t *queue, vo_frame_t *img) {
   pthread_mutex_unlock (&queue->mutex);
 }
 
-static vo_frame_t *vo_queue_get_nonblock (img_buf_fifo_t *queue,
+static vo_frame_t *vo_queue_pop_int (img_buf_fifo_t *queue) {
+  vo_frame_t *img;
+
+  img = queue->first;
+  queue->first = img->next;
+  img->next = NULL;
+  if (!queue->first) {
+    queue->last = NULL;
+    queue->num_buffers = 0;
+  } else {
+    queue->num_buffers--;
+  }
+
+  return img;
+}
+
+static int vo_frame_dec2_lock_int (vos_t *this, vo_frame_t *img);
+
+static vo_frame_t *vo_get_unblock_frame (vos_t *this) {
+  vo_frame_t *f, *prev;
+  /* Try 1: free queue reserve. */
+  pthread_mutex_lock (&this->free_img_buf_queue.mutex);
+  if (this->free_img_buf_queue.first) {
+    f = vo_queue_pop_int (&this->free_img_buf_queue);
+    pthread_mutex_unlock (&this->free_img_buf_queue.mutex);
+    xprintf (this->xine, XINE_VERBOSITY_DEBUG, "video_out: got unblock frame from free queue.\n");
+    return f;
+  }
+  pthread_mutex_unlock (&this->free_img_buf_queue.mutex);
+  /* Try 2: shared display queue. */
+  pthread_mutex_lock (&this->display_img_buf_queue.mutex);
+  prev = NULL;
+  f = this->display_img_buf_queue.first;
+  while (f) {
+    if (f->lock_counter <= 2)
+      break;
+    prev = f;
+    f = f->next;
+  }
+  if (f) {
+    if (!prev) {
+      if (!f->next) { /* only */
+        this->display_img_buf_queue.first =
+        this->display_img_buf_queue.last  = NULL;
+        this->display_img_buf_queue.num_buffers = 0;
+      } else { /* first */
+        this->display_img_buf_queue.first = f->next;
+        f->next = NULL;
+        this->display_img_buf_queue.num_buffers--;
+      }
+    } else {
+      this->display_img_buf_queue.num_buffers--;
+      if (f->next) { /* middle */
+        prev->next = f->next;
+        f->next = NULL;
+      } else { /* last */
+        prev->next = NULL;
+        this->display_img_buf_queue.last = prev;
+      }
+    }
+    vo_frame_dec2_lock_int (this, f);
+    pthread_mutex_unlock (&this->display_img_buf_queue.mutex);
+    xprintf (this->xine, XINE_VERBOSITY_DEBUG, "video_out: got unblock frame from display queue.\n");
+    return f;
+  }
+  pthread_mutex_unlock (&this->display_img_buf_queue.mutex);
+  return NULL;
+}
+
+static vo_frame_t *vo_free_queue_get (vos_t *this,
   uint32_t width, uint32_t height, double ratio, int format, int flags) {
   vo_frame_t *img, *prev;
 
-  pthread_mutex_lock (&queue->mutex);
+  pthread_mutex_lock (&this->free_img_buf_queue.mutex);
 
   do {
     prev = NULL;
-    if (queue->num_buffers > queue->locked_for_read) {
-      img = queue->first;
+    if (this->free_img_buf_queue.num_buffers > this->free_img_buf_queue.locked_for_read) {
+      img = this->free_img_buf_queue.first;
 #if EXPERIMENTAL_FRAME_QUEUE_OPTIMIZATION
       if (width && height) {
         /* try to obtain a frame with the same format first.
@@ -505,7 +582,7 @@ static vo_frame_t *vo_queue_get_nonblock (img_buf_fifo_t *queue,
         }
 
         if (!img) {
-          if ((queue->num_buffers == 1) && (queue->num_buffers_max > 8)) {
+          if ((this->free_img_buf_queue.num_buffers == 1) && (this->free_img_buf_queue.num_buffers_max > 8)) {
             /* only a single frame on fifo with different
              * format -> ignore it (give another chance of a frame format hit)
              * only if we have a lot of buffers at all.
@@ -516,12 +593,12 @@ static vo_frame_t *vo_queue_get_nonblock (img_buf_fifo_t *queue,
              * on fifo but they don't match -> give up. return whatever we got.
              */
             prev = NULL;
-            img = queue->first;
-            lprintf("frame format miss (%d/%d)\n", i, queue->num_buffers);
+            img = this->free_img_buf_queue.first;
+            lprintf("frame format miss (%d/%d)\n", i, this->free_img_buf_queue.num_buffers);
           }
         } else {
           /* good: format match! */
-          lprintf("frame format hit (%d/%d)\n", i, queue->num_buffers);
+          lprintf("frame format hit (%d/%d)\n", i, this->free_img_buf_queue.num_buffers);
         }
       }
 #endif
@@ -529,56 +606,59 @@ static vo_frame_t *vo_queue_get_nonblock (img_buf_fifo_t *queue,
       img = NULL;
     }
     if (!img) {
-      struct timeval tv;
-      struct timespec ts;
-      gettimeofday (&tv, NULL);
-      ts.tv_sec  = tv.tv_sec + 1;
-      ts.tv_nsec = tv.tv_usec * 1000;
-      if (pthread_cond_timedwait (&queue->not_empty, &queue->mutex, &ts) != 0)
-        break;
+      if (this->xine->port_ticket->ticket_revoked) {
+        pthread_mutex_unlock (&this->free_img_buf_queue.mutex);
+        this->xine->port_ticket->renew (this->xine->port_ticket, 1);
+        if (!(this->xine->port_ticket->ticket_revoked & XINE_TICKET_FLAG_REWIRE)) {
+          pthread_mutex_lock (&this->free_img_buf_queue.mutex);
+          continue;
+        }
+        /* O dear. Port rewire ahaed. Try unblocking with regular or emergency frame. */
+        if (this->clock->speed == XINE_SPEED_PAUSE) {
+          img = vo_get_unblock_frame (this);
+          if (img)
+            return img;
+          xprintf (this->xine, XINE_VERBOSITY_DEBUG, "video_out: allow port rewire.\n");
+          this->xine->port_ticket->renew (this->xine->port_ticket, XINE_TICKET_FLAG_REWIRE);
+          pthread_mutex_lock (&this->free_img_buf_queue.mutex);
+          continue;
+        }
+        pthread_mutex_lock (&this->free_img_buf_queue.mutex);
+      }
+      {
+        struct timeval tv;
+        struct timespec ts;
+        gettimeofday (&tv, NULL);
+        ts.tv_sec  = tv.tv_sec + 1;
+        ts.tv_nsec = tv.tv_usec * 1000;
+        pthread_cond_timedwait (&this->free_img_buf_queue.not_empty, &this->free_img_buf_queue.mutex, &ts);
+      }
     }
   } while (!img);
 
   if (img) {
     if (!prev) {
       if (!img->next) { /* only */
-        queue->first = queue->last = NULL;
-        queue->num_buffers = 0;
+        this->free_img_buf_queue.first = this->free_img_buf_queue.last = NULL;
+        this->free_img_buf_queue.num_buffers = 0;
       } else { /* first */
-        queue->first = img->next;
+        this->free_img_buf_queue.first = img->next;
         img->next = NULL;
-        queue->num_buffers--;
+        this->free_img_buf_queue.num_buffers--;
       }
     } else {
-      queue->num_buffers--;
+      this->free_img_buf_queue.num_buffers--;
       if (img->next) { /* middle */
         prev->next = img->next;
         img->next = NULL;
       } else { /* last */
         prev->next = NULL;
-        queue->last = prev;
+        this->free_img_buf_queue.last = prev;
       }
     }
   }
 
-  pthread_mutex_unlock (&queue->mutex);
-
-  return img;
-}
-
-static vo_frame_t *vo_queue_pop_int (img_buf_fifo_t *queue) {
-  vo_frame_t *img;
-
-  img = queue->first;
-  queue->first = img->next;
-  img->next = NULL;
-  if (!queue->first) {
-    queue->last = NULL;
-    queue->num_buffers = 0;
-  } else {
-    queue->num_buffers--;
-  }
-
+  pthread_mutex_unlock (&this->free_img_buf_queue.mutex);
   return img;
 }
 
@@ -1235,10 +1315,7 @@ static vo_frame_t *vo_get_frame (xine_video_port_t *this_gen,
 
   while (1) {
 
-    while (!(img = vo_queue_get_nonblock (&this->free_img_buf_queue,
-                   width, height, ratio, format, flags)))
-      if (this->xine->port_ticket->ticket_revoked)
-        this->xine->port_ticket->renew(this->xine->port_ticket, 1);
+    img = vo_free_queue_get (this, width, height, ratio, format, flags);
 
     lprintf ("got a frame -> pthread_mutex_lock (&img->mutex)\n");
 
@@ -1620,8 +1697,8 @@ static int vo_frame_draw (vo_frame_t *img, xine_stream_t *stream) {
  *
  * frame allocation inside vo loop is dangerous:
  * we must never wait for a free frame -> deadlock condition.
- * to avoid deadlocks we don't use vo_queue_get_nonblock ()
- * but vo_queue_get_dupl () instead.
+ * to avoid deadlocks we don't use vo_free_queue_get ()
+ * but vo_*_get_dupl () instead.
  */
 static vo_frame_t *duplicate_frame (vos_t *this, vo_frame_t *img) {
   vo_frame_t *dupl;
@@ -2671,6 +2748,8 @@ static void vo_exit (xine_video_port_t *this_gen) {
 
   xprintf (this->xine, XINE_VERBOSITY_DEBUG, "video_out: exit.\n");
 
+  this->xine->port_ticket->revoke_cb_unregister (this->xine->port_ticket, vo_ticket_revoked, this);
+  
   if (this->video_loop_running) {
     void *p;
 
@@ -3014,6 +3093,8 @@ xine_video_port_t *_x_vo_new_port (xine_t *xine, vo_driver_t *driver, int grabon
     vo_queue_append_int (&this->free_img_buf_queue, img);
   }
   this->free_img_buf_queue.locked_for_read = 0;
+
+  this->xine->port_ticket->revoke_cb_register (this->xine->port_ticket, vo_ticket_revoked, this);
 
   this->warn_skipped_threshold =
     xine->config->register_num (xine->config, "engine.performance.warn_skipped_threshold", 10,

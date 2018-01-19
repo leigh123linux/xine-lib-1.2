@@ -59,11 +59,13 @@
 #define XINE_ENABLE_EXPERIMENTAL_FEATURES
 #define METRONOM_INTERNAL
 #define METRONOM_CLOCK_INTERNAL
+#define POST_INTERNAL
 
 #include <xine/xine_internal.h>
 #include <xine/plugin_catalog.h>
 #include <xine/audio_out.h>
 #include <xine/video_out.h>
+#include <xine/post.h>
 #include <xine/demux.h>
 #include <xine/buffer.h>
 #include <xine/spu_decoder.h>
@@ -748,7 +750,7 @@ void xine_close (xine_stream_t *stream) {
 static int stream_rewire_audio(xine_post_out_t *output, void *data)
 {
   xine_stream_t *stream = (xine_stream_t *)output->data;
-  xine_audio_port_t *new_port = (xine_audio_port_t *)data;
+  xine_audio_port_t *new_port = (xine_audio_port_t *)data, *old_port;
   uint32_t bits, rate;
   int mode;
 
@@ -758,18 +760,19 @@ static int stream_rewire_audio(xine_post_out_t *output, void *data)
   /* just an optimization */
   set_speed_internal (stream, XINE_LIVE_PAUSE_OFF);
 
-  stream->xine->port_ticket->lock_port_rewiring(stream->xine->port_ticket, -1);
-  stream->xine->port_ticket->revoke(stream->xine->port_ticket, 1);
+  stream->xine->port_ticket->revoke (stream->xine->port_ticket, XINE_TICKET_FLAG_REWIRE);
 
-  if (stream->audio_out->status(stream->audio_out, stream, &bits, &rate, &mode)) {
+  old_port = stream->audio_out;
+  _x_post_audio_port_ref (new_port);
+  if (old_port->status (old_port, stream, &bits, &rate, &mode)) {
     /* register our stream at the new output port */
     (new_port->open) (new_port, stream, bits, rate, mode);
-    stream->audio_out->close(stream->audio_out, stream);
+    old_port->close (old_port, stream);
   }
   stream->audio_out = new_port;
+  _x_post_audio_port_unref (old_port);
 
-  stream->xine->port_ticket->issue(stream->xine->port_ticket, 1);
-  stream->xine->port_ticket->unlock_port_rewiring(stream->xine->port_ticket);
+  stream->xine->port_ticket->issue (stream->xine->port_ticket, XINE_TICKET_FLAG_REWIRE);
 
   return 1;
 }
@@ -777,7 +780,7 @@ static int stream_rewire_audio(xine_post_out_t *output, void *data)
 static int stream_rewire_video(xine_post_out_t *output, void *data)
 {
   xine_stream_t *stream = (xine_stream_t *)output->data;
-  xine_video_port_t *new_port = (xine_video_port_t *)data;
+  xine_video_port_t *new_port = (xine_video_port_t *)data, *old_port;
   int64_t img_duration;
   int width, height;
 
@@ -787,18 +790,19 @@ static int stream_rewire_video(xine_post_out_t *output, void *data)
   /* just an optimization */
   set_speed_internal (stream, XINE_LIVE_PAUSE_OFF);
 
-  stream->xine->port_ticket->lock_port_rewiring(stream->xine->port_ticket, -1);
-  stream->xine->port_ticket->revoke(stream->xine->port_ticket, 1);
+  stream->xine->port_ticket->revoke (stream->xine->port_ticket, XINE_TICKET_FLAG_REWIRE);
 
-  if (stream->video_out->status(stream->video_out, stream, &width, &height, &img_duration)) {
+  old_port = stream->video_out;
+  _x_post_video_port_ref (new_port);
+  if (old_port->status (old_port, stream, &width, &height, &img_duration)) {
     /* register our stream at the new output port */
     (new_port->open) (new_port, stream);
-    stream->video_out->close(stream->video_out, stream);
+    old_port->close (old_port, stream);
   }
   stream->video_out = new_port;
+  _x_post_video_port_unref (old_port);
 
-  stream->xine->port_ticket->issue(stream->xine->port_ticket, 1);
-  stream->xine->port_ticket->unlock_port_rewiring(stream->xine->port_ticket);
+  stream->xine->port_ticket->issue (stream->xine->port_ticket, XINE_TICKET_FLAG_REWIRE);
 
   return 1;
 }

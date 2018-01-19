@@ -580,33 +580,61 @@ static audio_buffer_t *ao_out_fifo_get (aos_t *this, audio_buffer_t *buf) {
   }
 }
 
-static audio_buffer_t *ao_fifo_get_nonblock (audio_fifo_t *fifo) {
+static void ao_ticket_revoked (void *user_data, int flags) {
+  aos_t *this = (aos_t *)user_data;
+  const char *s1 = (flags & XINE_TICKET_FLAG_ATOMIC) ? " atomic" : "";
+  const char *s2 = (flags & XINE_TICKET_FLAG_REWIRE) ? " port_rewire" : "";
+  pthread_cond_signal (&this->free_fifo.not_empty);
+  xprintf (this->xine, XINE_VERBOSITY_DEBUG, "audio_out: port ticket revoked%s%s.\n", s1, s2);
+}
+
+static audio_buffer_t *ao_free_fifo_get (aos_t *this) {
   audio_buffer_t *buf;
-  pthread_mutex_lock (&fifo->mutex);
-  while (!(buf = fifo->first)) {
-    struct timeval tv;
-    struct timespec ts;
-    gettimeofday (&tv, NULL);
-    ts.tv_sec  = tv.tv_sec + 1;
-    ts.tv_nsec = tv.tv_usec * 1000;
-    fifo->num_waiters++;
-    if (pthread_cond_timedwait (&fifo->not_empty, &fifo->mutex, &ts) != 0) {
-      fifo->num_waiters--;
-      pthread_mutex_unlock (&fifo->mutex);
-      return NULL;
+
+  pthread_mutex_lock (&this->free_fifo.mutex);
+  while (!(buf = this->free_fifo.first)) {
+    if (this->xine->port_ticket->ticket_revoked) {
+      pthread_mutex_unlock (&this->free_fifo.mutex);
+      this->xine->port_ticket->renew (this->xine->port_ticket, 1);
+      if (!(this->xine->port_ticket->ticket_revoked & XINE_TICKET_FLAG_REWIRE)) {
+        pthread_mutex_lock (&this->free_fifo.mutex);
+        continue;
+      }
+      /* O dear. Port rewiring ahead. Try unblock. */
+      if (this->clock->speed == XINE_SPEED_PAUSE) {
+        pthread_mutex_lock (&this->out_fifo.mutex);
+        if (this->out_fifo.first) {
+          buf = ao_fifo_pop_int (&this->out_fifo);
+          pthread_mutex_unlock (&this->out_fifo.mutex);
+          xprintf (this->xine, XINE_VERBOSITY_DEBUG, "audio_out: try unblocking decoder.\n");
+          return buf;
+        }
+        pthread_mutex_unlock (&this->out_fifo.mutex);
+      }
+      pthread_mutex_lock (&this->free_fifo.mutex);
     }
-    fifo->num_waiters--;
+    {
+      struct timeval tv;
+      struct timespec ts;
+      gettimeofday (&tv, NULL);
+      ts.tv_sec  = tv.tv_sec + 1;
+      ts.tv_nsec = tv.tv_usec * 1000;
+      this->free_fifo.num_waiters++;
+      pthread_cond_timedwait (&this->free_fifo.not_empty, &this->free_fifo.mutex, &ts);
+      this->free_fifo.num_waiters--;
+    }
   }
+
   if (buf->next) {
-    fifo->first = buf->next;
+    this->free_fifo.first = buf->next;
     buf->next = NULL;
-    fifo->num_buffers--;
+    this->free_fifo.num_buffers--;
   } else {
-    fifo->first = NULL;
-    fifo->last = NULL;
-    fifo->num_buffers = 0;
+    this->free_fifo.first = NULL;
+    this->free_fifo.last = NULL;
+    this->free_fifo.num_buffers = 0;
   }
-  pthread_mutex_unlock (&fifo->mutex);
+  pthread_mutex_unlock (&this->free_fifo.mutex);
   return buf;
 }
 
@@ -1796,9 +1824,7 @@ static audio_buffer_t *ao_get_buffer (xine_audio_port_t *this_gen) {
   aos_t *this = (aos_t *) this_gen;
   audio_buffer_t *buf;
 
-  while (!(buf = ao_fifo_get_nonblock (&this->free_fifo)))
-    if (this->xine->port_ticket->ticket_revoked)
-      this->xine->port_ticket->renew(this->xine->port_ticket, 1);
+  buf = ao_free_fifo_get (this);
 
   _x_extra_info_reset( buf->extra_info );
   buf->stream = NULL;
@@ -1883,6 +1909,8 @@ static void ao_exit(xine_audio_port_t *this_gen) {
   aos_t *this = (aos_t *) this_gen;
   int vol;
   int prop = 0;
+
+  this->xine->port_ticket->revoke_cb_unregister (this->xine->port_ticket, ao_ticket_revoked, this);
 
   if (this->audio_loop_running) {
     void *p;
@@ -2492,6 +2520,8 @@ xine_audio_port_t *_x_ao_new_port (xine_t *xine, ao_driver_t *driver,
     buf->extra_info = ei;
     this->frame_buf[1] = buf;
   }
+
+  this->xine->port_ticket->revoke_cb_register (this->xine->port_ticket, ao_ticket_revoked, this);
 
   /*
    * Set audio volume to latest used one ?
