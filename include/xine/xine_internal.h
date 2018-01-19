@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2000-2017 the xine project
+ * Copyright (C) 2000-2018 the xine project
  *
  * This file is part of xine, a free video player.
  *
@@ -30,6 +30,7 @@ extern "C" {
  */
 
 #include <xine.h>
+#include <xine/tickets.h>
 #include <xine/refcounter.h>
 #include <xine/input_plugin.h>
 #include <xine/demux.h>
@@ -66,8 +67,6 @@ extern "C" {
 #define XINE_LOG_NUM       3 /* # of log buffers defined */
 
 #define XINE_STREAM_INFO_MAX 99
-
-typedef struct xine_ticket_s xine_ticket_t;
 
 /*
  * the "big" xine struct, holding everything together
@@ -119,75 +118,6 @@ struct xine_s {
 };
 
 /*
- * xine thread tickets
- */
-
-struct xine_ticket_s {
-
-  /* the ticket owner must assure to check for ticket revocation in
-   * intervals of finite length; this means that you must release
-   * the ticket before any operation that might block
-   *
-   * you must never write to this member directly
-   */
-  int    ticket_revoked;
-
-  /* apply for a ticket; between acquire and relese of an irrevocable
-   * ticket (be sure to pair them properly!), it is guaranteed that you
-   * will never be blocked by ticket revocation */
-  void (*acquire)(xine_ticket_t *self, int irrevocable);
-
-  /* give a ticket back */
-  void (*release)(xine_ticket_t *self, int irrevocable);
-
-  /* renew a ticket, when it has been revoked, see ticket_revoked above;
-   * irrevocable must be set to one, if your thread might have acquired
-   * irrevocable tickets you don't know of; set it to zero only when
-   * you know that this is impossible */
-  void (*renew)(xine_ticket_t *self, int irrevocable);
-
-#ifdef XINE_ENGINE_INTERNAL
-  /* allow handing out new tickets */
-  void (*issue)(xine_ticket_t *self, int atomic);
-
-  /* revoke all tickets and deny new ones;
-   * a pair of atomic revoke and issue cannot be interrupted by another
-   * revocation or by other threads acquiring tickets */
-  void (*revoke)(xine_ticket_t *self, int atomic);
-
-  /* behaves like acquire() but doesn't block the calling thread; when
-   * the thread would have been blocked, 0 is returned otherwise 1
-   * this function acquires a ticket even if ticket revocation is active */
-  int (*acquire_nonblocking)(xine_ticket_t *self, int irrevocable);
-
-  /* behaves like release() but doesn't block the calling thread; should
-   * be used in combination with acquire_nonblocking() */
-  void (*release_nonblocking)(xine_ticket_t *self, int irrevocable);
-
-  int (*lock_port_rewiring)(xine_ticket_t *self, int ms_timeout);
-  void (*unlock_port_rewiring)(xine_ticket_t *self);
-
-  void (*dispose)(xine_ticket_t *self);
-
-  pthread_mutex_t lock;
-  pthread_mutex_t revoke_lock;
-  pthread_cond_t  issued;
-  pthread_cond_t  revoked;
-  int             tickets_granted;
-  int             irrevocable_tickets;
-  int             pending_revocations;
-  int             atomic_revoke;
-  pthread_t       atomic_revoker_thread;
-  pthread_mutex_t port_rewiring_lock;
-  struct {
-    int count;
-    pthread_t holder;
-  } *holder_threads;
-  unsigned        holder_thread_count;
-#endif
-};
-
-/*
  * xine event queue
  */
 
@@ -218,14 +148,14 @@ struct xine_stream_s {
   /* demuxers use input_plugin to read data */
   input_plugin_t            *input_plugin;
 
-  /* used by video decoders */
-  xine_video_port_t         *video_out;
+  /* used by video decoders, may change by port rewire */
+  xine_video_port_t         * volatile video_out;
 
   /* demuxers send data to video decoders using this fifo */
   fifo_buffer_t             *video_fifo;
 
-  /* used by audio decoders */
-  xine_audio_port_t         *audio_out;
+  /* used by audio decoders, may change by port rewire */
+  xine_audio_port_t         * volatile audio_out;
 
   /* demuxers send data to audio decoders using this fifo */
   fifo_buffer_t             *audio_fifo;

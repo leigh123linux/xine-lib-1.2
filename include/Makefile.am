@@ -32,6 +32,7 @@ nobase_include_HEADERS = xine.h \
 	xine/sorted_array.h	\
 	xine/spu.h		\
 	xine/spu_decoder.h	\
+	xine/tickets.h		\
 	xine/vdr.h		\
 	xine/version.h		\
 	xine/video_decoder.h	\
