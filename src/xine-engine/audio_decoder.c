@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2000-2017 the xine project
+ * Copyright (C) 2000-2018 the xine project
  *
  * This file is part of xine, a free video player.
  *
@@ -59,12 +59,14 @@ static void *audio_decoder_loop (void *stream_gen) {
   if (prof_audio_decode == -1)
     prof_audio_decode = xine_profiler_allocate_slot ("audio decoder/output");
 
+  running_ticket->acquire (running_ticket, 0);
+
   while (running) {
 
     lprintf ("audio_loop: waiting for package...\n");
 
     if( !replaying_headers )
-      buf = stream->audio_fifo->get (stream->audio_fifo);
+      buf = stream->audio_fifo->tget (stream->audio_fifo, running_ticket);
 
     lprintf ("audio_loop: got package pts = %"PRId64", type = %08x\n", buf->pts, buf->type);
 
@@ -85,7 +87,7 @@ static void *audio_decoder_loop (void *stream_gen) {
       lprintf ("start\n");
 
       /* decoder dispose might call port functions */
-      running_ticket->acquire(running_ticket, 0);
+      /* running_ticket->acquire(running_ticket, 0); */
 
       if (stream->audio_decoder_plugin) {
 
@@ -99,11 +101,13 @@ static void *audio_decoder_loop (void *stream_gen) {
 	stream->keep_ao_driver_open = 0;
       }
 
-      running_ticket->release(running_ticket, 0);
+      /* running_ticket->release(running_ticket, 0); */
 
-      if( !(buf->decoder_flags & BUF_FLAG_GAPLESS_SW) )
+      if (!(buf->decoder_flags & BUF_FLAG_GAPLESS_SW)) {
+        running_ticket->release (running_ticket, 0);
         stream->metronom->handle_audio_discontinuity (stream->metronom, DISC_STREAMSTART, 0);
-
+        running_ticket->acquire (running_ticket, 0);
+      }
       buftype_unknown = 0;
       break;
 
@@ -130,16 +134,20 @@ static void *audio_decoder_loop (void *stream_gen) {
       while(1) {
         int num_bufs, num_streams;
 
-        running_ticket->acquire(running_ticket, 0);
+        /* running_ticket->acquire(running_ticket, 0); */
         num_bufs = stream->audio_out->get_property(stream->audio_out, AO_PROP_BUFS_IN_FIFO);
         num_streams = stream->audio_out->get_property(stream->audio_out, AO_PROP_NUM_STREAMS);
-        running_ticket->release(running_ticket, 0);
+        /* running_ticket->release(running_ticket, 0); */
 
-        if( num_bufs > 0 && num_streams == 1 && !stream->early_finish_event)
+        if( num_bufs > 0 && num_streams == 1 && !stream->early_finish_event) {
+          running_ticket->release (running_ticket, 0);
           xine_usec_sleep (10000);
-        else
+          running_ticket->acquire (running_ticket, 0);
+        } else
           break;
       }
+
+      running_ticket->release (running_ticket, 0);
 
       /* wait for video to reach this marker, if necessary */
       pthread_mutex_lock (&stream->counter_lock);
@@ -164,11 +172,12 @@ static void *audio_decoder_loop (void *stream_gen) {
       pthread_mutex_unlock (&stream->counter_lock);
       stream->audio_channel_auto = -1;
 
+      running_ticket->acquire (running_ticket, 0);
       break;
 
     case BUF_CONTROL_QUIT:
       /* decoder dispose might call port functions */
-      running_ticket->acquire(running_ticket, 0);
+      /* running_ticket->acquire(running_ticket, 0); */
 
       if (stream->audio_decoder_plugin) {
 	_x_free_audio_decoder (stream, stream->audio_decoder_plugin);
@@ -177,7 +186,7 @@ static void *audio_decoder_loop (void *stream_gen) {
 	stream->audio_type = 0;
       }
 
-      running_ticket->release(running_ticket, 0);
+      /* running_ticket->release(running_ticket, 0); */
       running = 0;
       break;
 
@@ -189,34 +198,38 @@ static void *audio_decoder_loop (void *stream_gen) {
 
       _x_extra_info_reset( stream->audio_decoder_extra_info );
       if (stream->audio_decoder_plugin) {
-	running_ticket->acquire(running_ticket, 0);
+	/* running_ticket->acquire(running_ticket, 0); */
 	stream->audio_decoder_plugin->reset (stream->audio_decoder_plugin);
-	running_ticket->release(running_ticket, 0);
+	/* running_ticket->release(running_ticket, 0); */
       }
       break;
 
     case BUF_CONTROL_DISCONTINUITY:
       if (stream->audio_decoder_plugin) {
-	running_ticket->acquire(running_ticket, 0);
+	/* running_ticket->acquire(running_ticket, 0); */
 	stream->audio_decoder_plugin->discontinuity (stream->audio_decoder_plugin);
-	running_ticket->release(running_ticket, 0);
+	/* running_ticket->release(running_ticket, 0); */
       }
 
+      running_ticket->release (running_ticket, 0);
       stream->metronom->handle_audio_discontinuity (stream->metronom, DISC_RELATIVE, buf->disc_off);
+      running_ticket->acquire (running_ticket, 0);
       break;
 
     case BUF_CONTROL_NEWPTS:
       if (stream->audio_decoder_plugin) {
-	running_ticket->acquire(running_ticket, 0);
+	/* running_ticket->acquire(running_ticket, 0); */
 	stream->audio_decoder_plugin->discontinuity (stream->audio_decoder_plugin);
-	running_ticket->release(running_ticket, 0);
+	/* running_ticket->release(running_ticket, 0); */
       }
 
+      running_ticket->release (running_ticket, 0);
       if (buf->decoder_flags & BUF_FLAG_SEEK) {
         stream->metronom->handle_audio_discontinuity (stream->metronom, DISC_STREAMSEEK, buf->disc_off);
       } else {
         stream->metronom->handle_audio_discontinuity (stream->metronom, DISC_ABSOLUTE, buf->disc_off);
       }
+      running_ticket->acquire (running_ticket, 0);
       break;
 
     case BUF_CONTROL_AUDIO_CHANNEL:
@@ -248,7 +261,7 @@ static void *audio_decoder_loop (void *stream_gen) {
 
       xine_profiler_start_count (prof_audio_decode);
 
-      running_ticket->acquire(running_ticket, 0);
+      /* running_ticket->acquire (running_ticket, 0); */
 
       if ( (buf->type & 0xFF000000) == BUF_AUDIO_BASE ) {
 
@@ -389,9 +402,10 @@ static void *audio_decoder_loop (void *stream_gen) {
 	  buftype_unknown = buf->type;
       }
 
-      if (running_ticket->ticket_revoked)
-        running_ticket->renew(running_ticket, 0);
-      running_ticket->release(running_ticket, 0);
+      /* if (running_ticket->ticket_revoked)
+       *   running_ticket->renew (running_ticket, 0);
+       * running_ticket->release (running_ticket, 0);
+       */
 
       xine_profiler_stop_count (prof_audio_decode);
     }
@@ -409,9 +423,9 @@ static void *audio_decoder_loop (void *stream_gen) {
 
       if (stream->audio_decoder_plugin) {
 	/* decoder dispose might call port functions */
-	running_ticket->acquire(running_ticket, 0);
+        /* running_ticket->acquire (running_ticket, 0); */
 	_x_free_audio_decoder (stream, stream->audio_decoder_plugin);
-	running_ticket->release(running_ticket, 0);
+        /* running_ticket->release (running_ticket, 0); */
 
         stream->audio_decoder_plugin = NULL;
         stream->audio_track_map_entries = 0;
@@ -447,6 +461,8 @@ static void *audio_decoder_loop (void *stream_gen) {
         replaying_headers = 0;
     }
   }
+
+  running_ticket->release (running_ticket, 0);
 
   /* free all held header buffers */
   if( first_header ) {
@@ -553,3 +569,5 @@ int _x_get_audio_channel (xine_stream_t *stream) {
 
   return stream->audio_type & 0xFFFF;
 }
+
+

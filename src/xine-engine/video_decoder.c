@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2000-2017 the xine project
+ * Copyright (C) 2000-2018 the xine project
  *
  * This file is part of xine, a free video player.
  *
@@ -141,11 +141,13 @@ static void *video_decoder_loop (void *stream_gen) {
         "likely that these issues may reappear in case they haven't been fixed differently meanwhile.\n"),
         20, video_decoder_update_disable_flush_at_discontinuity, &disable_decoder_flush_at_discontinuity);
 
+  running_ticket->acquire (running_ticket, 0);
+
   while (running) {
 
     lprintf ("getting buffer...\n");
 
-    buf = stream->video_fifo->get (stream->video_fifo);
+    buf = stream->video_fifo->tget (stream->video_fifo, running_ticket);
 
     _x_extra_info_merge( stream->video_decoder_extra_info, buf->extra_info );
     stream->video_decoder_extra_info->seek_count = stream->video_seek_count;
@@ -163,7 +165,7 @@ static void *video_decoder_loop (void *stream_gen) {
     case BUF_CONTROL_START:
 
       /* decoder dispose might call port functions */
-      running_ticket->acquire(running_ticket, 0);
+      /* running_ticket->acquire(running_ticket, 0); */
 
       if (stream->video_decoder_plugin) {
 	_x_free_video_decoder (stream, stream->video_decoder_plugin);
@@ -176,12 +178,14 @@ static void *video_decoder_loop (void *stream_gen) {
         stream->spu_track_map_entries = 0;
       }
 
-      running_ticket->release(running_ticket, 0);
+      /* running_ticket->release(running_ticket, 0); */
 
-      if( !(buf->decoder_flags & BUF_FLAG_GAPLESS_SW) )
+      if (!(buf->decoder_flags & BUF_FLAG_GAPLESS_SW)) {
+        running_ticket->release (running_ticket, 0);
         stream->metronom->handle_video_discontinuity (stream->metronom,
 						      DISC_STREAMSTART, 0);
-
+        running_ticket->acquire (running_ticket, 0);
+      }
       buftype_unknown = 0;
       break;
 
@@ -210,10 +214,10 @@ static void *video_decoder_loop (void *stream_gen) {
 
       /* flush decoder frames if stream finished naturally (non-user stop) */
       if( buf->decoder_flags ) {
-        running_ticket->acquire(running_ticket, 0);
+        /* running_ticket->acquire(running_ticket, 0); */
         if (stream->video_decoder_plugin)
           stream->video_decoder_plugin->flush (stream->video_decoder_plugin);
-        running_ticket->release(running_ticket, 0);
+        /* running_ticket->release(running_ticket, 0); */
       }
 
       /*
@@ -229,17 +233,21 @@ static void *video_decoder_loop (void *stream_gen) {
       while(1) {
         int num_bufs, num_streams;
 
-        running_ticket->acquire(running_ticket, 0);
+        /* running_ticket->acquire(running_ticket, 0); */
         num_bufs = stream->video_out->get_property(stream->video_out, VO_PROP_BUFS_IN_FIFO);
         num_streams = stream->video_out->get_property(stream->video_out, VO_PROP_NUM_STREAMS);
-        running_ticket->release(running_ticket, 0);
+        /* running_ticket->release(running_ticket, 0); */
 
         if( num_bufs > 0 && num_streams == 1 && !stream->early_finish_event &&
-            stream->master == stream )
+            stream->master == stream ) {
+          running_ticket->release (running_ticket, 0);
           xine_usec_sleep (10000);
-        else
+          running_ticket->acquire (running_ticket, 0);
+        } else
           break;
       }
+
+      running_ticket->release (running_ticket, 0);
 
       /* wait for audio to reach this marker, if necessary */
 
@@ -274,11 +282,13 @@ static void *video_decoder_loop (void *stream_gen) {
         pthread_cond_broadcast(&stream->first_frame_reached);
       }
       pthread_mutex_unlock (&stream->first_frame_lock);
+
+      running_ticket->acquire (running_ticket, 0);
       break;
 
     case BUF_CONTROL_QUIT:
       /* decoder dispose might call port functions */
-      running_ticket->acquire(running_ticket, 0);
+      /* running_ticket->acquire(running_ticket, 0); */
 
       if (stream->video_decoder_plugin) {
 	_x_free_video_decoder (stream, stream->video_decoder_plugin);
@@ -290,7 +300,7 @@ static void *video_decoder_loop (void *stream_gen) {
         stream->spu_track_map_entries = 0;
       }
 
-      running_ticket->release(running_ticket, 0);
+      /* running_ticket->release(running_ticket, 0); */
       running = 0;
       break;
 
@@ -298,21 +308,21 @@ static void *video_decoder_loop (void *stream_gen) {
       _x_extra_info_reset( stream->video_decoder_extra_info );
       stream->video_seek_count++;
 
-      running_ticket->acquire(running_ticket, 0);
+      /* running_ticket->acquire(running_ticket, 0); */
       if (stream->video_decoder_plugin) {
         stream->video_decoder_plugin->reset (stream->video_decoder_plugin);
       }
       if (stream->spu_decoder_plugin) {
         stream->spu_decoder_plugin->reset (stream->spu_decoder_plugin);
       }
-      running_ticket->release(running_ticket, 0);
+      /* running_ticket->release(running_ticket, 0); */
       break;
 
     case BUF_CONTROL_FLUSH_DECODER:
       if (stream->video_decoder_plugin) {
-        running_ticket->acquire(running_ticket, 0);
+        /* running_ticket->acquire(running_ticket, 0); */
         stream->video_decoder_plugin->flush (stream->video_decoder_plugin);
-        running_ticket->release(running_ticket, 0);
+        /* running_ticket->release(running_ticket, 0); */
       }
       break;
 
@@ -320,16 +330,18 @@ static void *video_decoder_loop (void *stream_gen) {
       lprintf ("discontinuity ahead\n");
 
       if (stream->video_decoder_plugin) {
-        running_ticket->acquire(running_ticket, 0);
+        /* running_ticket->acquire(running_ticket, 0); */
         stream->video_decoder_plugin->discontinuity (stream->video_decoder_plugin);
         /* it might be a long time before we get back from a handle_video_discontinuity,
 	 * so we better flush the decoder before */
         if (!disable_decoder_flush_at_discontinuity)
           stream->video_decoder_plugin->flush (stream->video_decoder_plugin);
-        running_ticket->release(running_ticket, 0);
+        /* running_ticket->release(running_ticket, 0); */
       }
 
+      running_ticket->release (running_ticket, 0);
       stream->metronom->handle_video_discontinuity (stream->metronom, DISC_RELATIVE, buf->disc_off);
+      running_ticket->acquire (running_ticket, 0);
 
       break;
 
@@ -337,20 +349,22 @@ static void *video_decoder_loop (void *stream_gen) {
       lprintf ("new pts %"PRId64"\n", buf->disc_off);
 
       if (stream->video_decoder_plugin) {
-        running_ticket->acquire(running_ticket, 0);
+        /* running_ticket->acquire(running_ticket, 0); */
         stream->video_decoder_plugin->discontinuity (stream->video_decoder_plugin);
         /* it might be a long time before we get back from a handle_video_discontinuity,
 	 * so we better flush the decoder before */
         if (!disable_decoder_flush_at_discontinuity)
           stream->video_decoder_plugin->flush (stream->video_decoder_plugin);
-        running_ticket->release(running_ticket, 0);
+        /* running_ticket->release(running_ticket, 0); */
       }
 
+      running_ticket->release (running_ticket, 0);
       if (buf->decoder_flags & BUF_FLAG_SEEK) {
 	stream->metronom->handle_video_discontinuity (stream->metronom, DISC_STREAMSEEK, buf->disc_off);
       } else {
 	stream->metronom->handle_video_discontinuity (stream->metronom, DISC_ABSOLUTE, buf->disc_off);
       }
+      running_ticket->acquire (running_ticket, 0);
       break;
 
     case BUF_CONTROL_AUDIO_CHANNEL:
@@ -388,7 +402,7 @@ static void *video_decoder_loop (void *stream_gen) {
 
         xine_profiler_start_count (prof_video_decode);
 
-        running_ticket->acquire(running_ticket, 0);
+        /* running_ticket->acquire(running_ticket, 0); */
 
 	/*
 	  printf ("video_decoder: got package %d, decoder_info[0]:%d\n",
@@ -431,9 +445,10 @@ static void *video_decoder_loop (void *stream_gen) {
           }
         }
 
-        if (running_ticket->ticket_revoked)
-          running_ticket->renew(running_ticket, 0);
-        running_ticket->release(running_ticket, 0);
+        /* if (running_ticket->ticket_revoked)
+         *   running_ticket->renew(running_ticket, 0);
+         * running_ticket->release(running_ticket, 0);
+         */
 
         xine_profiler_stop_count (prof_video_decode);
 
@@ -446,7 +461,7 @@ static void *video_decoder_loop (void *stream_gen) {
 
         xine_profiler_start_count (prof_spu_decode);
 
-        running_ticket->acquire(running_ticket, 0);
+        /* running_ticket->acquire(running_ticket, 0); */
 
         update_spu_decoder(stream, buf->type);
 
@@ -488,9 +503,10 @@ static void *video_decoder_loop (void *stream_gen) {
           stream->spu_decoder_plugin->decode_data (stream->spu_decoder_plugin, buf);
         }
 
-        if (running_ticket->ticket_revoked)
-          running_ticket->renew(running_ticket, 0);
-        running_ticket->release(running_ticket, 0);
+        /* if (running_ticket->ticket_revoked)
+         *   running_ticket->renew(running_ticket, 0);
+         * running_ticket->release(running_ticket, 0);
+         */
 
         xine_profiler_stop_count (prof_spu_decode);
 
@@ -506,6 +522,8 @@ static void *video_decoder_loop (void *stream_gen) {
 
     buf->free_buffer (buf);
   }
+
+  running_ticket->release (running_ticket, 0);
 
   return NULL;
 }
