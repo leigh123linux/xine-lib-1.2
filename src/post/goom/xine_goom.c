@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2000-2017 the xine project
+ * Copyright (C) 2000-2018 the xine project
  *
  * This file is part of xine, a free video player.
  *
@@ -355,9 +355,10 @@ static void goom_dispose(post_plugin_t *this_gen)
 {
   post_plugin_goom_t *this   = (post_plugin_goom_t *)this_gen;
 
-  rgb2yuy2_free (this->rgb2yuy2);
-
   if (_x_post_dispose(this_gen)) {
+
+    rgb2yuy2_free (this->rgb2yuy2);
+
     this->class->ip = NULL;
 
     goom_close(this->goom);
@@ -576,8 +577,9 @@ static void goom_port_put_buffer (xine_audio_port_t *port_gen,
               frame->proc_slice (frame, sptr);
             }
           }
+        }
 #if defined(ARCH_X86)
-        } else if ((this->csc_method == 1) &&
+        else if ((this->csc_method == 1) &&
             (xine_mm_accel() & MM_ACCEL_X86_MMX)) {
           int plane_ptr = 0;
 
@@ -597,8 +599,9 @@ static void goom_port_put_buffer (xine_audio_port_t *port_gen,
           }
 
           yuv444_to_yuy2(&this->yuv, frame->base[0], frame->pitches[0]);
+        }
 #endif /* ARCH_X86 */
-        } else {
+        else {
 
           while (goom_frame < goom_frame_end) {
             uint8_t r1, g1, b1, r2, g2, b2;
