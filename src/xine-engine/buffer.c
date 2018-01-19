@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2000-2017 the xine project
+ * Copyright (C) 2000-2018 the xine project
  *
  * This file is part of xine, a free video player.
  *
@@ -448,6 +448,66 @@ static buf_element_t *fifo_buffer_get (fifo_buffer_t *fifo) {
   return buf;
 }
 
+static buf_element_t *fifo_buffer_tget (fifo_buffer_t *fifo, xine_ticket_t *ticket) {
+  /* Optimization: let decoders hold port ticket by default.
+   * Unfortunately, fifo callbacks are 1 big freezer, as they run with fifo locked,
+   * and may try to revoke ticket for pauseing or other stuff.
+   * Always releasing ticket when there are callbacks is safe but inefficient.
+   * Instead, we release ticket when we are going to wait for fifo or a buffer.
+   * This should melt the "put" side. We could still freeze ourselves directly
+   * at the "get" side, what ticket->revoke () self grant hack shall fix.
+   */
+  buf_element_t *buf;
+  int mode = ticket ? 2 : 0, i;
+
+  if (pthread_mutex_trylock (&fifo->mutex)) {
+    if (mode & 2) {
+      ticket->release (ticket, 0);
+      mode = 1;
+    }
+    pthread_mutex_lock (&fifo->mutex);
+  }
+
+  if (!fifo->first) {
+    if (mode & 2) {
+      ticket->release (ticket, 0);
+      mode = 1;
+    }
+    fifo->fifo_num_waiters++;
+    do {
+      pthread_cond_wait (&fifo->not_empty, &fifo->mutex);
+    } while (!fifo->first);
+    fifo->fifo_num_waiters--;
+  }
+
+  buf = fifo->first;
+
+  fifo->first = fifo->first->next;
+  if (fifo->first==NULL)
+    fifo->last = NULL;
+
+  if (buf->free_buffer == buffer_pool_free) {
+    be_ei_t *beei = (be_ei_t *)buf;
+    fifo->fifo_size -= beei->nbufs;
+  } else {
+    fifo->fifo_size -= 1;
+  }
+  fifo->fifo_data_size -= buf->size;
+
+  for(i = 0; fifo->get_cb[i]; i++)
+    fifo->get_cb[i](fifo, buf, fifo->get_cb_data[i]);
+
+  pthread_mutex_unlock (&fifo->mutex);
+
+  if (mode & 1)
+    ticket->acquire (ticket, 0);
+  if (ticket && ticket->ticket_revoked)
+    ticket->renew (ticket, XINE_TICKET_FLAG_REWIRE);
+
+  return buf;
+}
+
+
 /*
  * clear buffer (put all contained buffer elements back into buffer pool)
  */
@@ -774,6 +834,7 @@ fifo_buffer_t *_x_fifo_buffer_new (int num_buffers, uint32_t buf_size) {
   this->put                 = fifo_buffer_put;
   this->insert              = fifo_buffer_insert;
   this->get                 = fifo_buffer_get;
+  this->tget                = fifo_buffer_tget;
   this->clear               = fifo_buffer_clear;
   this->size                = fifo_buffer_size;
   this->num_free            = fifo_buffer_num_free;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2000-2017 the xine project
+ * Copyright (C) 2000-2018 the xine project
  *
  * This file is part of xine, a free video player.
  *
@@ -42,6 +42,7 @@ extern "C" {
 
 #include <xine/os_types.h>
 #include <xine/attributes.h>
+#include <xine/tickets.h>
 
 #define BUF_MAX_CALLBACKS 5
 
@@ -658,6 +659,12 @@ struct fifo_buffer_s
   int              buffer_pool_num_waiters;
   int              buffer_pool_large_wait;
   int              fifo_num_waiters;
+
+  /* Same as get but if ticket is not NULL
+   * - release it while waiting for a buf, or
+   * - renew it when revoked.
+   */
+  buf_element_t *(*tget) (fifo_buffer_t *fifo, xine_ticket_t *ticket);
 } ;
 
 /**
