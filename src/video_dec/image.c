@@ -37,7 +37,11 @@
 #define LOG
 */
 
+#ifdef HAVE_MAGICKWAND_MAGICKWAND_H
+#include <MagickWand/MagickWand.h>
+#else
 #include <wand/magick_wand.h>
+#endif
 #ifdef PACKAGE_NAME
 #undef PACKAGE_BUGREPORT
 #undef PACKAGE_NAME

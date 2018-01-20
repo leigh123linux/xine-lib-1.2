@@ -178,6 +178,11 @@ AC_DEFUN([XINE_DECODER_PLUGINS], [
         if test x"$with_imagemagick" = x"yes" && test x"$have_imagemagick" = x"no"; then
             AC_MSG_ERROR([ImageMagick support requested, but neither Wand, MagickWand, nor GraphicsMagick were found])
         fi
+        dnl header was changed in ImageMagick 7+
+        ac_save_CPPFLAGS="$CPPFLAGS" CPPFLAGS="$CPPFLAGS $WAND_CFLAGS"
+        AC_CHECK_HEADERS([MagickWand/MagickWand.h]) dnl ImageMagick 7+
+        AC_CHECK_HEADERS([wand/magick_wand.h])      dnl ImageMagick <7
+        CPPFLAGS="$ac_save_CPPFLAGS"
     fi
     AM_CONDITIONAL([ENABLE_IMAGEMAGICK], [test x"$have_imagemagick" = x"yes"])
 
