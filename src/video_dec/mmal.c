@@ -135,6 +135,12 @@ static int send_output_buffer(mmal_decoder_t *this)
             "xine frame not suitable for direct rendering\n");
 
     buffer->data = malloc(buffer->alloc_size);
+    if (!buffer->data) {
+      xprintf(this->stream->xine, XINE_VERBOSITY_LOG, LOG_MODULE": "
+              "failed to allocate output buffer\n");
+      free_output_buffer(buffer);
+      return -1;
+    }
   }
 
   status = mmal_port_send_buffer(this->decoder->output[0], buffer);
@@ -727,6 +733,8 @@ static video_decoder_t *open_plugin (video_decoder_class_t *class_gen, xine_stre
   bcm_host_init();
 
   this = (mmal_decoder_t *) calloc(1, sizeof(mmal_decoder_t));
+  if (!this)
+    return NULL;
 
   pthread_mutex_init (&this->mutex, NULL);
 
@@ -835,6 +843,8 @@ static void *init_plugin (xine_t *xine, void *data)
   video_decoder_class_t *this;
 
   this = (video_decoder_class_t *) calloc(1, sizeof(video_decoder_class_t));
+  if (!this)
+    return NULL;
 
   this->open_plugin     = open_plugin;
   this->identifier      = "libmmal";
