@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2000-2017 the xine project
+ * Copyright (C) 2000-2018 the xine project
  *
  * This file is part of xine, a free video player.
  *
@@ -36,8 +36,11 @@
 #define LOG
 */
 
-
 #include "net_buf_ctrl.h"
+
+#ifndef XINE_LIVE_PAUSE_ON
+# define XINE_LIVE_PAUSE_ON 0x7ffffffd
+#endif
 
 #define DEFAULT_HIGH_WATER_MARK 5000 /* in 1/1000 s */
 
@@ -114,6 +117,8 @@ static void nbc_set_speed_pause (nbc_t *this) {
 
   xprintf(stream->xine, XINE_VERBOSITY_DEBUG, "\nnet_buf_ctrl: nbc_set_speed_pause\n");
   _x_set_speed (stream, XINE_SPEED_PAUSE);
+  /* allow decoding while paused */
+  _x_set_fine_speed (stream, XINE_LIVE_PAUSE_ON);
   stream->xine->clock->set_option (stream->xine->clock, CLOCK_SCR_ADJUSTABLE, 0);
 }
 
@@ -214,6 +219,8 @@ static void dvbspeed_put (nbc_t *this, fifo_buffer_t * fifo, buf_element_t *b) {
         /* Pause on first a/v buffer. Decoder headers went through at this time
            already, and xine_play is done waiting for that */
         _x_set_fine_speed (this->stream, 0);
+        /* allow decoding while paused */
+        _x_set_fine_speed (this->stream, XINE_LIVE_PAUSE_ON);
         xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG, "net_buf_ctrl: prebuffering...\n");
         break;
       }
