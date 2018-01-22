@@ -185,10 +185,10 @@ static int ticket_acquire_internal(xine_ticket_t *this, int irrevocable, int non
       break;
   }
 
-  if (i == this->holder_thread_count) {
+  if (i >= this->holder_thread_count) {
     /* not found */
-    wait = (this->ticket_revoked && !this->irrevocable_tickets) ? !nonblocking
-         : (this->atomic_revoke ? !pthread_equal (this->atomic_revoker_thread, self) : 0);
+    wait = this->pending_revocations
+        && (this->rewirers || !irrevocable || (this->atomic_revoke && !pthread_equal (this->atomic_revoker_thread, self)));
     if (nonblocking && wait) {
       /* not available immediately, bail out */
       pthread_mutex_unlock (&this->lock);
@@ -216,8 +216,8 @@ static int ticket_acquire_internal(xine_ticket_t *this, int irrevocable, int non
     
   while (wait) {
     pthread_cond_wait (&this->issued, &this->lock);
-    wait = (this->ticket_revoked && !this->irrevocable_tickets) ? 1
-         : (this->atomic_revoke ? !pthread_equal (this->atomic_revoker_thread, self) : 0);
+    wait = this->pending_revocations
+        && (this->rewirers || !irrevocable || (this->atomic_revoke && !pthread_equal (this->atomic_revoker_thread, self)));
   }
 
   this->tickets_granted++;
@@ -248,7 +248,7 @@ static void ticket_release_internal(xine_ticket_t *this, int irrevocable) {
       break;
   }
 
-  if (i == this->holder_thread_count) {
+  if (i >= this->holder_thread_count) {
     lprintf ("BUG! Ticket 0x%p released by a thread that never took it! Allowing code to continue\n", (void*)this);
     _x_assert (0);
   } else {
@@ -262,16 +262,13 @@ static void ticket_release_internal(xine_ticket_t *this, int irrevocable) {
     }
   }
 
-  this->tickets_granted--;
-  if (this->tickets_granted < 0)
-    this->tickets_granted = 0;
-  if (irrevocable) {
+  if ((this->irrevocable_tickets > 0) && irrevocable)
     this->irrevocable_tickets--;
-    if (this->irrevocable_tickets < 0)
-      this->irrevocable_tickets = 0;
-  }
+  if (this->tickets_granted > 0)
+    this->tickets_granted--;
 
-  if (this->ticket_revoked && !this->tickets_granted)
+  if (this->pending_revocations
+    && (!this->tickets_granted || (this->rewirers && !this->irrevocable_tickets)))
     pthread_cond_broadcast(&this->revoked);
 
   pthread_mutex_unlock(&this->lock);
@@ -286,29 +283,57 @@ static void ticket_release(xine_ticket_t *this, int irrevocable) {
 }
 
 static void ticket_renew(xine_ticket_t *this, int irrevocable) {
+  int i, grants;
+  pthread_t self = pthread_self ();
   pthread_mutex_lock (&this->lock);
+#if 0
+  /* For performance, caller checks ticket_revoked without lock. 0 here is not really a bug. */
   _x_assert (this->ticket_revoked);
-
+#endif
+  /* Multithreaded decoders may well allocate frames outside the time window of the main
+   * decoding call. Usually, we cannot make those hidden threads acquire and release
+   * tickets properly. Blocking one of them may freeze main decoder with ticket held.
+   * Lets just not make them wait, not messing with grant count.
+   * There goes an optimization...
+   */
+  for (i = 0; i < this->holder_thread_count; i++) {
+    if (pthread_equal (this->holder_threads[i].holder, self))
+      break;
+  }
+  if (i >= this->holder_thread_count) {
+    pthread_mutex_unlock (&this->lock);
+    return;
+  }
+  /* If our thread still has saved self grants and calls this, restore them.
+   * Assume later reissue by another thread (engine pause).
+   */
+  grants = this->holder_threads[i].count;
+  if (grants >= 0x80000) {
+    grants &= 0x7ffff;
+    this->holder_threads[i].count = grants;
+    this->tickets_granted += grants;
+  }
+  /* Lift _all_ our grants, avoid freeze when we have more than 1. */
   if (irrevocable & XINE_TICKET_FLAG_REWIRE) {
     /* allow everything */
-    this->tickets_granted--;
+    this->tickets_granted -= grants;
     if (!this->tickets_granted)
       pthread_cond_broadcast (&this->revoked);
-    while ((this->pending_revocations > 0)
+    while (this->pending_revocations
         && (!this->irrevocable_tickets || !(irrevocable & ~XINE_TICKET_FLAG_REWIRE)))
       pthread_cond_wait (&this->issued, &this->lock);
-    this->tickets_granted++;
+    this->tickets_granted += grants;
   } else {
     /* fair wheather (not rewire) mode */
     this->plain_renewers++;
-    this->tickets_granted--;
+    this->tickets_granted -= grants;
     if (!this->tickets_granted)
       pthread_cond_broadcast (&this->revoked);
-    while ((this->pending_revocations > 0)
+    while (this->pending_revocations
         && (!this->irrevocable_tickets || !irrevocable)
         && !this->rewirers)
       pthread_cond_wait (&this->issued, &this->lock);
-    this->tickets_granted++;
+    this->tickets_granted += grants;
     this->plain_renewers--;
   }
 
@@ -330,8 +355,14 @@ static void ticket_issue (xine_ticket_t *this, int flags) {
   if (this->pending_revocations > 0)
     this->pending_revocations--;
 
-  if (!this->pending_revocations)
+  this->atomic_revoke = 0;
+
+  i = !this->pending_revocations ? 0
+    : (this->rewirers ? (XINE_TICKET_FLAG_REWIRE | 1) : 1);
+  if (this->ticket_revoked != i) {
+    this->ticket_revoked = i;
     pthread_cond_broadcast (&this->issued);
+  }
 
   /* HACK: restore self grants. */
   for (i = 0; i < this->holder_thread_count; i++) {
@@ -342,7 +373,6 @@ static void ticket_issue (xine_ticket_t *this, int flags) {
         this->holder_threads[i].count = n;
         if (n < 0x80000) {
           if (this->pending_revocations) {
-            this->atomic_revoke = 0;
             pthread_mutex_unlock (&this->revoke_lock);
             while (this->pending_revocations)
               pthread_cond_wait (&this->issued, &this->lock);
@@ -356,8 +386,6 @@ static void ticket_issue (xine_ticket_t *this, int flags) {
       break;
     }
   }
-
-  this->atomic_revoke = 0;
 
   pthread_mutex_unlock(&this->lock);
   pthread_mutex_unlock(&this->revoke_lock);
@@ -397,11 +425,11 @@ static void ticket_revoke(xine_ticket_t *this, int flags) {
     if (this->plain_renewers)
       pthread_cond_broadcast (&this->issued);
   }
+  this->ticket_revoked = (this->rewirers ? (XINE_TICKET_FLAG_REWIRE | 1) : 1);
 
   if (this->tickets_granted || (this->rewirers && this->plain_renewers)) {
-    int i, m = (this->rewirers ? (XINE_TICKET_FLAG_REWIRE | 1) : 1);
+    int i;
     /* Notify other holders. */
-    this->ticket_revoked = m;
     for (i = 0; i < XINE_TICKET_MAX_CB; i++) {
       if (!this->revoke_callbacks[i])
         break;
@@ -409,15 +437,13 @@ static void ticket_revoke(xine_ticket_t *this, int flags) {
     }
     /* Wait for them to release/renew. */
     do {
-      this->ticket_revoked = m;
       pthread_cond_wait (&this->revoked, &this->lock);
+      this->ticket_revoked = (this->rewirers ? (XINE_TICKET_FLAG_REWIRE | 1) : 1);
     } while (this->tickets_granted || (this->rewirers && this->plain_renewers));
   }
 
-  this->ticket_revoked = 0;
-
   if (flags & (XINE_TICKET_FLAG_REWIRE | XINE_TICKET_FLAG_ATOMIC))
-    this->atomic_revoker_thread = pthread_self();
+    this->atomic_revoker_thread = self;
 
   pthread_mutex_unlock(&this->lock);
   if (!(flags & (XINE_TICKET_FLAG_REWIRE | XINE_TICKET_FLAG_ATOMIC)))
@@ -475,8 +501,11 @@ static xine_ticket_t *XINE_MALLOC ticket_init(void) {
 
   port_ticket->ticket_revoked       = 0;
   port_ticket->holder_thread_count  = 0;
-  port_ticket->plain_renewers       = 0;
+  port_ticket->tickets_granted      = 0;
+  port_ticket->irrevocable_tickets  = 0;
+  port_ticket->atomic_revoke        = 0;
   port_ticket->rewirers             = 0;
+  port_ticket->plain_renewers       = 0;
   {
     int i;
     for (i = 0; i < XINE_TICKET_MAX_CB; i++) {
@@ -2140,7 +2169,7 @@ void _x_select_spu_channel (xine_stream_t *stream, int channel) {
   pthread_mutex_lock (&stream->frontend_lock);
   stream->spu_channel_user = (channel >= -2 ? channel : -2);
 
-  stream->xine->port_ticket->acquire(stream->xine->port_ticket, 0);
+  stream->xine->port_ticket->acquire(stream->xine->port_ticket, 1);
 
   switch (stream->spu_channel_user) {
   case -2:
@@ -2160,7 +2189,7 @@ void _x_select_spu_channel (xine_stream_t *stream, int channel) {
   }
   lprintf("set to %d\n",stream->spu_channel);
 
-  stream->xine->port_ticket->release(stream->xine->port_ticket, 0);
+  stream->xine->port_ticket->release(stream->xine->port_ticket, 1);
 
   pthread_mutex_unlock (&stream->frontend_lock);
 }
@@ -2314,9 +2343,9 @@ static int _x_get_current_frame_data (xine_stream_t *stream,
   vo_frame_t *frame;
   size_t required_size = 0;
 
-  stream->xine->port_ticket->acquire(stream->xine->port_ticket, 0);
+  stream->xine->port_ticket->acquire(stream->xine->port_ticket, 1);
   frame = stream->video_out->get_last_frame (stream->video_out);
-  stream->xine->port_ticket->release(stream->xine->port_ticket, 0);
+  stream->xine->port_ticket->release(stream->xine->port_ticket, 1);
 
   if (!frame) {
     data->img_size = 0;

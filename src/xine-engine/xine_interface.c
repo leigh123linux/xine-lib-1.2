@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2000-2017 the xine project
+ * Copyright (C) 2000-2018 the xine project
  *
  * This file is part of xine, a free video player.
  *
@@ -394,51 +394,51 @@ void xine_set_param (xine_stream_t *stream, int param, int value) {
     break;
 
   case XINE_PARAM_AUDIO_VOLUME:
-    stream->xine->port_ticket->acquire(stream->xine->port_ticket, 0);
+    stream->xine->port_ticket->acquire(stream->xine->port_ticket, 1);
     if (stream->audio_out)
       stream->audio_out->set_property (stream->audio_out, AO_PROP_MIXER_VOL, value);
-    stream->xine->port_ticket->release(stream->xine->port_ticket, 0);
+    stream->xine->port_ticket->release(stream->xine->port_ticket, 1);
     break;
 
   case XINE_PARAM_AUDIO_MUTE:
-    stream->xine->port_ticket->acquire(stream->xine->port_ticket, 0);
+    stream->xine->port_ticket->acquire(stream->xine->port_ticket, 1);
     if (stream->audio_out)
       stream->audio_out->set_property (stream->audio_out, AO_PROP_MUTE_VOL, value);
-    stream->xine->port_ticket->release(stream->xine->port_ticket, 0);
+    stream->xine->port_ticket->release(stream->xine->port_ticket, 1);
     break;
 
   case XINE_PARAM_AUDIO_COMPR_LEVEL:
-    stream->xine->port_ticket->acquire(stream->xine->port_ticket, 0);
+    stream->xine->port_ticket->acquire(stream->xine->port_ticket, 1);
     if (stream->audio_out)
       stream->audio_out->set_property (stream->audio_out, AO_PROP_COMPRESSOR, value);
-    stream->xine->port_ticket->release(stream->xine->port_ticket, 0);
+    stream->xine->port_ticket->release(stream->xine->port_ticket, 1);
     break;
 
   case XINE_PARAM_AUDIO_AMP_LEVEL:
-    stream->xine->port_ticket->acquire(stream->xine->port_ticket, 0);
+    stream->xine->port_ticket->acquire(stream->xine->port_ticket, 1);
     if (stream->audio_out) {
       int old_value = stream->audio_out->get_property (stream->audio_out, AO_PROP_AMP);
       if (old_value != stream->audio_out->set_property (stream->audio_out, AO_PROP_AMP, value))
         send_audio_amp_event_internal(stream);
     }
-    stream->xine->port_ticket->release(stream->xine->port_ticket, 0);
+    stream->xine->port_ticket->release(stream->xine->port_ticket, 1);
     break;
 
   case XINE_PARAM_AUDIO_AMP_MUTE:
-    stream->xine->port_ticket->acquire(stream->xine->port_ticket, 0);
+    stream->xine->port_ticket->acquire(stream->xine->port_ticket, 1);
     if (stream->audio_out) {
       int old_value = stream->audio_out->get_property (stream->audio_out, AO_PROP_AMP_MUTE);
       if (old_value != stream->audio_out->set_property (stream->audio_out, AO_PROP_AMP_MUTE, value))
         send_audio_amp_event_internal(stream);
     }
-    stream->xine->port_ticket->release(stream->xine->port_ticket, 0);
+    stream->xine->port_ticket->release(stream->xine->port_ticket, 1);
     break;
 
   case XINE_PARAM_AUDIO_CLOSE_DEVICE:
-    stream->xine->port_ticket->acquire(stream->xine->port_ticket, 0);
+    stream->xine->port_ticket->acquire(stream->xine->port_ticket, 1);
     if (stream->audio_out)
       stream->audio_out->set_property (stream->audio_out, AO_PROP_CLOSE_DEVICE, value);
-    stream->xine->port_ticket->release(stream->xine->port_ticket, 0);
+    stream->xine->port_ticket->release(stream->xine->port_ticket, 1);
     break;
 
   case XINE_PARAM_EQ_30HZ:
@@ -451,12 +451,12 @@ void xine_set_param (xine_stream_t *stream, int param, int value) {
   case XINE_PARAM_EQ_4000HZ:
   case XINE_PARAM_EQ_8000HZ:
   case XINE_PARAM_EQ_16000HZ:
-    stream->xine->port_ticket->acquire(stream->xine->port_ticket, 0);
+    stream->xine->port_ticket->acquire(stream->xine->port_ticket, 1);
     if (stream->audio_out)
       stream->audio_out->set_property (stream->audio_out,
 				       param - XINE_PARAM_EQ_30HZ + AO_PROP_EQ_30HZ,
 				       value);
-    stream->xine->port_ticket->release(stream->xine->port_ticket, 0);
+    stream->xine->port_ticket->release(stream->xine->port_ticket, 1);
     break;
 
   case XINE_PARAM_VERBOSITY:
@@ -479,9 +479,9 @@ void xine_set_param (xine_stream_t *stream, int param, int value) {
   case XINE_PARAM_VO_CROP_RIGHT:
   case XINE_PARAM_VO_CROP_TOP:
   case XINE_PARAM_VO_CROP_BOTTOM:
-    stream->xine->port_ticket->acquire(stream->xine->port_ticket, 0);
+    stream->xine->port_ticket->acquire(stream->xine->port_ticket, 1);
     stream->video_out->set_property(stream->video_out, param, value);
-    stream->xine->port_ticket->release(stream->xine->port_ticket, 0);
+    stream->xine->port_ticket->release(stream->xine->port_ticket, 1);
     break;
 
   case XINE_PARAM_VO_SINGLE_STEP:
@@ -493,10 +493,10 @@ void xine_set_param (xine_stream_t *stream, int param, int value) {
       _x_set_fine_speed (stream, XINE_LIVE_PAUSE_ON);
       /* rather miss 1 strobe than wait or freeze. */
       if (stream->xine->port_ticket->ticket_revoked == 0) {
-        stream->xine->port_ticket->acquire(stream->xine->port_ticket, 0);
+        stream->xine->port_ticket->acquire(stream->xine->port_ticket, 1);
         stream->video_out->set_property (stream->video_out, param, value);
         stream->audio_out->set_property (stream->audio_out, param, value);
-        stream->xine->port_ticket->release(stream->xine->port_ticket, 0);
+        stream->xine->port_ticket->release(stream->xine->port_ticket, 1);
       }
     }
     pthread_mutex_unlock (&stream->frontend_lock);
@@ -581,48 +581,48 @@ int xine_get_param (xine_stream_t *stream, int param) {
     break;
 
   case XINE_PARAM_AUDIO_VOLUME:
-    stream->xine->port_ticket->acquire(stream->xine->port_ticket, 0);
+    stream->xine->port_ticket->acquire(stream->xine->port_ticket, 1);
     if (!stream->audio_out)
       ret = -1;
     else
       ret = stream->audio_out->get_property (stream->audio_out, AO_PROP_MIXER_VOL);
-    stream->xine->port_ticket->release(stream->xine->port_ticket, 0);
+    stream->xine->port_ticket->release(stream->xine->port_ticket, 1);
     break;
 
   case XINE_PARAM_AUDIO_MUTE:
-    stream->xine->port_ticket->acquire(stream->xine->port_ticket, 0);
+    stream->xine->port_ticket->acquire(stream->xine->port_ticket, 1);
     if (!stream->audio_out)
       ret = -1;
     else
       ret = stream->audio_out->get_property (stream->audio_out, AO_PROP_MUTE_VOL);
-    stream->xine->port_ticket->release(stream->xine->port_ticket, 0);
+    stream->xine->port_ticket->release(stream->xine->port_ticket, 1);
     break;
 
   case XINE_PARAM_AUDIO_COMPR_LEVEL:
-    stream->xine->port_ticket->acquire(stream->xine->port_ticket, 0);
+    stream->xine->port_ticket->acquire(stream->xine->port_ticket, 1);
     if (!stream->audio_out)
       ret = -1;
     else
       ret = stream->audio_out->get_property (stream->audio_out, AO_PROP_COMPRESSOR);
-    stream->xine->port_ticket->release(stream->xine->port_ticket, 0);
+    stream->xine->port_ticket->release(stream->xine->port_ticket, 1);
     break;
 
   case XINE_PARAM_AUDIO_AMP_LEVEL:
-    stream->xine->port_ticket->acquire(stream->xine->port_ticket, 0);
+    stream->xine->port_ticket->acquire(stream->xine->port_ticket, 1);
     if (!stream->audio_out)
       ret = -1;
     else
       ret = stream->audio_out->get_property (stream->audio_out, AO_PROP_AMP);
-    stream->xine->port_ticket->release(stream->xine->port_ticket, 0);
+    stream->xine->port_ticket->release(stream->xine->port_ticket, 1);
     break;
 
   case XINE_PARAM_AUDIO_AMP_MUTE:
-    stream->xine->port_ticket->acquire(stream->xine->port_ticket, 0);
+    stream->xine->port_ticket->acquire(stream->xine->port_ticket, 1);
     if (!stream->audio_out)
       ret = -1;
     else
       ret = stream->audio_out->get_property (stream->audio_out, AO_PROP_AMP_MUTE);
-    stream->xine->port_ticket->release(stream->xine->port_ticket, 0);
+    stream->xine->port_ticket->release(stream->xine->port_ticket, 1);
     break;
 
   case XINE_PARAM_EQ_30HZ:
@@ -635,13 +635,13 @@ int xine_get_param (xine_stream_t *stream, int param) {
   case XINE_PARAM_EQ_4000HZ:
   case XINE_PARAM_EQ_8000HZ:
   case XINE_PARAM_EQ_16000HZ:
-    stream->xine->port_ticket->acquire(stream->xine->port_ticket, 0);
+    stream->xine->port_ticket->acquire(stream->xine->port_ticket, 1);
     if (!stream->audio_out)
       ret = -1;
     else
       ret=  stream->audio_out->get_property (stream->audio_out,
 					     param - XINE_PARAM_EQ_30HZ + AO_PROP_EQ_30HZ);
-    stream->xine->port_ticket->release(stream->xine->port_ticket, 0);
+    stream->xine->port_ticket->release(stream->xine->port_ticket, 1);
     break;
 
   case XINE_PARAM_VERBOSITY:
@@ -666,9 +666,9 @@ int xine_get_param (xine_stream_t *stream, int param) {
   case XINE_PARAM_VO_CROP_RIGHT:
   case XINE_PARAM_VO_CROP_TOP:
   case XINE_PARAM_VO_CROP_BOTTOM:
-    stream->xine->port_ticket->acquire(stream->xine->port_ticket, 0);
+    stream->xine->port_ticket->acquire(stream->xine->port_ticket, 1);
     ret = stream->video_out->get_property(stream->video_out, param);
-    stream->xine->port_ticket->release(stream->xine->port_ticket, 0);
+    stream->xine->port_ticket->release(stream->xine->port_ticket, 1);
     break;
 
   case XINE_PARAM_IGNORE_VIDEO:
