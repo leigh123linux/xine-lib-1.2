@@ -685,7 +685,7 @@ static void fb_dispose(vo_driver_t *this_gen)
 {
   fb_driver_t *this = (fb_driver_t *)this_gen;
 
-  if (this->video_mem_base != (void *)-1)
+  if (this->video_mem_base != MAP_FAILED)
     munmap(this->video_mem_base, this->mem_size);
 
   if (this->fd >= 0)
@@ -987,7 +987,7 @@ static vo_driver_t *fb_open_plugin(video_driver_class_t *class_gen,
   if(!this)
     return NULL;
 
-  this->video_mem_base = (void*)-1;
+  this->video_mem_base = MAP_FAILED;
 
   _x_alphablend_init(&this->alphablend_extra_data, class->xine);
 
@@ -1054,7 +1054,7 @@ static vo_driver_t *fb_open_plugin(video_driver_class_t *class_gen,
   this->mem_size = this->fb_fix.smem_len;
   this->video_mem_base = mmap(0, this->mem_size, PROT_READ | PROT_WRITE,
                               MAP_SHARED, this->fd, 0);
-  if (this->video_mem_base == (void*)-1)
+  if (this->video_mem_base == MAP_FAILED)
     goto error;
 
   return &this->vo_driver;
