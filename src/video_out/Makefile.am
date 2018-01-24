@@ -11,7 +11,7 @@ if ENABLE_MACOSX_VIDEO
 SUBDIRS += macosx
 endif
 
-EXTRA_DIST = video_out_directx.c video_out_macosx.m color_matrix.c
+EXTRA_DIST = video_out_macosx.m color_matrix.c
 
 noinst_HEADERS = x11osd.h xcbosd.h xv_common.h
 
