@@ -133,7 +133,7 @@ xineplug_vo_out_vdpau_la_SOURCES = video_out_vdpau.c
 xineplug_vo_out_vdpau_la_LIBADD = $(XINE_LIB) $(PTHREAD_LIBS) $(X_LIBS) $(LTLIBINTL) $(VDPAU_LIBS) -lm
 xineplug_vo_out_vdpau_la_CFLAGS = $(AM_CFLAGS) $(X_CFLAGS) $(VDPAU_CFLAGS)
 
-xineplug_vo_out_vaapi_la_SOURCES = $(X11OSD) video_out_vaapi.c
+xineplug_vo_out_vaapi_la_SOURCES = video_out_vaapi.c
 xineplug_vo_out_vaapi_la_LIBADD = $(XINE_LIB) $(OPENGL_LIBS) $(X_LIBS) $(PTHREAD_LIBS) $(LTLIBINTL) $(DYNAMIC_LD_LIBS) $(GLU_LIBS) $(LIBVA_LIBS) $(LIBVA_GLX_LIBS) -lm
 xineplug_vo_out_vaapi_la_CFLAGS = $(AM_CFLAGS) $(X_CFLAGS) $(XV_CFLAGS) $(LIBVA_CFLAGS) $(LIBVA_GLX_CFLAGS)
 
