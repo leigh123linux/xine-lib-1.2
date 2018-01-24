@@ -61,7 +61,9 @@
 #include <xine/vo_scale.h>
 
 #ifdef HAVE_VA_VA_GLX_H
-#include <GL/glu.h>
+#ifdef HAVE_GLU
+#  include <GL/glu.h>
+#endif
 #include <GL/glx.h>
 #include <GL/glext.h>
 #include <GL/gl.h>
@@ -2757,6 +2759,15 @@ static void vaapi_overlay_end (vo_driver_t *this_gen, vo_frame_t *frame_gen) {
 }
 
 #ifdef ENABLE_VA_GLX
+#ifndef HAVE_GLU
+#define gluPerspective myGluPerspective
+static void myGluPerspective (GLdouble fovy, GLdouble aspect,
+                              GLdouble zNear, GLdouble zFar) {
+  double ymax = zNear * tan(fovy * M_PI / 360.0);
+  double ymin = -ymax;
+  glFrustum (ymin * aspect, ymax * aspect, ymin, ymax, zNear, zFar);
+}
+#endif
 static void vaapi_resize_glx_window (vo_driver_t *this_gen, int width, int height) {
   vaapi_driver_t  *this = (vaapi_driver_t *) this_gen;
 
