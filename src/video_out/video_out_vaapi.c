@@ -60,21 +60,20 @@
 #include <xine/xineutils.h>
 #include <xine/vo_scale.h>
 
-#ifdef HAVE_VA_VA_GLX_H
-#ifdef HAVE_GLU
-#  include <GL/glu.h>
-#endif
-#include <GL/glx.h>
-#include <GL/glext.h>
-#include <GL/gl.h>
-#include <dlfcn.h>
-#endif
-
 #include <va/va_x11.h>
-#ifdef HAVE_VA_VA_GLX_H
-#include <va/va_glx.h>
-#define ENABLE_VA_GLX
-#endif
+
+#if defined(HAVE_OPENGL) && defined(HAVE_VA_VA_GLX_H)
+# ifdef HAVE_GLU
+#   include <GL/glu.h>
+# endif
+# include <GL/glx.h>
+# include <GL/glext.h>
+# include <GL/gl.h>
+# include <dlfcn.h>
+
+# include <va/va_glx.h>
+# define ENABLE_VA_GLX
+#endif /* OPENGL */
 
 #include "accel_vaapi.h"
 

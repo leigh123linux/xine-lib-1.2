@@ -272,6 +272,9 @@ AC_DEFUN([XINE_VIDEO_OUT_PLUGINS], [
     fi
     AM_CONDITIONAL([ENABLE_OPENGL], [test x"$have_opengl" = x"yes"])
     AM_CONDITIONAL([ENABLE_OPENGL2], [test x"$have_opengl2" = x"yes"])
+    if test x"$have_opengl" = x"yes"; then
+        AC_DEFINE([HAVE_OPENGL], 1, [Define this if you have OpenGL support available])
+    fi
 
     dnl SDL
     XINE_ARG_WITH([sdl], [Enable support for SDL video output])
