@@ -166,7 +166,7 @@ static void caca_update_frame_format (vo_driver_t *this_gen, vo_frame_t *img,
     frame->height = height;
     frame->format = format;
 
-    frame->pixmap_d = (uint8_t *) xine_xmalloc (height * width * 4);
+    frame->pixmap_d = (uint8_t *) calloc (height, width * 4);
     frame->pixmap_s = cucul_create_dither (32, width, height, width * 4,
       0xff0000, 0xff00, 0xff, 0);
 

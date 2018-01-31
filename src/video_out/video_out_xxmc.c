@@ -901,8 +901,7 @@ static void xxmc_setup_subpictures(xxmc_driver_t *driver, unsigned width, unsign
     if (sp == NULL) return;
 
     _x_init_xx44_palette( &driver->palette, sp->num_palette_entries);
-    driver->xvmc_palette = (char *) xine_xmalloc(sp->num_palette_entries
-						 * sp->entry_bytes);
+    driver->xvmc_palette = (char *)calloc(sp->num_palette_entries, sp->entry_bytes);
     xxmc_xvmc_free_subpicture( driver, sp);
     if (driver->xvmc_palette == NULL) return;
     driver->hwSubpictures = 1;
@@ -2352,8 +2351,7 @@ static void checkXvMCCap( xxmc_driver_t *this, XvPortID xv_port)
     xvmc_context_writer_unlock( &this->xvmc_lock );
     return;
   }
-  this->xvmc_cap = (xvmc_capabilities_t *)
-    xine_xmalloc(numSurf * sizeof(xvmc_capabilities_t));
+  this->xvmc_cap = (xvmc_capabilities_t *)calloc(numSurf, sizeof(xvmc_capabilities_t));
   if (NULL == this->xvmc_cap) {
     XVMCUNLOCKDISPLAY( this->display );
     xvmc_context_writer_unlock( &this->xvmc_lock );
