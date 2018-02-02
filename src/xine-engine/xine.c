@@ -2607,6 +2607,10 @@ int _x_get_spu_channel (xine_stream_t *stream) {
   return stream->spu_channel_user;
 }
 
+int _x_get_video_streamtype (xine_stream_t *stream) {
+  return stream->video_decoder_streamtype;
+}
+
 /*
  * log functions
  */

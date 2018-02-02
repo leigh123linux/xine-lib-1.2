@@ -485,6 +485,8 @@ int _x_get_audio_channel (xine_stream_t *stream) XINE_PROTECTED;
 
 int _x_get_spu_channel (xine_stream_t *stream) XINE_PROTECTED;
 
+int _x_get_video_streamtype (xine_stream_t *) XINE_PROTECTED;
+
 /*
  * internal events
  */
