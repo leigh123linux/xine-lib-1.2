@@ -1053,12 +1053,13 @@ static int osd_lookup_fontconfig( osd_object_t *osd, const char *const fontname,
 
     xprintf(osd->renderer->stream->xine, XINE_VERBOSITY_LOG,
 	    _("osd: error loading font %s with FontConfig"), fontname);
-    return 0;
   } else {
     xprintf(osd->renderer->stream->xine, XINE_VERBOSITY_LOG,
 	    _("osd: error looking up font %s with FontConfig"), fontname);
-    return 0;
   }
+
+  FcFontSetDestroy(fs);
+  return 0;
 }
 # endif /* HAVE_FONTCONFIG */
 
