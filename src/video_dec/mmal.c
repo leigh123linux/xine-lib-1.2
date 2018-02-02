@@ -35,8 +35,6 @@
 
 #define LOG_MODULE "mmal_video_decoder"
 
-#define XINE_ENGINE_INTERNAL  /* access to stream->video_decoder_streamtype */
-
 #include <xine/xine_internal.h>
 #include <xine/video_out.h>
 #include <xine/buffer.h>
@@ -774,7 +772,7 @@ static video_decoder_t *open_plugin (video_decoder_class_t *class_gen, xine_stre
 
   /* test if decoder supports requested codec */
 
-  uint32_t video_type = BUF_VIDEO_BASE | (stream->video_decoder_streamtype << 16);
+  uint32_t video_type = BUF_VIDEO_BASE | (_x_get_video_streamtype(stream) << 16);
   MMAL_PORT_T *input = this->decoder->input[0];
 
   switch (video_type) {
