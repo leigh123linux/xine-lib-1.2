@@ -186,15 +186,6 @@ struct vdr_input_plugin_s
 };
 
 
-typedef struct
-{
-  input_class_t       input_class;
-  xine_t             *xine;
-}
-vdr_input_class_t;
-
-
-
 static int vdr_write(int f, void *b, int n)
 {
   int t = 0, r;
@@ -2776,24 +2767,22 @@ static const char * const *vdr_class_get_autoplay_list(input_class_t *this_gen,
 
 void *vdr_input_init_plugin(xine_t *xine, void *data)
 {
-  vdr_input_class_t *this;
+  input_class_t *this;
 
   lprintf("init_class\n");
 
-  this = calloc(1, sizeof (vdr_input_class_t));
+  this = calloc(1, sizeof (input_class_t));
   if (!this) {
     return NULL;
   }
 
-  this->xine = xine;
-
-  this->input_class.get_instance      = vdr_class_get_instance;
-  this->input_class.identifier        = "VDR";
-  this->input_class.description       = N_("VDR display device plugin");
-  this->input_class.get_dir           = NULL;
-  this->input_class.get_autoplay_list = vdr_class_get_autoplay_list;
-  this->input_class.dispose           = default_input_class_dispose;
-  this->input_class.eject_media       = NULL;
+  this->get_instance      = vdr_class_get_instance;
+  this->identifier        = "VDR";
+  this->description       = N_("VDR display device plugin");
+  this->get_dir           = NULL;
+  this->get_autoplay_list = vdr_class_get_autoplay_list;
+  this->dispose           = default_input_class_dispose;
+  this->eject_media       = NULL;
 
   return this;
 }
