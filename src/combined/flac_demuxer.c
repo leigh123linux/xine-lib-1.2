@@ -55,6 +55,8 @@
 #include <xine/xineutils.h>
 #include <xine/demux.h>
 
+#include "flac_demuxer.h"
+
 #ifndef LEGACY_FLAC
 # define FLAC__SeekableStreamDecoder FLAC__StreamDecoder
 #endif
@@ -96,8 +98,6 @@ typedef struct demux_flac_class_s {
   config_values_t  *config;
 
 } demux_flac_class_t;
-
-void *demux_flac_init_class (xine_t *xine, void *data);
 
 /* FLAC Callbacks */
 static
