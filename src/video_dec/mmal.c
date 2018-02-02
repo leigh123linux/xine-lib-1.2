@@ -840,7 +840,7 @@ static void *init_plugin (xine_t *xine, void *data)
 {
   video_decoder_class_t *this;
 
-  this = (video_decoder_class_t *) calloc(1, sizeof(video_decoder_class_t));
+  this = calloc(1, sizeof(video_decoder_class_t));
   if (!this)
     return NULL;
 

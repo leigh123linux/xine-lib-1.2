@@ -205,14 +205,9 @@
   IFF_REPLACE_BYTE(xindex_ptr, xyuv_y, xyuv_u, xyuv_v, yuv_palette_l, *xold_data, *xnew_data, colorindexx_l ); \
 }
 
-typedef struct {
-  video_decoder_class_t   decoder_class;
-} bitplane_class_t;
-
 typedef struct bitplane_decoder_s {
   video_decoder_t   video_decoder;  /* parent video decoder structure */
 
-  bitplane_class_t *class;
   xine_stream_t    *stream;
 
   /* these are traditional variables in a video decoder object    */
@@ -1503,7 +1498,6 @@ static video_decoder_t *open_plugin (video_decoder_class_t *class_gen, xine_stre
   this->size                            = 0;
 
   this->stream                          = stream;
-  this->class                           = (bitplane_class_t *) class_gen;
 
   this->decoder_ok                      = 0;
   this->buf                             = NULL;
@@ -1516,12 +1510,16 @@ static video_decoder_t *open_plugin (video_decoder_class_t *class_gen, xine_stre
 
 void *decode_bitplane_init_class (xine_t *xine, void *data) {
 
-  bitplane_class_t *this                = (bitplane_class_t *) calloc(1, sizeof(bitplane_class_t));
+  video_decoder_class_t *this;
 
-  this->decoder_class.open_plugin       = open_plugin;
-  this->decoder_class.identifier        = "bitplane";
-  this->decoder_class.description       = N_("Raw bitplane video decoder plugin");
-  this->decoder_class.dispose           = default_video_decoder_class_dispose;
+  this = calloc(1, sizeof(video_decoder_class_t));
+  if (!this)
+    return NULL;
+
+  this->open_plugin       = open_plugin;
+  this->identifier        = "bitplane";
+  this->description       = N_("Raw bitplane video decoder plugin");
+  this->dispose           = default_video_decoder_class_dispose;
 
   return this;
 }

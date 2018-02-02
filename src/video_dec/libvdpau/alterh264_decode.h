@@ -334,19 +334,10 @@ typedef struct
 } sequence_t;
 
 
-
-typedef struct
-{
-  video_decoder_class_t decoder_class;
-} vdpau_h264_alter_class_t;
-
-
-
 typedef struct vdpau_mpeg12_decoder_s
 {
   video_decoder_t video_decoder;	/* parent video decoder structure */
 
-  vdpau_h264_alter_class_t *class;
   xine_stream_t *stream;
 
   sequence_t sequence;

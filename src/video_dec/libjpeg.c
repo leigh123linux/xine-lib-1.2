@@ -353,7 +353,9 @@ static video_decoder_t *open_plugin (video_decoder_class_t *class_gen,
 
   lprintf("opened\n");
 
-  this = (jpeg_decoder_t *) calloc(1, sizeof(jpeg_decoder_t));
+  this = calloc(1, sizeof(jpeg_decoder_t));
+  if (!this)
+    return NULL;
 
   this->video_decoder.decode_data         = jpeg_decode_data;
   this->video_decoder.flush               = jpeg_flush;
@@ -377,9 +379,11 @@ static video_decoder_t *open_plugin (video_decoder_class_t *class_gen,
  */
 static void *init_class (xine_t *xine, void *data) {
 
-  jpeg_class_t       *this;
+  jpeg_class_t *this;
 
-  this = (jpeg_class_t *) calloc(1, sizeof(jpeg_class_t));
+  this = calloc(1, sizeof(jpeg_class_t));
+  if (!this)
+    return NULL;
 
   this->decoder_class.open_plugin     = open_plugin;
   this->decoder_class.identifier      = "jpegvdec";

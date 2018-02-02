@@ -52,14 +52,10 @@
 #include <xine/xineutils.h>
 #include "group_raw.h"
 
-typedef struct {
-  video_decoder_class_t   decoder_class;
-} rgb_class_t;
 
 typedef struct rgb_decoder_s {
   video_decoder_t   video_decoder;  /* parent video decoder structure */
 
-  rgb_class_t      *class;
   xine_stream_t    *stream;
 
   /* these are traditional variables in a video decoder object */
@@ -263,7 +259,6 @@ static video_decoder_t *open_plugin (video_decoder_class_t *class_gen, xine_stre
   this->size                              = 0;
 
   this->stream                            = stream;
-  this->class                             = (rgb_class_t *) class_gen;
 
   this->decoder_ok    = 0;
   this->buf           = NULL;
@@ -273,14 +268,16 @@ static video_decoder_t *open_plugin (video_decoder_class_t *class_gen, xine_stre
 
 void *decode_rgb_init_class (xine_t *xine, void *data) {
 
-  rgb_class_t *this;
+  video_decoder_class_t *this;
 
-  this = (rgb_class_t *) calloc(1, sizeof(rgb_class_t));
+  this = calloc(1, sizeof(video_decoder_class_t));
+  if (!this)
+    return NULL;
 
-  this->decoder_class.open_plugin     = open_plugin;
-  this->decoder_class.identifier      = "RGB";
-  this->decoder_class.description     = N_("Raw RGB video decoder plugin");
-  this->decoder_class.dispose         = default_video_decoder_class_dispose;
+  this->open_plugin     = open_plugin;
+  this->identifier      = "RGB";
+  this->description     = N_("Raw RGB video decoder plugin");
+  this->dispose         = default_video_decoder_class_dispose;
 
   return this;
 }

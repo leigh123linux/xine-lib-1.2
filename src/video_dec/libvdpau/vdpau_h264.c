@@ -55,14 +55,9 @@
 
 #define VIDEOBUFSIZE 128*1024
 
-typedef struct {
-  video_decoder_class_t   decoder_class;
-} vdpau_h264_class_t;
-
 typedef struct vdpau_h264_decoder_s {
   video_decoder_t   video_decoder;  /* parent video decoder structure */
 
-  vdpau_h264_class_t *class;
   xine_stream_t    *stream;
 
   /* these are traditional variables in a video decoder object */
@@ -943,7 +938,6 @@ static video_decoder_t *open_plugin (video_decoder_class_t *class_gen, xine_stre
 
   this->stream                            = stream;
   this->xine                              = stream->xine;
-  this->class                             = (vdpau_h264_class_t *) class_gen;
 
   this->decoder                           = VDP_INVALID_HANDLE;
   this->vdp_runtime_nr                    = runtime_nr;
@@ -962,16 +956,18 @@ static video_decoder_t *open_plugin (video_decoder_class_t *class_gen, xine_stre
  */
 void *h264_init_plugin (xine_t *xine, void *data) {
 
-  vdpau_h264_class_t *this;
+  video_decoder_class_t *this;
 
-  this = (vdpau_h264_class_t *) calloc(1, sizeof(vdpau_h264_class_t));
+  this = calloc(1, sizeof(video_decoder_class_t));
+  if (!this)
+    return NULL;
 
-  this->decoder_class.open_plugin     = open_plugin;
-  this->decoder_class.identifier      = "vdpau_h264";
-  this->decoder_class.description     =
-	N_("vdpau_h264: h264 decoder plugin using VDPAU hardware decoding.\n"
-	   "Must be used along with video_out_vdpau.");
-  this->decoder_class.dispose         = default_video_decoder_class_dispose;
+  this->open_plugin     = open_plugin;
+  this->identifier      = "vdpau_h264";
+  this->description     =
+        N_("vdpau_h264: h264 decoder plugin using VDPAU hardware decoding.\n"
+           "Must be used along with video_out_vdpau.");
+  this->dispose         = default_video_decoder_class_dispose;
 
   return this;
 }

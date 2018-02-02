@@ -200,17 +200,9 @@ typedef struct {
 } sequence_t;
 
 
-
-typedef struct {
-  video_decoder_class_t   decoder_class;
-} vdpau_mpeg4_class_t;
-
-
-
 typedef struct vdpau_mpeg4_decoder_s {
   video_decoder_t         video_decoder;  /* parent video decoder structure */
 
-  vdpau_mpeg4_class_t    *class;
   xine_stream_t           *stream;
 
   sequence_t              sequence;
@@ -1110,7 +1102,6 @@ static video_decoder_t *open_plugin (video_decoder_class_t *class_gen, xine_stre
   this->video_decoder.dispose             = vdpau_mpeg4_dispose;
 
   this->stream                            = stream;
-  this->class                             = (vdpau_mpeg4_class_t *) class_gen;
 
   this->sequence.bufsize = 1024;
   this->sequence.buf = (uint8_t*)malloc(this->sequence.bufsize);
@@ -1143,16 +1134,18 @@ static video_decoder_t *open_plugin (video_decoder_class_t *class_gen, xine_stre
  */
 void *mpeg4_init_plugin (xine_t *xine, void *data) {
 
-  vdpau_mpeg4_class_t *this;
+  video_decoder_class_t *this;
 
-  this = (vdpau_mpeg4_class_t *) calloc(1, sizeof(vdpau_mpeg4_class_t));
+  this = calloc(1, sizeof(video_decoder_class_t));
+  if (!this)
+    return NULL;
 
-  this->decoder_class.open_plugin     = open_plugin;
-  this->decoder_class.identifier      = "vdpau_mpeg4";
-  this->decoder_class.description     =
-	N_("vdpau_mpeg4: mpeg4 part 2 decoder plugin using VDPAU hardware decoding.\n"
-	   "Must be used along with video_out_vdpau.");
-  this->decoder_class.dispose         = default_video_decoder_class_dispose;
+  this->open_plugin     = open_plugin;
+  this->identifier      = "vdpau_mpeg4";
+  this->description     =
+        N_("vdpau_mpeg4: mpeg4 part 2 decoder plugin using VDPAU hardware decoding.\n"
+           "Must be used along with video_out_vdpau.");
+  this->dispose         = default_video_decoder_class_dispose;
 
   return this;
 }

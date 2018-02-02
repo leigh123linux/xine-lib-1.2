@@ -44,10 +44,6 @@
 #include "mpeg2_internal.h"
 #include <xine/buffer.h>
 
-typedef struct {
-  video_decoder_class_t   decoder_class;
-} mpeg2_class_t;
-
 
 typedef struct mpeg2dec_decoder_s {
   video_decoder_t  video_decoder;
@@ -142,14 +138,16 @@ static video_decoder_t *open_plugin (video_decoder_class_t *class_gen, xine_stre
  */
 static void *init_plugin (xine_t *xine, void *data) {
 
-  mpeg2_class_t *this;
+  video_decoder_class_t *this;
 
-  this = (mpeg2_class_t *) calloc(1, sizeof(mpeg2_class_t));
+  this = calloc(1, sizeof(video_decoder_class_t));
+  if (!this)
+    return NULL;
 
-  this->decoder_class.open_plugin     = open_plugin;
-  this->decoder_class.identifier      = "mpeg2dec";
-  this->decoder_class.description     = N_("mpeg2 based video decoder plugin");
-  this->decoder_class.dispose         = default_video_decoder_class_dispose;
+  this->open_plugin     = open_plugin;
+  this->identifier      = "mpeg2dec";
+  this->description     = N_("mpeg2 based video decoder plugin");
+  this->dispose         = default_video_decoder_class_dispose;
 
   return this;
 }

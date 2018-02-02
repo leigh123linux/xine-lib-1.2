@@ -67,20 +67,8 @@
 #endif
 
 
-typedef struct {
-  video_decoder_class_t   decoder_class;
-
-  /*
-   * private variables
-   */
-
-} image_class_t;
-
-
 typedef struct image_decoder_s {
   video_decoder_t   video_decoder;
-
-  image_class_t    *cls;
 
   xine_stream_t    *stream;
   int               video_open;
@@ -249,7 +237,6 @@ static void image_dispose (video_decoder_t *this_gen) {
 static video_decoder_t *open_plugin (video_decoder_class_t *class_gen,
 				     xine_stream_t *stream) {
 
-  image_class_t   *cls = (image_class_t *) class_gen;
   image_decoder_t *this;
 
   lprintf("opened\n");
@@ -261,7 +248,6 @@ static video_decoder_t *open_plugin (video_decoder_class_t *class_gen,
   this->video_decoder.reset               = image_reset;
   this->video_decoder.discontinuity       = image_discontinuity;
   this->video_decoder.dispose             = image_dispose;
-  this->cls                               = cls;
   this->stream                            = stream;
 
   /*
@@ -278,14 +264,16 @@ static video_decoder_t *open_plugin (video_decoder_class_t *class_gen,
  */
 static void *init_class (xine_t *xine, void *data) {
 
-  image_class_t       *this;
+  video_decoder_class_t *this;
 
-  this = (image_class_t *) calloc(1, sizeof(image_class_t));
+  this = calloc(1, sizeof(video_decoder_class_t));
+  if (!this)
+    return NULL;
 
-  this->decoder_class.open_plugin     = open_plugin;
-  this->decoder_class.identifier      = "imagevdec";
-  this->decoder_class.description     = N_("image video decoder plugin");
-  this->decoder_class.dispose         = default_video_decoder_class_dispose;
+  this->open_plugin     = open_plugin;
+  this->identifier      = "imagevdec";
+  this->description     = N_("image video decoder plugin");
+  this->dispose         = default_video_decoder_class_dispose;
 
   /*
    * initialisation of privates
