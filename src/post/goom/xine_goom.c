@@ -123,22 +123,6 @@ struct post_plugin_goom_s {
 };
 
 
-/* plugin class initialization function */
-static void *goom_init_plugin(xine_t *xine, void *);
-
-
-/* plugin catalog information */
-static const post_info_t goom_special_info = {
-  XINE_POST_TYPE_AUDIO_VISUALIZATION
-};
-
-const plugin_info_t xine_plugin_info[] EXPORTED = {
-  /* type, API, "name", version, special_info, init_function */
-  { PLUGIN_POST | PLUGIN_MUST_PRELOAD, 10, "goom", XINE_VERSION_CODE, &goom_special_info, &goom_init_plugin },
-  { PLUGIN_NONE, 0, "", 0, NULL, NULL }
-};
-
-
 /* plugin class functions */
 static post_plugin_t *goom_open_plugin(post_class_t *class_gen, int inputs,
 					 xine_audio_port_t **audio_target,
@@ -671,3 +655,14 @@ static void goom_port_put_buffer (xine_audio_port_t *port_gen,
   }
   }
 }
+
+/* plugin catalog information */
+static const post_info_t goom_special_info = {
+  XINE_POST_TYPE_AUDIO_VISUALIZATION
+};
+
+const plugin_info_t xine_plugin_info[] EXPORTED = {
+  /* type, API, "name", version, special_info, init_function */
+  { PLUGIN_POST | PLUGIN_MUST_PRELOAD, 10, "goom", XINE_VERSION_CODE, &goom_special_info, &goom_init_plugin },
+  { PLUGIN_NONE, 0, "", 0, NULL, NULL }
+};

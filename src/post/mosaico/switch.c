@@ -35,17 +35,6 @@
 
 /* FIXME: This plugin needs to handle overlays as well. */
 
-/* plugin class initialization function */
-static void *switch_init_plugin(xine_t *xine, void *);
-
-/* plugin catalog information */
-static const post_info_t switch_special_info = { XINE_POST_TYPE_VIDEO_COMPOSE };
-
-const plugin_info_t xine_plugin_info[] EXPORTED = {
-  /* type, API, "name", version, special_info, init_function */
-  { PLUGIN_POST, 10, "switch", XINE_VERSION_CODE, &switch_special_info, &switch_init_plugin },
-  { PLUGIN_NONE, 0, "", 0, NULL, NULL }
-};
 
 typedef struct switch_parameter_s {
   unsigned int select;
@@ -78,7 +67,6 @@ struct post_switch_s {
   unsigned int     source_count;
   unsigned int     selected_source;
 };
-
 
 /* plugin class functions */
 static post_plugin_t *switch_open_plugin(post_class_t *class_gen, int inputs,
@@ -254,3 +242,12 @@ static int switch_draw(vo_frame_t *frame, xine_stream_t *stream)
 
   return skip;
 }
+
+/* plugin catalog information */
+static const post_info_t switch_special_info = { XINE_POST_TYPE_VIDEO_COMPOSE };
+
+const plugin_info_t xine_plugin_info[] EXPORTED = {
+  /* type, API, "name", version, special_info, init_function */
+  { PLUGIN_POST, 10, "switch", XINE_VERSION_CODE, &switch_special_info, &switch_init_plugin },
+  { PLUGIN_NONE, 0, "", 0, NULL, NULL }
+};

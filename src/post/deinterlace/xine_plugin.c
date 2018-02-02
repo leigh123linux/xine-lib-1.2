@@ -42,19 +42,6 @@
 #include "deinterlace.h"
 #include "plugins/plugins.h"
 
-/* plugin class initialization function */
-static void *deinterlace_init_plugin(xine_t *xine, void *);
-
-
-/* plugin catalog information */
-static const post_info_t deinterlace_special_info = { XINE_POST_TYPE_VIDEO_FILTER };
-
-const plugin_info_t xine_plugin_info[] EXPORTED = {
-  /* type, API, "name", version, special_info, init_function */
-  { PLUGIN_POST | PLUGIN_MUST_PRELOAD, 10, "tvtime", XINE_VERSION_CODE, &deinterlace_special_info, &deinterlace_init_plugin },
-  { PLUGIN_NONE, 0, "", 0, NULL, NULL }
-};
-
 
 typedef struct post_plugin_deinterlace_s post_plugin_deinterlace_t;
 
@@ -937,3 +924,12 @@ static int deinterlace_draw(vo_frame_t *frame, xine_stream_t *stream)
 
   return skip;
 }
+
+/* plugin catalog information */
+static const post_info_t deinterlace_special_info = { XINE_POST_TYPE_VIDEO_FILTER };
+
+const plugin_info_t xine_plugin_info[] EXPORTED = {
+  /* type, API, "name", version, special_info, init_function */
+  { PLUGIN_POST | PLUGIN_MUST_PRELOAD, 10, "tvtime", XINE_VERSION_CODE, &deinterlace_special_info, &deinterlace_init_plugin },
+  { PLUGIN_NONE, 0, "", 0, NULL, NULL }
+};
