@@ -1314,7 +1314,7 @@ static void dispose_audio_class (audio_decoder_class_t *this_gen) {
   free (this);
 }
 
-void *init_audio_plugin (xine_t *xine, void *data) {
+void *init_audio_plugin (xine_t *xine, const void *data) {
 
   ff_audio_class_t *this ;
 

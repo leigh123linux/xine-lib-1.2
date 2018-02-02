@@ -740,7 +740,7 @@ static void test_class_dispose (input_class_t *this_gen) {
   free (this_gen);
 }
 
-static void *test_init_plugin (xine_t *xine, void *data) {
+static void *test_init_plugin (xine_t *xine, const void *data) {
   test_input_class_t *this;
 
   this = (test_input_class_t *) calloc(1, sizeof (test_input_class_t));

@@ -827,7 +827,7 @@ static void dispose_class (audio_decoder_class_t *this_gen) {
   free (this);
 }
 
-static void *init_plugin (xine_t *xine, void *data) {
+static void *init_plugin (xine_t *xine, const void *data) {
 
   a52dec_class_t *this;
   config_values_t *cfg;

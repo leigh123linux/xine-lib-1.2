@@ -372,7 +372,7 @@ static audio_decoder_t *open_plugin (audio_decoder_class_t *class_gen,
 /*
  * vorbis plugin class
  */
-void *vorbis_init_plugin (xine_t *xine, void *data) {
+void *vorbis_init_plugin (xine_t *xine, const void *data) {
 
   vorbis_class_t *this;
 

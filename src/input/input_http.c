@@ -1059,7 +1059,7 @@ static void http_class_dispose (input_class_t *this_gen) {
   free (this);
 }
 
-void *input_http_init_class (xine_t *xine, void *data) {
+void *input_http_init_class (xine_t *xine, const void *data) {
   http_input_class_t  *this;
   config_values_t     *config;
   char                *proxy_env;

@@ -451,7 +451,7 @@ static post_plugin_t *volnorm_open_plugin(post_class_t *class_gen, int inputs,
 }
 
 /* plugin class initialization function */
-void *volnorm_init_plugin(xine_t *xine, void *data)
+void *volnorm_init_plugin(xine_t *xine, const void *data)
 {
   post_class_volnorm_t *class = calloc(1, sizeof(post_class_volnorm_t));
 

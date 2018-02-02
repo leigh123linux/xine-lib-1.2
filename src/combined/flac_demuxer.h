@@ -24,6 +24,6 @@
 
 #include <xine.h>
 
-void *demux_flac_init_class (xine_t *xine, void *data);
+void *demux_flac_init_class (xine_t *xine, const void *data);
 
 #endif /* XINE_FLAC_DEMUXER_H */

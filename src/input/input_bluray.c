@@ -1906,7 +1906,7 @@ static void bluray_class_dispose (input_class_t *this_gen)
   free (this);
 }
 
-static void *bluray_init_plugin (xine_t *xine, void *data)
+static void *bluray_init_plugin (xine_t *xine, const void *data)
 {
   static const char * const skip_modes[] = {"skip chapter", "skip title", NULL};
 
@@ -1990,7 +1990,7 @@ static const char * const *bd_class_get_autoplay_list (input_class_t *this_gen, 
   return autoplay_list;
 }
 
-static void *bd_init_plugin (xine_t *xine, void *data)
+static void *bd_init_plugin (xine_t *xine, const void *data)
 {
   bluray_input_class_t *this = bluray_init_plugin(xine, data);
 

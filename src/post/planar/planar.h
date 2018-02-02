@@ -25,17 +25,17 @@
 
 #include <xine/xine_internal.h>
 
-void *boxblur_init_plugin(xine_t *xine, void *);
-void *denoise3d_init_plugin(xine_t *xine, void *);
-void *eq_init_plugin(xine_t *xine, void *);
-void *eq2_init_plugin(xine_t *xine, void *);
-void *expand_init_plugin(xine_t *xine, void *);
-void *fill_init_plugin(xine_t *xine, void*);
-void *invert_init_plugin(xine_t *xine, void *);
-void *noise_init_plugin(xine_t *xine, void *);
+void *boxblur_init_plugin   (xine_t *xine, const void *);
+void *denoise3d_init_plugin (xine_t *xine, const void *);
+void *eq_init_plugin        (xine_t *xine, const void *);
+void *eq2_init_plugin       (xine_t *xine, const void *);
+void *expand_init_plugin    (xine_t *xine, const void *);
+void *fill_init_plugin      (xine_t *xine, const void *);
+void *invert_init_plugin    (xine_t *xine, const void *);
+void *noise_init_plugin     (xine_t *xine, const void *);
 #ifdef HAVE_POSTPROC
-void *pp_init_plugin(xine_t *xine, void *);
+void *pp_init_plugin        (xine_t *xine, const void *);
 #endif
-void *unsharp_init_plugin(xine_t *xine, void *);
+void *unsharp_init_plugin   (xine_t *xine, const void *);
 
 #endif /* XINE_POST_PLANAR_H */

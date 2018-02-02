@@ -49,6 +49,8 @@
 #include <xine/xineutils.h>
 #include <xine/demux.h>
 
+#include "sputext_demuxer.h"
+
 #define ERR           (void *)-1
 #define SUB_MAX_TEXT  5
 #define SUB_BUFSIZE   1024
@@ -104,8 +106,6 @@ typedef struct demux_sputext_class_s {
   int                max_timeout;  /* default timeout of hidding subtitles */
 
 } demux_sputext_class_t;
-
-void *init_sputext_demux_class (xine_t *xine, void *data);
 
 /*
  * Demuxer code start
@@ -1486,7 +1486,7 @@ static void sputext_demux_class_dispose(demux_class_t *this_gen)
   free(this);
 }
 
-void *init_sputext_demux_class (xine_t *xine, void *data) {
+void *init_sputext_demux_class (xine_t *xine, const void *data) {
 
   demux_sputext_class_t *this ;
 

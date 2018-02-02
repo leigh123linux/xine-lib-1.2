@@ -2126,7 +2126,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen,
   return &this->demux_plugin;
 }
 
-static void *init_class (xine_t *xine, void *data) {
+static void *init_class (xine_t *xine, const void *data) {
 
   demux_class_t *this;
 

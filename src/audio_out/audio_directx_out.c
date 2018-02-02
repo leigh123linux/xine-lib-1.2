@@ -817,7 +817,7 @@ static ao_driver_t *open_plugin (audio_driver_class_t *class_gen, const void *da
   return ( ao_driver_t * ) ao_directx;
 }
 
-static void *init_class (xine_t *xine, void *data) {
+static void *init_class (xine_t *xine, const void *data) {
   audiox_class_t    *audiox;
 
   lprintf("init_class() Enter\n");

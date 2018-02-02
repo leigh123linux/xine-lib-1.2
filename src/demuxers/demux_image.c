@@ -216,7 +216,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen,
 /*
  * image demuxer class
  */
-static void *init_class (xine_t *xine, void *data) {
+static void *init_class (xine_t *xine, const void *data) {
   demux_class_t *this;
 
   this = calloc(1, sizeof(demux_class_t));

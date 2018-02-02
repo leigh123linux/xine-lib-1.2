@@ -56,7 +56,7 @@ typedef struct {
   const char              *id;                      /* a name that identifies this plugin      */
   uint32_t                 version;                 /* version number, increased every release */
   const void              *special_info;            /* plugin-type specific, see structs below */
-  void                  *(*init)(xine_t *, void *); /* init the plugin class            */
+  void                  *(*init)(xine_t *, const void *); /* init the plugin class             */
 } plugin_info_t;
 
 

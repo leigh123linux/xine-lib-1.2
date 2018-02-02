@@ -477,7 +477,7 @@ static post_plugin_t *fftscope_open_plugin(post_class_t *class_gen, int inputs,
 }
 
 /* plugin class initialization function */
-void *fftscope_init_plugin(xine_t *xine, void *data)
+void *fftscope_init_plugin(xine_t *xine, const void *data)
 {
   post_class_fftscope_t *class = calloc(1, sizeof(post_class_fftscope_t));
 

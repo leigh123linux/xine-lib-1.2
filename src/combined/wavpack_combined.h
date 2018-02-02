@@ -41,5 +41,5 @@ typedef struct {
 
 static const uint32_t wvpk_signature = ME_FOURCC('w', 'v', 'p', 'k');
 
-void *demux_wv_init_plugin (xine_t *const xine, void *const data);
-void *decoder_wavpack_init_plugin (xine_t *xine, void *data);
+void *demux_wv_init_plugin (xine_t *xine, const void *data);
+void *decoder_wavpack_init_plugin (xine_t *xine, const void *data);

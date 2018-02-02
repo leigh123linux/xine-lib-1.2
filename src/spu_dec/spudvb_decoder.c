@@ -1367,7 +1367,7 @@ static void dvb_spu_decoder_class_dispose (spu_decoder_class_t * this_gen)
   free (this);
 }
 
-static void *init_spu_decoder_plugin (xine_t * xine, void *data)
+static void *init_spu_decoder_plugin (xine_t * xine, const void *data)
 {
 
   dvb_spu_class_t *this;

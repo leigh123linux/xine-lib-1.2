@@ -408,7 +408,7 @@ static video_decoder_t *theora_open_plugin (video_decoder_class_t *class_gen, xi
 /*
  * theora plugin class
  */
-void *theora_init_plugin (xine_t *xine, void *data) {
+void *theora_init_plugin (xine_t *xine, const void *data) {
   /*initialize our plugin*/
   theora_class_t *this;
 

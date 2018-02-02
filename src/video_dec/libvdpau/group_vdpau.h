@@ -49,10 +49,10 @@
 #  define CAST_VdpPictureInfo_PTR (VdpPictureInfo *)
 #endif
 
-void *h264_alter_init_plugin (xine_t *xine, void *data);
-void *h264_init_plugin       (xine_t *xine, void *data);
-void *vc1_init_plugin        (xine_t *xine, void *data);
-void *mpeg12_init_plugin     (xine_t *xine, void *data);
-void *mpeg4_init_plugin      (xine_t *xine, void *data);
+void *h264_alter_init_plugin (xine_t *xine, const void *data);
+void *h264_init_plugin       (xine_t *xine, const void *data);
+void *vc1_init_plugin        (xine_t *xine, const void *data);
+void *mpeg12_init_plugin     (xine_t *xine, const void *data);
+void *mpeg4_init_plugin      (xine_t *xine, const void *data);
 
 #endif

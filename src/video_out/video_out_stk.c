@@ -442,7 +442,7 @@ static vo_driver_t *open_plugin(video_driver_class_t *class_gen, const void *vis
 /**
  * Class Functions
  */
-static void *init_class (xine_t *xine, void *visual_gen) {
+static void *init_class (xine_t *xine, const void *visual_gen) {
     stk_class_t* this;
 
     //printf("video_out_stk: init_class()\n");

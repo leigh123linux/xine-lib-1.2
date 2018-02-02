@@ -3590,7 +3590,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
   return &this->demux_plugin;
 }
 
-void *demux_qt_init_class (xine_t *xine, void *data) {
+void *demux_qt_init_class (xine_t *xine, const void *data) {
 
   demux_class_t *this;
 

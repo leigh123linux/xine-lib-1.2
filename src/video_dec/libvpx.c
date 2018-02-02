@@ -337,13 +337,13 @@ static void *init_plugin (xine_t *xine, uint32_t buffer_type, const char *identi
   return this;
 }
 
-static void *init_plugin_vp8 (xine_t *xine, void *data)
+static void *init_plugin_vp8 (xine_t *xine, const void *data)
 {
   return init_plugin(xine, BUF_VIDEO_VP8, "libvpx-vp8");
 }
 
 #ifdef HAVE_VPX_VP9_DECODER
-static void *init_plugin_vp9 (xine_t *xine, void *data)
+static void *init_plugin_vp9 (xine_t *xine, const void *data)
 {
   return init_plugin(xine, BUF_VIDEO_VP9, "libvpx-vp9");
 }

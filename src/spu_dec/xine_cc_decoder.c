@@ -331,7 +331,7 @@ static spu_decoder_t *spudec_open_plugin (spu_decoder_class_t *class, xine_strea
   return &this->spu_decoder;
 }
 
-static void *init_spu_decoder_plugin (xine_t *xine, void *data) {
+static void *init_spu_decoder_plugin (xine_t *xine, const void *data) {
 
   spucc_class_t *this ;
 

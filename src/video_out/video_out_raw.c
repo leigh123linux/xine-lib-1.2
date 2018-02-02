@@ -514,7 +514,7 @@ static vo_driver_t *raw_open_plugin (video_driver_class_t *class_gen, const void
  * class functions
  */
 
-static void *raw_init_class (xine_t *xine, void *visual_gen)
+static void *raw_init_class (xine_t *xine, const void *visual_gen)
 {
   raw_class_t *this = (raw_class_t *) calloc(1, sizeof(raw_class_t));
 

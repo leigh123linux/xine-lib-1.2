@@ -76,9 +76,9 @@ void *_x_real_codec_open(xine_stream_t *const stream, const char *const path,
 			 const char *const codec_alternate);
 
 const decoder_info_t dec_info_realvideo;
-void *init_realvdec (xine_t *xine, void *data);
+void *init_realvdec (xine_t *xine, const void *data);
 
 const decoder_info_t dec_info_realaudio;
-void *init_realadec (xine_t *xine, void *data);
+void *init_realadec (xine_t *xine, const void *data);
 
 #endif

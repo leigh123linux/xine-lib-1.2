@@ -185,7 +185,7 @@ static void csc_method_changed_cb(void *data, xine_cfg_entry_t *cfg) {
   }
 }
 
-static void *goom_init_plugin(xine_t *xine, void *data)
+static void *goom_init_plugin(xine_t *xine, const void *data)
 {
   post_class_goom_t *this = calloc(1, sizeof(post_class_goom_t));
   config_values_t   *cfg;

@@ -1899,7 +1899,7 @@ static int opengl2_check_platform( xine_t *xine, const void *visual )
  * class functions
  */
 
-static void *opengl2_init_class( xine_t *xine, void *visual_gen )
+static void *opengl2_init_class( xine_t *xine, const void *visual_gen )
 {
   opengl2_class_t *this;
 

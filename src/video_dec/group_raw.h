@@ -26,9 +26,9 @@
 
 #include <xine/xine_internal.h>
 
-void *decode_rgb_init_class      (xine_t *xine, void *data);
-void *decode_yuv_init_class      (xine_t *xine, void *data);
-void *decode_bitplane_init_class (xine_t *xine, void *data);
+void *decode_rgb_init_class      (xine_t *xine, const void *data);
+void *decode_yuv_init_class      (xine_t *xine, const void *data);
+void *decode_bitplane_init_class (xine_t *xine, const void *data);
 
 #endif
 

@@ -429,7 +429,7 @@ static input_plugin_t *v4l2_class_get_instance(input_class_t *gen_cls, xine_stre
     return &this->input_plugin;
 }
 
-static void *v4l2_init_class(xine_t *xine, void *data) {
+static void *v4l2_init_class(xine_t *xine, const void *data) {
     input_class_t *this;
 
     this = calloc(1, sizeof(input_class_t));

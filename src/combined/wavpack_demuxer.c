@@ -362,7 +362,7 @@ static demux_plugin_t *open_plugin (demux_class_t *const class_gen,
   return &this->demux_plugin;
 }
 
-void *demux_wv_init_plugin (xine_t *const xine, void *const data) {
+void *demux_wv_init_plugin (xine_t *xine, const void *data) {
   demux_wv_class_t *const this = calloc(1, sizeof (demux_wv_class_t));
 
   this->demux_class.open_plugin     = open_plugin;

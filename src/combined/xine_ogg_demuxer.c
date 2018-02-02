@@ -2187,7 +2187,7 @@ static demux_plugin_t *ogg_open_plugin (demux_class_t *class_gen,
 /*
  * Annodex demuxer class
  */
-static void *anx_init_class (xine_t *xine, void *data) {
+static void *anx_init_class (xine_t *xine, const void *data) {
   demux_anx_class_t     *this;
 
   this = calloc(1, sizeof(demux_anx_class_t));
@@ -2211,7 +2211,7 @@ static void *anx_init_class (xine_t *xine, void *data) {
 /*
  * ogg demuxer class
  */
-static void *ogg_init_class (xine_t *xine, void *data) {
+static void *ogg_init_class (xine_t *xine, const void *data) {
   demux_ogg_class_t     *this;
 
   this = calloc(1, sizeof(demux_ogg_class_t));

@@ -72,7 +72,7 @@
 
 
 /* plugin class initialization function */
-static void   *dxr3_spudec_init_plugin(xine_t *xine, void *);
+static void   *dxr3_spudec_init_plugin(xine_t *xine, const void *);
 
 
 /* plugin catalog information */
@@ -185,7 +185,7 @@ static inline void dxr3_swab_clut(int *clut)
 }
 
 
-static void *dxr3_spudec_init_plugin(xine_t *xine, void* data)
+static void *dxr3_spudec_init_plugin(xine_t *xine, const void* data)
 {
   dxr3_spudec_class_t *this;
 

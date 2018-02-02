@@ -18,4 +18,4 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
  */
 
-void *init_sputext_demux_class (xine_t *xine, void *data);
+void *init_sputext_demux_class (xine_t *xine, const void *data);

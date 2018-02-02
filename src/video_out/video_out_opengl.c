@@ -2164,7 +2164,7 @@ static int opengl_verify_direct (x11_visual_t *vis) {
   return ret;
 }
 
-static void *opengl_init_class (xine_t *xine, void *visual_gen) {
+static void *opengl_init_class (xine_t *xine, const void *visual_gen) {
 
   opengl_class_t *this;
 

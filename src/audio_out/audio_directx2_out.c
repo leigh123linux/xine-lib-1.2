@@ -942,7 +942,7 @@ static ao_driver_t *open_plugin(audio_driver_class_t *class_gen, const void *dat
   return (ao_driver_t *)this;
 }
 
-static void *init_class(xine_t *xine, void *data) {
+static void *init_class(xine_t *xine, const void *data) {
   dx2_class_t *this;
 
   lprintf("init class\n");

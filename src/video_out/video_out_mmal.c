@@ -893,7 +893,7 @@ static vo_driver_t *open_plugin (video_driver_class_t *class_gen, const void *vi
 /**
  * Class Functions
  */
-static void *init_class (xine_t *xine, void *visual_gen) {
+static void *init_class (xine_t *xine, const void *visual_gen) {
   mmal_class_t      *this;
 
   this = (mmal_class_t*) calloc(1, sizeof(mmal_class_t));

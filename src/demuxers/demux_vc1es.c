@@ -368,7 +368,7 @@ static demux_plugin_t *open_plugin( demux_class_t *class_gen, xine_stream_t *str
 
 
 
-void *demux_vc1es_init_class ( xine_t *xine, void *data )
+void *demux_vc1es_init_class ( xine_t *xine, const void *data )
 {
   demux_class_t *this;
 

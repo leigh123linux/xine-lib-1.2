@@ -92,7 +92,7 @@ static int            vdr_video_route_preprocessing_procs(post_video_port_t *por
 static int            vdr_video_draw(vo_frame_t *frame, xine_stream_t *stream);
 
 
-void *vdr_video_init_plugin(xine_t *xine, void *data)
+void *vdr_video_init_plugin(xine_t *xine, const void *data)
 {
   post_class_t *class = calloc(1, sizeof (post_class_t));
 

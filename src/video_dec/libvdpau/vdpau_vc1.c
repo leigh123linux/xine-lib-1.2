@@ -1127,7 +1127,7 @@ static video_decoder_t *open_plugin (video_decoder_class_t *class_gen, xine_stre
  * This function allocates a private video decoder class and initializes
  * the class's member functions.
  */
-void *vc1_init_plugin (xine_t *xine, void *data) {
+void *vc1_init_plugin (xine_t *xine, const void *data) {
 
   video_decoder_class_t *this;
 

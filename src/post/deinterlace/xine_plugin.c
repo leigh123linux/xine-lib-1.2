@@ -290,7 +290,7 @@ static int            deinterlace_intercept_frame(post_video_port_t *port, vo_fr
 static int            deinterlace_draw(vo_frame_t *frame, xine_stream_t *stream);
 
 
-static void *deinterlace_init_plugin(xine_t *xine, void *data)
+static void *deinterlace_init_plugin(xine_t *xine, const void *data)
 {
   post_class_deinterlace_t *class = calloc(1, sizeof(post_class_deinterlace_t));
   uint32_t config_flags = xine_mm_accel();

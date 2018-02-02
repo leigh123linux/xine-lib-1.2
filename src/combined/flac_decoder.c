@@ -401,7 +401,7 @@ open_plugin (audio_decoder_class_t *class_gen, xine_stream_t *stream) {
  * flac plugin class
  */
 static void *
-init_plugin (xine_t *xine, void *data) {
+init_plugin (xine_t *xine, const void *data) {
     flac_class_t *this;
 
     this = calloc(1, sizeof (flac_class_t));

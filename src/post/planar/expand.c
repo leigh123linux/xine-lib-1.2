@@ -124,7 +124,7 @@ static int            expand_intercept_ovl(post_video_port_t *port);
 static int32_t        expand_overlay_add_event(video_overlay_manager_t *this_gen, void *event);
 
 
-void *expand_init_plugin(xine_t *xine, void *data)
+void *expand_init_plugin(xine_t *xine, const void *data)
 {
   post_class_t *class = calloc(1, sizeof(post_class_t));
 

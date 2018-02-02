@@ -577,7 +577,7 @@ static vo_driver_t *open_plugin (video_driver_class_t *class_gen, const void *vi
 /**
  * Class Functions
  */
-static void *init_class (xine_t *xine, void *visual_gen) {
+static void *init_class (xine_t *xine, const void *visual_gen) {
   /* x11_visual_t     *visual = (x11_visual_t *) visual_gen; */
   sdl_class_t      *this;
 
@@ -604,7 +604,7 @@ static void *init_class (xine_t *xine, void *visual_gen) {
   return this;
 }
 
-static void *init_class_fb (xine_t *xine, void *visual_gen) {
+static void *init_class_fb (xine_t *xine, const void *visual_gen) {
   sdl_class_t *this = (sdl_class_t *)init_class(xine, visual_gen);
 
   if (this) {

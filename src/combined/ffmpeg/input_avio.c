@@ -340,7 +340,7 @@ static input_plugin_t *input_avio_get_instance (input_class_t *cls_gen, xine_str
   return &this->input_plugin;
 }
 
-void *init_avio_input_plugin (xine_t *xine, void *data) {
+void *init_avio_input_plugin (xine_t *xine, const void *data) {
   input_class_t  *this;
   const char     *protocol;
   void           *iter;

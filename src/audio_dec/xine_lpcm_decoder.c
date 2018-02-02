@@ -388,7 +388,7 @@ static audio_decoder_t *open_plugin (audio_decoder_class_t *class_gen, xine_stre
   return &this->audio_decoder;
 }
 
-static void *init_plugin (xine_t *xine, void *data) {
+static void *init_plugin (xine_t *xine, const void *data) {
 
   lpcm_class_t *this ;
 

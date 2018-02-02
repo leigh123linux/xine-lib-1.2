@@ -710,7 +710,7 @@ open_plugin (demux_class_t *class_gen,
 
 /* FLAC Demuxer class */
 void *
-demux_flac_init_class (xine_t *xine, void *data) {
+demux_flac_init_class (xine_t *xine, const void *data) {
 
     demux_flac_class_t     *this;
 

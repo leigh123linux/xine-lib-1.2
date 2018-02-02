@@ -1122,7 +1122,7 @@ static void update_src_encoding(void *class_gen, xine_cfg_entry_t *entry)
   xprintf(class->xine, XINE_VERBOSITY_DEBUG, "libsputext: spu_src_encoding = %s\n", class->src_encoding );
 }
 
-static void *init_spu_decoder_plugin (xine_t *xine, void *data) {
+static void *init_spu_decoder_plugin (xine_t *xine, const void *data) {
 
   static const char *const subtitle_size_strings[] = {
     "tiny", "small", "normal", "large", "very large", "huge", NULL

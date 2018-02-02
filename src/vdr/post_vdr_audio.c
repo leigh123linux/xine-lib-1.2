@@ -69,7 +69,7 @@ static void           vdr_audio_port_put_buffer(xine_audio_port_t *port_gen, aud
 
 
 
-void *vdr_audio_init_plugin(xine_t *xine, void *data)
+void *vdr_audio_init_plugin(xine_t *xine, const void *data)
 {
   post_class_t *class = calloc(1, sizeof (post_class_t));
 

@@ -1541,7 +1541,7 @@ static void dispose_class (video_driver_class_t *this_gen) {
   free (this);
 }
 
-static void *init_class (xine_t *xine, void *visual_gen) {
+static void *init_class (xine_t *xine, const void *visual_gen) {
   const x11_visual_t *visual = (const x11_visual_t *) visual_gen;
   xvmc_class_t      *this;
   Display           *display = NULL;

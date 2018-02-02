@@ -42,7 +42,7 @@ static vo_frame_t    *fill_get_frame(xine_video_port_t *port_gen, uint32_t width
 static int            fill_draw(vo_frame_t *frame, xine_stream_t *stream);
 
 
-void *fill_init_plugin(xine_t *xine, void *data)
+void *fill_init_plugin(xine_t *xine, const void *data)
 {
   post_class_t *class = calloc(1, sizeof(post_class_t));
 

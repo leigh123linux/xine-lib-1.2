@@ -298,7 +298,7 @@ static void dispose_class (audio_decoder_class_t *this_gen) {
 
 /* This function allocates a private audio decoder class and initializes
  * the class's member functions. */
-static void *init_plugin (xine_t *xine, void *data) {
+static void *init_plugin (xine_t *xine, const void *data) {
 
   fooaudio_class_t *this ;
 

@@ -493,7 +493,7 @@ static void smb_auth(const char *srv, const char *shr, char *wg, int wglen, char
 }
 
 static void
-*init_input_class (xine_t *xine, void *data)
+*init_input_class (xine_t *xine, const void *data)
 {
 	smb_input_class_t *this = NULL;
 	/* libsmbclient seems to mess up with locale. Workaround: save and restore locale */

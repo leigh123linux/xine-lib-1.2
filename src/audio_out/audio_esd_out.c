@@ -563,7 +563,7 @@ static ao_driver_t *open_plugin (audio_driver_class_t *class_gen,
 /*
  * class functions
  */
-static void *init_class (xine_t *xine, void *data) {
+static void *init_class (xine_t *xine, const void *data) {
 
   esd_class_t        *this;
 

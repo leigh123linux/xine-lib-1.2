@@ -18,5 +18,5 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
  */
 
-void *decoder_nsf_init_plugin (xine_t *xine, void *data);
-void *demux_nsf_init_plugin (xine_t *xine, void *data);
+void *decoder_nsf_init_plugin (xine_t *xine, const void *data);
+void *demux_nsf_init_plugin (xine_t *xine, const void *data);

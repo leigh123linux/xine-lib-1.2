@@ -335,7 +335,7 @@ static post_plugin_t *upmix_mono_open_plugin(post_class_t *class_gen, int inputs
 }
 
 /* plugin class initialization function */
-void *upmix_mono_init_plugin(xine_t *xine, void *data)
+void *upmix_mono_init_plugin(xine_t *xine, const void *data)
 {
   post_class_upmix_mono_t *class = calloc(1, sizeof(post_class_upmix_mono_t));
 

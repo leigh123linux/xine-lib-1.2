@@ -42,11 +42,11 @@ typedef struct ff_codec_s {
   const char       *name;
 } ff_codec_t;
 
-void *init_audio_plugin (xine_t *xine, void *data);
-void *init_video_plugin (xine_t *xine, void *data);
-void *init_avio_input_plugin (xine_t *xine, void *data);
-void *init_avformat_input_plugin (xine_t *xine, void *data);
-void *init_avformat_demux_plugin (xine_t *xine, void *data);
+void *init_audio_plugin (xine_t *xine, const void *data);
+void *init_video_plugin (xine_t *xine, const void *data);
+void *init_avio_input_plugin (xine_t *xine, const void *data);
+void *init_avformat_input_plugin (xine_t *xine, const void *data);
+void *init_avformat_demux_plugin (xine_t *xine, const void *data);
 
 extern const decoder_info_t dec_info_ffmpeg_video;
 extern const decoder_info_t dec_info_ffmpeg_wmv8;

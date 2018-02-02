@@ -1213,7 +1213,7 @@ static vo_driver_t *vidix_open_plugin (video_driver_class_t *class_gen, const vo
   return &this->vo_driver;
 }
 
-static void *vidix_init_class (xine_t *xine, void *visual_gen) {
+static void *vidix_init_class (xine_t *xine, const void *visual_gen) {
 
   vidix_class_t *this = init_class (xine, visual_gen);
 
@@ -1287,7 +1287,7 @@ static vo_driver_t *vidixfb_open_plugin (video_driver_class_t *class_gen, const 
   return &this->vo_driver;
 }
 
-static void *vidixfb_init_class (xine_t *xine, void *visual_gen) {
+static void *vidixfb_init_class (xine_t *xine, const void *visual_gen) {
 
   vidix_class_t *this = init_class (xine, visual_gen);
 

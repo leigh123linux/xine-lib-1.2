@@ -80,9 +80,9 @@
 
 
 /* plugin class initialization functions */
-static void                *dxr3_x11_init_plugin(xine_t *xine, void *visual_gen);
-static void                *dxr3_aa_init_plugin(xine_t *xine, void *visual_gen);
-static dxr3_driver_class_t *dxr3_vo_init_plugin(xine_t *xine, void *visual_gen);
+static void                *dxr3_x11_init_plugin(xine_t *xine, const void *visual_gen);
+static void                *dxr3_aa_init_plugin(xine_t *xine, const void *visual_gen);
+static dxr3_driver_class_t *dxr3_vo_init_plugin(xine_t *xine, const void *visual_gen);
 
 
 /* plugin catalog information */
@@ -153,7 +153,7 @@ static void        dxr3_update_enhanced_mode(void *this_gen, xine_cfg_entry_t *e
 
 
 #ifdef HAVE_X11
-static void *dxr3_x11_init_plugin(xine_t *xine, void *visual_gen)
+static void *dxr3_x11_init_plugin(xine_t *xine, const void *visual_gen)
 {
   dxr3_driver_class_t *this = dxr3_vo_init_plugin(xine, visual_gen);
 
@@ -163,7 +163,7 @@ static void *dxr3_x11_init_plugin(xine_t *xine, void *visual_gen)
 }
 #endif
 
-static void *dxr3_aa_init_plugin(xine_t *xine, void *visual_gen)
+static void *dxr3_aa_init_plugin(xine_t *xine, const void *visual_gen)
 {
   dxr3_driver_class_t *this = dxr3_vo_init_plugin(xine, visual_gen);
 
@@ -172,7 +172,7 @@ static void *dxr3_aa_init_plugin(xine_t *xine, void *visual_gen)
   return &this->video_driver_class;
 }
 
-static dxr3_driver_class_t *dxr3_vo_init_plugin(xine_t *xine, void *visual_gen)
+static dxr3_driver_class_t *dxr3_vo_init_plugin(xine_t *xine, const void *visual_gen)
 {
   dxr3_driver_class_t *this;
 

@@ -23,7 +23,7 @@
 #include <xine/xine_internal.h>
 
 
-void *upmix_init_plugin(xine_t *xine, void *data);
-void *upmix_mono_init_plugin(xine_t *xine, void *data);
-void *stretch_init_plugin(xine_t *xine, void *data);
-void *volnorm_init_plugin(xine_t *xine, void *data);
+void *upmix_init_plugin      (xine_t *xine, const void *data);
+void *upmix_mono_init_plugin (xine_t *xine, const void *data);
+void *stretch_init_plugin    (xine_t *xine, const void *data);
+void *volnorm_init_plugin    (xine_t *xine, const void *data);

@@ -359,7 +359,7 @@ static post_plugin_t *oscope_open_plugin(post_class_t *class_gen, int inputs,
 }
 
 /* plugin class initialization function */
-void *oscope_init_plugin(xine_t *xine, void *data)
+void *oscope_init_plugin(xine_t *xine, const void *data)
 {
   post_class_oscope_t *class = calloc(1, sizeof(post_class_oscope_t));
 

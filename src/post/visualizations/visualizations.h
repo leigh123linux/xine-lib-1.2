@@ -22,7 +22,7 @@
 
 #include <xine/xine_internal.h>
 
-void *oscope_init_plugin(xine_t *xine, void *data);
-void *fftscope_init_plugin(xine_t *xine, void *data);
-void *fftgraph_init_plugin(xine_t *xine, void *data);
-void *tdaan_init_plugin(xine_t *xine, void *data);
+void *oscope_init_plugin   (xine_t *xine, const void *data);
+void *fftscope_init_plugin (xine_t *xine, const void *data);
+void *fftgraph_init_plugin (xine_t *xine, const void *data);
+void *tdaan_init_plugin    (xine_t *xine, const void *data);

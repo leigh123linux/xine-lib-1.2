@@ -23,21 +23,21 @@
 
 #include <xine/xine_internal.h>
 
-void *demux_aac_init_plugin (xine_t *xine, void *data);
-void *demux_ac3_init_plugin (xine_t *xine, void *data);
-void *demux_aud_init_plugin (xine_t *xine, void *data);
-void *demux_aiff_init_plugin (xine_t *xine, void *data);
-void *demux_cdda_init_plugin (xine_t *xine, void *data);
-void *demux_dts_init_plugin (xine_t *xine, void *data);
-void *demux_flac_init_plugin (xine_t *xine, void *data);
-void *demux_mpgaudio_init_class (xine_t *xine, void *data);
-void *demux_mpc_init_plugin (xine_t *xine, void *data);
-void *demux_realaudio_init_plugin (xine_t *xine, void *data);
-void *demux_shn_init_plugin (xine_t *xine, void *data);
-void *demux_snd_init_plugin (xine_t *xine, void *data);
-void *demux_tta_init_plugin (xine_t *xine, void *data);
-void *demux_voc_init_plugin (xine_t *xine, void *data);
-void *demux_vox_init_plugin (xine_t *xine, void *data);
-void *demux_wav_init_plugin (xine_t *xine, void *data);
+void *demux_aac_init_plugin       (xine_t *xine, const void *data);
+void *demux_ac3_init_plugin       (xine_t *xine, const void *data);
+void *demux_aud_init_plugin       (xine_t *xine, const void *data);
+void *demux_aiff_init_plugin      (xine_t *xine, const void *data);
+void *demux_cdda_init_plugin      (xine_t *xine, const void *data);
+void *demux_dts_init_plugin       (xine_t *xine, const void *data);
+void *demux_flac_init_plugin      (xine_t *xine, const void *data);
+void *demux_mpgaudio_init_class   (xine_t *xine, const void *data);
+void *demux_mpc_init_plugin       (xine_t *xine, const void *data);
+void *demux_realaudio_init_plugin (xine_t *xine, const void *data);
+void *demux_shn_init_plugin       (xine_t *xine, const void *data);
+void *demux_snd_init_plugin       (xine_t *xine, const void *data);
+void *demux_tta_init_plugin       (xine_t *xine, const void *data);
+void *demux_voc_init_plugin       (xine_t *xine, const void *data);
+void *demux_vox_init_plugin       (xine_t *xine, const void *data);
+void *demux_wav_init_plugin       (xine_t *xine, const void *data);
 
 #endif

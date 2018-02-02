@@ -86,7 +86,7 @@ static char          *switch_get_help(void);
 static int            switch_draw(vo_frame_t *frame, xine_stream_t *stream);
 
 
-static void *switch_init_plugin(xine_t *xine, void *data)
+static void *switch_init_plugin(xine_t *xine, const void *data)
 {
   post_class_switch_t *this = calloc(1, sizeof(post_class_switch_t));
 

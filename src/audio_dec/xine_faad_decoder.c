@@ -1104,7 +1104,7 @@ static void faad_class_unref (audio_decoder_class_t *this_gen) {
   free (master);
 }
 
-static void *faad_init_plugin (xine_t *xine, void *data, const char *id) {
+static void *faad_init_plugin (xine_t *xine, const void *data, const char *id) {
 
   faad_class_t *this, *master;
   struct cfg_entry_s *entry;
@@ -1143,11 +1143,11 @@ static void *faad_init_plugin (xine_t *xine, void *data, const char *id) {
   return this;
 }
 
-static void *latm_init_class (xine_t *xine, void *data) {
+static void *latm_init_class (xine_t *xine, const void *data) {
   return faad_init_plugin (xine, data, "FAAD-LATM");
 }
 
-static void *faad_init_class (xine_t *xine, void *data) {
+static void *faad_init_class (xine_t *xine, const void *data) {
   return faad_init_plugin (xine, data, "FAAD");
 }
 

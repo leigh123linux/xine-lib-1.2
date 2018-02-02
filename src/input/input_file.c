@@ -954,7 +954,7 @@ static void file_input_class_dispose (input_class_t *this_gen) {
   free (this);
 }
 
-static void *file_input_init_plugin (xine_t *xine, void *data) {
+static void *file_input_init_plugin (xine_t *xine, const void *data) {
 
   file_input_class_t  *this;
   config_values_t     *config;

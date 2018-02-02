@@ -3259,7 +3259,7 @@ static vo_driver_t *vdpau_open_plugin (video_driver_class_t *class_gen, const vo
  * class functions
  */
 
-static void *vdpau_init_class (xine_t *xine, void *visual_gen)
+static void *vdpau_init_class (xine_t *xine, const void *visual_gen)
 {
   vdpau_class_t *this = (vdpau_class_t *) calloc(1, sizeof(vdpau_class_t));
 

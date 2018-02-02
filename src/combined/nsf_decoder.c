@@ -236,7 +236,7 @@ static audio_decoder_t *open_plugin (audio_decoder_class_t *class_gen, xine_stre
 
 /* This function allocates a private audio decoder class and initializes
  * the class's member functions. */
-void *decoder_nsf_init_plugin (xine_t *xine, void *data) {
+void *decoder_nsf_init_plugin (xine_t *xine, const void *data) {
 
   nsf_class_t *this ;
 

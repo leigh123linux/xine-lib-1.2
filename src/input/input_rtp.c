@@ -786,7 +786,7 @@ static input_plugin_t *rtp_class_get_instance (input_class_t *cls_gen,
 /*
  *  net plugin class
  */
-static void *init_class (xine_t *xine, void *data) {
+static void *init_class (xine_t *xine, const void *data) {
 
   input_class_t  *this;
 

@@ -277,7 +277,7 @@ static vo_driver_t *vo_none_open_plugin(video_driver_class_t *driver_class, cons
 /*
  * Class related functions.
  */
-static void *vo_none_init_class (xine_t *xine, void *visual) {
+static void *vo_none_init_class (xine_t *xine, const void *visual) {
   vo_none_class_t        *this;
 
   this = calloc(1, sizeof(vo_none_class_t));

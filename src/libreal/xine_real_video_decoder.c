@@ -535,7 +535,7 @@ static video_decoder_t *open_plugin (video_decoder_class_t *class_gen,
 /*
  * real plugin class
  */
-void *init_realvdec (xine_t *xine, void *data) {
+void *init_realvdec (xine_t *xine, const void *data) {
 
   real_class_t       *this;
 

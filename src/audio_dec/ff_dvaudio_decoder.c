@@ -358,7 +358,7 @@ static audio_decoder_t *dvaudio_open_plugin (audio_decoder_class_t *class_gen, x
   return &this->audio_decoder;
 }
 
-static void *init_dvaudio_plugin (xine_t *xine, void *data) {
+static void *init_dvaudio_plugin (xine_t *xine, const void *data) {
 
   dvaudio_class_t *this ;
 

@@ -1678,7 +1678,7 @@ static void alsa_speaker_arrangement_cb (void *user_data,
 /*
  * class functions
  */
-static void *init_class (xine_t *xine, void *data) {
+static void *init_class (xine_t *xine, const void *data) {
 
   alsa_class_t        *this;
 

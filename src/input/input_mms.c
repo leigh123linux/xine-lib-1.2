@@ -461,7 +461,7 @@ static void mms_class_dispose (input_class_t *this_gen) {
   free (this);
 }
 
-static void *init_class (xine_t *xine, void *data) {
+static void *init_class (xine_t *xine, const void *data) {
 
   mms_input_class_t  *this;
 

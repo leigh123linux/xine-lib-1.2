@@ -1066,7 +1066,7 @@ error:
   return 0;
 }
 
-static void *fb_init_class(xine_t *xine, void *visual_gen)
+static void *fb_init_class(xine_t *xine, const void *visual_gen)
 {
   fb_class_t *this = calloc(1, sizeof(fb_class_t));
 

@@ -266,7 +266,7 @@ static video_decoder_t *open_plugin (video_decoder_class_t *class_gen, xine_stre
   return &this->video_decoder;
 }
 
-void *decode_rgb_init_class (xine_t *xine, void *data) {
+void *decode_rgb_init_class (xine_t *xine, const void *data) {
 
   video_decoder_class_t *this;
 

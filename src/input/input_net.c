@@ -533,7 +533,7 @@ static input_plugin_t *net_class_get_instance (input_class_t *cls_gen, xine_stre
  *  net plugin class
  */
 
-void *input_net_init_class (xine_t *xine, void *data) {
+void *input_net_init_class (xine_t *xine, const void *data) {
 
   net_input_class_t  *this;
 

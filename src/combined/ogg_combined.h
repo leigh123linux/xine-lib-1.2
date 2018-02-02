@@ -22,6 +22,6 @@
 #include <xine/os_types.h>
 #include <xine/attributes.h>
 
-void *vorbis_init_plugin (xine_t *xine, void *data);
-void *speex_init_plugin (xine_t *xine, void *data);
-void *theora_init_plugin (xine_t *xine, void *data);
+void *vorbis_init_plugin (xine_t *xine, const void *data);
+void *speex_init_plugin (xine_t *xine, const void *data);
+void *theora_init_plugin (xine_t *xine, const void *data);

@@ -355,7 +355,7 @@ gnomevfs_klass_get_instance (input_class_t *klass_gen, xine_stream_t *stream,
 }
 
 static void
-*init_input_class (xine_t *xine, void *data)
+*init_input_class (xine_t *xine, const void *data)
 {
 	gnomevfs_input_class_t *this;
 

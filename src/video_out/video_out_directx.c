@@ -1342,7 +1342,7 @@ static vo_driver_t *open_plugin (video_driver_class_t *class_gen, const void *vi
   return ( vo_driver_t * ) win32_driver;
 }
 
-static void *init_class (xine_t *xine, void *visual_gen) {
+static void *init_class (xine_t *xine, const void *visual_gen) {
 
   directx_class_t    *directx;
 

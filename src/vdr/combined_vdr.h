@@ -72,9 +72,9 @@ inline static int vdr_is_vdr_stream(xine_stream_t *stream)
 
 
 /* plugin class initialization function */
-void *vdr_input_init_plugin(xine_t *xine, void *data);
-void *vdr_video_init_plugin(xine_t *xine, void *data);
-void *vdr_audio_init_plugin(xine_t *xine, void *data);
+void *vdr_input_init_plugin(xine_t *xine, const void *data);
+void *vdr_video_init_plugin(xine_t *xine, const void *data);
+void *vdr_audio_init_plugin(xine_t *xine, const void *data);
 
 
 

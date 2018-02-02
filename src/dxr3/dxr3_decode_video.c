@@ -68,7 +68,7 @@
 
 
 /* plugin class initialization function */
-static void     *dxr3_init_plugin(xine_t *xine, void *);
+static void     *dxr3_init_plugin(xine_t *xine, const void *);
 
 
 /* plugin catalog information */
@@ -174,7 +174,7 @@ static inline int dxr3_mvcommand(int fd_control, int command)
 }
 
 
-static void *dxr3_init_plugin(xine_t *xine, void *data)
+static void *dxr3_init_plugin(xine_t *xine, const void *data)
 {
   dxr3_decoder_class_t *this;
 

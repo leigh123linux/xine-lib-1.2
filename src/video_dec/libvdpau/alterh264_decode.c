@@ -2391,7 +2391,7 @@ open_plugin (video_decoder_class_t * class_gen, xine_stream_t * stream)
  * the class's member functions.
  */
 void *
-h264_alter_init_plugin (xine_t * xine, void *data)
+h264_alter_init_plugin (xine_t * xine, const void *data)
 {
   video_decoder_class_t *this;
 

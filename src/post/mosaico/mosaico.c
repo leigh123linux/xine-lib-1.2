@@ -112,7 +112,7 @@ static int            mosaico_draw_background(vo_frame_t *frame, xine_stream_t *
 static int            mosaico_draw(vo_frame_t *frame, xine_stream_t *stream);
 
 
-static void *mosaico_init_plugin(xine_t *xine, void *data)
+static void *mosaico_init_plugin(xine_t *xine, const void *data)
 {
   post_class_mosaico_t *this = calloc(1, sizeof(post_class_mosaico_t));
 

@@ -1889,7 +1889,7 @@ VCD_ENUM_CALLBACK (vcd_default_autoplay_cb, vcdinfo_item_enum_t, default_autopla
 VCD_NUM_CALLBACK (vcd_debug_cb, vcdplayer_debug)
 
 static void *
-vcd_init (xine_t *xine, void *data)
+vcd_init (xine_t *xine, const void *data)
 {
   vcd_input_class_t  *class;
   config_values_t    *config;

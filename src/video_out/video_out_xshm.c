@@ -1436,7 +1436,7 @@ static vo_driver_t *xshm_open_plugin_old (video_driver_class_t *class_gen, const
 /*
  * class functions
  */
-static void *xshm_init_class (xine_t *xine, void *visual_gen) {
+static void *xshm_init_class (xine_t *xine, const void *visual_gen) {
   xshm_class_t	       *this = (xshm_class_t *) calloc(1, sizeof(xshm_class_t));
 
   this->driver_class.open_plugin     = xshm_open_plugin_old;
@@ -1449,7 +1449,7 @@ static void *xshm_init_class (xine_t *xine, void *visual_gen) {
   return this;
 }
 
-static void *xshm_init_class_2 (xine_t *xine, void *visual_gen) {
+static void *xshm_init_class_2 (xine_t *xine, const void *visual_gen) {
   xshm_class_t	       *this;
   this = xshm_init_class (xine, visual_gen);
   this->driver_class.open_plugin     = xshm_open_plugin_2;

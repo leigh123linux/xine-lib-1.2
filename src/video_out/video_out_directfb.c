@@ -1907,7 +1907,7 @@ static vo_driver_t *open_plugin_fb (video_driver_class_t *class_gen, const void 
 }
 
 #ifndef DIRECTFB_X11
-static void *init_class_fb (xine_t *xine, void *visual_gen) {
+static void *init_class_fb (xine_t *xine, const void *visual_gen) {
   directfb_class_t *this;
   const char       *error;
 
@@ -2101,7 +2101,7 @@ static vo_driver_t *open_plugin_x11 (video_driver_class_t *class_gen, const void
   return &this->vo_driver;
 }
 
-static void *init_class_x11 (xine_t *xine, void *visual_gen) {
+static void *init_class_x11 (xine_t *xine, const void *visual_gen) {
   directfb_class_t *this;
   x11_visual_t     *visual = (x11_visual_t *) visual_gen;
   const char       *error;
@@ -2138,7 +2138,7 @@ static void *init_class_x11 (xine_t *xine, void *visual_gen) {
   return this;
 }
 
-static void *init_class_x11_2 (xine_t *xine, void *visual_gen) {
+static void *init_class_x11_2 (xine_t *xine, const void *visual_gen) {
   directfb_class_t *this;
 
   this = init_class_x11( xine, visual_gen );

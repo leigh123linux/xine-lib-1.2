@@ -2765,7 +2765,7 @@ static const char * const *vdr_class_get_autoplay_list(input_class_t *this_gen,
   return mrls;
 }
 
-void *vdr_input_init_plugin(xine_t *xine, void *data)
+void *vdr_input_init_plugin(xine_t *xine, const void *data)
 {
   input_class_t *this;
 

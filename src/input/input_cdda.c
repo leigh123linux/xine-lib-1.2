@@ -2767,7 +2767,7 @@ static int cdda_class_eject_media (input_class_t *this_gen) {
 }
 
 
-static void *init_plugin (xine_t *xine, void *data) {
+static void *init_plugin (xine_t *xine, const void *data) {
 
   cdda_input_class_t  *this;
   config_values_t     *config;

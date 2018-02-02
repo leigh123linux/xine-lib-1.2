@@ -314,7 +314,7 @@ static audio_decoder_t *open_plugin (audio_decoder_class_t *class_gen, xine_stre
  * wavpack plugin class
  */
 
-void *decoder_wavpack_init_plugin (xine_t *xine, void *data) {
+void *decoder_wavpack_init_plugin (xine_t *xine, const void *data) {
     wavpack_class_t *this;
 
     this = calloc(1, sizeof (wavpack_class_t));

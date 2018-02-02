@@ -425,7 +425,7 @@ static input_plugin_t *stdin_class_get_instance (input_class_t *class_gen,
 /*
  * stdin input plugin class stuff
  */
-static void *stdin_plugin_init_class (xine_t *xine, void *data) {
+static void *stdin_plugin_init_class (xine_t *xine, const void *data) {
 
   input_class_t  *this;
 

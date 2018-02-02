@@ -456,7 +456,7 @@ static post_plugin_t *fftgraph_open_plugin(post_class_t *class_gen, int inputs,
 }
 
 /* plugin class initialization function */
-void *fftgraph_init_plugin(xine_t *xine, void *data)
+void *fftgraph_init_plugin(xine_t *xine, const void *data)
 {
   post_class_fftgraph_t *class = calloc(1, sizeof(post_class_fftgraph_t));
 

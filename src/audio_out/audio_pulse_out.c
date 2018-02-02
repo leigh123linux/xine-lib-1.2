@@ -1067,7 +1067,7 @@ static void dispose_class (audio_driver_class_t *this_gen) {
   free(this);
 }
 
-static void *init_class (xine_t *xine, void *data) {
+static void *init_class (xine_t *xine, const void *data) {
 
   pulse_class_t        *this;
 

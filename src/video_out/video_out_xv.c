@@ -1649,7 +1649,7 @@ static vo_driver_t *open_plugin_old (video_driver_class_t *class_gen, const void
 /*
  * class functions
  */
-static void *init_class (xine_t *xine, void *visual_gen) {
+static void *init_class (xine_t *xine, const void *visual_gen) {
   xv_class_t        *this = (xv_class_t *) calloc(1, sizeof(xv_class_t));
 
   this->driver_class.open_plugin     = open_plugin_old;
@@ -1663,7 +1663,7 @@ static void *init_class (xine_t *xine, void *visual_gen) {
   return this;
 }
 
-static void *init_class_2 (xine_t *xine, void *visual_gen) {
+static void *init_class_2 (xine_t *xine, const void *visual_gen) {
   xv_class_t	       *this;
   this = init_class (xine, visual_gen);
   this->driver_class.open_plugin     = open_plugin_2;

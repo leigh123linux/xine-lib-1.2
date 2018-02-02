@@ -2921,7 +2921,7 @@ static void dispose_video_class (video_decoder_class_t *this_gen) {
   free (this);
 }
 
-void *init_video_plugin (xine_t *xine, void *data) {
+void *init_video_plugin (xine_t *xine, const void *data) {
 
   ff_video_class_t *this;
   config_values_t  *config;

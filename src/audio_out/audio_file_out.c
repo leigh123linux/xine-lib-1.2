@@ -378,7 +378,7 @@ static ao_driver_t *ao_file_open_plugin (audio_driver_class_t *class_gen,
 /*
  * class functions
  */
-static void *ao_file_init_class (xine_t *xine, void *data) {
+static void *ao_file_init_class (xine_t *xine, const void *data) {
 
 	ao_file_class_t        *this;
 

@@ -231,7 +231,7 @@ static input_plugin_t *input_avformat_get_instance (input_class_t *cls_gen, xine
   return &this->input_plugin;
 }
 
-void *init_avformat_input_plugin (xine_t *xine, void *data) {
+void *init_avformat_input_plugin (xine_t *xine, const void *data) {
 
   input_class_t  *this;
 
@@ -867,7 +867,7 @@ static demux_plugin_t *open_demux_avformat_plugin (demux_class_t *class_gen,
   return &this->demux_plugin;
 }
 
-void *init_avformat_demux_plugin (xine_t *xine, void *data) {
+void *init_avformat_demux_plugin (xine_t *xine, const void *data) {
   demux_class_t     *this;
 
   this  = calloc(1, sizeof(demux_class_t));

@@ -848,7 +848,7 @@ static vo_driver_t *pgx32_init_driver(video_driver_class_t *class_gen, const voi
   return (vo_driver_t *)this;
 }
 
-static void *pgx32_init_class(xine_t *xine, void *visual_gen)
+static void *pgx32_init_class(xine_t *xine, const void *visual_gen)
 {
   pgx32_driver_class_t *class;
 

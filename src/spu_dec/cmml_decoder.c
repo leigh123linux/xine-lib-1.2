@@ -513,7 +513,7 @@ static void spu_decoder_class_dispose(spu_decoder_class_t *this_gen)
   free(this);
 }
 
-static void *init_spu_decoder_plugin (xine_t *xine, void *data) {
+static void *init_spu_decoder_plugin (xine_t *xine, const void *data) {
   spucmml_class_t *this;
 
   this = (spucmml_class_t *) calloc(1, sizeof(spucmml_class_t));

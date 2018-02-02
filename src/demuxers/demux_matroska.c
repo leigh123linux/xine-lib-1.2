@@ -3308,7 +3308,7 @@ error:
 /*
  * demux matroska class
  */
-void *demux_matroska_init_class (xine_t *xine, void *data) {
+void *demux_matroska_init_class (xine_t *xine, const void *data) {
 
   demux_matroska_class_t     *this;
 

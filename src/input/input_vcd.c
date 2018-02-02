@@ -1063,7 +1063,7 @@ static const char * const * vcd_class_get_autoplay_list (input_class_t *this_gen
   return (const char * const *)this->filelist;
 }
 
-static void *init_class (xine_t *xine, void *data) {
+static void *init_class (xine_t *xine, const void *data) {
 
   vcd_input_class_t  *this;
   config_values_t    *config = xine->config;

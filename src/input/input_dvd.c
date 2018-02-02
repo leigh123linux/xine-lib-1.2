@@ -1726,7 +1726,7 @@ static int dvd_class_eject_media (input_class_t *this_gen) {
   return media_eject_media (this->xine, this->eject_device);
 }
 
-static void *init_class (xine_t *xine, void *data) {
+static void *init_class (xine_t *xine, const void *data) {
   dvd_input_class_t   *this;
   config_values_t     *config = xine->config;
   void                *dvdcss;

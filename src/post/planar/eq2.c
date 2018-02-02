@@ -425,7 +425,7 @@ static int            eq2_intercept_frame(post_video_port_t *port, vo_frame_t *f
 static int            eq2_draw(vo_frame_t *frame, xine_stream_t *stream);
 
 
-void *eq2_init_plugin(xine_t *xine, void *data)
+void *eq2_init_plugin(xine_t *xine, const void *data)
 {
   post_class_t *class = calloc(1, sizeof(post_class_t));
 

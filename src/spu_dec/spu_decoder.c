@@ -357,7 +357,7 @@ static spu_decoder_t *open_plugin (spu_decoder_class_t *class_gen, xine_stream_t
   return &this->spu_decoder;
 }
 
-static void *init_plugin (xine_t *xine, void *data) {
+static void *init_plugin (xine_t *xine, const void *data) {
 
   spu_decoder_class_t *this;
 

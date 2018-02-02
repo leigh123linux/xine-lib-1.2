@@ -236,7 +236,7 @@ static void dispose_class (video_decoder_class_t *this) {
  * This function allocates a private video decoder class and initializes
  * the class's member functions.
  */
-static void *init_plugin (xine_t *xine, void *data) {
+static void *init_plugin (xine_t *xine, const void *data) {
 
   foovideo_class_t *this;
 

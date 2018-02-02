@@ -1011,7 +1011,7 @@ static ao_driver_t *ao_sun_open_plugin (audio_driver_class_t *class_gen, const v
 /*
  * class functions
  */
-static void *ao_sun_init_class (xine_t *xine, void *data) {
+static void *ao_sun_init_class (xine_t *xine, const void *data) {
   sun_class_t         *this;
 
   this = calloc(1, sizeof (sun_class_t));

@@ -377,7 +377,7 @@ static video_decoder_t *open_plugin (video_decoder_class_t *class_gen,
 /*
  * jpeg plugin class
  */
-static void *init_class (xine_t *xine, void *data) {
+static void *init_class (xine_t *xine, const void *data) {
 
   jpeg_class_t *this;
 
