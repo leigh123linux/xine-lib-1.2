@@ -1,6 +1,6 @@
 /*
  * kate: space-indent on; indent-width 2; mixedindent off; indent-mode cstyle; remove-trailing-space on;
- * Copyright (C) 2012-2017 the xine project
+ * Copyright (C) 2012-2018 the xine project
  * Copyright (C) 2012 Christophe Thommeret <hftom@free.fr>
  *
  * This file is part of xine, a free video player.
@@ -52,9 +52,9 @@
 #define GL_GLEXT_PROTOTYPES
 #include <GL/gl.h>
 #include <GL/glext.h>
-#include <GL/glx.h>
 
-
+#include "opengl/xine_gl.h"
+#include "opengl/xine_glx.c"
 
 typedef int (*GLXSWAPINTERVALSGI) ( int );
 
@@ -104,10 +104,7 @@ typedef struct {
   vo_driver_t        vo_driver;
   vo_scale_t         sc;
 
-  Display           *display;
-  int                screen;
-  Drawable           drawable;
-  GLXContext         context;
+  xine_gl_t         *gl;
 
   int                texture_float;
   opengl2_program_t  yuv420_program;
@@ -233,7 +230,6 @@ static void opengl2_exit_register (opengl2_driver_t *this) {
 
 typedef struct {
   video_driver_class_t driver_class;
-  GLXContext           ctx;
   xine_t              *xine;
 } opengl2_class_t;
 
@@ -645,8 +641,7 @@ static void opengl2_overlay_begin (vo_driver_t *this_gen, vo_frame_t *frame_gen,
   if ( changed ) {
     this->ovl_changed = 1;
 
-    if ( !glXMakeCurrent( this->display, this->drawable, this->context ) ) {
-      xprintf( this->xine, XINE_VERBOSITY_LOG, "video_out_opengl2: display unavailable for rendering\n" );
+    if (!this->gl->make_current(this->gl)) {
       return;
     }
   }
@@ -709,7 +704,7 @@ static void opengl2_overlay_end (vo_driver_t *this_gen, vo_frame_t *vo_img)
     this->overlays[i].tex = 0;
   }
 
-  glXMakeCurrent( this->display, None, NULL );
+  this->gl->release_current(this->gl);
 }
 
 
@@ -1316,13 +1311,12 @@ static void opengl2_draw_video_bilinear( opengl2_driver_t *that, int guiw, int g
 
 static void opengl2_draw( opengl2_driver_t *that, opengl2_frame_t *frame )
 {
-  if ( !glXMakeCurrent( that->display, that->drawable, that->context ) ) {
-    xprintf( that->xine, XINE_VERBOSITY_LOG, "video_out_opengl2: display unavailable for rendering\n" );
+  if (!that->gl->make_current(that->gl)) {
     return;
   }
 
   if ( !opengl2_check_textures_size( that, frame->width, frame->height ) ) {
-    glXMakeCurrent( that->display, None, NULL );
+    that->gl->release_current(that->gl);
     return;
   }
 
@@ -1442,9 +1436,8 @@ static void opengl2_draw( opengl2_driver_t *that, opengl2_frame_t *frame )
   //if ( that->mglXSwapInterval )
     //that->mglXSwapInterval( 1 );
 
-  glXSwapBuffers( that->display, that->drawable );
-
-  glXMakeCurrent( that->display, None, NULL );
+  that->gl->swap_buffers(that->gl);
+  that->gl->release_current(that->gl);
 }
 
 
@@ -1475,11 +1468,9 @@ static void opengl2_display_frame( vo_driver_t *this_gen, vo_frame_t *frame_gen 
   opengl2_redraw_needed( this_gen );
 
   if( !this->exiting ) {
-    XLockDisplay (this->display);
     pthread_mutex_lock(&this->drawable_lock); /* protect drawable from being changed */
     opengl2_draw( this, frame );
     pthread_mutex_unlock(&this->drawable_lock); /* allow changing drawable again */
-    XUnlockDisplay (this->display);
   }
 
   if( !this->exit_indx )
@@ -1610,7 +1601,7 @@ static int opengl2_gui_data_exchange( vo_driver_t *this_gen, int data_type, void
 
     case XINE_GUI_SEND_DRAWABLE_CHANGED: {
       pthread_mutex_lock(&this->drawable_lock); /* wait for other thread which is currently displaying */
-      this->drawable = (Drawable)data;
+      this->gl->set_native_window(this->gl, data);
       pthread_mutex_unlock(&this->drawable_lock);
       this->sc.force_redraw = 1;
       break;
@@ -1667,8 +1658,8 @@ static void opengl2_dispose( vo_driver_t *this_gen )
 
   pthread_mutex_destroy(&this->drawable_lock);
 
-  glXMakeCurrent( this->display, this->drawable, this->context );
-  
+  this->gl->make_current(this->gl);
+
   opengl2_delete_program( &this->yuv420_program );
   opengl2_delete_program( &this->yuv422_program );
 
@@ -1709,10 +1700,9 @@ static void opengl2_dispose( vo_driver_t *this_gen )
   for ( i=0; i<XINE_VORAW_MAX_OVL; ++i ) {
     glDeleteTextures( 1, &this->overlays[i].tex );
   }
-  
-  glXMakeCurrent( this->display, None, NULL );
 
-  glXDestroyContext( this->display, this->context );
+  this->gl->release_current(this->gl);
+  this->gl->dispose(&this->gl);
 
   free (this);
 }
@@ -1731,10 +1721,11 @@ static vo_driver_t *opengl2_open_plugin( video_driver_class_t *class_gen, const 
   if (!this)
     return NULL;
 
-  this->display       = visual->display;
-  this->screen        = visual->screen;
-  this->drawable      = visual->d;
-  this->context        = class->ctx;
+  this->gl = _glx_init(class->xine, visual);
+  if (!this->gl) {
+    goto fail_gl_init;
+  }
+
   pthread_mutex_init(&this->drawable_lock, 0);
 
   _x_vo_scale_init(&this->sc, 1, 0, config);
@@ -1763,10 +1754,9 @@ static vo_driver_t *opengl2_open_plugin( video_driver_class_t *class_gen, const 
   this->vo_driver.dispose              = opengl2_dispose;
   this->vo_driver.redraw_needed        = opengl2_redraw_needed;
 
-  if ( !glXMakeCurrent( this->display, this->drawable, this->context ) ) {
+  if (!this->gl->make_current(this->gl)) {
     xprintf( this->xine, XINE_VERBOSITY_LOG, "video_out_opengl2: display unavailable for initialization\n" );
-    free( this );
-    return NULL;
+    goto fail_make_current;
   }
 
   glClearColor( 0.0f, 0.0f, 0.0f, 0.0f );
@@ -1792,25 +1782,19 @@ static vo_driver_t *opengl2_open_plugin( video_driver_class_t *class_gen, const 
   this->yuvtex.width = this->yuvtex.height = 0;
   this->fbo = this->videoPBO = this->videoTex = this->videoTex2 = 0;
   if ( !opengl2_check_textures_size( this, INITWIDTH, INITHEIGHT ) ) {
-    glXMakeCurrent( this->display, None, NULL );
-    free( this );
-    return NULL;
+    goto fail;
   }
 
   if ( !opengl2_build_program( this, &this->yuv420_program, &yuv420_frag, "yuv420_frag" ) ) {
-    glXMakeCurrent( this->display, None, NULL );
-    free( this );
-    return NULL;
+    goto fail;
   }
   if ( !opengl2_build_program( this, &this->yuv422_program, &yuv422_frag, "yuv422_frag" ) ) {
-    glXMakeCurrent( this->display, None, NULL );
-    free( this );
-    return NULL;
+    goto fail;
   }
 
   this->mglXSwapInterval = (GLXSWAPINTERVALSGI)glXGetProcAddressARB( (const GLubyte*)"glXSwapIntervalSGI" );
 
-  glXMakeCurrent( this->display, None, NULL );
+  this->gl->release_current(this->gl);
 
   this->capabilities = VO_CAP_YV12 | VO_CAP_YUY2 | VO_CAP_CROP | VO_CAP_UNSCALED_OVERLAY | VO_CAP_CUSTOM_EXTENT_OVERLAY | VO_CAP_ARGB_LAYER_OVERLAY;// | VO_CAP_VIDEO_WINDOW_OVERLAY;
 
@@ -1863,60 +1847,52 @@ static vo_driver_t *opengl2_open_plugin( video_driver_class_t *class_gen, const 
   xprintf( this->xine, XINE_VERBOSITY_DEBUG, "video_out_opengl2: initialized.\n");
 
   return &this->vo_driver;
+
+ fail:
+  this->gl->release_current(this->gl);
+ fail_make_current:
+  this->gl->dispose(&this->gl);
+ fail_gl_init:
+  free(this);
+  return NULL;
 }
 
-
-
-static int opengl2_check_platform( opengl2_class_t *this_gen, const x11_visual_t *vis )
+static int opengl2_check_platform( xine_t *xine, const void *visual )
 {
-  int attribs[] = { GLX_RGBA, GLX_DOUBLEBUFFER, GLX_RED_SIZE, 8,
-    GLX_GREEN_SIZE, 8, GLX_BLUE_SIZE, 8, GLX_DEPTH_SIZE, 16, None };
+  const char *extensions;
+  xine_gl_t  *gl;
+  int result = 0;
 
-  Window        root;
-  XVisualInfo  *visinfo;
-  GLXContext    ctx;
-  int           ret = 1;
-
-  if ( !vis || !vis->display || !( root = RootWindow( vis->display, vis->screen ) ) )
+  gl = _glx_init(xine, visual);
+  if (!gl)
     return 0;
-  
-  if ( !( visinfo = glXChooseVisual( vis->display, vis->screen, attribs ) ) )
-    return 0;
-  
-  if ( !( ctx = glXCreateContext( vis->display, visinfo, NULL, GL_TRUE  ) ) ) {
-    XFree( visinfo );
-    return 0;
-  }
-  
-  if ( glXMakeCurrent( vis->display, root, ctx ) ) {
-    if ( !glXIsDirect( vis->display, ctx ) )
-      ret = 0;
-    const char *extensions = glGetString( GL_EXTENSIONS );
-    if ( !strstr( extensions, "ARB_texture_rectangle" ) )
-      ret = 0;
-    if ( !strstr( extensions, "ARB_texture_non_power_of_two" ) )
-      ret = 0;
-    if ( !strstr( extensions, "ARB_pixel_buffer_object" ) )
-      ret = 0;
-    if ( !strstr( extensions, "ARB_framebuffer_object" ) )
-      ret = 0;
-    if ( !strstr( extensions, "ARB_fragment_shader" ) )
-      ret = 0;
-    if ( !strstr( extensions, "ARB_vertex_shader" ) )
-      ret = 0;
-    glXMakeCurrent( vis->display, None, NULL );
-  }
-  else
-    ret = 0;
 
-  if ( !ret )
-    glXDestroyContext( vis->display, ctx );
-  else
-    this_gen->ctx = ctx;    
+  if (!gl->make_current(gl))
+    goto fail_released;
 
-  XFree( visinfo );
+  extensions = glGetString(GL_EXTENSIONS);
+  if (!extensions)
+    goto fail;
 
-  return ret;
+  if (!strstr( extensions, "ARB_texture_rectangle"))
+    goto fail;
+  if (!strstr( extensions, "ARB_texture_non_power_of_two"))
+    goto fail;
+  if (!strstr( extensions, "ARB_pixel_buffer_object"))
+    goto fail;
+  if (!strstr( extensions, "ARB_framebuffer_object"))
+    goto fail;
+  if (!strstr( extensions, "ARB_fragment_shader"))
+    goto fail;
+  if (!strstr( extensions, "ARB_vertex_shader"))
+    goto fail;
+  result = 1;
+
+ fail:
+  gl->release_current(gl);
+ fail_released:
+  gl->dispose(&gl);
+  return result;
 }
 
 /*
@@ -1925,10 +1901,14 @@ static int opengl2_check_platform( opengl2_class_t *this_gen, const x11_visual_t
 
 static void *opengl2_init_class( xine_t *xine, void *visual_gen )
 {
-  opengl2_class_t *this = (opengl2_class_t *) calloc(1, sizeof(opengl2_class_t));
+  opengl2_class_t *this;
 
-  if ( !opengl2_check_platform( this, (const x11_visual_t *)visual_gen ) ) {
-    free(this);
+  if (!opengl2_check_platform( xine, visual_gen)) {
+    return NULL;
+  }
+
+  this = calloc(1, sizeof(*this));
+  if (!this) {
     return NULL;
   }
 

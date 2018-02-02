@@ -28,6 +28,8 @@ libxcbosd_la_LIBADD = $(XINE_LIB) $(XCB_LIBS) $(LTLIBINTL)
 
 noinst_LTLIBRARIES = $(X11OSD_LIB) $(XCBOSD_LIB)
 
+EXTRA_DIST += opengl/xine_gl.h opengl/xine_glx.c
+
 #
 
 if !ENABLE_LIBXINE_BUILTINS
