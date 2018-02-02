@@ -64,7 +64,6 @@ typedef struct aa_frame_s {
 typedef struct {
   vo_driver_t        vo_driver;
 
-  config_values_t   *config;
   xine_t            *xine;
   int                user_ratio;
   aa_context        *context;
@@ -74,7 +73,6 @@ typedef struct {
 typedef struct {
 
   video_driver_class_t driver_class;
-  config_values_t     *config;
   xine_t              *xine;
 
 } aa_class_t;
@@ -269,7 +267,6 @@ static vo_driver_t *open_plugin (video_driver_class_t *class_gen, const void *vi
 
   this->context = (aa_context*) visual_gen;
 
-  this->config = class->config;
   this->xine   = class->xine;
 
   this->vo_driver.get_capabilities     = aa_get_capabilities;
@@ -289,7 +286,7 @@ static vo_driver_t *open_plugin (video_driver_class_t *class_gen, const void *vi
   return &this->vo_driver;
 }
 
-static void *init_class (xine_t *xine, void *visual_gen) {
+static void *init_class (xine_t *xine, const void *visual_gen) {
   /* aa_context    *context = (aa_context*) visual_gen; */
   aa_class_t    *this;
 
@@ -300,7 +297,6 @@ static void *init_class (xine_t *xine, void *visual_gen) {
   this->driver_class.description     = N_("xine video output plugin using the ascii-art library");
   this->driver_class.dispose         = default_video_driver_class_dispose;
 
-  this->config            = xine->config;
   this->xine              = xine;
 
   return this;

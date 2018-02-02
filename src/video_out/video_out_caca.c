@@ -69,7 +69,6 @@ typedef struct caca_frame_s {
 typedef struct {
   vo_driver_t        vo_driver;
 
-  config_values_t   *config;
   xine_t            *xine;
   int                user_ratio;
 
@@ -83,7 +82,6 @@ typedef struct {
 typedef struct {
 
   video_driver_class_t driver_class;
-  config_values_t     *config;
   xine_t              *xine;
 
 } caca_class_t;
@@ -270,7 +268,6 @@ static vo_driver_t *open_plugin (video_driver_class_t *class_gen, const void *vi
 
   this = calloc(1, sizeof (caca_driver_t));
 
-  this->config = class->config;
   this->xine   = class->xine;
 
   this->vo_driver.get_capabilities     = caca_get_capabilities;
@@ -317,7 +314,6 @@ static void *init_class (xine_t *xine, void *visual_gen) {
   this->driver_class.description     = N_("xine video output plugin using the Color AsCii Art library");
   this->driver_class.dispose         = default_video_driver_class_dispose;
 
-  this->config            = xine->config;
   this->xine              = xine;
 
   return this;
