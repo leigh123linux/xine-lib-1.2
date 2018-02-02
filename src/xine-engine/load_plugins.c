@@ -1865,15 +1865,13 @@ static vo_driver_t *_load_video_driver (xine_t *this, plugin_node_t *node,
 
 vo_driver_t *_x_load_video_output_plugin(xine_t *this,
                                          const char *id,
-					   int visual_type, void *visual) {
+                                         int visual_type, void *visual) {
 
   plugin_node_t      *node;
-  vo_driver_t        *driver;
+  vo_driver_t        *driver = NULL;
   const vo_info_t    *vo_info;
   plugin_catalog_t   *catalog = this->plugin_catalog;
   int                 list_id, list_size;
-
-  driver = NULL;
 
   if (id && !strcasecmp(id, "auto"))
     id = NULL;
@@ -2071,7 +2069,7 @@ xine_audio_port_t *xine_open_audio_driver (xine_t *this, const char *id,
 					   void *data) {
 
   plugin_node_t      *node;
-  ao_driver_t        *driver;
+  ao_driver_t        *driver = NULL;
   xine_audio_port_t  *port;
   const ao_info_t    *ao_info;
   plugin_catalog_t   *catalog = this->plugin_catalog;
@@ -2081,8 +2079,6 @@ xine_audio_port_t *xine_open_audio_driver (xine_t *this, const char *id,
     id = NULL;
 
   pthread_mutex_lock (&catalog->lock);
-
-  driver = NULL;
 
   list_size = xine_sarray_size (this->plugin_catalog->plugin_lists[PLUGIN_AUDIO_OUT - 1]);
   for (list_id = 0; list_id < list_size; list_id++) {
