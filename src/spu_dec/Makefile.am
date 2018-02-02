@@ -37,5 +37,5 @@ xineplug_decode_spudvb_la_LIBADD  = $(XINE_LIB) $(PTHREAD_LIBS) $(LTLIBINTL)
 xineplug_decode_spuhdmv_la_SOURCES = spuhdmv_decoder.c
 xineplug_decode_spuhdmv_la_LIBADD  = $(XINE_LIB) $(PTHREAD_LIBS) $(LTLIBINTL)
 
-xineplug_sputext_la_SOURCES = sputext_demuxer.c sputext_decoder.c
+xineplug_sputext_la_SOURCES = sputext_demuxer.c sputext_demuxer.h sputext_decoder.c
 xineplug_sputext_la_LIBADD  = $(XINE_LIB) $(LTLIBINTL)

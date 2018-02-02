@@ -40,6 +40,8 @@
 #include <xine/xineutils.h>
 #include <xine/osd.h>
 
+#include "sputext_demuxer.h"
+
 #define SUB_MAX_TEXT  5      /* lines */
 #define SUB_BUFSIZE   256    /* chars per line */
 
@@ -1210,8 +1212,6 @@ static const decoder_info_t spudec_info = {
   supported_types,     /* supported types */
   1                    /* priority        */
 };
-
-extern void *init_sputext_demux_class (xine_t *xine, void *data);
 
 const plugin_info_t xine_plugin_info[] EXPORTED = {
   /* type, API, "name", version, special_info, init_function */
