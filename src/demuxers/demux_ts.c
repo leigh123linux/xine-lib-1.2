@@ -334,17 +334,6 @@ typedef struct {
 } demux_ts_audio_track;
 
 typedef struct {
-
-  demux_class_t     demux_class;
-
-  /* class-wide, global variables here */
-
-  xine_t           *xine;
-  config_values_t  *config;
-
-} demux_ts_class_t;
-
-typedef struct {
   /*
    * The first field must be the "base class" for the plugin!
    */
@@ -359,8 +348,6 @@ typedef struct {
 
   input_plugin_t  *input;
   unsigned int     read_retries;
-
-  demux_ts_class_t *class;
 
   int              status;
 
@@ -2696,7 +2683,6 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen,
   this            = calloc(1, sizeof(*this));
   this->stream    = stream;
   this->input     = input;
-  this->class     = (demux_ts_class_t*)class_gen;
 
   this->demux_plugin.send_headers      = demux_ts_send_headers;
   this->demux_plugin.send_chunk        = demux_ts_send_chunk;
@@ -2759,23 +2745,23 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen,
  */
 void *demux_ts_init_class (xine_t *xine, void *data) {
 
-  demux_ts_class_t     *this;
+  demux_class_t *this;
 
-  this         = calloc(1, sizeof(demux_ts_class_t));
-  this->config = xine->config;
-  this->xine   = xine;
+  this = calloc(1, sizeof(demux_class_t));
+  if (!this)
+    return NULL;
 
-  this->demux_class.open_plugin     = open_plugin;
-  this->demux_class.description     = N_("MPEG Transport Stream demuxer");
-  this->demux_class.identifier      = "MPEG_TS";
-  this->demux_class.mimetypes       = "video/mp2t: m2t: MPEG2 transport stream;";
+  this->open_plugin     = open_plugin;
+  this->description     = N_("MPEG Transport Stream demuxer");
+  this->identifier      = "MPEG_TS";
+  this->mimetypes       = "video/mp2t: m2t: MPEG2 transport stream;";
 
   /* accept dvb streams; also handle the special dvbs,dvbt and dvbc
    * mrl formats: the content is exactly the same but the input plugin
    * uses a different tuning algorithm [Pragma]
    */
-  this->demux_class.extensions      = "ts m2t trp m2ts mts dvb:// dvbs:// dvbc:// dvbt://";
-  this->demux_class.dispose         = default_demux_class_dispose;
+  this->extensions      = "ts m2t trp m2ts mts dvb:// dvbs:// dvbc:// dvbt://";
+  this->dispose         = default_demux_class_dispose;
 
   return this;
 }

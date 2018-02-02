@@ -60,10 +60,6 @@ typedef struct demux_yuv_frames_s {
   int64_t               last_pts;
 } demux_yuv_frames_t ;
 
-typedef struct {
-  demux_class_t     demux_class;
-} demux_yuv_frames_class_t;
-
 
 static int demux_yuv_frames_get_status (demux_plugin_t *this_gen) {
   demux_yuv_frames_t *this = (demux_yuv_frames_t *) this_gen;
@@ -227,16 +223,18 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen,
  * demuxer class
  */
 void *demux_yuv_frames_init_class (xine_t *xine, void *data) {
-  demux_yuv_frames_class_t     *this;
+  demux_class_t *this;
 
-  this = calloc(1, sizeof(demux_yuv_frames_class_t));
+  this = calloc(1, sizeof(demux_class_t));
+  if (!this)
+    return NULL;
 
-  this->demux_class.open_plugin     = open_plugin;
-  this->demux_class.description     = N_("YUV frames dummy demux plugin");
-  this->demux_class.identifier      = "YUV_FRAMES";
-  this->demux_class.mimetypes       = NULL;
-  this->demux_class.extensions      = NULL;
-  this->demux_class.dispose         = default_demux_class_dispose;
+  this->open_plugin     = open_plugin;
+  this->description     = N_("YUV frames dummy demux plugin");
+  this->identifier      = "YUV_FRAMES";
+  this->mimetypes       = NULL;
+  this->extensions      = NULL;
+  this->dispose         = default_demux_class_dispose;
 
   return this;
 }

@@ -97,9 +97,6 @@ typedef struct {
   int64_t              video_pts;
 } demux_mve_t;
 
-typedef struct {
-  demux_class_t     demux_class;
-} demux_mve_class_t;
 
 /* bizarre palette lookup table */
 static const unsigned char wc3_pal_lookup[] = {
@@ -709,16 +706,18 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
 }
 
 void *demux_wc3movie_init_plugin (xine_t *xine, void *data) {
-  demux_mve_class_t     *this;
+  demux_class_t *this;
 
-  this = calloc(1, sizeof(demux_mve_class_t));
+  this = calloc(1, sizeof(demux_class_t));
+  if (!this)
+    return NULL;
 
-  this->demux_class.open_plugin     = open_plugin;
-  this->demux_class.description     = N_("Wing Commander III Movie (MVE) demux plugin");
-  this->demux_class.identifier      = "WC3 Movie";
-  this->demux_class.mimetypes       = NULL;
-  this->demux_class.extensions      = "mve";
-  this->demux_class.dispose         = default_demux_class_dispose;
+  this->open_plugin     = open_plugin;
+  this->description     = N_("Wing Commander III Movie (MVE) demux plugin");
+  this->identifier      = "WC3 Movie";
+  this->mimetypes       = NULL;
+  this->extensions      = "mve";
+  this->dispose         = default_demux_class_dispose;
 
   return this;
 }

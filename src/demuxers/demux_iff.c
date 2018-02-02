@@ -137,10 +137,6 @@ typedef struct {
   int                  seek_flag;  /* this is set when a seek just occurred */
 } demux_iff_t;
 
-typedef struct {
-  demux_class_t     demux_class;
-} demux_iff_class_t;
-
 
 /* Decode delta encoded data from n byte source
  * buffer into double as long dest buffer, given initial data
@@ -1218,14 +1214,16 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
 }
 
 void *demux_iff_init_class (xine_t *xine, void *data) {
-  demux_iff_class_t     *this;
+  demux_class_t *this;
 
-  this = calloc(1, sizeof(demux_iff_class_t));
+  this = calloc(1, sizeof(demux_class_t));
+  if (!this)
+    return NULL;
 
-  this->demux_class.open_plugin         = open_plugin;
-  this->demux_class.description         = N_("IFF demux plugin");
-  this->demux_class.identifier          = "IFF";
-  this->demux_class.mimetypes           =
+  this->open_plugin         = open_plugin;
+  this->description         = N_("IFF demux plugin");
+  this->identifier          = "IFF";
+  this->mimetypes           =
     "audio/x-8svx: 8svx: IFF-8SVX Audio;"
     "audio/8svx: 8svx: IFF-8SVX Audio;"
     "audio/x-16sv: 16sv: IFF-16SV Audio;"
@@ -1234,8 +1232,8 @@ void *demux_iff_init_class (xine_t *xine, void *data) {
     "image/ilbm: ilbm: IFF-ILBM Picture;"
     "video/x-anim: anim: IFF-ANIM Video;"
     "video/anim: anim: IFF-ANIM Video;";
-  this->demux_class.extensions          = "iff svx 8svx 16sv ilbm ham ham6 ham8 anim anim3 anim5 anim7 anim8";
-  this->demux_class.dispose             = default_demux_class_dispose;
+  this->extensions          = "iff svx 8svx 16sv ilbm ham ham6 ham8 anim anim3 anim5 anim7 anim8";
+  this->dispose             = default_demux_class_dispose;
 
   return this;
 }

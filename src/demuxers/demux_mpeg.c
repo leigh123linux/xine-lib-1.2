@@ -72,10 +72,6 @@ typedef struct demux_mpeg_s {
   int                  has_pts;
 } demux_mpeg_t;
 
-typedef struct {
-  demux_class_t     demux_class;
-} demux_mpeg_class_t;
-
     /* code never reached, is it still usefull ?? */
 /*
  * borrow a little knowledge from the Quicktime demuxer
@@ -1226,18 +1222,20 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
 }
 
 void *demux_mpeg_init_class (xine_t *xine, void *data) {
-  demux_mpeg_class_t     *this;
+  demux_class_t *this;
 
-  this = calloc(1, sizeof(demux_mpeg_class_t));
+  this = calloc(1, sizeof(demux_class_t));
+  if (!this)
+    return NULL;
 
-  this->demux_class.open_plugin     = open_plugin;
-  this->demux_class.description     = N_("MPEG program stream demux plugin");
-  this->demux_class.identifier      = "MPEG";
-  this->demux_class.mimetypes       =
+  this->open_plugin     = open_plugin;
+  this->description     = N_("MPEG program stream demux plugin");
+  this->identifier      = "MPEG";
+  this->mimetypes       =
     "video/mpeg: mpeg, mpg, mpe: MPEG animation;"
     "video/x-mpeg: mpeg, mpg, mpe: MPEG animation;";
-  this->demux_class.extensions      = "mpg mpeg";
-  this->demux_class.dispose         = default_demux_class_dispose;
+  this->extensions      = "mpg mpeg";
+  this->dispose         = default_demux_class_dispose;
 
   return this;
 }

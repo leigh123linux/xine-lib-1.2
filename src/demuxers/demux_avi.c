@@ -273,10 +273,6 @@ typedef struct demux_avi_s {
   uint8_t              send_newpts:1;
 } demux_avi_t ;
 
-typedef struct {
-  demux_class_t     demux_class;
-} demux_avi_class_t;
-
 
 /* The following variable indicates the kind of error */
 #define AVI_ERR_SIZELIM      1     /* The write of the data would exceed
@@ -2339,18 +2335,20 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
  * demux avi class
  */
 void *demux_avi_init_class (xine_t *xine, void *data) {
-  demux_avi_class_t     *this;
+  demux_class_t *this;
 
-  this = calloc(1, sizeof(demux_avi_class_t));
+  this = calloc(1, sizeof(demux_class_t));
+  if (!this)
+    return NULL;
 
-  this->demux_class.open_plugin     = open_plugin;
-  this->demux_class.description     = N_("AVI/RIFF demux plugin");
-  this->demux_class.identifier      = "AVI";
-  this->demux_class.mimetypes       =
+  this->open_plugin     = open_plugin;
+  this->description     = N_("AVI/RIFF demux plugin");
+  this->identifier      = "AVI";
+  this->mimetypes       =
     "video/msvideo: avi: AVI video;"
     "video/x-msvideo: avi: AVI video;";
-  this->demux_class.extensions      = "avi";
-  this->demux_class.dispose         = default_demux_class_dispose;
+  this->extensions      = "avi";
+  this->dispose         = default_demux_class_dispose;
 
   return this;
 }

@@ -71,10 +71,6 @@ typedef struct {
   unsigned int         next_frame_bits;
 } demux_mpc_t;
 
-typedef struct {
-  demux_class_t     demux_class;
-} demux_mpc_class_t;
-
 
 /* Open a musepack file
  * This function is called from the _open() function of this demuxer.
@@ -350,18 +346,20 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
 }
 
 void *demux_mpc_init_plugin (xine_t *xine, void *data) {
-  demux_mpc_class_t     *this;
+  demux_class_t *this;
 
-  this = calloc(1, sizeof(demux_mpc_class_t));
+  this = calloc(1, sizeof(demux_class_t));
+  if (!this)
+    return NULL;
 
-  this->demux_class.open_plugin     = open_plugin;
-  this->demux_class.description     = N_("Musepack demux plugin");
-  this->demux_class.identifier      = "Musepack";
-  this->demux_class.mimetypes       =
+  this->open_plugin     = open_plugin;
+  this->description     = N_("Musepack demux plugin");
+  this->identifier      = "Musepack";
+  this->mimetypes       =
          "audio/musepack: mpc, mp+, mpp: Musepack audio;"
          "audio/x-musepack: mpc, mp+, mpp: Musepack audio;";
-  this->demux_class.extensions      = "mpc mp+ mpp";
-  this->demux_class.dispose         = default_demux_class_dispose;
+  this->extensions      = "mpc mp+ mpp";
+  this->dispose         = default_demux_class_dispose;
 
   return this;
 }

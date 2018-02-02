@@ -113,9 +113,6 @@ typedef struct {
   int                  new_palette;
 } demux_ipmovie_t;
 
-typedef struct {
-  demux_class_t     demux_class;
-} demux_ipmovie_class_t;
 
 /* This function loads and processes a single chunk in an IP movie file.
  * It returns the type of chunk that was processed. */
@@ -714,18 +711,18 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
 }
 
 void *demux_ipmovie_init_plugin (xine_t *xine, void *data) {
-  demux_ipmovie_class_t     *this;
+  demux_class_t *this;
 
-  this = calloc(1, sizeof(demux_ipmovie_class_t));
+  this = calloc(1, sizeof(demux_class_t));
   if (!this) {
     return NULL;
   }
-  this->demux_class.open_plugin     = open_plugin;
-  this->demux_class.description     = N_("Interplay MVE Movie demux plugin");
-  this->demux_class.identifier      = "Interplay MVE";
-  this->demux_class.mimetypes       = NULL;
-  this->demux_class.extensions      = "mve mv8";
-  this->demux_class.dispose         = default_demux_class_dispose;
+  this->open_plugin     = open_plugin;
+  this->description     = N_("Interplay MVE Movie demux plugin");
+  this->identifier      = "Interplay MVE";
+  this->mimetypes       = NULL;
+  this->extensions      = "mve mv8";
+  this->dispose         = default_demux_class_dispose;
 
   return this;
 }

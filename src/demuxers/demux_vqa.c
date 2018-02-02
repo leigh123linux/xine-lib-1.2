@@ -82,9 +82,6 @@ typedef struct {
   unsigned int         iteration;
 } demux_vqa_t;
 
-typedef struct {
-  demux_class_t     demux_class;
-} demux_vqa_class_t;
 
 /* returns 1 if the VQA file was opened successfully, 0 otherwise */
 static int open_vqa_file(demux_vqa_t *this) {
@@ -365,16 +362,18 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
 }
 
 void *demux_vqa_init_plugin (xine_t *xine, void *data) {
-  demux_vqa_class_t     *this;
+  demux_class_t *this;
 
-  this = calloc(1, sizeof(demux_vqa_class_t));
+  this = calloc(1, sizeof(demux_class_t));
+  if (!this)
+    return NULL;
 
-  this->demux_class.open_plugin     = open_plugin;
-  this->demux_class.description     = N_("Westwood Studios VQA file demux plugin");
-  this->demux_class.identifier      = "VQA";
-  this->demux_class.mimetypes       = NULL;
-  this->demux_class.extensions      = "vqa";
-  this->demux_class.dispose         = default_demux_class_dispose;
+  this->open_plugin     = open_plugin;
+  this->description     = N_("Westwood Studios VQA file demux plugin");
+  this->identifier      = "VQA";
+  this->mimetypes       = NULL;
+  this->extensions      = "vqa";
+  this->dispose         = default_demux_class_dispose;
 
   return this;
 }

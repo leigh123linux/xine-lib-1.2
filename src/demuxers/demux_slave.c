@@ -73,10 +73,6 @@ typedef struct {
   int                  scratch_used;
 } demux_slave_t ;
 
-typedef struct {
-  demux_class_t     demux_class;
-} demux_slave_class_t;
-
 
 #define MAX_COMMAND_SIZE 20
 
@@ -380,16 +376,18 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
 }
 
 static void *init_plugin (xine_t *xine, void *data) {
-  demux_slave_class_t     *this;
+  demux_class_t *this;
 
-  this = calloc(1, sizeof(demux_slave_class_t));
+  this = calloc(1, sizeof(demux_class_t));
+  if (!this)
+    return NULL;
 
-  this->demux_class.open_plugin     = open_plugin;
-  this->demux_class.description     = "";
-  this->demux_class.identifier      = "slave";
-  this->demux_class.mimetypes       = NULL;
-  this->demux_class.extensions      = "slave://";
-  this->demux_class.dispose         = default_demux_class_dispose;
+  this->open_plugin     = open_plugin;
+  this->description     = "";
+  this->identifier      = "slave";
+  this->mimetypes       = NULL;
+  this->extensions      = "slave://";
+  this->dispose         = default_demux_class_dispose;
 
   return this;
 }

@@ -80,10 +80,6 @@ typedef struct {
   int                  seek_flag;  /* this is set when a seek just occurred */
 } demux_aiff_t;
 
-typedef struct {
-  demux_class_t     demux_class;
-} demux_aiff_class_t;
-
 /* converts IEEE 80bit extended into int, based on FFMPEG code */
 static int extended_to_int(const unsigned char p[10])
 {
@@ -401,19 +397,21 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
 }
 
 void *demux_aiff_init_plugin (xine_t *xine, void *data) {
-  demux_aiff_class_t     *this;
+  demux_class_t *this;
 
-  this = calloc(1, sizeof(demux_aiff_class_t));
+  this = calloc(1, sizeof(demux_class_t));
+  if (!this)
+    return NULL;
 
-  this->demux_class.open_plugin     = open_plugin;
-  this->demux_class.description     = N_("AIFF file demux plugin");
-  this->demux_class.identifier      = "AIFF";
-  this->demux_class.mimetypes       =
+  this->open_plugin     = open_plugin;
+  this->description     = N_("AIFF file demux plugin");
+  this->identifier      = "AIFF";
+  this->mimetypes       =
     "audio/x-aiff: aif, aiff: AIFF audio;"
     "audio/aiff: aif, aiff: AIFF audio;"
     "audio/x-pn-aiff: aif, aiff: AIFF audio;";
-  this->demux_class.extensions      = "aif aiff";
-  this->demux_class.dispose         = default_demux_class_dispose;
+  this->extensions      = "aif aiff";
+  this->dispose         = default_demux_class_dispose;
 
   return this;
 }

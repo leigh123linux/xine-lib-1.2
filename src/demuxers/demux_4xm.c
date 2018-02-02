@@ -97,10 +97,6 @@ typedef struct {
 
 } demux_fourxm_t;
 
-typedef struct {
-  demux_class_t     demux_class;
-} demux_fourxm_class_t;
-
 static float get_le_float(unsigned char *buffer)
 {
   float f;
@@ -497,16 +493,18 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
 }
 
 void *demux_fourxm_init_plugin (xine_t *xine, void *data) {
-  demux_fourxm_class_t     *this;
+  demux_class_t *this;
 
-  this = calloc(1, sizeof(demux_fourxm_class_t));
+  this = calloc(1, sizeof(demux_class_t));
+  if (!this)
+    return NULL;
 
-  this->demux_class.open_plugin     = open_plugin;
-  this->demux_class.description     = N_("4X Technologies (4xm) demux plugin");
-  this->demux_class.identifier      = "4X Technologies";
-  this->demux_class.mimetypes       = NULL;
-  this->demux_class.extensions      = "4xm";
-  this->demux_class.dispose         = default_demux_class_dispose;
+  this->open_plugin     = open_plugin;
+  this->description     = N_("4X Technologies (4xm) demux plugin");
+  this->identifier      = "4X Technologies";
+  this->mimetypes       = NULL;
+  this->extensions      = "4xm";
+  this->dispose         = default_demux_class_dispose;
 
   return this;
 }

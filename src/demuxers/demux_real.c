@@ -170,9 +170,6 @@ typedef struct {
   int                  reference_mode;
 } demux_real_t ;
 
-typedef struct {
-  demux_class_t     demux_class;
-} demux_real_class_t;
 
 static void real_parse_index(demux_real_t *this) {
 
@@ -1767,18 +1764,22 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
 }
 
 void *demux_real_init_class (xine_t *xine, void *data) {
-  demux_real_class_t *const this = calloc(1, sizeof(demux_real_class_t));
+  demux_class_t *this;
 
-  this->demux_class.open_plugin     = open_plugin;
-  this->demux_class.description     = N_("RealMedia file demux plugin");
-  this->demux_class.identifier      = "Real";
-  this->demux_class.mimetypes       =
+  this = calloc(1, sizeof(demux_class_t));
+  if (!this)
+    return NULL;
+
+  this->open_plugin     = open_plugin;
+  this->description     = N_("RealMedia file demux plugin");
+  this->identifier      = "Real";
+  this->mimetypes       =
     "audio/x-pn-realaudio: ra, rm, ram: Real Media file;"
     "audio/x-pn-realaudio-plugin: rpm: Real Media plugin file;"
     "audio/x-real-audio: ra, rm, ram: Real Media file;"
     "application/vnd.rn-realmedia: ra, rm, ram: Real Media file;";
-  this->demux_class.extensions      = "rm rmvb ram";
-  this->demux_class.dispose         = default_demux_class_dispose;
+  this->extensions      = "rm rmvb ram";
+  this->dispose         = default_demux_class_dispose;
 
   return this;
 }

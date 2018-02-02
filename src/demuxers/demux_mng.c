@@ -68,9 +68,6 @@ typedef struct {
   int                timer_count;
 } demux_mng_t;
 
-typedef struct {
-  demux_class_t     demux_class;
-} demux_mng_class_t;
 
 static mng_ptr mymng_alloc(mng_size_t size){
   return (mng_ptr)calloc(1, size);
@@ -343,20 +340,22 @@ static demux_plugin_t* open_plugin(demux_class_t *class_gen, xine_stream_t *stre
 }
 
 static void *init_plugin(xine_t *xine, void *data){
-  demux_mng_class_t     *this;
+  demux_class_t *this;
 
-  this  = calloc(1, sizeof(demux_mng_class_t));
+  this = calloc(1, sizeof(demux_class_t));
+  if (!this)
+    return NULL;
 
-  this->demux_class.open_plugin     = open_plugin;
-  this->demux_class.description     = N_("Multiple-image Network Graphics demux plugin");
-  this->demux_class.identifier      = "MNG";
-  this->demux_class.mimetypes       =
+  this->open_plugin     = open_plugin;
+  this->description     = N_("Multiple-image Network Graphics demux plugin");
+  this->identifier      = "MNG";
+  this->mimetypes       =
     "image/png: png: PNG image;"
     "image/x-png: png: PNG image;"
     "video/mng: mng: MNG animation;"
     "video/x-mng: mng: MNG animation;";
-  this->demux_class.extensions      = "png mng";
-  this->demux_class.dispose         = default_demux_class_dispose;
+  this->extensions      = "png mng";
+  this->dispose         = default_demux_class_dispose;
 
   return this;
 }

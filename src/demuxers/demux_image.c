@@ -56,10 +56,6 @@ typedef struct demux_image_s {
   int                   bytes_left;
 } demux_image_t ;
 
-typedef struct {
-  demux_class_t     demux_class;
-} demux_image_class_t;
-
 
 static int demux_image_get_status (demux_plugin_t *this_gen) {
   demux_image_t *this = (demux_image_t *) this_gen;
@@ -221,16 +217,18 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen,
  * image demuxer class
  */
 static void *init_class (xine_t *xine, void *data) {
-  demux_image_class_t     *this;
+  demux_class_t *this;
 
-  this  = calloc(1, sizeof(demux_image_class_t));
+  this = calloc(1, sizeof(demux_class_t));
+  if (!this)
+    return NULL;
 
-  this->demux_class.open_plugin     = open_plugin;
-  this->demux_class.description     = N_("image demux plugin");
-  this->demux_class.identifier      = "imagedmx";
-  this->demux_class.mimetypes       = NULL;
-  this->demux_class.extensions      = "png gif jpg jpeg bmp";
-  this->demux_class.dispose         = default_demux_class_dispose;
+  this->open_plugin     = open_plugin;
+  this->description     = N_("image demux plugin");
+  this->identifier      = "imagedmx";
+  this->mimetypes       = NULL;
+  this->extensions      = "png gif jpg jpeg bmp";
+  this->dispose         = default_demux_class_dispose;
 
   lprintf("class opened\n");
   return this;

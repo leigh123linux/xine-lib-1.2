@@ -67,11 +67,6 @@ typedef struct {
   off_t                data_size;
 } demux_pva_t;
 
-typedef struct {
-  demux_class_t     demux_class;
-} demux_pva_class_t;
-
-
 /* redefine abs as macro to handle 64-bit diffs.
    i guess llabs may not be available everywhere */
 #define abs(x) ( ((x)<0) ? -(x) : (x) )
@@ -462,16 +457,18 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
 }
 
 static void *init_plugin (xine_t *xine, void *data) {
-  demux_pva_class_t     *this;
+  demux_class_t *this;
 
-  this = calloc(1, sizeof(demux_pva_class_t));
+  this = calloc(1, sizeof(demux_class_t));
+  if (!this)
+    return NULL;
 
-  this->demux_class.open_plugin     = open_plugin;
-  this->demux_class.description     = N_("TechnoTrend PVA demux plugin");
-  this->demux_class.identifier      = "TechnoTrend PVA";
-  this->demux_class.mimetypes       = NULL;
-  this->demux_class.extensions      = "pva";
-  this->demux_class.dispose         = default_demux_class_dispose;
+  this->open_plugin     = open_plugin;
+  this->description     = N_("TechnoTrend PVA demux plugin");
+  this->identifier      = "TechnoTrend PVA";
+  this->mimetypes       = NULL;
+  this->extensions      = "pva";
+  this->dispose         = default_demux_class_dispose;
 
   return this;
 }

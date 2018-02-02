@@ -99,16 +99,6 @@ typedef struct demux_mpeg_pes_s {
   off_t                 preview_size, preview_done;
 } demux_mpeg_pes_t ;
 
-typedef struct {
-
-  demux_class_t     demux_class;
-
-  /* class-wide, global variables here */
-
-  xine_t           *xine;
-  config_values_t  *config;
-} demux_mpeg_pes_class_t;
-
 static int32_t parse_video_stream(demux_mpeg_pes_t *this, uint8_t *p, buf_element_t *buf);
 static int32_t parse_audio_stream(demux_mpeg_pes_t *this, uint8_t *p, buf_element_t *buf);
 static int32_t parse_ancillary_stream(demux_mpeg_pes_t *this, uint8_t *p, buf_element_t *buf);
@@ -1750,17 +1740,17 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
 
 void *demux_pes_init_class (xine_t *xine, void *data) {
 
-  demux_mpeg_pes_class_t     *this;
-  this         = calloc(1, sizeof(demux_mpeg_pes_class_t));
-  this->config = xine->config;
-  this->xine   = xine;
+  demux_class_t *this;
+  this = calloc(1, sizeof(demux_class_t));
+  if (!this)
+    return NULL;
 
-  this->demux_class.open_plugin     = open_plugin;
-  this->demux_class.description     = N_("mpeg pes demux plugin");
-  this->demux_class.identifier      = "MPEG_PES";
-  this->demux_class.mimetypes       = "video/mp2p: m2p: MPEG2 program stream;";
-  this->demux_class.extensions      = "pes vdr:/ netvdr:/";
-  this->demux_class.dispose         = default_demux_class_dispose;
+  this->open_plugin     = open_plugin;
+  this->description     = N_("mpeg pes demux plugin");
+  this->identifier      = "MPEG_PES";
+  this->mimetypes       = "video/mp2p: m2p: MPEG2 program stream;";
+  this->extensions      = "pes vdr:/ netvdr:/";
+  this->dispose         = default_demux_class_dispose;
 
   return this;
 }

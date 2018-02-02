@@ -73,9 +73,6 @@ typedef struct {
   off_t                stream_len;
 } demux_fli_t;
 
-typedef struct {
-  demux_class_t     demux_class;
-} demux_fli_class_t;
 
 /* returns 1 if the FLI file was opened successfully, 0 otherwise */
 static int open_fli_file(demux_fli_t *this) {
@@ -336,16 +333,18 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
 }
 
 static void *init_plugin (xine_t *xine, void *data) {
-  demux_fli_class_t     *this;
+  demux_class_t *this;
 
-  this = calloc(1, sizeof(demux_fli_class_t));
+  this = calloc(1, sizeof(demux_class_t));
+  if (!this)
+    return NULL;
 
-  this->demux_class.open_plugin     = open_plugin;
-  this->demux_class.description     = N_("Autodesk Animator FLI/FLC demux plugin");
-  this->demux_class.identifier      = "FLI/FLC";
-  this->demux_class.mimetypes       = "video/x-flic: fli,flc: Autodesk FLIC files;";
-  this->demux_class.extensions      = "fli flc";
-  this->demux_class.dispose         = default_demux_class_dispose;
+  this->open_plugin     = open_plugin;
+  this->description     = N_("Autodesk Animator FLI/FLC demux plugin");
+  this->identifier      = "FLI/FLC";
+  this->mimetypes       = "video/x-flic: fli,flc: Autodesk FLIC files;";
+  this->extensions      = "fli flc";
+  this->dispose         = default_demux_class_dispose;
 
   return this;
 }

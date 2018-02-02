@@ -54,10 +54,6 @@ typedef struct {
   int                  seek_flag;  /* this is set when a seek just occurred */
 } demux_shn_t;
 
-typedef struct {
-  demux_class_t     demux_class;
-} demux_shn_class_t;
-
 
 static int open_shn_file(demux_shn_t *this) {
   uint8_t peak[4];
@@ -211,16 +207,18 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
 }
 
 void *demux_shn_init_plugin (xine_t *xine, void *data) {
-  demux_shn_class_t     *this;
+  demux_class_t *this;
 
-  this = calloc(1, sizeof(demux_shn_class_t));
+  this = calloc(1, sizeof(demux_class_t));
+  if (!this)
+    return NULL;
 
-  this->demux_class.open_plugin     = open_plugin;
-  this->demux_class.description     = N_("Shorten demux plugin");
-  this->demux_class.identifier      = "Shorten";
-  this->demux_class.mimetypes       = NULL;
-  this->demux_class.extensions      = "shn";
-  this->demux_class.dispose         = default_demux_class_dispose;
+  this->open_plugin     = open_plugin;
+  this->description     = N_("Shorten demux plugin");
+  this->identifier      = "Shorten";
+  this->mimetypes       = NULL;
+  this->extensions      = "shn";
+  this->dispose         = default_demux_class_dispose;
 
   return this;
 }

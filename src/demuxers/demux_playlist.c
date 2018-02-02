@@ -70,10 +70,6 @@ typedef struct {
   int                status;
 } demux_playlist_t;
 
-typedef struct {
-  demux_class_t      demux_class;
-} demux_playlist_class_t;
-
 
 static playlist_t detect_by_extension (input_plugin_t *input) {
   char *ext;
@@ -716,17 +712,17 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen,
 }
 
 static void *init_plugin (xine_t *xine, void *data) {
-  demux_playlist_class_t     *this;
+  demux_class_t *this;
 
-  this = calloc(1, sizeof(demux_playlist_class_t));
+  this = calloc(1, sizeof(demux_class_t));
   if (!this) {
     return NULL;
   }
 
-  this->demux_class.open_plugin     = open_plugin;
-  this->demux_class.description     = N_("Playlist demux plugin");
-  this->demux_class.identifier      = "playlist";
-  this->demux_class.mimetypes       =
+  this->open_plugin     = open_plugin;
+  this->description     = N_("Playlist demux plugin");
+  this->identifier      = "playlist";
+  this->mimetypes       =
     "audio/mpegurl: m3u: M3U playlist;"
     "audio/x-mpegurl: m3u: M3U playlist;"
     //"audio/x-pn-realaudio: ram: RAM playlist;"
@@ -737,8 +733,8 @@ static void *init_plugin (xine_t *xine, void *data) {
     "application/smil: smi, smil: SMIL playlist;"
     "application/x-quicktimeplayer: qtl: Quicktime playlist;"
     "application/xspf+xml: xspf: XSPF playlist;";
-  this->demux_class.extensions      = "m3u ram pls asx wax wvx smi smil qtl xspf rss";
-  this->demux_class.dispose         = default_demux_class_dispose;
+  this->extensions      = "m3u ram pls asx wax wvx smi smil qtl xspf rss";
+  this->dispose         = default_demux_class_dispose;
 
   return this;
 }

@@ -158,16 +158,6 @@ typedef struct demux_asf_s {
 
 } demux_asf_t ;
 
-typedef struct {
-
-  demux_class_t     demux_class;
-
-  /* class-wide, global variables here */
-
-  xine_t           *xine;
-  config_values_t  *config;
-} demux_asf_class_t;
-
 
 static uint8_t get_byte (demux_asf_t *this) {
 
@@ -2138,16 +2128,16 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen,
 
 static void *init_class (xine_t *xine, void *data) {
 
-  demux_asf_class_t     *this;
+  demux_class_t *this;
 
-  this         = calloc(1, sizeof(demux_asf_class_t));
-  this->config = xine->config;
-  this->xine   = xine;
+  this = calloc(1, sizeof(demux_class_t));
+  if (!this)
+    return NULL;
 
-  this->demux_class.open_plugin     = open_plugin;
-  this->demux_class.description     = N_("ASF demux plugin");
-  this->demux_class.identifier      = "ASF";
-  this->demux_class.mimetypes       =
+  this->open_plugin     = open_plugin;
+  this->description     = N_("ASF demux plugin");
+  this->identifier      = "ASF";
+  this->mimetypes       =
     "video/x-ms-asf: asf: ASF stream;"
     "video/x-ms-wmv: wmv: Windows Media Video;"
     "audio/x-ms-wma: wma: Windows Media Audio;"
@@ -2157,8 +2147,8 @@ static void *init_class (xine_t *xine, void *data) {
     "video/x-ms-wvx: wvx: wmv metafile;"
     "video/x-ms-wax: wva: wma metafile;";
   /* asx, wvx, wax are metafile or playlist */
-  this->demux_class.extensions      = "asf wmv wma asx wvx wax";
-  this->demux_class.dispose         = default_demux_class_dispose;
+  this->extensions      = "asf wmv wma asx wvx wax";
+  this->dispose         = default_demux_class_dispose;
 
   return this;
 }

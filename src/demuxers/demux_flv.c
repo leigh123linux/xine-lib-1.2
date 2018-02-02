@@ -109,9 +109,6 @@ typedef struct {
   uint8_t             *tempbuf;
 } demux_flv_t ;
 
-typedef struct {
-  demux_class_t     demux_class;
-} demux_flv_class_t;
 
 /* an early FLV specification had 24bit bigendian timestamps. This
    limited clip duration to 4:39:37.215. The backwards compatible solution:
@@ -1141,18 +1138,20 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
 }
 
 void *demux_flv_init_class (xine_t *xine, void *data) {
-  demux_flv_class_t     *this;
+  demux_class_t *this;
 
-  this = calloc(1, sizeof (demux_flv_class_t));
+  this = calloc(1, sizeof (demux_class_t));
+  if (!this)
+    return NULL;
 
-  this->demux_class.open_plugin     = open_plugin;
-  this->demux_class.description     = N_("Flash Video file demux plugin");
-  this->demux_class.identifier      = "FLV";
-  this->demux_class.mimetypes       = "video/x-flv: flv: Flash video;"
-				      "video/flv: flv: Flash video;"
-				      "application/x-flash-video: flv: Flash video;";
-  this->demux_class.extensions      = "flv";
-  this->demux_class.dispose         = default_demux_class_dispose;
+  this->open_plugin     = open_plugin;
+  this->description     = N_("Flash Video file demux plugin");
+  this->identifier      = "FLV";
+  this->mimetypes       = "video/x-flv: flv: Flash video;"
+                          "video/flv: flv: Flash video;"
+                          "application/x-flash-video: flv: Flash video;";
+  this->extensions      = "flv";
+  this->dispose         = default_demux_class_dispose;
 
   return this;
 }

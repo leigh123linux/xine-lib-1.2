@@ -72,9 +72,6 @@ typedef struct {
   } header;
 } demux_tta_t;
 
-typedef struct {
-  demux_class_t     demux_class;
-} demux_tta_class_t;
 
 static int open_tta_file(demux_tta_t *this) {
   uint32_t peek;
@@ -320,16 +317,18 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
 }
 
 void *demux_tta_init_plugin (xine_t *xine, void *data) {
-  demux_tta_class_t     *this;
+  demux_class_t *this;
 
-  this = calloc(1, sizeof(demux_tta_class_t));
+  this = calloc(1, sizeof(demux_class_t));
+  if (!this)
+    return NULL;
 
-  this->demux_class.open_plugin     = open_plugin;
-  this->demux_class.description     = N_("True Audio demux plugin");
-  this->demux_class.identifier      = "True Audio";
-  this->demux_class.mimetypes       = NULL;
-  this->demux_class.extensions      = "tta";
-  this->demux_class.dispose         = default_demux_class_dispose;
+  this->open_plugin     = open_plugin;
+  this->description     = N_("True Audio demux plugin");
+  this->identifier      = "True Audio";
+  this->mimetypes       = NULL;
+  this->extensions      = "tta";
+  this->dispose         = default_demux_class_dispose;
 
   return this;
 }

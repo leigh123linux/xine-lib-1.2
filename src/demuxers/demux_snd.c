@@ -68,9 +68,6 @@ typedef struct {
   int                  seek_flag;  /* this is set when a seek just occurred */
 } demux_snd_t;
 
-typedef struct {
-  demux_class_t     demux_class;
-} demux_snd_class_t;
 
 /* returns 1 if the SND file was opened successfully, 0 otherwise */
 static int open_snd_file(demux_snd_t *this) {
@@ -348,19 +345,21 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
 }
 
 void *demux_snd_init_plugin (xine_t *xine, void *data) {
-  demux_snd_class_t     *this;
+  demux_class_t *this;
 
-  this  = calloc(1, sizeof(demux_snd_class_t));
+  this = calloc(1, sizeof(demux_class_t));
+  if (!this)
+    return NULL;
 
-  this->demux_class.open_plugin     = open_plugin;
-  this->demux_class.description     = N_("SND/AU file demux plugin");
-  this->demux_class.identifier      = "SND/AU";
-  this->demux_class.mimetypes       =
+  this->open_plugin     = open_plugin;
+  this->description     = N_("SND/AU file demux plugin");
+  this->identifier      = "SND/AU";
+  this->mimetypes       =
     "audio/basic: snd,au: ULAW (Sun) audio;"
     "audio/x-basic: snd,au: ULAW (Sun) audio;"
     "audio/x-pn-au: snd,au: ULAW (Sun) audio;";
-  this->demux_class.extensions      = "snd au";
-  this->demux_class.dispose         = default_demux_class_dispose;
+  this->extensions      = "snd au";
+  this->dispose         = default_demux_class_dispose;
 
   return this;
 }
