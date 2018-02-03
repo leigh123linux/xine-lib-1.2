@@ -489,6 +489,7 @@ static void nbc_put_cb (fifo_buffer_t *fifo,
   int64_t video_p = 0;
   int64_t audio_p = 0;
   int has_video, has_audio;
+  int pause = 0;
 
   lprintf("enter nbc_put_cb\n");
   pthread_mutex_lock(&this->mutex);
@@ -525,9 +526,9 @@ static void nbc_put_cb (fifo_buffer_t *fifo,
             xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG, "\nnet_buf_ctrl: nbc_put_cb: stops buffering\n");
 
             nbc_set_speed_normal(this);
-
+#if 0 /* WTF... */
             this->high_water_mark += this->high_water_mark / 2;
-
+#endif
           } else {
             /*  compute the buffering progress
              *    50%: video
@@ -582,7 +583,7 @@ static void nbc_put_cb (fifo_buffer_t *fifo,
           this->video_fifo_length = 0;
           this->audio_fifo_length = 0;
           dvbspeed_init (this);
-          if (!this->dvbspeed) nbc_set_speed_pause(this);
+          if (!this->dvbspeed) pause = 1;
           this->progress = 0;
           report_progress (this->stream, progress);
         }
@@ -641,6 +642,8 @@ static void nbc_put_cb (fifo_buffer_t *fifo,
     }
   }
   pthread_mutex_unlock(&this->mutex);
+  if (pause)
+    nbc_set_speed_pause (this);
   lprintf("exit nbc_put_cb\n");
 }
 
@@ -649,6 +652,7 @@ static void nbc_put_cb (fifo_buffer_t *fifo,
 static void nbc_get_cb (fifo_buffer_t *fifo,
 			buf_element_t *buf, void *this_gen) {
   nbc_t *this = (nbc_t*)this_gen;
+  int pause = 0;
 
   lprintf("enter nbc_get_cb\n");
   pthread_mutex_lock(&this->mutex);
@@ -679,11 +683,11 @@ static void nbc_get_cb (fifo_buffer_t *fifo,
               xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG,
                       "\nnet_buf_ctrl: nbc_get_cb: starts buffering, vid: %d, aud: %d\n",
                       this->video_fifo_fill, this->audio_fifo_fill);
-              nbc_set_speed_pause(this);
+              pause = 1;
             }
           }
         } else {
-          nbc_set_speed_pause(this);
+          pause = 1;
         }
 
         if(this->stream->xine->verbosity >= XINE_VERBOSITY_DEBUG)
@@ -716,6 +720,8 @@ static void nbc_get_cb (fifo_buffer_t *fifo,
   }
 
   pthread_mutex_unlock(&this->mutex);
+  if (pause)
+    nbc_set_speed_pause (this);
   lprintf("exit nbc_get_cb\n");
 }
 

@@ -453,7 +453,8 @@ static buf_element_t *fifo_buffer_tget (fifo_buffer_t *fifo, xine_ticket_t *tick
    * Unfortunately, fifo callbacks are 1 big freezer, as they run with fifo locked,
    * and may try to revoke ticket for pauseing or other stuff.
    * Always releasing ticket when there are callbacks is safe but inefficient.
-   * Instead, we release ticket when we are going to wait for fifo or a buffer.
+   * Instead, we release ticket when we are going to wait for fifo or a buffer,
+   * and of course, when the ticket has been revoked.
    * This should melt the "put" side. We could still freeze ourselves directly
    * at the "get" side, what ticket->revoke () self grant hack shall fix.
    */
@@ -494,6 +495,11 @@ static buf_element_t *fifo_buffer_tget (fifo_buffer_t *fifo, xine_ticket_t *tick
   }
   fifo->fifo_data_size -= buf->size;
 
+  if ((mode & 2) && ticket->ticket_revoked) {
+    ticket->release (ticket, 0);
+    mode = 1;
+  }
+
   for(i = 0; fifo->get_cb[i]; i++)
     fifo->get_cb[i](fifo, buf, fifo->get_cb_data[i]);
 
@@ -501,8 +507,6 @@ static buf_element_t *fifo_buffer_tget (fifo_buffer_t *fifo, xine_ticket_t *tick
 
   if (mode & 1)
     ticket->acquire (ticket, 0);
-  if (ticket && ticket->ticket_revoked)
-    ticket->renew (ticket, XINE_TICKET_FLAG_REWIRE);
 
   return buf;
 }

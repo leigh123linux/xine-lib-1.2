@@ -118,26 +118,6 @@ struct xine_ticket_s {
 
   void (*dispose)(xine_ticket_t *self);
 
-  pthread_mutex_t lock;
-  pthread_mutex_t revoke_lock;
-  pthread_cond_t  issued;
-  pthread_cond_t  revoked;
-  int             tickets_granted;
-  int             irrevocable_tickets;
-  int             pending_revocations;
-  int             atomic_revoke;
-  pthread_t       atomic_revoker_thread;
-  pthread_mutex_t port_rewiring_lock;
-  struct {
-    int count;
-    pthread_t holder;
-  } *holder_threads;
-  unsigned        holder_thread_count;
-
-  int             plain_renewers;
-  int             rewirers;
-
-#define XINE_TICKET_MAX_CB 15
   /* (un)register a revoke notify callback, telling the current revoke flags.
    * Return from it does not * imply anything about the ticket itself,
    * it just shall shorten wait.
@@ -145,9 +125,6 @@ struct xine_ticket_s {
    * handle multiple instances of the same object. */
   void (*revoke_cb_register)  (xine_ticket_t *self, xine_ticket_revoke_cb_t *cb, void *user_data);
   void (*revoke_cb_unregister)(xine_ticket_t *self, xine_ticket_revoke_cb_t *cb, void *user_data);
-
-  xine_ticket_revoke_cb_t *revoke_callbacks[XINE_TICKET_MAX_CB + 1];
-  void *revoke_cb_data[XINE_TICKET_MAX_CB + 1];
 #endif
 };
 
