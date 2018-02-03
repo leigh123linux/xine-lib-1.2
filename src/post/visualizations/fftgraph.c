@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2000-2017 the xine project
+ * Copyright (C) 2000-2018 the xine project
  *
  * This file is part of xine, a free video player.
  *
@@ -82,31 +82,45 @@ struct post_plugin_fftgraph_s {
   int cur_line;
   int lines_per_channel;
 
-  uint32_t yuy2_colors[8192];
+  uint32_t yuy2_colors[512];
 };
+
+static int d2db (double d) {
+  int i;
+  if (d <= 0.0)
+    return 0;
+  i = log2 (d) * 512.0 / 12.0;
+  return (i & ~511) ? ~(i >> 31) & 511 : i;
+}
 
 /*
  * fade function
  */
 static void fade(int r1, int g1, int b1,
 		 int r2, int g2, int b2,
-		 uint32_t *yuy2_colors, int steps) {
-  int i, r, g, b, y, u, v;
+		 uint32_t *yuy2_colors, int ldsteps) {
+  int y  = COMPUTE_Y (r1, g1, b1);
+  int u  = COMPUTE_U (r1, g1, b1);
+  int v  = COMPUTE_V (r1, g1, b1);
+  int dy = (int)COMPUTE_Y (r2, g2, b2) - y;
+  int du = (int)COMPUTE_U (r2, g2, b2) - u;
+  int dv = (int)COMPUTE_V (r2, g2, b2) - v;
+  int i;
 
-  for (i = 0; i < steps; i++) {
-    r = r1 + (r2 - r1) * i / steps;
-    g = g1 + (g2 - g1) * i / steps;
-    b = b1 + (b2 - b1) * i / steps;
+  y <<= ldsteps;
+  u <<= ldsteps;
+  v <<= ldsteps;
 
-    y = COMPUTE_Y(r, g, b);
-    u = COMPUTE_U(r, g, b);
-    v = COMPUTE_V(r, g, b);
-
-    *(yuy2_colors + i) = be2me_32((y << 24) |
-				  (u << 16) |
-				  (y << 8) |
-				  v);
-
+  for (i = 1 << ldsteps; i; i--) {
+    uint32_t ny = y >> ldsteps;
+#ifdef WORDS_BIGENDIAN
+    *yuy2_colors++ = (ny << 24) | (ny << 8) | ((u >> ldsteps) << 16) | (v >> ldsteps);
+#else
+    *yuy2_colors++ = (ny << 16) | ny | ((u >> ldsteps) << 8) | ((uint32_t)(v >> ldsteps) << 24);
+#endif
+    y += dy;
+    u += du;
+    v += dv;
   }
 }
 
@@ -114,8 +128,6 @@ static void draw_fftgraph(post_plugin_fftgraph_t *this, vo_frame_t *frame) {
 
   int i, c, y;
   int map_ptr;
-  int amp_int;
-  float amp_float;
   uint32_t yuy2_white;
   int line, line_min, line_max;
 
@@ -134,14 +146,8 @@ static void draw_fftgraph(post_plugin_fftgraph_t *this, vo_frame_t *frame) {
     line = this->cur_line + c * this->lines_per_channel;
 
     for (i = 0; i < FFTGRAPH_WIDTH / 2; i++) {
-      amp_float = fft_amp(i, this->wave[c], this->fft->bits);
-      amp_int = (int)(amp_float);
-      if (amp_int > 8191)
-        amp_int = 8191;
-      if (amp_int < 0)
-        amp_int = 0;
-
-      this->map[line][i] = this->yuy2_colors[amp_int];
+      double amp_float = fft_amp2 (this->fft, i, this->wave[c]);
+      this->map[line][i] = this->yuy2_colors[d2db (amp_float)];
     }
   }
 
@@ -211,7 +217,7 @@ static int fftgraph_port_open(xine_audio_port_t *port_gen, xine_stream_t *stream
   post_plugin_fftgraph_t *this = (post_plugin_fftgraph_t *)port->post;
   int i,j;
   uint32_t *color_ptr;
-  uint32_t last_color, yuy2_black;
+  uint32_t yuy2_black;
 
   /* printf("fftgraph_port_open, port_gen=%p, stream=%p, this=%p\n", port_gen, stream, this); */
 
@@ -245,34 +251,25 @@ static int fftgraph_port_open(xine_audio_port_t *port_gen, xine_stream_t *stream
   /* black -> red */
   fade(0, 0, 0,
        128, 0, 0,
-       color_ptr, 128);
+       color_ptr, 7);
   color_ptr += 128;
 
   /* red -> blue */
   fade(128, 0, 0,
        40, 0, 160,
-       color_ptr, 256);
-  color_ptr += 256;
+       color_ptr, 7);
+  color_ptr += 128;
 
   /* blue -> green */
   fade(40, 0, 160,
        40, 160, 70,
-       color_ptr, 1024);
-  color_ptr += 1024;
+       color_ptr, 7);
+  color_ptr += 128;
 
   /* green -> white */
   fade(40, 160, 70,
        255, 255, 255,
-       color_ptr, 2048);
-  color_ptr += 2048;
-
-  last_color = *(color_ptr - 1);
-
-  /* white */
-  for (i = 0; i < 8192 - 128 - 256 - 1024 - 2048; i++) {
-    *color_ptr = last_color;
-    color_ptr++;
-  }
+       color_ptr, 7);
 
   /* clear the map */
   yuy2_black = be2me_32((0x00 << 24) |

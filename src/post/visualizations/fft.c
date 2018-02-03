@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2000-2012 the xine project
+ * Copyright (C) 2000-2018 the xine project
  *
  * This file is part of xine, a free video player.
  *
@@ -74,11 +74,10 @@ reverse (unsigned int val, int bits)
  */
 void fft_compute (fft_t *fft, complex_t wave[])
 {
-  register int  loop, loop1, loop2;
-  unsigned      i1;             /* going to right shift this */
-  int           i2, i3, i4, y;
-  double         a1, a2, b1, b2, z1, z2;
-  int bits = fft->bits;
+  int      loop;
+  unsigned i1;             /* going to right shift this */
+  int      i2;
+  int      bits = fft->bits;
 
   i1 = SAMPLES / 2;
   i2 = 1;
@@ -87,17 +86,26 @@ void fft_compute (fft_t *fft, complex_t wave[])
 
   for (loop = 0; loop < bits; loop++)
     {
+      int loop1;
+      int i3, i4;
+
       i3 = 0;
       i4 = i1;
 
       for (loop1 = 0; loop1 < i2; loop1++)
         {
-          y  = PERMUTE(i3 / (int)i1, bits);
+          int loop2;
+          int y;
+          double z1, z2;
+
+          y  = fft->PermuteTable[(i3 / (int)i1) & fft->bmask];
           z1 = COSINE(y);
           z2 = -SINE(y);
 
           for (loop2 = i3; loop2 < i4; loop2++)
             {
+              double a1, a2, b1, b2;
+
               a1 = REAL(loop2);
               a2 = IMAG(loop2);
 
@@ -134,25 +142,42 @@ fft_t *fft_new (int bits)
 
   /* printf("fft_new: bits=%d\n", bits); */
 
-  fft = (fft_t*)malloc(sizeof(fft_t));
+  fft = malloc (sizeof (fft_t));
   if (!fft)
     return NULL;
 
+  /* xine just uses 9 or 11. */
   fft->bits = bits;
-  fft->SineTable   = malloc (sizeof(double) * SAMPLES);
-  fft->CosineTable = malloc (sizeof(double) * SAMPLES);
-  fft->WinTable    = malloc (sizeof(double) * SAMPLES);
-  for (i=0; i < SAMPLES; i++)
-    {
-      fft->SineTable[i]   = sin((double) i * TWOPIoN);
-      fft->CosineTable[i] = cos((double) i * TWOPIoN);
+  fft->bmask = SAMPLES - 1;
+  fft->PermuteTable = malloc (sizeof (int) * SAMPLES);
+  if (!fft->PermuteTable) {
+    free (fft);
+    return NULL;
+  }
+  for (i = 0; i < SAMPLES; i++) {
+    fft->PermuteTable[i] = PERMUTE (i, bits);
+  }
+
+  fft->SineTable   = malloc (3 * sizeof(double) * SAMPLES);
+  if (!fft->SineTable) {
+    free (fft->PermuteTable);
+    free (fft);
+    return NULL;
+  }
+  fft->CosineTable = fft->SineTable + SAMPLES;
+  fft->WinTable    = fft->SineTable + 2 * SAMPLES;
+  for (i = 0; i < SAMPLES; i++) {
+    double a = (double) i * TWOPIoN;
+    fft->SineTable[i]   = sin (a);
+    fft->CosineTable[i] = cos (a);
+  }
       /*
        * Generalized Hamming window function.
        * Set ALPHA to 0.54 for a hanning window. (Good idea)
        */
-      fft->WinTable[i] = ALPHA + ((1.0 - ALPHA)
-				  * cos (TWOPIoNm1 * (i - SAMPLES/2)));
-    }
+  for (i = 0; i < SAMPLES; i++)
+    fft->WinTable[i] = ALPHA + ((1.0 - ALPHA) * cos (TWOPIoNm1 * (i - SAMPLES/2)));
+
   return fft;
 }
 
@@ -160,9 +185,8 @@ void fft_dispose(fft_t *fft)
 {
   if (fft)
   {
+    free(fft->PermuteTable);
     free(fft->SineTable);
-    free(fft->CosineTable);
-    free(fft->WinTable);
     free(fft);
   }
 }
@@ -191,16 +215,23 @@ double fft_amp (int n, complex_t wave[], int bits)
   return (hypot (REAL(n), IMAG(n)));
 }
 
+double fft_amp2 (fft_t *fft, int n, complex_t wave[])
+{
+  n = fft->PermuteTable[n & fft->bmask];
+  return (hypot (REAL(n), IMAG(n)));
+}
+
 /*
  *  Scale sampled values.
  *  Do this *before* the fft.
  */
 void fft_scale (complex_t wave[], int bits)
 {
-  int i;
+  int i, n = 1 << bits;
+  double m = (double)1 / n;
 
-  for (i = 0; i < SAMPLES; i++)  {
-    wave[i].re /= SAMPLES;
-    wave[i].im /= SAMPLES;
+  for (i = 0; i < n; i++)  {
+    wave[i].re *= m;
+    wave[i].im *= m;
   }
 }

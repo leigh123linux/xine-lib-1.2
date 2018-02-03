@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2000-2017 the xine project
+ * Copyright (C) 2000-2018 the xine project
  *
  * This file is part of xine, a free video player.
  *
@@ -171,7 +171,7 @@ static void draw_fftscope(post_plugin_fftscope_t *this, vo_frame_t *frame) {
 
       map_ptr = ((FFT_HEIGHT * (c+1) / this->channels -1 ) * FFT_WIDTH + i * 2) / 2;
       map_ptr_bkp = map_ptr;
-      amp_float = fft_amp(i, this->wave[c], FFT_BITS);
+      amp_float = fft_amp2 (this->fft, i, this->wave[c]);
       if (amp_float == 0)
         amp_int = 0;
       else

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2000-2009 the xine project
+ * Copyright (C) 2000-2018 the xine project
  *
  * This file is part of xine, a free video player.
  *
@@ -34,6 +34,8 @@ struct fft_s {
   double *SineTable;
   double *CosineTable;
   double *WinTable;
+  int    *PermuteTable;
+  int     bmask;
 };
 typedef struct fft_s fft_t;
 
@@ -45,5 +47,7 @@ void    fft_window (fft_t *fft, complex_t wave[]);
 
 double  fft_amp (int n, complex_t wave[], int bits);
 void    fft_scale (complex_t wave[], int bits);
+
+double  fft_amp2 (fft_t *fft, int n, complex_t wave[]);
 
 #endif /* FFT_H */
