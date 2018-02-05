@@ -367,6 +367,12 @@ AC_DEFUN([XINE_DECODER_PLUGINS], [
     AM_CONDITIONAL([ENABLE_MODPLUG], [test x"$have_modplug" = x"yes"])
 
 
+    dnl libmpeg2 (optional; enabled by default)
+    AC_ARG_ENABLE([libmpeg2],
+	AS_HELP_STRING([--disable-libmpeg2], [disable internal libmpeg2 decoder]))
+    AM_CONDITIONAL([ENABLE_LIBMPEG2], [test x"$enable_libmpeg2" != x"no"])
+
+
     dnl libmpeg2new (optional; disabled by default)
     AC_ARG_ENABLE([libmpeg2new],
 	AS_HELP_STRING([--enable-libmpeg2new], [build the newer MPEG2 decoder (buggy)]))

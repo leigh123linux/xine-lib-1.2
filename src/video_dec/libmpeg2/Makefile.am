@@ -7,7 +7,11 @@ AM_LDFLAGS = $(xineplug_ldflags)
 noinst_HEADERS = vlc.h mpeg2.h xvmc.h xvmc_vld.h mpeg2_internal.h idct_mlib.h vis.h \
 	libmpeg2_accel.h
 
-xineplug_LTLIBRARIES = xineplug_decode_mpeg2.la
+if ENABLE_LIBMPEG2
+libmpeg2_module = xineplug_decode_mpeg2.la
+endif
+
+xineplug_LTLIBRARIES = $(libmpeg2_module)
 
 xineplug_decode_mpeg2_la_SOURCES = \
 	cpu_state.c \

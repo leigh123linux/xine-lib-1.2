@@ -76,8 +76,10 @@ AC_DEFUN([XINE_LIB_SUMMARY], [
 
     dnl video decoders
     echo " * video decoder plugins:"
-    echo "   - MPEG 1,2         - Amiga Bitplane"
-    echo "   - Raw RGB          - Raw YUV"
+    test x"$enable_libmpeg2" != x"no"  && echo "   - MPEG 1,2 (libmpeg2)"
+    echo "   - Amiga Bitplane"
+    echo "   - Raw RGB"
+    echo "   - Raw YUV"
     test x"$have_dxr3" = x"yes"        && echo "   - dxr3_video"
     test x"$have_gdkpixbuf" = x"yes"   && echo "   - gdk-pixbuf"
     test x"$have_imagemagick" = x"yes" && echo "   - image"
