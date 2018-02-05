@@ -48,18 +48,10 @@
 
 #include "real_common.h"
 
-typedef struct {
-  video_decoder_class_t   decoder_class;
-
-  /* empty so far */
-} real_class_t;
-
 #define BUF_SIZE       65536
 
 typedef struct realdec_decoder_s {
   video_decoder_t  video_decoder;
-
-  real_class_t    *cls;
 
   xine_stream_t   *stream;
 
@@ -508,7 +500,6 @@ static void realdec_dispose (video_decoder_t *this_gen) {
 static video_decoder_t *open_plugin (video_decoder_class_t *class_gen,
 				     xine_stream_t *stream) {
 
-  real_class_t      *cls = (real_class_t *) class_gen;
   realdec_decoder_t *this ;
 
   this = (realdec_decoder_t *) calloc(1, sizeof(realdec_decoder_t));
@@ -522,7 +513,6 @@ static video_decoder_t *open_plugin (video_decoder_class_t *class_gen,
   this->video_decoder.discontinuity       = realdec_discontinuity;
   this->video_decoder.dispose             = realdec_dispose;
   this->stream                            = stream;
-  this->cls                               = cls;
 
   this->context    = 0;
   this->pts        = 0;
@@ -537,17 +527,17 @@ static video_decoder_t *open_plugin (video_decoder_class_t *class_gen,
  */
 void *init_realvdec (xine_t *xine, const void *data) {
 
-  real_class_t       *this;
+  video_decoder_class_t       *this;
 
-  this = (real_class_t *) calloc(1, sizeof(real_class_t));
+  this = calloc(1, sizeof(video_decoder_class_t));
   if (!this) {
     return NULL;
   }
 
-  this->decoder_class.open_plugin     = open_plugin;
-  this->decoder_class.identifier      = "realvdec";
-  this->decoder_class.description     = N_("real binary-only codec based video decoder plugin");
-  this->decoder_class.dispose         = default_video_decoder_class_dispose;
+  this->open_plugin     = open_plugin;
+  this->identifier      = "realvdec";
+  this->description     = N_("real binary-only codec based video decoder plugin");
+  this->dispose         = default_video_decoder_class_dispose;
 
   _x_real_codecs_init(xine);
 
