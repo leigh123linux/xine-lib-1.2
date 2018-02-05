@@ -486,11 +486,8 @@ static void realdec_dispose (video_decoder_t *this_gen) {
   if (this->rv_handle)
     dlclose (this->rv_handle);
 
-  if (this->frame_buffer)
-    free (this->frame_buffer);
-
-  if (this->chunk_buffer)
-    free (this->chunk_buffer);
+  _x_freep (&this->frame_buffer);
+  _x_freep (&this->chunk_buffer);
 
   free (this);
 
