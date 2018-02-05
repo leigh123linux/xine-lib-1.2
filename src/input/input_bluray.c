@@ -52,8 +52,6 @@
 
 #define LOGMSG(x...)  xine_log (this->stream->xine, XINE_LOG_MSG, "input_bluray: " x);
 
-#define XINE_ENGINE_INTERNAL
-
 #include <xine/xine_internal.h>
 #include <xine/xineutils.h>
 #include <xine/input_plugin.h>
@@ -188,11 +186,13 @@ static void queue_black_frame(bluray_input_plugin_t *this)
 {
   vo_frame_t *img    = NULL;
 
-  this->class->xine->port_ticket->acquire(this->class->xine->port_ticket, 1);
+  if (!_x_lock_port_rewiring(this->class->xine, 0)) {
+    return;
+  }
+
   img = this->stream->video_out->get_frame(this->stream->video_out,
                                            1920, 1080, 16.0/9.0,
                                            XINE_IMGFMT_YV12, VO_BOTH_FIELDS);
-  this->class->xine->port_ticket->release(this->class->xine->port_ticket, 1);
 
   if (img) {
     if (img->format == XINE_IMGFMT_YV12 && img->base[0] && img->base[1] && img->base[2]) {
@@ -203,11 +203,13 @@ static void queue_black_frame(bluray_input_plugin_t *this)
       img->pts       = 0;
       img->bad_frame = 0;
       img->draw(img, this->stream);
+
+      this->has_video = 1;
     }
     img->free(img);
   }
 
-  this->has_video = 1;
+  _x_unlock_port_rewiring(this->class->xine);
 }
 
 /*
