@@ -46,11 +46,8 @@
 #define LOG_FRAME_COUNTER
 */
 
+#undef _x_abort
 #define _x_abort() do {} while (0)
-
-typedef struct {
-  video_decoder_class_t   decoder_class;
-} mpeg2_class_t;
 
 typedef struct {
   uint32_t id;
@@ -60,7 +57,6 @@ typedef struct {
 typedef struct mpeg2_video_decoder_s {
   video_decoder_t  video_decoder;
   mpeg2dec_t      *mpeg2dec;
-  mpeg2_class_t   *class;
   xine_stream_t   *stream;
   int32_t         force_aspect;
   int             force_pan_scan;
@@ -89,7 +85,7 @@ static void mpeg2_video_print_bad_state(img_state_t * img_state) {
 #endif
 
 static void mpeg2_video_free_all(img_state_t * img_state) {
-  int32_t n,m;
+  int32_t n;
   vo_frame_t * img;
   printf("libmpeg2new:free_all\n");
   for(n=0;n<30;n++) {
@@ -101,7 +97,7 @@ static void mpeg2_video_free_all(img_state_t * img_state) {
   }
 }
 
-
+#if 0
 static void mpeg2_video_print_fbuf(const mpeg2_fbuf_t * fbuf) {
   printf("%p",fbuf);
   vo_frame_t * img;
@@ -117,6 +113,7 @@ static void mpeg2_video_print_fbuf(const mpeg2_fbuf_t * fbuf) {
     printf ("\n");
   }
 }
+#endif
 
 static void mpeg2_video_decode_data (video_decoder_t *this_gen, buf_element_t *buf_element) {
   mpeg2_video_decoder_t *this = (mpeg2_video_decoder_t *) this_gen;
@@ -126,7 +123,7 @@ static void mpeg2_video_decode_data (video_decoder_t *this_gen, buf_element_t *b
   mpeg2_state_t state;
   vo_frame_t * img;
   uint32_t picture_structure;
-  int32_t frame_skipping;
+  //int32_t frame_skipping;
 
   /* handle aspect hints from xine-dvdnav */
   if (buf_element->decoder_flags & BUF_FLAG_SPECIAL) {
@@ -264,7 +261,7 @@ static void mpeg2_video_decode_data (video_decoder_t *this_gen, buf_element_t *b
             _x_abort();
           }
           if (this->img_state[img->id].id == 1) {
-            frame_skipping = img->draw (img, this->stream);
+            /*frame_skipping =*/ img->draw (img, this->stream);
             /* FIXME: Handle skipping */
             this->img_state[img->id].id = 2;
           }
@@ -307,7 +304,6 @@ static void mpeg2_video_decode_data (video_decoder_t *this_gen, buf_element_t *b
 }
 
 static void mpeg2_video_flush (video_decoder_t *this_gen) {
-  mpeg2_video_decoder_t *this = (mpeg2_video_decoder_t *) this_gen;
 
 #ifdef LOG_ENTRY
   printf ("libmpeg2: flush\n");
@@ -318,10 +314,12 @@ static void mpeg2_video_flush (video_decoder_t *this_gen) {
 
 static void mpeg2_video_reset (video_decoder_t *this_gen) {
   mpeg2_video_decoder_t *this = (mpeg2_video_decoder_t *) this_gen;
+#if 0
   int32_t state;
   const mpeg2_info_t * info;
   vo_frame_t * img;
   int32_t frame_skipping;
+#endif
 
 #ifdef LOG_ENTRY
   printf ("libmpeg2: reset\n");
@@ -430,7 +428,6 @@ static void mpeg2_video_reset (video_decoder_t *this_gen) {
 }
 
 static void mpeg2_video_discontinuity (video_decoder_t *this_gen) {
-  mpeg2_video_decoder_t *this = (mpeg2_video_decoder_t *) this_gen;
 
 #ifdef LOG_ENTRY
   printf ("libmpeg2: dicontinuity\n");
@@ -465,7 +462,6 @@ static video_decoder_t *open_plugin (video_decoder_class_t *class_gen, xine_stre
   this->video_decoder.discontinuity       = mpeg2_video_discontinuity;
   this->video_decoder.dispose             = mpeg2_video_dispose;
   this->stream                            = stream;
-  this->class                             = (mpeg2_class_t *) class_gen;
   this->frame_number=0;
   this->rff_pattern=0;
 
@@ -481,16 +477,18 @@ static video_decoder_t *open_plugin (video_decoder_class_t *class_gen, xine_stre
 /*
  * mpeg2 plugin class
  */
-static void *init_plugin (xine_t *xine, void *data) {
+static void *init_plugin (xine_t *xine, const void *data) {
 
-  mpeg2_class_t *this;
+  video_decoder_class_t *this;
 
-  this = (mpeg2_class_t *) calloc(1, sizeof(mpeg2_class_t));
+  this = calloc(1, sizeof(video_decoder_class_t));
+  if (!this)
+    return NULL;
 
-  this->decoder_class.open_plugin     = open_plugin;
-  this->decoder_class.identifier      = "mpeg2new";
-  this->decoder_class.description     = N_("mpeg2 based video decoder plugin");
-  this->decoder_class.dispose         = default_video_decoder_class_dispose;
+  this->open_plugin     = open_plugin;
+  this->identifier      = "mpeg2new";
+  this->description     = N_("mpeg2 based video decoder plugin");
+  this->dispose         = default_video_decoder_class_dispose;
 
   return this;
 }
