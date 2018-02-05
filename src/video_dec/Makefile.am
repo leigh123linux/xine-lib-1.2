@@ -53,11 +53,11 @@ xineplug_decode_rawvideo_la_SOURCES = \
 xineplug_decode_rawvideo_la_LIBADD = $(XINE_LIB) $(LTLIBINTL)
 
 xineplug_decode_image_la_SOURCES = image.c
-xineplug_decode_image_la_LIBADD = $(XINE_LIB) $(DYNAMIC_LD_LIBS) $(WAND_LIBS)
+xineplug_decode_image_la_LIBADD = $(XINE_LIB) $(WAND_LIBS)
 xineplug_decode_image_la_CFLAGS = $(AM_CFLAGS) $(WAND_CFLAGS)
 
 xineplug_decode_gdk_pixbuf_la_SOURCES = gdkpixbuf.c
-xineplug_decode_gdk_pixbuf_la_LIBADD = $(XINE_LIB) $(DYNAMIC_LD_LIBS) $(GDK_PIXBUF_LIBS)
+xineplug_decode_gdk_pixbuf_la_LIBADD = $(XINE_LIB) $(GDK_PIXBUF_LIBS)
 xineplug_decode_gdk_pixbuf_la_CFLAGS = $(AM_CFLAGS) $(GDK_PIXBUF_CFLAGS)
 
 xineplug_decode_libjpeg_la_SOURCES = libjpeg.c
