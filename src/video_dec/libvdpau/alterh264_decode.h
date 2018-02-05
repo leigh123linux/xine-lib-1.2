@@ -26,9 +26,6 @@
 //#define LOG
 #define LOG_MODULE "vdpau_h264"
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -69,7 +66,6 @@ enum aspect_ratio
   ASPECT_RESERVED,
   ASPECT_EXTENDED_SAR = 255
 };
-
 
 
 static const uint8_t zigzag_4x4[16] = {

@@ -24,10 +24,6 @@
 #ifndef GROUP_VDPAU_H
 #define GROUP_VDPAU_H 1
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
 #include <xine/xine_internal.h>
 
 /* TJ. My vdpau.h says
