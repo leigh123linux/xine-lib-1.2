@@ -28,4 +28,4 @@ xineplug_decode_vdpau_la_SOURCES = \
 	vdpau_vc1.c \
 	vdpau_mpeg4.c
 xineplug_decode_vdpau_la_CFLAGS = $(AM_CFLAGS) $(VDPAU_CFLAGS)
-xineplug_decode_vdpau_la_LIBADD = $(XINE_LIB) $(DYNAMIC_LD_LIBS) -lm
+xineplug_decode_vdpau_la_LIBADD = $(XINE_LIB) -lm
