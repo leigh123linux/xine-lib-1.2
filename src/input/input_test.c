@@ -230,9 +230,14 @@ static int test_make (test_input_plugin_t * this) {
   /* dimensions */
   width = 320;
   if (this->stream && this->stream->video_out) {
-    x = this->stream->video_out->get_property (this->stream->video_out,
-      VO_PROP_WINDOW_WIDTH);
-    if (x > width) width = x;
+    if (_x_lock_port_rewiring(this->stream->xine, 0)) {
+      if (this->stream->video_out) {
+        x = this->stream->video_out->get_property (this->stream->video_out,
+                                                   VO_PROP_WINDOW_WIDTH);
+        if (x > width) width = x;
+      }
+      _x_unlock_port_rewiring(this->stream->xine);
+    }
   }
   if (width > 1920) width = 1920;
   width &= ~1;
