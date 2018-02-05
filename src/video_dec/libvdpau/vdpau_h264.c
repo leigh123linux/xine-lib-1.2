@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2016 the xine project
+ * Cpyright (C) 2008-2016 the xine project
  * Copyright (C) 2008 Julian Scheel
  *
  * kate: space-indent on; indent-width 2; mixedindent off; indent-mode cstyle; remove-trailing-space on;
@@ -46,7 +46,6 @@
 #include "dpb.h"
 #include "cpb.h"
 #include "dpb.c"
-#include "cpb.c"
 #include "nal.c"
 #include "h264_parser.c"
 #include "group_vdpau.h"

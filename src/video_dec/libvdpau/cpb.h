@@ -23,6 +23,9 @@
 #ifndef CPB_H_
 #define CPB_H_
 
+#include <stdlib.h>
+#include <stdint.h>
+
 #include "nal.h"
 
 enum picture_flags {
@@ -61,7 +64,23 @@ struct coded_picture
   struct nal_unit *slc_nal;
 };
 
-static struct coded_picture* create_coded_picture(void);
-static void free_coded_picture(struct coded_picture *pic);
+static inline struct coded_picture* create_coded_picture(void)
+{
+  struct coded_picture* pic = calloc(1, sizeof(struct coded_picture));
+  return pic;
+}
+
+static inline void free_coded_picture(struct coded_picture *pic)
+{
+  if(!pic)
+    return;
+
+  release_nal_unit(pic->sei_nal);
+  release_nal_unit(pic->sps_nal);
+  release_nal_unit(pic->pps_nal);
+  release_nal_unit(pic->slc_nal);
+
+  free(pic);
+}
 
 #endif /* CPB_H_ */

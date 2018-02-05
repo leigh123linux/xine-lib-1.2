@@ -3,7 +3,7 @@ include $(top_srcdir)/misc/Makefile.common
 AM_CFLAGS = $(DEFAULT_OCFLAGS) $(VISIBILITY_FLAG)
 AM_LDFLAGS = $(xineplug_ldflags)
 
-EXTRA_DIST = nal.c dpb.c cpb.c h264_parser.c
+EXTRA_DIST = nal.c dpb.c h264_parser.c
 
 if ENABLE_VDPAU
 vdpau_module = xineplug_decode_vdpau.la
