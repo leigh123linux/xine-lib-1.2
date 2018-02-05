@@ -287,7 +287,7 @@ static int init_codec (realdec_decoder_t *this, buf_element_t *buf) {
   (this->stream->video_out->open) (this->stream->video_out, this->stream);
 
   this->frame_size   = this->width * this->height;
-  this->frame_buffer = xine_xmalloc (this->width * this->height * 3 / 2);
+  this->frame_buffer = calloc (1, this->frame_size * 3 / 2);
 
   this->chunk_buffer = calloc(1, BUF_SIZE);
   this->chunk_buffer_max = BUF_SIZE;
