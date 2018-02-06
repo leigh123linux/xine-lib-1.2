@@ -224,7 +224,7 @@ if test x"$enable_iconvtest" != x"no"; then
 fi
 
 AM_GNU_GETTEXT([external])
-AM_GNU_GETTEXT_VERSION([0.17])
+AM_GNU_GETTEXT_VERSION([0.18.3])
 AC_PROG_GMSGFMT_PLURAL
 
 AC_CHECK_LIB([c], [dlopen], [DYNAMIC_LD_LIBS=""],
