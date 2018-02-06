@@ -36,7 +36,7 @@
 int dca_downmix_init (int input, int flags, level_t * level,
 		      level_t clev, level_t slev)
 {
-    static uint8_t table[11][10] = {
+    static const uint8_t table[11][10] = {
         /* DCA_MONO */
         {DCA_MONO,      DCA_MONO,       DCA_MONO,       DCA_MONO,
          DCA_MONO,      DCA_MONO,       DCA_MONO,       DCA_MONO,
