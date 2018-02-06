@@ -31,10 +31,6 @@
 extern "C" {
 #endif
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
 #include <va/va.h>
 
 #define SURFACE_FREE            0

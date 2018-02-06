@@ -23,10 +23,6 @@
 #ifndef _DEMUX_MATROSKA_H_
 #define _DEMUX_MATROSKA_H_
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
 #include <ctype.h>
 #include <stdio.h>
 #include <fcntl.h>

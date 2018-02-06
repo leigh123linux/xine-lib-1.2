@@ -20,7 +20,12 @@
  * simple network input plugins
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "group_network.h"
+
 
 /*
  * exported plugin catalog entry

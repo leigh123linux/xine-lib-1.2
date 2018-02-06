@@ -20,10 +20,6 @@
  * simple network input plugins
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
 #include <xine/xine_internal.h>
 #include <xine/input_plugin.h>
 

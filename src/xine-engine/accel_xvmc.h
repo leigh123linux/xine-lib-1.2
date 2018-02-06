@@ -31,10 +31,6 @@
 extern "C" {
 #endif
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
 typedef struct xine_macroblock_s {
   short  *blockptr;          /* pointer to current dct block */
   short  *blockbaseptr;      /* pointer to base of dct block array in blocks */
