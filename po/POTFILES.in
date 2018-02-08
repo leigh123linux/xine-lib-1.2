@@ -107,6 +107,7 @@ src/video_dec/libjpeg.c
 src/video_out/color_matrix.c
 src/video_out/video_out_aa.c
 src/video_out/video_out_caca.c
+src/video_out/opengl/xine_glx.c
 src/video_out/video_out_directfb.c
 src/video_out/video_out_directx.c
 src/video_out/video_out_fb.c
