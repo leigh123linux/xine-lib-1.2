@@ -43,6 +43,8 @@ typedef struct {
   Drawable    drawable;
   GLXContext  context;
 
+  int         lock1, lock2;
+
   /* DEBUG */
   int         is_current;
 } xine_glx_t;
@@ -55,11 +57,17 @@ static int _glx_make_current(xine_gl_t *gl)
 
   _x_assert(!glx->is_current);
 
+  /* User may change lock1 anytime, make sure we pair lock calls properly. */
+  glx->lock2 = glx->lock1;
+
   XLockDisplay(glx->display);
   result = glXMakeCurrent(glx->display, glx->drawable, glx->context);
-  XUnlockDisplay(glx->display);
+  if (!glx->lock2)
+    XUnlockDisplay (glx->display);
 
   if (!result) {
+    if (glx->lock2)
+      XUnlockDisplay (glx->display);
     xprintf(glx->xine, XINE_VERBOSITY_LOG, "glx: display unavailable for rendering\n");
     return 0;
   }
@@ -74,7 +82,8 @@ static void _glx_release_current(xine_gl_t *gl)
 
   _x_assert(glx->is_current);
 
-  XLockDisplay(glx->display);
+  if (!glx->lock2)
+    XLockDisplay (glx->display);
   glXMakeCurrent(glx->display, None, NULL);
   XUnlockDisplay(glx->display);
 
@@ -116,6 +125,8 @@ static void _glx_dispose(xine_gl_t **pgl)
 
   lprintf("Destroying glx context %p\n", (void*)glx->context);
 
+  glx->xine->config->unregister_callback (glx->xine->config, "video.output.lockdisplay");
+
   _x_assert(!glx->is_current);
 
   XLockDisplay(glx->display);
@@ -126,6 +137,12 @@ static void _glx_dispose(xine_gl_t **pgl)
   XUnlockDisplay(glx->display);
 
   _x_freep(pgl);
+}
+
+static void _glx_set_lockdisplay (void *this_gen, xine_cfg_entry_t *entry) {
+  xine_glx_t *glx = (xine_glx_t *)this_gen;
+  glx->lock1 = entry->num_value;
+  xprintf (glx->xine, XINE_VERBOSITY_DEBUG, "glx: lockdisplay=%d\n", glx->lock1);
 }
 
 static xine_gl_t *_glx_init(xine_t *xine, const void *visual)
@@ -196,6 +213,12 @@ static xine_gl_t *_glx_init(xine_t *xine, const void *visual)
   glx->context  = ctx;
   glx->display  = vis->display;
   glx->drawable = vis->d;
+
+  glx->lock1 = glx->lock2 = xine->config->register_bool (xine->config,
+    "video.output.lockdisplay", 0,
+    _("Lock X display during whole frame output."),
+    _("This sometimes reduces system load and jitter.\n"),
+      10, _glx_set_lockdisplay, glx);
 
   return &glx->gl;
 
