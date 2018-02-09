@@ -1,3 +1,4 @@
+AUTOMAKE_OPTIONS = subdir-objects
 include $(top_builddir)/misc/Makefile.plugins
 include $(top_srcdir)/misc/Makefile.common
 
@@ -11,10 +12,7 @@ AM_LDFLAGS = $(xineplug_ldflags)
 # All of xine input plugins should be named like the scheme "xineplug_inp_"
 #
 
-SUBDIRS = libreal librtsp
-if ENABLE_VCD
-SUBDIRS += vcd
-endif
+SUBDIRS =
 if !WITH_EXTERNAL_DVDNAV
 SUBDIRS += libdvdnav
 endif
@@ -38,6 +36,32 @@ net_buf_ctrl_la_SOURCES = net_buf_ctrl.c net_buf_ctrl.h
 net_buf_ctrl_la_LIBADD = $(XINE_LIB) $(LTLIBINTL) $(PTHREAD_LIBS)
 
 #
+#
+#
+
+noinst_LTLIBRARIES += \
+        librtsp.la \
+        libreal.la
+
+librtsp_la_SOURCES = \
+        librtsp/rtsp.c \
+        librtsp/rtsp.h \
+        librtsp/rtsp_session.c \
+        librtsp/rtsp_session.h
+librtsp_la_CPPFLAGS = $(AM_CPPFLAGS) -I$(top_srcdir)/src/input/libreal -I$(top_srcdir)/src/input/librtsp
+
+libreal_la_SOURCES = \
+        libreal/real.h \
+        libreal/real.c \
+        libreal/asmrp.h \
+        libreal/asmrp.c \
+        libreal/rmff.h \
+        libreal/rmff.c \
+        libreal/sdpplin.h \
+        libreal/sdpplin.c
+libreal_la_CPPFLAGS = $(AM_CPPFLAGS) -I$(top_srcdir)/src/input/librtsp -I$(top_srcdir)/src/input/libreal
+
+#
 # external libs
 #
 
@@ -57,8 +81,12 @@ if ENABLE_DVB
 in_dvb = xineplug_inp_dvb.la
 endif
 
+if ENABLE_VCD
+in_vcd = xineplug_inp_vcd.la
+endif
+
 if ENABLE_VCDO
-in_vcd = xineplug_inp_vcdo.la
+in_vcdo = xineplug_inp_vcdo.la
 endif
 
 if ENABLE_V4L
@@ -102,6 +130,7 @@ xineplug_LTLIBRARIES = \
 	$(in_builtins) \
 	xineplug_inp_dvd.la \
 	$(in_vcd) \
+	$(in_vcdo) \
 	$(in_v4l) \
 	$(in_v4l2) \
 	$(in_gnome_vfs) \
@@ -128,13 +157,18 @@ xineplug_inp_dvd_la_CFLAGS = $(AM_CFLAGS) $(DVD_CFLAGS)
 
 xineplug_inp_network_la_SOURCES = group_network.c group_network.h input_net.c input_http.c input_pnm.c pnm.c pnm.h input_rtsp.c
 xineplug_inp_network_la_LIBADD = $(XINE_LIB) $(NET_LIBS) $(LTLIBINTL) \
-	libreal/libreal.la librtsp/librtsp.la http_helper.la net_buf_ctrl.la
+	libreal.la librtsp.la http_helper.la net_buf_ctrl.la
 
 xineplug_inp_rtp_la_SOURCES = input_rtp.c
 xineplug_inp_rtp_la_LIBADD = $(XINE_LIB) $(NET_LIBS) $(PTHREAD_LIBS) $(LTLIBINTL) net_buf_ctrl.la
 
 xineplug_inp_mms_la_SOURCES = input_mms.c mms.c mms.h mmsh.c mmsh.h
 xineplug_inp_mms_la_LIBADD = $(XINE_LIB) $(LTLIBICONV) $(LTLIBINTL) $(ASFHEADER_LIB) http_helper.la net_buf_ctrl.la
+
+xineplug_inp_vcd_la_SOURCES = vcd/xineplug_inp_vcd.c vcd/vcdplayer.c vcd/vcdplayer.h vcd/vcdio.c vcd/vcdio.h
+xineplug_inp_vcd_la_LIBADD = $(XINE_LIB) $(LTLIBINTL) $(LIBCDIO_LIBS) $(LIBVCD_LIBS) $(LIBVCDINFO_LIBS) $(LIBISO9660_LIBS) -lm
+xineplug_inp_vcd_la_DEPENDENCIES = $(LIBCDIO_DEPS) $(LIBVCD_DEPS) $(LIBVCDINFO_DEPS) $(LIBISO9660_DEPS)
+xineplug_inp_vcd_la_CFLAGS  = $(AM_CFLAGS) $(LIBCDIO_CFLAGS) $(LIBVCD_CFLAGS)
 
 xineplug_inp_vcdo_la_SOURCES = input_vcd.c
 xineplug_inp_vcdo_la_LIBADD = $(XINE_LIB) $(LTLIBINTL) media_helper.la
