@@ -26,6 +26,7 @@
 
 #include "group_network.h"
 
+#include <xine/xine_plugin.h>
 
 /*
  * exported plugin catalog entry

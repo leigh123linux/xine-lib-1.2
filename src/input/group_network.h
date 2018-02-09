@@ -21,7 +21,6 @@
  */
 
 #include <xine/xine_internal.h>
-#include <xine/input_plugin.h>
 
 void *input_net_init_class  (xine_t *xine, const void *data);
 void *input_http_init_class (xine_t *xine, const void *data);
