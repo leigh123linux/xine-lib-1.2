@@ -1366,6 +1366,8 @@ static int get_spu_lang (bluray_input_plugin_t *this, int *data)
 
 static int get_optional_data_impl (bluray_input_plugin_t *this, void *data, int data_type)
 {
+  int r;
+
   switch (data_type) {
 
     case INPUT_OPTIONAL_DATA_DEMUXER:
@@ -1374,10 +1376,16 @@ static int get_optional_data_impl (bluray_input_plugin_t *this, void *data, int 
       return INPUT_OPTIONAL_SUCCESS;
 
     case INPUT_OPTIONAL_DATA_AUDIOLANG:
-      return get_audio_lang(this, data);
+      pthread_mutex_lock(&this->title_info_mutex);
+      r = get_audio_lang(this, data);
+      pthread_mutex_unlock(&this->title_info_mutex);
+      return r;
 
     case INPUT_OPTIONAL_DATA_SPULANG:
-      return get_spu_lang(this, data);
+      pthread_mutex_lock(&this->title_info_mutex);
+      r = get_spu_lang(this, data);
+      pthread_mutex_unlock(&this->title_info_mutex);
+      return r;
 
     default:
       return INPUT_OPTIONAL_UNSUPPORTED;
