@@ -17,16 +17,12 @@ noinst_HEADERS = xv_common.h
 
 # helper libraries
 
-XCBOSD_LIB = libxcbosd.la
-X11OSD_LIB = libx11osd.la
 libx11osd_la_SOURCES = x11osd.c x11osd.h
 libx11osd_la_CFLAGS = $(AM_CFLAGS) $(X_CFLAGS)
 libx11osd_la_LIBADD = $(XINE_LIB) $(X_LIBS) $(LTLIBINTL)
 libxcbosd_la_SOURCES = xcbosd.c xcbosd.h
 libxcbosd_la_CFLAGS = $(AM_CFLAGS) $(XCB_CFLAGS)
 libxcbosd_la_LIBADD = $(XINE_LIB) $(XCB_LIBS) $(LTLIBINTL)
-
-noinst_LTLIBRARIES = $(X11OSD_LIB) $(XCBOSD_LIB)
 
 EXTRA_DIST += opengl/xine_gl.h opengl/xine_glx.c
 
@@ -37,6 +33,7 @@ vo_builtins = xineplug_vo_out_none.la
 endif
 
 if HAVE_X11
+X11OSD_LIB = libx11osd.la
 xshm_module = xineplug_vo_out_xshm.la
 if HAVE_XV
 xv_module = xineplug_vo_out_xv.la
@@ -70,6 +67,7 @@ vaapi_module = xineplug_vo_out_vaapi.la
 endif
 
 if ENABLE_XCB
+XCBOSD_LIB = libxcbosd.la
 if ENABLE_XCBSHM
 xcbshm_module = xineplug_vo_out_xcbshm.la
 endif
@@ -122,6 +120,8 @@ endif
 if ENABLE_MACOSX_VIDEO
 macosx_module = xineplug_vo_out_macosx.la
 endif
+
+noinst_LTLIBRARIES = $(X11OSD_LIB) $(XCBOSD_LIB)
 
 xineplug_LTLIBRARIES = $(xshm_module) $(xv_module) $(xvmc_module) \
                   $(opengl_module) \
