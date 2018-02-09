@@ -19,13 +19,35 @@ if !WITH_EXTERNAL_DVDNAV
 SUBDIRS += libdvdnav
 endif
 
+#
+# helper libs
+#
 
-noinst_HEADERS = group_network.h net_buf_ctrl.h mms.h mmsh.h pnm.h media_helper.h http_helper.h
+noinst_LTLIBRARIES = \
+	http_helper.la \
+	media_helper.la \
+	net_buf_ctrl.la
+
+http_helper_la_SOURCES = http_helper.c http_helper.h
+http_helper_la_LIBADD = $(XINE_LIB) $(LTLIBINTL)
+
+media_helper_la_SOURCES = media_helper.c media_helper.h
+media_helper_la_LIBADD = $(XINE_LIB) $(LTLIBINTL)
+
+net_buf_ctrl_la_SOURCES = net_buf_ctrl.c net_buf_ctrl.h
+net_buf_ctrl_la_LIBADD = $(XINE_LIB) $(LTLIBINTL) $(PTHREAD_LIBS)
+
+#
+# external libs
+#
 
 ASFHEADER_LIB = $(top_builddir)/src/demuxers/libasfheader.la
 $(ASFHEADER_LIB):
 	$(MAKE) -C $(top_builddir)/src/demuxers libasfheader.la
 
+#
+# plugins
+#
 
 if !ENABLE_LIBXINE_BUILTINS
 in_builtins = xineplug_inp_file.la xineplug_inp_stdin_fifo.la xineplug_inp_test.la
@@ -100,33 +122,34 @@ xineplug_inp_test_la_LIBADD = $(XINE_LIB) $(LTLIBINTL)
 xineplug_inp_test_la_CFLAGS = $(VISIBILITY_FLAG) $(AM_CFLAGS)
 xineplug_inp_test_la_LDFLAGS = $(xineplug_ldflags)
 
-xineplug_inp_dvd_la_SOURCES = input_dvd.c media_helper.c
-xineplug_inp_dvd_la_LIBADD = $(XINE_LIB) $(link_dvdnav) $(PTHREAD_LIBS) $(DYNAMIC_LD_LIBS) $(LTLIBINTL)
+xineplug_inp_dvd_la_SOURCES = input_dvd.c
+xineplug_inp_dvd_la_LIBADD = $(XINE_LIB) $(link_dvdnav) $(PTHREAD_LIBS) $(DYNAMIC_LD_LIBS) $(LTLIBINTL) media_helper.la
 xineplug_inp_dvd_la_CFLAGS = $(AM_CFLAGS) $(DVD_CFLAGS)
 
-xineplug_inp_network_la_SOURCES = group_network.c net_buf_ctrl.c input_net.c input_http.c http_helper.c input_pnm.c pnm.c input_rtsp.c
-xineplug_inp_network_la_LIBADD = $(XINE_LIB) $(NET_LIBS) $(PTHREAD_LIBS) $(LTLIBINTL) libreal/libreal.la librtsp/librtsp.la
+xineplug_inp_network_la_SOURCES = group_network.c group_network.h input_net.c input_http.c input_pnm.c pnm.c pnm.h input_rtsp.c
+xineplug_inp_network_la_LIBADD = $(XINE_LIB) $(NET_LIBS) $(LTLIBINTL) \
+	libreal/libreal.la librtsp/librtsp.la http_helper.la net_buf_ctrl.la
 
-xineplug_inp_rtp_la_SOURCES = input_rtp.c net_buf_ctrl.c
-xineplug_inp_rtp_la_LIBADD = $(XINE_LIB) $(NET_LIBS) $(PTHREAD_LIBS) $(LTLIBINTL)
+xineplug_inp_rtp_la_SOURCES = input_rtp.c
+xineplug_inp_rtp_la_LIBADD = $(XINE_LIB) $(NET_LIBS) $(PTHREAD_LIBS) $(LTLIBINTL) net_buf_ctrl.la
 
-xineplug_inp_mms_la_SOURCES = input_mms.c net_buf_ctrl.c mms.c mmsh.c http_helper.c
-xineplug_inp_mms_la_LIBADD = $(XINE_LIB) $(LTLIBICONV) $(PTHREAD_LIBS) $(LTLIBINTL) $(ASFHEADER_LIB)
+xineplug_inp_mms_la_SOURCES = input_mms.c mms.c mms.h mmsh.c mmsh.h
+xineplug_inp_mms_la_LIBADD = $(XINE_LIB) $(LTLIBICONV) $(LTLIBINTL) $(ASFHEADER_LIB) http_helper.la net_buf_ctrl.la
 
-xineplug_inp_vcdo_la_SOURCES = input_vcd.c media_helper.c
-xineplug_inp_vcdo_la_LIBADD = $(XINE_LIB) $(LTLIBINTL)
+xineplug_inp_vcdo_la_SOURCES = input_vcd.c
+xineplug_inp_vcdo_la_LIBADD = $(XINE_LIB) $(LTLIBINTL) media_helper.la
 
-xineplug_inp_stdin_fifo_la_SOURCES = input_stdin_fifo.c net_buf_ctrl.c
-xineplug_inp_stdin_fifo_la_LIBADD = $(XINE_LIB) $(PTHREAD_LIBS) $(LTLIBINTL)
+xineplug_inp_stdin_fifo_la_SOURCES = input_stdin_fifo.c
+xineplug_inp_stdin_fifo_la_LIBADD = $(XINE_LIB) $(LTLIBINTL) net_buf_ctrl.la
 
-xineplug_inp_dvb_la_SOURCES = input_dvb.c net_buf_ctrl.c
+xineplug_inp_dvb_la_SOURCES = input_dvb.c
 xineplug_inp_dvb_la_DEPS = $(XDG_BASEDIR_DEPS)
-xineplug_inp_dvb_la_LIBADD = $(XINE_LIB) $(PTHREAD_LIBS) $(LTLIBINTL) $(XDG_BASEDIR_LIBS)
+xineplug_inp_dvb_la_LIBADD = $(XINE_LIB) $(PTHREAD_LIBS) $(LTLIBINTL) $(XDG_BASEDIR_LIBS) net_buf_ctrl.la
 xineplug_inp_dvb_la_CPPFLAGS = $(AM_CPPFLAGS) $(XDG_BASEDIR_CPPFLAGS)
 
-xineplug_inp_cdda_la_SOURCES = input_cdda.c media_helper.c
+xineplug_inp_cdda_la_SOURCES = input_cdda.c
 xineplug_inp_cdda_la_DEPS = $(XDG_BASEDIR_DEPS)
-xineplug_inp_cdda_la_LIBADD = $(XINE_LIB) $(LTLIBINTL) $(XDG_BASEDIR_LIBS)
+xineplug_inp_cdda_la_LIBADD = $(XINE_LIB) $(LTLIBINTL) $(XDG_BASEDIR_LIBS) media_helper.la
 xineplug_inp_cdda_la_CPPFLAGS = $(AM_CPPFLAGS) $(XDG_BASEDIR_CPPFLAGS)
 
 xineplug_inp_v4l_la_SOURCES = input_v4l.c
@@ -138,8 +161,8 @@ xineplug_inp_v4l2_la_LIBADD = $(XINE_LIB) $(ALSA_LIBS) $(LTLIBINTL) $(V4L2_LIBS)
 xineplug_inp_v4l2_la_CFLAGS = $(AM_CFLAGS) $(ALSA_CFLAGS) $(V4L2_CFLAGS)
 xineplug_inp_v4l2_la_LDFLAGS = -avoid-version -module
 
-xineplug_inp_gnome_vfs_la_SOURCES = input_gnome_vfs.c net_buf_ctrl.c
-xineplug_inp_gnome_vfs_la_LIBADD = $(XINE_LIB) $(GNOME_VFS_LIBS) $(PTHREAD_LIBS) $(LTLIBINTL)
+xineplug_inp_gnome_vfs_la_SOURCES = input_gnome_vfs.c
+xineplug_inp_gnome_vfs_la_LIBADD = $(XINE_LIB) $(GNOME_VFS_LIBS) $(LTLIBINTL) net_buf_ctrl.la
 xineplug_inp_gnome_vfs_la_CFLAGS = $(AM_CFLAGS) $(GNOME_VFS_CFLAGS)
 
 xineplug_inp_smb_la_SOURCES = input_smb.c
@@ -149,6 +172,6 @@ xineplug_inp_smb_la_CFLAGS = $(AM_CFLAGS) $(LIBSMBCLIENT_CFLAGS)
 xineplug_inp_pvr_la_SOURCES = input_pvr.c
 xineplug_inp_pvr_la_LIBADD = $(XINE_LIB) $(PTHREAD_LIBS) $(LTLIBINTL)
 
-xineplug_inp_bluray_la_SOURCES = input_bluray.c media_helper.c
-xineplug_inp_bluray_la_LIBADD = $(XINE_LIB) $(LIBBLURAY_LIBS) $(PTHREAD_LIBS) $(LTLIBINTL)
+xineplug_inp_bluray_la_SOURCES = input_bluray.c
+xineplug_inp_bluray_la_LIBADD = $(XINE_LIB) $(LIBBLURAY_LIBS) $(PTHREAD_LIBS) $(LTLIBINTL) media_helper.la
 xineplug_inp_bluray_la_CFLAGS = $(AM_CFLAGS) $(LIBBLURAY_CFLAGS)
