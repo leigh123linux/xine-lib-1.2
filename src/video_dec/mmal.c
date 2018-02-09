@@ -510,7 +510,7 @@ static MMAL_BUFFER_HEADER_T *get_input_buffer(mmal_decoder_t *this)
     this->input_buffer = mmal_queue_timedwait(this->input_pool->queue, 200);
     while (!this->input_buffer) {
       handle_output(this);
-      if (--retries < 1 || this->stream->emergency_brake) {
+      if (--retries < 1 || _x_action_pending(this->stream)) {
         xprintf(this->stream->xine, XINE_VERBOSITY_LOG, LOG_MODULE": "
                 "failed to retrieve buffer header for input data\n");
         this->discontinuity = 1;
@@ -795,7 +795,7 @@ static video_decoder_t *open_plugin (video_decoder_class_t *class_gen, xine_stre
     default:
       xprintf(this->stream->xine, XINE_VERBOSITY_LOG, LOG_MODULE": "
               "unsupported video codec: 0x%x\n",
-              stream->video_decoder_streamtype);
+	      video_type);
       mmal_dispose(&this->video_decoder);
       return (video_decoder_t *)1;
   }
