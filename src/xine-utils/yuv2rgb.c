@@ -3332,7 +3332,9 @@ yuv2rgb_factory_t* yuv2rgb_factory_init (int mode, int swapped,
 
   yuv2rgb_factory_impl_t *this;
   yuv2rgb_factory_t      *intf;
+#if defined(ARCH_X86) || defined(HAVE_MLIB)
   uint32_t mm = xine_mm_accel();
+#endif
 
   this = malloc (sizeof (*this));
   if (!this)
