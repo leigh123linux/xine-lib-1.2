@@ -1597,6 +1597,11 @@ demux_plugin_t *_x_find_demux_plugin (xine_stream_t *stream, input_plugin_t *inp
 
   switch (stream->xine->demux_strategy) {
 
+  default:
+    xprintf (stream->xine, XINE_VERBOSITY_LOG,
+             _("load_plugins: unknown content detection strategy %d\n"),
+             stream->xine->demux_strategy);
+    /* fall through */
   case XINE_DEMUX_DEFAULT_STRATEGY:
     return probe_demux (stream, METHOD_BY_CONTENT, METHOD_BY_MRL, input);
 
@@ -1608,11 +1613,6 @@ demux_plugin_t *_x_find_demux_plugin (xine_stream_t *stream, input_plugin_t *inp
 
   case XINE_DEMUX_EXTENSION_STRATEGY:
     return probe_demux (stream, METHOD_BY_MRL, -1, input);
-
-  default:
-    xprintf (stream->xine, XINE_VERBOSITY_LOG,
-	     _("load_plugins: unknown content detection strategy %d\n"), stream->xine->demux_strategy);
-    _x_abort();
   }
 
   return NULL;
