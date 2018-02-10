@@ -274,7 +274,7 @@ static XvImage *create_ximage (xv_driver_t *this, XShmSegmentInfo *shminfo,
     break;
   default:
     xprintf (this->xine, XINE_VERBOSITY_DEBUG, "create_ximage: unknown format %08x\n",format);
-    _x_abort();
+    return NULL;
   }
 
   if (xv_format == 0) {

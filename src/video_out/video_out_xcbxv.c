@@ -227,7 +227,7 @@ static void create_ximage(xv_driver_t *this, xv_frame_t *frame, int width, int h
     break;
   default:
     xprintf (this->xine, XINE_VERBOSITY_DEBUG, "create_ximage: unknown format %08x\n",format);
-    _x_abort();
+    return;
   }
 
   if (frame->xv_format == 0) {
@@ -340,7 +340,7 @@ static void create_ximage(xv_driver_t *this, xv_frame_t *frame, int width, int h
     break;
   default:
     xprintf (this->xine, XINE_VERBOSITY_DEBUG, "create_ximage: unknown format %08x\n",format);
-    _x_abort();
+    return;
   }
 }
 
