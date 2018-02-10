@@ -1101,7 +1101,7 @@ static void query_fourccs (vidix_driver_t *this) {
     this->supports_yv12 = 0;
 }
 
-static void *init_class (xine_t *xine, void *visual_gen) {
+static void *init_class (xine_t *xine, const void *visual_gen) {
   vidix_class_t        *this;
   int                   err;
 
