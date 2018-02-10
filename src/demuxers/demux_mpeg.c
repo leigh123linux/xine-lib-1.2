@@ -179,6 +179,9 @@ static uint32_t read_bytes (demux_mpeg_t *this, uint32_t n) {
   uint32_t i;
   unsigned char buf[6];
 
+  _x_assert(n > 0);
+  _x_assert(n <= 4);
+
   buf[4]=0;
 
   i = this->input->read (this->input, buf, n);
@@ -201,9 +204,6 @@ static uint32_t read_bytes (demux_mpeg_t *this, uint32_t n) {
   case 4:
     res = (buf[2]<<8) | buf[3] | (buf[1]<<16) | (buf[0] << 24);
     break;
-  default:
-    lprintf ("how how - something wrong in wonderland demux:read_bytes (%d)\n", n);
-    _x_abort();
   }
 
   return res;

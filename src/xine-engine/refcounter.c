@@ -51,8 +51,7 @@ int _x_refcounter_inc(refcounter_t *refcounter)
   int res;
 
   pthread_mutex_lock(&refcounter->lock);
-  if (!refcounter->count)
-    _x_abort();
+  _x_assert(refcounter->count > 0);
   res = ++refcounter->count;
   pthread_mutex_unlock(&refcounter->lock);
 

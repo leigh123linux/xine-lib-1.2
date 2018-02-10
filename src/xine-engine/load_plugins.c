@@ -1535,10 +1535,7 @@ static demux_plugin_t *probe_demux (xine_stream_t *stream, int method1, int meth
   methods[1] = method2;
   methods[2] = -1;
 
-  if (methods[0] == -1) {
-    xprintf (stream->xine, XINE_VERBOSITY_DEBUG, "load_plugins: probe_demux method1 = %d is not allowed \n", method1);
-    _x_abort();
-  }
+  _x_assert(methods[0] != -1);
 
   i = 0;
   while (methods[i] != -1 && !plugin) {
