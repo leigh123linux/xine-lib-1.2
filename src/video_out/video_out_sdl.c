@@ -472,9 +472,25 @@ static vo_driver_t *open_plugin (video_driver_class_t *class_gen, const void *vi
   XWindowAttributes     window_attributes;
 #endif
 
+  if ((SDL_Init (SDL_INIT_VIDEO)) < 0) {
+    xprintf (class->xine, XINE_VERBOSITY_DEBUG, "video_out_sdl: open_plugin - sdl video initialization failed.\n");
+    return NULL;
+  }
+
   this = (sdl_driver_t *) calloc(1, sizeof(sdl_driver_t));
   if (!this)
     return NULL;
+
+  vidInfo = SDL_GetVideoInfo ();
+  if (!SDL_ListModes (vidInfo->vfmt, SDL_HWSURFACE | SDL_RESIZABLE)) {
+    this->sdlflags = SDL_RESIZABLE;
+    if (!SDL_ListModes (vidInfo->vfmt, SDL_RESIZABLE)) {
+      xprintf (class->xine, XINE_VERBOSITY_DEBUG,
+	       "video_out_sdl: open_plugin - sdl couldn't get any acceptable video mode\n");
+      free(this);
+      return NULL;
+    }
+  }
 
   _x_alphablend_init(&this->alphablend_extra_data, class->xine);
 
@@ -512,21 +528,6 @@ static vo_driver_t *open_plugin (video_driver_class_t *class_gen, const void *vi
 
       this->sc.frame_output_cb   = visual->frame_output_cb;
       this->sc.user_data         = visual->user_data;
-    }
-  }
-
-  if ((SDL_Init (SDL_INIT_VIDEO)) < 0) {
-    xprintf (this->xine, XINE_VERBOSITY_DEBUG, "video_out_sdl: open_plugin - sdl video initialization failed.\n");
-    return NULL;
-  }
-
-  vidInfo = SDL_GetVideoInfo ();
-  if (!SDL_ListModes (vidInfo->vfmt, SDL_HWSURFACE | SDL_RESIZABLE)) {
-    this->sdlflags = SDL_RESIZABLE;
-    if (!SDL_ListModes (vidInfo->vfmt, SDL_RESIZABLE)) {
-      xprintf (this->xine, XINE_VERBOSITY_DEBUG,
-	       "video_out_sdl: open_plugin - sdl couldn't get any acceptable video mode\n");
-      return NULL;
     }
   }
 
