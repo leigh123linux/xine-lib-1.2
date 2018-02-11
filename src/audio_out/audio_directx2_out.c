@@ -284,7 +284,7 @@ static int audio_create_buffers(dx2_driver_t *this) {
     return 0;
   }
 
-  lprintf("created direct sound buffer, size = %u\n", this->buffer_size);
+  lprintf("created direct sound buffer, size = %zu\n", this->buffer_size);
   return 1;
 }
 
@@ -368,7 +368,7 @@ static int audio_set_volume(dx2_driver_t *this, int volume) {
   value = DSBVOLUME_MIN * (pow(FACTOR, 1 - volume / 100.0) - 1) / (FACTOR - 1);
   if (value < DSBVOLUME_MIN) value = DSBVOLUME_MIN;
   else if (value > DSBVOLUME_MAX) value = DSBVOLUME_MAX;
-  lprintf("Setting sound to %d%% (%ld dB)\n", volume, value);
+  lprintf("Setting sound to %ld%% (%lu dB)\n", (long)volume, (unsigned long)value);
   if ((err = IDirectSoundBuffer_SetVolume(this->dsbuffer, value) != DS_OK)) {
     audio_error(this, err, _("Can't set sound volume"));
     return 0;
@@ -402,7 +402,7 @@ static int audio_fill(dx2_driver_t *this, char *data, size_t size) {
 
   // this->read_size += size;
   this->write_pos = (this->write_pos + size ) % this->buffer_size;
-  lprintf("size %u, write_pos %u\n", size, this->write_pos);
+  lprintf("size %lu, write_pos %zu\n", (unsigned long)size, this->write_pos);
 
   if ((err = IDirectSoundBuffer_Unlock(this->dsbuffer, ptr1, size1, ptr2, size2)) != DS_OK) {
     audio_error(this, err, _("Couldn't unlock direct sound buffer"));
@@ -507,7 +507,7 @@ static int test_capabilities(dx2_driver_t *this) {
     if (test_capability(buffer, tests[i].bits, tests[i].rate, tests[i].mode)) this->capabilities |= tests[i].caps;
     i++;
   }
-  lprintf("result capabilities: 0x08%" PRIX32 "\n", this->capabilities);
+  lprintf("result capabilities: 0x%" PRIX32 "\n", this->capabilities);
 
   IDirectSoundBuffer_Release(buffer);
   return 1;
@@ -577,7 +577,7 @@ static void *buffer_service(void *data) {
         // pre: stop/buffer flushed
         lprintf("no data, sleeping...\n");
         pthread_cond_wait(&this->data_cond, &this->data_mutex);
-        lprintf("woke up (write_pos=%d,free=%" PRIsizet")\n", this->write_pos, buffer_free_size(this));
+        lprintf("woke up (write_pos=%zd,free=%zu\n", this->write_pos, buffer_free_size(this));
         if (this->finished) goto finished;
         if (!audio_seek(this, 0)) goto fail;
         if (!this->paused) {

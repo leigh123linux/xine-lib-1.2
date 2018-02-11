@@ -140,7 +140,7 @@ static boolean CreateDirectSound( ao_directx_t * ao_directx )
   DSCAPS        dscaps;
   HWND          hxinewnd;
 
-  lprintf("CreateDirectSound(%08x) Enter\n", (unsigned long)ao_directx);
+  lprintf("CreateDirectSound(%p) Enter\n", (void *)ao_directx);
 
   /* create direct sound object */
 
@@ -188,7 +188,7 @@ static boolean CreateDirectSound( ao_directx_t * ao_directx )
 static void DestroyDirectSound( ao_directx_t * ao_directx )
 {
 
-  lprintf("DestroyDirectSound(%08x) Enter\n", (unsigned long)ao_directx);
+  lprintf("DestroyDirectSound(%p) Enter\n", (void *)ao_directx);
 
   if( ao_directx->dsobj )
     {
@@ -343,7 +343,7 @@ static uint32_t FillSoundBuffer( ao_directx_t * ao_directx, int code, unsigned c
 
 static void DestroySoundBuffer( ao_directx_t * ao_directx )
 {
-  lprintf("DestroySoundBuffer(%08x) Enter\n", (unsigned long)ao_directx);
+  lprintf("DestroySoundBuffer(%p) Enter\n", (void *)ao_directx);
 
   /* stop our buffer and zero it out */
 
@@ -396,7 +396,7 @@ static boolean CreateSoundBuffer( ao_directx_t * ao_directx )
   DSBUFFERDESC	dsbdesc;
   PCMWAVEFORMAT	pcmwf;
 
-  lprintf("CreateSoundBuffer(%08x) Enter\n", (unsigned long)ao_directx);
+  lprintf("CreateSoundBuffer(%p) Enter\n", (void *)ao_directx);
 
   /* calculate buffer and frame size */
 
@@ -527,7 +527,7 @@ static int ao_directx_open( ao_driver_t * ao_driver, uint32_t bits, uint32_t rat
 {
   ao_directx_t  *ao_directx = ( ao_directx_t * ) ao_driver;
 
-  lprintf("ao_directx_open(%08x, %d, %d, %d) Enter\n", (unsigned long)ao_directx, bits, rate, mode);
+  lprintf("ao_directx_open(%p, %u, %u, %u) Enter\n", (void *)ao_directx, bits, rate, mode);
 
   /* store input rate and bits */
 
@@ -599,7 +599,7 @@ static int ao_directx_delay( ao_driver_t * ao_driver )
   DWORD	         frames_left;
   ao_directx_t  *ao_directx = ( ao_directx_t * ) ao_driver;
 
-  lprintf("ao_directx_delay(%08x) Enter\n", (unsigned long)ao_directx);
+  lprintf("ao_directx_delay(%p) Enter\n", (void *)ao_directx);
 
   IDirectSoundBuffer_GetCurrentPosition( ao_directx->dsbuffer, &current_read, 0 );
 
@@ -610,7 +610,7 @@ static int ao_directx_delay( ao_driver_t * ao_driver )
 
   frames_left = ( ao_directx->prebuff_size + bytes_left ) / ao_directx->frsz;
 
-  lprintf("ao_directx_delay() Exit! Returning frames_left=%d\n", frames_left);
+  lprintf("ao_directx_delay() Exit! Returning frames_left=%lu\n", (unsigned long)frames_left);
 
   return frames_left;
 }
@@ -622,8 +622,8 @@ static int ao_directx_write( ao_driver_t * ao_driver, int16_t * frame_buffer, ui
   uint32_t	 wrote;	        /* number of bytes written */
   uint32_t	 half_size;     /* half our sound buffer size */
 
-  lprintf("ao_directx_write(%08x, %08x, %d) Enter\n",
-	  (unsigned long)ao_directx, (unsigned long)frame_buffer, num_frames);
+  lprintf("ao_directx_write(%p, %p, %u) Enter\n",
+	  (void *)ao_directx, (void *)frame_buffer, num_frames);
 
   /* zero write counter */
 
@@ -683,7 +683,7 @@ static int ao_directx_write( ao_driver_t * ao_driver, int16_t * frame_buffer, ui
       ao_directx->prebuff_size = ao_directx->prebuff_size - wrote;
     }
 
-  lprintf("ao_directx_write() Exit! Returning num_frmaes=%d\n", num_frames);
+  lprintf("ao_directx_write() Exit! Returning num_frames=%u\n", num_frames);
 
   return num_frames;
 }
@@ -692,7 +692,7 @@ static void ao_directx_close( ao_driver_t * ao_driver )
 {
   ao_directx_t  *ao_directx = ( ao_directx_t * ) ao_driver;
 
-  lprintf("ao_directx_close(%08x) Enter\n", (unsigned long)ao_directx);
+  lprintf("ao_directx_close(%p) Enter\n", (void *)ao_directx);
 
   /* release any existing sound buffer
    * related resources */
@@ -711,7 +711,7 @@ static void ao_directx_exit( ao_driver_t * ao_driver )
 {
   ao_directx_t  *ao_directx = ( ao_directx_t * ) ao_driver;
 
-  lprintf("ao_directx_exit(%08x) Enter\n", (unsigned long)ao_directx);
+  lprintf("ao_directx_exit(%p) Enter\n", (void *)ao_directx);
 
   /* release any existing sound buffer
    * related resources */
@@ -739,8 +739,8 @@ static int ao_directx_set_property( ao_driver_t * ao_driver, int property, int v
 {
   ao_directx_t  *ao_directx = ( ao_directx_t * ) ao_driver;
 
-  lprintf("ao_directx_set_property(%08x, %d, %d) Enter\n",
-	  (unsigned long)ao_directx, property, value);
+  lprintf("ao_directx_set_property(%p, %d, %d) Enter\n",
+          (void *)ao_directx, property, value);
 
   switch( property )
     {
@@ -792,8 +792,8 @@ static ao_driver_t *open_plugin (audio_driver_class_t *class_gen, const void *da
   if (!ao_directx)
     return NULL;
 
-  lprintf("open_plugin(%08x, %08x) Enter\n", (unsigned long)class_gen, (unsigned long)data);
-  lprintf("open_plugin: ao_directx=%08x\n", (unsigned long)ao_directx);
+  lprintf("open_plugin(%p, %p) Enter\n", (void *)class_gen, (void *)data);
+  lprintf("open_plugin: ao_directx=%p\n", (void *)ao_directx);
 
   ao_directx->xine                              = class->xine;
 
@@ -812,9 +812,9 @@ static ao_driver_t *open_plugin (audio_driver_class_t *class_gen, const void *da
 
   CreateDirectSound( ao_directx );
 
-  lprintf("open_plugin() Exit! Returning ao_directx=%08x\n", (unsigned long)ao_directx);
+  lprintf("open_plugin() Exit! Returning ao_directx=%p\n", (void *)ao_directx);
 
-  return ( ao_driver_t * ) ao_directx;
+  return &ao_directx->ao_driver;
 }
 
 static void *init_class (xine_t *xine, const void *data) {
@@ -837,7 +837,7 @@ static void *init_class (xine_t *xine, const void *data) {
   audiox->xine                         = xine;
   audiox->config                       = xine->config;
 
-  lprintf("init_class() Exit! Returning audiox=%08x\n", audiox);
+  lprintf("init_class() Exit! Returning audiox=%p\n", (void *)audiox);
 
   return audiox;
 }
