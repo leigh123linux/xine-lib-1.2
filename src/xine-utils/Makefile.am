@@ -39,7 +39,7 @@ libxineutils_la_SOURCES = $(pppc_files) \
 	pool.c \
 	ring_buffer.c
 
-libxineutils_la_LIBADD = $(YUV_LIB)
+libxineutils_la_LIBADD = $(DYNAMIC_LD_LIBS) $(YUV_LIB)
 
 if !WIN32
 noinst_PROGRAMS = xmltest
