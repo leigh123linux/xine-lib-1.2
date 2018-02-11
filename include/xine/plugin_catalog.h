@@ -65,7 +65,7 @@ struct plugin_catalog_s {
   /* memory block for the decoder priority config entry descriptions */
   char            *prio_desc[DECODER_MAX];
 
-  pthread_mutex_t  lock;
+  pthread_mutex_t  lock;  /* recursive mutex */
 
   int              plugin_count;
   int              decoder_count;

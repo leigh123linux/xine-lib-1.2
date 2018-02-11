@@ -510,9 +510,12 @@ static int _plugin_node_comparator(void *a, void *b) {
 static plugin_catalog_t *_new_catalog(void){
 
   plugin_catalog_t *catalog;
+  pthread_mutexattr_t attr;
   int i;
 
   catalog = calloc(1, sizeof(plugin_catalog_t));
+  if (!catalog)
+    return NULL;
 
   for (i = 0; i < PLUGIN_TYPE_MAX; i++) {
     catalog->plugin_lists[i] = xine_sarray_new(0, _plugin_node_comparator);
@@ -520,7 +523,11 @@ static plugin_catalog_t *_new_catalog(void){
 
   catalog->cache_list = xine_sarray_new(0, _plugin_node_comparator);
   catalog->file_list  = xine_list_new();
-  pthread_mutex_init (&catalog->lock, NULL);
+
+  pthread_mutexattr_init (&attr);
+  pthread_mutexattr_settype (&attr, PTHREAD_MUTEX_RECURSIVE);
+  pthread_mutex_init (&catalog->lock, &attr);
+  pthread_mutexattr_destroy (&attr);
 
   return catalog;
 }
