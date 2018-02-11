@@ -188,6 +188,8 @@ extern const char _x_vo_scale_aspect_ratio_name_table[][8] XINE_PROTECTED;
 void _x_vo_scale_init(vo_scale_t *self, int support_zoom,
 		      int scaling_disabled, config_values_t *config ) XINE_PROTECTED;
 
+void _x_vo_scale_cleanup(vo_scale_t *self, config_values_t *config) XINE_PROTECTED;
+
 #ifdef __cplusplus
 }
 #endif

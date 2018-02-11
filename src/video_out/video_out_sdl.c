@@ -455,6 +455,7 @@ static void sdl_dispose (vo_driver_t * this_gen) {
   SDL_QuitSubSystem (SDL_INIT_VIDEO);
 
   _x_alphablend_free(&this->alphablend_extra_data);
+  _x_vo_scale_cleanup (&this->sc, this->xine->config);
 
   free(this);
 }

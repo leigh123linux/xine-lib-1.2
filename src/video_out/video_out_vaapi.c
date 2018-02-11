@@ -3913,6 +3913,8 @@ static void vaapi_dispose_locked (vo_driver_t *this_gen) {
   config->unregister_callback(config, "video.output.vaapi_vdr_osd_height");
   config->unregister_callback(config, "video.output.vaapi_vdr_osd_width");
 
+  _x_vo_scale_cleanup (&this->sc, config);
+
   // vaapi_lock is locked at this point, either from vaapi_dispose or vaapi_open_plugin
 
   DO_LOCKDISPLAY;

@@ -391,6 +391,15 @@ static void vo_scale_square_pixels_changed(void *data, xine_cfg_entry_t *entry) 
  * initialize rescaling struct
  */
 
+void _x_vo_scale_cleanup(vo_scale_t *self, config_values_t *config) {
+
+  (void)self;
+  config->unregister_callback(config, "video.output.horizontal_position");
+  config->unregister_callback(config, "video.output.vertical_position");
+  config->unregister_callback(config, "video.output.disable_scaling");
+  config->unregister_callback(config, "video.output.square_pixels");
+}
+
 void _x_vo_scale_init(vo_scale_t *this, int support_zoom, int scaling_disabled,
                    config_values_t *config ) {
 

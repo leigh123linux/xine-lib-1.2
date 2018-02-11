@@ -1191,6 +1191,8 @@ static int directfb_gui_data_exchange (vo_driver_t *this_gen,
 static void directfb_dispose (vo_driver_t *this_gen) {
   directfb_driver_t *this = (directfb_driver_t *) this_gen;
 
+  _x_vo_scale_init (&this->sc, this->xine->config);
+
   if (this->cur_frame)
     this->cur_frame->vo_frame.dispose (&this->cur_frame->vo_frame);
 

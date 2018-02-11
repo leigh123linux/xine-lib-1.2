@@ -1307,6 +1307,7 @@ static void pgx64_dispose(vo_driver_t *this_gen)
   close(this->devfd);
 
   _x_alphablend_free(&this->alphablend_extra_data);
+  _x_vo_scale_cleanup (&this->vo_scale, this->class->xine->config);
 
   free(this);
 }
@@ -1377,6 +1378,7 @@ static vo_driver_t *pgx64_init_driver(video_driver_class_t *class_gen, const voi
   this->drawable = ((x11_visual_t *)visual_gen)->d;
 
   if (!setup_dga(this)) {
+    _x_vo_scale_cleanup (&this->vo_scale, class->xine->config);
     free(this);
     return NULL;
   }

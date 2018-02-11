@@ -2423,6 +2423,7 @@ static void vdpau_dispose (vo_driver_t *this_gen)
   int i;
 
   cm_close (this);
+  _x_vo_scale_cleanup (&this->sc, this->class->xine->config);
 
   if ( vdp_queue != VDP_INVALID_HANDLE )
     vdp_queue_destroy( vdp_queue );

@@ -692,6 +692,7 @@ static void fb_dispose(vo_driver_t *this_gen)
     close(this->fd);
 
   _x_alphablend_free(&this->alphablend_extra_data);
+  _x_vo_scale_cleanup (&this->sc, this->xine->config);
 
   if (this->yuv2rgb_factory)
     this->yuv2rgb_factory->dispose (this->yuv2rgb_factory);
@@ -991,6 +992,8 @@ static vo_driver_t *fb_open_plugin(video_driver_class_t *class_gen,
 
   _x_alphablend_init(&this->alphablend_extra_data, class->xine);
 
+  _x_vo_scale_init(&this->sc, 0, 0, config);
+
   register_callbacks(this);
 
   this->fd = open_fb_device(config, class->xine);
@@ -1021,7 +1024,6 @@ static vo_driver_t *fb_open_plugin(video_driver_class_t *class_gen,
       (this->fb_var.xres_virtual *
        this->fb_var.bits_per_pixel)/8;
 
-  _x_vo_scale_init(&this->sc, 0, 0, config);
   this->sc.gui_width  = this->fb_var.xres;
   this->sc.gui_height = this->fb_var.yres;
   this->sc.user_ratio = XINE_VO_ASPECT_AUTO;

@@ -2107,6 +2107,7 @@ static void xxmc_dispose (vo_driver_t *this_gen) {
   free_context_lock(&this->xvmc_lock);
 
   _x_alphablend_free(&this->alphablend_extra_data);
+  _x_vo_scale_cleanup (&this->sc, this->xine->config);
 
   free (this);
 }

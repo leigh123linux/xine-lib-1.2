@@ -1655,6 +1655,7 @@ static void opengl2_dispose( vo_driver_t *this_gen )
   opengl2_exit_unregister( this );
 
   cm_close (this);
+  _x_vo_scale_cleanup (&this->sc, this->xine->config);
 
   pthread_mutex_destroy(&this->drawable_lock);
 

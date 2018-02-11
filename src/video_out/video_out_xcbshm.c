@@ -1058,6 +1058,7 @@ static void xshm_dispose (vo_driver_t *this_gen) {
     this->yuv2rgb_factory->dispose (this->yuv2rgb_factory);
 
   cm_close (this);
+  _x_vo_scale_cleanup (&this->sc, this->xine->config);
 
   pthread_mutex_lock(&this->main_mutex);
   xcb_free_gc(this->connection, this->gc);

@@ -1941,6 +1941,7 @@ static void opengl_dispose_internal (opengl_driver_t *this, int thread_running) 
   }
 
   _x_alphablend_free(&this->alphablend_extra_data);
+  _x_vo_scale_cleanup (&this->sc, this->xine->config);
 
   free (this);
 }
