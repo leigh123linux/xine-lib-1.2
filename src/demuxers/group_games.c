@@ -25,7 +25,7 @@
 #endif
 
 #include <xine/xine_internal.h>
-#include <xine/demux.h>
+#include <xine/xine_plugin.h>
 
 #include "group_games.h"
 
