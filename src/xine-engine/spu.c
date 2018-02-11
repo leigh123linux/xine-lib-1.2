@@ -27,22 +27,18 @@
 #define BLACK_OPACITY   67
 #define COLOUR_OPACITY 100
 
-static void no_op (void *user_data, xine_cfg_entry_t *entry)
-{
-}
-
 void _x_spu_misc_init (xine_t *this)
 {
   this->config->register_range (this->config, "subtitles.bitmap.black_opacity",
                                 BLACK_OPACITY, 0, 100,
                                 _("opacity for the black parts of bitmapped subtitles"),
                                 NULL,
-                                10, no_op, NULL);
+                                10, NULL, NULL);
   this->config->register_range (this->config, "subtitles.bitmap.colour_opacity",
                                 COLOUR_OPACITY, 0, 100,
                                 _("opacity for the colour parts of bitmapped subtitles"),
                                 NULL,
-                                10, no_op, NULL);
+                                10, NULL, NULL);
 }
 
 void _x_spu_get_opacity (xine_t *this, xine_spu_opacity_t *opacity)
