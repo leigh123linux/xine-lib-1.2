@@ -1611,6 +1611,7 @@ config_values_t *_x_config_init (void) {
   pthread_mutexattr_init(&attr);
   pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE);
   pthread_mutex_init(&this->config_lock, &attr);
+  pthread_mutexattr_destroy(&attr);
 
   this->register_string           = config_register_string;
   this->register_filename         = config_register_filename;

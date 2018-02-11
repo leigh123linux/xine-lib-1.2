@@ -2385,6 +2385,7 @@ xine_audio_port_t *_x_ao_new_port (xine_t *xine, ao_driver_t *driver,
   pthread_mutexattr_settype( &attr, PTHREAD_MUTEX_RECURSIVE );
 
   pthread_mutex_init( &this->driver_lock, &attr );
+  pthread_mutexattr_destroy(&attr);
   pthread_mutex_init( &this->driver_action_lock, NULL );
   pthread_cond_init( &this->driver_action_cond, NULL );
 
