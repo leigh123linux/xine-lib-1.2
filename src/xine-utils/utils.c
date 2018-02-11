@@ -772,7 +772,7 @@ int xine_monotonic_clock(struct timeval *tv, struct timezone *tz)
   return gettimeofday (tv, tz);
 }
 
-char *xine_strcat_realloc (char **dest, char *append)
+char *xine_strcat_realloc (char **dest, const char *append)
 {
   char *newstr = realloc (*dest, (*dest ? strlen (*dest) : 0) + strlen (append) + 1);
   if (newstr)

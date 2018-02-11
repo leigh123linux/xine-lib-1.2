@@ -279,7 +279,7 @@ void xine_usec_sleep(unsigned usec) XINE_PROTECTED;
  * normally, updates & returns *dest
  * on error, *dest is unchanged & NULL is returned.
  */
-char *xine_strcat_realloc (char **dest, char *append) XINE_PROTECTED;
+char *xine_strcat_realloc (char **dest, const char *append) XINE_PROTECTED;
 
 /**
  * asprintf wrapper
