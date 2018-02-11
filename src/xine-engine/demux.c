@@ -471,7 +471,7 @@ int _x_demux_stop_thread (xine_stream_t *stream) {
   _x_demux_flush_engine( stream );
   pthread_mutex_unlock( &stream->demux_lock );
 
-  lprintf ("joining thread %ld\n", stream->demux_thread );
+  lprintf ("joining thread\n" );
 
   if( stream->demux_thread_created ) {
     pthread_join (stream->demux_thread, &p);
