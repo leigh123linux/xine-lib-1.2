@@ -888,212 +888,239 @@ static int stream_rewire_video(xine_post_out_t *output, void *data)
 
 static void xine_dispose_internal (xine_stream_t *stream);
 
-xine_stream_t *xine_stream_new (xine_t *this,
-				xine_audio_port_t *ao, xine_video_port_t *vo) {
+typedef struct {
+  xine_stream_t s;
+  extra_info_t  ei[3];
+} xine_stream_private_t;
 
-  xine_stream_t *stream;
+xine_stream_t *xine_stream_new (xine_t *this, xine_audio_port_t *ao, xine_video_port_t *vo) {
+
+  xine_stream_private_t *stream;
   pthread_mutexattr_t attr;
 
   xprintf (this, XINE_VERBOSITY_DEBUG, "xine_stream_new\n");
 
-  /*
-   * create a new stream object
-   */
-
-  stream = (xine_stream_t *) calloc (1, sizeof (xine_stream_t)) ;
+  /* create a new stream object */
+  stream = calloc (1, sizeof (*stream));
   if (!stream)
-    return NULL;
+    goto err_null;
 
   /* Do these first, when compiler still knows stream is all zeroed.
    * Let it optimize away this on most systems where clear mem
    * interpretes as 0, 0f or NULL safely.
    */
-  stream->spu_decoder_plugin     = NULL;
-  stream->audio_decoder_plugin   = NULL;
-  stream->early_finish_event     = 0;
-  stream->delay_finish_event     = 0;
-  stream->gapless_switch         = 0;
-  stream->keep_ao_driver_open    = 0;
-  stream->video_channel          = 0;
-  stream->video_decoder_plugin   = NULL;
-  stream->header_count_audio     = 0;
-  stream->header_count_video     = 0;
-  stream->finished_count_audio   = 0;
-  stream->finished_count_video   = 0;
-  stream->err                    = 0;
-  stream->broadcaster            = NULL;
-  stream->index_array            = NULL;
-  stream->slave                  = NULL;
-  stream->slave_is_subtitle      = 0;
+  stream->s.spu_decoder_plugin     = NULL;
+  stream->s.audio_decoder_plugin   = NULL;
+  stream->s.early_finish_event     = 0;
+  stream->s.delay_finish_event     = 0;
+  stream->s.gapless_switch         = 0;
+  stream->s.keep_ao_driver_open    = 0;
+  stream->s.video_channel          = 0;
+  stream->s.video_decoder_plugin   = NULL;
+  stream->s.header_count_audio     = 0;
+  stream->s.header_count_video     = 0;
+  stream->s.finished_count_audio   = 0;
+  stream->s.finished_count_video   = 0;
+  stream->s.err                    = 0;
+  stream->s.broadcaster            = NULL;
+  stream->s.index_array            = NULL;
+  stream->s.slave                  = NULL;
+  stream->s.slave_is_subtitle      = 0;
   {
     int i;
     for (i = 0; i < XINE_STREAM_INFO_MAX; i++) {
-      stream->stream_info_public[i] = stream->stream_info[i] = 0;
-      stream->meta_info_public[i]   = stream->meta_info[i]   = NULL;
+      stream->s.stream_info_public[i] = stream->s.stream_info[i] = 0;
+      stream->s.meta_info_public[i]   = stream->s.meta_info[i]   = NULL;
     }
   }
+  /* no need to memset again
+  _x_extra_info_reset (&stream->ei[0]);
+  _x_extra_info_reset (&stream->ei[1]);
+  _x_extra_info_reset (&stream->ei[2]);
+  */
 
-  pthread_mutex_lock (&this->streams_lock);
+  stream->s.current_extra_info       = &stream->ei[0];
+  stream->s.audio_decoder_extra_info = &stream->ei[1];
+  stream->s.video_decoder_extra_info = &stream->ei[2];
 
-  stream->current_extra_info       = malloc( sizeof( extra_info_t ) );
-  stream->audio_decoder_extra_info = malloc( sizeof( extra_info_t ) );
-  stream->video_decoder_extra_info = malloc( sizeof( extra_info_t ) );
-  _x_extra_info_reset( stream->current_extra_info );
-  _x_extra_info_reset( stream->video_decoder_extra_info );
-  _x_extra_info_reset( stream->audio_decoder_extra_info );
+  stream->s.xine                = this;
+  stream->s.status              = XINE_STATUS_IDLE;
 
-  stream->xine                   = this;
-  stream->status                 = XINE_STATUS_IDLE;
+  stream->s.video_source.name   = "video source";
+  stream->s.video_source.type   = XINE_POST_DATA_VIDEO;
+  stream->s.video_source.data   = &stream->s;
+  stream->s.video_source.rewire = stream_rewire_video;
 
-  stream->spu_decoder_streamtype = -1;
-  stream->audio_out              = ao;
-  stream->audio_channel_user     = -1;
-  stream->audio_channel_auto     = -1;
-  stream->audio_decoder_streamtype = -1;
-  stream->spu_channel_auto       = -1;
-  stream->spu_channel_letterbox  = -1;
-  stream->spu_channel_pan_scan   = -1;
-  stream->spu_channel_user       = -1;
-  stream->spu_channel            = -1;
+  stream->s.audio_source.name   = "audio source";
+  stream->s.audio_source.type   = XINE_POST_DATA_AUDIO;
+  stream->s.audio_source.data   = &stream->s;
+  stream->s.audio_source.rewire = stream_rewire_audio;
+
+  stream->s.spu_decoder_streamtype   = -1;
+  stream->s.audio_out                = ao;
+  stream->s.audio_channel_user       = -1;
+  stream->s.audio_channel_auto       = -1;
+  stream->s.audio_decoder_streamtype = -1;
+  stream->s.spu_channel_auto         = -1;
+  stream->s.spu_channel_letterbox    = -1;
+  stream->s.spu_channel_pan_scan     = -1;
+  stream->s.spu_channel_user         = -1;
+  stream->s.spu_channel              = -1;
   /* Do not flush output when opening/closing yet unused streams (eg subtitle). */
-  stream->finished_naturally     = 1;
+  stream->s.finished_naturally       = 1;
+  stream->s.video_out                = vo;
+  stream->s.video_driver             = vo ? vo->driver : NULL;
+  stream->s.video_decoder_streamtype = -1;
+  /* initial master/slave */
+  stream->s.master                   = &stream->s;
 
-  stream->video_out              = vo;
-  if (vo)
-    stream->video_driver           = vo->driver;
-  else
-    stream->video_driver           = NULL;
+  /* event queues */
+  stream->s.event_queues = xine_list_new ();
+  if (!stream->s.event_queues)
+    goto err_free;
 
-  stream->video_decoder_streamtype = -1;
-
-  /*
-   * initial master/slave
-   */
-  stream->master                 = stream;
-
-  /*
-   * init mutexes and conditions
-   */
-
-
-  pthread_mutex_init (&stream->info_mutex, NULL);
-  pthread_mutex_init (&stream->meta_mutex, NULL);
-  pthread_mutex_init (&stream->demux_lock, NULL);
-  pthread_mutex_init (&stream->demux_action_lock, NULL);
-  pthread_mutex_init (&stream->demux_mutex, NULL);
-  pthread_cond_init  (&stream->demux_resume, NULL);
-  pthread_mutex_init (&stream->event_queues_lock, NULL);
-  pthread_mutex_init (&stream->counter_lock, NULL);
-  pthread_cond_init  (&stream->counter_changed, NULL);
-  pthread_mutex_init (&stream->first_frame_lock, NULL);
-  pthread_cond_init  (&stream->first_frame_reached, NULL);
-  pthread_mutex_init (&stream->current_extra_info_lock, NULL);
-  pthread_mutex_init (&stream->speed_change_lock, NULL);
-  pthread_mutex_init (&stream->index_mutex, NULL);
+  /* init mutexes and conditions */
+  pthread_mutex_init (&stream->s.info_mutex, NULL);
+  pthread_mutex_init (&stream->s.meta_mutex, NULL);
+  pthread_mutex_init (&stream->s.demux_lock, NULL);
+  pthread_mutex_init (&stream->s.demux_action_lock, NULL);
+  pthread_mutex_init (&stream->s.demux_mutex, NULL);
+  pthread_cond_init  (&stream->s.demux_resume, NULL);
+  pthread_mutex_init (&stream->s.event_queues_lock, NULL);
+  pthread_mutex_init (&stream->s.counter_lock, NULL);
+  pthread_cond_init  (&stream->s.counter_changed, NULL);
+  pthread_mutex_init (&stream->s.first_frame_lock, NULL);
+  pthread_cond_init  (&stream->s.first_frame_reached, NULL);
+  pthread_mutex_init (&stream->s.current_extra_info_lock, NULL);
+  pthread_mutex_init (&stream->s.speed_change_lock, NULL);
+  pthread_mutex_init (&stream->s.index_mutex, NULL);
 
   /* warning: frontend_lock is a recursive mutex. it must NOT be
    * used with neither pthread_cond_wait() or pthread_cond_timedwait()
    */
   pthread_mutexattr_init(&attr);
   pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE);
-  pthread_mutex_init (&stream->frontend_lock, &attr);
+  pthread_mutex_init (&stream->s.frontend_lock, &attr);
   pthread_mutexattr_destroy(&attr);
 
-  /*
-   * event queues
-   */
+  pthread_mutex_lock (&this->streams_lock);
 
-  stream->event_queues = xine_list_new ();
+  /* create a metronom */
+  stream->s.metronom = _x_metronom_init ( (vo != NULL), (ao != NULL), this);
+  if (!stream->s.metronom)
+    goto err_mutex;
 
-  /*
-   * create a metronom
-   */
+  /* alloc fifos, init and start decoder threads */
+  if (!_x_video_decoder_init (&stream->s))
+    goto err_metronom;
 
-  stream->metronom = _x_metronom_init ( (vo != NULL), (ao != NULL), this);
+  if (!_x_audio_decoder_init (&stream->s))
+    goto err_video;
 
-  /*
-   * alloc fifos, init and start decoder threads
-   */
-
-  if (!_x_video_decoder_init (stream))
-  {
-    free(stream->audio_decoder_extra_info);
-    free(stream->current_extra_info);
-    free(stream);
-    pthread_mutex_unlock(&this->streams_lock);
-    return NULL;
-  }
-
-  if (!_x_audio_decoder_init (stream))
-  {
-    _x_video_decoder_shutdown(stream);
-    free(stream->audio_decoder_extra_info);
-    free(stream->current_extra_info);
-    free(stream);
-    pthread_mutex_unlock(&this->streams_lock);
-    return NULL;
-  }
-
-  /*
-   * osd
-   */
+  /* osd */
   if (vo) {
     _x_spu_misc_init (this);
-    stream->osd_renderer = _x_osd_renderer_init(stream);
+    stream->s.osd_renderer = _x_osd_renderer_init (&stream->s);
   } else
-    stream->osd_renderer = NULL;
+    stream->s.osd_renderer = NULL;
 
-  /*
-   * create a reference counter
-   */
-  stream->refcounter = _x_new_refcounter(stream, (refcounter_destructor)xine_dispose_internal);
-  if (!stream->refcounter)
-  {
-    _x_video_decoder_shutdown(stream);
-    _x_audio_decoder_shutdown(stream);
-    free(stream->audio_decoder_extra_info);
-    free(stream->current_extra_info);
-    free(stream);
-    pthread_mutex_unlock(&this->streams_lock);
-    return NULL;
-  }
+  /* create a reference counter */
+  stream->s.refcounter = _x_new_refcounter (&stream->s, (refcounter_destructor)xine_dispose_internal);
+  if (!stream->s.refcounter)
+    goto err_audio;
 
-  /*
-   * register stream
-   */
-
-  xine_list_push_back (this->streams, stream);
-
+  /* register stream */
+  xine_list_push_back (this->streams, &stream->s);
   pthread_mutex_unlock (&this->streams_lock);
+  return &stream->s;
 
-  stream->video_source.name   = "video source";
-  stream->video_source.type   = XINE_POST_DATA_VIDEO;
-  stream->video_source.data   = stream;
-  stream->video_source.rewire = stream_rewire_video;
+  err_audio:
+  _x_audio_decoder_shutdown (&stream->s);
 
-  stream->audio_source.name   = "audio source";
-  stream->audio_source.type   = XINE_POST_DATA_AUDIO;
-  stream->audio_source.data   = stream;
-  stream->audio_source.rewire = stream_rewire_audio;
+  err_video:
+  _x_video_decoder_shutdown (&stream->s);
 
-  return stream;
+  err_metronom:
+  stream->s.metronom->exit (stream->s.metronom);
+
+  err_mutex:
+  pthread_mutex_unlock  (&this->streams_lock);
+  pthread_mutex_destroy (&stream->s.frontend_lock);
+  pthread_mutex_destroy (&stream->s.index_mutex);
+  pthread_mutex_destroy (&stream->s.speed_change_lock);
+  pthread_mutex_destroy (&stream->s.current_extra_info_lock);
+  pthread_cond_destroy  (&stream->s.first_frame_reached);
+  pthread_mutex_destroy (&stream->s.first_frame_lock);
+  pthread_cond_destroy  (&stream->s.counter_changed);
+  pthread_mutex_destroy (&stream->s.counter_lock);
+  pthread_mutex_destroy (&stream->s.event_queues_lock);
+  pthread_cond_destroy  (&stream->s.demux_resume);
+  pthread_mutex_destroy (&stream->s.demux_mutex);
+  pthread_mutex_destroy (&stream->s.demux_action_lock);
+  pthread_mutex_destroy (&stream->s.demux_lock);
+  pthread_mutex_destroy (&stream->s.meta_mutex);
+  pthread_mutex_destroy (&stream->s.info_mutex);
+  xine_list_delete      (stream->s.event_queues);
+
+  err_free:
+  free (stream);
+
+  err_null:
+  return NULL;
 }
 
-void _x_mrl_unescape(char *mrl) {
-  size_t i, len = strlen(mrl);
-
-  for (i = 0; i < len; i++) {
-    if ((mrl[i]=='%') && (i<(len-2))) {
-      unsigned int c;
-
-      if (sscanf(&mrl[i + 1], "%02x", &c) == 1) {
-	mrl[i]= (char)c;
-	memmove(mrl + i + 1, mrl + i + 3, len - i - 3);
-	len -= 2;
+void _x_mrl_unescape (char *mrl) {
+  static const uint8_t tab_unhex[256] = {
+#define nn 128
+    nn,nn,nn,nn,nn,nn,nn,nn,nn,nn,nn,nn,nn,nn,nn,nn,
+    nn,nn,nn,nn,nn,nn,nn,nn,nn,nn,nn,nn,nn,nn,nn,nn,
+    nn,nn,nn,nn,nn,nn,nn,nn,nn,nn,nn,nn,nn,nn,nn,nn,
+     0, 1, 2, 3, 4, 5, 6, 7, 8, 9,nn,nn,nn,nn,nn,nn,
+    nn,10,11,12,13,14,15,nn,nn,nn,nn,nn,nn,nn,nn,nn,
+    nn,nn,nn,nn,nn,nn,nn,nn,nn,nn,nn,nn,nn,nn,nn,nn,
+    nn,10,11,12,13,14,15,nn,nn,nn,nn,nn,nn,nn,nn,nn,
+    nn,nn,nn,nn,nn,nn,nn,nn,nn,nn,nn,nn,nn,nn,nn,nn,
+    nn,nn,nn,nn,nn,nn,nn,nn,nn,nn,nn,nn,nn,nn,nn,nn,
+    nn,nn,nn,nn,nn,nn,nn,nn,nn,nn,nn,nn,nn,nn,nn,nn,
+    nn,nn,nn,nn,nn,nn,nn,nn,nn,nn,nn,nn,nn,nn,nn,nn,
+    nn,nn,nn,nn,nn,nn,nn,nn,nn,nn,nn,nn,nn,nn,nn,nn,
+    nn,nn,nn,nn,nn,nn,nn,nn,nn,nn,nn,nn,nn,nn,nn,nn,
+    nn,nn,nn,nn,nn,nn,nn,nn,nn,nn,nn,nn,nn,nn,nn,nn,
+    nn,nn,nn,nn,nn,nn,nn,nn,nn,nn,nn,nn,nn,nn,nn,nn,
+    nn,nn,nn,nn,nn,nn,nn,nn,nn,nn,nn,nn,nn,nn,nn,nn
+  };
+  const uint8_t *p = (const uint8_t *)mrl;
+  uint8_t *q;
+  /* dont touch until first %xx */
+  while (*p) {
+    if (*p == '%') break;
+    p++;
+  }
+  if (!*p)
+    return;
+  /* now really unescape */
+  /* q = (uint8_t *)p ?? */
+  q = (uint8_t *)mrl + (p - (const uint8_t *)mrl);
+  while (1) {
+    uint8_t z = *p++;
+    if (z == '%') {
+      uint8_t h = tab_unhex[*p];
+      if (!(h & nn)) {
+        z = h;
+        p++;
+        h = tab_unhex[*p];
+        if (!(h & nn)) {
+          z = (z << 4) | h;
+          p++;
+        }
+      } else if (*p == '%') {
+        p++;
       }
     }
+    *q++ = z;
+    if (!z) break;
   }
-  mrl[len] = 0;
+#undef nn
 }
 
 char *_x_mrl_remove_auth(const char *mrl_in)
@@ -1815,28 +1842,26 @@ static void xine_dispose_internal (xine_stream_t *stream) {
   stream->metronom->exit (stream->metronom);
   pthread_mutex_unlock (&xine->streams_lock);
 
-  pthread_mutex_destroy (&stream->info_mutex);
-  pthread_mutex_destroy (&stream->meta_mutex);
   pthread_mutex_destroy (&stream->frontend_lock);
+  pthread_mutex_destroy (&stream->index_mutex);
+  pthread_mutex_destroy (&stream->speed_change_lock);
+  pthread_mutex_destroy (&stream->current_extra_info_lock);
+  pthread_cond_destroy  (&stream->first_frame_reached);
+  pthread_mutex_destroy (&stream->first_frame_lock);
+  pthread_cond_destroy  (&stream->counter_changed);
   pthread_mutex_destroy (&stream->counter_lock);
   pthread_mutex_destroy (&stream->event_queues_lock);
-  pthread_mutex_destroy (&stream->current_extra_info_lock);
-  pthread_cond_destroy  (&stream->counter_changed);
-  pthread_mutex_destroy (&stream->demux_mutex);
   pthread_cond_destroy  (&stream->demux_resume);
+  pthread_mutex_destroy (&stream->demux_mutex);
   pthread_mutex_destroy (&stream->demux_action_lock);
   pthread_mutex_destroy (&stream->demux_lock);
-  pthread_mutex_destroy (&stream->first_frame_lock);
-  pthread_cond_destroy  (&stream->first_frame_reached);
-  pthread_mutex_destroy (&stream->index_mutex);
+  pthread_mutex_destroy (&stream->meta_mutex);
+  pthread_mutex_destroy (&stream->info_mutex);
 
   xine_list_delete(stream->event_queues);
 
   _x_refcounter_dispose(stream->refcounter);
 
-  free (stream->current_extra_info);
-  free (stream->video_decoder_extra_info);
-  free (stream->audio_decoder_extra_info);
   free (stream->index_array);
   free (stream);
 }
