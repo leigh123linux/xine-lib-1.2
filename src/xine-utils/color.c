@@ -424,40 +424,57 @@ static void yuv444_to_yuy2_mmx(const yuv_planes_t *yuv_planes, unsigned char *yu
 }
 #endif
 
-static void hscale_chroma_line (unsigned char *dst, const unsigned char *src,
-  int width) {
+static void hscale_chroma_line (uint8_t *dst, const uint8_t *src, int src_width) {
+  /*    s1      s2      s3      s4   ...
+   *  d1  d2  d3  d4  d5  d6  d7  d8 ... */
+  int32_t n1, n2, n3, v;
+  int      x = src_width;
 
-  unsigned int n1, n2;
-  int       x;
+  if (x <= 0)
+    return;
+  n1 = *src++;
+  *dst++ = n1;
+  *dst++ = n1;
+  if (--x <= 0)
+    return;
+  n2 = *src++;
 
-  n1       = *src;
-  *(dst++) = n1;
-
-  for (x=0; x < (width - 1); x++) {
-    n2       = *(++src);
-    *(dst++) = (3*n1 + n2 + 2) >> 2;
-    *(dst++) = (n1 + 3*n2 + 2) >> 2;
-    n1       = n2;
+  while (--x > 1) {
+    n3 = *src++;
+    v = (2 * n1 + 7 * n2 - n3) >> 3;
+    *dst++ = (v & 0xffffff00) ? ~(v >> 31) : v;
+    v = (-n1 + 7 * n2 + 2 * n3) >> 3;
+    *dst++ = (v & 0xffffff00) ? ~(v >> 31) : v;
+    n1 = n2;
+    n2 = n3;
   }
-
-  *dst = n1;
+    
+  if (x > 0) {
+    *dst++ = (n1 + 3 * n2) >> 2;
+    *dst++ = n2;
+  }
 }
 
 static void vscale_chroma_line (unsigned char *dst, int pitch,
   const unsigned char *src1, const unsigned char *src2, int width) {
+  /* The purpose of pitches is to align lines.
+   * We align again here just to kill cast-align warnings. */
+  const uint32_t *p1, *p2;
+  uint32_t *q1, *q2;
 
-  unsigned int t1, t2;
-  unsigned int n1, n2, n3, n4;
-  unsigned int *dst1, *dst2;
-  int       x;
+  uint32_t t1, t2;
+  uint32_t n1, n2, n3, n4;
+  int      x;
 
-  dst1 = (unsigned int *) dst;
-  dst2 = (unsigned int *) (dst + pitch);
+  p1 = (const uint32_t *)ALIGN4(src1);
+  p2 = (const uint32_t *)ALIGN4(src2);
+  q1 = (uint32_t *)ALIGN4(dst);
+  q2 = q1 + (pitch >> 2);
 
   /* process blocks of 4 pixels */
-  for (x=0; x < (width / 4); x++) {
-    n1  = *((const unsigned int *) src1); src1 = (const unsigned char *)(((const unsigned int *) src1) + 1);
-    n2  = *((const unsigned int *) src2); src2 = (const unsigned char *)(((const unsigned int *) src2) + 1);
+  for (x = (width >> 2); x > 0; x--) {
+    n1  = *p1++;
+    n2  = *p2++;
     n3  = (n1 & 0xFF00FF00) >> 8;
     n4  = (n2 & 0xFF00FF00) >> 8;
     n1 &= 0x00FF00FF;
@@ -472,17 +489,21 @@ static void vscale_chroma_line (unsigned char *dst, int pitch,
     n3 = (t1 + t2);
     n4 = (t1 - t2);
 
-    *(dst1++) = ((n1 >> 2) & 0x00FF00FF) | ((n3 << 6) & 0xFF00FF00);
-    *(dst2++) = ((n2 >> 2) & 0x00FF00FF) | ((n4 << 6) & 0xFF00FF00);
+    *q1++ = ((n1 >> 2) & 0x00FF00FF) | ((n3 << 6) & 0xFF00FF00);
+    *q2++ = ((n2 >> 2) & 0x00FF00FF) | ((n4 << 6) & 0xFF00FF00);
   }
 
   /* process remaining pixels */
-  for (x=(width & ~0x3); x < width; x++) {
-    n1 = src1[x];
-    n2 = src2[x];
-
-    dst[x]       = (3*n1 + n2 + 2) >> 2;
-    dst[x+pitch] = (n1 + 3*n2 + 2) >> 2;
+  if (width & 3) {
+    src1 += width & ~3;
+    src2 += width & ~3;
+    dst  += width & ~3;
+    for (x = width & 3; x > 0; x--) {
+      n1 = src1[x];
+      n2 = src2[x];
+      dst[x]         = (3 * n1 + n2 + 2) >> 2;
+      dst[x + pitch] = (n1 + 3 * n2 + 2) >> 2;
+    }
   }
 }
 
