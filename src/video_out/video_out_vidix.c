@@ -949,7 +949,7 @@ static void vidix_exit (vo_driver_t *this_gen) {
 #endif
 
   _x_alphablend_free(&this->alphablend_extra_data);
-  _x_vo_scale_cleanup (&this->sc, this->class->config);
+  _x_vo_scale_cleanup (&this->sc, this->config);
 
   free (this);
 }
