@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2000-2017 the xine project
+ * Copyright (C) 2000-2018 the xine project
  *
  * This file is part of xine, a free video player.
  *
@@ -2007,6 +2007,21 @@ void rgb2yuy2_palette (void *rgb2yuy2, const uint8_t *pal, int num_colors, int b
   }
 }
 
+#ifdef ARCH_X86_32
+   /* gcc 4.5 appearantly does not see this optimization:
+    * One half of value is eough to get all required bits.
+    * Saves at least 1 register within 2 loops.
+    * 27% faster!!
+    */
+#  define GET_Y(v) ((uint32_t)(v) >> 13)
+#  define GET_U(v) ((uint32_t)(v >> 32) >> 23)
+#  define GET_V(v) ((uint32_t)(v >> 32) >> 2)
+#else
+#  define GET_Y(v) ((v) >> 13)
+#  define GET_U(v) ((v) >> 55)
+#  define GET_V(v) ((v) >> 34)
+#endif
+
 void rgb2yuy2_slice (void *rgb2yuy2, const uint8_t *in, int ipitch, uint8_t *out, int opitch,
   int width, int height) {
   rgb2yuy2_t *b = rgb2yuy2;
@@ -2029,14 +2044,14 @@ void rgb2yuy2_slice (void *rgb2yuy2, const uint8_t *in, int ipitch, uint8_t *out
           v  = b->t0[*in++];
           v += b->t1[*in++];
           v += b->t2[*in++];
-          *out++  = v >> 13; /* y1 */
+          *out++  = GET_Y(v); /* y1 */
           v &= ~0x1fffffLL;
           v += b->t0[*in++];
           v += b->t1[*in++];
           v += b->t2[*in++];
-          *out++  = v >> 55; /* u */
-          *out++  = v >> 13; /* y2 */
-          *out++  = v >> 34; /* v */
+          *out++  = GET_U(v); /* u */
+          *out++  = GET_Y(v); /* y2 */
+          *out++  = GET_V(v); /* v */
         }
         in  += ipad;
         out += opad;
@@ -2054,15 +2069,15 @@ void rgb2yuy2_slice (void *rgb2yuy2, const uint8_t *in, int ipitch, uint8_t *out
           v += b->t1[*in++];
           v += b->t2[*in];
           in += 2;
-          *out++  = v >> 13; /* y1 */
+          *out++  = GET_Y(v); /* y1 */
           v &= ~0x1fffffLL;
           v += b->t0[*in++];
           v += b->t1[*in++];
           v += b->t2[*in];
           in += 2;
-          *out++  = v >> 55; /* u */
-          *out++  = v >> 13; /* y2 */
-          *out++  = v >> 34; /* v */
+          *out++  = GET_U(v); /* u */
+          *out++  = GET_Y(v); /* y2 */
+          *out++  = GET_V(v); /* v */
         }
         in  += ipad;
         out += opad;
@@ -2077,13 +2092,13 @@ void rgb2yuy2_slice (void *rgb2yuy2, const uint8_t *in, int ipitch, uint8_t *out
         for (x = width / 2; x; x--) {
           v  = b->t0[*in++];
           v += b->t1[*in++];
-          *out++  = v >> 13; /* y1 */
+          *out++  = GET_Y(v); /* y1 */
           v &= ~0x1fffffLL;
           v += b->t0[*in++];
           v += b->t1[*in++];
-          *out++  = v >> 55; /* u */
-          *out++  = v >> 13; /* y2 */
-          *out++  = v >> 34; /* v */
+          *out++  = GET_U(v); /* u */
+          *out++  = GET_Y(v); /* y2 */
+          *out++  = GET_V(v); /* v */
         }
         in  += ipad;
         out += opad;
@@ -2161,10 +2176,10 @@ void rgb2yuy2_slice (void *rgb2yuy2, const uint8_t *in, int ipitch, uint8_t *out
           v  = b->t0[*in++];
           v += b->t1[*in++];
           v += b->t2[*in++];
-          *out++  = v >> 54; /* u */
-          *out++  = v >> 33; /* v */
-          *out++  = v >> 13; /* y */
-          *out++  = *in++;   /* a */
+          *out++  = GET_U(v); /* u */
+          *out++  = GET_V(v); /* v */
+          *out++  = GET_Y(v); /* y */
+          *out++  = *in++;    /* a */
         }
         in  += ipad;
         out += opad;
