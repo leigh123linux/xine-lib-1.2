@@ -69,6 +69,8 @@
 #include <xine/xine_internal.h>
 #include "xine_mmx.h"
 
+#define ALIGN4(ptr) ((uintptr_t)(ptr) & ~(uintptr_t)3)
+
 /*
  * Precalculate all of the YUV tables since it requires only 8 kilobytes to store them
  * (plus 2 for backwards compatibility).
@@ -2123,7 +2125,7 @@ void rgb2yuy2_slice (void *rgb2yuy2, const uint8_t *in, int ipitch, uint8_t *out
     case rgb_pal4:
       ipad = ipitch - (width / 2);
       for (y = height; y; y--) {
-        uint32_t *o2 = (uint32_t *)out;
+        uint32_t *o2 = (uint32_t *)ALIGN4(out);
         for (x = width / 2; x; x--)
           *o2++ = b->p[*in++];
         in  += ipad;
@@ -2133,7 +2135,7 @@ void rgb2yuy2_slice (void *rgb2yuy2, const uint8_t *in, int ipitch, uint8_t *out
     case rgb_pal2:
       ipad = ipitch - (width / 4);
       for (y = height; y; y--) {
-        uint32_t *o2 = (uint32_t *)out;
+        uint32_t *o2 = (uint32_t *)ALIGN4(out);
         for (x = width / 4; x; x--) {
           *o2++ = b->p[(*in)   >> 4];
           *o2++ = b->p[(*in++) & 15];
@@ -2147,7 +2149,7 @@ void rgb2yuy2_slice (void *rgb2yuy2, const uint8_t *in, int ipitch, uint8_t *out
     case rgb_pal1:
       ipad = ipitch - (width / 8);
       for (y = height; y; y--) {
-        uint32_t *o2 = (uint32_t *)out;
+        uint32_t *o2 = (uint32_t *)ALIGN4(out);
         for (x = width / 8; x; x--) {
           *o2++ = b->p[(*in) >> 6];
           *o2++ = b->p[((*in) >> 4) & 3];
