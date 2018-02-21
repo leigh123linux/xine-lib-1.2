@@ -20,6 +20,7 @@ AC_DEFUN([XINE_INPUT_PLUGINS], [
     default_enable_vdr=yes
     default_enable_bluray=yes
     default_enable_avformat=yes
+    default_enable_sftp=yes
     default_with_external_dvdnav=yes
 
     case "$host_os" in
@@ -213,5 +214,17 @@ AC_DEFUN([XINE_INPUT_PLUGINS], [
         fi
     fi
     AM_CONDITIONAL([ENABLE_AVFORMAT], [test x"$have_avformat" = x"yes"])
+
+    dnl libssh2
+    XINE_ARG_ENABLE([sftp], [Enable SFTP support using libssh2])
+    if test "x$enable_sftp" != "xno"; then
+        PKG_CHECK_MODULES([LIBSSH2], [libssh2], [have_libssh2=yes], [have_libssh2=no])
+        if test x"$hard_enable_sftp" = x"yes" && test x"$have_libssh2" != x"yes"; then
+            AC_MSG_ERROR([SFTP support requested, but libssh2 not found])
+        fi
+        AC_SUBST(LIBSSH2_CFLAGS)
+        AC_SUBST(LIBSSH2_LIBS)
+    fi
+    AM_CONDITIONAL(ENABLE_SSH, test "x$have_libssh2" = "xyes")
 
 ])
