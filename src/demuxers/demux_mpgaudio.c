@@ -830,30 +830,6 @@ static int demux_mpgaudio_get_status (demux_plugin_t *this_gen) {
   return this->status;
 }
 
-static int demux_mpgaudio_read_head(input_plugin_t *input, uint8_t *buf) {
-
-  int       bs = 0;
-
-  if (INPUT_IS_SEEKABLE(input)) {
-    input->seek(input, 0, SEEK_SET);
-
-    bs = input->read(input, buf, MAX_PREVIEW_SIZE);
-
-    lprintf("stream is seekable\n");
-
-  } else if ((input->get_capabilities(input) & INPUT_CAP_PREVIEW) != 0) {
-
-    lprintf("input plugin provides preview\n");
-
-    bs = input->get_optional_data (input, buf, INPUT_OPTIONAL_DATA_PREVIEW);
-
-  } else {
-    lprintf("not seekable, no preview\n");
-    return 0;
-  }
-  return bs;
-}
-
 /*
  * mp3 stream detection
  * return 1 if detected, 0 otherwise
@@ -865,7 +841,7 @@ static int detect_mpgaudio_file(input_plugin_t *input,
   uint32_t head;
 
   *version = *layer = 0;
-  preview_len = demux_mpgaudio_read_head(input, buf);
+  preview_len = _x_demux_read_header(input, buf, sizeof(buf));
   if (preview_len < 4)
     return 0;
 
