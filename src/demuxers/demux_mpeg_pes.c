@@ -72,8 +72,6 @@ typedef struct demux_mpeg_pes_s {
 
   int                   rate;
 
-  uint8_t              *scratch;
-
   int64_t               nav_last_end_pts;
   int64_t               nav_last_start_pts;
   int64_t               last_pts[2];
@@ -1457,14 +1455,6 @@ static int demux_mpeg_pes_estimate_rate (demux_mpeg_pes_t *this) {
 }
 #endif /*ESTIMATE_RATE_FIXED*/
 
-static void demux_mpeg_pes_dispose (demux_plugin_t *this_gen) {
-
-  demux_mpeg_pes_t *this = (demux_mpeg_pes_t *) this_gen;
-
-  xine_free_aligned (this->scratch);
-  free (this);
-}
-
 static int demux_mpeg_pes_get_status (demux_plugin_t *this_gen) {
   demux_mpeg_pes_t *this = (demux_mpeg_pes_t *) this_gen;
 
@@ -1620,14 +1610,13 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
   this->demux_plugin.send_headers      = demux_mpeg_pes_send_headers;
   this->demux_plugin.send_chunk        = demux_mpeg_pes_send_chunk;
   this->demux_plugin.seek              = demux_mpeg_pes_seek;
-  this->demux_plugin.dispose           = demux_mpeg_pes_dispose;
+  this->demux_plugin.dispose           = default_demux_plugin_dispose;
   this->demux_plugin.get_status        = demux_mpeg_pes_get_status;
   this->demux_plugin.get_stream_length = demux_mpeg_pes_get_stream_length;
   this->demux_plugin.get_capabilities  = demux_mpeg_pes_get_capabilities;
   this->demux_plugin.get_optional_data = demux_mpeg_pes_get_optional_data;
   this->demux_plugin.demux_class       = class_gen;
 
-  this->scratch    = xine_mallocz_aligned (4096);
   this->status     = DEMUX_FINISHED;
   /* Don't start demuxing stream until we see a program_stream_pack_header */
   /* We need to system header in order to identify is the stream is mpeg1 or mpeg2. */
@@ -1646,7 +1635,6 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
 
     /* use demux_mpeg_block for block devices */
     if ((input->get_capabilities(input) & INPUT_CAP_BLOCK)) {
-      xine_free_aligned (this->scratch);
       free (this);
       return NULL;
     }
@@ -1662,7 +1650,6 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
             || (this->preview_data[2] != 0x01) ) {
           lprintf("open_plugin:preview_data failed\n");
 
-          xine_free_aligned (this->scratch);
           free (this);
           return NULL;
         }
@@ -1673,7 +1660,6 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
         case 0xbd ... 0xbe:
           break;
         default:
-          xine_free_aligned (this->scratch);
           free (this);
           return NULL;
         }
@@ -1685,27 +1671,25 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
     }
 
     if (((input->get_capabilities(input) & INPUT_CAP_SEEKABLE) != 0) ) {
-
+      uint8_t scratch[6];
       input->seek(input, 0, SEEK_SET);
-      if (input->read(input, (char *)this->scratch, 6) == 6) {
+      if (input->read(input, scratch, 6) == 6) {
         lprintf("open_plugin:read worked\n");
 
-        if (this->scratch[0] || this->scratch[1]
-            || (this->scratch[2] != 0x01) ) {
+        if (scratch[0] || scratch[1]
+            || (scratch[2] != 0x01) ) {
           lprintf("open_plugin:scratch failed\n");
 
-          xine_free_aligned (this->scratch);
           free (this);
           return NULL;
         }
-        switch(this->scratch[3]) {
+        switch(scratch[3]) {
 
         case 0xe0 ... 0xef:
         case 0xc0 ... 0xdf:
         case 0xbd ... 0xbe:
           break;
         default:
-          xine_free_aligned (this->scratch);
           free (this);
           return NULL;
         }
@@ -1718,7 +1702,6 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
       }
     }
 
-    xine_free_aligned (this->scratch);
     free (this);
     return NULL;
   }
@@ -1731,7 +1714,6 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
     break;
 
   default:
-    xine_free_aligned (this->scratch);
     free (this);
     return NULL;
   }
