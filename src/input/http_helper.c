@@ -37,18 +37,19 @@ const char *_x_url_user_agent (const char *url)
   return NULL;
 }
 
-int _x_parse_url (char *url, char **proto, char** host, int *port,
+int _x_parse_url (const char *url,
+                  char **proto, char** host, int *port,
                   char **user, char **password, char **uri,
                   const char **user_agent)
 {
-  char   *start      = NULL;
-  char   *authcolon  = NULL;
-  char	 *at         = NULL;
-  char	 *portcolon  = NULL;
-  char   *slash      = NULL;
-  char   *semicolon  = NULL;
-  char   *end        = NULL;
-  char   *strtol_err = NULL;
+  const char *start      = NULL;
+  const char *authcolon  = NULL;
+  const char *at         = NULL;
+  const char *portcolon  = NULL;
+  const char *slash      = NULL;
+  const char *semicolon  = NULL;
+  const char *end        = NULL;
+  char       *strtol_err = NULL;
 
   _x_assert (url);
   _x_assert (proto);
@@ -171,13 +172,13 @@ int _x_parse_url (char *url, char **proto, char** host, int *port,
       strcpy(*uri + 1, start);
     } else {
       static const char toescape[] = " #";
-      char *it = start;
+      const char *itc = start;
       unsigned int escapechars = 0;
 
-      while( it && *it ) {
-	if ( strchr(toescape, *it) != NULL )
+      while( itc && *itc ) {
+	if ( strchr(toescape, *itc) != NULL )
 	  escapechars++;
-	it++;
+	itc++;
       }
 
       if ( escapechars == 0 )
@@ -185,6 +186,7 @@ int _x_parse_url (char *url, char **proto, char** host, int *port,
       else {
 	const size_t len = strlen(start);
 	size_t i;
+        char *it;
 
 	*uri = malloc(len + 1 + escapechars*2);
 	it = *uri;
