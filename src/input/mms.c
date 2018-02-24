@@ -117,13 +117,7 @@ struct mms_s {
   int           s;
 
   /* url parsing */
-  char         *url;
-  char         *proto;
-  char         *host;
-  int           port;
-  char         *user;
-  char         *password;
-  char         *uri;
+  xine_url_t    url;
 
   /* command to send */
   char          scmd[CMD_HEADER_LEN + CMD_BODY_LEN];
@@ -581,16 +575,17 @@ static void report_progress (xine_stream_t *stream, int p) {
 static int mms_tcp_connect(mms_t *this) {
   int progress, res;
 
-  if (!this->port) this->port = MMST_PORT;
+  if (!this->url.port)
+    this->url.port = MMST_PORT;
 
   /*
    * try to connect
    */
-  lprintf("try to connect to %s on port %d \n", this->host, this->port);
-  this->s = _x_io_tcp_connect (this->stream, this->host, this->port);
+  lprintf("try to connect to %s on port %d \n", this->url.host, this->url.port);
+  this->s = _x_io_tcp_connect (this->stream, this->url.host, this->url.port);
   if (this->s < 0) {
     xprintf (this->stream->xine, XINE_VERBOSITY_LOG,
-             "failed to connect '%s'\n", this->host);
+             "failed to connect '%s'\n", this->url.host);
     return 1;
   }
 
@@ -689,7 +684,6 @@ mms_t *mms_connect (xine_stream_t *stream, const char *url, int bandwidth) {
   this = calloc(1, sizeof (mms_t));
 
   this->stream          = stream;
-  this->url             = strdup (url);
   this->s               = -1;
   this->seq_num         = 0;
   this->scmd_body       = this->scmd + CMD_HEADER_LEN + CMD_PREFIX_LEN;
@@ -703,13 +697,12 @@ mms_t *mms_connect (xine_stream_t *stream, const char *url, int bandwidth) {
 
   report_progress (stream, 0);
 
-  if (!_x_parse_url (this->url, &this->proto, &this->host, &this->port,
-                     &this->user, &this->password, &this->uri, NULL)) {
+  if (!_x_url_parse2 (url, &this->url)) {
     lprintf ("invalid url\n");
     goto fail;
   }
 
-  if (!mmst_valid_proto(this->proto)) {
+  if (!mmst_valid_proto(this->url.proto)) {
     lprintf ("unsupported protocol\n");
     goto fail;
   }
@@ -730,7 +723,7 @@ mms_t *mms_connect (xine_stream_t *stream, const char *url, int bandwidth) {
   lprintf("send command 0x01\n");
   mms_gen_guid(this->guid);
   snprintf (str, sizeof(str), "\x1c\x03NSPlayer/7.0.0.1956; {%s}; Host: %s",
-    this->guid, this->host);
+    this->guid, this->url.host);
   string_utf16 (url_conv, this->scmd_body, str, strlen(str) + 2);
 
   if (!send_command (this, 1, 0, 0x0004000b, strlen(str) * 2 + 8)) {
@@ -780,7 +773,7 @@ mms_t *mms_connect (xine_stream_t *stream, const char *url, int bandwidth) {
     char *path, *unescaped;
     size_t pathlen;
 
-    unescaped = strdup (this->uri);
+    unescaped = strdup (this->url.uri);
     if (!unescaped)
       goto fail;
     _x_mrl_unescape (unescaped);
@@ -914,18 +907,8 @@ fail:
 
   if (this->s != -1)
     close (this->s);
-  if (this->url)
-    free(this->url);
-  if (this->proto)
-    free(this->proto);
-  if (this->host)
-    free(this->host);
-  if (this->user)
-    free(this->user);
-  if (this->password)
-    free(this->password);
-  if (this->uri)
-    free(this->uri);
+
+  _x_url_cleanup(&this->url);
 
   free (this);
   return NULL;
@@ -1154,18 +1137,9 @@ void mms_close (mms_t *this) {
 
   if (this->s != -1)
     close (this->s);
-  if (this->url)
-    free(this->url);
-  if (this->proto)
-    free(this->proto);
-  if (this->host)
-    free(this->host);
-  if (this->user)
-    free(this->user);
-  if (this->password)
-    free(this->password);
-  if (this->uri)
-    free(this->uri);
+
+  _x_url_cleanup(&this->url);
+
   if (this->asf_header)
     asf_header_delete(this->asf_header);
   free (this);

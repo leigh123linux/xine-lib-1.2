@@ -155,13 +155,7 @@ struct mmsh_s {
   int           s;
 
   /* url parsing */
-  char         *url;
-  char         *proto;
-  char         *host;
-  int           port;
-  char         *user;
-  char         *password;
-  char         *uri;
+  xine_url_t    url;
 
   char          str[SCRATCH_SIZE]; /* scratch buffer to built strings */
 
@@ -490,18 +484,19 @@ static void report_progress (xine_stream_t *stream, int p) {
 static int mmsh_tcp_connect(mmsh_t *this) {
   int progress, res;
 
-  if (!this->port) this->port = MMSH_PORT;
+  if (!this->url.port)
+    this->url.port = MMSH_PORT;
 
   /*
    * try to connect
    */
-  lprintf("try to connect to %s on port %d \n", this->host, this->port);
+  lprintf("try to connect to %s on port %d \n", this->url.host, this->url.port);
 
-  this->s = _x_io_tcp_connect (this->stream, this->host, this->port);
+  this->s = _x_io_tcp_connect (this->stream, this->url.host, this->url.port);
 
   if (this->s < 0) {
     xprintf (this->stream->xine, XINE_VERBOSITY_LOG,
-             "libmmsh: failed to connect '%s'\n", this->host);
+             "libmmsh: failed to connect '%s'\n", this->url.host);
     return 1;
   }
 
@@ -531,8 +526,8 @@ static int mmsh_connect_int(mmsh_t *this, int bandwidth) {
   /* first request */
   lprintf("first http request\n");
 
-  snprintf (this->str, SCRATCH_SIZE, mmsh_FirstRequest, this->uri,
-            this->host, this->port, 1);
+  snprintf (this->str, SCRATCH_SIZE, mmsh_FirstRequest, this->url.uri,
+            this->url.host, this->url.port, 1);
 
   if (!send_command (this, this->str))
     return 0;
@@ -598,13 +593,13 @@ static int mmsh_connect_int2(mmsh_t *this, int bandwidth) {
 
   switch (this->stream_type) {
     case MMSH_SEEKABLE:
-      snprintf (this->str, SCRATCH_SIZE, mmsh_SeekableRequest, this->uri,
-                this->host, this->port, this->start_time, 0, 0, 2, 0,
+      snprintf (this->str, SCRATCH_SIZE, mmsh_SeekableRequest, this->url.uri,
+                this->url.host, this->url.port, this->start_time, 0, 0, 2, 0,
                 this->asf_header->stream_count, stream_selection);
       break;
     case MMSH_LIVE:
-      snprintf (this->str, SCRATCH_SIZE, mmsh_LiveRequest, this->uri,
-                this->host, this->port, 2,
+      snprintf (this->str, SCRATCH_SIZE, mmsh_LiveRequest, this->url.uri,
+                this->url.host, this->url.port, 2,
                 this->asf_header->stream_count, stream_selection);
       break;
   }
@@ -642,7 +637,7 @@ mmsh_t *mmsh_connect (xine_stream_t *stream, const char *url, int bandwidth) {
   this = calloc(1, sizeof (mmsh_t));
 
   this->stream          = stream;
-  this->url             = strdup(url);
+  //this->url             = strdup(url);
   this->s               = -1;
   this->asf_header_len  = 0;
   this->asf_header_read = 0;
@@ -653,13 +648,12 @@ mmsh_t *mmsh_connect (xine_stream_t *stream, const char *url, int bandwidth) {
 
   report_progress (stream, 0);
 
-  if (!_x_parse_url (this->url, &this->proto, &this->host, &this->port,
-                     &this->user, &this->password, &this->uri, NULL)) {
+  if (!_x_url_parse2 (url, &this->url)) {
     xine_log (this->stream->xine, XINE_LOG_MSG, _("invalid url\n"));
     goto fail;
   }
 
-  if (!mmsh_valid_proto(this->proto)) {
+  if (!mmsh_valid_proto(this->url.proto)) {
     xine_log (this->stream->xine, XINE_LOG_MSG, _("unsupported protocol\n"));
     goto fail;
   }
@@ -683,12 +677,7 @@ fail:
   if (this->s != -1)
     close(this->s);
 
-  free(this->url);
-  free(this->proto);
-  free(this->host);
-  free(this->user);
-  free(this->password);
-  free(this->uri);
+  _x_url_cleanup(&this->url);
 
   free(this);
 
@@ -870,12 +859,7 @@ void mmsh_close (mmsh_t *this) {
   if (this->asf_header)
     asf_header_delete(this->asf_header);
 
-  free(this->url);
-  free(this->proto);
-  free(this->host);
-  free(this->user);
-  free(this->password);
-  free(this->uri);
+  _x_url_cleanup(&this->url);
 
   free(this);
 }
