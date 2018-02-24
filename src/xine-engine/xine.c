@@ -486,17 +486,14 @@ static int lock_timeout (pthread_mutex_t *mutex, int ms_timeout) {
   if (ms_timeout == 0)
     return (0 == pthread_mutex_trylock (mutex));
   if (ms_timeout >= 0) {
-    struct timespec abstime;
-    struct timeval now;
-    gettimeofday (&now, NULL);
-    now.tv_sec  +=  ms_timeout / 1000;
-    now.tv_usec += (ms_timeout % 1000) * 1000;
-    if (now.tv_usec >= 1000000) {
-      now.tv_usec -= 1000000;
-      now.tv_sec++;
+    struct timespec abstime = {0, 0};
+    xine_gettime (&abstime);
+    abstime.tv_sec  +=  ms_timeout / 1000;
+    abstime.tv_nsec += (ms_timeout % 1000) * 1000000;
+    if (abstime.tv_nsec >= 1000000000) {
+      abstime.tv_nsec -= 10000000000;
+      abstime.tv_sec++;
     }
-    abstime.tv_sec  = now.tv_sec;
-    abstime.tv_nsec = now.tv_usec * 1000;
     return (0 == pthread_mutex_timedlock (mutex, &abstime));
   }
   pthread_mutex_lock (mutex);
@@ -508,17 +505,14 @@ static int ticket_lock_port_rewiring (xine_ticket_t *tgen, int ms_timeout) {
   if (ms_timeout == 0)
     return (0 == xine_rwlock_tryrdlock (&this->port_rewiring_lock));
   if (ms_timeout >= 0) {
-    struct timespec abstime;
-    struct timeval now;
-    gettimeofday (&now, NULL);
-    now.tv_sec  +=  ms_timeout / 1000;
-    now.tv_usec += (ms_timeout % 1000) * 1000;
-    if (now.tv_usec >= 1000000) {
-      now.tv_usec -= 1000000;
-      now.tv_sec++;
+    struct timespec abstime = {0, 0};
+    xine_gettime (&abstime);
+    abstime.tv_sec  +=  ms_timeout / 1000;
+    abstime.tv_nsec += (ms_timeout % 1000) * 1000000;
+    if (abstime.tv_nsec >= 1000000000) {
+      abstime.tv_nsec -= 1000000000;
+      abstime.tv_sec++;
     }
-    abstime.tv_sec  = now.tv_sec;
-    abstime.tv_nsec = now.tv_usec * 1000;
     return (0 == xine_rwlock_timedrdlock (&this->port_rewiring_lock, &abstime));
   }
   xine_rwlock_rdlock (&this->port_rewiring_lock);
@@ -1651,11 +1645,9 @@ static void wait_first_frame (xine_stream_t *stream) {
   if (stream->video_decoder_plugin) {
     pthread_mutex_lock (&stream->first_frame_lock);
     if (stream->first_frame_flag > 0) {
-      struct timeval  tv;
-      struct timespec ts;
-      gettimeofday(&tv, NULL);
-      ts.tv_sec  = tv.tv_sec + 10;
-      ts.tv_nsec = tv.tv_usec * 1000;
+      struct timespec ts = {0, 0};
+      xine_gettime (&ts);
+      ts.tv_sec += 10;
       pthread_cond_timedwait(&stream->first_frame_reached, &stream->first_frame_lock, &ts);
     }
     pthread_mutex_unlock (&stream->first_frame_lock);

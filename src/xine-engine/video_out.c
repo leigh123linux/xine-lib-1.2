@@ -67,17 +67,6 @@
  */
 #define EXPERIMENTAL_FRAME_QUEUE_OPTIMIZATION 1
 
-#ifndef timeradd
-#  define timeradd(a, b, result)                   \
-  (result)->tv_sec = (a)->tv_sec + (b)->tv_sec;    \
-  (result)->tv_usec = (a)->tv_usec + (b)->tv_usec; \
-  if ((result)->tv_usec >= 1000000)                \
-    {                                              \
-      ++(result)->tv_sec;                          \
-      (result)->tv_usec -= 1000000;                \
-    }
-#endif
-
 static vo_frame_t * crop_frame( xine_video_port_t *this_gen, vo_frame_t *img );
 
 typedef struct vos_grab_video_frame_s vos_grab_video_frame_t;
@@ -152,7 +141,7 @@ typedef struct {
   /* Filler frame during forward seek. */
   vo_frame_t               *last_flushed;
   /* Wakeup time. */
-  struct timeval            now;
+  struct timespec           now;
 
   /* Get grab_lock when
    *  - accessing grab queue,
@@ -626,11 +615,9 @@ static vo_frame_t *vo_free_queue_get (vos_t *this,
         pthread_mutex_lock (&this->free_img_buf_queue.mutex);
       }
       {
-        struct timeval tv;
-        struct timespec ts;
-        gettimeofday (&tv, NULL);
-        ts.tv_sec  = tv.tv_sec + 1;
-        ts.tv_nsec = tv.tv_usec * 1000;
+        struct timespec ts = {0, 0};
+        xine_gettime (&ts);
+        ts.tv_sec += 1;
         pthread_cond_timedwait (&this->free_img_buf_queue.not_empty, &this->free_img_buf_queue.mutex, &ts);
       }
     }
@@ -981,18 +968,16 @@ static int vo_grab_grab_video_frame (xine_grab_video_frame_t *frame_gen) {
   uint8_t *base[3];
 
   if (frame->grab_frame.flags & XINE_GRAB_VIDEO_FRAME_FLAGS_WAIT_NEXT) {
-    struct timeval tvnow, tvdiff, tvtimeout;
-    struct timespec ts;
+    struct timespec ts = {0, 0};
 
     /* calculate absolute timeout time */
-    tvdiff.tv_sec = frame->grab_frame.timeout / 1000;
-    tvdiff.tv_usec = frame->grab_frame.timeout % 1000;
-    tvdiff.tv_usec *= 1000;
-    gettimeofday(&tvnow, NULL);
-    timeradd(&tvnow, &tvdiff, &tvtimeout);
-    ts.tv_sec  = tvtimeout.tv_sec;
-    ts.tv_nsec = tvtimeout.tv_usec;
-    ts.tv_nsec *= 1000;
+    xine_gettime (&ts);
+    ts.tv_sec  +=  frame->grab_frame.timeout / 1000;
+    ts.tv_nsec += (frame->grab_frame.timeout % 1000) * 1000000;
+    if (ts.tv_nsec >= 1000000000) {
+      ts.tv_sec += 1;
+      ts.tv_nsec -= 1000000000;
+    }
 
     pthread_mutex_lock(&this->grab_lock);
 
@@ -2143,28 +2128,26 @@ static void paused_loop( vos_t *this, int64_t vpts )
     }
 
     /* wait for 1/50s or wakeup */
-    this->now.tv_usec += 20000;
-    if (this->now.tv_usec >= 1000000) {
+    this->now.tv_nsec += 20000000;
+    if (this->now.tv_nsec >= 1000000000) {
       /* resyncing the pause clock every second should be enough ;-) */
-      gettimeofday (&this->now, NULL);
-      this->now.tv_usec += 20000;
-      if (this->now.tv_usec >= 1000000) {
+      xine_gettime (&this->now);
+      this->now.tv_nsec += 20000000;
+      if (this->now.tv_nsec >= 1000000000) {
         this->now.tv_sec++;
-        this->now.tv_usec -= 1000000;
+        this->now.tv_nsec -= 1000000000;
       }
     }
     pthread_mutex_lock (&this->trigger_drawing_mutex);
     if (!this->trigger_drawing) {
-      struct timespec ts;
-      ts.tv_sec = this->now.tv_sec;
-      ts.tv_nsec = this->now.tv_usec * 1000;
+      struct timespec ts = this->now;
       pthread_cond_timedwait (&this->trigger_drawing_cond, &this->trigger_drawing_mutex, &ts);
     }
     if (this->trigger_drawing) {
       this->trigger_drawing = 0;
       this->redraw_needed = 1;
       /* no timeout, resync clock */
-      this->now.tv_usec = 990000;
+      this->now.tv_nsec = 990000000;
     }
     pthread_mutex_unlock (&this->trigger_drawing_mutex);
 
@@ -2223,7 +2206,7 @@ static void *video_out_loop (void *this_gen) {
      * and absolute system time, and hope these are halfway in sync.
      */
     vpts = next_frame_vpts = this->clock->get_current_time (this->clock);
-    gettimeofday (&this->now, NULL);
+    xine_gettime (&this->now);
     lprintf ("loop iteration at %" PRId64 "\n", vpts);
 
     this->wakeups_total++;
@@ -2319,19 +2302,17 @@ static void *video_out_loop (void *this_gen) {
       lprintf ("%d usec to sleep at master vpts %" PRId64 "\n", wait, vpts);
 
       /* next stop absolute time */
-      this->now.tv_usec += wait;
-      if (this->now.tv_usec >= 1000000) {
+      this->now.tv_nsec += wait * 1000;
+      if (this->now.tv_nsec >= 1000000000) {
         this->now.tv_sec++;
-        this->now.tv_usec -= 1000000;
+        this->now.tv_nsec -= 1000000000;
       }
       usec_to_sleep -= wait;
 
       timedout = 0;
       pthread_mutex_lock (&this->trigger_drawing_mutex);
       if (!this->trigger_drawing) {
-        struct timespec abstime;
-        abstime.tv_sec = this->now.tv_sec;
-        abstime.tv_nsec = this->now.tv_usec * 1000;
+        struct timespec abstime = this->now;
         timedout = pthread_cond_timedwait (&this->trigger_drawing_cond, &this->trigger_drawing_mutex, &abstime);
       }
       this->trigger_drawing = 0;
@@ -2383,9 +2364,7 @@ static void *video_out_loop (void *this_gen) {
 int xine_get_next_video_frame (xine_video_port_t *this_gen, xine_video_frame_t *frame) {
   vos_t *this = (vos_t *)this_gen;
   vo_frame_t *img;
-  struct timeval now;
-
-  now.tv_usec = 990000;
+  struct timespec now = {0, 990000000};
 
   pthread_mutex_lock (&this->display_img_buf_queue.mutex);
 
@@ -2400,19 +2379,17 @@ int xine_get_next_video_frame (xine_video_port_t *this_gen, xine_video_frame_t *
       }
     }
 
-    now.tv_usec += 20000;
-    if (now.tv_usec >= 1000000) {
-      gettimeofday (&now, NULL);
-      now.tv_usec += 20000;
-      if (now.tv_usec >= 1000000) {
+    now.tv_nsec += 20000000;
+    if (now.tv_nsec >= 1000000000) {
+      xine_gettime (&now);
+      now.tv_nsec += 20000000;
+      if (now.tv_nsec >= 1000000000) {
         now.tv_sec++;
-        now.tv_usec -= 1000000;
+        now.tv_nsec -= 1000000000;
       }
     }
     {
-      struct timespec ts;
-      ts.tv_sec = now.tv_sec;
-      ts.tv_nsec = now.tv_usec * 1000;
+      struct timespec ts = now;
       pthread_cond_timedwait (&this->display_img_buf_queue.not_empty, &this->display_img_buf_queue.mutex, &ts);
     }
   }
@@ -2593,16 +2570,13 @@ static int vo_set_property (xine_video_port_t *this_gen, int property, int value
     this->trigger_drawing = 0;
     pthread_cond_signal (&this->trigger_drawing_cond);
     if (ret) {
-      struct timeval tv;
-      struct timespec ts;
-      gettimeofday (&tv, NULL);
-      tv.tv_usec += 500000;
-      if (tv.tv_usec >= 1000000) {
-        tv.tv_sec++;
-        tv.tv_usec -= 1000000;
+      struct timespec ts = {0, 0};
+      xine_gettime (&ts);
+      ts.tv_nsec += 500000000;
+      if (ts.tv_nsec >= 1000000000) {
+        ts.tv_sec++;
+        ts.tv_nsec -= 1000000000;
       }
-      ts.tv_sec = tv.tv_sec;
-      ts.tv_nsec = tv.tv_usec * 1000;
       if (pthread_cond_timedwait (&this->done_stepping, &this->trigger_drawing_mutex, &ts))
         ret = 0;
     }

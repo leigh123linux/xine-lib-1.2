@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2000-2017 the xine project
+ * Copyright (C) 2000-2018 the xine project
  *
  * This file is part of xine, a free video player.
  *
@@ -145,6 +145,21 @@ int _x_set_socket_close_on_exec(int s) INTERNAL;
 #  define xine_rwlock_timedwrlock(l,t) pthread_mutex_timedlock (l, t)
 #  define xine_rwlock_unlock(l)        pthread_mutex_unlock (l)
 #  define xine_rwlock_destroy(l)       pthread_mutex_destroy (l)
+#endif
+
+#ifdef HAVE_POSIX_TIMERS
+#  define xine_gettime(t) clock_gettime (CLOCK_REALTIME, t)
+#else
+static inline int xine_gettime (struct timespec *ts) {
+  struct timeval tv;
+  int r;
+  r = gettimeofday (&tv, NULL);
+  if (!r) {
+    ts->tv_sec  = tv.tv_sec;
+    ts->tv_nsec = tv.tv_usec * 1000;
+  }
+  return r;
+}
 #endif
 
 

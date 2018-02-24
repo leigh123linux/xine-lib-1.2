@@ -614,11 +614,9 @@ static audio_buffer_t *ao_free_fifo_get (aos_t *this) {
       pthread_mutex_lock (&this->free_fifo.mutex);
     }
     {
-      struct timeval tv;
-      struct timespec ts;
-      gettimeofday (&tv, NULL);
-      ts.tv_sec  = tv.tv_sec + 1;
-      ts.tv_nsec = tv.tv_usec * 1000;
+      struct timespec ts = {0, 0};
+      xine_gettime (&ts);
+      ts.tv_sec += 1;
       this->free_fifo.num_waiters++;
       pthread_cond_timedwait (&this->free_fifo.not_empty, &this->free_fifo.mutex, &ts);
       this->free_fifo.num_waiters--;
@@ -1578,9 +1576,9 @@ int xine_get_next_audio_frame (xine_audio_port_t *this_gen,
 
   aos_t          *this = (aos_t *) this_gen;
   audio_buffer_t *in_buf = NULL, *out_buf;
-  struct timeval now;
+  struct timespec now = {0, 0};
 
-  now.tv_usec = 990000;
+  now.tv_nsec = 990000000;
 
   pthread_mutex_lock (&this->out_fifo.mutex);
 
@@ -1597,19 +1595,17 @@ int xine_get_next_audio_frame (xine_audio_port_t *this_gen,
       }
     }
 
-    now.tv_usec += 20000;
-    if (now.tv_usec >= 1000000) {
-      gettimeofday (&now, NULL);
-      now.tv_usec += 20000;
-      if (now.tv_usec >= 1000000) {
+    now.tv_nsec += 20000000;
+    if (now.tv_nsec >= 1000000000) {
+      xine_gettime (&now);
+      now.tv_nsec += 20000000;
+      if (now.tv_nsec >= 1000000000) {
         now.tv_sec++;
-        now.tv_usec -= 1000000;
+        now.tv_nsec -= 1000000000;
       }
     }
     {
-      struct timespec ts;
-      ts.tv_sec = now.tv_sec;
-      ts.tv_nsec = now.tv_usec * 1000;
+      struct timespec ts = now;
       this->out_fifo.num_waiters++;
       pthread_cond_timedwait (&this->out_fifo.not_empty, &this->out_fifo.mutex, &ts);
       this->out_fifo.num_waiters--;
@@ -2080,16 +2076,13 @@ static int ao_set_property (xine_audio_port_t *this_gen, int property, int value
     pthread_mutex_lock (&this->step_mutex);
     this->step = ret;
     if (ret) {
-      struct timeval tv;
-      struct timespec ts;
-      gettimeofday (&tv, NULL);
-      tv.tv_usec += 500000;
-      if (tv.tv_usec >= 1000000) {
-        tv.tv_sec++;
-        tv.tv_usec -= 1000000;
+      struct timespec ts = {0, 0};
+      xine_gettime (&ts);
+      ts.tv_nsec += 500000000;
+      if (ts.tv_nsec >= 1000000000) {
+        ts.tv_sec++;
+        ts.tv_nsec -= 1000000000;
       }
-      ts.tv_sec = tv.tv_sec;
-      ts.tv_nsec = tv.tv_usec * 1000;
       if (pthread_cond_timedwait (&this->done_stepping, &this->step_mutex, &ts))
         ret = 0;
     }
@@ -2580,3 +2573,5 @@ xine_audio_port_t *_x_ao_new_port (xine_t *xine, ao_driver_t *driver,
 
   return &this->ao;
 }
+
+

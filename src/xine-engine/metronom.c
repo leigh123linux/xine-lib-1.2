@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2000-2017 the xine project
+ * Copyright (C) 2000-2018 the xine project
  *
  * This file is part of xine, a free video player.
  *
@@ -992,8 +992,7 @@ static scr_plugin_t* get_master_scr(metronom_clock_t *this) {
 static void *metronom_sync_loop (void *const this_gen) {
   metronom_clock_private_t *const this_priv = (metronom_clock_private_t *const)this_gen;
 
-  struct timeval tv;
-  struct timespec ts;
+  struct timespec ts = {0, 0};
   scr_plugin_t **r;
   int64_t        pts;
 
@@ -1006,9 +1005,8 @@ static void *metronom_sync_loop (void *const this_gen) {
     for (r = this_priv->providers; *r && (r < this_priv->providers + MAX_SCR_PROVIDERS); r++)
       if (*r != this_priv->mct.scr_master) (*r)->adjust (*r, pts);
 
-    gettimeofday(&tv, NULL);
-    ts.tv_sec  = tv.tv_sec + 5;
-    ts.tv_nsec = tv.tv_usec * 1000;
+    xine_gettime (&ts);
+    ts.tv_sec += 5;
     pthread_cond_timedwait (&this_priv->mct.cancel, &this_priv->mct.lock, &ts);
 
     pthread_mutex_unlock (&this_priv->mct.lock);

@@ -263,11 +263,9 @@ static void *video_decoder_loop (void *stream_gen) {
       if (stream->audio_thread_created) {
 
         while (stream->finished_count_video > stream->finished_count_audio) {
-          struct timeval tv;
-          struct timespec ts;
-          gettimeofday(&tv, NULL);
-          ts.tv_sec  = tv.tv_sec + 1;
-          ts.tv_nsec = tv.tv_usec * 1000;
+          struct timespec ts = {0, 0};
+          xine_gettime (&ts);
+          ts.tv_sec += 1;
           /* use timedwait to workaround buggy pthread broadcast implementations */
           pthread_cond_timedwait (&stream->counter_changed, &stream->counter_lock, &ts);
         }
