@@ -220,6 +220,24 @@ error:
   return 0;
 }
 
+int _x_url_parse2(const char *mrl, xine_url_t *url)
+{
+  return _x_parse_url (mrl, &url->proto, &url->host, &url->port,
+                       &url->user, &url->password, &url->uri,
+                       NULL);
+}
+
+void _x_url_cleanup(xine_url_t *url)
+{
+  if (url->password)
+    memset(url->password, 0, strlen(url->password)); /* no need to leak it */
+  _x_freep (&url->proto);
+  _x_freep (&url->user);
+  _x_freep (&url->password);
+  _x_freep (&url->host);
+  _x_freep (&url->uri);
+  url->port = 0;
+}
 
 #ifdef TEST_URL
 /*

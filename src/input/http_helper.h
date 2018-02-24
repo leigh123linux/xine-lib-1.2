@@ -50,6 +50,19 @@ int _x_parse_url (const char *url,
                   char **user, char **password, char **uri,
                   const char **user_agent);
 
+
+typedef struct {
+  char *proto;
+  char *host;
+  int   port;
+  char *user;
+  char *password;
+  char *uri;
+} xine_url_t;
+
+int _x_url_parse2 (const char *mrl, xine_url_t *url);
+void _x_url_cleanup (xine_url_t *);
+
 /*
  * canonicalise url, given base
  * base must be valid according to _x_parse_url
