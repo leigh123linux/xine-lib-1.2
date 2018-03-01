@@ -609,7 +609,8 @@ rmff_header_t  *real_setup_and_get_header(rtsp_t *rtsp_session, uint32_t bandwid
   char *description=NULL;
   char *session_id=NULL;
   rmff_header_t *h = NULL;
-  char *challenge1;
+  const char *tmp;
+  char *challenge1 = NULL;
   char challenge2[64];
   char checksum[34];
   char *subscribe = NULL;
@@ -619,8 +620,11 @@ rmff_header_t  *real_setup_and_get_header(rtsp_t *rtsp_session, uint32_t bandwid
   int status;
 
   /* get challenge */
-  challenge1=strdup(rtsp_search_answers(rtsp_session,"RealChallenge1"));
-  lprintf("Challenge1: %s\n", challenge1);
+  tmp = rtsp_search_answers(rtsp_session,"RealChallenge1");
+  if (tmp) {
+    challenge1 = strdup(tmp);
+    lprintf("Challenge1: %s\n", challenge1);
+  }
 
   /* request stream description */
   rtsp_schedule_field(rtsp_session, "Accept: application/sdp");
@@ -684,10 +688,12 @@ rmff_header_t  *real_setup_and_get_header(rtsp_t *rtsp_session, uint32_t bandwid
 	  h->cont->title, h->cont->copyright, h->cont->author, h->prop->num_streams);
 
   /* setup our streams */
+ if (challenge1) {
   real_calc_response_and_checksum (challenge2, checksum, challenge1);
   xine_buffer_ensure_size(buf, strlen(challenge2) + strlen(checksum) + 32);
   sprintf(buf, "RealChallenge2: %s, sd=%s", challenge2, checksum);
   rtsp_schedule_field(rtsp_session, buf);
+ }
   xine_buffer_ensure_size(buf, strlen(session_id) + 32);
   sprintf(buf, "If-Match: %s", session_id);
   rtsp_schedule_field(rtsp_session, buf);
