@@ -74,4 +74,9 @@ static inline uint32_t _x_input_default_get_blocksize (input_plugin_t *this_gen)
   return 0;
 }
 
+static inline int _x_input_default_get_optional_data (input_plugin_t *this_gen, void *data, int data_type)
+{
+  return INPUT_OPTIONAL_UNSUPPORTED;
+}
+
 #endif /* XINE_INPUT_HELPER_H */

@@ -21,6 +21,7 @@ AC_DEFUN([XINE_INPUT_PLUGINS], [
     default_enable_bluray=yes
     default_enable_avformat=yes
     default_enable_sftp=yes
+    default_enable_nfs=yes
     default_with_external_dvdnav=yes
 
     case "$host_os" in
@@ -226,5 +227,17 @@ AC_DEFUN([XINE_INPUT_PLUGINS], [
         AC_SUBST(LIBSSH2_LIBS)
     fi
     AM_CONDITIONAL(ENABLE_SSH, test "x$have_libssh2" = "xyes")
+
+    dnl libnfs
+    XINE_ARG_ENABLE([nfs], [Enable NFS support using libnfs])
+    if test "x$enable_nfs" != "xno"; then
+        PKG_CHECK_MODULES([LIBNFS], [libnfs], [have_libnfs=yes], [have_libnfs=no])
+        if test x"$hard_enable_nfs" = x"yes" && test x"$have_libnfs" != x"yes"; then
+            AC_MSG_ERROR([NFS support requested, but libnfs not found])
+        fi
+        AC_SUBST(LIBNFS_CFLAGS)
+        AC_SUBST(LIBNFS_LIBS)
+    fi
+    AM_CONDITIONAL(ENABLE_NFS, test "x$have_libnfs" = "xyes")
 
 ])

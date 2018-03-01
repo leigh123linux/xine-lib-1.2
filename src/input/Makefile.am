@@ -110,6 +110,10 @@ if ENABLE_SSH
 in_ssh = xineplug_inp_ssh.la
 endif
 
+if ENABLE_NFS
+in_nfs = xineplug_inp_nfs.la
+endif
+
 if WITH_EXTERNAL_DVDNAV
 DVD_CFLAGS  = $(DVDNAV_CFLAGS) $(DVDREAD_CFLAGS)
 link_dvdnav = $(DVDNAV_LIBS) $(DVDREAD_LIBS)
@@ -138,6 +142,7 @@ xineplug_LTLIBRARIES = \
 	$(in_v4l) \
 	$(in_v4l2) \
 	$(in_gnome_vfs) \
+	$(in_nfs) \
 	$(in_smb) \
 	$(in_ssh) \
 	xineplug_inp_mms.la \
@@ -214,6 +219,10 @@ xineplug_inp_pvr_la_LIBADD = $(XINE_LIB) $(PTHREAD_LIBS) $(LTLIBINTL)
 xineplug_inp_bluray_la_SOURCES = input_bluray.c
 xineplug_inp_bluray_la_LIBADD = $(XINE_LIB) $(LIBBLURAY_LIBS) $(PTHREAD_LIBS) $(LTLIBINTL) media_helper.la
 xineplug_inp_bluray_la_CFLAGS = $(AM_CFLAGS) $(LIBBLURAY_CFLAGS)
+
+xineplug_inp_nfs_la_SOURCES = input_nfs.c input_helper.h
+xineplug_inp_nfs_la_LIBADD = $(XINE_LIB) $(LIBNFS_LIBS) $(LTLIBINTL)
+xineplug_inp_nfs_la_CFLAGS = $(AM_CFLAGS) $(LIBNFS_CFLAGS)
 
 xineplug_inp_ssh_la_SOURCES = input_ssh.c input_helper.h
 xineplug_inp_ssh_la_LIBADD = $(XINE_LIB) $(LIBSSH2_LIBS) $(LTLIBINTL) http_helper.la

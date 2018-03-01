@@ -34,6 +34,7 @@ AC_DEFUN([XINE_LIB_SUMMARY], [
     test x"$have_libbluray" = x"yes" && echo "   - bluray"
     test x"$have_libssh2" = x"yes"   && echo "   - sftp"
     test x"$have_libssh2" = x"yes"   && echo "   - scp"
+    test x"$have_libnfs" = x"yes"    && echo "   - nfs"
     test x"$enable_ffmpeg" != x"no" -a x"$have_avformat" = x"yes" && echo "   - avio (libavformat)"
     echo "   - test"
     echo ""
