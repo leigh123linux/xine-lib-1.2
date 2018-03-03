@@ -491,7 +491,7 @@ static int lock_timeout (pthread_mutex_t *mutex, int ms_timeout) {
     abstime.tv_sec  +=  ms_timeout / 1000;
     abstime.tv_nsec += (ms_timeout % 1000) * 1000000;
     if (abstime.tv_nsec >= 1000000000) {
-      abstime.tv_nsec -= 10000000000;
+      abstime.tv_nsec -= 1000000000;
       abstime.tv_sec++;
     }
     return (0 == pthread_mutex_timedlock (mutex, &abstime));
