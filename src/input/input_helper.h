@@ -28,6 +28,24 @@
 #include <xine/xine_internal.h>
 
 /*
+ * mrl array alloc / free helpers
+ */
+
+void _x_input_free_mrls(xine_mrl_t ***p);
+xine_mrl_t **_x_input_alloc_mrls(size_t n);
+xine_mrl_t **_x_input_realloc_mrls(xine_mrl_t ***p, size_t n);
+
+/*
+ * config helpers
+ */
+
+void _x_input_register_show_hidden_files(config_values_t *config);
+int _x_input_get_show_hidden_files(config_values_t *config);
+
+void _x_input_register_default_servers(config_values_t *config);
+xine_mrl_t **_x_input_get_default_server_mrls(config_values_t *config, const char *type, int *nFiles);
+
+/*
  * default read_block function.
  * uses read() to fill the block.
  */

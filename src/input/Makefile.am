@@ -31,6 +31,7 @@ http_helper_la_SOURCES = http_helper.c http_helper.h
 http_helper_la_LIBADD = $(XINE_LIB) $(LTLIBINTL)
 
 input_helper_la_SOURCES = input_helper.c input_helper.h
+input_helper_la_LIBADD = $(XINE_LIB) $(LTLIBINTL)
 
 media_helper_la_SOURCES = media_helper.c media_helper.h
 media_helper_la_LIBADD = $(XINE_LIB) $(LTLIBINTL)
@@ -168,9 +169,9 @@ xineplug_inp_dvd_la_SOURCES = input_dvd.c
 xineplug_inp_dvd_la_LIBADD = $(XINE_LIB) $(link_dvdnav) $(PTHREAD_LIBS) $(DYNAMIC_LD_LIBS) $(LTLIBINTL) media_helper.la
 xineplug_inp_dvd_la_CFLAGS = $(AM_CFLAGS) $(DVD_CFLAGS)
 
-xineplug_inp_network_la_SOURCES = group_network.c group_network.h input_net.c input_http.c input_pnm.c pnm.c pnm.h input_rtsp.c
+xineplug_inp_network_la_SOURCES = group_network.c group_network.h input_net.c input_http.c input_pnm.c pnm.c pnm.h input_rtsp.c input_ftp.c
 xineplug_inp_network_la_LIBADD = $(XINE_LIB) $(NET_LIBS) $(LTLIBINTL) \
-	libreal.la librtsp.la http_helper.la net_buf_ctrl.la
+	libreal.la librtsp.la http_helper.la input_helper.la net_buf_ctrl.la
 
 xineplug_inp_rtp_la_SOURCES = input_rtp.c
 xineplug_inp_rtp_la_LIBADD = $(XINE_LIB) $(NET_LIBS) $(PTHREAD_LIBS) $(LTLIBINTL) net_buf_ctrl.la
@@ -227,7 +228,6 @@ xineplug_inp_nfs_la_SOURCES = input_nfs.c
 xineplug_inp_nfs_la_LIBADD = $(XINE_LIB) $(LIBNFS_LIBS) $(LTLIBINTL) input_helper.la
 xineplug_inp_nfs_la_CFLAGS = $(AM_CFLAGS) $(LIBNFS_CFLAGS)
 
-xineplug_inp_ssh_la_SOURCES = input_ssh.c input_helper.h
+xineplug_inp_ssh_la_SOURCES = input_ssh.c
 xineplug_inp_ssh_la_LIBADD = $(XINE_LIB) $(LIBSSH2_LIBS) $(LTLIBINTL) http_helper.la input_helper.la
 xineplug_inp_ssh_la_CFLAGS = $(AM_CFLAGS) $(LIBSSH2_CFLAGS)
-

@@ -38,6 +38,7 @@ const plugin_info_t xine_plugin_info[] EXPORTED = {
   { PLUGIN_INPUT | PLUGIN_MUST_PRELOAD, 18, "http", XINE_VERSION_CODE, NULL, input_http_init_class },
   { PLUGIN_INPUT,                       18, "rtsp", XINE_VERSION_CODE, NULL, input_rtsp_init_class },
   { PLUGIN_INPUT,                       18, "pnm",  XINE_VERSION_CODE, NULL, input_pnm_init_class },
+  { PLUGIN_INPUT,                       18, "ftp",  XINE_VERSION_CODE, NULL, input_ftp_init_class },
   { PLUGIN_NONE, 0, "", 0, NULL, NULL }
 };
 

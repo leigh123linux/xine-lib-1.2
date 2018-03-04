@@ -19,6 +19,7 @@ AC_DEFUN([XINE_LIB_SUMMARY], [
             echo "   - vcd"
         fi
     fi
+    echo "   - ftp"
     if test x"$with_external_dvdnav" != x"no"; then
         echo "   - dvd (external libs)"
     else
