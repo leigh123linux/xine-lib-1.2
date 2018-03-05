@@ -1,5 +1,12 @@
-SUBDIRS = libmpcdec libxdg-basedir libdca nosefart gsm610 libmad a52dec \
-	libfaad
+SUBDIRS = \
+	a52dec \
+	gsm610 \
+	libdca \
+	libfaad \
+	libmad \
+	libmpcdec \
+	libxdg-basedir \
+	nosefart
 
 
 if BUILD_DHA_KMOD

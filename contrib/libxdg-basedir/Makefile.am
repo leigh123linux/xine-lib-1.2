@@ -4,4 +4,7 @@ endif
 
 AM_CFLAGS = $(DEFAULT_OCFLAGS) $(VISIBILITY_FLAG)
 
-libxdg_basedir_la_SOURCES = basedir.c basedir.h basedir_fs.h
+libxdg_basedir_la_SOURCES = \
+	basedir.c \
+	basedir.h \
+	basedir_fs.h

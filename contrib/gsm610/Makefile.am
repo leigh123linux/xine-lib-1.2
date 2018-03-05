@@ -8,19 +8,18 @@ noinst_LTLIBRARIES = libgsm610.la
 libgsm610_la_SOURCES = \
 	add.c \
 	decode.c \
+	gsm.h \
+	gsm_config.h \
 	gsm_create.c \
 	gsm_decode.c \
 	gsm_destroy.c \
 	long_term.c \
 	lpc.c \
-	rpe.c \
-	short_term.c \
-	table.c
-
-
-noinst_HEADERS = \
-	gsm_config.h \
-	gsm.h \
 	private.h \
 	proto.h \
+	rpe.c \
+	short_term.c \
+	table.c \
 	unproto.h
+
+
