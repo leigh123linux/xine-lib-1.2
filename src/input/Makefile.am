@@ -23,11 +23,14 @@ endif
 
 noinst_LTLIBRARIES = \
 	http_helper.la \
+	input_helper.la \
 	media_helper.la \
 	net_buf_ctrl.la
 
 http_helper_la_SOURCES = http_helper.c http_helper.h
 http_helper_la_LIBADD = $(XINE_LIB) $(LTLIBINTL)
+
+input_helper_la_SOURCES = input_helper.c input_helper.h
 
 media_helper_la_SOURCES = media_helper.c media_helper.h
 media_helper_la_LIBADD = $(XINE_LIB) $(LTLIBINTL)
@@ -220,11 +223,11 @@ xineplug_inp_bluray_la_SOURCES = input_bluray.c
 xineplug_inp_bluray_la_LIBADD = $(XINE_LIB) $(LIBBLURAY_LIBS) $(PTHREAD_LIBS) $(LTLIBINTL) media_helper.la
 xineplug_inp_bluray_la_CFLAGS = $(AM_CFLAGS) $(LIBBLURAY_CFLAGS)
 
-xineplug_inp_nfs_la_SOURCES = input_nfs.c input_helper.h
-xineplug_inp_nfs_la_LIBADD = $(XINE_LIB) $(LIBNFS_LIBS) $(LTLIBINTL)
+xineplug_inp_nfs_la_SOURCES = input_nfs.c
+xineplug_inp_nfs_la_LIBADD = $(XINE_LIB) $(LIBNFS_LIBS) $(LTLIBINTL) input_helper.la
 xineplug_inp_nfs_la_CFLAGS = $(AM_CFLAGS) $(LIBNFS_CFLAGS)
 
 xineplug_inp_ssh_la_SOURCES = input_ssh.c input_helper.h
-xineplug_inp_ssh_la_LIBADD = $(XINE_LIB) $(LIBSSH2_LIBS) $(LTLIBINTL) http_helper.la
+xineplug_inp_ssh_la_LIBADD = $(XINE_LIB) $(LIBSSH2_LIBS) $(LTLIBINTL) http_helper.la input_helper.la
 xineplug_inp_ssh_la_CFLAGS = $(AM_CFLAGS) $(LIBSSH2_CFLAGS)
 

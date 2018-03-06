@@ -21,36 +21,38 @@
  * input plugin helper functions
  */
 
-#ifndef XINE_INPUT_HELPER_H
-#define XINE_INPUT_HELPER_H
-
-#include <xine/attributes.h>
 #include <xine/xine_internal.h>
+
+#include "input_helper.h"
 
 /*
  * default read_block function.
  * uses read() to fill the block.
  */
-buf_element_t *_x_input_default_read_block (input_plugin_t *this_gen, fifo_buffer_t *fifo, off_t todo);
-
-static inline uint32_t _x_input_get_capabilities_preview (input_plugin_t *this_gen)
+buf_element_t *_x_input_default_read_block (input_plugin_t *this_gen, fifo_buffer_t *fifo, off_t todo)
 {
-  return INPUT_CAP_PREVIEW;
-}
+  buf_element_t *buf;
+  off_t          total_bytes;
 
-static inline uint32_t _x_input_get_capabilities_seekable (input_plugin_t *this_gen)
-{
-  return INPUT_CAP_SEEKABLE;
-}
+  if (todo < 0)
+    return NULL;
 
-static inline uint32_t _x_input_default_get_blocksize (input_plugin_t *this_gen)
-{
-  return 0;
-}
+  buf = fifo->buffer_pool_size_alloc (fifo, todo);
 
-static inline int _x_input_default_get_optional_data (input_plugin_t *this_gen, void *data, int data_type)
-{
-  return INPUT_OPTIONAL_UNSUPPORTED;
-}
+  if (todo > buf->max_size)
+    todo = buf->max_size;
 
-#endif /* XINE_INPUT_HELPER_H */
+  buf->content = buf->mem;
+  buf->type = BUF_DEMUX_BLOCK;
+
+  total_bytes = this_gen->read (this_gen, buf->content, todo);
+
+  if (total_bytes != todo) {
+    buf->free_buffer (buf);
+    return NULL;
+  }
+
+  buf->size = total_bytes;
+
+  return buf;
+}
