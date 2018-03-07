@@ -59,6 +59,7 @@
 #include "net_buf_ctrl.h"
 #include "group_network.h"
 #include "http_helper.h"
+#include "input_helper.h"
 
 #define BUFSIZE                 1024
 
@@ -473,34 +474,6 @@ static int resync_nsv(http_input_plugin_t *this) {
   return 1;
 }
 
-static buf_element_t *http_plugin_read_block (input_plugin_t *this_gen, fifo_buffer_t *fifo, off_t todo) {
-
-  off_t                 total_bytes;
-  buf_element_t        *buf = fifo->buffer_pool_alloc (fifo);
-
-  if (todo > buf->max_size)
-    todo = buf->max_size;
-  if (todo < 0) {
-    buf->free_buffer (buf);
-    return NULL;
-  }
-
-  buf->content = buf->mem;
-  buf->type = BUF_DEMUX_BLOCK;
-
-  total_bytes = http_plugin_read (this_gen, (char*)buf->content, todo);
-
-  if (total_bytes != todo) {
-    buf->free_buffer (buf);
-    buf = NULL;
-  }
-
-  if (buf != NULL)
-    buf->size = total_bytes;
-
-  return buf;
-}
-
 static off_t http_plugin_get_length (input_plugin_t *this_gen) {
   http_input_plugin_t *this = (http_input_plugin_t *) this_gen;
 
@@ -517,11 +490,6 @@ static uint32_t http_plugin_get_capabilities (input_plugin_t *this_gen) {
     caps |= INPUT_CAP_RIP_FORBIDDEN;
 
   return caps;
-}
-
-static uint32_t http_plugin_get_blocksize (input_plugin_t *this_gen) {
-
-  return 0;
 }
 
 static off_t http_plugin_get_current_pos (input_plugin_t *this_gen){
@@ -1031,11 +999,11 @@ static input_plugin_t *http_class_get_instance (input_class_t *cls_gen, xine_str
   this->input_plugin.open              = http_plugin_open;
   this->input_plugin.get_capabilities  = http_plugin_get_capabilities;
   this->input_plugin.read              = http_plugin_read;
-  this->input_plugin.read_block        = http_plugin_read_block;
+  this->input_plugin.read_block        = _x_input_default_read_block;
   this->input_plugin.seek              = http_plugin_seek;
   this->input_plugin.get_current_pos   = http_plugin_get_current_pos;
   this->input_plugin.get_length        = http_plugin_get_length;
-  this->input_plugin.get_blocksize     = http_plugin_get_blocksize;
+  this->input_plugin.get_blocksize     = _x_input_default_get_blocksize;
   this->input_plugin.get_mrl           = http_plugin_get_mrl;
   this->input_plugin.get_optional_data = http_plugin_get_optional_data;
   this->input_plugin.dispose           = http_plugin_dispose;

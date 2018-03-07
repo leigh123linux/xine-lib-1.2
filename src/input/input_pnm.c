@@ -53,6 +53,7 @@
 
 #include "pnm.h"
 #include "net_buf_ctrl.h"
+#include "input_helper.h"
 #include "group_network.h"
 
 #define BUFSIZE 4096
@@ -88,36 +89,6 @@ static off_t pnm_plugin_read (input_plugin_t *this_gen,
     this->curpos += n;
 
   return n;
-}
-
-static buf_element_t *pnm_plugin_read_block (input_plugin_t *this_gen,
-                                             fifo_buffer_t *fifo, off_t todo) {
-  /*pnm_input_plugin_t   *this = (pnm_input_plugin_t *) this_gen; */
-  buf_element_t        *buf = fifo->buffer_pool_alloc (fifo);
-  int                   total_bytes;
-
-  lprintf ("pnm_plugin_read_block: %"PRId64" bytes...\n", todo);
-
-  if (todo > buf->max_size)
-    todo = buf->max_size;
-  if (todo < 0) {
-    buf->free_buffer (buf);
-    return NULL;
-  }
-
-  buf->content = buf->mem;
-  buf->type = BUF_DEMUX_BLOCK;
-
-  total_bytes = pnm_plugin_read (this_gen, (char*)buf->content, todo);
-
-  if (total_bytes != todo) {
-    buf->free_buffer (buf);
-    return NULL;
-  }
-
-  buf->size = total_bytes;
-
-  return buf;
 }
 
 static off_t pnm_plugin_seek (input_plugin_t *this_gen, off_t offset, int origin) {
@@ -159,10 +130,6 @@ static off_t pnm_plugin_get_length (input_plugin_t *this_gen) {
 
 static uint32_t pnm_plugin_get_capabilities (input_plugin_t *this_gen) {
   return INPUT_CAP_PREVIEW | INPUT_CAP_RIP_FORBIDDEN;
-}
-
-static uint32_t pnm_plugin_get_blocksize (input_plugin_t *this_gen) {
-  return 0;
 }
 
 static off_t pnm_plugin_get_current_pos (input_plugin_t *this_gen){
@@ -254,11 +221,11 @@ static input_plugin_t *pnm_class_get_instance (input_class_t *cls_gen, xine_stre
   this->input_plugin.open              = pnm_plugin_open;
   this->input_plugin.get_capabilities  = pnm_plugin_get_capabilities;
   this->input_plugin.read              = pnm_plugin_read;
-  this->input_plugin.read_block        = pnm_plugin_read_block;
+  this->input_plugin.read_block        = _x_input_default_read_block;
   this->input_plugin.seek              = pnm_plugin_seek;
   this->input_plugin.get_current_pos   = pnm_plugin_get_current_pos;
   this->input_plugin.get_length        = pnm_plugin_get_length;
-  this->input_plugin.get_blocksize     = pnm_plugin_get_blocksize;
+  this->input_plugin.get_blocksize     = _x_input_default_get_blocksize;
   this->input_plugin.get_mrl           = pnm_plugin_get_mrl;
   this->input_plugin.dispose           = pnm_plugin_dispose;
   this->input_plugin.get_optional_data = pnm_plugin_get_optional_data;

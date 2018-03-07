@@ -80,6 +80,7 @@
 #include <xine/input_plugin.h>
 #include "net_buf_ctrl.h"
 #include "group_network.h"
+#include "input_helper.h"
 
 #define NET_BS_LEN 2324
 #define BUFSIZE                 1024
@@ -298,34 +299,6 @@ static off_t net_plugin_read (input_plugin_t *this_gen,
   return total;
 }
 
-static buf_element_t *net_plugin_read_block (input_plugin_t *this_gen,
-					     fifo_buffer_t *fifo, off_t todo) {
-  /* net_input_plugin_t   *this = (net_input_plugin_t *) this_gen; */
-  buf_element_t        *buf = fifo->buffer_pool_alloc (fifo);
-  off_t                 total_bytes;
-
-  if (todo > buf->max_size)
-    todo = buf->max_size;
-  if (todo < 0) {
-    buf->free_buffer (buf);
-    return NULL;
-  }
-
-  buf->content = buf->mem;
-  buf->type = BUF_DEMUX_BLOCK;
-
-  total_bytes = net_plugin_read (this_gen, (char*)buf->content, todo);
-
-  if (total_bytes != todo) {
-    buf->free_buffer (buf);
-    return NULL;
-  }
-
-  buf->size = total_bytes;
-
-  return buf;
-}
-
 static off_t net_plugin_get_length (input_plugin_t *this_gen) {
 
   return 0;
@@ -515,7 +488,7 @@ static input_plugin_t *net_class_get_instance (input_class_t *cls_gen, xine_stre
   this->input_plugin.open              = net_plugin_open;
   this->input_plugin.get_capabilities  = net_plugin_get_capabilities;
   this->input_plugin.read              = net_plugin_read;
-  this->input_plugin.read_block        = net_plugin_read_block;
+  this->input_plugin.read_block        = _x_input_default_read_block;
   this->input_plugin.seek              = net_plugin_seek;
   this->input_plugin.get_current_pos   = net_plugin_get_current_pos;
   this->input_plugin.get_length        = net_plugin_get_length;
