@@ -163,6 +163,8 @@ static int open_flac_file(demux_flac_t *flac) {
     /* SEEKTABLE */
     case 3:
       lprintf ("SEEKTABLE metadata, %d bytes\n", block_length);
+      if (!flac->sample_rate)
+        break;
       flac->seekpoint_count = block_length / FLAC_SEEKPOINT_SIZE;
       flac->seekpoints = xine_xcalloc(flac->seekpoint_count,
 				      sizeof(flac_seekpoint_t));
@@ -288,6 +290,11 @@ static int open_flac_file(demux_flac_t *flac) {
 
   } while ((preamble[0] & 0x80) == 0);
 
+  /* do not bail out yet, maybe decoder can handle this
+  if (!flac->sample_rate)
+    return 0;
+  */
+
   flac->data_start = flac->input->get_current_pos(flac->input);
   flac->data_size = flac->input->get_length(flac->input) - flac->data_start;
 
@@ -325,12 +332,14 @@ static int demux_flac_send_chunk(demux_plugin_t *this_gen) {
    */
 
   /* do this one step at a time to make sure all the numbers stay safe */
-  input_time_guess = this->total_samples;
-  input_time_guess /= this->sample_rate;
-  input_time_guess *= 1000;
-  input_time_guess *= buf->extra_info->input_normpos;
-  input_time_guess /= 65535;
-  buf->extra_info->input_time = input_time_guess;
+  if (this->sample_rate) {
+    input_time_guess = this->total_samples;
+    input_time_guess /= this->sample_rate;
+    input_time_guess *= 1000;
+    input_time_guess *= buf->extra_info->input_normpos;
+    input_time_guess /= 65535;
+    buf->extra_info->input_time = input_time_guess;
+  }
 
   if (this->input->read(this->input, buf->content, buf->size) !=
     buf->size) {
@@ -485,6 +494,9 @@ static int demux_flac_get_status (demux_plugin_t *this_gen) {
 static int demux_flac_get_stream_length (demux_plugin_t *this_gen) {
   demux_flac_t *this = (demux_flac_t *) this_gen;
   int64_t length = this->total_samples;
+
+  if (!this->sample_rate)
+    return 0;
 
   length *= 1000;
   length /= this->sample_rate;
