@@ -1345,10 +1345,14 @@ static void fill_extra_data(matroska_track_t *track, uint32_t fourcc) {
 
   /* create a bitmap info header struct */
   bih = calloc(1, sizeof(xine_bmiheader) + track->codec_private_len);
+  if (!bih)
+    return;
   bih->biSize = sizeof(xine_bmiheader) + track->codec_private_len;
   bih->biCompression = fourcc;
-  bih->biWidth = track->video_track->pixel_width;
-  bih->biHeight = track->video_track->pixel_height;
+  if (track->video_track) {
+    bih->biWidth = track->video_track->pixel_width;
+    bih->biHeight = track->video_track->pixel_height;
+  }
   /* this is to be passed to decoder in native machine endian */
   /* (no _x_bmiheader_le2me(bih);) */
 
