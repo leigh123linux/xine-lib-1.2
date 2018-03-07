@@ -193,11 +193,18 @@ static int open_flac_file(demux_flac_t *flac) {
     case 4:
       lprintf ("VORBIS_COMMENT metadata\n");
       {
-        char comments[block_length + 1]; /* last byte for NUL termination */
-        char *ptr = comments;
+        char *comments;
+        char *ptr;
         uint32_t length, user_comment_list_length, cn;
         char *comment;
         char c;
+
+        if (block_length < 8)
+          break;
+
+        comments = ptr = malloc(block_length + 1); /* last byte for NUL termination */
+        if (!comments)
+          break;
 
         if (flac->input->read(flac->input, comments, block_length) == block_length) {
           int tracknumber = -1;
@@ -205,21 +212,27 @@ static int open_flac_file(demux_flac_t *flac) {
 
           length = _X_LE_32(ptr);
           ptr += 4 + length;
-          if (length > block_length - 8)
+          if (length > block_length - 8) {
+            free(comments);
             return 0; /* bad length or too little left in the buffer */
+          }
 
           user_comment_list_length = _X_LE_32(ptr);
           ptr += 4;
 
           cn = 0;
           for (; cn < user_comment_list_length; cn++) {
-            if (ptr > comments + block_length - 4)
+            if (ptr > comments + block_length - 4) {
+              free(comments);
               return 0; /* too little left in the buffer */
+            }
 
             length = _X_LE_32(ptr);
             ptr += 4;
-            if (length >= block_length || ptr + length > comments + block_length)
+            if (length >= block_length || ptr + length > comments + block_length) {
+              free(comments);
               return 0; /* bad length */
+            }
 
             comment = (char*) ptr;
             c = comment[length];
@@ -271,6 +284,7 @@ static int open_flac_file(demux_flac_t *flac) {
             _x_meta_info_set(flac->stream, XINE_META_INFO_TRACK_NUMBER, tn);
           }
         }
+        free(comments);
       }
       break;
 
