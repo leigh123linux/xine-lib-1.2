@@ -1320,6 +1320,7 @@ static int open_internal (xine_stream_t *stream, const char *mrl) {
       case -1: /* Open unsuccessfull, but correct plugin */
 	stream->err = XINE_ERROR_INPUT_FAILED;
 	_x_flush_events_queues (stream);
+        free (buf);
 	return 0;
       default:
 	xine_log (stream->xine, XINE_LOG_MSG, _("xine: input plugin cannot open MRL [%s]\n"),mrl);
@@ -1334,6 +1335,7 @@ static int open_internal (xine_stream_t *stream, const char *mrl) {
     xine_log (stream->xine, XINE_LOG_MSG, _("xine: cannot find input plugin for MRL [%s]\n"),mrl);
     stream->err = XINE_ERROR_NO_INPUT_PLUGIN;
     _x_flush_events_queues (stream);
+    free (buf);
     return 0;
   }
 
