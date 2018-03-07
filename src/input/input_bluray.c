@@ -1181,13 +1181,14 @@ static off_t bluray_plugin_read (input_plugin_t *this_gen, void *buf, off_t len)
 
 static buf_element_t *bluray_plugin_read_block (input_plugin_t *this_gen, fifo_buffer_t *fifo, off_t todo)
 {
-  buf_element_t *buf = fifo->buffer_pool_alloc (fifo);
-
-  if (todo > (off_t)buf->max_size)
-    todo = buf->max_size;
+  buf_element_t *buf;
 
   if (todo > ALIGNED_UNIT_SIZE)
     todo = ALIGNED_UNIT_SIZE;
+
+  buf = fifo->buffer_pool_size_alloc (fifo, todo);
+  if (todo > (off_t)buf->max_size)
+    todo = buf->max_size;
 
   if (todo > 0) {
     bluray_input_plugin_t *this = (bluray_input_plugin_t *) this_gen;
