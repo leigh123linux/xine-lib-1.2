@@ -57,6 +57,7 @@
 #include <xine/input_plugin.h>
 
 #include "media_helper.h"
+#include "input_helper.h"
 
 /* */
 
@@ -1826,20 +1827,6 @@ static void parental_change_cb(void *data, xine_cfg_entry_t *cfg)
   class->parental = cfg->num_value;
 }
 
-static void free_xine_playlist(bluray_input_class_t *this)
-{
-  if (this->xine_playlist) {
-    int i;
-    for (i = 0; i < this->xine_playlist_size; i++) {
-      MRL_ZERO(this->xine_playlist[i]);
-      _x_freep(&this->xine_playlist[i]);
-    }
-    _x_freep (&this->xine_playlist);
-  }
-
-  this->xine_playlist_size = 0;
-}
-
 static const char * const *bluray_class_get_autoplay_list (input_class_t *this_gen, int *num_files)
 {
   static const char * const autoplay_list[] = { "bluray:/", NULL };
@@ -1858,38 +1845,36 @@ static xine_mrl_t **bluray_class_get_dir(input_class_t *this_gen, const char *fi
 
   lprintf("bluray_class_get_dir(%s)\n", filename);
 
-  free_xine_playlist(this);
+  _x_input_free_mrls(&this->xine_playlist);
+  *nFiles = 0;
 
   if (filename)
     parse_mrl(filename, &path, &title, &chapter);
 
   bdh = bd_open(path ? path : this->mountpoint, NULL);
+  if (!bdh)
+    goto out;
 
-  if (bdh) {
-    num_pl = bd_get_titles(bdh, TITLES_RELEVANT, MIN_TITLE_LENGTH);
+  num_pl = bd_get_titles(bdh, TITLES_RELEVANT, MIN_TITLE_LENGTH);
+  if (num_pl < 1)
+    goto out;
 
-    if (num_pl > 0) {
+  this->xine_playlist = _x_input_alloc_mrls(num_pl);
+  if (!this->xine_playlist)
+    goto out;
 
-      this->xine_playlist_size = num_pl;
-      this->xine_playlist      = calloc(this->xine_playlist_size + 1, sizeof(xine_mrl_t*));
-
-      for (i = 0; i < num_pl; i++) {
-        this->xine_playlist[i] = calloc(1, sizeof(xine_mrl_t));
-
-        this->xine_playlist[i]->origin = _x_asprintf("bluray:/%s", path ? path : "");
-        this->xine_playlist[i]->mrl    = _x_asprintf("bluray:/%s/%d", path ? path : "", i);
-        this->xine_playlist[i]->type   = mrl_dvd;
-      }
-    }
-
-    bd_close(bdh);
+  for (i = 0; i < num_pl; i++) {
+    this->xine_playlist[i]->origin = _x_asprintf("bluray:/%s", path ? path : "");
+    this->xine_playlist[i]->mrl    = _x_asprintf("bluray:/%s/%d", path ? path : "", i);
+    this->xine_playlist[i]->type   = mrl_dvd;
   }
 
+  *nFiles = num_pl;
+
+ out:
+  if (bdh)
+    bd_close(bdh);
   free(path);
-
-  if (nFiles)
-    *nFiles = this->xine_playlist_size;
-
   return this->xine_playlist;
 }
 
@@ -1905,7 +1890,7 @@ static void bluray_class_dispose (input_class_t *this_gen)
   bluray_input_class_t *this   = (bluray_input_class_t *) this_gen;
   config_values_t      *config = this->xine->config;
 
-  free_xine_playlist(this);
+  _x_input_free_mrls(&this->xine_playlist);
 
   config->unregister_callback(config, "media.bluray.mountpoint");
   config->unregister_callback(config, "media.bluray.device");
