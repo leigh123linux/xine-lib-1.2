@@ -1460,18 +1460,23 @@ static int parse_mrl(const char *mrl_in, char **path, int *title, int *chapter)
     return -1;
 
   char *mrl = strdup(mrl_in + skip);
+  if (!mrl)
+    return 0;
 
   /* title[.chapter] given ? parse and drop it */
-  if (mrl[strlen(mrl)-1] != '/') {
+  if (title && mrl[0] && mrl[strlen(mrl)-1] != '/') {
     char *end = strrchr(mrl, '/');
+    int tail_len = 0;
     if (end && end[1]) {
-      if (sscanf(end, "/%d.%d", title, chapter) < 1)
+      if (sscanf(end, "/%d.%d%n", title, chapter, &tail_len) < 1)
+        *title = -1;
+      else if (end[tail_len])
         *title = -1;
       else
         *end = 0;
     }
+    lprintf(" -> title %d, chapter %d, mrl \'%s\'\n", *title, *chapter, mrl);
   }
-  lprintf(" -> title %d, chapter %d, mrl \'%s\'\n", *title, *chapter, mrl);
 
   if ((mrl[0] == 0) || !strcmp(mrl, "/") || !strcmp(mrl, "//") || !strcmp(mrl, "///")) {
 
