@@ -251,6 +251,8 @@ static void *audio_decoder_loop (void *stream_gen) {
       }
       break;
 
+    case BUF_AUDIO_UNKNOWN:
+      break;
 
     default:
 

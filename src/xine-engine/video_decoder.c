@@ -391,6 +391,9 @@ static void *video_decoder_loop (void *stream_gen) {
       }
       break;
 
+    case BUF_VIDEO_UNKNOWN:
+      break;
+
     default:
 
       if ( (buf->type & 0xFF000000) == BUF_VIDEO_BASE ) {
