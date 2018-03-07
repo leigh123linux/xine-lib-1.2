@@ -3238,7 +3238,8 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
   case METHOD_BY_CONTENT: {
     if (!(input->get_capabilities (input) & INPUT_CAP_SEEKABLE))
       return NULL;
-    input->seek(input, 0, SEEK_SET);
+    if (input->seek(input, 0, SEEK_SET) != 0)
+      return NULL;
     ebml = new_ebml_parser(stream->xine, input);
     if (!ebml)
       goto error;
