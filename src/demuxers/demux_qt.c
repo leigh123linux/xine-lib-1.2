@@ -1857,7 +1857,9 @@ static qt_error build_frame_table(qt_trak *trak,
 
           /* figure out the offset and size */
           if (size_left) {
-            if (trak->sample_size_bits == 32)
+            if (!s)
+              size_value = 0;
+            else if (trak->sample_size_bits == 32)
               size_value = _X_BE_32 (s), s += 4;
             else if (trak->sample_size_bits == 16)
               size_value = _X_BE_16 (s), s += 2;
