@@ -1080,23 +1080,6 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
 				    input_plugin_t *input) {
   demux_mpeg_t       *this;
 
-  this         = calloc(1, sizeof(demux_mpeg_t));
-  this->stream = stream;
-  this->input  = input;
-
-  this->demux_plugin.send_headers      = demux_mpeg_send_headers;
-  this->demux_plugin.send_chunk       = demux_mpeg_send_chunk;
-  this->demux_plugin.seek              = demux_mpeg_seek;
-  this->demux_plugin.dispose           = default_demux_plugin_dispose;
-  this->demux_plugin.get_status        = demux_mpeg_get_status;
-  this->demux_plugin.get_stream_length = demux_mpeg_get_stream_length;
-  this->demux_plugin.get_capabilities  = demux_mpeg_get_capabilities;
-  this->demux_plugin.get_optional_data = demux_mpeg_get_optional_data;
-  this->demux_plugin.demux_class       = class_gen;
-
-  this->status = DEMUX_FINISHED;
-  this->has_pts = 0;
-
   switch (stream->content_detection_method) {
 
   case METHOD_BY_CONTENT: {
@@ -1109,14 +1092,12 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
 
     /* use demux_mpeg_block for block devices */
     if (input->get_capabilities(input) & INPUT_CAP_BLOCK ) {
-      free (this);
       return NULL;
     }
 
     /* look for mpeg header */
     read = _x_demux_read_header(input, buf, SCRATCH_SIZE);
     if (!read) {
-      free (this);
       return NULL;
     }
 
@@ -1134,7 +1115,6 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
 
     /* the special cases need seeking */
     if (!INPUT_IS_SEEKABLE(input)) {
-      free (this);
       return NULL;
     }
 
@@ -1157,13 +1137,11 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
 	  break;
       }
 
-      free (this);
       return NULL;
     }
 
     /* reset position for next check */
     if (input->seek(input, 0, SEEK_SET) != 0) {
-      free (this);
       return NULL;
     }
 
@@ -1173,7 +1151,6 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
       uint8_t large_buf[1024];
 
       if (input->read(input, large_buf, 12) != 12) {
-        free(this);
         return NULL;
       }
       fourcc_tag = _X_BE_32(&large_buf[8]);
@@ -1182,7 +1159,6 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
       if ((fourcc_tag == WAVE_TAG) ||
 	  (fourcc_tag == AVI_TAG) ||
 	  (fourcc_tag == FOURXM_TAG)) {
-	free (this);
 	return NULL;
       }
 
@@ -1205,7 +1181,6 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
       if (ok)
 	break;
     }
-    free (this);
     return NULL;
   }
 
@@ -1214,9 +1189,28 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
     break;
 
   default:
-    free (this);
     return NULL;
   }
+
+  this = calloc(1, sizeof(demux_mpeg_t));
+  if (!this)
+    return NULL;
+
+  this->stream = stream;
+  this->input  = input;
+
+  this->demux_plugin.send_headers      = demux_mpeg_send_headers;
+  this->demux_plugin.send_chunk        = demux_mpeg_send_chunk;
+  this->demux_plugin.seek              = demux_mpeg_seek;
+  this->demux_plugin.dispose           = default_demux_plugin_dispose;
+  this->demux_plugin.get_status        = demux_mpeg_get_status;
+  this->demux_plugin.get_stream_length = demux_mpeg_get_stream_length;
+  this->demux_plugin.get_capabilities  = demux_mpeg_get_capabilities;
+  this->demux_plugin.get_optional_data = demux_mpeg_get_optional_data;
+  this->demux_plugin.demux_class       = class_gen;
+
+  this->status = DEMUX_FINISHED;
+  this->has_pts = 0;
 
   return &this->demux_plugin;
 }
