@@ -266,15 +266,17 @@ int _x_io_select (xine_stream_t *stream, int fd, int state, int timeout_msec) {
             return XIO_ABORTED;
           break;
         case WAIT_ABANDONED:
-	  xine_log(stream->xine, XINE_LOG_MSG,
-                 _("io_helper: waiting abandoned\n"));
+          if (stream)
+            xine_log(stream->xine, XINE_LOG_MSG,
+                     _("io_helper: waiting abandoned\n"));
           return XIO_ERROR;
         case WAIT_FAILED:
         default:
           dwret = GetLastError();
           FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM, NULL, GetLastError(), 0, (LPSTR)&msg, sizeof(msg), NULL);
-	  xine_log(stream->xine, XINE_LOG_MSG,
-                 _("io_helper: waiting failed: %s\n"), msg);
+          if (stream)
+            xine_log(stream->xine, XINE_LOG_MSG,
+                     _("io_helper: waiting failed: %s\n"), msg);
           return XIO_ERROR;
       }
     }
@@ -364,7 +366,7 @@ static off_t xio_rw_abort(xine_stream_t *stream, int fd, int cmd, void *buf_gen,
     return -1;
   }
 
-  if (xine_config_lookup_entry (stream->xine, "media.network.timeout", &cfgentry)) {
+  if (stream && xine_config_lookup_entry (stream->xine, "media.network.timeout", &cfgentry)) {
     timeout = cfgentry.num_value * 1000;
   } else {
     timeout = 30000; /* 30K msecs = 30 secs */
@@ -405,16 +407,19 @@ static off_t xio_rw_abort(xine_stream_t *stream, int fd, int cmd, void *buf_gen,
 
       if (errno == EACCES) {
         _x_message(stream, XINE_MSG_PERMISSION_ERROR, NULL, NULL);
-	xine_log (stream->xine, XINE_LOG_MSG,
-		  _("io_helper: Permission denied\n"));
+        if (stream)
+          xine_log (stream->xine, XINE_LOG_MSG,
+                    _("io_helper: Permission denied\n"));
       } else if (errno == ENOENT) {
         _x_message(stream, XINE_MSG_FILE_NOT_FOUND, NULL, NULL);
-	xine_log (stream->xine, XINE_LOG_MSG,
-		  _("io_helper: File not found\n"));
+        if (stream)
+          xine_log (stream->xine, XINE_LOG_MSG,
+                    _("io_helper: File not found\n"));
       } else if (errno == ECONNREFUSED) {
 	_x_message(stream, XINE_MSG_CONNECTION_REFUSED, NULL, NULL);
-	xine_log (stream->xine, XINE_LOG_MSG,
-		  _("io_helper: Connection Refused\n"));
+        if (stream)
+          xine_log (stream->xine, XINE_LOG_MSG,
+                    _("io_helper: Connection Refused\n"));
       } else {
         perror("io_helper: I/O error");
       }
