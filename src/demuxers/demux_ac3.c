@@ -136,11 +136,11 @@ static int open_ac3_file(demux_ac3_t *this) {
 
   blocksize = this->input->get_blocksize(this->input);
   if (blocksize && INPUT_IS_SEEKABLE(this->input)) {
-    this->input->seek(this->input, 0, SEEK_SET);
+    if (this->input->seek(this->input, 0, SEEK_SET) != 0)
+      return 0;
     buf_element_t *buf = this->input->read_block(this->input,
 						 this->stream->audio_fifo,
 						 blocksize);
-    this->input->seek(this->input, 0, SEEK_SET);
 
     if (!buf)
       return 0;
@@ -149,6 +149,10 @@ static int open_ac3_file(demux_ac3_t *this) {
     xine_fast_memcpy(peak, buf->content, peak_size);
 
     buf->free_buffer(buf);
+
+    if (this->input->seek(this->input, 0, SEEK_SET) != 0)
+      return 0;
+
   } else {
     peak = alloca(peak_size = MAX_PREVIEW_SIZE);
 
