@@ -85,18 +85,7 @@ typedef struct {
 } demux_nsf_t;
 
 /* returns 1 if the NSF file was opened successfully, 0 otherwise */
-static int open_nsf_file(demux_nsf_t *this) {
-  unsigned char header[NSF_HEADER_SIZE];
-
-  if (this->input->seek(this->input, 0, SEEK_SET) != 0)
-    return 0;
-  if (this->input->read(this->input, header, NSF_HEADER_SIZE) !=
-    NSF_HEADER_SIZE)
-    return 0;
-
-  /* check for the signature */
-  if (memcmp(header, "NESM\x1A", 5) != 0)
-    return 0;
+static void parse_nsf_header(demux_nsf_t *this, const uint8_t *header) {
 
   this->total_songs = header[6];
   this->current_song = header[7];
@@ -105,8 +94,6 @@ static int open_nsf_file(demux_nsf_t *this) {
   this->copyright = strndup((char*)&header[0x4E], 0x20);
 
   this->filesize = this->input->get_length(this->input);
-
-  return 1;
 }
 
 static int demux_nsf_send_chunk(demux_plugin_t *this_gen) {
@@ -291,10 +278,27 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
                                     input_plugin_t *input) {
 
   demux_nsf_t   *this;
+  unsigned char header[NSF_HEADER_SIZE];
 
   if (!INPUT_IS_SEEKABLE(input)) {
     xprintf(stream->xine, XINE_VERBOSITY_DEBUG, "input not seekable, can not handle!\n");
     return NULL;
+  }
+
+  switch (stream->content_detection_method) {
+    case METHOD_BY_MRL:
+    case METHOD_BY_CONTENT:
+    case METHOD_EXPLICIT:
+      if (_x_demux_read_header(input, header, sizeof(header)) != NSF_HEADER_SIZE)
+        return NULL;
+
+      /* check for the signature */
+      if (memcmp(header, "NESM\x1A", 5) != 0)
+        return NULL;
+      break;
+
+    default:
+      return NULL;
   }
 
   this         = calloc(1, sizeof(demux_nsf_t));
@@ -316,23 +320,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
 
   this->status = DEMUX_FINISHED;
 
-  switch (stream->content_detection_method) {
-
-  case METHOD_BY_MRL:
-  case METHOD_BY_CONTENT:
-  case METHOD_EXPLICIT:
-
-    if (!open_nsf_file(this)) {
-      free (this);
-      return NULL;
-    }
-
-  break;
-
-  default:
-    free (this);
-    return NULL;
-  }
+  parse_nsf_header(this, header);
 
   return &this->demux_plugin;
 }
