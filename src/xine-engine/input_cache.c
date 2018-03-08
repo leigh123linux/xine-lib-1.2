@@ -68,6 +68,11 @@ static off_t cache_plugin_read(input_plugin_t *this_gen, void *buf_gen, off_t le
   lprintf("cache_plugin_read: len=%"PRId64"\n", len);
   this->read_call++;
 
+  if (len <= 0) {
+    _x_assert(len >= 0);
+    return len;
+  }
+
   /* optimized for common cases */
   if (len <= (this->buf_len - this->buf_pos)) {
     /* all bytes are in the buffer */
