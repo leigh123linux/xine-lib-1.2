@@ -564,25 +564,13 @@ open_plugin (demux_class_t *class_gen,
     switch (stream->content_detection_method) {
         case METHOD_BY_CONTENT:
         {
-          uint8_t      buf[MAX_PREVIEW_SIZE];
-          int          len;
+          uint8_t      buf[4];
 
           /*
            * try to get a preview of the data
            */
-          len = input->get_optional_data (input, buf, INPUT_OPTIONAL_DATA_PREVIEW);
-          if (len == INPUT_OPTIONAL_UNSUPPORTED) {
-
-            if (input->get_capabilities (input) & INPUT_CAP_SEEKABLE) {
-
-              input->seek (input, 0, SEEK_SET);
-              if ( (len=input->read (input, buf, 1024)) <= 0)
-                return NULL;
-              input->seek (input, 0, SEEK_SET);
-
-            } else
-              return NULL;
-          }
+          if (_x_demux_read_header(input, buf, sizeof(buf)) < 4)
+            return NULL;
 
           /* FIXME: Skip id3v2 tag */
           /* Look for fLaC tag at the beginning of file */
