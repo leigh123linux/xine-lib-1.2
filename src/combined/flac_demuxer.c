@@ -297,6 +297,7 @@ flac_metadata_callback (const FLAC__SeekableStreamDecoder *decoder,
        this->bits_per_sample = metadata->data.stream_info.bits_per_sample;
        this->channels        = metadata->data.stream_info.channels;
        this->sample_rate     = metadata->data.stream_info.sample_rate;
+       if (this->sample_rate)
        this->length_in_msec  = (this->total_samples * 1000) /
                                 this->sample_rate;
      }
