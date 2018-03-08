@@ -162,6 +162,9 @@ static int open_ac3_file(demux_ac3_t *this) {
 
   lprintf("peak size: %zu\n", peak_size);
 
+  if (peak_size < 16)
+    return 0;
+
   /* Check for wav header, as we'll handle AC3 with a wav header shoved
   * on the front for CD burning */
   /* FIXME: This is risky. Real LPCM may contain anything, even sync words. */
@@ -169,6 +172,9 @@ static int open_ac3_file(demux_ac3_t *this) {
     /* Check this looks like a cd audio wav */
     unsigned int audio_type;
     xine_waveformatex *wave = (xine_waveformatex *) &peak[20];
+
+    if (peak_size < 20 + sizeof(xine_waveformatex))
+      return 0;
 
     _x_waveformatex_le2me(wave);
     audio_type = _x_formattag_to_buf_audio(wave->wFormatTag);
