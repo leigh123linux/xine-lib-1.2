@@ -182,13 +182,11 @@ static uint32_t read_bytes (demux_mpeg_t *this, uint32_t n) {
   _x_assert(n > 0);
   _x_assert(n <= 4);
 
-  buf[4]=0;
-
   i = this->input->read (this->input, buf, n);
 
   if (i != n) {
-
     this->status = DEMUX_FINISHED;
+    return 0;
   }
 
   switch (n)  {
