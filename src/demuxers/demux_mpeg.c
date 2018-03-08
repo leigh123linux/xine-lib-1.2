@@ -236,7 +236,8 @@ static void check_newpts( demux_mpeg_t *this, int64_t pts, int video ) {
 static void parse_mpeg2_packet (demux_mpeg_t *this, int stream_id, int64_t scr) {
 
   int            len, i;
-  uint32_t       w, flags, header_len;
+  int            header_len;
+  uint32_t       w, flags;
   int64_t        pts, dts;
   buf_element_t *buf = NULL;
 
@@ -256,7 +257,7 @@ static void parse_mpeg2_packet (demux_mpeg_t *this, int stream_id, int64_t scr) 
 
     pts=0;
 
-    if ((flags & 0x80) == 0x80) {
+    if ((flags & 0x80) == 0x80 && header_len >= 5) {
 
       w = read_bytes(this, 1);
       pts = (int64_t)(w & 0x0e) << 29 ;
@@ -433,7 +434,7 @@ static void parse_mpeg2_packet (demux_mpeg_t *this, int stream_id, int64_t scr) 
 
     pts = 0;
 
-    if ((flags & 0x80) == 0x80) {
+    if ((flags & 0x80) == 0x80 && header_len >= 5) {
 
       w = read_bytes(this, 1);
       pts = (int64_t)(w & 0x0e) << 29 ;
@@ -492,7 +493,7 @@ static void parse_mpeg2_packet (demux_mpeg_t *this, int stream_id, int64_t scr) 
     pts = 0;
     dts = 0;
 
-    if ((flags & 0x80) == 0x80) {
+    if ((flags & 0x80) == 0x80 && header_len >= 5) {
 
       w = read_bytes(this, 1);
       pts = (int64_t)(w & 0x0e) << 29 ;
@@ -504,7 +505,7 @@ static void parse_mpeg2_packet (demux_mpeg_t *this, int stream_id, int64_t scr) 
       header_len -= 5 ;
     }
 
-    if ((flags & 0x40) == 0x40) {
+    if ((flags & 0x40) == 0x40 && header_len >= 5) {
 
       w = read_bytes(this, 1);
       dts = (int64_t)(w & 0x0e) << 29 ;
