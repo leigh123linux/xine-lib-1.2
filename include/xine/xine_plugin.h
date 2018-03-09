@@ -103,6 +103,6 @@ typedef struct {
  *   };
  *
  */
-void xine_register_plugins(xine_t *self, plugin_info_t *info) XINE_PROTECTED;
+void xine_register_plugins(xine_t *self, const plugin_info_t *info) XINE_PROTECTED;
 
 #endif

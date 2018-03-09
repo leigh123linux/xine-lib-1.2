@@ -624,7 +624,7 @@ static void _register_plugins_internal(xine_t *this, plugin_file_t *file,
   }
 }
 
-void xine_register_plugins(xine_t *self, plugin_info_t *info) {
+void xine_register_plugins(xine_t *self, const plugin_info_t *info) {
   _register_plugins_internal(self, NULL, NULL, info);
 }
 
