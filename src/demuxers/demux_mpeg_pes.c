@@ -1342,7 +1342,8 @@ static int demux_mpeg_pes_estimate_rate (demux_mpeg_pes_t *this) {
      they should continue to be so throughout.
    */
 
-  this->input->seek (this->input, pos, SEEK_SET);
+  if (this->input->seek (this->input, pos, SEEK_SET) != pos)
+    return 0;
 
   while ( (buf = this->input->read_block (this->input, this->video_fifo, 2048))
           && count < MAX_SAMPLES && reads++ < MAX_READS ) {
@@ -1486,7 +1487,10 @@ static void demux_mpeg_pes_send_headers (demux_plugin_t *this_gen) {
 
     int num_buffers = NUM_PREVIEW_BUFFERS;
 
-    this->input->seek (this->input, 0, SEEK_SET);
+    if (this->input->seek (this->input, 0, SEEK_SET) != 0) {
+      this->status = DEMUX_FINISHED;
+      return;
+    }
 
     this->status = DEMUX_OK ;
     while ( (num_buffers>0) && (this->status == DEMUX_OK) ) {
