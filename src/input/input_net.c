@@ -107,15 +107,6 @@ typedef struct {
 
 } net_input_plugin_t;
 
-typedef struct {
-
-  input_class_t     input_class;
-
-  xine_t           *xine;
-  config_values_t  *config;
-
-} net_input_class_t;
-
 /* **************************************************************** */
 /*                       Private functions                          */
 /* **************************************************************** */
@@ -508,19 +499,19 @@ static input_plugin_t *net_class_get_instance (input_class_t *cls_gen, xine_stre
 
 void *input_net_init_class (xine_t *xine, const void *data) {
 
-  net_input_class_t  *this;
+  input_class_t *this;
 
-  this         = calloc(1, sizeof(net_input_class_t));
-  this->config = xine->config;
-  this->xine   = xine;
+  this = calloc(1, sizeof(*this));
+  if (!this)
+    return NULL;
 
-  this->input_class.get_instance      = net_class_get_instance;
-  this->input_class.description       = N_("net input plugin as shipped with xine");
-  this->input_class.identifier        = "TCP";
-  this->input_class.get_dir           = NULL;
-  this->input_class.get_autoplay_list = NULL;
-  this->input_class.dispose           = default_input_class_dispose;
-  this->input_class.eject_media       = NULL;
+  this->get_instance      = net_class_get_instance;
+  this->description       = N_("net input plugin as shipped with xine");
+  this->identifier        = "TCP";
+  this->get_dir           = NULL;
+  this->get_autoplay_list = NULL;
+  this->dispose           = default_input_class_dispose;
+  this->eject_media       = NULL;
 
   return this;
 }
