@@ -20,7 +20,7 @@ xineplug_post_tvtime_la_SOURCES = \
 	tvtime.h \
 	xine_plugin.c
 
-xineplug_post_tvtime_la_CFLAGS = $(AM_CFLAGS) -fno-strict-aliasing
+xineplug_post_tvtime_la_CFLAGS = $(AM_CFLAGS)
 xineplug_post_tvtime_la_LIBADD = $(XINE_LIB) $(LTLIBINTL) $(PTHREAD_LIBS) \
 	$(top_builddir)/src/post/deinterlace/plugins/libdeinterlaceplugins.la
 
