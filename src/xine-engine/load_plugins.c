@@ -274,7 +274,8 @@ static void _decoder_priority_cb(void *data, xine_cfg_entry_t *cfg) {
 }
 
 static plugin_node_t *_get_cached_node (xine_t *this,
-					char *filename, off_t filesize, time_t filemtime,
+                                        const char *filename,
+                                        off_t filesize, time_t filemtime,
 					plugin_node_t *previous_node) {
   xine_sarray_t *list = this->plugin_catalog->cache_list;
   int            list_id, list_size;
@@ -302,7 +303,8 @@ static plugin_node_t *_get_cached_node (xine_t *this,
 
 static plugin_file_t *_insert_file (xine_t *this,
 				    xine_list_t *list,
-				    char *filename, struct stat *statbuffer,
+                                    const char *filename,
+                                    const struct stat *statbuffer,
 				    void *lib) {
   plugin_file_t *entry;
 
@@ -495,8 +497,8 @@ static void _insert_node (xine_t *this,
 
 
 static int _plugin_node_comparator(void *a, void *b) {
-  plugin_node_t *node_a = (plugin_node_t *)a;
-  plugin_node_t *node_b = (plugin_node_t *)b;
+  const plugin_node_t *node_a = (const plugin_node_t *)a;
+  const plugin_node_t *node_b = (const plugin_node_t *)b;
 
   if (node_a->priority > node_b->priority) {
     return -1;
@@ -633,7 +635,7 @@ void xine_register_plugins(xine_t *self, const plugin_info_t *info) {
  *
  ***************************************************************************/
 
-static void collect_plugins(xine_t *this, char *path){
+static void collect_plugins(xine_t *this, const char *path){
 
   DIR *dir;
 
@@ -650,7 +652,7 @@ static void collect_plugins(xine_t *this, char *path){
 
     while ((pEntry = readdir (dir)) != NULL) {
       void *lib = NULL;
-      plugin_info_t *info = NULL;
+      const plugin_info_t *info = NULL;
       plugin_node_t *node = NULL;
 
       struct stat statbuffer;
@@ -797,10 +799,10 @@ static int _load_plugin_class(xine_t *this,
 			      plugin_node_t *node,
 			      void *data) {
   if (node->file) {
-    char *filename = node->file->filename;
-    plugin_info_t *target = node->info;
+    const char *filename = node->file->filename;
+    const plugin_info_t *target = node->info;
+    const plugin_info_t *info;
     void *lib;
-    plugin_info_t *info;
 
     /* load the dynamic library if needed */
     if (!node->file->lib_handle) {
@@ -1025,7 +1027,7 @@ static void save_plugin_list(xine_t *this, FILE *fp, xine_sarray_t *list) {
     if (node->config_entry_list) {
       xine_list_iterator_t ite = xine_list_front(node->config_entry_list);
       while (ite) {
-        char *key = xine_list_get_value(node->config_entry_list, ite);
+        const char *key = xine_list_get_value(node->config_entry_list, ite);
 
         /* now serialize the config key */
         char *key_value = this->config->get_serialized_entry(this->config, key);
@@ -1377,7 +1379,8 @@ static void push_if_dir (xine_list_t *plugindirs, void *path)
  */
 int _x_scan_plugins (xine_t *this) {
 
-  char *homedir = NULL, *pluginpath = NULL;
+  const char *pluginpath = NULL;
+  char *homedir = NULL;
   xine_list_t *plugindirs = NULL;
   xine_list_iterator_t iter;
   int result = -1;
@@ -1408,11 +1411,12 @@ int _x_scan_plugins (xine_t *this) {
 #endif
 
   if ((pluginpath = getenv("XINE_PLUGIN_PATH")) != NULL && *pluginpath) {
-    char *p = pluginpath;
+    const char *p = pluginpath;
     while (p && p[0])
     {
       size_t len;
-      char *dir, *q;
+      const char *q;
+      char *dir;
 
       q = p;
       p = strchr (p, XINE_PATH_SEPARATOR_CHAR);
