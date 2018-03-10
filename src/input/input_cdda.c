@@ -332,9 +332,6 @@ typedef struct {
   int                  show_hidden_files;
   char                *origin_path;
 
-  int                  mrls_allocated_entries;
-  xine_mrl_t         **mrls;
-
   char               **autoplaylist;
 
 } cdda_input_class_t;
@@ -2751,12 +2748,6 @@ static void cdda_class_dispose (input_class_t *this_gen) {
 
   free_autoplay_list(this);
 
-  while (this->mrls_allocated_entries) {
-    MRL_ZERO(this->mrls[this->mrls_allocated_entries - 1]);
-    free(this->mrls[this->mrls_allocated_entries--]);
-  }
-  free (this->mrls);
-
   free (this);
 }
 
@@ -2787,8 +2778,6 @@ static void *init_plugin (xine_t *xine, const void *data) {
   this->input_class.dispose            = cdda_class_dispose;
   this->input_class.eject_media        = cdda_class_eject_media;
 
-  this->mrls = NULL;
-  this->mrls_allocated_entries = 0;
   this->ip = NULL;
 
   this->cdda_device = config->register_filename(config, "media.audio_cd.device",
