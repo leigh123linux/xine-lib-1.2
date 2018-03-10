@@ -435,13 +435,13 @@ static void parse_mpeg2_packet (demux_mpeg_t *this, int stream_id, int64_t scr) 
           this->video_fifo->put (this->video_fifo, buf);
           pts = 0;
         }
+        lprintf ("SPU SVCD PACK (pts: %"PRId64", spu id: %d) put on FIFO\n", pts, type & 3);
       }
       /* There is a bug in WinSubMux doesn't redo PACK headers in
 	 the private stream 1. This might cause the below to mess up.
       if( !preview_mode )
         check_newpts( this, this->pts, PTS_VIDEO );
       */
-      lprintf ("SPU SVCD PACK (pts: %"PRId64", spu id: %d) put on FIFO\n", buf->pts, type & 3);
       return;
     }
 
