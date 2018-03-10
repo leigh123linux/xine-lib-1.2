@@ -1636,6 +1636,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
   switch (stream->content_detection_method) {
 
   case METHOD_BY_CONTENT: {
+    uint8_t buf[6];
 
     /* use demux_mpeg_block for block devices */
     if ((input->get_capabilities(input) & INPUT_CAP_BLOCK)) {
@@ -1643,71 +1644,27 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
       return NULL;
     }
 
-    if (((input->get_capabilities(input) & INPUT_CAP_PREVIEW) != 0) ) {
-
-      int preview_size = input->get_optional_data(input, &this->preview_data, INPUT_OPTIONAL_DATA_PREVIEW);
-
-      if (preview_size >= 6) {
-        lprintf("open_plugin:get_optional_data worked\n");
-
-        if (this->preview_data[0] || this->preview_data[1]
-            || (this->preview_data[2] != 0x01) ) {
-          lprintf("open_plugin:preview_data failed\n");
-
-          free (this);
-          return NULL;
-        }
-        switch(this->preview_data[3]) {
-
-        case 0xe0 ... 0xef:
-        case 0xc0 ... 0xdf:
-        case 0xbd ... 0xbe:
-          break;
-        default:
-          free (this);
-          return NULL;
-        }
-
-        lprintf("open_plugin:Accepting detection_method XINE_DEMUX_CONTENT_STRATEGY (preview_data)\n");
-
-        break;
-      }
+    if (_x_demux_read_header(input, buf, sizeof(buf)) != 6) {
+      free(this);
+      return NULL;
     }
 
-    if (((input->get_capabilities(input) & INPUT_CAP_SEEKABLE) != 0) ) {
-      uint8_t scratch[6];
-      input->seek(input, 0, SEEK_SET);
-      if (input->read(input, scratch, 6) == 6) {
-        lprintf("open_plugin:read worked\n");
-
-        if (scratch[0] || scratch[1]
-            || (scratch[2] != 0x01) ) {
-          lprintf("open_plugin:scratch failed\n");
-
-          free (this);
-          return NULL;
-        }
-        switch(scratch[3]) {
-
-        case 0xe0 ... 0xef:
-        case 0xc0 ... 0xdf:
-        case 0xbd ... 0xbe:
-          break;
-        default:
-          free (this);
-          return NULL;
-        }
-
-        input->seek(input, 0, SEEK_SET);
-
-        lprintf("open_plugin:Accepting detection_method XINE_DEMUX_CONTENT_STRATEGY \n");
-
+    if (buf[0] || buf[1] || (buf[2] != 0x01)) {
+      lprintf("open_plugin:preview_data failed\n");
+      free (this);
+      return NULL;
+    }
+    switch (buf[3]) {
+      case 0xe0 ... 0xef:
+      case 0xc0 ... 0xdf:
+      case 0xbd ... 0xbe:
         break;
-      }
+      default:
+        free (this);
+        return NULL;
     }
 
-    free (this);
-    return NULL;
+    lprintf("open_plugin:Accepting detection_method XINE_DEMUX_CONTENT_STRATEGY (preview_data)\n");
   }
   break;
 
