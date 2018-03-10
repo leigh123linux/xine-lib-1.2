@@ -1,7 +1,8 @@
 include $(top_builddir)/misc/Makefile.plugins
 include $(top_srcdir)/misc/Makefile.common
 
-AM_CFLAGS  = $(VISIBILITY_FLAG)
+AM_CFLAGS = $(DEFAULT_OCFLAGS) $(VISIBILITY_FLAG)
+AM_LDFLAGS = $(xineplug_ldflags)
 
 EXTRA_DIST = mmx.c xmmx.c ppc_drawings.s ppc_zoom_ultimate.s diff_against_release.patch \
 	gfontrle.c mathtools.c
@@ -14,10 +15,9 @@ EXTRA_DIST += \
 noinst_LTLIBRARIES = libpost_goom_asm.la
 libpost_goom_asm_la_SOURCES = xmmx.c
 if DEBUG_BUILD
-libpost_goom_asm_la_CFLAGS  = $(O1_CFLAGS) $(AM_CFLAGS)
-else
-libpost_goom_asm_la_CFLAGS  = $(DEFAULT_OCFLAGS) $(AM_CFLAGS)
+libpost_goom_asm_la_CFLAGS  = $(O1_CFLAGS) $(VISIBILITY_FLAG)
 endif
+libpost_goom_asm_la_LDFLAGS =
 
 xinepost_LTLIBRARIES = xineplug_post_goom.la
 xineplug_post_goom_la_SOURCES = \
@@ -65,7 +65,4 @@ xineplug_post_goom_la_SOURCES = \
 	v3d.c \
 	v3d.h \
 	xine_goom.c
-
-xineplug_post_goom_la_LIBADD  = $(XINE_LIB) $(GOOM_LIBS) $(PTHREAD_LIBS) $(LTLIBINTL) -lm $(noinst_LTLIBRARIES)
-xineplug_post_goom_la_CFLAGS  = $(DEFAULT_OCFLAGS) $(AM_CFLAGS)
-xineplug_post_goom_la_LDFLAGS = $(AM_LDFLAGS) $(xineplug_ldflags)
+xineplug_post_goom_la_LIBADD = $(XINE_LIB) $(GOOM_LIBS) $(PTHREAD_LIBS) $(LTLIBINTL) -lm libpost_goom_asm.la
