@@ -913,8 +913,9 @@ static xine_mrl_t **file_input_class_get_dir (input_class_t *this_gen, const cha
    * Freeing exceeded mrls if exists.
    */
   while(this->mrls_allocated_entries > num_files) {
-    MRL_ZERO(this->mrls[this->mrls_allocated_entries - 1]);
-    _x_freep(&this->mrls[this->mrls_allocated_entries--]);
+    this->mrls_allocated_entries--;
+    MRL_ZERO(this->mrls[this->mrls_allocated_entries]);
+    _x_freep(&this->mrls[this->mrls_allocated_entries]);
   }
 
   /*
@@ -946,8 +947,9 @@ static void file_input_class_dispose (input_class_t *this_gen) {
   config->unregister_callback(config, "media.files.show_hidden_files");
 
   while(this->mrls_allocated_entries) {
-    MRL_ZERO(this->mrls[this->mrls_allocated_entries - 1]);
-    _x_freep(&this->mrls[this->mrls_allocated_entries--]);
+    this->mrls_allocated_entries--;
+    MRL_ZERO(this->mrls[this->mrls_allocated_entries]);
+    _x_freep(&this->mrls[this->mrls_allocated_entries]);
   }
   _x_freep (&this->mrls);
 

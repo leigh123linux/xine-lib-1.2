@@ -945,7 +945,14 @@ static void vcd_class_dispose (input_class_t *this_gen) {
   config->unregister_callback(config, "media.vcd.device");
 
   vcd_filelist_dispose(this);
-  free (this->mrls);
+
+  while (this->mrls_allocated_entries) {
+    this->mrls_allocated_entries--;
+    MRL_ZERO(this->mrls[this->mrls_allocated_entries]);
+    _x_freep(&this->mrls[this->mrls_allocated_entries]);
+  }
+  _x_freep(&this->mrls);
+
   free (this);
 }
 
@@ -999,7 +1006,7 @@ static xine_mrl_t **vcd_class_get_dir (input_class_t *this_gen, const char *file
       this->mrls[(i-1)] = calloc(1, sizeof(xine_mrl_t));
     }
     else {
-      memset(this->mrls[(i-1)], 0, sizeof(xine_mrl_t));
+      MRL_ZERO(this->mrls[(i-1)]);
     }
 
     this->mrls[i-1]->mrl  = _x_asprintf("vcdo:/%d", i);
@@ -1014,8 +1021,9 @@ static xine_mrl_t **vcd_class_get_dir (input_class_t *this_gen, const char *file
    * Freeing exceeded mrls if exists.
    */
   while(this->mrls_allocated_entries > *num_files) {
-    MRL_ZERO(this->mrls[this->mrls_allocated_entries - 1]);
-    free(this->mrls[this->mrls_allocated_entries--]);
+    this->mrls_allocated_entries--;
+    MRL_ZERO(this->mrls[this->mrls_allocated_entries]);
+    _x_freep(&this->mrls[this->mrls_allocated_entries]);
   }
 
   this->mrls[*num_files] = NULL;

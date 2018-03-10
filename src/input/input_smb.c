@@ -394,8 +394,9 @@ static xine_mrl_t **smb_class_get_dir (input_class_t *this_gen,
 	 * Freeing exceeded mrls if exists.
 	 */
 	while(this->mrls_allocated_entries > num_files) {
-		MRL_ZERO(this->mrls[this->mrls_allocated_entries - 1]);
-		free(this->mrls[this->mrls_allocated_entries--]);
+          this->mrls_allocated_entries--;
+          MRL_ZERO(this->mrls[this->mrls_allocated_entries]);
+          _x_freep(&this->mrls[this->mrls_allocated_entries]);
 	}
 
 	/*
@@ -446,10 +447,11 @@ smb_class_dispose (input_class_t *this_gen)
 	smb_input_class_t *this = (smb_input_class_t *) this_gen;
 
 	while(this->mrls_allocated_entries) {
-		MRL_ZERO(this->mrls[this->mrls_allocated_entries - 1]);
-		free(this->mrls[this->mrls_allocated_entries--]);
+          this->mrls_allocated_entries--;
+          MRL_ZERO(this->mrls[this->mrls_allocated_entries]);
+          _x_freep(&this->mrls[this->mrls_allocated_entries]);
 	}
-	free(this->mrls);
+        _x_freep(&this->mrls);
 
 	free (this);
 }
