@@ -869,28 +869,36 @@ static void _dispose_plugin_class(plugin_node_t *node) {
     /* dispose of plugin class */
     switch (node->info->type & PLUGIN_TYPE_MASK) {
     case PLUGIN_INPUT:
-      ((input_class_t *)cls)->dispose ((input_class_t *)cls);
+      if (((input_class_t *)cls)->dispose)
+        ((input_class_t *)cls)->dispose ((input_class_t *)cls);
       break;
     case PLUGIN_DEMUX:
-      ((demux_class_t *)cls)->dispose ((demux_class_t *)cls);
+      if (((demux_class_t *)cls)->dispose)
+        ((demux_class_t *)cls)->dispose ((demux_class_t *)cls);
       break;
     case PLUGIN_SPU_DECODER:
-      ((spu_decoder_class_t *)cls)->dispose ((spu_decoder_class_t *)cls);
+      if (((spu_decoder_class_t *)cls)->dispose)
+        ((spu_decoder_class_t *)cls)->dispose ((spu_decoder_class_t *)cls);
       break;
     case PLUGIN_AUDIO_DECODER:
-      ((audio_decoder_class_t *)cls)->dispose ((audio_decoder_class_t *)cls);
+      if (((audio_decoder_class_t *)cls)->dispose)
+        ((audio_decoder_class_t *)cls)->dispose ((audio_decoder_class_t *)cls);
       break;
     case PLUGIN_VIDEO_DECODER:
-      ((video_decoder_class_t *)cls)->dispose ((video_decoder_class_t *)cls);
+      if (((video_decoder_class_t *)cls)->dispose)
+        ((video_decoder_class_t *)cls)->dispose ((video_decoder_class_t *)cls);
       break;
     case PLUGIN_AUDIO_OUT:
-      ((audio_driver_class_t *)cls)->dispose ((audio_driver_class_t *)cls);
+      if (((audio_driver_class_t *)cls)->dispose)
+        ((audio_driver_class_t *)cls)->dispose ((audio_driver_class_t *)cls);
       break;
     case PLUGIN_VIDEO_OUT:
-      ((video_driver_class_t *)cls)->dispose ((video_driver_class_t *)cls);
+      if (((video_driver_class_t *)cls)->dispose)
+        ((video_driver_class_t *)cls)->dispose ((video_driver_class_t *)cls);
       break;
     case PLUGIN_POST:
-      ((post_class_t *)cls)->dispose ((post_class_t *)cls);
+      if (((post_class_t *)cls)->dispose)
+        ((post_class_t *)cls)->dispose ((post_class_t *)cls);
       break;
     }
     node->plugin_class = NULL;
