@@ -842,7 +842,7 @@ static xine_mrl_t **file_input_class_get_dir (input_class_t *this_gen, const cha
       else
 	MRL_ZERO(this->mrls[num_files]);
 
-      MRL_DUPLICATE(&dir_files[i], this->mrls[num_files]);
+      *(this->mrls[num_files]) = dir_files[i];
 
       num_files++;
     }
@@ -860,7 +860,7 @@ static xine_mrl_t **file_input_class_get_dir (input_class_t *this_gen, const cha
       else
 	MRL_ZERO(this->mrls[num_files]);
 
-      MRL_DUPLICATE(&hide_files[i], this->mrls[num_files]);
+      *(this->mrls[num_files]) = hide_files[i];
 
       num_files++;
     }
@@ -878,24 +878,15 @@ static xine_mrl_t **file_input_class_get_dir (input_class_t *this_gen, const cha
       else
 	MRL_ZERO(this->mrls[num_files]);
 
-      MRL_DUPLICATE(&norm_files[i], this->mrls[num_files]);
+      *(this->mrls[num_files]) = norm_files[i];
 
       num_files++;
     }
 
     /* Some cleanups before leaving */
-    for(i = num_dir_files; i == 0; i--)
-      MRL_ZERO(&dir_files[i]);
     free(dir_files);
-
-    for(i = num_hide_files; i == 0; i--)
-      MRL_ZERO(&hide_files[i]);
     free(hide_files);
-
-    for(i = num_norm_files; i == 0; i--)
-      MRL_ZERO(&norm_files[i]);
     free(norm_files);
-
   }
   else {
     free(hide_files);

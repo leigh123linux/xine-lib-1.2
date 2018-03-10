@@ -347,8 +347,7 @@ static xine_mrl_t **smb_class_get_dir (input_class_t *this_gen,
 			}else
 				MRL_ZERO(this->mrls[num_files]);
 
-			MRL_DUPLICATE(&dir_files[i], this->mrls[num_files]);
-
+                        *(this->mrls[num_files]) = dir_files[i];
 			num_files++;
 		}
 
@@ -364,18 +363,12 @@ static xine_mrl_t **smb_class_get_dir (input_class_t *this_gen,
 			}else
 				MRL_ZERO(this->mrls[num_files]);
 
-			MRL_DUPLICATE(&norm_files[i], this->mrls[num_files]);
-
+                        *(this->mrls[num_files]) = norm_files[i];
 			num_files++;
 		}
 
 		/* Some cleanups before leaving */
-		for(i = num_dir_files; i == 0; i--)
-			MRL_ZERO(&dir_files[i]);
 		free(dir_files);
-
-		for(i = num_norm_files; i == 0; i--)
-			MRL_ZERO(&norm_files[i]);
 		free(norm_files);
 	}else {
 		xprintf (this->xine, XINE_VERBOSITY_DEBUG,
