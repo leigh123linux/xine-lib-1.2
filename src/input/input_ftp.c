@@ -353,7 +353,7 @@ static int _retr(ftp_input_plugin_t *this, const char *uri)
  * xine plugin
  */
 
-static off_t _read (input_plugin_t *this_gen, void *buf_gen, off_t len)
+static off_t _ftp_read (input_plugin_t *this_gen, void *buf_gen, off_t len)
 {
   ftp_input_plugin_t *this = (ftp_input_plugin_t *) this_gen;
   uint8_t *buf = buf_gen;
@@ -384,33 +384,33 @@ static off_t _read (input_plugin_t *this_gen, void *buf_gen, off_t len)
   return got;
 }
 
-static off_t _get_length (input_plugin_t *this_gen)
+static off_t _ftp_get_length (input_plugin_t *this_gen)
 {
   return 0;
 }
 
-static off_t _get_current_pos (input_plugin_t *this_gen)
+static off_t _ftp_get_current_pos (input_plugin_t *this_gen)
 {
   ftp_input_plugin_t *this = (ftp_input_plugin_t *) this_gen;
 
   return this->curpos;
 }
 
-static off_t _seek (input_plugin_t *this_gen, off_t offset, int origin)
+static off_t _ftp_seek (input_plugin_t *this_gen, off_t offset, int origin)
 {
   ftp_input_plugin_t *this = (ftp_input_plugin_t *) this_gen;
 
   return this->curpos;
 }
 
-static const char *_get_mrl (input_plugin_t *this_gen)
+static const char *_ftp_get_mrl (input_plugin_t *this_gen)
 {
   ftp_input_plugin_t *this = (ftp_input_plugin_t *) this_gen;
 
   return this->mrl;
 }
 
-static int _get_optional_data (input_plugin_t *this_gen, void *data, int data_type)
+static int _ftp_get_optional_data (input_plugin_t *this_gen, void *data, int data_type)
 {
   ftp_input_plugin_t *this = (ftp_input_plugin_t *)this_gen;
 
@@ -425,7 +425,7 @@ static int _get_optional_data (input_plugin_t *this_gen, void *data, int data_ty
   return INPUT_OPTIONAL_UNSUPPORTED;
 }
 
-static void _dispose (input_plugin_t *this_gen)
+static void _ftp_dispose (input_plugin_t *this_gen)
 {
   ftp_input_plugin_t *this = (ftp_input_plugin_t *) this_gen;
 
@@ -446,7 +446,7 @@ static int _fill_preview(ftp_input_plugin_t *this)
 {
   off_t got;
 
-  got = _read (&this->input_plugin, this->preview, sizeof(this->preview));
+  got = _ftp_read (&this->input_plugin, this->preview, sizeof(this->preview));
   if (got < 1 || got > sizeof(this->preview)) {
     xprintf(this->xine, XINE_VERBOSITY_LOG, LOG_MODULE ": "
             "Unable to read preview data\n");
@@ -457,7 +457,7 @@ static int _fill_preview(ftp_input_plugin_t *this)
   return 0;
 }
 
-static int _open (input_plugin_t *this_gen)
+static int _ftp_open (input_plugin_t *this_gen)
 {
   ftp_input_plugin_t *this = (ftp_input_plugin_t *)this_gen;
   xine_url_t url;
@@ -511,17 +511,17 @@ static input_plugin_t *_get_instance (input_class_t *cls_gen, xine_stream_t *str
   this->fd            = -1;
   this->fd_data       = -1;
 
-  this->input_plugin.open              = _open;
+  this->input_plugin.open              = _ftp_open;
   this->input_plugin.get_capabilities  = _x_input_get_capabilities_preview;
-  this->input_plugin.read              = _read;
+  this->input_plugin.read              = _ftp_read;
   this->input_plugin.read_block        = _x_input_default_read_block;
-  this->input_plugin.seek              = _seek;
-  this->input_plugin.get_current_pos   = _get_current_pos;
-  this->input_plugin.get_length        = _get_length;
+  this->input_plugin.seek              = _ftp_seek;
+  this->input_plugin.get_current_pos   = _ftp_get_current_pos;
+  this->input_plugin.get_length        = _ftp_get_length;
   this->input_plugin.get_blocksize     = _x_input_default_get_blocksize;
-  this->input_plugin.get_mrl           = _get_mrl;
-  this->input_plugin.get_optional_data = _get_optional_data;
-  this->input_plugin.dispose           = _dispose;
+  this->input_plugin.get_mrl           = _ftp_get_mrl;
+  this->input_plugin.get_optional_data = _ftp_get_optional_data;
+  this->input_plugin.dispose           = _ftp_dispose;
   this->input_plugin.input_class       = cls_gen;
 
   return &this->input_plugin;
