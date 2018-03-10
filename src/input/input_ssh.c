@@ -228,12 +228,20 @@ static int _sftp_session_init(ssh_input_plugin_t *this)
 
 static int _scp_channel_init(ssh_input_plugin_t *this, const char *uri)
 {
+#if LIBSSH2_VERSION_NUM < 0x010800
+  struct stat sb;
+#else
   libssh2_struct_stat sb;
+#endif
   int rc;
 
   /* Request a file via SCP */
   do {
+#if LIBSSH2_VERSION_NUM < 0x010800
+    this->scp_channel = libssh2_scp_recv(this->session, uri, &sb);
+#else
     this->scp_channel = libssh2_scp_recv2(this->session, uri, &sb);
+#endif
     if (!this->scp_channel) {
       rc = libssh2_session_last_errno(this->session);
       if (rc != LIBSSH2_ERROR_EAGAIN) {
