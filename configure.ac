@@ -1456,13 +1456,6 @@ src/libw32dll/qtx/Makefile
 src/libw32dll/qtx/qtxsdk/Makefile
 src/libreal/Makefile
 src/post/Makefile
-src/post/planar/Makefile
-src/post/goom/Makefile
-src/post/mosaico/Makefile
-src/post/visualizations/Makefile
-src/post/audio/Makefile
-src/post/deinterlace/Makefile
-src/post/deinterlace/plugins/Makefile
 src/spu_dec/Makefile
 src/video_dec/Makefile
 src/video_dec/libmpeg2/Makefile
