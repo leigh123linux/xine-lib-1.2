@@ -37,11 +37,11 @@
 #define MAX_SHIFT 1024
 #define MAX_RES (MAX_NOISE-MAX_SHIFT)
 
-static inline void lineNoise_C(uint8_t *dst, uint8_t *src, int8_t *noise, int len, int shift);
-static inline void lineNoiseAvg_C(uint8_t *dst, uint8_t *src, int len, int8_t **shift);
+static inline void lineNoise_C(uint8_t *dst, const uint8_t *src, const int8_t *noise, int len, int shift);
+static inline void lineNoiseAvg_C(uint8_t *dst, const uint8_t *src, int len, int8_t **shift);
 
-static void (*lineNoise)(uint8_t *dst, uint8_t *src, int8_t *noise, int len, int shift) = lineNoise_C;
-static void (*lineNoiseAvg)(uint8_t *dst, uint8_t *src, int len, int8_t **shift) = lineNoiseAvg_C;
+static void (*lineNoise)(uint8_t *dst, const uint8_t *src, const int8_t *noise, int len, int shift) = lineNoise_C;
+static void (*lineNoiseAvg)(uint8_t *dst, const uint8_t *src, int len, int8_t **shift) = lineNoiseAvg_C;
 
 
 typedef struct noise_param_t {
@@ -131,7 +131,8 @@ static int8_t *initNoise(noise_param_t *fp){
     return noise;
 }
 
-static inline void lineNoise_C(uint8_t *dst, uint8_t *src, int8_t *noise, int len, int shift){
+static inline void lineNoise_C(uint8_t *dst, const uint8_t *src, const int8_t *noise, int len, int shift)
+{
     int i;
     noise+= shift;
     for(i=0; i<len; i++)
@@ -165,7 +166,8 @@ static inline void lineNoise_C(uint8_t *dst, uint8_t *src, int8_t *noise, int le
 #  define ADDA(val) "\n\taddl\t"val", %%eax"
 #endif
 
-static inline void lineNoise_MMX(uint8_t *dst, uint8_t *src, int8_t *noise, int len, int shift){
+static inline void lineNoise_MMX(uint8_t *dst, const uint8_t *src, const int8_t *noise, int len, int shift)
+{
   TYPEA mmx_len = len & (~7);
   noise += shift;
 
@@ -192,7 +194,8 @@ static inline void lineNoise_MMX(uint8_t *dst, uint8_t *src, int8_t *noise, int 
 }
 
 //duplicate of previous except movntq
-static inline void lineNoise_MMX2(uint8_t *dst, uint8_t *src, int8_t *noise, int len, int shift){
+static inline void lineNoise_MMX2(uint8_t *dst, const uint8_t *src, const int8_t *noise, int len, int shift)
+{
   TYPEA mmx_len = len & (~7);
   noise += shift;
 
@@ -222,9 +225,10 @@ static inline void lineNoise_MMX2(uint8_t *dst, uint8_t *src, int8_t *noise, int
 
 /***************************************************************************/
 
-static inline void lineNoiseAvg_C(uint8_t *dst, uint8_t *src, int len, int8_t **shift){
+static inline void lineNoiseAvg_C(uint8_t *dst, const uint8_t *src, int len, int8_t **shift)
+{
     int i;
-    int8_t *src2= (int8_t*)src;
+    const int8_t *src2= (const int8_t*)src;
 
     for(i=0; i<len; i++)
     {
@@ -235,7 +239,8 @@ static inline void lineNoiseAvg_C(uint8_t *dst, uint8_t *src, int len, int8_t **
 
 #ifdef ARCH_X86
 
-static inline void lineNoiseAvg_MMX(uint8_t *dst, uint8_t *src, int len, int8_t **shift){
+static inline void lineNoiseAvg_MMX(uint8_t *dst, const uint8_t *src, int len, int8_t **shift)
+{
   TYPEA mmx_len = len & (~7);
 
   __asm__ __volatile__ (
@@ -278,7 +283,7 @@ static inline void lineNoiseAvg_MMX(uint8_t *dst, uint8_t *src, int len, int8_t 
 
 /***************************************************************************/
 
-static void noise(uint8_t *dst, uint8_t *src, int dstStride, int srcStride, int width, int height, noise_param_t *fp)
+static void noise(uint8_t *dst, const uint8_t *src, int dstStride, int srcStride, int width, int height, noise_param_t *fp)
 {
     int8_t *noise= fp->noise;
     int y;
