@@ -1602,33 +1602,8 @@ static int demux_mpeg_pes_get_optional_data(demux_plugin_t *this_gen,
 }
 
 static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *stream,
-                                   input_plugin_t *input_gen) {
-
-  input_plugin_t     *input = (input_plugin_t *) input_gen;
+                                   input_plugin_t *input) {
   demux_mpeg_pes_t *this;
-
-  this         = calloc(1, sizeof(demux_mpeg_pes_t));
-  this->stream = stream;
-  this->input  = input;
-
-  this->demux_plugin.send_headers      = demux_mpeg_pes_send_headers;
-  this->demux_plugin.send_chunk        = demux_mpeg_pes_send_chunk;
-  this->demux_plugin.seek              = demux_mpeg_pes_seek;
-  this->demux_plugin.dispose           = default_demux_plugin_dispose;
-  this->demux_plugin.get_status        = demux_mpeg_pes_get_status;
-  this->demux_plugin.get_stream_length = demux_mpeg_pes_get_stream_length;
-  this->demux_plugin.get_capabilities  = demux_mpeg_pes_get_capabilities;
-  this->demux_plugin.get_optional_data = demux_mpeg_pes_get_optional_data;
-  this->demux_plugin.demux_class       = class_gen;
-
-  this->status     = DEMUX_FINISHED;
-  /* Don't start demuxing stream until we see a program_stream_pack_header */
-  /* We need to system header in order to identify is the stream is mpeg1 or mpeg2. */
-  this->wait_for_program_stream_pack_header = 1;
-  /* trigger detection of MPEG 1/2 respectively H.264 content */
-  this->mpeg12_h264_detected = 0;
-
-  this->preview_size = 0;
 
   lprintf ("open_plugin:detection_method=%d\n",
            stream->content_detection_method);
@@ -1640,18 +1615,15 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
 
     /* use demux_mpeg_block for block devices */
     if ((input->get_capabilities(input) & INPUT_CAP_BLOCK)) {
-      free (this);
       return NULL;
     }
 
     if (_x_demux_read_header(input, buf, sizeof(buf)) != 6) {
-      free(this);
       return NULL;
     }
 
     if (buf[0] || buf[1] || (buf[2] != 0x01)) {
       lprintf("open_plugin:preview_data failed\n");
-      free (this);
       return NULL;
     }
     switch (buf[3]) {
@@ -1660,7 +1632,6 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
       case 0xbd ... 0xbe:
         break;
       default:
-        free (this);
         return NULL;
     }
 
@@ -1675,9 +1646,34 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
     break;
 
   default:
-    free (this);
     return NULL;
   }
+
+  this = calloc(1, sizeof(demux_mpeg_pes_t));
+  if (!this)
+    return NULL;
+
+  /* trigger detection of MPEG 1/2 respectively H.264 content */
+  this->mpeg12_h264_detected = 0;
+  this->preview_size = 0;
+  this->stream = stream;
+  this->input  = input;
+  this->status = DEMUX_FINISHED;
+
+  /* Don't start demuxing stream until we see a program_stream_pack_header */
+  /* We need to system header in order to identify is the stream is mpeg1 or mpeg2. */
+  this->wait_for_program_stream_pack_header = 1;
+
+  this->demux_plugin.send_headers      = demux_mpeg_pes_send_headers;
+  this->demux_plugin.send_chunk        = demux_mpeg_pes_send_chunk;
+  this->demux_plugin.seek              = demux_mpeg_pes_seek;
+  this->demux_plugin.dispose           = default_demux_plugin_dispose;
+  this->demux_plugin.get_status        = demux_mpeg_pes_get_status;
+  this->demux_plugin.get_stream_length = demux_mpeg_pes_get_stream_length;
+  this->demux_plugin.get_capabilities  = demux_mpeg_pes_get_capabilities;
+  this->demux_plugin.get_optional_data = demux_mpeg_pes_get_optional_data;
+  this->demux_plugin.demux_class       = class_gen;
+
   return &this->demux_plugin;
 }
 
