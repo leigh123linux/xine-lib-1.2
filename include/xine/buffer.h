@@ -683,6 +683,12 @@ fifo_buffer_t *_x_fifo_buffer_new (int num_buffers, uint32_t buf_size) XINE_PROT
  */
 fifo_buffer_t *_x_dummy_fifo_buffer_new (int num_buffers, uint32_t buf_size);
 
+/**
+ * @brief Free chained list of buffer elements.
+ * @param head List to free. May be NULL.
+ */
+void _x_free_buf_elements (buf_element_t *head) XINE_PROTECTED;
+
 
 /**
  * @brief Returns the \ref buffer_video "BUF_VIDEO_xxx" for the given fourcc.

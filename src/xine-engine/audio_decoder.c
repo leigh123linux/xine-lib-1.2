@@ -114,17 +114,8 @@ static void *audio_decoder_loop (void *stream_gen) {
     case BUF_CONTROL_END:
 
       /* free all held header buffers, see comments below */
-      if( first_header ) {
-        buf_element_t  *cur, *next;
-
-        cur = first_header;
-        while( cur ) {
-          next = cur->next;
-          cur->free_buffer (cur);
-          cur = next;
-        }
-        first_header = last_header = NULL;
-      }
+      _x_free_buf_elements( first_header );
+      first_header = last_header = NULL;
 
       /*
        * wait the output fifos to run dry before sending the notification event
@@ -465,17 +456,7 @@ static void *audio_decoder_loop (void *stream_gen) {
   running_ticket->release (running_ticket, 0);
 
   /* free all held header buffers */
-  if( first_header ) {
-    buf_element_t  *cur, *next;
-
-    cur = first_header;
-    while( cur ) {
-      next = cur->next;
-      cur->free_buffer (cur);
-      cur = next;
-    }
-    first_header = last_header = NULL;
-  }
+  _x_free_buf_elements( first_header );
 
   return NULL;
 }

@@ -900,3 +900,18 @@ fifo_buffer_t *_x_dummy_fifo_buffer_new (int num_buffers, uint32_t buf_size) {
   this->insert = dummy_fifo_buffer_insert;
   return this;
 }
+
+void _x_free_buf_elements(buf_element_t *head) {
+
+  if (head) {
+    buf_element_t  *cur, *next;
+
+    cur = head;
+    while (cur) {
+      next = cur->next;
+      cur->free_buffer(cur);
+      cur = next;
+    }
+  }
+}
+
