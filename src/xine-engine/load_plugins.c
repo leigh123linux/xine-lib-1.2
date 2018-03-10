@@ -310,12 +310,19 @@ static plugin_file_t *_insert_file (xine_t *this,
 
   /* create the file entry */
   entry = malloc(sizeof(plugin_file_t));
+  if (!entry)
+    return NULL;
   entry->filename  = strdup(filename);
   entry->filesize  = statbuffer->st_size;
   entry->filemtime = statbuffer->st_mtime;
   entry->lib_handle = lib;
   entry->ref = 0;
   entry->no_unload = 0;
+
+  if (!entry->filename) {
+    free(entry);
+    return NULL;
+  }
 
   xine_list_push_back (list, entry);
   return entry;
@@ -648,6 +655,11 @@ static void collect_plugins(xine_t *this, const char *path){
     size_t path_len = strlen(path);
     size_t str_size = path_len * 2 + 2; /* +2 for '/' and '\0' */
     char *str = malloc(str_size);
+
+    if (!str) {
+      closedir (dir);
+      return;
+    }
     sprintf(str, "%s/", path);
 
     while ((pEntry = readdir (dir)) != NULL) {
@@ -717,8 +729,11 @@ static void collect_plugins(xine_t *this, const char *path){
 	      plugin_file_t *file;
 
 	      file = _insert_file(this, this->plugin_catalog->file_list, str, &statbuffer, lib);
-
-	      _register_plugins_internal(this, file, node, info);
+              if (file) {
+                _register_plugins_internal(this, file, node, info);
+              } else {
+                dlclose(lib);
+              }
 	    }
 	    else {
 	      const char *error = dlerror();
