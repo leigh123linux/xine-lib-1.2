@@ -2269,6 +2269,11 @@ static void demux_ts_parse_packet (demux_ts_t*this) {
 
   if( adaptation_field_control & 0x2 ){
     uint32_t adaptation_field_length = originalPkt[4];
+    if (adaptation_field_length > PKT_SIZE - 5) {
+      xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG, "demux: invalid adaptation field length\n");
+      return;
+    }
+
     if (adaptation_field_length > 0) {
       int64_t pcr = demux_ts_adaptation_field_parse (originalPkt+5, adaptation_field_length);
       if (pid == this->pcr_pid)
@@ -2280,6 +2285,10 @@ static void demux_ts_parse_packet (demux_ts_t*this) {
      * Skip adaptation header.
      */
     data_offset += adaptation_field_length + 1;
+    if (data_offset >= PKT_SIZE) {
+      /* no payload or invalid header */
+      return;
+    }
   }
 
   if (! (adaptation_field_control & 0x1)) {
@@ -2314,13 +2323,7 @@ static void demux_ts_parse_packet (demux_ts_t*this) {
     program_count++;
   }
 
-  if (data_len > PKT_SIZE) {
-
-    xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG,
-	     "demux_ts: demux error! invalid payload size %d\n", data_len);
-
-  } else {
-
+  {
     /*
      * Do the demuxing in descending order of packet frequency!
      */
