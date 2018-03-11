@@ -2286,10 +2286,12 @@ static void demux_ts_parse_packet (demux_ts_t*this) {
     return;
   }
 
+  data_len = PKT_SIZE - data_offset;
+
   /* PAT */
   if (pid == 0) {
     demux_ts_parse_pat(this, originalPkt, originalPkt + data_offset,
-		       payload_unit_start_indicator, PKT_SIZE - data_offset);
+		       payload_unit_start_indicator, data_len);
     return;
   }
 
@@ -2305,14 +2307,12 @@ static void demux_ts_parse_packet (demux_ts_t*this) {
               this->pmt_pid[program_count]);
 #endif
       demux_ts_parse_pmt (this, originalPkt, originalPkt + data_offset,
-                          payload_unit_start_indicator, PKT_SIZE - data_offset,
+                          payload_unit_start_indicator, data_len,
                           program_count);
       return;
     }
     program_count++;
   }
-
-  data_len = PKT_SIZE - data_offset;
 
   if (data_len > PKT_SIZE) {
 
