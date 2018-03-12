@@ -651,6 +651,9 @@ static xine_mrl_t **_get_files(ftp_input_plugin_t *this, const char *uri, int *n
     n++;
   }
 
+  if (n > 2)
+    _x_input_sort_mrls(mrls + 1, n - 1);
+
   *nFiles = n;
   return mrls;
 }

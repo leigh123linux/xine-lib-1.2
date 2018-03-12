@@ -502,16 +502,16 @@ static xine_mrl_t **_get_dir (input_class_t *this_gen, const char *filename, int
 
   if (!filename || !strcmp(filename, "nfs:/")) {
     this->mrls = _get_servers(this->xine, nFiles);
-    return this->mrls;
+    goto out;
   }
 
   input = (nfs_input_plugin_t *)_get_instance(this_gen, NULL, filename);
   if (!input) {
-    return NULL;
+    goto fail;
   }
 
   if (_parse_url(input, 0) < 0) {
-    goto out;
+    goto fail;
   }
 
   if (!input->url->server) {
@@ -523,7 +523,15 @@ static xine_mrl_t **_get_dir (input_class_t *this_gen, const char *filename, int
   }
 
  out:
-  input->input_plugin.dispose(&input->input_plugin);
+
+  if (*nFiles > 2)
+    _x_input_sort_mrls(this->mrls + 1, *nFiles - 1);
+
+ fail:
+
+  if (input)
+    input->input_plugin.dispose(&input->input_plugin);
+
   return this->mrls;
 }
 

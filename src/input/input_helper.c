@@ -21,6 +21,8 @@
  * input plugin helper functions
  */
 
+#include <stdlib.h>
+
 #include <xine/xine_internal.h>
 
 #include "input_helper.h"
@@ -97,6 +99,97 @@ xine_mrl_t **_x_input_realloc_mrls(xine_mrl_t ***p, size_t n)
 }
 
 /*
+ * Sorting function, it comes from GNU fileutils package.
+ */
+#define S_N        0x0
+#define S_I        0x4
+#define S_F        0x8
+#define S_Z        0xC
+#define CMP          2
+#define LEN          3
+#define ISDIGIT(c)   ((unsigned) (c) - '0' <= 9)
+static int _input_strverscmp (const char *s1, const char *s2) {
+  const unsigned char *p1 = (const unsigned char *) s1;
+  const unsigned char *p2 = (const unsigned char *) s2;
+  unsigned char c1, c2;
+  int state;
+  int diff;
+  static const unsigned int next_state[] = {
+    S_N, S_I, S_Z, S_N,
+    S_N, S_I, S_I, S_I,
+    S_N, S_F, S_F, S_F,
+    S_N, S_F, S_Z, S_Z
+  };
+  static const int result_type[] = {
+    CMP, CMP, CMP, CMP, CMP, LEN, CMP, CMP,
+    CMP, CMP, CMP, CMP, CMP, CMP, CMP, CMP,
+    CMP,  -1,  -1, CMP,   1, LEN, LEN, CMP,
+      1, LEN, LEN, CMP, CMP, CMP, CMP, CMP,
+    CMP, CMP, CMP, CMP, CMP, LEN, CMP, CMP,
+    CMP, CMP, CMP, CMP, CMP, CMP, CMP, CMP,
+    CMP,   1,   1, CMP,  -1, CMP, CMP, CMP,
+     -1, CMP, CMP, CMP
+  };
+
+  if(p1 == p2)
+    return 0;
+
+  c1 = *p1++;
+  c2 = *p2++;
+
+  state = S_N | ((c1 == '0') + (ISDIGIT(c1) != 0));
+
+  while((diff = c1 - c2) == 0 && c1 != '\0') {
+    state = next_state[state];
+    c1 = *p1++;
+    c2 = *p2++;
+    state |= (c1 == '0') + (ISDIGIT(c1) != 0);
+  }
+
+  state = result_type[state << 2 | ((c2 == '0') + (ISDIGIT(c2) != 0))];
+
+  switch(state) {
+  case CMP:
+    return diff;
+
+  case LEN:
+    while(ISDIGIT(*p1++))
+      if(!ISDIGIT(*p2++))
+        return 1;
+
+    return ISDIGIT(*p2) ? -1 : diff;
+
+  default:
+    return state;
+  }
+}
+
+static int _mrl_cmp (const void *p1, const void *p2)
+{
+  const xine_mrl_t * const *m1 = p1;
+  const xine_mrl_t * const *m2 = p2;
+  int dir = ((*m2)->type & mrl_file_directory) - ((*m1)->type & mrl_file_directory);
+  if (dir) {
+    return dir;
+  }
+  return _input_strverscmp((*m1)->mrl, (*m2)->mrl);
+}
+
+void _x_input_sort_mrls(xine_mrl_t **mrls, ssize_t cnt)
+{
+  _x_assert(mrls);
+
+  /* count entries */
+  if (cnt < 0)
+    for (cnt = 0; mrls[cnt]; cnt++) ;
+
+  if (cnt < 2)
+    return;
+
+  qsort(mrls, cnt, sizeof(xine_mrl_t *), _mrl_cmp);
+}
+
+/*
  * config helpers
  */
 
@@ -166,6 +259,9 @@ xine_mrl_t **_x_input_get_default_server_mrls(config_values_t *config, const cha
       n++;
     }
   }
+
+  if (n > 1)
+    _x_input_sort_mrls(mrls, n);
 
   *nFiles = n;
   free(svrs);

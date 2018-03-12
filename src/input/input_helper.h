@@ -35,6 +35,8 @@ void _x_input_free_mrls(xine_mrl_t ***p);
 xine_mrl_t **_x_input_alloc_mrls(size_t n);
 xine_mrl_t **_x_input_realloc_mrls(xine_mrl_t ***p, size_t n);
 
+void _x_input_sort_mrls(xine_mrl_t **mrls, ssize_t cnt /* optional, may be -1 */);
+
 /*
  * config helpers
  */
