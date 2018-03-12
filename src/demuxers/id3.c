@@ -123,7 +123,7 @@ int id3v1_parse_tag (input_plugin_t *input, xine_stream_t *stream) {
 }
 
 /* id3v2 "genre" parsing code. what a ugly format ! */
-static int id3v2_parse_genre(char* dest, char *src, int len) {
+static int id3v2_parse_genre(char* dest, const char *src, size_t len) {
   int state = 0;
   char *buf = dest;
   unsigned int index = 0;
@@ -292,7 +292,7 @@ static int id3v22_interp_frame(input_plugin_t *input,
         {
           char tmp[1024];
 
-          if (id3v2_parse_genre(tmp, buf + 1, 1024)) {
+          if (id3v2_parse_genre(tmp, buf + 1, sizeof(tmp))) {
             _x_meta_info_set(stream, XINE_META_INFO_GENRE, tmp);
           }
         }
@@ -482,7 +482,7 @@ static int id3v23_interp_frame(input_plugin_t *input,
         {
           char tmp[1024];
 
-          if (id3v2_parse_genre(tmp, buf + 1, 1024)) {
+          if (id3v2_parse_genre(tmp, buf + 1, sizeof(tmp))) {
             _x_meta_info_set(stream, XINE_META_INFO_GENRE, tmp);
           }
         }
@@ -597,7 +597,7 @@ static int id3v23_parse_tag(input_plugin_t *input,
 /* id3 v2.4 */
 
 /* id3v2 "genre" parsing code. what a ugly format ! */
-static int id3v24_parse_genre(char* dest, char *src, int len) {
+static int id3v24_parse_genre(char* dest, const char *src, size_t len) {
   unsigned int index = 0;
 
   dest[0] = '\0';
@@ -735,7 +735,7 @@ static int id3v24_interp_frame(input_plugin_t *input,
         {
           char tmp[1024];
 
-          if (id3v24_parse_genre(tmp, buf + 1, 1024)) {
+          if (id3v24_parse_genre(tmp, buf + 1, sizeof(tmp))) {
             _x_meta_info_set(stream, XINE_META_INFO_GENRE, tmp);
           }
         }
