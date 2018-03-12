@@ -3118,8 +3118,8 @@ static input_plugin_t *dvb_class_get_instance (input_class_t *class_gen,
   fprintf(stderr, "input_dvb: continuing in get_instance\n");
 
   this = calloc(1, sizeof(dvb_input_plugin_t));
-
-  _x_assert(this != NULL);
+  if (!this)
+    return NULL;
 
   this->stream       = stream;
   this->mrl          = strdup(mrl);
@@ -3256,7 +3256,8 @@ static void *init_class (xine_t *xine, const void *data) {
   config_values_t *config = xine->config;
 
   this = calloc(1, sizeof (dvb_input_class_t));
-  _x_assert(this != NULL);
+  if (!this)
+    return NULL;
 
   this->xine   = xine;
 
