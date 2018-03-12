@@ -1198,7 +1198,6 @@ static void parse_pmt(dvb_input_plugin_t *this, const unsigned char *buf, int se
 	}
         break;
       case 0x81: /* AC3 audio */
-	fprintf(stderr, "  pid type 0x%x,  has audio %d\n",buf[0],has_audio);
         if(!has_audio) {
 	  xprintf(this->stream->xine,XINE_VERBOSITY_LOG,"input_dvb: Adding AUDIO     : PID 0x%04x\n", elementary_pid);
 	  dvb_set_pidfilter(this, AUDFILTER, elementary_pid, DMX_PES_AUDIO, DMX_OUT_TS_TAP);
@@ -2941,13 +2940,11 @@ static int dvb_plugin_open(input_plugin_t * this_gen)
       this->channel = 0;
     } else if (strncasecmp(this->mrl, "dvba://", 7) == 0)
     {
-      fprintf(stderr,"input_dvb: 2a %x\n",tuner->feinfo.type);
       /*
        * This is dvba://<channel name>:<atsc tuning parameters>
        */
        if (tuner->feinfo.type != FE_ATSC)
        {
-	 fprintf(stderr,"input_dvb: FAILED 1\n");
          xprintf(this->class->xine, XINE_VERBOSITY_LOG,
 	 _("input_dvb: dvba mrl specified but the tuner doesn't appear to be ATSC (DVB-A)\n"));
          tuner_dispose(tuner);
@@ -2959,7 +2956,6 @@ static int dvb_plugin_open(input_plugin_t * this_gen)
       _x_assert(channels != NULL);
       if (extract_channel_from_string(channels, ptr, tuner->feinfo.type) < 0)
       {
-	fprintf(stderr,"input_dvb: FAILED 2\n");
         free(channels);
         tuner_dispose(tuner);
         return 0;
@@ -3114,8 +3110,6 @@ static input_plugin_t *dvb_class_get_instance (input_class_t *class_gen,
         if(strncasecmp(mrl,"dvbc://",7))
 	  if(strncasecmp(mrl,"dvba://",7))
 	    return NULL;
-
-  fprintf(stderr, "input_dvb: continuing in get_instance\n");
 
   this = calloc(1, sizeof(dvb_input_plugin_t));
   if (!this)
