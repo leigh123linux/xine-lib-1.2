@@ -54,6 +54,7 @@ typedef struct {
 
   char            *mrl;
   off_t            curpos;
+  off_t            file_size;
 
   int              fd;
   int              fd_data;
@@ -325,10 +326,44 @@ static int _list(ftp_input_plugin_t *this)
   return 0;
 }
 
+static off_t _parse_off_t(const char *pt)
+{
+  off_t off = 0;
+  while (*pt >= '0' && *pt <= '9') {
+    off = 10 * off + (*pt - '0');
+    pt++;
+  }
+  return off;
+}
+
+static int _ftp_size(ftp_input_plugin_t *this, const char *uri)
+{
+  int rc;
+  char *cmd;
+
+  cmd = _x_asprintf("SIZE %s", uri);
+  if (!cmd)
+    return -1;
+  rc = _send_command(this, cmd);
+  free(cmd);
+
+  if (rc / 100 != 2)
+    return -1;
+
+  this->file_size = _parse_off_t(this->buf + 4);
+
+  xprintf(this->xine, XINE_VERBOSITY_LOG, LOG_MODULE ": "
+          "File size is %" PRId64 " bytes\n", (int64_t)this->file_size);
+
+  return 0;
+}
+
 static int _retr(ftp_input_plugin_t *this, const char *uri)
 {
   int rc;
   char *cmd;
+
+  _ftp_size(this, uri);
 
   rc = _connect_data(this, 'I');
   if (rc < 0)
@@ -344,6 +379,14 @@ static int _retr(ftp_input_plugin_t *this, const char *uri)
     xprintf(this->xine, XINE_VERBOSITY_LOG, LOG_MODULE ": "
             "Failed to retrive file %s: %s\n", uri, this->buf);
     return -1;
+  }
+
+  /* if SIZE failed, try to parse it from reply */
+  if (this->file_size < 1) {
+    char *pt = strrchr(this->buf, '(');
+    if (pt) {
+      this->file_size = _parse_off_t(pt + 1);
+    }
   }
 
   return 0;
@@ -386,7 +429,9 @@ static off_t _ftp_read (input_plugin_t *this_gen, void *buf_gen, off_t len)
 
 static off_t _ftp_get_length (input_plugin_t *this_gen)
 {
-  return 0;
+  ftp_input_plugin_t *this = (ftp_input_plugin_t *) this_gen;
+
+  return this->file_size;
 }
 
 static off_t _ftp_get_current_pos (input_plugin_t *this_gen)
