@@ -50,10 +50,6 @@ typedef struct {
 	char *mrl;
 	GnomeVFSURI *uri;
 
-	/* Preview */
-	char preview[MAX_PREVIEW_SIZE];
-	off_t preview_size;
-	off_t preview_pos;
 } gnomevfs_input_t;
 
 static off_t gnomevfs_plugin_get_current_pos (input_plugin_t *this_gen);
