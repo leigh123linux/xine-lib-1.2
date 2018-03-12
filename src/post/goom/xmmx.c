@@ -85,7 +85,7 @@ void zoom_filter_xmmx (int prevX, int prevY,
         "#1 \n\t paddd   %%mm1, %%mm0" /* mm0 = S + mm1 */
         "#1 \n\t psrld   $16,   %%mm0"
         :
-        : "g" (brutS[loop]), "g" (brutD[loop])
+        : "m" (brutS[loop]), "m" (brutD[loop])
       ); /* mm0 = S */
 
       /*
