@@ -295,8 +295,6 @@ typedef struct {
 
   xine_t           *xine;
 
-  const char       *mrls[6];
-
   int		    numchannels;
 
   char		   *autoplaylist[MAX_AUTOCHANNELS];
@@ -3194,22 +3192,25 @@ static const char * const *dvb_class_get_autoplay_list(input_class_t * this_gen,
     xine_config_lookup_entry(class->xine, "media.dvb.adapter", &adapter);
 
     if (!(tuner = tuner_init(class->xine,adapter.num_value))) {
+       static const char * const mrls[] = {"Sorry, No DVB input device found.", NULL};
        xprintf(class->xine, XINE_VERBOSITY_LOG, _("input_dvb: cannot open dvb device\n"));
-       class->mrls[0]="Sorry, No DVB input device found.";
        *num_files=1;
-       return class->mrls;
+       return mrls;
     }
 
     if (!(channels = load_channels(class->xine, NULL, &num_channels, tuner->feinfo.type))) {
        /* channels.conf not found in .xine */
-       class->mrls[0]="Sorry, No valid channels.conf found";
-       class->mrls[1]="for the selected DVB device.";
-       class->mrls[2]="Please run the dvbscan utility";
-       class->mrls[3]="from the dvb drivers apps package";
-       class->mrls[4]="and place the file in ~/.xine/";
+       static const char * const mrls[] = {
+          "Sorry, No valid channels.conf found",
+          "for the selected DVB device.",
+          "Please run the dvbscan utility",
+          "from the dvb drivers apps package",
+          "and place the file in ~/.xine/",
+          NULL
+       };
        *num_files=5;
        tuner_dispose(tuner);
-       return class->mrls;
+       return mrls;
     }
 
     tuner_dispose(tuner);
@@ -3266,13 +3267,6 @@ static void *init_class (xine_t *xine, const void *data) {
   this->input_class.get_autoplay_list  = dvb_class_get_autoplay_list;
   this->input_class.dispose            = dvb_class_dispose;
   this->input_class.eject_media        = dvb_class_eject_media;
-
-  this->mrls[0] = "dvb://";
-  this->mrls[1] = "dvbs://";
-  this->mrls[2] = "dvbc://";
-  this->mrls[3] = "dvbt://";
-  this->mrls[4] = "dvba://";
-  this->mrls[5] = 0;
 
   xprintf(this->xine,XINE_VERBOSITY_DEBUG,"init class succeeded\n");
 
