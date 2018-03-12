@@ -46,7 +46,7 @@
 #include "id3.h"
 
 #define ID3_GENRE_COUNT (sizeof (id3_genre) / sizeof (id3_genre[0]))
-static const char* const id3_genre[] =
+static const char id3_genre[][24] =
   {"Blues", "Classic Rock", "Country", "Dance", "Disco",
    "Funk", "Grunge", "Hip-Hop", "Jazz", "Metal",
    "New Age", "Oldies", "Other", "Pop", "R&B",
@@ -79,7 +79,7 @@ static const char* const id3_genre[] =
    "Thrash Metal", "Anime", "JPop", "Synthpop" };
 
 #define ID3_ENCODING_COUNT 4
-static const char* const id3_encoding[] = {
+static const char id3_encoding[][12] = {
    "ISO-8859-1",   /* 0x00 */
    "UTF-16",       /* 0x01 */
    "UTF-16BE",     /* 0x02 */
