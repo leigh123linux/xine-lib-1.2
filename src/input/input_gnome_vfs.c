@@ -40,11 +40,6 @@
 /* #define LOG */
 
 typedef struct {
-	input_class_t input_class;
-	xine_t *xine;
-} gnomevfs_input_class_t;
-
-typedef struct {
 	input_plugin_t input_plugin;
 	xine_stream_t *stream;
 	nbc_t *nbc;
@@ -290,14 +285,6 @@ gnomevfs_plugin_open (input_plugin_t *this_gen )
 	return 1;
 }
 
-static void
-gnomevfs_klass_dispose (input_class_t *this_gen)
-{
-	gnomevfs_input_class_t *this = (gnomevfs_input_class_t *) this_gen;
-
-        free (this);
-}
-
 static const char ignore_scheme[][8] = { "cdda", "file", "http" };
 
 static input_plugin_t *
@@ -357,7 +344,7 @@ gnomevfs_klass_get_instance (input_class_t *klass_gen, xine_stream_t *stream,
 static void
 *init_input_class (xine_t *xine, const void *data)
 {
-	gnomevfs_input_class_t *this;
+        input_class_t *this;
 
 	xprintf (xine, XINE_VERBOSITY_DEBUG, "gnome_vfs init_input_class\n");
 
@@ -373,20 +360,19 @@ static void
 		g_thread_init (NULL);
 #endif
 
-        this = calloc(1, sizeof(gnomevfs_input_class_t));
+        this = calloc(1, sizeof(*this));
         if (!this) {
           return NULL;
         }
-	this->xine = xine;
 
-	this->input_class.get_instance       = gnomevfs_klass_get_instance;
-	this->input_class.identifier         = "gnomevfs";
-	this->input_class.description        = N_("gnome-vfs input plugin as shipped with xine");
-	this->input_class.get_dir            = NULL;
-	this->input_class.get_autoplay_list  = NULL;
-	this->input_class.dispose            = gnomevfs_klass_dispose;
+        this->get_instance       = gnomevfs_klass_get_instance;
+        this->identifier         = "gnomevfs";
+        this->description        = N_("gnome-vfs input plugin as shipped with xine");
+        this->get_dir            = NULL;
+        this->get_autoplay_list  = NULL;
+        this->dispose            = default_input_class_dispose;
 
-	return (input_class_t *) this;
+        return this;
 }
 
 static const input_info_t input_info_gnomevfs = {
