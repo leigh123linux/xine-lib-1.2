@@ -35,15 +35,9 @@
 #include <xine/buffer.h>
 #include <xine/xineutils.h>
 
-typedef struct {
-  video_decoder_class_t decoder_class;
-  uint32_t              buffer_type;
-} vpx_class_t;
-
 typedef struct vpx_decoder_s {
   video_decoder_t   video_decoder;  /* parent video decoder structure */
 
-  vpx_class_t      *class;
   xine_stream_t    *stream;
 
   int64_t              pts;
@@ -261,14 +255,14 @@ static void vpx_dispose (video_decoder_t *this_gen)
 
 static video_decoder_t *open_plugin (video_decoder_class_t *class_gen, xine_stream_t *stream)
 {
-  vpx_class_t    *cls = (vpx_class_t *)class_gen;
   vpx_decoder_t  *this;
 
   const struct vpx_codec_iface *iface;
   struct vpx_codec_dec_cfg deccfg = { 0 };
   int vp_version;
 
-  switch (cls->buffer_type) {
+  uint32_t video_type = BUF_VIDEO_BASE | (_x_get_video_streamtype(stream) << 16);
+  switch (video_type) {
     case BUF_VIDEO_VP8:
       iface = &vpx_codec_vp8_dx_algo;
       vp_version = 8;
@@ -285,6 +279,8 @@ static video_decoder_t *open_plugin (video_decoder_class_t *class_gen, xine_stre
 
 
   this = (vpx_decoder_t *) calloc(1, sizeof(vpx_decoder_t));
+  if (!this)
+    return NULL;
 
   this->video_decoder.decode_data         = vpx_decode_data;
   this->video_decoder.flush               = vpx_flush;
@@ -295,7 +291,6 @@ static video_decoder_t *open_plugin (video_decoder_class_t *class_gen, xine_stre
   this->size                              = 0;
 
   this->stream                            = stream;
-  this->class                             = (vpx_class_t *) class_gen;
 
   this->decoder_ok    = 0;
   this->buf           = NULL;
@@ -321,67 +316,41 @@ static video_decoder_t *open_plugin (video_decoder_class_t *class_gen, xine_stre
   return &this->video_decoder;
 }
 
-static void *init_plugin (xine_t *xine, uint32_t buffer_type, const char *identifier)
+static void *init_plugin_vpx (xine_t *xine, const void *data)
 {
-  vpx_class_t *this;
+  video_decoder_class_t *this;
 
-  this = (vpx_class_t *) calloc(1, sizeof(vpx_class_t));
+  this = calloc(1, sizeof(*this));
+  if (!this)
+    return NULL;
 
-  this->decoder_class.open_plugin     = open_plugin;
-  this->decoder_class.identifier      = identifier;
-  this->decoder_class.description     = N_("WebM (VP8/VP9) video decoder plugin");
-  this->decoder_class.dispose         = default_video_decoder_class_dispose;
-
-  this->buffer_type = buffer_type;
+  this->open_plugin     = open_plugin;
+  this->identifier      = "libvpx";
+  this->description     = N_("WebM (VP8/VP9) video decoder plugin");
+  this->dispose         = default_video_decoder_class_dispose;
 
   return this;
 }
-
-static void *init_plugin_vp8 (xine_t *xine, const void *data)
-{
-  return init_plugin(xine, BUF_VIDEO_VP8, "libvpx-vp8");
-}
-
-#ifdef HAVE_VPX_VP9_DECODER
-static void *init_plugin_vp9 (xine_t *xine, const void *data)
-{
-  return init_plugin(xine, BUF_VIDEO_VP9, "libvpx-vp9");
-}
-#endif
 
 /*
  * exported plugin catalog entry
  */
 
-static const uint32_t video_types_vp8[] = {
+static const uint32_t video_types_vpx[] = {
   BUF_VIDEO_VP8,
-  0
-};
-
 #ifdef HAVE_VPX_VP9_DECODER
-static const uint32_t video_types_vp9[] = {
   BUF_VIDEO_VP9,
+#endif
   0
 };
-#endif
 
-static const decoder_info_t dec_info_video_vp8 = {
-  video_types_vp8,     /* supported types */
+static const decoder_info_t dec_info_video_vpx = {
+  video_types_vpx,     /* supported types */
   1                    /* priority        */
 };
-
-#ifdef HAVE_VPX_VP9_DECODER
-static const decoder_info_t dec_info_video_vp9 = {
-  video_types_vp9,     /* supported types */
-  1                    /* priority        */
-};
-#endif
 
 const plugin_info_t xine_plugin_info[] EXPORTED = {
   /* type, API, "name", version, special_info, init_function */
-  { PLUGIN_VIDEO_DECODER, 19, "libvpx-vp8", XINE_VERSION_CODE, &dec_info_video_vp8, init_plugin_vp8 },
-#ifdef HAVE_VPX_VP9_DECODER
-  { PLUGIN_VIDEO_DECODER, 19, "libvpx-vp9", XINE_VERSION_CODE, &dec_info_video_vp9, init_plugin_vp9 },
-#endif
+  { PLUGIN_VIDEO_DECODER, 19, "libvpx", XINE_VERSION_CODE, &dec_info_video_vpx, init_plugin_vpx },
   { PLUGIN_NONE, 0, "", 0, NULL, NULL }
 };
