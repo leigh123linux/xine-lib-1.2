@@ -34,6 +34,8 @@
 #include "config.h"
 #endif
 
+#include <stdlib.h>
+
 #define LOG_MODULE "id3"
 #define LOG_VERBOSE
 /*
@@ -275,10 +277,14 @@ static int id3v22_interp_frame(input_plugin_t *input,
                                xine_stream_t *stream,
                                id3v22_frame_header_t *frame_header) {
   const size_t bufsize = frame_header->size + 2;
+  char *buf;
+  int enc;
+
   if ( bufsize < 3 ) /* frames has to be _at least_ 1 byte */
     return 0;
-  char buf[bufsize];
-  int enc;
+  buf = malloc(bufsize);
+  if (!buf)
+    return 0;
 
   if (input->read (input, buf, frame_header->size) == frame_header->size) {
     buf[frame_header->size] = 0;
@@ -326,9 +332,11 @@ static int id3v22_interp_frame(input_plugin_t *input,
         lprintf("unhandled frame\n");
     }
 
+    free(buf);
     return 1;
   } else {
     lprintf("read error\n");
+    free(buf);
     return 0;
   }
 }
@@ -465,10 +473,14 @@ static int id3v23_interp_frame(input_plugin_t *input,
                                xine_stream_t *stream,
                                id3v23_frame_header_t *frame_header) {
   const size_t bufsize = frame_header->size + 2;
+  char *buf;
+  int enc;
+
   if ( bufsize < 3 ) /* frames has to be _at least_ 1 byte */
     return 0;
-  char buf[bufsize];
-  int enc;
+  buf = malloc(bufsize);
+  if (!buf)
+    return 0;
 
   if (input->read (input, buf, frame_header->size) == frame_header->size) {
     buf[frame_header->size] = 0;
@@ -520,9 +532,11 @@ static int id3v23_interp_frame(input_plugin_t *input,
         lprintf("unhandled frame\n");
     }
 
+    free(buf);
     return 1;
   } else {
     lprintf("read error\n");
+    free(buf);
     return 0;
   }
 }
@@ -716,10 +730,15 @@ static int id3v24_interp_frame(input_plugin_t *input,
                                xine_stream_t *stream,
                                id3v24_frame_header_t *frame_header) {
   const size_t bufsize = frame_header->size + 2;
+  char *buf;
+  int enc;
+
   if ( bufsize < 3 ) /* frames has to be _at least_ 1 byte */
     return 0;
-  char buf[bufsize];
-  int enc;
+
+  buf = malloc(bufsize);
+  if (!buf)
+    return 0;
 
   if (input->read (input, buf, frame_header->size) == frame_header->size) {
     buf[frame_header->size] = 0;
@@ -774,9 +793,11 @@ static int id3v24_interp_frame(input_plugin_t *input,
         lprintf("unhandled frame\n");
     }
 
+    free(buf);
     return 1;
   } else {
     lprintf("read error\n");
+    free(buf);
     return 0;
   }
 }
