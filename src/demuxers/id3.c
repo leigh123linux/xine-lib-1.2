@@ -431,26 +431,26 @@ static int id3v23_parse_frame_header(input_plugin_t *input,
 
 static int id3v23_parse_frame_ext_header(input_plugin_t *input,
                                          id3v23_frame_ext_header_t *frame_ext_header) {
-  uint8_t buf[14];
+  uint8_t buf[10];
 
   if (input->read (input, buf, 4) == 4) {
 
     frame_ext_header->size  = _X_BE_32(&buf[0]);
 
     if (frame_ext_header->size == 6) {
-      if (input->read (input, buf + 4, 6) == 6) {
-        frame_ext_header->flags = _X_BE_16(buf + 4);
-        frame_ext_header->padding_size = _X_BE_32(buf + 6);
+      if (input->read (input, buf, 6) == 6) {
+        frame_ext_header->flags = _X_BE_16(buf);
+        frame_ext_header->padding_size = _X_BE_32(buf + 2);
         frame_ext_header->crc = 0;
       } else {
         return 0;
       }
 
     } else if (frame_ext_header->size == 10) {
-      if (input->read (input, buf + 4, 10) == 10) {
-        frame_ext_header->flags = _X_BE_16(buf + 4);
-        frame_ext_header->padding_size = _X_BE_32(buf + 6);
-        frame_ext_header->crc = _X_BE_32(buf + 10);
+      if (input->read (input, buf, 10) == 10) {
+        frame_ext_header->flags = _X_BE_16(buf);
+        frame_ext_header->padding_size = _X_BE_32(buf + 2);
+        frame_ext_header->crc = _X_BE_32(buf + 6);
       } else {
         return 0;
       }
