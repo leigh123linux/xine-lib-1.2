@@ -363,15 +363,14 @@ typedef struct {
 } dvb_input_plugin_t;
 
 typedef struct {
-	const char *name;
-	int value;
+  char    name[23];
+  uint8_t value;
 } Param;
 
 static const Param inversion_list [] = {
 	{ "INVERSION_OFF", INVERSION_OFF },
 	{ "INVERSION_ON", INVERSION_ON },
 	{ "INVERSION_AUTO", INVERSION_AUTO },
-        { NULL, 0 }
 };
 
 static const Param bw_list [] = {
@@ -379,7 +378,6 @@ static const Param bw_list [] = {
 	{ "BANDWIDTH_7_MHZ", BANDWIDTH_7_MHZ },
 	{ "BANDWIDTH_8_MHZ", BANDWIDTH_8_MHZ },
 	{ "BANDWIDTH_AUTO", BANDWIDTH_AUTO },
-        { NULL, 0 }
 };
 
 static const Param fec_list [] = {
@@ -393,7 +391,6 @@ static const Param fec_list [] = {
 	{ "FEC_8_9", FEC_8_9 },
 	{ "FEC_AUTO", FEC_AUTO },
 	{ "FEC_NONE", FEC_NONE },
-        { NULL, 0 }
 };
 
 static const Param guard_list [] = {
@@ -402,7 +399,6 @@ static const Param guard_list [] = {
 	{"GUARD_INTERVAL_1_4", GUARD_INTERVAL_1_4},
 	{"GUARD_INTERVAL_1_8", GUARD_INTERVAL_1_8},
 	{"GUARD_INTERVAL_AUTO", GUARD_INTERVAL_AUTO},
-        { NULL, 0 }
 };
 
 static const Param hierarchy_list [] = {
@@ -411,7 +407,6 @@ static const Param hierarchy_list [] = {
 	{ "HIERARCHY_4", HIERARCHY_4 },
 	{ "HIERARCHY_NONE", HIERARCHY_NONE },
 	{ "HIERARCHY_AUTO", HIERARCHY_AUTO },
-        { NULL, 0 }
 };
 
 static const Param atsc_list [] = {
@@ -419,7 +414,6 @@ static const Param atsc_list [] = {
 	{ "QAM_256", QAM_256 },
 	{ "QAM_64", QAM_64 },
 	{ "QAM", QAM_AUTO },
-        { NULL, 0 }
 };
 
 static const Param qam_list [] = {
@@ -430,14 +424,12 @@ static const Param qam_list [] = {
 	{ "QAM_32", QAM_32 },
 	{ "QAM_64", QAM_64 },
 	{ "QAM_AUTO", QAM_AUTO },
-        { NULL, 0 }
 };
 
 static const Param transmissionmode_list [] = {
 	{ "TRANSMISSION_MODE_2K", TRANSMISSION_MODE_2K },
 	{ "TRANSMISSION_MODE_8K", TRANSMISSION_MODE_8K },
 	{ "TRANSMISSION_MODE_AUTO", TRANSMISSION_MODE_AUTO },
-        { NULL, 0 }
 };
 
 
@@ -698,12 +690,17 @@ static int dvb_set_sectfilter(dvb_input_plugin_t * this, int filter, ushort pid,
 }
 
 
-static int find_param(const Param *list, const char *name)
+static int find_param_0(const Param *list, size_t list_size, const char *name)
 {
-  while (list->name && strcmp(list->name, name))
-    list++;
-  return list->value;;
+  size_t i;
+  for (i = 0; i < list_size; i++)
+    if (!strncmp(list[i].name, name, sizeof(list[0].name)))
+      return list[i].value;
+  return 0;
 }
+
+#define find_param(list, name) \
+  find_param_0(list, sizeof(list)/sizeof(list[0]), name)
 
 static int extract_channel_from_string_internal(channel_t * channel,char * str,fe_type_t fe_type)
 {
