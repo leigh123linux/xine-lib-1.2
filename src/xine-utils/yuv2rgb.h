@@ -41,14 +41,14 @@ typedef struct yuv2rgb_factory_s yuv2rgb_factory_t;
  */
 
 typedef void (*yuv2rgb_fun_t) (yuv2rgb_t *this,
-                               uint8_t *image,
-                               const uint8_t *py,
-                               const uint8_t *pu,
-                               const uint8_t *pv);
+                               uint8_t       *restrict image,
+                               const uint8_t *restrict py,
+                               const uint8_t *restrict pu,
+                               const uint8_t *restrict pv);
 
 typedef void (*yuy22rgb_fun_t) (yuv2rgb_t *this,
-                                uint8_t *image,
-                                const uint8_t *p);
+                                uint8_t       *restrict image,
+                                const uint8_t *restrict p);
 
 typedef uint32_t (*yuv2rgb_single_pixel_fun_t) (yuv2rgb_t *this, uint8_t y, uint8_t u, uint8_t v);
 

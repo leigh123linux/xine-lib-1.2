@@ -38,8 +38,8 @@
 typedef struct yuv2rgb_impl_s yuv2rgb_impl_t;
 typedef struct yuv2rgb_factory_impl_s yuv2rgb_factory_impl_t;
 
-typedef void (*scale_line_func_t) (const uint8_t *source,
-                                   uint8_t *dest,
+typedef void (*scale_line_func_t) (const uint8_t *restrict source,
+                                   uint8_t       *restrict dest,
                                    int width, int step);
 
 struct yuv2rgb_impl_s {

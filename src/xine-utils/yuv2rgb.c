@@ -57,7 +57,7 @@ const int32_t Inverse_Table_6_9[8][4] = {
 };
 
 
-static int yuv2rgb_next_slice (yuv2rgb_impl_t *this, uint8_t **dest)
+static int yuv2rgb_next_slice (yuv2rgb_impl_t *this, uint8_t *restrict *dest)
 {
   int y0, y1;
 
@@ -193,8 +193,8 @@ static int yuv2rgb_configure (yuv2rgb_t *this_gen,
   return 1;
 }
 
-static void scale_line_gen (const uint8_t *source,
-                            uint8_t       *dest,
+static void scale_line_gen (const uint8_t *restrict source,
+                            uint8_t       *restrict dest,
                             int width, int step) {
 
   /*
@@ -288,8 +288,8 @@ static void scale_line_gen (const uint8_t *source,
  * a monitor using square pixels.
  * (720 x 576 ==> 768 x 576)
  */
-static void scale_line_15_16 (const uint8_t *source,
-                              uint8_t       *dest,
+static void scale_line_15_16 (const uint8_t *restrict source,
+                              uint8_t       *restrict dest,
                               int width, int step) {
 
   int p1, p2;
@@ -375,8 +375,8 @@ static void scale_line_15_16 (const uint8_t *source,
  * pixels.
  * (720 x 480 ==> 848 x 480)
  */
-static void scale_line_45_53 (const uint8_t *source,
-                              uint8_t       *dest,
+static void scale_line_45_53 (const uint8_t *restrict source,
+                              uint8_t       *restrict dest,
                               int width, int step) {
 
   int p1, p2;
@@ -604,8 +604,8 @@ static void scale_line_45_53 (const uint8_t *source,
  * pixels.
  * (720 x 576 ==> 1024 x 576)
  */
-static void scale_line_45_64 (const uint8_t *source,
-                              uint8_t       *dest,
+static void scale_line_45_64 (const uint8_t *restrict source,
+                              uint8_t       *restrict dest,
                               int width, int step) {
 
   int p1, p2;
@@ -864,8 +864,8 @@ static void scale_line_45_64 (const uint8_t *source,
  * Useful for scaling a PAL mpeg2 dvd input source to 1280x1024 fullscreen
  * (720 x 576 ==> 1280 x XXX)
  */
-static void scale_line_9_16 (const uint8_t *source,
-                             uint8_t       *dest,
+static void scale_line_9_16 (const uint8_t *restrict source,
+                             uint8_t       *restrict dest,
                              int width, int step) {
 
   int p1, p2;
@@ -942,8 +942,8 @@ done:
  * Interpolates 12 output pixels from 11 source pixels using shifts.
  * Useful for scaling a PAL vcd input source to 4:3 display format.
  */
-static void scale_line_11_12 (const uint8_t *source,
-                              uint8_t       *dest,
+static void scale_line_11_12 (const uint8_t *restrict source,
+                              uint8_t       *restrict dest,
                               int width, int step) {
 
   int p1, p2;
@@ -1012,8 +1012,8 @@ done:
  * Useful for scaling a PAL vcd input source to 4:3 display format
  * at 2*zoom.
  */
-static void scale_line_11_24 (const uint8_t *source,
-                              uint8_t       *dest,
+static void scale_line_11_24 (const uint8_t *restrict source,
+                              uint8_t       *restrict dest,
                               int width, int step) {
 
   int p1, p2;
@@ -1117,8 +1117,8 @@ done:
  * Interpolates 8 output pixels from 5 source pixels using shifts.
  * Useful for scaling a PAL svcd input source to 4:3 display format.
  */
-static void scale_line_5_8 (const uint8_t *source,
-                            uint8_t       *dest,
+static void scale_line_5_8 (const uint8_t *restrict source,
+                            uint8_t       *restrict dest,
                             int width, int step) {
 
   int p1, p2;
@@ -1168,8 +1168,8 @@ done:
  * Interpolates 4 output pixels from 3 source pixels using shifts.
  * Useful for scaling a NTSC svcd input source to 4:3 display format.
  */
-static void scale_line_3_4 (const uint8_t *source,
-                            uint8_t       *dest,
+static void scale_line_3_4 (const uint8_t *restrict source,
+                            uint8_t       *restrict dest,
                             int width, int step) {
 
   int p1, p2;
@@ -1203,8 +1203,8 @@ done:
 
 /* Interpolate 2 output pixels from one source pixel. */
 
-static void scale_line_1_2 (const uint8_t *source,
-                            uint8_t       *dest,
+static void scale_line_1_2 (const uint8_t *restrict source,
+                            uint8_t       *restrict dest,
                             int width, int step) {
   int p1, p2;
 
@@ -1235,8 +1235,8 @@ static void scale_line_1_2 (const uint8_t *source,
 /* *   *   *   *   * */
 /* *    *    *    *  */
 
-static void scale_line_5_4 (const uint8_t *source,
-                            uint8_t       *dest,
+static void scale_line_5_4 (const uint8_t *restrict source,
+                            uint8_t       *restrict dest,
                             int width, int step) {
   int p1, p2, p3, p4, p5;
 
@@ -1273,8 +1273,8 @@ static void scale_line_5_4 (const uint8_t *source,
 /* Interpolate 3 output pixels from 2 source pixels (1280x720 -> 1920x1080). */
 /* *  *  *  */
 /* * * * *  */
-static void scale_line_2_3 (const uint8_t *source,
-                            uint8_t       *dest,
+static void scale_line_2_3 (const uint8_t *restrict source,
+                            uint8_t       *restrict dest,
                             int width, int step) {
   int p1, p2, p3, p4, p5;
 
@@ -1322,8 +1322,8 @@ static void scale_line_2_3 (const uint8_t *source,
  * Scale line with no horizontal scaling. For NTSC mpeg2 dvd input in
  * 4:3 output format (720x480 -> 720x540)
  */
-static void scale_line_1_1 (const uint8_t *source,
-                            uint8_t       *dest,
+static void scale_line_1_1 (const uint8_t *restrict source,
+                            uint8_t       *restrict dest,
                             int width, int step) {
 
   xine_profiler_start_count(prof_scale_line);
@@ -1379,8 +1379,8 @@ static scale_line_func_t find_scale_line_func(int step) {
 }
 
 
-static void scale_line_2 (const uint8_t *source,
-                          uint8_t       *dest,
+static void scale_line_2 (const uint8_t *restrict source,
+                          uint8_t       *restrict dest,
                           int width, int step) {
   int p1;
   int p2;
@@ -1407,8 +1407,8 @@ static void scale_line_2 (const uint8_t *source,
   }
 }
 
-static void scale_line_4 (const uint8_t *source,
-                          uint8_t       *dest,
+static void scale_line_4 (const uint8_t *restrict source,
+                          uint8_t       *restrict dest,
                           int width, int step) {
   int p1;
   int p2;
@@ -1492,10 +1492,10 @@ static void scale_line_4 (const uint8_t *source,
 	dst_2[2*i+1] = this->cmap[r[Y] + g[Y] + b[Y]];
 
 static void yuv2rgb_c_32 (yuv2rgb_t *this_gen,
-                          uint8_t       * _dst,
-                          const uint8_t * _py,
-                          const uint8_t * _pu,
-                          const uint8_t * _pv)
+                          uint8_t       *restrict _dst,
+                          const uint8_t *restrict _py,
+                          const uint8_t *restrict _pu,
+                          const uint8_t *restrict _pv)
 {
   yuv2rgb_impl_t *this = (yuv2rgb_impl_t*)this_gen;
   int U, V, Y;
@@ -1626,10 +1626,10 @@ static void yuv2rgb_c_32 (yuv2rgb_t *this_gen,
 
 /* This is very near from the yuv2rgb_c_32 code */
 static void yuv2rgb_c_24_rgb (yuv2rgb_t *this_gen,
-                              uint8_t       * _dst,
-                              const uint8_t * _py,
-                              const uint8_t * _pu,
-                              const uint8_t * _pv)
+                              uint8_t       *restrict _dst,
+                              const uint8_t *restrict _py,
+                              const uint8_t *restrict _pu,
+                              const uint8_t *restrict _pv)
 {
   yuv2rgb_impl_t *this = (yuv2rgb_impl_t*)this_gen;
   int U, V, Y;
@@ -1761,10 +1761,10 @@ static void yuv2rgb_c_24_rgb (yuv2rgb_t *this_gen,
 
 /* only trivial mods from yuv2rgb_c_24_rgb */
 static void yuv2rgb_c_24_bgr (yuv2rgb_t *this_gen,
-                              uint8_t       * _dst,
-                              const uint8_t * _py,
-                              const uint8_t * _pu,
-                              const uint8_t * _pv)
+                              uint8_t       *restrict _dst,
+                              const uint8_t *restrict _py,
+                              const uint8_t *restrict _pu,
+                              const uint8_t *restrict _pv)
 {
   yuv2rgb_impl_t *this = (yuv2rgb_impl_t*)this_gen;
   int U, V, Y;
@@ -1898,9 +1898,9 @@ static void yuv2rgb_c_24_bgr (yuv2rgb_t *this_gen,
 /* r, g, b, dst_1, dst_2 */
 static void yuv2rgb_c_16 (yuv2rgb_t *this_gen,
                           uint8_t       * _dst,
-                          const uint8_t * _py,
-                          const uint8_t * _pu,
-                          const uint8_t * _pv)
+                          const uint8_t *restrict _py,
+                          const uint8_t *restrict _pu,
+                          const uint8_t *restrict _pv)
 {
   yuv2rgb_impl_t *this = (yuv2rgb_impl_t*)this_gen;
   int U, V, Y;
@@ -2031,10 +2031,10 @@ static void yuv2rgb_c_16 (yuv2rgb_t *this_gen,
 /* This is exactly the same code as yuv2rgb_c_32 except for the types of */
 /* r, g, b, dst_1, dst_2 */
 static void yuv2rgb_c_8 (yuv2rgb_t *this_gen,
-                         uint8_t       * _dst,
-                         const uint8_t * _py,
-                         const uint8_t * _pu,
-                         const uint8_t * _pv)
+                         uint8_t       *restrict _dst,
+                         const uint8_t *restrict _py,
+                         const uint8_t *restrict _pu,
+                         const uint8_t *restrict _pv)
 {
   yuv2rgb_impl_t *this = (yuv2rgb_impl_t*)this_gen;
   int U, V, Y;
@@ -2165,10 +2165,10 @@ static void yuv2rgb_c_8 (yuv2rgb_t *this_gen,
 
 /* now for something different: 256 grayscale mode */
 static void yuv2rgb_c_gray (yuv2rgb_t *this_gen,
-                            uint8_t       * _dst,
-                            const uint8_t * _py,
-                            const uint8_t * _pu,
-                            const uint8_t * _pv)
+                            uint8_t       *restrict _dst,
+                            const uint8_t *restrict _py,
+                            const uint8_t *restrict _pu,
+                            const uint8_t *restrict _pv)
 {
   yuv2rgb_impl_t *this = (yuv2rgb_impl_t*)this_gen;
   int height, dst_height;
@@ -2214,10 +2214,10 @@ static void yuv2rgb_c_gray (yuv2rgb_t *this_gen,
 
 /* now for something different: 256 color mode */
 static void yuv2rgb_c_palette (yuv2rgb_t *this_gen,
-                               uint8_t       * _dst,
-                               const uint8_t * _py,
-                               const uint8_t * _pu,
-                               const uint8_t * _pv)
+                               uint8_t       *restrict _dst,
+                               const uint8_t *restrict _py,
+                               const uint8_t *restrict _pu,
+                               const uint8_t *restrict _pv)
 {
   yuv2rgb_impl_t *this = (yuv2rgb_impl_t*)this_gen;
   int U, V, Y;
@@ -2766,8 +2766,8 @@ static int yuv2rgb_single_pixel_init (yuv2rgb_factory_impl_t *this) {
  */
 
 static void yuy22rgb_c_32 (yuv2rgb_t *this_gen,
-                           uint8_t       * _dst,
-                           const uint8_t * _p)
+                           uint8_t       *restrict _dst,
+                           const uint8_t *restrict _p)
 {
   yuv2rgb_impl_t *this = (yuv2rgb_impl_t*)this_gen;
   int U, V, Y;
@@ -2848,8 +2848,8 @@ static void yuy22rgb_c_32 (yuv2rgb_t *this_gen,
 }
 
 static void yuy22rgb_c_24_rgb (yuv2rgb_t *this_gen,
-                               uint8_t       * _dst,
-                               const uint8_t * _p)
+                               uint8_t       *restrict _dst,
+                               const uint8_t *restrict _p)
 {
   yuv2rgb_impl_t *this = (yuv2rgb_impl_t*)this_gen;
   int U, V, Y;
@@ -2929,8 +2929,8 @@ static void yuy22rgb_c_24_rgb (yuv2rgb_t *this_gen,
 }
 
 static void yuy22rgb_c_24_bgr (yuv2rgb_t *this_gen,
-                               uint8_t       * _dst,
-                               const uint8_t * _p)
+                               uint8_t       *restrict _dst,
+                               const uint8_t *restrict _p)
 {
   yuv2rgb_impl_t *this = (yuv2rgb_impl_t*)this_gen;
   int U, V, Y;
@@ -3006,8 +3006,8 @@ static void yuy22rgb_c_24_bgr (yuv2rgb_t *this_gen,
 }
 
 static void yuy22rgb_c_16 (yuv2rgb_t *this_gen,
-                           uint8_t       * _dst,
-                           const uint8_t * _p)
+                           uint8_t       *restrict _dst,
+                           const uint8_t *restrict _p)
 {
   yuv2rgb_impl_t *this = (yuv2rgb_impl_t*)this_gen;
   int U, V, Y;
@@ -3083,8 +3083,8 @@ static void yuy22rgb_c_16 (yuv2rgb_t *this_gen,
 }
 
 static void yuy22rgb_c_8 (yuv2rgb_t *this_gen,
-                          uint8_t       * _dst,
-                          const uint8_t * _p)
+                          uint8_t       *restrict _dst,
+                          const uint8_t *restrict _p)
 {
   yuv2rgb_impl_t *this = (yuv2rgb_impl_t*)this_gen;
   int U, V, Y;
@@ -3160,8 +3160,8 @@ static void yuy22rgb_c_8 (yuv2rgb_t *this_gen,
 }
 
 static void yuy22rgb_c_gray (yuv2rgb_t *this_gen,
-                             uint8_t       * _dst,
-                             const uint8_t * _p)
+                             uint8_t       *restrict _dst,
+                             const uint8_t *restrict _p)
 {
   yuv2rgb_impl_t *this = (yuv2rgb_impl_t*)this_gen;
   int width, height;
@@ -3208,8 +3208,8 @@ static void yuy22rgb_c_gray (yuv2rgb_t *this_gen,
 }
 
 static void yuy22rgb_c_palette (yuv2rgb_t *this_gen,
-                                uint8_t       * _dst,
-                                const uint8_t * _p)
+                                uint8_t       *restrict _dst,
+                                const uint8_t *restrict _p)
 {
   yuv2rgb_impl_t *this = (yuv2rgb_impl_t*)this_gen;
   int U, V, Y;
