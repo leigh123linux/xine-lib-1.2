@@ -92,12 +92,7 @@ typedef struct {
 
   char            *mime_type;
   const char      *user_agent;
-  char            *proto;
-  char            *user;
-  char            *password;
-  char            *host;
-  char            *uri;
-  int              port;
+  xine_url_t       url;
 
   int              fh;
 
@@ -381,7 +376,7 @@ static off_t http_plugin_read_int (http_input_plugin_t *this,
 
 error:
   if (!_x_action_pending(this->stream))
-    _x_message (this->stream, XINE_MSG_READ_ERROR, this->host, NULL);
+    _x_message (this->stream, XINE_MSG_READ_ERROR, this->url.host, NULL);
   xine_log (this->stream->xine, XINE_LOG_MSG, _("input_http: read error %d\n"), errno);
   return read_bytes;
 }
@@ -485,8 +480,8 @@ static uint32_t http_plugin_get_capabilities (input_plugin_t *this_gen) {
   uint32_t caps = INPUT_CAP_PREVIEW;
 
   /* Nullsoft asked to not allow saving streaming nsv files */
-  if (this->uri && strlen(this->uri) >= 4 &&
-      !strncmp(this->uri + strlen(this->uri) - 4, ".nsv", 4))
+  if (this->url.uri && strlen(this->url.uri) >= 4 &&
+      !strncmp(this->url.uri + strlen(this->url.uri) - 4, ".nsv", 4))
     caps |= INPUT_CAP_RIP_FORBIDDEN;
 
   return caps;
@@ -578,11 +573,7 @@ static void http_plugin_dispose (input_plugin_t *this_gen ) {
   }
 
   _x_freep (&this->mrl);
-  _x_freep (&this->proto);
-  _x_freep (&this->host);
-  _x_freep (&this->user);
-  _x_freep (&this->password);
-  _x_freep (&this->uri);
+  _x_url_cleanup(&this->url);
   _x_freep (&this->mime_type);
   free (this);
 }
@@ -617,16 +608,15 @@ static int http_plugin_open (input_plugin_t *this_gen ) {
   mime_type[0] = 0;
   use_proxy = this_class->proxyhost && strlen(this_class->proxyhost);
 
-  if (!_x_parse_url(this->mrl, &this->proto, &this->host, &this->port,
-                    &this->user, &this->password, &this->uri,
-                    &this->user_agent)) {
+  this->user_agent = _x_url_user_agent (this->mrl);
+  if (!_x_url_parse2(this->mrl, &this->url)) {
     _x_message(this->stream, XINE_MSG_GENERAL_WARNING, "malformed url", NULL);
     return 0;
   }
-  use_proxy = use_proxy && _x_use_proxy(this_class, this->host);
+  use_proxy = use_proxy && _x_use_proxy(this_class, this->url.host);
 
-  if (this->port == 0)
-    this->port = DEFAULT_HTTP_PORT;
+  if (this->url.port == 0)
+    this->url.port = DEFAULT_HTTP_PORT;
 
   if (this_class->proxyport == 0)
     proxyport = DEFAULT_HTTP_PORT;
@@ -635,11 +625,11 @@ static int http_plugin_open (input_plugin_t *this_gen ) {
 
 #ifdef LOG
   {
-    printf ("input_http: host     : >%s<\n", this->host);
-    printf ("input_http: port     : >%d<\n", this->port);
-    printf ("input_http: user     : >%s<\n", this->user);
-    printf ("input_http: password : >%s<\n", this->password);
-    printf ("input_http: path     : >%s<\n", this->uri);
+    printf ("input_http: host     : >%s<\n", this->url.host);
+    printf ("input_http: port     : >%d<\n", this->url.port);
+    printf ("input_http: user     : >%s<\n", this->url.user);
+    printf ("input_http: password : >%s<\n", this->url.password);
+    printf ("input_http: path     : >%s<\n", this->url.uri);
 
 
     if (use_proxy)
@@ -653,7 +643,7 @@ static int http_plugin_open (input_plugin_t *this_gen ) {
   if (use_proxy)
     this->fh = _x_io_tcp_connect (this->stream, this_class->proxyhost, proxyport);
   else
-    this->fh = _x_io_tcp_connect (this->stream, this->host, this->port);
+    this->fh = _x_io_tcp_connect (this->stream, this->url.host, this->url.port);
 
   this->curpos = 0;
 
@@ -683,24 +673,24 @@ static int http_plugin_open (input_plugin_t *this_gen ) {
   }
 
   if (use_proxy) {
-    if (this->port != DEFAULT_HTTP_PORT) {
+    if (this->url.port != DEFAULT_HTTP_PORT) {
       snprintf (this->buf, BUFSIZE, "GET http://%s:%d%s HTTP/1.0\015\012",
-	       this->host, this->port, this->uri);
+                this->url.host, this->url.port, this->url.uri);
     } else {
       snprintf (this->buf, BUFSIZE, "GET http://%s%s HTTP/1.0\015\012",
-	       this->host, this->uri);
+                this->url.host, this->url.uri);
     }
   }
   else
-    snprintf (this->buf, BUFSIZE, "GET %s HTTP/1.0\015\012", this->uri);
+    snprintf (this->buf, BUFSIZE, "GET %s HTTP/1.0\015\012", this->url.uri);
 
   buflen = strlen(this->buf);
-  if (this->port != DEFAULT_HTTP_PORT)
+  if (this->url.port != DEFAULT_HTTP_PORT)
     snprintf (this->buf + buflen, BUFSIZE - buflen, "Host: %s:%d\015\012",
-	     this->host, this->port);
+              this->url.host, this->url.port);
   else
     snprintf (this->buf + buflen, BUFSIZE - buflen, "Host: %s\015\012",
-	     this->host);
+              this->url.host);
 
   buflen = strlen(this->buf);
   if (use_proxy && this_class->proxyuser && strlen(this_class->proxyuser)) {
@@ -713,9 +703,9 @@ static int http_plugin_open (input_plugin_t *this_gen ) {
     buflen = strlen(this->buf);
     free(proxyauth);
   }
-  if (this->user && strlen(this->user)) {
+  if (this->url.user && strlen(this->url.user)) {
     char *auth;
-    http_plugin_basicauth (this->user, this->password, &auth);
+    http_plugin_basicauth (this->url.user, this->url.password, &auth);
 
     snprintf (this->buf + buflen, BUFSIZE - buflen,
               "Authorization: Basic %s\015\012", auth);
