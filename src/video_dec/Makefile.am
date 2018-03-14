@@ -1,7 +1,7 @@
+AUTOMAKE_OPTIONS = subdir-objects
 SUBDIRS = \
 	libmpeg2 \
-	libmpeg2new \
-	libvdpau
+	libmpeg2new
 
 include $(top_builddir)/misc/Makefile.plugins
 include $(top_srcdir)/misc/Makefile.common
@@ -10,6 +10,7 @@ AM_CFLAGS  = $(DEFAULT_OCFLAGS) $(VISIBILITY_FLAG)
 AM_LDFLAGS = $(xineplug_ldflags)
 
 EXTRA_DIST = foovideo.c
+EXTRA_DIST += libvdpau/nal.c libvdpau/dpb.c libvdpau/h264_parser.c
 
 if ENABLE_IMAGEMAGICK
 image_module = xineplug_decode_image.la
@@ -35,6 +36,11 @@ if ENABLE_MMAL
 libmmal_module = xineplug_decode_libmmal.la
 endif
 
+if ENABLE_VDPAU
+vdpau_module = xineplug_decode_vdpau.la
+VDPAU_CFLAGS += -D_ISOC99_SOURCE
+endif
+
 xineplug_LTLIBRARIES = $(image_module) \
 	$(gdkpixbuf_module) \
 	$(libjpeg_module) \
@@ -42,6 +48,7 @@ xineplug_LTLIBRARIES = $(image_module) \
 	$(libopenhevc_module) \
 	$(libvpx_module) \
 	$(libmmal_module) \
+	$(vdpau_module) \
 	xineplug_decode_rawvideo.la
 
 xineplug_decode_rawvideo_la_SOURCES = \
@@ -78,4 +85,20 @@ xineplug_decode_libmmal_la_LIBADD = $(XINE_LIB) $(PTHREAD_LIBS) $(MMAL_LIBS)
 xineplug_decode_libmmal_la_CFLAGS = $(AM_CFLAGS) $(MMAL_CFLAGS)
 xineplug_decode_libmmal_la_LDFLAGS = $(AM_LDFLAGS) $(MMAL_LDFLAGS)
 
-
+xineplug_decode_vdpau_la_SOURCES = \
+	libvdpau/group_vdpau.c \
+	libvdpau/group_vdpau.h \
+	libvdpau/alterh264_bits_reader.h \
+	libvdpau/alterh264_decode.c \
+	libvdpau/alterh264_decode.h \
+	libvdpau/bits_reader.h \
+	libvdpau/cpb.h \
+	libvdpau/dpb.h \
+	libvdpau/h264_parser.h \
+	libvdpau/nal.h \
+	libvdpau/vdpau_h264.c \
+	libvdpau/vdpau_mpeg12.c \
+	libvdpau/vdpau_vc1.c \
+	libvdpau/vdpau_mpeg4.c
+xineplug_decode_vdpau_la_CFLAGS = $(AM_CFLAGS) $(VDPAU_CFLAGS)
+xineplug_decode_vdpau_la_LIBADD = $(XINE_LIB) -lm
