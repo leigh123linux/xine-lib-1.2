@@ -495,7 +495,7 @@ static xine_mrl_t **_get_files(nfs_input_plugin_t *this, int *nFiles)
 static xine_mrl_t **_get_dir (input_class_t *this_gen, const char *filename, int *nFiles)
 {
   nfs_input_class_t *this = (nfs_input_class_t *)this_gen;
-  nfs_input_plugin_t *input;
+  nfs_input_plugin_t *input = NULL;
 
   *nFiles = 0;
   _x_input_free_mrls(&this->mrls);
