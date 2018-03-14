@@ -210,9 +210,9 @@ int _x_parse_url (const char *url,
   return 1;
 
 error:
+  _x_freep_wipe_string (password);
   _x_freep (proto);
   _x_freep (user);
-  _x_freep (password);
   _x_freep (host);
   _x_freep (uri);
   *port = 0;
@@ -229,11 +229,9 @@ int _x_url_parse2(const char *mrl, xine_url_t *url)
 
 void _x_url_cleanup(xine_url_t *url)
 {
-  if (url->password)
-    memset(url->password, 0, strlen(url->password)); /* no need to leak it */
+  _x_freep_wipe_string (&url->password); /* no need to leak it */
   _x_freep (&url->proto);
   _x_freep (&url->user);
-  _x_freep (&url->password);
   _x_freep (&url->host);
   _x_freep (&url->uri);
   url->port = 0;

@@ -200,6 +200,13 @@ static inline void _x_freep(void *ptr) {
   *p = NULL;
 }
 
+static inline void _x_freep_wipe_string(char **pp) {
+  char *p = *pp;
+  while (p && *p)
+    *p++ = 0;
+  _x_freep(pp);
+}
+
 /*
  * Copy blocks of memory.
  */
