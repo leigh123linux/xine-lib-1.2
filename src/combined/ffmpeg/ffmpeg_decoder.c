@@ -45,10 +45,12 @@ pthread_mutex_t ffmpeg_lock;
 void init_once_routine(void) {
   pthread_mutex_init(&ffmpeg_lock, NULL);
   XFF_AVCODEC_INIT();
-  avcodec_register_all();
+  XFF_AVCODEC_REGISTER_ALL();
 
 #ifdef HAVE_AVFORMAT
+# if !defined(LIBAVFORMAT_VERSION_INT) || LIBAVFORMAT_VERSION_INT < XFF_INT_VERSION(58,9,100)
   av_register_all();
+# endif
   avformat_network_init();
 #endif
 }

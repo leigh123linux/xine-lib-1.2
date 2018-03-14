@@ -86,7 +86,8 @@ int dxr3_lavc_init(dxr3_driver_t *drv, plugin_node_t *plugin)
   lavc_data_t* this;
   XFF_AVCODEC_INIT();
 
-  avcodec_register_all();
+  XFF_AVCODEC_REGISTER_ALL();
+
   lprintf("lavc init , version %x\n", avcodec_version());
   this = calloc(1, sizeof(lavc_data_t));
   if (!this) return 0;

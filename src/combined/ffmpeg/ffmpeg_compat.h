@@ -244,5 +244,10 @@
 #  define AV_CODEC_FLAG2_FAST CODEC_FLAG2_FAST
 #endif
 
+#if LIBAVCODEC_VERSION_INT < XFF_INT_VERSION(58,10,100)
+#  define XFF_AVCODEC_REGISTER_ALL() avcodec_register_all()
+#else
+#  define XFF_AVCODEC_REGISTER_ALL() do {} while(0)
+#endif
 
 #endif /* XINE_AVCODEC_COMPAT_H */
