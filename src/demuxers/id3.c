@@ -321,7 +321,8 @@ static int id3v22_interp_frame(input_plugin_t *input,
       break;
 
     case ( BE_FOURCC(0, 'C', 'O', 'M') ):
-      _x_meta_info_set_generic(stream, XINE_META_INFO_COMMENT, buf + 1 + 3, id3_encoding[enc]);
+      if (frame_header->size > 4)
+        _x_meta_info_set_generic(stream, XINE_META_INFO_COMMENT, buf + 1 + 3, id3_encoding[enc]);
       break;
 
     case ( BE_FOURCC(0, 'T', 'R', 'K') ):
@@ -517,7 +518,8 @@ static int id3v23_interp_frame(input_plugin_t *input,
       break;
 
     case ( BE_FOURCC('C', 'O', 'M', 'M') ):
-      _x_meta_info_set_generic(stream, XINE_META_INFO_COMMENT, buf + 1 + 3, id3_encoding[enc]);
+      if (frame_header->size > 4)
+        _x_meta_info_set_generic(stream, XINE_META_INFO_COMMENT, buf + 1 + 3, id3_encoding[enc]);
       break;
 
     case ( BE_FOURCC('T', 'R', 'C', 'K') ):
@@ -784,7 +786,8 @@ static int id3v24_interp_frame(input_plugin_t *input,
       break;
 
     case ( BE_FOURCC('C', 'O', 'M', 'M') ):
-      _x_meta_info_set_generic(stream, XINE_META_INFO_COMMENT, buf + 1 + 3, id3_encoding[enc]);
+      if (frame_header->size > 4)
+        _x_meta_info_set_generic(stream, XINE_META_INFO_COMMENT, buf + 1 + 3, id3_encoding[enc]);
       break;
 
     case ( BE_FOURCC('T', 'R', 'C', 'K') ):
