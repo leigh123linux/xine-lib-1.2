@@ -38,7 +38,9 @@
 typedef struct yuv2rgb_impl_s yuv2rgb_impl_t;
 typedef struct yuv2rgb_factory_impl_s yuv2rgb_factory_impl_t;
 
-typedef void (*scale_line_func_t) (uint8_t *source, uint8_t *dest, int width, int step);
+typedef void (*scale_line_func_t) (const uint8_t *source,
+                                   uint8_t *dest,
+                                   int width, int step);
 
 struct yuv2rgb_impl_s {
 
@@ -56,13 +58,13 @@ struct yuv2rgb_impl_s {
   uint8_t          *u_buffer;
   uint8_t          *v_buffer;
 
-  void            **table_rV;
-  void            **table_gU;
-  int              *table_gV;
-  void            **table_bU;
-  void             *table_mmx;
+  void * const     *table_rV;
+  void * const     *table_gU;
+  const int        *table_gV;
+  void * const     *table_bU;
+  const void       *table_mmx;
 
-  uint8_t          *cmap;
+  const uint8_t    *cmap;
   scale_line_func_t scale_line;
 
 #ifdef HAVE_MLIB
@@ -78,7 +80,7 @@ struct yuv2rgb_factory_impl_s {
 
   int      mode;
   int      swapped;
-  uint8_t *cmap;
+  const uint8_t *cmap;
 
   void    *table_base;
   void    *table_rV[256];

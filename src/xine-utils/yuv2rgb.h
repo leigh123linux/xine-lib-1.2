@@ -40,9 +40,15 @@ typedef struct yuv2rgb_factory_s yuv2rgb_factory_t;
  * by hardware-accelerated versions
  */
 
-typedef void (*yuv2rgb_fun_t) (yuv2rgb_t *this, uint8_t * image, uint8_t * py, uint8_t * pu, uint8_t * pv) ;
+typedef void (*yuv2rgb_fun_t) (yuv2rgb_t *this,
+                               uint8_t *image,
+                               const uint8_t *py,
+                               const uint8_t *pu,
+                               const uint8_t *pv);
 
-typedef void (*yuy22rgb_fun_t) (yuv2rgb_t *this, uint8_t * image, uint8_t * p);
+typedef void (*yuy22rgb_fun_t) (yuv2rgb_t *this,
+                                uint8_t *image,
+                                const uint8_t *p);
 
 typedef uint32_t (*yuv2rgb_single_pixel_fun_t) (yuv2rgb_t *this, uint8_t y, uint8_t u, uint8_t v);
 
@@ -130,7 +136,7 @@ struct yuv2rgb_factory_s {
   void (*dispose) (yuv2rgb_factory_t *this);
 };
 
-yuv2rgb_factory_t *yuv2rgb_factory_init (int mode, int swapped, uint8_t *colormap) XINE_PROTECTED XINE_MALLOC;
+yuv2rgb_factory_t *yuv2rgb_factory_init (int mode, int swapped, const uint8_t *colormap) XINE_PROTECTED;
 
 
 #endif /* XINE_YUV2RGB_H */

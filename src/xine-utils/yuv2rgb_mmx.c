@@ -133,7 +133,10 @@ void mmx_yuv2rgb_set_csc_levels(yuv2rgb_factory_t *this_gen,
   }
 }
 
-static inline void mmx_yuv2rgb (uint8_t * py, uint8_t * pu, uint8_t * pv, mmx_csc_t *csc)
+static inline void mmx_yuv2rgb (const uint8_t * py,
+                                const uint8_t * pu,
+                                const uint8_t * pv,
+                                const mmx_csc_t *csc)
 {
 
     /* OK what we're doing here is
@@ -534,9 +537,11 @@ static inline void mmx_unpack_24bgr (uint8_t * image, int cpu)
 }
 
 static inline void yuv420_rgb16 (yuv2rgb_t *this_gen,
-				 uint8_t * image,
-				 uint8_t * py, uint8_t * pu, uint8_t * pv,
-				 int cpu)
+                                 uint8_t * image,
+                                 const uint8_t * py,
+                                 const uint8_t * pu,
+                                 const uint8_t * pv,
+                                 int cpu)
 {
     yuv2rgb_impl_t *this = (yuv2rgb_impl_t*)this_gen;
     int i, height, dst_height;
@@ -648,9 +653,11 @@ static inline void yuv420_rgb16 (yuv2rgb_t *this_gen,
 }
 
 static inline void yuv420_rgb15 (yuv2rgb_t *this_gen,
-				 uint8_t * image,
-				 uint8_t * py, uint8_t * pu, uint8_t * pv,
-				 int cpu)
+                                 uint8_t * image,
+                                 const uint8_t * py,
+                                 const uint8_t * pu,
+                                 const uint8_t * pv,
+                                 int cpu)
 {
     yuv2rgb_impl_t *this = (yuv2rgb_impl_t*)this_gen;
     int i, height, dst_height;
@@ -761,8 +768,11 @@ static inline void yuv420_rgb15 (yuv2rgb_t *this_gen,
 }
 
 static inline void yuv420_rgb24 (yuv2rgb_t *this_gen,
-				 uint8_t * image, uint8_t * py,
-				 uint8_t * pu, uint8_t * pv, int cpu)
+                                 uint8_t * image,
+                                 const uint8_t * py,
+                                 const uint8_t * pu,
+                                 const uint8_t * pv,
+                                 int cpu)
 {
     yuv2rgb_impl_t *this = (yuv2rgb_impl_t*)this_gen;
     int i, height, dst_height;
@@ -874,8 +884,11 @@ static inline void yuv420_rgb24 (yuv2rgb_t *this_gen,
 }
 
 static inline void yuv420_bgr24 (yuv2rgb_t *this_gen,
-				 uint8_t * image, uint8_t * py,
-				 uint8_t * pu, uint8_t * pv, int cpu)
+                                 uint8_t * image,
+                                 const uint8_t * py,
+                                 const uint8_t * pu,
+                                 const uint8_t * pv,
+                                 int cpu)
 {
     yuv2rgb_impl_t *this = (yuv2rgb_impl_t*)this_gen;
     int i, height, dst_height;
@@ -987,8 +1000,11 @@ static inline void yuv420_bgr24 (yuv2rgb_t *this_gen,
 }
 
 static inline void yuv420_argb32 (yuv2rgb_t *this_gen,
-				  uint8_t * image, uint8_t * py,
-				  uint8_t * pu, uint8_t * pv, int cpu)
+                                  uint8_t * image,
+                                  const uint8_t * py,
+                                  const uint8_t * pu,
+                                  const uint8_t * pv,
+                                  int cpu)
 {
     yuv2rgb_impl_t *this = (yuv2rgb_impl_t*)this_gen;
     int i, height, dst_height;
@@ -1099,8 +1115,11 @@ static inline void yuv420_argb32 (yuv2rgb_t *this_gen,
 }
 
 static inline void yuv420_abgr32 (yuv2rgb_t *this_gen,
-				  uint8_t * image, uint8_t * py,
-				  uint8_t * pu, uint8_t * pv, int cpu)
+                                  uint8_t * image,
+                                  const uint8_t * py,
+                                  const uint8_t * pu,
+                                  const uint8_t * pv,
+                                  int cpu)
 {
     yuv2rgb_impl_t *this = (yuv2rgb_impl_t*)this_gen;
     int i, height, dst_height;
@@ -1212,77 +1231,77 @@ static inline void yuv420_abgr32 (yuv2rgb_t *this_gen,
 }
 
 static void mmxext_rgb15 (yuv2rgb_t *this, uint8_t * image,
-			  uint8_t * py, uint8_t * pu, uint8_t * pv)
+                          const uint8_t * py, const uint8_t * pu, const uint8_t * pv)
 {
     yuv420_rgb15 (this, image, py, pu, pv, CPU_MMXEXT);
     emms();	/* re-initialize x86 FPU after MMX use */
 }
 
 static void mmxext_rgb16 (yuv2rgb_t *this, uint8_t * image,
-			  uint8_t * py, uint8_t * pu, uint8_t * pv)
+                          const uint8_t * py, const uint8_t * pu, const uint8_t * pv)
 {
     yuv420_rgb16 (this, image, py, pu, pv, CPU_MMXEXT);
     emms();	/* re-initialize x86 FPU after MMX use */
 }
 
 static void mmxext_rgb24 (yuv2rgb_t *this, uint8_t * image,
-			   uint8_t * py, uint8_t * pu, uint8_t * pv)
+                          const uint8_t * py, const uint8_t * pu, const uint8_t * pv)
 {
     yuv420_rgb24 (this, image, py, pu, pv, CPU_MMXEXT);
     emms();	/* re-initialize x86 FPU after MMX use */
 }
 
 static void mmxext_argb32 (yuv2rgb_t *this, uint8_t * image,
-			   uint8_t * py, uint8_t * pu, uint8_t * pv)
+                           const uint8_t * py, const uint8_t * pu, const uint8_t * pv)
 {
     yuv420_argb32 (this, image, py, pu, pv, CPU_MMXEXT);
     emms();	/* re-initialize x86 FPU after MMX use */
 }
 
 static void mmxext_abgr32 (yuv2rgb_t *this, uint8_t * image,
-			   uint8_t * py, uint8_t * pu, uint8_t * pv)
+                           const uint8_t * py, const uint8_t * pu, const uint8_t * pv)
 {
     yuv420_abgr32 (this, image, py, pu, pv, CPU_MMXEXT);
     emms();	/* re-initialize x86 FPU after MMX use */
 }
 
 static void mmx_rgb15 (yuv2rgb_t *this, uint8_t * image,
-		       uint8_t * py, uint8_t * pu, uint8_t * pv)
+                       const uint8_t * py, const uint8_t * pu, const uint8_t * pv)
 {
     yuv420_rgb15 (this, image, py, pu, pv, CPU_MMX);
     emms();	/* re-initialize x86 FPU after MMX use */
 }
 
 static void mmx_rgb16 (yuv2rgb_t *this, uint8_t * image,
-		       uint8_t * py, uint8_t * pu, uint8_t * pv)
+                       const uint8_t * py, const uint8_t * pu, const uint8_t * pv)
 {
     yuv420_rgb16 (this, image, py, pu, pv, CPU_MMX);
     emms();	/* re-initialize x86 FPU after MMX use */
 }
 
 static void mmx_rgb24 (yuv2rgb_t *this, uint8_t * image,
-		       uint8_t * py, uint8_t * pu, uint8_t * pv)
+                       const uint8_t * py, const uint8_t * pu, const uint8_t * pv)
 {
     yuv420_rgb24 (this, image, py, pu, pv, CPU_MMX);
     emms();	/* re-initialize x86 FPU after MMX use */
 }
 
 static void mmx_bgr24 (yuv2rgb_t *this, uint8_t * image,
-		       uint8_t * py, uint8_t * pu, uint8_t * pv)
+                       const uint8_t * py, const uint8_t * pu, const uint8_t * pv)
 {
     yuv420_bgr24 (this, image, py, pu, pv, CPU_MMX);
     emms();	/* re-initialize x86 FPU after MMX use */
 }
 
 static void mmx_argb32 (yuv2rgb_t *this, uint8_t * image,
-			uint8_t * py, uint8_t * pu, uint8_t * pv)
+                        const uint8_t * py, const uint8_t * pu, const uint8_t * pv)
 {
     yuv420_argb32 (this, image, py, pu, pv, CPU_MMX);
     emms();	/* re-initialize x86 FPU after MMX use */
 }
 
 static void mmx_abgr32 (yuv2rgb_t *this, uint8_t * image,
-			uint8_t * py, uint8_t * pu, uint8_t * pv)
+                        const uint8_t * py, const uint8_t * pu, const uint8_t * pv)
 {
     yuv420_abgr32 (this, image, py, pu, pv, CPU_MMX);
     emms();	/* re-initialize x86 FPU after MMX use */
