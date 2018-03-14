@@ -51,7 +51,8 @@ typedef struct {
 
   xine_t          *xine;
   xine_stream_t   *stream;
-  char            *mrl;
+  char            *mrl;         /* mrl without credentials */
+  char            *mrl_private;
   off_t            curpos;
   off_t            file_size;
 
@@ -526,6 +527,8 @@ static void _dispose (input_plugin_t *this_gen)
   }
 
   _x_freep (&this->mrl);
+  _x_freep_wipe_string(&this->mrl_private);
+
   free (this_gen);
 
   libssh2_exit();
@@ -550,13 +553,15 @@ static int _open_plugin (input_plugin_t *this_gen)
 {
   ssh_input_plugin_t *this = (ssh_input_plugin_t *)this_gen;
   xine_url_t url;
-  int   result = 0;
+  int   result = 0, rc;
   int   is_scp;
 
   this->curpos = 0;
 
   /* parse mrl */
-  if (!_x_url_parse2(this->mrl, &url)) {
+  rc = _x_url_parse2(this->mrl_private, &url);
+  _x_freep_wipe_string(&this->mrl_private);
+  if (!rc) {
     _x_message(this->stream, XINE_MSG_GENERAL_WARNING, "malformed url", NULL);
     return 0;
   }
@@ -629,7 +634,9 @@ static input_plugin_t *_get_instance (input_class_t *cls_gen, xine_stream_t *str
   if (!this)
     return NULL;
 
-  this->mrl    = strdup(mrl);
+  this->mrl_private = strdup(mrl);
+  this->mrl         = _x_mrl_remove_auth(mrl);
+
   this->stream = stream;
   this->fd     = -1;
   this->xine   = stream ? stream->xine : NULL;
