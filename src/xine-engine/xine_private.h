@@ -32,8 +32,10 @@
 #ifndef XINE_LIBRARY_COMPILE
 # error xine_private.h is for libxine private use only!
 #endif
+#if defined(HAVE_CONFIG_H) && !defined(__XINE_LIB_CONFIG_H__)
+#  error config.h not included
+#endif
 
-#include <config.h>
 #include <xine/xine_internal.h>
 
 #if SUPPORT_ATTRIBUTE_VISIBILITY_INTERNAL

@@ -21,7 +21,9 @@
 #ifndef __BSWAP_H__
 #define __BSWAP_H__
 
-#include "config.h"
+#if defined(HAVE_CONFIG_H) && !defined(__XINE_LIB_CONFIG_H__)
+#  error config.h not included
+#endif
 
 #define always_inline inline
 

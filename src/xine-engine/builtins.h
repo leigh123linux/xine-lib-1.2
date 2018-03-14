@@ -23,8 +23,8 @@
 #ifndef XINE_ENGINE_BUILTINS_H
 #define XINE_ENGINE_BUILTINS_H
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
+#if defined(HAVE_CONFIG_H) && !defined(__XINE_LIB_CONFIG_H__)
+#  error config.h not included
 #endif
 
 #ifdef XINE_MAKE_BUILTINS
