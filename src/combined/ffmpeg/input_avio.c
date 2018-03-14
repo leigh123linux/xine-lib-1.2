@@ -226,14 +226,14 @@ static int input_avio_open (input_plugin_t *this_gen) {
     /* try to open libavio protocol */
     if (avio_open2(&this->pb, this->mrl_private, AVIO_FLAG_READ, NULL, NULL) < 0) {
       xprintf (this->stream->xine, XINE_VERBOSITY_LOG, LOG_MODULE": failed to open avio protocol for '%s'\n", this->mrl);
-      _x_freep (&this->mrl_private);
+      _x_freep_wipe_string (&this->mrl_private);
 
       return 0;
     }
 
     xprintf (this->stream->xine, XINE_VERBOSITY_LOG, LOG_MODULE": opened avio protocol for '%s'\n", this->mrl);
   }
-  _x_freep (&this->mrl_private);
+  _x_freep_wipe_string (&this->mrl_private);
 
   while ((toread > 0) && (trycount < 10)) {
     off_t n = avio_read (this->pb, this->preview + this->preview_size, toread);
@@ -252,7 +252,7 @@ static void input_avio_dispose (input_plugin_t *this_gen ) {
 
   avio_close(this->pb);
   _x_freep (&this->mrl);
-  _x_freep (&this->mrl_private);
+  _x_freep_wipe_string (&this->mrl_private);
   free (this_gen);
 }
 
