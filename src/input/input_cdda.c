@@ -1689,7 +1689,7 @@ static void _cdda_save_cached_cddb_infos(cdda_input_plugin_t *this, char *fileco
   /* Ensure the cache directory exists */
   _cdda_mkdir_recursive_safe(this->stream->xine, cfile);
 
-  sprintf(cfile, "%s/%08" PRIx32, cfile, this->cddb.disc_id);
+  sprintf(cfile + strlen(cfile), "/%08" PRIx32, this->cddb.disc_id);
 
   if((fd = fopen(cfile, "w")) == NULL) {
     xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG,
