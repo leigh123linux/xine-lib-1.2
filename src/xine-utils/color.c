@@ -163,6 +163,11 @@ void free_yuv_planes(yuv_planes_t *yuv_planes) {
 static void yuv444_to_yuy2_c(const yuv_planes_t *yuv_planes, unsigned char *yuy2_map,
   int pitch) {
 
+  const uint8_t *restrict y = yuv_planes->y;
+  const uint8_t *restrict u = yuv_planes->u;
+  const uint8_t *restrict v = yuv_planes->v;
+  uint8_t       *restrict yuy2 = yuy2_map;
+
   unsigned int row_ptr, pixel_ptr;
   int yuy2_index;
 
@@ -172,7 +177,7 @@ static void yuv444_to_yuy2_c(const yuv_planes_t *yuv_planes, unsigned char *yuy2
     row_ptr += yuv_planes->row_width) {
     for (pixel_ptr = 0; pixel_ptr <  yuv_planes->row_width;
       pixel_ptr++, yuy2_index += 2)
-      yuy2_map[yuy2_index] = yuv_planes->y[row_ptr + pixel_ptr];
+      yuy2[yuy2_index] = y[row_ptr + pixel_ptr];
 
     yuy2_index += (pitch - 2*yuv_planes->row_width);
   }
@@ -183,10 +188,10 @@ static void yuv444_to_yuy2_c(const yuv_planes_t *yuv_planes, unsigned char *yuy2
     row_ptr += yuv_planes->row_width) {
 
     for (pixel_ptr = 0; pixel_ptr <  yuv_planes->row_width;) {
-      yuy2_map[yuy2_index] = yuv_planes->u[row_ptr + pixel_ptr];
+      yuy2[yuy2_index] = u[row_ptr + pixel_ptr];
       pixel_ptr++;
       yuy2_index += 2;
-      yuy2_map[yuy2_index] = yuv_planes->v[row_ptr + pixel_ptr];
+      yuy2[yuy2_index] = v[row_ptr + pixel_ptr];
       pixel_ptr++;
       yuy2_index += 2;
     }
@@ -424,7 +429,9 @@ static void yuv444_to_yuy2_mmx(const yuv_planes_t *yuv_planes, unsigned char *yu
 }
 #endif
 
-static void hscale_chroma_line (uint8_t *dst, const uint8_t *src, int src_width) {
+static void hscale_chroma_line (uint8_t       *restrict dst,
+                                const uint8_t *restrict src,
+                                int src_width) {
   /*    s1      s2      s3      s4   ...
    *  d1  d2  d3  d4  d5  d6  d7  d8 ... */
   int32_t n1, n2, n3, v;
@@ -455,8 +462,11 @@ static void hscale_chroma_line (uint8_t *dst, const uint8_t *src, int src_width)
   }
 }
 
-static void vscale_chroma_line (unsigned char *dst, int pitch,
-  const unsigned char *src1, const unsigned char *src2, int width) {
+static void vscale_chroma_line (uint8_t *restrict dst,
+                                int pitch,
+                                const uint8_t *restrict src1,
+                                const uint8_t *restrict src2,
+                                int width) {
   /* The purpose of pitches is to align lines.
    * We align again here just to kill cast-align warnings. */
   const uint32_t *p1, *p2;
@@ -507,9 +517,10 @@ static void vscale_chroma_line (unsigned char *dst, int pitch,
   }
 }
 
-static void upsample_c_plane_c(const unsigned char *src, int src_width,
-  int src_height, unsigned char *dest,
-  unsigned int src_pitch, unsigned int dest_pitch) {
+static void upsample_c_plane_c(const uint8_t *src,
+                               int src_width, int src_height,
+                               uint8_t       *dest,
+                               unsigned int src_pitch, unsigned int dest_pitch) {
 
   unsigned char *cr1;
   unsigned char *cr2;
@@ -552,9 +563,9 @@ static void upsample_c_plane_c(const unsigned char *src, int src_width,
  *
  */
 static void yuv9_to_yv12_c
-  (const unsigned char *y_src, int y_src_pitch, unsigned char *y_dest, int y_dest_pitch,
-   const unsigned char *u_src, int u_src_pitch, unsigned char *u_dest, int u_dest_pitch,
-   const unsigned char *v_src, int v_src_pitch, unsigned char *v_dest, int v_dest_pitch,
+  (const uint8_t *restrict y_src, int y_src_pitch, uint8_t *restrict y_dest, int y_dest_pitch,
+   const uint8_t *restrict u_src, int u_src_pitch, uint8_t *restrict u_dest, int u_dest_pitch,
+   const uint8_t *restrict v_src, int v_src_pitch, uint8_t *restrict v_dest, int v_dest_pitch,
    int width, int height) {
 
   int y;
@@ -581,9 +592,9 @@ static void yuv9_to_yv12_c
  *
  */
 static void yuv411_to_yv12_c
-  (const unsigned char *y_src, int y_src_pitch, unsigned char *y_dest, int y_dest_pitch,
-   const unsigned char *u_src, int u_src_pitch, unsigned char *u_dest, int u_dest_pitch,
-   const unsigned char *v_src, int v_src_pitch, unsigned char *v_dest, int v_dest_pitch,
+  (const uint8_t *restrict y_src, int y_src_pitch, uint8_t *restrict y_dest, int y_dest_pitch,
+   const uint8_t *restrict u_src, int u_src_pitch, uint8_t *restrict u_dest, int u_dest_pitch,
+   const uint8_t *restrict v_src, int v_src_pitch, uint8_t *restrict v_dest, int v_dest_pitch,
    int width, int height) {
 
   int y;
@@ -661,10 +672,10 @@ static void yuv411_to_yv12_c
  * correct weighting factors and no chroma shift.
  *****************************************************************************/
 static void yv12_to_yuy2_c
-  (const unsigned char *y_src, int y_src_pitch,
-   const unsigned char *u_src, int u_src_pitch,
-   const unsigned char *v_src, int v_src_pitch,
-   unsigned char *yuy2_map, int yuy2_pitch,
+  (const uint8_t *restrict y_src, int y_src_pitch,
+   const uint8_t *restrict u_src, int u_src_pitch,
+   const uint8_t *restrict v_src, int v_src_pitch,
+   uint8_t       *restrict yuy2_map, int yuy2_pitch,
    int width, int height, int progressive) {
 
     uint8_t *p_line1, *p_line2 = yuy2_map;
@@ -1519,16 +1530,18 @@ static void yv12_to_yuy2_mmx
     *p_v++ = (*p_line1++ + *p_line2++)>>1;
 
 static void yuy2_to_yv12_c
-  (const unsigned char *yuy2_map, int yuy2_pitch,
-   unsigned char *y_dst, int y_dst_pitch,
-   unsigned char *u_dst, int u_dst_pitch,
-   unsigned char *v_dst, int v_dst_pitch,
+  (const uint8_t *restrict yuy2_map, int yuy2_pitch,
+   uint8_t       *restrict y_dst, int y_dst_pitch,
+   uint8_t       *restrict u_dst, int u_dst_pitch,
+   uint8_t       *restrict v_dst, int v_dst_pitch,
    int width, int height) {
 
-    const uint8_t *p_line1, *p_line2 = yuy2_map;
-    uint8_t *p_y1, *p_y2 = y_dst;
-    uint8_t *p_u = u_dst;
-    uint8_t *p_v = v_dst;
+    const uint8_t *restrict p_line1;
+    const uint8_t *restrict p_line2 = yuy2_map;
+    uint8_t *restrict p_y1;
+    uint8_t *restrict p_y2 = y_dst;
+    uint8_t *restrict p_u = u_dst;
+    uint8_t *restrict p_v = v_dst;
 
     int i_x, i_y;
 
@@ -2045,8 +2058,10 @@ void rgb2yuy2_palette (void *rgb2yuy2, const uint8_t *pal, int num_colors, int b
 #  define GET_V(v) ((v) >> 34)
 #endif
 
-void rgb2yuy2_slice (void *rgb2yuy2, const uint8_t *in, int ipitch, uint8_t *out, int opitch,
-  int width, int height) {
+void rgb2yuy2_slice (void *rgb2yuy2,
+                     const uint8_t *restrict in,  int ipitch,
+                     uint8_t       *restrict out, int opitch,
+                     int width, int height) {
   rgb2yuy2_t *b = rgb2yuy2;
   uint64_t v;
   uint32_t w;
