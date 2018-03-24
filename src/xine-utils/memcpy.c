@@ -223,10 +223,6 @@ static __inline__ void *linux_kernel_memcpy_impl (void *to, const void *from, si
   return ret;
 }
 
-#define AVX_MMREG_SIZE 32
-#define SSE_MMREG_SIZE 16
-#define MMX_MMREG_SIZE 8
-
 #define MMX1_MIN_LEN 0x800  /* 2K blocks */
 #define MIN_LEN 0x40  /* 64-byte blocks */
 
