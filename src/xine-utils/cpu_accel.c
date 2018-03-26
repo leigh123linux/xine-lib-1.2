@@ -82,7 +82,7 @@ static uint32_t arch_accel (void)
          "movl %%ebx,%1\n\t"            \
          "pop %%rbx"                    \
          : "=a" (eax),                  \
-           "=r" (ebx),                  \
+           "=S" (ebx),                  \
            "=c" (ecx),                  \
            "=d" (edx)                   \
          : "a" (op)                     \
@@ -103,7 +103,7 @@ static uint32_t arch_accel (void)
          "movl %%ebx,%1\n\t"            \
          "popl %%ebx"                   \
          : "=a" (eax),                  \
-           "=r" (ebx),                  \
+           "=S" (ebx),                  \
            "=c" (ecx),                  \
            "=d" (edx)                   \
          : "a" (op)                     \
