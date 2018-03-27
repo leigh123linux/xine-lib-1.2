@@ -26,6 +26,18 @@ if ENABLE_FAAD
 faad_module = xineplug_decode_faad.la
 endif
 
+if ENABLE_GSM610
+gsm610_module = xineplug_decode_gsm610.la
+endif
+
+if ENABLE_LPCM
+lpcm_module = xineplug_decode_lpcm.la
+endif
+
+if ENABLE_DVAUDIO
+dvaudio_module = xineplug_decode_dvaudio.la
+endif
+
 $(top_builddir)/contrib/a52dec/liba52.la:
 	$(MAKE) -C $(top_builddir)/contrib/a52dec
 
@@ -45,9 +57,9 @@ $(top_builddir)/contrib/gsm610/libgsm610.la:
 	$(MAKE) -C $(top_builddir)/contrib/gsm610
 
 xineplug_LTLIBRARIES = \
-	xineplug_decode_gsm610.la \
-	xineplug_decode_lpcm.la \
-	xineplug_decode_dvaudio.la \
+	$(dvaudio_module) \
+	$(lpcm_module) \
+	$(gsm610_module) \
 	$(musepack_module) \
 	$(dts_module) \
 	$(mad_module) \

@@ -367,11 +367,30 @@ AC_DEFUN([XINE_DECODER_PLUGINS], [
     AM_CONDITIONAL([ENABLE_MODPLUG], [test x"$have_modplug" = x"yes"])
 
 
+    dnl raw video (rgb, yuv, ...) (optional; enabled by default)
+    AC_ARG_ENABLE([rawvideo],
+	AS_HELP_STRING([--disable-rawvideo], [disable internal raw video decoders]))
+    AM_CONDITIONAL([ENABLE_RAWVIDEO], [test x"$enable_rawvideo" != x"no"])
+
     dnl libmpeg2 (optional; enabled by default)
     AC_ARG_ENABLE([libmpeg2],
 	AS_HELP_STRING([--disable-libmpeg2], [disable internal libmpeg2 decoder]))
     AM_CONDITIONAL([ENABLE_LIBMPEG2], [test x"$enable_libmpeg2" != x"no"])
 
+    dnl gsm610 (optional; enabled by default)
+    AC_ARG_ENABLE([gsm610],
+	AS_HELP_STRING([--disable-gsm610], [disable internal GSM 06.10 decoder]))
+    AM_CONDITIONAL([ENABLE_GSM610], [test x"$enable_gsm610" != x"no"])
+
+    dnl lpcm (optional; enabled by default)
+    AC_ARG_ENABLE([lpcm],
+	AS_HELP_STRING([--disable-lpcm], [disable internal LPCM decoder]))
+    AM_CONDITIONAL([ENABLE_LPCM], [test x"$enable_lpcm" != x"no"])
+
+    dnl dvaudio (optional; enabled by default)
+    AC_ARG_ENABLE([dvaudio],
+	AS_HELP_STRING([--disable-dvaudio], [disable internal dvaudio decoder]))
+    AM_CONDITIONAL([ENABLE_DVAUDIO], [test x"$enable_dvaudio" != x"no"])
 
     dnl libmpeg2new (optional; disabled by default)
     AC_ARG_ENABLE([libmpeg2new],

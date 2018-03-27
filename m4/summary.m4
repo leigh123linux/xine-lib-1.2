@@ -81,9 +81,11 @@ AC_DEFUN([XINE_LIB_SUMMARY], [
     dnl video decoders
     echo " * video decoder plugins:"
     test x"$enable_libmpeg2" != x"no"  && echo "   - MPEG 1,2 (libmpeg2)"
+    if test x"$enable_rawvideo" != x"no"; then
     echo "   - Amiga Bitplane"
     echo "   - Raw RGB"
     echo "   - Raw YUV"
+    fi
     test x"$have_dxr3" = x"yes"        && echo "   - dxr3_video"
     test x"$have_gdkpixbuf" = x"yes"   && echo "   - gdk-pixbuf"
     test x"$have_imagemagick" = x"yes" && echo "   - image"
@@ -99,9 +101,11 @@ AC_DEFUN([XINE_LIB_SUMMARY], [
 
     dnl audio decoders
     echo " * audio decoder plugins:"
-    echo "   - GSM 06.10       - linear PCM"
-    test x"$enable_faad" != x"no"  && echo "   - faad"
-    test x"$enable_nosefart" != xno && echo "   - Nosefart (NSF)"
+    test x"$enable_lpcm" != x"no"    && echo "   - linear PCM"
+    test x"$enable_dvaudio" != x"no" && echo "   - dvaudio"
+    test x"$enable_gsm610" != x"no"  && echo "   - GSM 06.10"
+    test x"$enable_faad" != x"no"    && echo "   - faad"
+    test x"$enable_nosefart" != xno  && echo "   - Nosefart (NSF)"
     test x"$have_libflac" = x"yes" && echo "   - FLAC (with libFLAC)"
     test x"$have_speex" = x"yes"   && echo "   - speex"
     test x"$have_vorbis" = x"yes"  && echo "   - vorbis"

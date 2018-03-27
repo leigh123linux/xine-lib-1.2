@@ -41,6 +41,10 @@ vdpau_module = xineplug_decode_vdpau.la
 VDPAU_CFLAGS += -D_ISOC99_SOURCE
 endif
 
+if ENABLE_RAWVIDEO
+rawvideo_module = xineplug_decode_rawvideo.la
+endif
+
 xineplug_LTLIBRARIES = $(image_module) \
 	$(gdkpixbuf_module) \
 	$(libjpeg_module) \
@@ -49,7 +53,7 @@ xineplug_LTLIBRARIES = $(image_module) \
 	$(libvpx_module) \
 	$(libmmal_module) \
 	$(vdpau_module) \
-	xineplug_decode_rawvideo.la
+	$(rawvideo_module)
 
 xineplug_decode_rawvideo_la_SOURCES = \
 	group_raw.c \

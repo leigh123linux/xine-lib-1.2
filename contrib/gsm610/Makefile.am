@@ -3,7 +3,9 @@ include $(top_srcdir)/misc/Makefile.common
 AM_CFLAGS = $(DEFAULT_OCFLAGS) $(VISIBILITY_FLAG)
 AM_LDFLAGS = $(xineplug_ldflags)
 
+if ENABLE_GSM610
 noinst_LTLIBRARIES = libgsm610.la
+endif
 
 libgsm610_la_SOURCES = \
 	add.c \
