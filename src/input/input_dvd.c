@@ -1258,8 +1258,10 @@ static int dvd_plugin_get_optional_data (input_plugin_t *this_gen,
 
   case INPUT_OPTIONAL_DATA_AUDIOLANG: {
     uint16_t lang;
-    int      channel = *((int *)data);
+    int      channel;
     int8_t   dvd_channel;
+
+    memcpy(&channel, data, sizeof(channel));
 
     /* Be paranoid */
     if(this && this->stream && this->dvdnav) {
@@ -1300,8 +1302,10 @@ static int dvd_plugin_get_optional_data (input_plugin_t *this_gen,
 
   case INPUT_OPTIONAL_DATA_SPULANG: {
     uint16_t lang;
-    int      channel = *((int *)data);
+    int      channel;
     int8_t   dvd_channel;
+
+    memcpy(&channel, data, sizeof(channel));
 
     /* Be paranoid */
     if(this && this->stream && this->dvdnav) {

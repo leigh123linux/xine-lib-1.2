@@ -1304,7 +1304,7 @@ static const char* bluray_plugin_get_mrl (input_plugin_t *this_gen)
   return this->mrl;
 }
 
-static int get_audio_lang (bluray_input_plugin_t *this, int *data)
+static int get_audio_lang (bluray_input_plugin_t *this, void *data)
 {
   /*
    * audio track language:
@@ -1314,8 +1314,10 @@ static int get_audio_lang (bluray_input_plugin_t *this, int *data)
   unsigned int current_clip = this->current_clip; /* can change any time */
 
   if (this->title_info && current_clip < this->title_info->clip_count) {
-    int               channel = *data;
     BLURAY_CLIP_INFO *clip    = &this->title_info->clips[current_clip];
+    int channel;
+
+    memcpy(&channel, data, sizeof(channel));
 
     if (channel >= 0 && channel < clip->audio_stream_count) {
       memcpy(data, clip->audio_streams[channel].lang, 4);
@@ -1335,7 +1337,7 @@ static int get_audio_lang (bluray_input_plugin_t *this, int *data)
   return INPUT_OPTIONAL_UNSUPPORTED;
 }
 
-static int get_spu_lang (bluray_input_plugin_t *this, int *data)
+static int get_spu_lang (bluray_input_plugin_t *this, void *data)
 {
   /*
    * SPU track language:
@@ -1345,8 +1347,10 @@ static int get_spu_lang (bluray_input_plugin_t *this, int *data)
   unsigned int current_clip = this->current_clip; /* can change any time */
 
   if (this->title_info && current_clip < this->title_info->clip_count) {
-    int               channel = *data;
     BLURAY_CLIP_INFO *clip    = &this->title_info->clips[current_clip];
+    int channel;
+
+    memcpy(&channel, data, sizeof(channel));
 
     if (channel >= 0 && channel < clip->pg_stream_count) {
       memcpy(data, clip->pg_streams[channel].lang, 4);
