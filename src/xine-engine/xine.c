@@ -2624,7 +2624,7 @@ int xine_get_spu_lang (xine_stream_t *stream, int channel, char *lang) {
   if (stream->demux_plugin) {
     if (stream->demux_plugin->get_capabilities (stream->demux_plugin) & DEMUX_CAP_SPULANG) {
       /* pass the channel number to the plugin in the data field */
-      *((int *)lang) = channel;
+      memcpy(lang, &channel, sizeof(channel));
       if (stream->demux_plugin->get_optional_data (stream->demux_plugin, lang,
 	  DEMUX_OPTIONAL_DATA_SPULANG) == DEMUX_OPTIONAL_SUCCESS)
         return 1;
@@ -2637,7 +2637,7 @@ int xine_get_spu_lang (xine_stream_t *stream, int channel, char *lang) {
   if (stream->input_plugin) {
     if (stream->input_plugin->get_capabilities (stream->input_plugin) & INPUT_CAP_SPULANG) {
       /* pass the channel number to the plugin in the data field */
-      *((int *)lang) = channel;
+      memcpy(lang, &channel, sizeof(channel));
       if (stream->input_plugin->get_optional_data (stream->input_plugin, lang,
 	  INPUT_OPTIONAL_DATA_SPULANG) == INPUT_OPTIONAL_SUCCESS)
         return 1;
@@ -2652,7 +2652,7 @@ int xine_get_audio_lang (xine_stream_t *stream, int channel, char *lang) {
   if (stream->demux_plugin) {
     if (stream->demux_plugin->get_capabilities (stream->demux_plugin) & DEMUX_CAP_AUDIOLANG) {
       /* pass the channel number to the plugin in the data field */
-      *((int *)lang) = channel;
+      memcpy(lang, &channel, sizeof(channel));
       if (stream->demux_plugin->get_optional_data (stream->demux_plugin, lang,
 	  DEMUX_OPTIONAL_DATA_AUDIOLANG) == DEMUX_OPTIONAL_SUCCESS)
         return 1;
@@ -2662,7 +2662,7 @@ int xine_get_audio_lang (xine_stream_t *stream, int channel, char *lang) {
   if (stream->input_plugin) {
     if (stream->input_plugin->get_capabilities (stream->input_plugin) & INPUT_CAP_AUDIOLANG) {
       /* pass the channel number to the plugin in the data field */
-      *((int *)lang) = channel;
+      memcpy(lang, &channel, sizeof(channel));
       if (stream->input_plugin->get_optional_data (stream->input_plugin, lang,
 	  INPUT_OPTIONAL_DATA_AUDIOLANG) == INPUT_OPTIONAL_SUCCESS)
         return 1;
