@@ -2,7 +2,9 @@ include $(top_srcdir)/misc/Makefile.common
 
 AM_CFLAGS = $(DEFAULT_OCFLAGS) $(VISIBILITY_FLAG)
 
+if ENABLE_NOSEFART
 noinst_LTLIBRARIES = libnosefart.la
+endif
 
 libnosefart_la_SOURCES = \
 	dis6502.c \
