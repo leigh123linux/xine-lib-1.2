@@ -5,7 +5,6 @@ AM_CFLAGS  = $(DEFAULT_OCFLAGS) $(VISIBILITY_FLAG)
 AM_LDFLAGS = $(xineplug_ldflags)
 
 EXTRA_DIST = fooaudio.c latm.c
-noinst_HEADERS = ff_dvdata.h
 
 if ENABLE_MUSEPACK
 musepack_module = xineplug_decode_mpc.la
@@ -87,6 +86,6 @@ xineplug_decode_faad_la_DEPENDENCIES = $(FAAD_DEPS)
 xineplug_decode_faad_la_LIBADD = $(XINE_LIB) $(LTLIBINTL) $(FAAD_LIBS) -lm
 xineplug_decode_faad_la_CFLAGS = $(FAAD_CFLAGS)
 
-xineplug_decode_dvaudio_la_SOURCES  = ff_dvaudio_decoder.c
+xineplug_decode_dvaudio_la_SOURCES  = ff_dvaudio_decoder.c ff_dvdata.h
 xineplug_decode_dvaudio_la_LIBADD   = $(XINE_LIB) $(LTLIBINTL)
-xineplug_decode_dvaudio_la_CPPFLAGS = $(AM_CPPFLAGS) $(FFMPEG_CFLAGS)
+xineplug_decode_dvaudio_la_CPPFLAGS = $(AM_CPPFLAGS)

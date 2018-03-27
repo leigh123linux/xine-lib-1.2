@@ -27,17 +27,9 @@
 #ifndef FFMPEG_DVDATA_H
 #define FFMPEG_DVDATA_H
 
-#if 0
-#ifdef HAVE_FFMPEG_AVUTIL_H
-#  include <rational.h>
-#else
-#  include <libavutil/rational.h>
-#endif
-#else
 typedef struct {
   int num, den;
 } AVRational;
-#endif
 
 /* TJ. This is a fairly old snapshot. Dont mess it up by including
    a recent avcodec.h, and put a little outtake from it here. */
