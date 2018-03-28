@@ -54,6 +54,7 @@
 #include <xine/video_out.h>
 #include <xine/buffer.h>
 #include <xine/xineutils.h>
+#include <xine/xine_buffer.h>
 #include "bswap.h"
 
 #ifdef HAVE_GRAPHICSMAGICK

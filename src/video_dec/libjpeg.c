@@ -44,6 +44,7 @@
 #include <xine/xine_internal.h>
 #include <xine/video_out.h>
 #include <xine/buffer.h>
+#include <xine/xine_buffer.h>
 
 
 typedef struct {
