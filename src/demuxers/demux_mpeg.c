@@ -1240,36 +1240,7 @@ static int demux_mpeg_get_optional_data(demux_plugin_t *this_gen,
 
 static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *stream,
 				    input_plugin_t *input) {
-  demux_mpeg_t       *this;
-
-  this         = calloc(1, sizeof(demux_mpeg_t));
-  if (!this)
-    return NULL;
-  this->stream = stream;
-  this->input  = input;
-
-  this->demux_plugin.send_headers      = demux_mpeg_send_headers;
-  this->demux_plugin.send_chunk       = demux_mpeg_send_chunk;
-  this->demux_plugin.seek              = demux_mpeg_seek;
-  this->demux_plugin.dispose           = default_demux_plugin_dispose;
-  this->demux_plugin.get_status        = demux_mpeg_get_status;
-  this->demux_plugin.get_stream_length = demux_mpeg_get_stream_length;
-  this->demux_plugin.get_capabilities  = demux_mpeg_get_capabilities;
-  this->demux_plugin.get_optional_data = demux_mpeg_get_optional_data;
-  this->demux_plugin.demux_class       = class_gen;
-
-  this->status = DEMUX_FINISHED;
-  this->has_pts = 0;
-
-  this->num_audio = 0;
-  memset (this->audio_dvd,  255, sizeof (this->audio_dvd));
-  memset (this->audio_lpcm, 255, sizeof (this->audio_lpcm));
-  memset (this->audio_mpeg, 255, sizeof (this->audio_mpeg));
-
-  this->num_spu = 0;
-  memset (this->spu_dvd,  255, sizeof (this->spu_dvd));
-  memset (this->spu_svcd, 255, sizeof (this->spu_svcd));
-  memset (this->spu_cvd,  255, sizeof (this->spu_cvd));
+  /* Test our support first. */
 
   switch (stream->content_detection_method) {
 
@@ -1282,17 +1253,13 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
     uint8_t buf[SCRATCH_SIZE];
 
     /* use demux_mpeg_block for block devices */
-    if (input->get_capabilities(input) & INPUT_CAP_BLOCK ) {
-      free (this);
+    if (input->get_capabilities(input) & INPUT_CAP_BLOCK)
       return NULL;
-    }
 
     /* look for mpeg header */
     read = _x_demux_read_header(input, buf, SCRATCH_SIZE);
-    if (!read) {
-      free (this);
+    if (!read)
       return NULL;
-    }
 
     for (i = 0; i < read - 4; i++) {
       lprintf ("%02x %02x %02x %02x\n", buf[i], buf[i+1], buf[i+2], buf[i+3]);
@@ -1307,10 +1274,8 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
       break;
 
     /* the special cases need seeking */
-    if (!INPUT_IS_SEEKABLE(input)) {
-      free (this);
+    if (!INPUT_IS_SEEKABLE (input))
       return NULL;
-    }
 
     /* special case for MPEG streams hidden inside QT files; check
      * is there is an mdat atom  */
@@ -1331,34 +1296,27 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
 	  break;
       }
 
-      free (this);
       return NULL;
     }
 
     /* reset position for next check */
-    if (input->seek(input, 0, SEEK_SET) != 0) {
-      free (this);
+    if (input->seek (input, 0, SEEK_SET) != 0)
       return NULL;
-    }
 
     /* special case for MPEG streams with a RIFF header */
     fourcc_tag = _X_BE_32(&buf[0]);
     if (fourcc_tag == RIFF_TAG) {
       uint8_t large_buf[1024];
 
-      if (input->read(input, large_buf, 12) != 12) {
-        free(this);
+      if (input->read (input, large_buf, 12) != 12)
         return NULL;
-      }
       fourcc_tag = _X_BE_32(&large_buf[8]);
       /* disregard the RIFF file if it is certainly a better known
        * format like AVI or WAVE */
       if ((fourcc_tag == WAVE_TAG) ||
 	  (fourcc_tag == AVI_TAG) ||
-	  (fourcc_tag == FOURXM_TAG)) {
-	free (this);
+	  (fourcc_tag == FOURXM_TAG))
 	return NULL;
-      }
 
       /* Iterate through first n kilobytes of RIFF file searching for
        * MPEG video marker. No, it's not a very efficient approach, but
@@ -1379,7 +1337,6 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
       if (ok)
 	break;
     }
-    free (this);
     return NULL;
   }
 
@@ -1388,11 +1345,44 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
     break;
 
   default:
-    free (this);
     return NULL;
   }
 
-  return &this->demux_plugin;
+  /* OK now set up instance. */
+  {
+    demux_mpeg_t *this = calloc (1, sizeof (demux_mpeg_t));
+    if (!this)
+      return NULL;
+
+    this->has_pts = 0;
+    this->num_audio = 0;
+    this->num_spu = 0;
+
+    this->stream = stream;
+    this->input  = input;
+
+    this->demux_plugin.send_headers      = demux_mpeg_send_headers;
+    this->demux_plugin.send_chunk        = demux_mpeg_send_chunk;
+    this->demux_plugin.seek              = demux_mpeg_seek;
+    this->demux_plugin.dispose           = default_demux_plugin_dispose;
+    this->demux_plugin.get_status        = demux_mpeg_get_status;
+    this->demux_plugin.get_stream_length = demux_mpeg_get_stream_length;
+    this->demux_plugin.get_capabilities  = demux_mpeg_get_capabilities;
+    this->demux_plugin.get_optional_data = demux_mpeg_get_optional_data;
+    this->demux_plugin.demux_class       = class_gen;
+
+    this->status = DEMUX_FINISHED;
+
+    memset (this->audio_dvd,  255, sizeof (this->audio_dvd));
+    memset (this->audio_lpcm, 255, sizeof (this->audio_lpcm));
+    memset (this->audio_mpeg, 255, sizeof (this->audio_mpeg));
+
+    memset (this->spu_dvd,  255, sizeof (this->spu_dvd));
+    memset (this->spu_svcd, 255, sizeof (this->spu_svcd));
+    memset (this->spu_cvd,  255, sizeof (this->spu_cvd));
+
+    return &this->demux_plugin;
+  }
 }
 
 void *demux_mpeg_init_class (xine_t *xine, const void *data) {
