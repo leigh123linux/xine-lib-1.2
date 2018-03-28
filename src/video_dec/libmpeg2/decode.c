@@ -509,30 +509,19 @@ static inline int parse_chunk (mpeg2dec_t * mpeg2dec, int code,
 		     picture->current_frame != picture->forward_reference_frame ) {
 			picture->current_frame->free (picture->current_frame);
 		}
-		if (picture->picture_coding_type == B_TYPE) {
-                    ratio = get_aspect_ratio(mpeg2dec);
-		    picture->current_frame =
-		        mpeg2dec->stream->video_out->get_frame (mpeg2dec->stream->video_out,
-						     picture->coded_picture_width,
-						     picture->coded_picture_height,
-						     ratio,
-						     mpeg2dec->frame_format,
-						     flags);
-		    libmpeg2_accel_new_frame( &mpeg2dec->accel, mpeg2dec->frame_format,
-					      picture, ratio, flags);
-		} else {
-                    ratio = get_aspect_ratio(mpeg2dec);
-		    picture->current_frame =
-		        mpeg2dec->stream->video_out->get_frame (mpeg2dec->stream->video_out,
-						     picture->coded_picture_width,
-						     picture->coded_picture_height,
-						     ratio,
-						     mpeg2dec->frame_format,
-						     flags);
 
-		    libmpeg2_accel_new_frame( &mpeg2dec->accel, mpeg2dec->frame_format,
-					      picture, ratio, flags);
+                ratio = get_aspect_ratio(mpeg2dec);
+                picture->current_frame =
+                  mpeg2dec->stream->video_out->get_frame (mpeg2dec->stream->video_out,
+                                                          picture->coded_picture_width,
+                                                          picture->coded_picture_height,
+                                                          ratio,
+                                                          mpeg2dec->frame_format,
+                                                          flags);
+                libmpeg2_accel_new_frame( &mpeg2dec->accel, mpeg2dec->frame_format,
+                                          picture, ratio, flags);
 
+                if (picture->picture_coding_type != B_TYPE) {
 		    if (picture->forward_reference_frame &&
 		        picture->forward_reference_frame != picture->backward_reference_frame)
 		      picture->forward_reference_frame->free (picture->forward_reference_frame);
