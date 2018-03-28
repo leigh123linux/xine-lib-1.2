@@ -131,6 +131,12 @@ static void image_decode_data (video_decoder_t *this_gen, buf_element_t *buf) {
 					      (double)width / (double)height,
 					      XINE_IMGFMT_YUY2,
 					      flags);
+    if (!img) {
+      xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
+              LOG_MODULE ": get_frame(%dx%d) failed\n", width, height);
+      g_object_unref (pixbuf);
+      return;
+    }
 
     /* crop if allocated frame is smaller than requested */
     if (width > img->width)

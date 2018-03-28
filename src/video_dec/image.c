@@ -158,6 +158,12 @@ static void image_decode_data (video_decoder_t *this_gen, buf_element_t *buf) {
 					      (double)width / (double)height,
 					      XINE_IMGFMT_YUY2,
 					      frame_flags);
+    if (!img) {
+      xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
+              LOG_MODULE ": get_frame(%dx%d) failed\n", width, height);
+      free (img_buf);
+      return;
+    }
 
     if (width > img->width)
       width = img->width;

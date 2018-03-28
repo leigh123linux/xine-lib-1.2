@@ -183,12 +183,25 @@ static void yuv_decode_data (video_decoder_t *this_gen,
       this->color_matrix = buf->decoder_info[4];
 
     if (buf->decoder_flags & BUF_FLAG_FRAME_END) {
+      int format;
+      if (buf->type == BUF_VIDEO_YUY2) {
+        format = XINE_IMGFMT_YUY2;
+      } else {
+        format = XINE_IMGFMT_YV12;
+      }
+
+      img = this->stream->video_out->get_frame (this->stream->video_out,
+                                                this->width, this->height,
+                                                this->ratio, format, VO_BOTH_FIELDS);
+      if (!img) {
+        xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
+                LOG_MODULE ": get_frame(%dx%d) failed\n", this->width, this->height);
+        this->size = 0;
+        return;
+      }
+
 
       if (buf->type == BUF_VIDEO_YUY2) {
-
-        img = this->stream->video_out->get_frame (this->stream->video_out,
-                                          this->width, this->height,
-                                          this->ratio, XINE_IMGFMT_YUY2, VO_BOTH_FIELDS);
 
         yuy2_to_yuy2(
          /* src */
@@ -199,10 +212,6 @@ static void yuv_decode_data (video_decoder_t *this_gen,
           this->width, this->height);
 
       } else if (buf->type == BUF_VIDEO_YV12) {
-
-        img = this->stream->video_out->get_frame (this->stream->video_out,
-                                          this->width, this->height,
-                                          this->ratio, XINE_IMGFMT_YV12, VO_BOTH_FIELDS);
 
         yv12_to_yv12(
          /* Y */
@@ -219,10 +228,6 @@ static void yuv_decode_data (video_decoder_t *this_gen,
 
       } else if (buf->type == BUF_VIDEO_I420) {
 
-        img = this->stream->video_out->get_frame (this->stream->video_out,
-                                          this->width, this->height,
-                                          this->ratio, XINE_IMGFMT_YV12, VO_BOTH_FIELDS);
-
         yv12_to_yv12(
          /* Y */
           src, this->width,
@@ -237,11 +242,6 @@ static void yuv_decode_data (video_decoder_t *this_gen,
           this->width, this->height);
 
       } else if (buf->type == BUF_VIDEO_YVU9) {
-
-        img = this->stream->video_out->get_frame (this->stream->video_out,
-                                          this->width, this->height,
-                                          this->ratio, XINE_IMGFMT_YV12, VO_BOTH_FIELDS);
-
 
         yuv9_to_yv12(
          /* Y */
@@ -266,21 +266,14 @@ static void yuv_decode_data (video_decoder_t *this_gen,
 
       } else if (buf->type == BUF_VIDEO_GREY) {
 
-        img = this->stream->video_out->get_frame (this->stream->video_out,
-                                          this->width, this->height,
-                                          this->ratio, XINE_IMGFMT_YV12, VO_BOTH_FIELDS);
-
         xine_fast_memcpy(img->base[0], src, this->width * this->height);
         memset( img->base[1], 0x80, this->width * this->height / 4 );
         memset( img->base[2], 0x80, this->width * this->height / 4 );
 
       } else {
 
-        /* just allocate something to avoid compiler warnings */
-        img = this->stream->video_out->get_frame (this->stream->video_out,
-                                          this->width, this->height,
-                                          this->ratio, XINE_IMGFMT_YV12, VO_BOTH_FIELDS);
-
+        xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
+                LOG_MODULE ": unsupported format 0x%x\n", buf->type);
       }
 
       VO_SET_FLAGS_CM (this->color_matrix, img->flags);

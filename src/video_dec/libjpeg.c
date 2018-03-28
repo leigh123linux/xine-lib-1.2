@@ -225,6 +225,14 @@ static void jpeg_decode_data (video_decoder_t *this_gen, buf_element_t *buf) {
                                               (double)width/(double)height,
 					      XINE_IMGFMT_YUY2,
                                               frame_flags);
+    if (!img) {
+      xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
+              LOG_MODULE ": get_frame(%dx%d) failed\n", width, height);
+      jpeg_finish_decompress(&cinfo);
+      jpeg_destroy_decompress(&cinfo);
+      this->index = 0;
+      return;
+    }
 
     linesize = cinfo.output_width * cinfo.output_components;
     buffer = (cinfo.mem->alloc_sarray)((void*)&cinfo, JPOOL_IMAGE, linesize, 1);
