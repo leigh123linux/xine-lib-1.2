@@ -16,6 +16,11 @@
  * several streams simultaneously. (Example: Video capturing and video
  * playback or capturing, video playback, audio encoding and so on).
 */
+
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <errno.h>

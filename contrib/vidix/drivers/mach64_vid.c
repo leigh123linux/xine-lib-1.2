@@ -5,6 +5,11 @@
    Licence: GPL
    WARNING: THIS DRIVER IS IN BETTA STAGE
 */
+
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -14,6 +19,7 @@
 #include <fcntl.h>
 #include <limits.h>
 #include <sys/mman.h> /* for m(un)lock */
+#include <sched.h>
 #ifdef HAVE_MALLOC_H
 #include <malloc.h>
 #ifdef HAVE_MEMALIGN
@@ -1377,7 +1383,7 @@ int VIDIX_NAME(vixPlaybackCopyFrame)( vidix_dma_t * dmai )
 	/* burn CPU instead of PCI bus here */
 	while(vixQueryDMAStatus()!=0){
 	    if(can_use_irq)	hwirq_wait(pci_info.irq);
-	    else		usleep(0); /* ugly but may help */
+	    else		sched_yield (); /* usleep(0); */ /* ugly but may help */
 	}
     }
     mach64_engine_reset();
