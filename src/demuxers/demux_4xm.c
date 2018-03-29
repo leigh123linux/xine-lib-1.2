@@ -143,7 +143,10 @@ static int open_fourxm_file(demux_fourxm_t *fourxm) {
     return 0;
 
   /* read the whole header */
-  const uint32_t header_size = _X_LE_32(&preview[4]) - 4;
+  uint32_t header_size = _X_LE_32(&preview[4]);
+  if (header_size < 12)
+    return 0;
+  header_size -= 4;
   uint8_t *const header = malloc(header_size);
   if (!header || fourxm->input->read(fourxm->input, header, header_size) != header_size) {
     free(header);
