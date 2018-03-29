@@ -63,7 +63,7 @@ typedef struct {
 } demux_aac_t;
 
 
-static int open_aac_file(demux_aac_t *this) {
+static int probe_aac_file(xine_stream_t *stream, input_plugin_t *input) {
   int i;
   uint8_t peak[MAX_PREVIEW_SIZE];
   uint32_t signature;
@@ -73,18 +73,18 @@ static int open_aac_file(demux_aac_t *this) {
 
   _x_assert(MAX_PREVIEW_SIZE > 10);
 
-  if (_x_demux_read_header(this->input, &signature, 4) != 4)
+  if (_x_demux_read_header(input, &signature, 4) != 4)
       return 0;
 
   /* Check if there's an ID3v2 tag at the start */
   if ( id3v2_istag(signature) ) {
-    if (this->input->seek(this->input, 4, SEEK_SET) != 4)
+    if (input->seek(input, 4, SEEK_SET) != 4)
       return 0;
 
-    id3v2_parse_tag(this->input, this->stream, signature);
+    id3v2_parse_tag(input, stream, signature);
   }
 
-  if ( this->input->read(this->input, &signature, 4) != 4 )
+  if (input->read(input, &signature, 4) != 4)
     return 0;
 
   /* Check for an ADIF header - should be at the start of the file */
@@ -94,16 +94,16 @@ static int open_aac_file(demux_aac_t *this) {
   }
 
   /* Look for an ADTS header - might not be at the start of the file */
-  if ( this->input->get_capabilities(this->input) & INPUT_CAP_SEEKABLE ) {
+  if (input->get_capabilities(input) & INPUT_CAP_SEEKABLE) {
     lprintf("Getting a buffer of size %u\n", MAX_PREVIEW_SIZE);
 
-    if ( this->input->read(this->input, peak, MAX_PREVIEW_SIZE) != MAX_PREVIEW_SIZE )
+    if (input->read(input, peak, MAX_PREVIEW_SIZE) != MAX_PREVIEW_SIZE )
       return 0;
-    if (this->input->seek(this->input, 0, SEEK_SET) != 0)
+    if (input->seek(input, 0, SEEK_SET) != 0)
       return 0;
 
-  } else if (_x_demux_read_header(this->input, peak, MAX_PREVIEW_SIZE) !=
-	   MAX_PREVIEW_SIZE)
+  } else if (_x_demux_read_header(input, peak, MAX_PREVIEW_SIZE) !=
+             MAX_PREVIEW_SIZE)
     return 0;
 
   for (i=0; i<MAX_PREVIEW_SIZE; i++) {
@@ -136,10 +136,7 @@ static int open_aac_file(demux_aac_t *this) {
     {
       lprintf("found second ADTS header\n");
 
-      _x_stream_info_set(this->stream, XINE_STREAM_INFO_HAS_VIDEO, 0);
-      _x_stream_info_set(this->stream, XINE_STREAM_INFO_HAS_AUDIO, 1);
-
-      if (this->input->seek(this->input, data_start+id3size, SEEK_SET) < 0)
+      if (input->seek(input, data_start+id3size, SEEK_SET) < 0)
         return 0;
       return 1;
     }
@@ -252,6 +249,17 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
 
   demux_aac_t    *this;
 
+  switch (stream->content_detection_method) {
+    case METHOD_BY_MRL:
+    case METHOD_BY_CONTENT:
+    case METHOD_EXPLICIT:
+      if (!probe_aac_file(stream, input))
+        return NULL;
+      break;
+    default:
+      return NULL;
+  }
+
   this         = calloc(1, sizeof(demux_aac_t));
   this->stream = stream;
   this->input  = input;
@@ -267,21 +275,9 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
   this->demux_plugin.demux_class       = class_gen;
 
   this->status = DEMUX_FINISHED;
-  switch (stream->content_detection_method) {
 
-  case METHOD_BY_MRL:
-  case METHOD_BY_CONTENT:
-  case METHOD_EXPLICIT:
-    if (!open_aac_file(this)) {
-      free (this);
-      return NULL;
-    }
-    break;
-
-  default:
-    free (this);
-    return NULL;
-  }
+  _x_stream_info_set(stream, XINE_STREAM_INFO_HAS_VIDEO, 0);
+  _x_stream_info_set(stream, XINE_STREAM_INFO_HAS_AUDIO, 1);
 
   return &this->demux_plugin;
 }
