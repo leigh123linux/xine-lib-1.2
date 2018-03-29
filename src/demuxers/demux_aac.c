@@ -78,7 +78,8 @@ static int open_aac_file(demux_aac_t *this) {
 
   /* Check if there's an ID3v2 tag at the start */
   if ( id3v2_istag(signature) ) {
-    this->input->seek(this->input, 4, SEEK_SET);
+    if (this->input->seek(this->input, 4, SEEK_SET) != 4)
+      return 0;
 
     id3v2_parse_tag(this->input, this->stream, signature);
   }
@@ -98,7 +99,9 @@ static int open_aac_file(demux_aac_t *this) {
 
     if ( this->input->read(this->input, peak, MAX_PREVIEW_SIZE) != MAX_PREVIEW_SIZE )
       return 0;
-    this->input->seek(this->input, 0, SEEK_SET);
+    if (this->input->seek(this->input, 0, SEEK_SET) != 0)
+      return 0;
+
   } else if (_x_demux_read_header(this->input, peak, MAX_PREVIEW_SIZE) !=
 	   MAX_PREVIEW_SIZE)
     return 0;
@@ -136,7 +139,8 @@ static int open_aac_file(demux_aac_t *this) {
       _x_stream_info_set(this->stream, XINE_STREAM_INFO_HAS_VIDEO, 0);
       _x_stream_info_set(this->stream, XINE_STREAM_INFO_HAS_AUDIO, 1);
 
-      this->input->seek(this->input, data_start+id3size, SEEK_SET);
+      if (this->input->seek(this->input, data_start+id3size, SEEK_SET) < 0)
+        return 0;
       return 1;
     }
   }
