@@ -145,11 +145,12 @@ static void jpeg_decode_data (video_decoder_t *this_gen, buf_element_t *buf) {
     int         width, height;
     vo_frame_t *img;
     int         max_width, max_height;
-    uint8_t    *slice_start[1] = {NULL};
+    uint8_t    *slice_start[3] = {NULL, NULL, NULL};
     int         slice_line = 0;
     int         fullrange;
     uint8_t     ytab[256], ctab[256];
     int         frame_flags = VO_BOTH_FIELDS;
+    int         format;
 
     /* query max. image size vo can handle */
     max_width = this->stream->video_out->get_property( this->stream->video_out,
@@ -220,10 +221,12 @@ static void jpeg_decode_data (video_decoder_t *this_gen, buf_element_t *buf) {
       VO_SET_FLAGS_CM (10, frame_flags);
     }
 
+    format = (this->stream->video_out->get_capabilities (this->stream->video_out) & VO_CAP_YUY2) ?
+             XINE_IMGFMT_YUY2 : XINE_IMGFMT_YV12;
     img = this->stream->video_out->get_frame (this->stream->video_out,
                                               width, height,
                                               (double)width/(double)height,
-					      XINE_IMGFMT_YUY2,
+                                              format,
                                               frame_flags);
     if (!img) {
       xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
@@ -238,6 +241,8 @@ static void jpeg_decode_data (video_decoder_t *this_gen, buf_element_t *buf) {
     buffer = (cinfo.mem->alloc_sarray)((void*)&cinfo, JPOOL_IMAGE, linesize, 1);
     if (img->proc_slice && !(img->height & 0xf)) {
       slice_start[0] = img->base[0];
+      slice_start[1] = img->base[1];
+      slice_start[2] = img->base[2];
     }
 
     /* cut to frame width */
@@ -258,6 +263,49 @@ static void jpeg_decode_data (video_decoder_t *this_gen, buf_element_t *buf) {
         continue;
       }
 
+      if (img->format == XINE_IMGFMT_YV12) {
+        if (fullrange) {
+          for (i = 0; i < linesize; i += 3) {
+            *dst++ = buffer[0][i];
+          }
+          if (!(cinfo.output_scanline & 1)) {
+            dst = img->base[1] + img->pitches[1] * cinfo.output_scanline / 2;
+            for (i = 0; i < linesize; i += 6) {
+              *dst++ = buffer[0][i + 1];
+            }
+            dst = img->base[2] + img->pitches[2] * cinfo.output_scanline / 2;
+            for (i = 0; i < linesize; i += 6) {
+              *dst++ = buffer[0][i + 2];
+            }
+          }
+        } else {
+          for (i = 0; i < linesize; i += 3) {
+            *dst++ = ytab[(uint8_t)buffer[0][i]];
+          }
+          if (!(cinfo.output_scanline & 1)) {
+            dst = img->base[1] + img->pitches[1] * cinfo.output_scanline / 2;
+            for (i = 0; i < linesize; i += 6) {
+              *dst++ = ctab[(uint8_t)buffer[0][i + 2]];
+            }
+            dst = img->base[2] + img->pitches[2] * cinfo.output_scanline / 2;
+            for (i = 0; i < linesize; i += 6) {
+              *dst++ = ctab[(uint8_t)buffer[0][i + 1]];
+            }
+          }
+        }
+
+        if (slice_start[0]) {
+          slice_line++;
+          if (slice_line == 16) {
+            img->proc_slice(img, slice_start);
+            slice_start[0] += 16 * img->pitches[0];
+            slice_start[1] += 8 * img->pitches[1];
+            slice_start[2] += 8 * img->pitches[2];
+            slice_line = 0;
+          }
+        }
+
+      } else /* XINE_IMGFMT_YUY2 */ {
       if (fullrange) {
         for (i = 0; i < linesize; i += 3) {
           *dst++ = buffer[0][i];
@@ -286,6 +334,7 @@ static void jpeg_decode_data (video_decoder_t *this_gen, buf_element_t *buf) {
           slice_start[0] += 16 * img->pitches[0];
           slice_line = 0;
         }
+      }
       }
     }
 
