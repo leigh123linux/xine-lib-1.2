@@ -196,12 +196,13 @@ static int open_fourxm_file(demux_fourxm_t *fourxm) {
           free(header);
           return 0;
         }
-        fourxm->tracks = realloc(fourxm->tracks,
+        void *tmp = realloc(fourxm->tracks,
           fourxm->track_count * sizeof(audio_track_t));
-        if (!fourxm->tracks) {
+        if (!tmp) {
           free(header);
           return 0;
         }
+        fourxm->tracks = tmp;
       }
 
       fourxm->tracks[current_track].channels = _X_LE_32(&header[i + 36]);
@@ -456,6 +457,15 @@ static int demux_fourxm_get_optional_data(demux_plugin_t *this_gen,
   return DEMUX_OPTIONAL_UNSUPPORTED;
 }
 
+static void demux_fourxm_dispose(demux_plugin_t *this_gen) {
+
+  demux_fourxm_t *this = (demux_fourxm_t *) this_gen;
+
+  _x_freep (&this->tracks);
+
+  free (this_gen);
+}
+
 static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *stream,
                                     input_plugin_t *input) {
 
@@ -468,7 +478,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
   this->demux_plugin.send_headers      = demux_fourxm_send_headers;
   this->demux_plugin.send_chunk        = demux_fourxm_send_chunk;
   this->demux_plugin.seek              = demux_fourxm_seek;
-  this->demux_plugin.dispose           = default_demux_plugin_dispose;
+  this->demux_plugin.dispose           = demux_fourxm_dispose;
   this->demux_plugin.get_status        = demux_fourxm_get_status;
   this->demux_plugin.get_stream_length = demux_fourxm_get_stream_length;
   this->demux_plugin.get_capabilities  = demux_fourxm_get_capabilities;
@@ -484,14 +494,14 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
   case METHOD_EXPLICIT:
 
     if (!open_fourxm_file(this)) {
-      free (this);
+      demux_fourxm_dispose (&this->demux_plugin);
       return NULL;
     }
 
   break;
 
   default:
-    free (this);
+    demux_fourxm_dispose (&this->demux_plugin);
     return NULL;
   }
 
