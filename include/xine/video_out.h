@@ -289,14 +289,14 @@ struct xine_video_port_s {
 #define VO_NUM_RECENT_FRAMES     2
 
 /* get_frame flags */
-#define VO_TOP_FIELD         1
-#define VO_BOTTOM_FIELD      2
-#define VO_BOTH_FIELDS       (VO_TOP_FIELD | VO_BOTTOM_FIELD)
-#define VO_PAN_SCAN_FLAG     4
-#define VO_INTERLACED_FLAG   8
-#define VO_NEW_SEQUENCE_FLAG 16 /* set after MPEG2 Sequence Header Code (used by XvMC) */
-#define VO_CHROMA_422        32 /* used by VDPAU, default is chroma_420 */
-#define VO_STILL_IMAGE       64
+#define VO_TOP_FIELD           0x0001
+#define VO_BOTTOM_FIELD        0x0002
+#define VO_BOTH_FIELDS         (VO_TOP_FIELD | VO_BOTTOM_FIELD)
+#define VO_PAN_SCAN_FLAG       0x0004
+#define VO_INTERLACED_FLAG     0x0008
+#define VO_NEW_SEQUENCE_FLAG   0x0010 /* set after MPEG2 Sequence Header Code (used by XvMC) */
+#define VO_CHROMA_422          0x0020 /* used by VDPAU, default is chroma_420 */
+#define VO_STILL_IMAGE         0x0040
 
 /* ((mpeg_color_matrix << 1) | color_range) inside frame.flags bits 12-8 */
 #define VO_FULLRANGE 0x100
