@@ -100,7 +100,7 @@ static void image_decode_data (video_decoder_t *this_gen, buf_element_t *buf) {
     vo_frame_t        *img;
 
     void              *rgb2yuy2;
-    int                frame_flags, cm;
+    int                frame_flags, cm, format;
 
     /*
      * this->image -> rgb data
@@ -154,10 +154,12 @@ static void image_decode_data (video_decoder_t *this_gen, buf_element_t *buf) {
     /*
      * alloc video frame and set cropping
      */
+    format = (this->stream->video_out->get_capabilities (this->stream->video_out) & VO_CAP_YUY2) ?
+             XINE_IMGFMT_YUY2 : XINE_IMGFMT_YV12;
     img = this->stream->video_out->get_frame (this->stream->video_out, width, height,
 					      (double)width / (double)height,
-					      XINE_IMGFMT_YUY2,
-					      frame_flags);
+                                              format,
+                                              frame_flags | VO_GET_FRAME_MAY_FAIL);
     if (!img) {
       xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
               LOG_MODULE ": get_frame(%dx%d) failed\n", width, height);
@@ -175,7 +177,15 @@ static void image_decode_data (video_decoder_t *this_gen, buf_element_t *buf) {
      * rgb data -> yuv_planes
      */
     rgb2yuy2 = rgb2yuy2_alloc (cm, "rgb");
-    rgb2yuy2_slice (rgb2yuy2, img_buf, img_stride, img->base[0], img->pitches[0], width, height);
+    if (img->format == XINE_IMGFMT_YV12) {
+      rgb2yv12_slice (rgb2yuy2, img_buf, img_stride,
+                      img->base[0], img->pitches[0],
+                      img->base[1], img->pitches[1],
+                      img->base[2], img->pitches[2],
+                      width, height);
+    } else {
+      rgb2yuy2_slice (rgb2yuy2, img_buf, img_stride, img->base[0], img->pitches[0], width, height);
+    }
     rgb2yuy2_free (rgb2yuy2);
     free (img_buf);
 

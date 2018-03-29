@@ -2225,3 +2225,35 @@ void rgb2yuy2_slice (void *rgb2yuy2,
     break;
   }
 }
+
+void rgb2yv12_slice(void *rgb2yuy2,
+                    const uint8_t *src, int src_stride,
+                    uint8_t *y_dst, int y_pitch,
+                    uint8_t *u_dst, int u_pitch,
+                    uint8_t *v_dst, int v_pitch,
+                    int width, int height)
+{
+  int y, h = 16;
+  uint8_t *yuy2;
+
+  yuy2 = xine_malloc_aligned(2 * 16 * y_pitch);
+  if (!yuy2)
+    return;
+
+  for (y = 0; y < height; y += 16) {
+
+    if (y + 16 > height)
+      h = height & 15;
+
+    rgb2yuy2_slice (rgb2yuy2,
+                    src + y * src_stride, src_stride,
+                    yuy2, 2 * y_pitch,
+                    width, h);
+    yuy2_to_yv12(yuy2, 2 * y_pitch,
+                 y_dst +   y * y_pitch, y_pitch,
+                 u_dst + y/2 * u_pitch, u_pitch,
+                 v_dst + y/2 * v_pitch, v_pitch,
+                 width, h);
+  }
+  xine_free_aligned(yuy2);
+}

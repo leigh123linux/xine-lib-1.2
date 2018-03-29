@@ -85,7 +85,7 @@ static void image_decode_data (video_decoder_t *this_gen, buf_element_t *buf) {
     int                width, height, rowstride, n_channels;
     guchar            *img_buf;
     vo_frame_t        *img;
-    int                color_matrix, flags;
+    int                color_matrix, flags, format;
     void              *rgb2yuy2;
 
     /*
@@ -127,10 +127,12 @@ static void image_decode_data (video_decoder_t *this_gen, buf_element_t *buf) {
     /*
      * alloc video frame
      */
+    format = (this->stream->video_out->get_capabilities (this->stream->video_out) & VO_CAP_YUY2) ?
+             XINE_IMGFMT_YUY2 : XINE_IMGFMT_YV12;
     img = this->stream->video_out->get_frame (this->stream->video_out, width, height,
-					      (double)width / (double)height,
-					      XINE_IMGFMT_YUY2,
-					      flags);
+                                              (double)width / (double)height,
+                                              format,
+                                              flags);
     if (!img) {
       xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
               LOG_MODULE ": get_frame(%dx%d) failed\n", width, height);
@@ -150,6 +152,15 @@ static void image_decode_data (video_decoder_t *this_gen, buf_element_t *buf) {
     rowstride = gdk_pixbuf_get_rowstride (pixbuf);
 
     rgb2yuy2 = rgb2yuy2_alloc (color_matrix, n_channels > 3 ? "rgba" : "rgb");
+
+    if (img->format == XINE_IMGFMT_YV12) {
+      rgb2yv12_slice (rgb2yuy2, img_buf, rowstride,
+                      img->base[0], img->pitches[0],
+                      img->base[1], img->pitches[1],
+                      img->base[2], img->pitches[2],
+                      width, height);
+    } else {
+
     if (!img->proc_slice || (img->height & 15)) {
       /* do all at once */
       rgb2yuy2_slice (rgb2yuy2, img_buf, rowstride, img->base[0], img->pitches[0], width, height);
@@ -165,6 +176,7 @@ static void image_decode_data (video_decoder_t *this_gen, buf_element_t *buf) {
           width, h);
         img->proc_slice (img, sptr);
       }
+    }
     }
     rgb2yuy2_free (rgb2yuy2);
     g_object_unref (pixbuf);

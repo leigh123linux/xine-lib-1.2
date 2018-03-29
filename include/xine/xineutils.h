@@ -432,6 +432,11 @@ extern void  rgb2yuy2_slice (void *rgb2yuy2, const uint8_t *in, int ipitch, uint
 extern void  rgb2yuy2_palette (void *rgb2yuy2, const uint8_t *pal, int num_colors, int bits_per_pixel)
   XINE_PROTECTED;
 
+extern void rgb2yv12_slice(void *rgb2yuy2, const uint8_t *src, int src_stride,
+                           uint8_t *y_dst, int y_pitch,
+                           uint8_t *u_dst, int u_pitch,
+                           uint8_t *v_dst, int v_pitch,
+                           int width, int height) XINE_PROTECTED;
 
 /* frame copying functions */
 extern void yv12_to_yv12
