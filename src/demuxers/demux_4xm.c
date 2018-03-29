@@ -117,14 +117,12 @@ static float get_le_float(unsigned char *buffer)
   return f;
 }
 
-/* Open a 4xm file
- * This function is called from the _open() function of this demuxer.
- * It returns 1 if 4xm file was opened successfully. */
-static int open_fourxm_file(demux_fourxm_t *fourxm) {
-  unsigned char preview[12];
+static int probe_fourxm_file(input_plugin_t *input, uint32_t *header_size)
+{
+  unsigned char preview[24];
 
   /* the file signature will be in the first 12 bytes */
-  if (_x_demux_read_header(fourxm->input, preview, 12) != 12)
+  if (_x_demux_read_header(input, preview, 24) != 24)
     return 0;
 
   /* check for the signature tags */
@@ -132,22 +130,23 @@ static int open_fourxm_file(demux_fourxm_t *fourxm) {
       !_x_is_fourcc(&preview[8], "4XMV"))
     return 0;
 
-  /* file is qualified; skip over the header bytes in the stream */
-  if (fourxm->input->seek(fourxm->input, 12, SEEK_SET) != 12)
+  if (!_x_is_fourcc(&preview[12 + 0], "LIST") ||
+      !_x_is_fourcc(&preview[12 + 8], "HEAD") )
     return 0;
 
-  /* fetch the LIST-HEAD header */
-  if (fourxm->input->read(fourxm->input, preview, 12) != 12)
+  *header_size = _X_LE_32(&preview[12 + 4]);
+  if (*header_size < 12)
     return 0;
-  if (!_x_is_fourcc(&preview[0], "LIST") ||
-      !_x_is_fourcc(&preview[8], "HEAD") )
-    return 0;
+  *header_size -= 4;
 
-  /* read the whole header */
-  uint32_t header_size = _X_LE_32(&preview[4]);
-  if (header_size < 12)
-    return 0;
-  header_size -= 4;
+  return 1;
+}
+
+/* Open a 4xm file
+ * This function is called from the _open() function of this demuxer.
+ * It returns 1 if 4xm file was opened successfully. */
+static int open_fourxm_file(demux_fourxm_t *fourxm, uint32_t header_size) {
+
   uint8_t *const header = malloc(header_size);
   if (!header || fourxm->input->read(fourxm->input, header, header_size) != header_size) {
     free(header);
@@ -470,6 +469,18 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
                                     input_plugin_t *input) {
 
   demux_fourxm_t    *this;
+  uint32_t header_size;
+
+  switch (stream->content_detection_method) {
+    case METHOD_BY_MRL:
+    case METHOD_BY_CONTENT:
+    case METHOD_EXPLICIT:
+      if (!probe_fourxm_file(input, &header_size))
+        return NULL;
+      break;
+    default:
+      return NULL;
+  }
 
   this         = calloc(1, sizeof(demux_fourxm_t));
   this->stream = stream;
@@ -487,20 +498,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
 
   this->status = DEMUX_FINISHED;
 
-  switch (stream->content_detection_method) {
-
-  case METHOD_BY_MRL:
-  case METHOD_BY_CONTENT:
-  case METHOD_EXPLICIT:
-
-    if (!open_fourxm_file(this)) {
-      demux_fourxm_dispose (&this->demux_plugin);
-      return NULL;
-    }
-
-  break;
-
-  default:
+  if (!open_fourxm_file(this, header_size)) {
     demux_fourxm_dispose (&this->demux_plugin);
     return NULL;
   }
