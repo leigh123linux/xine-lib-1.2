@@ -133,7 +133,8 @@ static int open_fourxm_file(demux_fourxm_t *fourxm) {
     return 0;
 
   /* file is qualified; skip over the header bytes in the stream */
-  fourxm->input->seek(fourxm->input, 12, SEEK_SET);
+  if (fourxm->input->seek(fourxm->input, 12, SEEK_SET) != 12)
+    return 0;
 
   /* fetch the LIST-HEAD header */
   if (fourxm->input->read(fourxm->input, preview, 12) != 12)
@@ -221,10 +222,11 @@ static int open_fourxm_file(demux_fourxm_t *fourxm) {
   /* this will get bumped to 0 on the first iteration */
   fourxm->video_pts = -fourxm->video_pts_inc;
 
-  /* skip the data body LIST header */
-  fourxm->input->seek(fourxm->input, 12, SEEK_CUR);
-
   free(header);
+
+  /* skip the data body LIST header */
+  if (fourxm->input->seek(fourxm->input, 12, SEEK_CUR) < 0)
+    return 0;
 
   return 1;
 }
@@ -346,7 +348,8 @@ static int demux_fourxm_send_chunk(demux_plugin_t *this_gen) {
 
   case LIST_TAG:
     /* skip LIST header */
-    this->input->seek(this->input, 4, SEEK_CUR);
+    if (this->input->seek(this->input, 4, SEEK_CUR) < 0)
+      this->status = DEMUX_FINISHED;
 
     /* take this opportunity to bump the video pts */
     this->video_pts += this->video_pts_inc;
