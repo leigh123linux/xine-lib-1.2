@@ -227,6 +227,9 @@ static int open_ac3_file(demux_ac3_t *this) {
   } else {
     int fscod, frmsizecod;
 
+    if (data_start + 4 >= peak_size)
+      return 0;
+
     fscod = peak[data_start+4] >> 6;
     frmsizecod = peak[data_start+4] & 0x3F;
 
