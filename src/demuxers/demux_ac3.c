@@ -70,8 +70,6 @@ typedef struct {
   int                  frame_size;
   int                  running_time;
 
-  off_t                data_start;
-
   uint32_t             buf_type;
 
 } demux_ac3_t;
@@ -133,6 +131,7 @@ static int open_ac3_file(demux_ac3_t *this) {
   uint32_t syncword = 0;
   uint32_t blocksize;
   uint8_t *peak;
+  off_t data_start = 0;
 
   blocksize = this->input->get_blocksize(this->input);
   if (blocksize && INPUT_IS_SEEKABLE(this->input)) {
@@ -203,14 +202,14 @@ static int open_ac3_file(demux_ac3_t *this) {
   /* Look for a valid AC3 sync word */
   for (i=offset; i<peak_size; i++) {
     if ((syncword & 0xffff) == 0x0b77) {
-      this->data_start = i-2;
+      data_start = i-2;
       lprintf("found AC3 syncword at offset %d\n", i-2);
       break;
     }
 
     if ((syncword == 0x72f81f4e) && (peak[i] == 0x01)) {
       spdif_mode = 1;
-      this->data_start = i+4;
+      data_start = i+4;
       lprintf("found AC3 SPDIF header at offset %d\n", i-4);
       break;
     }
@@ -228,8 +227,8 @@ static int open_ac3_file(demux_ac3_t *this) {
   } else {
     int fscod, frmsizecod;
 
-    fscod = peak[this->data_start+4] >> 6;
-    frmsizecod = peak[this->data_start+4] & 0x3F;
+    fscod = peak[data_start+4] >> 6;
+    frmsizecod = peak[data_start+4] & 0x3F;
 
     if ((fscod > 2) || (frmsizecod > 37))
       return 0;
@@ -250,9 +249,9 @@ static int open_ac3_file(demux_ac3_t *this) {
     }
 
     /* Look for a second sync word */
-    if ((this->data_start+this->frame_size+1 >= peak_size) ||
-        (peak[this->data_start+this->frame_size] != 0x0b) ||
-        (peak[this->data_start+this->frame_size + 1] != 0x77)) {
+    if ((data_start+this->frame_size+1 >= peak_size) ||
+        (peak[data_start+this->frame_size] != 0x0b) ||
+        (peak[data_start+this->frame_size + 1] != 0x77)) {
       return 0;
     }
 
@@ -261,8 +260,7 @@ static int open_ac3_file(demux_ac3_t *this) {
     this->buf_type = BUF_AUDIO_A52;
   }
 
-  this->running_time = this->input->get_length(this->input) -
-                       this->data_start;
+  this->running_time = this->input->get_length(this->input) - data_start;
   this->running_time /= this->frame_size;
   this->running_time *= (90000 / 1000) * (256 * 6);
   this->running_time /= this->sample_rate;
