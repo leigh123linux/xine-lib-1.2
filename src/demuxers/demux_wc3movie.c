@@ -361,7 +361,6 @@ static int open_mve_file(demux_mve_t *this) {
   int i, j;
   unsigned char r, g, b;
   int temp;
-  void *title;
 
   /* file is qualified */
 
@@ -442,12 +441,10 @@ static int open_mve_file(demux_mve_t *this) {
    * BNAM, SIZE and perhaps others; traverse chunks until first BRCH
    * chunk is found */
   chunk_tag = 0;
-  title = NULL;
   while (chunk_tag != BRCH_TAG) {
 
     if (this->input->read(this->input, preamble, PREAMBLE_SIZE) !=
       PREAMBLE_SIZE) {
-      free (title);
       free (this->palettes);
       free (this->shot_offsets);
       return 0;
@@ -463,24 +460,25 @@ static int open_mve_file(demux_mve_t *this) {
         /* time to start demuxing */
         break;
 
-      case BNAM_TAG:
+      case BNAM_TAG: {
         /* load the name into the stream attributes */
-        free (title);
-        title = malloc (chunk_size);
+        void *title = malloc (chunk_size);
         if (!title || this->input->read(this->input, title, chunk_size) != chunk_size) {
           free (title);
           free (this->palettes);
           free (this->shot_offsets);
           return 0;
         }
+        _x_meta_info_set(this->stream, XINE_META_INFO_TITLE, title);
+        free(title);
         break;
+      }
 
       case SIZE_TAG:
         /* override the default width and height */
         /* reuse the preamble bytes */
         if (this->input->read(this->input, preamble, PREAMBLE_SIZE) !=
           PREAMBLE_SIZE) {
-          free (title);
           free (this->palettes);
           free (this->shot_offsets);
           return 0;
@@ -510,8 +508,6 @@ static int open_mve_file(demux_mve_t *this) {
   this->data_start = this->input->get_current_pos(this->input);
   this->data_size  = this->input->get_length(this->input) - this->data_start;
   this->video_pts  = 0;
-
-  _x_meta_info_set(this->stream, XINE_META_INFO_TITLE, title);
 
   return 1;
 }
