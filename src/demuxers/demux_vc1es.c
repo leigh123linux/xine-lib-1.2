@@ -76,7 +76,6 @@ typedef struct {
 
   xine_stream_t       *stream;
   fifo_buffer_t       *video_fifo;
-  fifo_buffer_t       *audio_fifo;
   input_plugin_t      *input;
   int                  status;
   int                  mode;
@@ -196,7 +195,6 @@ static void demux_vc1_es_send_headers( demux_plugin_t *this_gen )
   demux_vc1_es_t *this = (demux_vc1_es_t *) this_gen;
 
   this->video_fifo  = this->stream->video_fifo;
-  this->audio_fifo  = this->stream->audio_fifo;
   _x_stream_info_set(this->stream, XINE_STREAM_INFO_HAS_VIDEO, 1);
   _x_stream_info_set(this->stream, XINE_STREAM_INFO_HAS_AUDIO, 0);
   _x_demux_control_start(this->stream);
