@@ -3330,22 +3330,18 @@ error:
  */
 void *demux_matroska_init_class (xine_t *xine, const void *data) {
 
-  demux_class_t     *this;
+  static const demux_class_t demux_matroska_class = {
+    .open_plugin     = open_plugin,
+    .description     = N_("matroska & webm demux plugin"),
+    .identifier      = "matroska",
+    .mimetypes       =
+      "video/mkv: mkv: matroska;"
+      "video/x-matroska: mkv: matroska;"
+      "video/webm: wbm,webm: WebM;",
+    .extensions      = "mkv wbm webm",
+    .dispose         = NULL,
+  };
 
-  this         = calloc(1, sizeof(demux_class_t));
-  if (!this)
-    return NULL;
-
-  this->open_plugin     = open_plugin;
-  this->description     = N_("matroska & webm demux plugin");
-  this->identifier      = "matroska";
-  this->mimetypes       =
-    "video/mkv: mkv: matroska;"
-    "video/x-matroska: mkv: matroska;"
-    "video/webm: wbm,webm: WebM;";
-  this->extensions      = "mkv wbm webm";
-  this->dispose         = default_demux_class_dispose;
-
-  return this;
+  return (void *)&demux_matroska_class;
 }
 

@@ -340,24 +340,21 @@ static demux_plugin_t* open_plugin(demux_class_t *class_gen, xine_stream_t *stre
 }
 
 static void *init_plugin(xine_t *xine, const void *data) {
-  demux_class_t *this;
 
-  this = calloc(1, sizeof(demux_class_t));
-  if (!this)
-    return NULL;
+  static const demux_class_t demux_mng_class = {
+    .open_plugin     = open_plugin,
+    .description     = N_("Multiple-image Network Graphics demux plugin"),
+    .identifier      = "MNG",
+    .mimetypes       =
+      "image/png: png: PNG image;"
+      "image/x-png: png: PNG image;"
+      "video/mng: mng: MNG animation;"
+      "video/x-mng: mng: MNG animation;",
+    .extensions      = "png mng",
+    .dispose         = NULL,
+  };
 
-  this->open_plugin     = open_plugin;
-  this->description     = N_("Multiple-image Network Graphics demux plugin");
-  this->identifier      = "MNG";
-  this->mimetypes       =
-    "image/png: png: PNG image;"
-    "image/x-png: png: PNG image;"
-    "video/mng: mng: MNG animation;"
-    "video/x-mng: mng: MNG animation;";
-  this->extensions      = "png mng";
-  this->dispose         = default_demux_class_dispose;
-
-  return this;
+  return (void *)&demux_mng_class;
 }
 
 static const demuxer_info_t demux_info_mng = {

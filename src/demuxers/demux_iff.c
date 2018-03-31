@@ -1214,27 +1214,24 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
 }
 
 void *demux_iff_init_class (xine_t *xine, const void *data) {
-  demux_class_t *this;
 
-  this = calloc(1, sizeof(demux_class_t));
-  if (!this)
-    return NULL;
+  static const demux_class_t demux_iff_class = {
+    .open_plugin         = open_plugin,
+    .description         = N_("IFF demux plugin"),
+    .identifier          = "IFF",
+    .mimetypes           =
+      "audio/x-8svx: 8svx: IFF-8SVX Audio;"
+      "audio/8svx: 8svx: IFF-8SVX Audio;"
+      "audio/x-16sv: 16sv: IFF-16SV Audio;"
+      "audio/168sv: 16sv: IFF-16SV Audio;"
+      "image/x-ilbm: ilbm: IFF-ILBM Picture;"
+      "image/ilbm: ilbm: IFF-ILBM Picture;"
+      "video/x-anim: anim: IFF-ANIM Video;"
+      "video/anim: anim: IFF-ANIM Video;",
+    .extensions          = "iff svx 8svx 16sv ilbm ham ham6 ham8 anim anim3 anim5 anim7 anim8",
+    .dispose             = NULL,
+  };
 
-  this->open_plugin         = open_plugin;
-  this->description         = N_("IFF demux plugin");
-  this->identifier          = "IFF";
-  this->mimetypes           =
-    "audio/x-8svx: 8svx: IFF-8SVX Audio;"
-    "audio/8svx: 8svx: IFF-8SVX Audio;"
-    "audio/x-16sv: 16sv: IFF-16SV Audio;"
-    "audio/168sv: 16sv: IFF-16SV Audio;"
-    "image/x-ilbm: ilbm: IFF-ILBM Picture;"
-    "image/ilbm: ilbm: IFF-ILBM Picture;"
-    "video/x-anim: anim: IFF-ANIM Video;"
-    "video/anim: anim: IFF-ANIM Video;";
-  this->extensions          = "iff svx 8svx 16sv ilbm ham ham6 ham8 anim anim3 anim5 anim7 anim8";
-  this->dispose             = default_demux_class_dispose;
-
-  return this;
+  return (void *)&demux_iff_class;
 }
 

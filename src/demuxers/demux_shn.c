@@ -202,18 +202,15 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
 }
 
 void *demux_shn_init_plugin (xine_t *xine, const void *data) {
-  demux_class_t *this;
 
-  this = calloc(1, sizeof(demux_class_t));
-  if (!this)
-    return NULL;
+  static const demux_class_t demux_shn_class = {
+    .open_plugin     = open_plugin,
+    .description     = N_("Shorten demux plugin"),
+    .identifier      = "Shorten",
+    .mimetypes       = NULL,
+    .extensions      = "shn",
+    .dispose         = NULL,
+  };
 
-  this->open_plugin     = open_plugin;
-  this->description     = N_("Shorten demux plugin");
-  this->identifier      = "Shorten";
-  this->mimetypes       = NULL;
-  this->extensions      = "shn";
-  this->dispose         = default_demux_class_dispose;
-
-  return this;
+  return (void *)&demux_shn_class;
 }

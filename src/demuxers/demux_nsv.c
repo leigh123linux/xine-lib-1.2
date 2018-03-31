@@ -621,20 +621,17 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
 }
 
 static void *demux_nsv_init_plugin (xine_t *xine, const void *data) {
-  demux_class_t *this;
 
-  this = calloc(1, sizeof(demux_class_t));
-  if (!this)
-    return NULL;
+  static const demux_class_t demux_nsv_class = {
+    .open_plugin     = open_plugin,
+    .description     = N_("Nullsoft Video demux plugin"),
+    .identifier      = "Nullsoft NSV",
+    .mimetypes       = NULL,
+    .extensions      = "nsv",
+    .dispose         = NULL,
+  };
 
-  this->open_plugin     = open_plugin;
-  this->description     = N_("Nullsoft Video demux plugin");
-  this->identifier      = "Nullsoft NSV";
-  this->mimetypes       = NULL;
-  this->extensions      = "nsv";
-  this->dispose         = default_demux_class_dispose;
-
-  return this;
+  return (void *)&demux_nsv_class;
 }
 
 /*

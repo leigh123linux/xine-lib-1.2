@@ -712,31 +712,27 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen,
 }
 
 static void *init_plugin (xine_t *xine, const void *data) {
-  demux_class_t *this;
 
-  this = calloc(1, sizeof(demux_class_t));
-  if (!this) {
-    return NULL;
-  }
+  static const demux_class_t demux_playlist_class = {
+    .open_plugin     = open_plugin,
+    .description     = N_("Playlist demux plugin"),
+    .identifier      = "playlist",
+    .mimetypes       =
+      "audio/mpegurl: m3u: M3U playlist;"
+      "audio/x-mpegurl: m3u: M3U playlist;"
+      //"audio/x-pn-realaudio: ram: RAM playlist;"
+      //"audio/vnd.rn-realaudio: ram: RAM playlist;"
+      "audio/x-scpls: pls: Winamp playlist;"
+      "audio/x-ms-wax: wax, asx: WAX playlist;"
+      "audio/x-ms-wvx: wvx, asx: WVX playlist;"
+      "application/smil: smi, smil: SMIL playlist;"
+      "application/x-quicktimeplayer: qtl: Quicktime playlist;"
+      "application/xspf+xml: xspf: XSPF playlist;",
+    .extensions      = "m3u ram pls asx wax wvx smi smil qtl xspf rss",
+    .dispose         = NULL,
+  };
 
-  this->open_plugin     = open_plugin;
-  this->description     = N_("Playlist demux plugin");
-  this->identifier      = "playlist";
-  this->mimetypes       =
-    "audio/mpegurl: m3u: M3U playlist;"
-    "audio/x-mpegurl: m3u: M3U playlist;"
-    //"audio/x-pn-realaudio: ram: RAM playlist;"
-    //"audio/vnd.rn-realaudio: ram: RAM playlist;"
-    "audio/x-scpls: pls: Winamp playlist;"
-    "audio/x-ms-wax: wax, asx: WAX playlist;"
-    "audio/x-ms-wvx: wvx, asx: WVX playlist;"
-    "application/smil: smi, smil: SMIL playlist;"
-    "application/x-quicktimeplayer: qtl: Quicktime playlist;"
-    "application/xspf+xml: xspf: XSPF playlist;";
-  this->extensions      = "m3u ram pls asx wax wvx smi smil qtl xspf rss";
-  this->dispose         = default_demux_class_dispose;
-
-  return this;
+  return (void *)&demux_playlist_class;
 }
 
 /*

@@ -357,16 +357,12 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
 }
 
 static void *demux_mod_init_plugin (xine_t *xine, const void *data) {
-  demux_class_t *this;
 
-  this = calloc(1, sizeof(demux_class_t));
-  if (!this)
-    return NULL;
-
-  this->open_plugin     = open_plugin;
-  this->description     = N_("ModPlug Amiga MOD Music file demux plugin");
-  this->identifier      = "mod";
-  this->mimetypes       =
+  static const demux_class_t demux_mod_class = {
+    .open_plugin     = open_plugin,
+    .description     = N_("ModPlug Amiga MOD Music file demux plugin"),
+    .identifier      = "mod",
+    .mimetypes       =
          "audio/x-mod: mod: SoundTracker/NoiseTracker/ProTracker Module;"
          "audio/mod: mod: SoundTracker/NoiseTracker/ProTracker Module;"
          "audio/it: it: ImpulseTracker Module;"
@@ -379,11 +375,12 @@ static void *demux_mod_init_plugin (xine_t *xine, const void *data) {
          "audio/med: med: Amiga MED/OctaMED Tracker Module Sound File;"
          "audio/x-amf: amf: ADRIFT Module File;"
          "audio/x-xm: xm: FastTracker II Audio;"
-         "audio/xm: xm: FastTracker II Audio;";
-  this->extensions      = "mod it stm s3m 669 amf med mdl xm";
-  this->dispose         = default_demux_class_dispose;
+         "audio/xm: xm: FastTracker II Audio;",
+    .extensions      = "mod it stm s3m 669 amf med mdl xm",
+    .dispose         = NULL,
+  };
 
-  return this;
+  return (void *)&demux_mod_class;
 }
 
 static const demuxer_info_t demux_info_mod = {

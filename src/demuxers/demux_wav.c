@@ -420,22 +420,19 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
 }
 
 void *demux_wav_init_plugin (xine_t *xine, const void *data) {
-  demux_class_t *this;
 
-  this = calloc(1, sizeof(demux_class_t));
-  if (!this)
-    return NULL;
+  static const demux_class_t demux_wav_class = {
+    .open_plugin     = open_plugin,
+    .description     = N_("WAV file demux plugin"),
+    .identifier      = "WAV",
+    .mimetypes       =
+      "audio/x-wav: wav: WAV audio;"
+      "audio/wav: wav: WAV audio;"
+      "audio/x-pn-wav: wav: WAV audio;"
+      "audio/x-pn-windows-acm: wav: WAV audio;",
+    .extensions      = "wav",
+    .dispose         = NULL,
+  };
 
-  this->open_plugin     = open_plugin;
-  this->description     = N_("WAV file demux plugin");
-  this->identifier      = "WAV";
-  this->mimetypes       =
-    "audio/x-wav: wav: WAV audio;"
-    "audio/wav: wav: WAV audio;"
-    "audio/x-pn-wav: wav: WAV audio;"
-    "audio/x-pn-windows-acm: wav: WAV audio;";
-  this->extensions      = "wav";
-  this->dispose         = default_demux_class_dispose;
-
-  return this;
+  return (void *)&demux_wav_class;
 }

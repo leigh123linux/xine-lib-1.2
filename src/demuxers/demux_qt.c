@@ -3594,24 +3594,20 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
 
 void *demux_qt_init_class (xine_t *xine, const void *data) {
 
-  demux_class_t *this;
+  static const demux_class_t demux_qt_class = {
+    .open_plugin     = open_plugin,
+    .description     = N_("Apple Quicktime (MOV) and MPEG-4 demux plugin"),
+    .identifier      = "MOV/MPEG-4",
+    .mimetypes       =
+      "video/quicktime: mov,qt: Quicktime animation;"
+      "video/x-quicktime: mov,qt: Quicktime animation;"
+      "audio/x-m4a: m4a,m4b: MPEG-4 audio;"
+      "video/mp4: f4v,mp4,mpg4: MPEG-4 video;"
+      "audio/mp4: f4a,mp4,mpg4: MPEG-4 audio;",
+    .extensions      = "mov qt mp4 m4a m4b f4a f4v",
+    .dispose         = NULL,
+  };
 
-  this = calloc(1, sizeof(demux_class_t));
-  if (!this)
-    return NULL;
-
-  this->open_plugin     = open_plugin;
-  this->description     = N_("Apple Quicktime (MOV) and MPEG-4 demux plugin");
-  this->identifier      = "MOV/MPEG-4";
-  this->mimetypes       =
-    "video/quicktime: mov,qt: Quicktime animation;"
-    "video/x-quicktime: mov,qt: Quicktime animation;"
-    "audio/x-m4a: m4a,m4b: MPEG-4 audio;"
-    "video/mp4: f4v,mp4,mpg4: MPEG-4 video;"
-    "audio/mp4: f4a,mp4,mpg4: MPEG-4 audio;";
-  this->extensions      = "mov qt mp4 m4a m4b f4a f4v";
-  this->dispose         = default_demux_class_dispose;
-
-  return this;
+  return (void *)&demux_qt_class;
 }
 

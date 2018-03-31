@@ -2128,29 +2128,25 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen,
 
 static void *init_class (xine_t *xine, const void *data) {
 
-  demux_class_t *this;
+  static const demux_class_t demux_asf_class = {
+    .open_plugin     = open_plugin,
+    .description     = N_("ASF demux plugin"),
+    .identifier      = "ASF",
+    .mimetypes       =
+      "video/x-ms-asf: asf: ASF stream;"
+      "video/x-ms-wmv: wmv: Windows Media Video;"
+      "audio/x-ms-wma: wma: Windows Media Audio;"
+      "application/vnd.ms-asf: asf: ASF stream;"
+      "application/x-mplayer2: asf,asx,asp: mplayer2;"
+      "video/x-ms-asf-plugin: asf,asx,asp: mms animation;"
+      "video/x-ms-wvx: wvx: wmv metafile;"
+      "video/x-ms-wax: wva: wma metafile;",
+    /* asx, wvx, wax are metafile or playlist */
+    .extensions      = "asf wmv wma asx wvx wax",
+    .dispose         = NULL,
+  };
 
-  this = calloc(1, sizeof(demux_class_t));
-  if (!this)
-    return NULL;
-
-  this->open_plugin     = open_plugin;
-  this->description     = N_("ASF demux plugin");
-  this->identifier      = "ASF";
-  this->mimetypes       =
-    "video/x-ms-asf: asf: ASF stream;"
-    "video/x-ms-wmv: wmv: Windows Media Video;"
-    "audio/x-ms-wma: wma: Windows Media Audio;"
-    "application/vnd.ms-asf: asf: ASF stream;"
-    "application/x-mplayer2: asf,asx,asp: mplayer2;"
-    "video/x-ms-asf-plugin: asf,asx,asp: mms animation;"
-    "video/x-ms-wvx: wvx: wmv metafile;"
-    "video/x-ms-wax: wva: wma metafile;";
-  /* asx, wvx, wax are metafile or playlist */
-  this->extensions      = "asf wmv wma asx wvx wax";
-  this->dispose         = default_demux_class_dispose;
-
-  return this;
+  return (void *)&demux_asf_class;
 }
 
 

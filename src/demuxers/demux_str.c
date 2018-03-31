@@ -580,18 +580,15 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
 }
 
 void *demux_str_init_plugin (xine_t *xine, const void *data) {
-  demux_class_t *this;
 
-  this = calloc(1, sizeof(demux_class_t));
-  if (!this)
-    return NULL;
+  static const demux_class_t demux_str_class = {
+    .open_plugin     = open_plugin,
+    .description     = N_("Sony Playstation STR file demux plugin"),
+    .identifier      = "PSX STR",
+    .mimetypes       = NULL,
+    .extensions      = "str iki ik2 dps dat xa xa1 xa2 xas xap",
+    .dispose         = NULL,
+  };
 
-  this->open_plugin     = open_plugin;
-  this->description     = N_("Sony Playstation STR file demux plugin");
-  this->identifier      = "PSX STR";
-  this->mimetypes       = NULL;
-  this->extensions      = "str iki ik2 dps dat xa xa1 xa2 xas xap";
-  this->dispose         = default_demux_class_dispose;
-
-  return this;
+  return (void *)&demux_str_class;
 }

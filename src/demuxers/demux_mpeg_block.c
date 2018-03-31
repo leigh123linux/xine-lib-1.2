@@ -1446,19 +1446,15 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
 
 void *demux_mpeg_block_init_class (xine_t *xine, const void *data) {
 
-  demux_class_t *this;
+  static const demux_class_t demux_mpeg_block_class = {
+    .open_plugin     = open_plugin,
+    .description     = N_("DVD/VOB demux plugin"),
+    .identifier      = "MPEG_BLOCK",
+    .mimetypes       = NULL,
+    .extensions      = "vob vcd:/ dvd:/ pvr:/",
+    .dispose         = NULL,
+  };
 
-  this = calloc(1, sizeof(demux_class_t));
-  if (!this)
-    return NULL;
-
-  this->open_plugin     = open_plugin;
-  this->description     = N_("DVD/VOB demux plugin");
-  this->identifier      = "MPEG_BLOCK";
-  this->mimetypes       = NULL;
-  this->extensions      = "vob vcd:/ dvd:/ pvr:/";
-  this->dispose         = default_demux_class_dispose;
-
-  return this;
+  return (void *)&demux_mpeg_block_class;
 }
 

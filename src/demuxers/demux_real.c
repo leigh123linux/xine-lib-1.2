@@ -1764,23 +1764,20 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
 }
 
 void *demux_real_init_class (xine_t *xine, const void *data) {
-  demux_class_t *this;
 
-  this = calloc(1, sizeof(demux_class_t));
-  if (!this)
-    return NULL;
+  static const demux_class_t demux_real_class = {
+    .open_plugin     = open_plugin,
+    .description     = N_("RealMedia file demux plugin"),
+    .identifier      = "Real",
+    .mimetypes       =
+      "audio/x-pn-realaudio: ra, rm, ram: Real Media file;"
+      "audio/x-pn-realaudio-plugin: rpm: Real Media plugin file;"
+      "audio/x-real-audio: ra, rm, ram: Real Media file;"
+      "application/vnd.rn-realmedia: ra, rm, ram: Real Media file;",
+    .extensions      = "rm rmvb ram",
+    .dispose         = NULL,
+  };
 
-  this->open_plugin     = open_plugin;
-  this->description     = N_("RealMedia file demux plugin");
-  this->identifier      = "Real";
-  this->mimetypes       =
-    "audio/x-pn-realaudio: ra, rm, ram: Real Media file;"
-    "audio/x-pn-realaudio-plugin: rpm: Real Media plugin file;"
-    "audio/x-real-audio: ra, rm, ram: Real Media file;"
-    "application/vnd.rn-realmedia: ra, rm, ram: Real Media file;";
-  this->extensions      = "rm rmvb ram";
-  this->dispose         = default_demux_class_dispose;
-
-  return this;
+  return (void *)&demux_real_class;
 }
 

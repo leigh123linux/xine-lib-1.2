@@ -2751,24 +2751,20 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen,
  */
 void *demux_ts_init_class (xine_t *xine, const void *data) {
 
-  demux_class_t *this;
+  static const demux_class_t demux_ts_class = {
+    .open_plugin     = open_plugin,
+    .description     = N_("MPEG Transport Stream demuxer"),
+    .identifier      = "MPEG_TS",
+    .mimetypes       = "video/mp2t: m2t: MPEG2 transport stream;",
 
-  this = calloc(1, sizeof(demux_class_t));
-  if (!this)
-    return NULL;
+    /* accept dvb streams; also handle the special dvbs,dvbt and dvbc
+     * mrl formats: the content is exactly the same but the input plugin
+     * uses a different tuning algorithm [Pragma]
+     */
+    .extensions      = "ts m2t trp m2ts mts dvb:// dvbs:// dvbc:// dvbt://",
+    .dispose         = NULL,
+  };
 
-  this->open_plugin     = open_plugin;
-  this->description     = N_("MPEG Transport Stream demuxer");
-  this->identifier      = "MPEG_TS";
-  this->mimetypes       = "video/mp2t: m2t: MPEG2 transport stream;";
-
-  /* accept dvb streams; also handle the special dvbs,dvbt and dvbc
-   * mrl formats: the content is exactly the same but the input plugin
-   * uses a different tuning algorithm [Pragma]
-   */
-  this->extensions      = "ts m2t trp m2ts mts dvb:// dvbs:// dvbc:// dvbt://";
-  this->dispose         = default_demux_class_dispose;
-
-  return this;
+  return (void *)&demux_ts_class;
 }
 

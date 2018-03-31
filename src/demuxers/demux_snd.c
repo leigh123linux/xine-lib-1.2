@@ -353,21 +353,18 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
 }
 
 void *demux_snd_init_plugin (xine_t *xine, const void *data) {
-  demux_class_t *this;
 
-  this = calloc(1, sizeof(demux_class_t));
-  if (!this)
-    return NULL;
+  static const demux_class_t demux_snd_class = {
+    .open_plugin     = open_plugin,
+    .description     = N_("SND/AU file demux plugin"),
+    .identifier      = "SND/AU",
+    .mimetypes       =
+      "audio/basic: snd,au: ULAW (Sun) audio;"
+      "audio/x-basic: snd,au: ULAW (Sun) audio;"
+      "audio/x-pn-au: snd,au: ULAW (Sun) audio;",
+    .extensions      = "snd au",
+    .dispose         = NULL,
+  };
 
-  this->open_plugin     = open_plugin;
-  this->description     = N_("SND/AU file demux plugin");
-  this->identifier      = "SND/AU";
-  this->mimetypes       =
-    "audio/basic: snd,au: ULAW (Sun) audio;"
-    "audio/x-basic: snd,au: ULAW (Sun) audio;"
-    "audio/x-pn-au: snd,au: ULAW (Sun) audio;";
-  this->extensions      = "snd au";
-  this->dispose         = default_demux_class_dispose;
-
-  return this;
+  return (void *)&demux_snd_class;
 }

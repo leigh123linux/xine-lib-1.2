@@ -436,19 +436,16 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
 }
 
 void *demux_yuv4mpeg2_init_class (xine_t *xine, const void *data) {
-  demux_class_t *this;
 
-  this = calloc(1, sizeof(demux_class_t));
-  if (!this)
-    return NULL;
+  static const demux_class_t demux_yuv4mpeg2_class = {
+    .open_plugin     = open_plugin,
+    .description     = N_("YUV4MPEG2 file demux plugin"),
+    .identifier      = "YUV4MPEG2",
+    .mimetypes       = NULL,
+    .extensions      = "y4m",
+    .dispose         = NULL,
+  };
 
-  this->open_plugin     = open_plugin;
-  this->description     = N_("YUV4MPEG2 file demux plugin");
-  this->identifier      = "YUV4MPEG2";
-  this->mimetypes       = NULL;
-  this->extensions      = "y4m";
-  this->dispose         = default_demux_class_dispose;
-
-  return this;
+  return (void *)&demux_yuv4mpeg2_class;
 }
 

@@ -226,20 +226,17 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen,
  * demuxer class
  */
 void *demux_yuv_frames_init_class (xine_t *xine, const void *data) {
-  demux_class_t *this;
 
-  this = calloc(1, sizeof(demux_class_t));
-  if (!this)
-    return NULL;
+  static const demux_class_t demux_yuv_frames_class = {
+    .open_plugin     = open_plugin,
+    .description     = N_("YUV frames dummy demux plugin"),
+    .identifier      = "YUV_FRAMES",
+    .mimetypes       = NULL,
+    .extensions      = NULL,
+    .dispose         = NULL,
+  };
 
-  this->open_plugin     = open_plugin;
-  this->description     = N_("YUV frames dummy demux plugin");
-  this->identifier      = "YUV_FRAMES";
-  this->mimetypes       = NULL;
-  this->extensions      = NULL;
-  this->dispose         = default_demux_class_dispose;
-
-  return this;
+  return (void *)&demux_yuv_frames_class;
 }
 
 /*

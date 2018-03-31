@@ -376,18 +376,15 @@ static demux_plugin_t* open_plugin(demux_class_t *class_gen, xine_stream_t *stre
 }
 
 void *demux_eawve_init_plugin(xine_t *xine, const void *data) {
-  demux_class_t *this;
 
-  this = calloc(1, sizeof(demux_class_t));
-  if (!this)
-    return NULL;
+  static const demux_class_t demux_eawve_class = {
+    .open_plugin     = open_plugin,
+    .description     = N_("Electronics Arts WVE format demux plugin"),
+    .identifier      = "EA WVE",
+    .mimetypes       = NULL,
+    .extensions      = "wve",
+    .dispose         = NULL,
+  };
 
-  this->open_plugin     = open_plugin;
-  this->description     = N_("Electronics Arts WVE format demux plugin");
-  this->identifier      = "EA WVE";
-  this->mimetypes       = NULL;
-  this->extensions      = "wve";
-  this->dispose         = default_demux_class_dispose;
-
-  return this;
+  return (void *)&demux_eawve_class;
 }

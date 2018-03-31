@@ -429,19 +429,16 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
 }
 
 void *demux_dts_init_plugin (xine_t *xine, const void *data) {
-  demux_class_t *this;
 
-  this = calloc(1, sizeof(demux_class_t));
-  if (!this)
-    return NULL;
+  static const demux_class_t demux_dts_class = {
+    .open_plugin     = open_plugin,
+    .description     = N_("Raw DTS demux plugin"),
+    .identifier      = "DTS",
+    .mimetypes       = NULL,
+    .extensions      = "dts",
+    .dispose         = NULL,
+  };
 
-  this->open_plugin     = open_plugin;
-  this->description     = N_("Raw DTS demux plugin");
-  this->identifier      = "DTS";
-  this->mimetypes       = NULL;
-  this->extensions      = "dts";
-  this->dispose         = default_demux_class_dispose;
-
-  return this;
+  return (void *)&demux_dts_class;
 }
 

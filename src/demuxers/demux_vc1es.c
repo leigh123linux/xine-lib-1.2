@@ -368,19 +368,15 @@ static demux_plugin_t *open_plugin( demux_class_t *class_gen, xine_stream_t *str
 
 void *demux_vc1es_init_class ( xine_t *xine, const void *data )
 {
-  demux_class_t *this;
+  static const demux_class_t demux_vc1es_class = {
+    .open_plugin     = open_plugin,
+    .description     = N_("VC1 elementary stream demux plugin"),
+    .identifier      = "VC1_ES",
+    .mimetypes       = NULL,
+    .extensions      = "",
+    .dispose         = NULL,
+  };
 
-  this = calloc(1, sizeof(demux_class_t));
-  if (!this)
-    return NULL;
-
-  this->open_plugin     = open_plugin;
-  this->description     = N_("VC1 elementary stream demux plugin");
-  this->identifier      = "VC1_ES";
-  this->mimetypes       = NULL;
-  this->extensions      = "";
-  this->dispose         = default_demux_class_dispose;
-
-  return this;
+  return (void *)&demux_vc1es_class;
 }
 

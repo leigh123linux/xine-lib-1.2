@@ -249,17 +249,16 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
 }
 
 void *demux_elem_init_class (xine_t *xine, const void *data) {
-  demux_mpeg_elem_class_t     *this;
 
-  this = calloc(1, sizeof(demux_mpeg_elem_class_t));
+  static const demux_class_t demux_mpeg_elem_class = {
+    .open_plugin     = open_plugin,
+    .description     = N_("Elementary MPEG stream demux plugin"),
+    .identifier      = "MPEG_ELEM",
+    .mimetypes       = NULL,
+    .extensions      = "mpv",
+    .dispose         = NULL,
+  };
 
-  this->demux_class.open_plugin     = open_plugin;
-  this->demux_class.description     = N_("Elementary MPEG stream demux plugin");
-  this->demux_class.identifier      = "MPEG_ELEM";
-  this->demux_class.mimetypes       = NULL;
-  this->demux_class.extensions      = "mpv";
-  this->demux_class.dispose         = default_demux_class_dispose;
-
-  return this;
+  return (void*)&demux_mpeg_elem_class;
 }
 

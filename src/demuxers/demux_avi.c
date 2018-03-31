@@ -2335,21 +2335,18 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
  * demux avi class
  */
 void *demux_avi_init_class (xine_t *xine, const void *data) {
-  demux_class_t *this;
 
-  this = calloc(1, sizeof(demux_class_t));
-  if (!this)
-    return NULL;
+  static const demux_class_t demux_avi_class = {
+    .open_plugin     = open_plugin,
+    .description     = N_("AVI/RIFF demux plugin"),
+    .identifier      = "AVI",
+    .mimetypes       =
+      "video/msvideo: avi: AVI video;"
+      "video/x-msvideo: avi: AVI video;",
+    .extensions      = "avi",
+    .dispose         = NULL,
+  };
 
-  this->open_plugin     = open_plugin;
-  this->description     = N_("AVI/RIFF demux plugin");
-  this->identifier      = "AVI";
-  this->mimetypes       =
-    "video/msvideo: avi: AVI video;"
-    "video/x-msvideo: avi: AVI video;";
-  this->extensions      = "avi";
-  this->dispose         = default_demux_class_dispose;
-
-  return this;
+  return (void *)&demux_avi_class;
 }
 

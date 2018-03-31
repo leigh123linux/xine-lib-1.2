@@ -1679,19 +1679,16 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
 
 void *demux_pes_init_class (xine_t *xine, const void *data) {
 
-  demux_class_t *this;
-  this = calloc(1, sizeof(demux_class_t));
-  if (!this)
-    return NULL;
+  static const demux_class_t demux_mpeg_pes_class = {
+    .open_plugin     = open_plugin,
+    .description     = N_("mpeg pes demux plugin"),
+    .identifier      = "MPEG_PES",
+    .mimetypes       = "video/mp2p: m2p: MPEG2 program stream;",
+    .extensions      = "pes vdr:/ netvdr:/",
+    .dispose         = NULL,
+  };
 
-  this->open_plugin     = open_plugin;
-  this->description     = N_("mpeg pes demux plugin");
-  this->identifier      = "MPEG_PES";
-  this->mimetypes       = "video/mp2p: m2p: MPEG2 program stream;";
-  this->extensions      = "pes vdr:/ netvdr:/";
-  this->dispose         = default_demux_class_dispose;
-
-  return this;
+  return (void *)&demux_mpeg_pes_class;
 }
 
 

@@ -576,20 +576,17 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
 }
 
 void *demux_flac_init_plugin (xine_t *xine, const void *data) {
-  demux_class_t *this;
 
-  this = calloc(1, sizeof(demux_class_t));
-  if (!this)
-    return NULL;
+  static const demux_class_t demux_flac_class = {
+    .open_plugin     = open_plugin,
+    .description     = N_("Free Lossless Audio Codec (flac) demux plugin"),
+    .identifier      = "FLAC",
+    .mimetypes       =
+      "audio/x-flac: flac: FLAC Audio;"
+      "audio/flac: flac: FLAC Audio;",
+    .extensions      = "flac",
+    .dispose         = NULL,
+  };
 
-  this->open_plugin     = open_plugin;
-  this->description     = N_("Free Lossless Audio Codec (flac) demux plugin");
-  this->identifier      = "FLAC";
-  this->mimetypes       =
-    "audio/x-flac: flac: FLAC Audio;"
-    "audio/flac: flac: FLAC Audio;";
-  this->extensions      = "flac";
-  this->dispose         = default_demux_class_dispose;
-
-  return this;
+  return (void *)&demux_flac_class;
 }
