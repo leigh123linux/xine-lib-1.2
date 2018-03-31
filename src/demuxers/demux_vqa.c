@@ -82,19 +82,24 @@ typedef struct {
   unsigned int         iteration;
 } demux_vqa_t;
 
-
-/* returns 1 if the VQA file was opened successfully, 0 otherwise */
-static int open_vqa_file(demux_vqa_t *this) {
+static int probe_vqa_file(input_plugin_t *input) {
   unsigned char scratch[12];
-  unsigned int chunk_size;
 
-  if (_x_demux_read_header(this->input, scratch, 12) != 12)
+  if (_x_demux_read_header(input, scratch, 12) != 12)
     return 0;
 
   /* check for the VQA signatures */
   if (!_x_is_fourcc(&scratch[0], "FORM") ||
       !_x_is_fourcc(&scratch[8], "WVQA") )
     return 0;
+
+  return 1;
+}
+
+/* returns 1 if the VQA file was opened successfully, 0 otherwise */
+static int open_vqa_file(demux_vqa_t *this) {
+  unsigned char scratch[12];
+  unsigned int chunk_size;
 
   /* file is qualified; skip to the start of the VQA header */
   this->input->seek(this->input, 20, SEEK_SET);
@@ -324,6 +329,17 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
 
   demux_vqa_t    *this;
 
+  switch (stream->content_detection_method) {
+    case METHOD_BY_MRL:
+    case METHOD_BY_CONTENT:
+    case METHOD_EXPLICIT:
+      if (!probe_vqa_file(input))
+        return NULL;
+      break;
+    default:
+      return NULL;
+  }
+
   this         = calloc(1, sizeof(demux_vqa_t));
   this->stream = stream;
   this->input  = input;
@@ -340,20 +356,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
 
   this->status = DEMUX_FINISHED;
 
-  switch (stream->content_detection_method) {
-
-  case METHOD_BY_MRL:
-  case METHOD_BY_CONTENT:
-  case METHOD_EXPLICIT:
-
-    if (!open_vqa_file(this)) {
-      free (this);
-      return NULL;
-    }
-
-  break;
-
-  default:
+  if (!open_vqa_file(this)) {
     free (this);
     return NULL;
   }
