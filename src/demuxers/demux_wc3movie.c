@@ -462,13 +462,14 @@ static int open_mve_file(demux_mve_t *this) {
 
       case BNAM_TAG: {
         /* load the name into the stream attributes */
-        void *title = malloc (chunk_size);
+        char *title = malloc (chunk_size);
         if (!title || this->input->read(this->input, title, chunk_size) != chunk_size) {
           free (title);
           free (this->palettes);
           free (this->shot_offsets);
           return 0;
         }
+        title[chunk_size - 1] = 0;
         _x_meta_info_set(this->stream, XINE_META_INFO_TITLE, title);
         free(title);
         break;
