@@ -108,15 +108,33 @@ typedef struct {
   int                  total_time;
 } demux_film_t ;
 
+static int probe_film_file(input_plugin_t *input, int *film_header_size) {
+  unsigned char header[8];
+
+  if (_x_demux_read_header(input, header, 8) != 8)
+    return 0;
+
+  /* FILM signature correct? */
+  if (!_x_is_fourcc(header, "FILM"))
+    return 0;
+
+  llprintf(DEBUG_FILM_LOAD, "found 'FILM' signature\n");
+
+  /* header size = header size - 16-byte FILM signature */
+  *film_header_size = _X_BE_32(&header[4]);
+  if (*film_header_size < 16)
+    return 0;
+  *film_header_size -= 16;
+
+  return 1;
+}
 
 /* Open a FILM file
  * This function is called from the _open() function of this demuxer.
  * It returns 1 if FILM file was opened successfully. */
-static int open_film_file(demux_film_t *film) {
+static int open_film_file(demux_film_t *film, int film_header_size) {
 
   unsigned char *film_header;
-  unsigned int film_header_size;
-  unsigned char scratch[16];
   unsigned int chunk_type;
   unsigned int chunk_size;
   unsigned int i, j;
@@ -132,35 +150,27 @@ static int open_film_file(demux_film_t *film) {
   film->audio_bits = 0;
   film->audio_channels = 0;
 
-  /* get the signature, header length and file version */
-  if (_x_demux_read_header(film->input, scratch, 16) != 16)
+  if (film->input->seek(film->input, 8, SEEK_SET) != 8)
     return 0;
 
-  /* FILM signature correct? */
-  if (!_x_is_fourcc(scratch, "FILM"))
+  /* read version */
+  if (film->input->read(film->input, film->version, 4) != 4)
     return 0;
 
-  llprintf(DEBUG_FILM_LOAD, "found 'FILM' signature\n");
-
-  /* file is qualified; skip over the header bytes in the stream */
-  film->input->seek(film->input, 16, SEEK_SET);
-
-  /* header size = header size - 16-byte FILM signature */
-  film_header_size = _X_BE_32(&scratch[4]);
-  if (film_header_size < 16)
-    return 0;
-  film_header_size -= 16;
-
-  film_header = malloc(film_header_size);
-  if (!film_header)
-    return 0;
-  memcpy(film->version, &scratch[8], 4);
   llprintf(DEBUG_FILM_LOAD, "0x%X header bytes, version %c%c%c%c\n",
     film_header_size,
     film->version[0],
     film->version[1],
     film->version[2],
     film->version[3]);
+
+  /* file is qualified; skip over the header bytes in the stream */
+  if (film->input->seek(film->input, 16, SEEK_SET) != 16)
+    return 0;
+
+  film_header = malloc(film_header_size);
+  if (!film_header)
+    return 0;
 
   /* load the rest of the FILM header */
   if (film->input->read(film->input, film_header, film_header_size) !=
@@ -172,6 +182,8 @@ static int open_film_file(demux_film_t *film) {
   /* get the starting offset */
   film->data_start = film->input->get_current_pos(film->input);
   film->data_size = film->input->get_length(film->input) - film->data_start;
+  if (film->data_size < 0)
+    film->data_size = 0;
 
   /* traverse the FILM header */
   i = 0;
@@ -851,8 +863,23 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
                                     input_plugin_t *input) {
 
   demux_film_t    *this;
+  int film_header_size;
 
-  this         = calloc(1, sizeof(demux_film_t));
+  switch (stream->content_detection_method) {
+    case METHOD_BY_MRL:
+    case METHOD_BY_CONTENT:
+    case METHOD_EXPLICIT:
+      if (!probe_film_file(input, &film_header_size))
+        return NULL;
+      break;
+    default:
+      return NULL;
+  }
+
+  this = calloc(1, sizeof(demux_film_t));
+  if (!this)
+    return NULL;
+
   this->stream = stream;
   this->input  = input;
 
@@ -868,21 +895,8 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
 
   this->status = DEMUX_FINISHED;
 
-  switch (stream->content_detection_method) {
-
-  case METHOD_BY_MRL:
-  case METHOD_BY_CONTENT:
-  case METHOD_EXPLICIT:
-
-    if (!open_film_file(this)) {
-      demux_film_dispose(&this->demux_plugin);
-      return NULL;
-    }
-
-  break;
-
-  default:
-    free (this);
+  if (!open_film_file(this, film_header_size)) {
+    demux_film_dispose(&this->demux_plugin);
     return NULL;
   }
 
