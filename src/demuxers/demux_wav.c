@@ -54,7 +54,6 @@ typedef struct {
   demux_plugin_t       demux_plugin;
 
   xine_stream_t       *stream;
-  fifo_buffer_t       *video_fifo;
   fifo_buffer_t       *audio_fifo;
   input_plugin_t      *input;
   int                  status;
@@ -106,18 +105,23 @@ static int find_chunk_by_tag(demux_wav_t *this, const uint32_t given_chunk_tag,
   }
 }
 
-/* returns 1 if the WAV file was opened successfully, 0 otherwise */
-static int open_wav_file(demux_wav_t *this) {
+static int probe_wav_file(input_plugin_t *input) {
   uint8_t signature[WAV_SIGNATURE_SIZE];
-  off_t wave_pos;
-  uint32_t wave_size;
 
   /* check the signature */
-  if (_x_demux_read_header(this->input, signature, WAV_SIGNATURE_SIZE) != WAV_SIGNATURE_SIZE)
+  if (_x_demux_read_header(input, signature, WAV_SIGNATURE_SIZE) != WAV_SIGNATURE_SIZE)
     return 0;
 
   if (memcmp(signature, "RIFF", 4) || memcmp(&signature[8], "WAVE", 4) )
     return 0;
+
+  return 1;
+}
+
+/* returns 1 if the WAV file was opened successfully, 0 otherwise */
+static int open_wav_file(demux_wav_t *this) {
+  off_t wave_pos;
+  uint32_t wave_size;
 
   /* search for the 'fmt ' chunk first */
   wave_pos = 0;
@@ -247,7 +251,6 @@ static void demux_wav_send_headers(demux_plugin_t *this_gen) {
   demux_wav_t *this = (demux_wav_t *) this_gen;
   buf_element_t *buf;
 
-  this->video_fifo  = this->stream->video_fifo;
   this->audio_fifo  = this->stream->audio_fifo;
 
   this->status = DEMUX_OK;
@@ -365,6 +368,17 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
   demux_wav_t    *this;
   uint32_t	align;
 
+  switch (stream->content_detection_method) {
+    case METHOD_BY_MRL:
+    case METHOD_BY_CONTENT:
+    case METHOD_EXPLICIT:
+      if (!probe_wav_file(input))
+        return NULL;
+      break;
+    default:
+      return NULL;
+  }
+
   this         = calloc(1, sizeof(demux_wav_t));
   this->stream = stream;
   this->input  = input;
@@ -381,20 +395,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
 
   this->status = DEMUX_FINISHED;
 
-  switch (stream->content_detection_method) {
-
-  case METHOD_BY_MRL:
-  case METHOD_BY_CONTENT:
-  case METHOD_EXPLICIT:
-
-    if (!open_wav_file(this)) {
-      free (this);
-      return NULL;
-    }
-
-  break;
-
-  default:
+  if (!open_wav_file(this)) {
     free (this);
     return NULL;
   }
