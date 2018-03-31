@@ -62,9 +62,8 @@ typedef struct {
   input_class_t     input_class;
 
   xine_t           *xine;
-  config_values_t  *config;
 
-  char             *origin_path;
+  const char       *origin_path;
   int               show_hidden_files;
 
   int               mrls_allocated_entries;
@@ -668,7 +667,7 @@ static xine_mrl_t **file_input_class_get_dir (input_class_t *this_gen, const cha
   /* Store new origin path */
  try_again_from_home:
 
-  this->config->update_string(this->config, "media.files.origin_path", current_dir);
+  this->xine->config->update_string(this->xine->config, "media.files.origin_path", current_dir);
 
   if(strcasecmp(current_dir, "/"))
     snprintf(current_dir_slashed, sizeof(current_dir_slashed), "%s/", current_dir);
@@ -955,7 +954,6 @@ static void *file_input_init_plugin (xine_t *xine, const void *data) {
   this = (file_input_class_t *) calloc(1, sizeof (file_input_class_t));
 
   this->xine   = xine;
-  this->config = xine->config;
   config       = xine->config;
 
   this->input_class.get_instance       = file_input_get_instance;
