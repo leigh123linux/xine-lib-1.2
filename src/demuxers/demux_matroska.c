@@ -95,12 +95,17 @@ static void check_newpts (demux_matroska_t *this, int64_t pts,
 /* Add an entry to the top_level element list */
 static int add_top_level_entry (demux_matroska_t *this, off_t pos) {
   if (this->top_level_list_size == this->top_level_list_max_size) {
+    void *tmp = this->top_level_list;
     this->top_level_list_max_size += 50;
     lprintf("top_level_list_max_size: %d\n", this->top_level_list_max_size);
     this->top_level_list = realloc(this->top_level_list,
                                    this->top_level_list_max_size * sizeof(off_t));
-    if (this->top_level_list == NULL)
+    if (this->top_level_list == NULL) {
+      this->top_level_list_max_size = 0;
+      this->top_level_list_size = 0;
+      free(tmp);
       return 0;
+    }
   }
   this->top_level_list[this->top_level_list_size] = pos;
   this->top_level_list_size++;
