@@ -73,15 +73,20 @@ typedef struct {
 } demux_tta_t;
 
 
-static int open_tta_file(demux_tta_t *this) {
+static int probe_tta_file(input_plugin_t *input) {
   uint32_t peek;
-  uint32_t framelen;
 
-  if (_x_demux_read_header(this->input, &peek, 4) != 4)
+  if (_x_demux_read_header(input, &peek, 4) != 4)
       return 0;
 
   if ( !_x_is_fourcc(&peek, "TTA1") )
     return 0;
+
+  return 1;
+}
+
+static int open_tta_file(demux_tta_t *this) {
+  uint32_t framelen;
 
   if ( this->input->read(this->input, this->header.buffer, sizeof(this->header)) != sizeof(this->header) )
     return 0;
@@ -279,6 +284,17 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
 
   demux_tta_t    *this;
 
+  switch (stream->content_detection_method) {
+    case METHOD_BY_MRL:
+    case METHOD_BY_CONTENT:
+    case METHOD_EXPLICIT:
+      if (!probe_tta_file(input))
+        return NULL;
+      break;
+    default:
+      return NULL;
+  }
+
   this         = calloc(1, sizeof(demux_tta_t));
   this->stream = stream;
   this->input  = input;
@@ -297,18 +313,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
 
   this->seektable = NULL;
 
-  switch (stream->content_detection_method) {
-
-  case METHOD_BY_MRL:
-  case METHOD_BY_CONTENT:
-  case METHOD_EXPLICIT:
-    if (!open_tta_file(this)) {
-      free (this);
-      return NULL;
-    }
-    break;
-
-  default:
+  if (!open_tta_file(this)) {
     free (this);
     return NULL;
   }
