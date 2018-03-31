@@ -285,8 +285,6 @@ static xine_mrl_t **_get_servers(xine_t *xine, int *nFiles)
   size_t n;
 
   srvrs = nfs_find_local_servers();
-  if (!srvrs)
-    return NULL;
 
   /* count servers */
   for (n = 0, srv = srvrs; srv; srv = srv->next, n++) {}
@@ -309,8 +307,12 @@ static xine_mrl_t **_get_servers(xine_t *xine, int *nFiles)
 
   *nFiles = n;
 
+  if (!n)
+    _x_input_free_mrls(&mrls);
+
  out:
-  free_nfs_srvr_list(srvrs);
+  if (srvrs)
+    free_nfs_srvr_list(srvrs);
   return mrls;
 }
 
