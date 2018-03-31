@@ -146,7 +146,11 @@ static int open_film_file(demux_film_t *film) {
   film->input->seek(film->input, 16, SEEK_SET);
 
   /* header size = header size - 16-byte FILM signature */
-  film_header_size = _X_BE_32(&scratch[4]) - 16;
+  film_header_size = _X_BE_32(&scratch[4]);
+  if (film_header_size < 16)
+    return 0;
+  film_header_size -= 16;
+
   film_header = malloc(film_header_size);
   if (!film_header)
     return 0;
