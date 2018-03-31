@@ -156,8 +156,6 @@ static void demux_tta_send_headers(demux_plugin_t *this_gen) {
 
   memset(&wave, 0, sizeof(wave));
 
-  header = malloc(total_size);
-
   this->audio_fifo  = this->stream->audio_fifo;
 
   this->status = DEMUX_OK;
@@ -176,6 +174,10 @@ static void demux_tta_send_headers(demux_plugin_t *this_gen) {
 
   /* create header */
   wave.cbSize = total_size - sizeof(xine_waveformatex);
+
+  header = malloc(total_size);
+  if (!header)
+    return;
 
   memcpy(header, &wave, sizeof(wave));
   memcpy(header+sizeof(xine_waveformatex), this->header.buffer, sizeof(this->header));
