@@ -392,8 +392,7 @@ static int demux_film_send_chunk(demux_plugin_t *this_gen) {
 
   /* check if all the samples have been sent */
   if (i >= this->sample_count) {
-    this->status = DEMUX_FINISHED;
-    return this->status;
+    goto finished;
   }
 
   /* check if we're only sending audio samples until the next keyframe */
@@ -427,8 +426,7 @@ static int demux_film_send_chunk(demux_plugin_t *this_gen) {
 
     remaining_sample_bytes = cvid_chunk_size;
     if (this->input->seek(this->input, this->sample_table[i].sample_offset, SEEK_SET) < 0) {
-      this->status = DEMUX_FINISHED;
-      return this->status;
+      goto finished;
     }
 
     while (remaining_sample_bytes) {
@@ -451,26 +449,20 @@ static int demux_film_send_chunk(demux_plugin_t *this_gen) {
         buf->size = remaining_sample_bytes;
       remaining_sample_bytes -= buf->size;
 
-      if (!fixed_cvid_header) {
+      if (!fixed_cvid_header && buf->size >= 10) {
         if (this->input->read(this->input, buf->content, 10) != 10) {
-          buf->free_buffer(buf);
-          this->status = DEMUX_FINISHED;
-          break;
+          goto fail_buf;
         }
 
         /* skip over the extra non-spec CVID bytes */
         if (this->input->seek(this->input,
             this->sample_table[i].sample_size - cvid_chunk_size, SEEK_CUR) < 0) {
-          buf->free_buffer(buf);
-          this->status = DEMUX_FINISHED;
-          break;
+          goto fail_buf;
         }
         /* load the rest of the chunk */
         if (this->input->read(this->input, buf->content + 10,
           buf->size - 10) != buf->size - 10) {
-          buf->free_buffer(buf);
-          this->status = DEMUX_FINISHED;
-          break;
+          goto fail_buf;
         }
 
         /* adjust the length in the CVID data chunk */
@@ -482,9 +474,7 @@ static int demux_film_send_chunk(demux_plugin_t *this_gen) {
       } else {
         if (this->input->read(this->input, buf->content, buf->size) !=
           buf->size) {
-          buf->free_buffer(buf);
-          this->status = DEMUX_FINISHED;
-          break;
+          goto fail_buf;
         }
       }
 
@@ -503,8 +493,7 @@ static int demux_film_send_chunk(demux_plugin_t *this_gen) {
     /* load a non-cvid video chunk */
     remaining_sample_bytes = this->sample_table[i].sample_size;
     if (this->input->seek(this->input, this->sample_table[i].sample_offset, SEEK_SET) < 0) {
-      this->status = DEMUX_FINISHED;
-      return this->status;
+      goto finished;
     }
 
     while (remaining_sample_bytes) {
@@ -527,11 +516,8 @@ static int demux_film_send_chunk(demux_plugin_t *this_gen) {
         buf->size = remaining_sample_bytes;
       remaining_sample_bytes -= buf->size;
 
-      if (this->input->read(this->input, buf->content, buf->size) !=
-        buf->size) {
-        buf->free_buffer(buf);
-        this->status = DEMUX_FINISHED;
-        break;
+      if (this->input->read(this->input, buf->content, buf->size) != buf->size) {
+        goto fail_buf;
       }
 
       if (this->sample_table[i].keyframe)
@@ -548,8 +534,7 @@ static int demux_film_send_chunk(demux_plugin_t *this_gen) {
     /* load a mono audio sample and packetize it */
     remaining_sample_bytes = this->sample_table[i].sample_size;
     if (this->input->seek(this->input, this->sample_table[i].sample_offset, SEEK_SET) < 0) {
-      this->status = DEMUX_FINISHED;
-      return this->status;
+      goto finished;
     }
 
     first_buf = 1;
@@ -577,11 +562,8 @@ static int demux_film_send_chunk(demux_plugin_t *this_gen) {
         buf->size = remaining_sample_bytes;
       remaining_sample_bytes -= buf->size;
 
-      if (this->input->read(this->input, buf->content, buf->size) !=
-        buf->size) {
-        buf->free_buffer(buf);
-        this->status = DEMUX_FINISHED;
-        break;
+      if (this->input->read(this->input, buf->content, buf->size) != buf->size) {
+        goto fail_buf;
       }
 
       if (this->video_type == BUF_VIDEO_SEGA) {
@@ -613,8 +595,7 @@ static int demux_film_send_chunk(demux_plugin_t *this_gen) {
     /* load the whole chunk into the buffer */
     if (this->input->read(this->input, this->interleave_buffer,
       this->sample_table[i].sample_size) != this->sample_table[i].sample_size) {
-      this->status = DEMUX_FINISHED;
-      return this->status;
+      goto finished;
     }
 
     /* proceed to de-interleave into individual buffers */
@@ -678,6 +659,12 @@ static int demux_film_send_chunk(demux_plugin_t *this_gen) {
     }
   }
 
+  return this->status;
+
+ fail_buf:
+  buf->free_buffer(buf);
+ finished:
+  this->status = DEMUX_FINISHED;
   return this->status;
 }
 
