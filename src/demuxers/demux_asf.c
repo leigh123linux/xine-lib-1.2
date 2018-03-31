@@ -2047,20 +2047,10 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen,
     /*
      * try to get a preview of the data
      */
-    len = input->get_optional_data (input, buf, INPUT_OPTIONAL_DATA_PREVIEW);
-    if (len == INPUT_OPTIONAL_UNSUPPORTED) {
 
-      if (input->get_capabilities (input) & INPUT_CAP_SEEKABLE) {
-
-	input->seek (input, 0, SEEK_SET);
-	if ( (len=input->read (input, buf, 1024)) <= 0)
-	  return NULL;
-
-	lprintf ("PREVIEW data unavailable, but seek+read worked.\n");
-
-      } else
-	return NULL;
-    }
+    len = _x_demux_read_header(input, buf, sizeof(buf));
+    if (len < sizeof(GUID))
+      return 0;
 
     if (memcmp(buf, &guids[GUID_ASF_HEADER].guid, sizeof(GUID))) {
       buf[len] = '\0';
