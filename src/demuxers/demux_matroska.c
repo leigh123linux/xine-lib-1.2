@@ -847,8 +847,14 @@ static void handle_realvideo (demux_plugin_t *this_gen, matroska_track_t *track,
   int chunks;
   int chunk_tab_size;
 
+  if (data_len < 1)
+    return;
+
   chunks = data[0];
   chunk_tab_size = (chunks + 1) * 8;
+
+  if (data_len - 1 < chunk_tab_size)
+    return;
 
   lprintf("chunks: %d, chunk_tab_size: %d\n", chunks, chunk_tab_size);
 
