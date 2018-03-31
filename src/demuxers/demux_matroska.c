@@ -3114,32 +3114,32 @@ static void demux_matroska_dispose (demux_plugin_t *this_gen) {
   demux_matroska_t *this = (demux_matroska_t *) this_gen;
   int i;
 
-  free(this->block_data);
+  _x_freep (&this->block_data);
 
   /* free tracks */
   for (i = 0; i < this->num_tracks; i++) {
     matroska_track_t *const track = this->tracks[i];
 
-    free (track->language);
-    free (track->codec_id);
-    free (track->codec_private);
-    free (track->video_track);
-    free (track->audio_track);
-    free (track->sub_track);
+    _x_freep (&track->language);
+    _x_freep (&track->codec_id);
+    _x_freep (&track->codec_private);
+    _x_freep (&track->video_track);
+    _x_freep (&track->audio_track);
+    _x_freep (&track->sub_track);
 
-    free (track);
+    _x_freep (&this->tracks[i]);
   }
   /* Free the cues. */
   for (i = 0; i < this->num_indexes; i++) {
-    free(this->indexes[i].pos);
-    free(this->indexes[i].timecode);
+    _x_freep(&this->indexes[i].pos);
+    _x_freep(&this->indexes[i].timecode);
   }
-  free(this->indexes);
+  _x_freep(&this->indexes);
 
   /* Free the top_level elem list */
-  free(this->top_level_list);
+  _x_freep(&this->top_level_list);
 
-  free(this->title);
+  _x_freep(&this->title);
 
   matroska_free_editions(this);
 
