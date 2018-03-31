@@ -412,17 +412,24 @@ static int demux_film_send_chunk(demux_plugin_t *this_gen) {
   if ((!this->sample_table[i].audio) &&
     (this->video_type == BUF_VIDEO_CINEPAK)) {
     /* do a special song and dance when loading CVID data */
-    if (this->version[0])
+    if (this->version[0]) {
+      if (this->sample_table[i].sample_size < 2)
+        return this->status;
       cvid_chunk_size = this->sample_table[i].sample_size - 2;
-    else
+    } else {
+      if (this->sample_table[i].sample_size < 6)
+        return this->status;
       cvid_chunk_size = this->sample_table[i].sample_size - 6;
+    }
 
     /* reset flag */
     fixed_cvid_header = 0;
 
     remaining_sample_bytes = cvid_chunk_size;
-    this->input->seek(this->input, this->sample_table[i].sample_offset,
-      SEEK_SET);
+    if (this->input->seek(this->input, this->sample_table[i].sample_offset, SEEK_SET) < 0) {
+      this->status = DEMUX_FINISHED;
+      return this->status;
+    }
 
     while (remaining_sample_bytes) {
       buf = this->video_fifo->buffer_pool_alloc (this->video_fifo);
@@ -452,9 +459,12 @@ static int demux_film_send_chunk(demux_plugin_t *this_gen) {
         }
 
         /* skip over the extra non-spec CVID bytes */
-        this->input->seek(this->input,
-          this->sample_table[i].sample_size - cvid_chunk_size, SEEK_CUR);
-
+        if (this->input->seek(this->input,
+            this->sample_table[i].sample_size - cvid_chunk_size, SEEK_CUR) < 0) {
+          buf->free_buffer(buf);
+          this->status = DEMUX_FINISHED;
+          break;
+        }
         /* load the rest of the chunk */
         if (this->input->read(this->input, buf->content + 10,
           buf->size - 10) != buf->size - 10) {
@@ -492,8 +502,10 @@ static int demux_film_send_chunk(demux_plugin_t *this_gen) {
 
     /* load a non-cvid video chunk */
     remaining_sample_bytes = this->sample_table[i].sample_size;
-    this->input->seek(this->input, this->sample_table[i].sample_offset,
-      SEEK_SET);
+    if (this->input->seek(this->input, this->sample_table[i].sample_offset, SEEK_SET) < 0) {
+      this->status = DEMUX_FINISHED;
+      return this->status;
+    }
 
     while (remaining_sample_bytes) {
       buf = this->video_fifo->buffer_pool_alloc (this->video_fifo);
@@ -535,8 +547,10 @@ static int demux_film_send_chunk(demux_plugin_t *this_gen) {
 
     /* load a mono audio sample and packetize it */
     remaining_sample_bytes = this->sample_table[i].sample_size;
-    this->input->seek(this->input, this->sample_table[i].sample_offset,
-      SEEK_SET);
+    if (this->input->seek(this->input, this->sample_table[i].sample_offset, SEEK_SET) < 0) {
+      this->status = DEMUX_FINISHED;
+      return this->status;
+    }
 
     first_buf = 1;
     while (remaining_sample_bytes) {
