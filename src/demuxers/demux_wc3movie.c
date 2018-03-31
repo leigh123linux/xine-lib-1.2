@@ -389,7 +389,6 @@ static int open_mve_file(demux_mve_t *this) {
 				sizeof(palette_entry_t));
 
   if (!this->shot_offsets || !this->palettes) {
-    free (this->shot_offsets);
     return 0;
   }
 
@@ -397,8 +396,6 @@ static int open_mve_file(demux_mve_t *this) {
     /* make sure there was a valid palette chunk preamble */
     if (this->input->read(this->input, preamble, PREAMBLE_SIZE) !=
       PREAMBLE_SIZE) {
-      free (this->palettes);
-      free (this->shot_offsets);
       return 0;
     }
 
@@ -406,16 +403,12 @@ static int open_mve_file(demux_mve_t *this) {
 	 (_X_BE_32(&preamble[4]) != PALETTE_CHUNK_SIZE)) {
       xine_log(this->stream->xine, XINE_LOG_MSG,
 	       _("demux_wc3movie: There was a problem while loading palette chunks\n"));
-      free (this->palettes);
-      free (this->shot_offsets);
       return 0;
     }
 
     /* load the palette chunk */
     if (this->input->read(this->input, disk_palette, PALETTE_CHUNK_SIZE) !=
       PALETTE_CHUNK_SIZE) {
-      free (this->palettes);
-      free (this->shot_offsets);
       return 0;
     }
 
@@ -445,8 +438,6 @@ static int open_mve_file(demux_mve_t *this) {
 
     if (this->input->read(this->input, preamble, PREAMBLE_SIZE) !=
       PREAMBLE_SIZE) {
-      free (this->palettes);
-      free (this->shot_offsets);
       return 0;
     }
 
@@ -465,8 +456,6 @@ static int open_mve_file(demux_mve_t *this) {
         char *title = malloc (chunk_size);
         if (!title || this->input->read(this->input, title, chunk_size) != chunk_size) {
           free (title);
-          free (this->palettes);
-          free (this->shot_offsets);
           return 0;
         }
         title[chunk_size - 1] = 0;
@@ -480,8 +469,6 @@ static int open_mve_file(demux_mve_t *this) {
         /* reuse the preamble bytes */
         if (this->input->read(this->input, preamble, PREAMBLE_SIZE) !=
           PREAMBLE_SIZE) {
-          free (this->palettes);
-          free (this->shot_offsets);
           return 0;
         }
         this->bih.biWidth = _X_BE_32(&preamble[0]);
@@ -641,8 +628,8 @@ static int demux_mve_seek (demux_plugin_t *this_gen,
 static void demux_mve_dispose (demux_plugin_t *this_gen) {
   demux_mve_t *this = (demux_mve_t *) this_gen;
 
-  free(this->palettes);
-  free(this->shot_offsets);
+  _x_freep(&this->palettes);
+  _x_freep(&this->shot_offsets);
   free(this);
 }
 
@@ -698,7 +685,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
   this->status = DEMUX_FINISHED;
 
   if (!open_mve_file(this)) {
-    free (this);
+    demux_mve_dispose (&this->demux_plugin);
     return NULL;
   }
 
