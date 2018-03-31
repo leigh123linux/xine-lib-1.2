@@ -34,6 +34,7 @@
 #include "rtsp.h"
 #include "sdpplin.h"
 #include <xine/xineutils.h>
+#include <xine/xine_buffer.h>
 
 static char *nl(char *data) {
 
