@@ -46,7 +46,6 @@ typedef struct {
   demux_plugin_t       demux_plugin;
 
   xine_stream_t       *stream;
-  fifo_buffer_t       *video_fifo;
   fifo_buffer_t       *audio_fifo;
   input_plugin_t      *input;
   int                  status;
@@ -55,10 +54,10 @@ typedef struct {
 } demux_shn_t;
 
 
-static int open_shn_file(demux_shn_t *this) {
+static int probe_shn_file(input_plugin_t *input) {
   uint8_t peak[4];
 
-  if (_x_demux_read_header(this->input, peak, 4) != 4)
+  if (_x_demux_read_header(input, peak, 4) != 4)
       return 0;
 
   if ((peak[0] != 'a') || (peak[1] != 'j') ||
@@ -103,7 +102,6 @@ static void demux_shn_send_headers(demux_plugin_t *this_gen) {
   demux_shn_t *this = (demux_shn_t *) this_gen;
   buf_element_t *buf;
 
-  this->video_fifo  = this->stream->video_fifo;
   this->audio_fifo  = this->stream->audio_fifo;
 
   this->status = DEMUX_OK;
@@ -172,6 +170,18 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
 
   demux_shn_t    *this;
 
+  switch (stream->content_detection_method) {
+    case METHOD_BY_MRL:
+    case METHOD_BY_CONTENT:
+    case METHOD_EXPLICIT:
+      if (!probe_shn_file(input)) {
+        return NULL;
+      }
+      break;
+    default:
+      return NULL;
+  }
+
   this         = calloc(1, sizeof(demux_shn_t));
   this->stream = stream;
   this->input  = input;
@@ -187,21 +197,6 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
   this->demux_plugin.demux_class       = class_gen;
 
   this->status = DEMUX_FINISHED;
-  switch (stream->content_detection_method) {
-
-  case METHOD_BY_MRL:
-  case METHOD_BY_CONTENT:
-  case METHOD_EXPLICIT:
-    if (!open_shn_file(this)) {
-      free (this);
-      return NULL;
-    }
-    break;
-
-  default:
-    free (this);
-    return NULL;
-  }
 
   return &this->demux_plugin;
 }
