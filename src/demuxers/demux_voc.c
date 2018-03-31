@@ -53,7 +53,6 @@ typedef struct {
   demux_plugin_t       demux_plugin;
 
   xine_stream_t       *stream;
-  fifo_buffer_t       *video_fifo;
   fifo_buffer_t       *audio_fifo;
   input_plugin_t      *input;
   int                  status;
@@ -71,23 +70,28 @@ typedef struct {
 } demux_voc_t;
 
 
-/* returns 1 if the VOC file was opened successfully, 0 otherwise */
-static int open_voc_file(demux_voc_t *this) {
+static int probe_voc_file(input_plugin_t *input, int *first_block_offset) {
   unsigned char header[VOC_HEADER_SIZE];
-  unsigned char preamble[BLOCK_PREAMBLE_SIZE];
-  off_t first_block_offset;
-  unsigned char sample_rate_divisor;
 
-  if (_x_demux_read_header(this->input, header, VOC_HEADER_SIZE) != VOC_HEADER_SIZE)
+  if (_x_demux_read_header(input, header, VOC_HEADER_SIZE) != VOC_HEADER_SIZE)
     return 0;
 
   /* check the signature */
   if (memcmp(header, VOC_SIGNATURE, sizeof(VOC_SIGNATURE)-1) != 0)
     return 0;
 
-  /* file is qualified */
-  first_block_offset = _X_LE_16(&header[0x14]);
-  this->input->seek(this->input, first_block_offset, SEEK_SET);
+  *first_block_offset = _X_LE_16(&header[0x14]);
+
+  return 1;
+}
+
+/* returns 1 if the VOC file was opened successfully, 0 otherwise */
+static int open_voc_file(demux_voc_t *this, int first_block_offset) {
+  unsigned char preamble[BLOCK_PREAMBLE_SIZE];
+  unsigned char sample_rate_divisor;
+
+  if (this->input->seek(this->input, first_block_offset, SEEK_SET) != first_block_offset)
+    return 0;
 
   /* load the block preamble */
   if (this->input->read(this->input, preamble, BLOCK_PREAMBLE_SIZE) !=
@@ -191,7 +195,6 @@ static void demux_voc_send_headers(demux_plugin_t *this_gen) {
   demux_voc_t *this = (demux_voc_t *) this_gen;
   buf_element_t *buf;
 
-  this->video_fifo  = this->stream->video_fifo;
   this->audio_fifo  = this->stream->audio_fifo;
 
   this->status = DEMUX_OK;
@@ -286,6 +289,18 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
                                     input_plugin_t *input) {
 
   demux_voc_t    *this;
+  int first_block_offset;
+
+  switch (stream->content_detection_method) {
+    case METHOD_BY_MRL:
+    case METHOD_BY_CONTENT:
+    case METHOD_EXPLICIT:
+      if (!probe_voc_file(input, &first_block_offset))
+        return NULL;
+      break;
+    default:
+      return NULL;
+  }
 
   this         = calloc(1, sizeof(demux_voc_t));
   this->stream = stream;
@@ -303,20 +318,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
 
   this->status = DEMUX_FINISHED;
 
-  switch (stream->content_detection_method) {
-
-  case METHOD_BY_MRL:
-  case METHOD_BY_CONTENT:
-  case METHOD_EXPLICIT:
-
-    if (!open_voc_file(this)) {
-      free (this);
-      return NULL;
-    }
-
-  break;
-
-  default:
+  if (!open_voc_file(this, first_block_offset)) {
     free (this);
     return NULL;
   }
