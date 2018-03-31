@@ -91,7 +91,6 @@ static int open_dts_file(demux_dts_t *this) {
     buf_element_t *buf = this->input->read_block(this->input,
 						 this->stream->audio_fifo,
 						 blocksize);
-    this->input->seek(this->input, 0, SEEK_SET);
 
     if (!buf)
       return 0;
@@ -100,6 +99,10 @@ static int open_dts_file(demux_dts_t *this) {
     xine_fast_memcpy(peak, buf->content, peak_size);
 
     buf->free_buffer(buf);
+
+    if (this->input->seek(this->input, 0, SEEK_SET) != 0)
+      return 0;
+
   } else {
     peak = alloca(peak_size = MAX_PREVIEW_SIZE);
 
@@ -231,7 +234,8 @@ static int open_dts_file(demux_dts_t *this) {
     lprintf("sample rate: %d\n", this->sample_rate);
 
     /* Seek to start of DTS data */
-    this->input->seek(this->input, this->data_start, SEEK_SET);
+    if (this->input->seek(this->input, this->data_start, SEEK_SET) != this->data_start)
+      return 0;
 
     return 1;
   }
