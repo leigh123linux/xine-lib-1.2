@@ -102,7 +102,8 @@ static int open_vqa_file(demux_vqa_t *this) {
   unsigned int chunk_size;
 
   /* file is qualified; skip to the start of the VQA header */
-  this->input->seek(this->input, 20, SEEK_SET);
+  if (this->input->seek(this->input, 20, SEEK_SET) != 20)
+    return 0;
 
   /* get the actual filesize */
   if ( !(this->filesize = this->input->get_length(this->input)) )
@@ -125,7 +126,9 @@ static int open_vqa_file(demux_vqa_t *this) {
     VQA_PREAMBLE_SIZE)
     return 0;
   chunk_size = _X_BE_32(&scratch[4]);
-  this->input->seek(this->input, chunk_size, SEEK_CUR);
+
+  if (this->input->seek(this->input, chunk_size, SEEK_CUR) < 0)
+    return 0;
 
   this->video_pts = this->audio_frames = 0;
   this->iteration = 0;
@@ -185,13 +188,19 @@ static int demux_vqa_send_chunk(demux_plugin_t *this_gen) {
 
       this->audio_fifo->put (this->audio_fifo, buf);
     }else{
-      this->input->seek(this->input, chunk_size, SEEK_CUR);
-      chunk_size = 0;
+      if (this->input->seek(this->input, chunk_size, SEEK_CUR) < 0) {
+        this->status = DEMUX_FINISHED;
+        return this->status;
+      }
+      break;
     }
   }
   /* stay on 16-bit alignment */
   if (skip_byte)
-    this->input->seek(this->input, 1, SEEK_CUR);
+    if (this->input->seek(this->input, 1, SEEK_CUR) < 0) {
+      this->status = DEMUX_FINISHED;
+      return this->status;
+    }
 
   /* load and dispatch the video portion of the frame but only if this
    * is not frame #0 */
@@ -340,7 +349,10 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
       return NULL;
   }
 
-  this         = calloc(1, sizeof(demux_vqa_t));
+  this = calloc(1, sizeof(demux_vqa_t));
+  if (!this)
+    return NULL;
+
   this->stream = stream;
   this->input  = input;
 
