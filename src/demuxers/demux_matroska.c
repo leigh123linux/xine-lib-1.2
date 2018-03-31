@@ -3321,8 +3321,6 @@ void *demux_matroska_init_class (xine_t *xine, const void *data) {
   if (!this)
     return NULL;
 
-  this->xine   = xine;
-
   this->demux_class.open_plugin     = open_plugin;
   this->demux_class.description     = N_("matroska & webm demux plugin");
   this->demux_class.identifier      = "matroska";

@@ -60,8 +60,6 @@ typedef struct {
 
   /* class-wide, global variables here */
 
-  xine_t           *xine;
-
 #define LITERAL_UTF_8_LEN 5
   char              literal_utf_8[8]; /* "utf-8" */
 
