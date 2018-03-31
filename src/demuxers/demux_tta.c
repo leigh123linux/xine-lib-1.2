@@ -320,7 +320,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
   this->seektable = NULL;
 
   if (!open_tta_file(this)) {
-    free (this);
+    demux_tta_dispose(&this->demux_plugin);
     return NULL;
   }
 
