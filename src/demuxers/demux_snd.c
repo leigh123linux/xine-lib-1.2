@@ -90,9 +90,6 @@ static int open_snd_file(demux_snd_t *this) {
   if (_x_demux_read_header(this->input, header, SND_HEADER_SIZE) != SND_HEADER_SIZE)
     return 0;
 
-  /* file is qualified; skip over the header bytes in the stream */
-  this->input->seek(this->input, SND_HEADER_SIZE, SEEK_SET);
-
   this->data_start = _X_BE_32(&header[0x04]);
   this->data_size = _X_BE_32(&header[0x08]);
   encoding = _X_BE_32(&header[0x0C]);
@@ -154,6 +151,10 @@ static int open_snd_file(demux_snd_t *this) {
   }
 
   this->running_time = this->audio_frames / this->audio_sample_rate;
+
+  /* file is qualified; skip over the header bytes in the stream */
+  if (this->input->seek(this->input, SND_HEADER_SIZE, SEEK_SET) != SND_HEADER_SIZE)
+    return 0;
 
   return 1;
 }
