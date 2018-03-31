@@ -83,7 +83,8 @@ static int find_chunk_by_tag(demux_wav_t *this, const uint32_t given_chunk_tag,
   uint8_t chunk_preamble[8];
 
   /* search for the chunks from the start of the WAV file */
-  this->input->seek(this->input, WAV_SIGNATURE_SIZE, SEEK_SET);
+  if (this->input->seek(this->input, WAV_SIGNATURE_SIZE, SEEK_SET) != WAV_SIGNATURE_SIZE)
+    return 0;
 
   while (1) {
     if (this->input->read(this->input, chunk_preamble, 8) != 8) {
@@ -100,7 +101,8 @@ static int find_chunk_by_tag(demux_wav_t *this, const uint32_t given_chunk_tag,
         *found_chunk_pos = this->input->get_current_pos(this->input);
       return 1;
     } else {
-      this->input->seek(this->input, chunk_size, SEEK_CUR);
+      if (this->input->seek(this->input, chunk_size, SEEK_CUR) < 0)
+        return 0;
     }
   }
 }
@@ -129,10 +131,14 @@ static int open_wav_file(demux_wav_t *this) {
     return 0;
   this->wave_size = wave_size;
 
-  this->input->seek(this->input, wave_pos, SEEK_SET);
-  this->wave = malloc( this->wave_size );
+  if (this->input->seek(this->input, wave_pos, SEEK_SET) != wave_pos)
+    return 0;
 
-  if (!this->wave || this->input->read(this->input, (void *)this->wave, this->wave_size) !=
+  this->wave = malloc( this->wave_size );
+  if (!this->wave)
+    return 0;
+
+  if (this->input->read(this->input, (void *)this->wave, this->wave_size) !=
     this->wave_size) {
     free (this->wave);
     return 0;
@@ -159,7 +165,8 @@ static int open_wav_file(demux_wav_t *this) {
   {
     /* Get the data length from the file itself, instead of the data
      * TAG, for broken files */
-    this->input->seek(this->input, this->data_start, SEEK_SET);
+    if (this->input->seek(this->input, this->data_start, SEEK_SET) != this->data_start)
+      return 0;
     this->data_size = this->input->get_length(this->input);
     return 1;
   }
@@ -379,7 +386,10 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
       return NULL;
   }
 
-  this         = calloc(1, sizeof(demux_wav_t));
+  this = calloc(1, sizeof(demux_wav_t));
+  if (!this)
+    return NULL;
+
   this->stream = stream;
   this->input  = input;
 
