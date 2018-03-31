@@ -69,16 +69,25 @@ typedef struct {
 } demux_snd_t;
 
 
+static int probe_snd_file(input_plugin_t *input) {
+  unsigned char fourcc[4];
+
+  if (_x_demux_read_header(input, fourcc, 4) != 4)
+    return 0;
+
+  /* check the signature */
+  if ( !_x_is_fourcc(&fourcc[0], ".snd") )
+    return 0;
+
+  return 1;
+}
+
 /* returns 1 if the SND file was opened successfully, 0 otherwise */
 static int open_snd_file(demux_snd_t *this) {
   unsigned char header[SND_HEADER_SIZE];
   unsigned int encoding;
 
   if (_x_demux_read_header(this->input, header, SND_HEADER_SIZE) != SND_HEADER_SIZE)
-    return 0;
-
-  /* check the signature */
-  if ( !_x_is_fourcc(&header[0], ".snd") )
     return 0;
 
   /* file is qualified; skip over the header bytes in the stream */
@@ -307,6 +316,17 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
 
   demux_snd_t    *this;
 
+  switch (stream->content_detection_method) {
+    case METHOD_BY_MRL:
+    case METHOD_BY_CONTENT:
+    case METHOD_EXPLICIT:
+      if (!probe_snd_file(input))
+        return NULL;
+      break;
+    default:
+      return NULL;
+  }
+
   this         = calloc(1, sizeof(demux_snd_t));
   this->stream = stream;
   this->input  = input;
@@ -323,20 +343,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
 
   this->status = DEMUX_FINISHED;
 
-  switch (stream->content_detection_method) {
-
-  case METHOD_BY_MRL:
-  case METHOD_BY_CONTENT:
-  case METHOD_EXPLICIT:
-
-    if (!open_snd_file(this)) {
-      free (this);
-      return NULL;
-    }
-
-  break;
-
-  default:
+  if (!open_snd_file(this)) {
     free (this);
     return NULL;
   }
