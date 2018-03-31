@@ -337,6 +337,20 @@ static void demux_mve_send_headers(demux_plugin_t *this_gen) {
   }
 }
 
+static int probe_mve_file(input_plugin_t *input) {
+  unsigned char header[WC3_HEADER_SIZE];
+
+  if (_x_demux_read_header(input, header, WC3_HEADER_SIZE) != WC3_HEADER_SIZE)
+    return 0;
+
+  if ( !_x_is_fourcc(&header[0], "FORM") ||
+       !_x_is_fourcc(&header[8], "MOVE") ||
+       !_x_is_fourcc(&header[12], "_PC_") )
+    return 0;
+
+  return 1;
+}
+
 /* returns 1 if the MVE file was opened successfully, 0 otherwise */
 static int open_mve_file(demux_mve_t *this) {
 
@@ -347,16 +361,7 @@ static int open_mve_file(demux_mve_t *this) {
   int i, j;
   unsigned char r, g, b;
   int temp;
-  unsigned char header[WC3_HEADER_SIZE];
   void *title;
-
-  if (_x_demux_read_header(this->input, header, WC3_HEADER_SIZE) != WC3_HEADER_SIZE)
-    return 0;
-
-  if ( !_x_is_fourcc(&header[0], "FORM") ||
-       !_x_is_fourcc(&header[8], "MOVE") ||
-       !_x_is_fourcc(&header[12], "_PC_") )
-    return 0;
 
   /* file is qualified */
 
@@ -668,6 +673,17 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
 
   demux_mve_t    *this;
 
+  switch (stream->content_detection_method) {
+    case METHOD_BY_MRL:
+    case METHOD_BY_CONTENT:
+    case METHOD_EXPLICIT:
+      if (!probe_mve_file(input))
+        return NULL;
+      break;
+    default:
+      return NULL;
+  }
+
   this         = calloc(1, sizeof(demux_mve_t));
   this->stream = stream;
   this->input  = input;
@@ -684,20 +700,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
 
   this->status = DEMUX_FINISHED;
 
-  switch (stream->content_detection_method) {
-
-  case METHOD_BY_MRL:
-  case METHOD_BY_CONTENT:
-  case METHOD_EXPLICIT:
-
-    if (!open_mve_file(this)) {
-      free (this);
-      return NULL;
-    }
-
-  break;
-
-  default:
+  if (!open_mve_file(this)) {
     free (this);
     return NULL;
   }
