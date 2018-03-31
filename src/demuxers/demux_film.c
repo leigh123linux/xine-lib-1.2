@@ -175,7 +175,7 @@ static int open_film_file(demux_film_t *film) {
 
   /* traverse the FILM header */
   i = 0;
-  while (i < film_header_size) {
+  while (i + 7 < film_header_size) {
     chunk_type = _X_BE_32(&film_header[i]);
     chunk_size = _X_BE_32(&film_header[i + 4]);
 
