@@ -53,6 +53,7 @@ typedef struct {
   xine_stream_t   *stream;
 
   char            *mrl;
+  char            *mrl_private;
   off_t            curpos;
   off_t            file_size;
 
@@ -97,22 +98,22 @@ static int _send_command(ftp_input_plugin_t *this, const char *cmd)
 {
   size_t len;
   int rc = -1;
-  char *s;
 
   lprintf(">>> %s\n", cmd);
   this->buf[0] = 0;
 
-  s = _x_asprintf("%s\r\n", cmd);
-  if (!s)
-    return -1;
-
-  len = strlen(s);
-  rc = _x_io_tcp_write(this->stream, this->fd, s, len);
-  free(s);
-
+  len = strlen(cmd);
+  rc = _x_io_tcp_write(this->stream, this->fd, cmd, len);
   if (rc != len) {
     xprintf(this->xine, XINE_VERBOSITY_LOG, LOG_MODULE ": "
             "send failed\n");
+    return -1;
+  }
+
+  rc = _x_io_tcp_write(this->stream, this->fd, "\r\n", 2);
+  if (rc != 2) {
+    xprintf(this->xine, XINE_VERBOSITY_LOG, LOG_MODULE ": "
+            "send CRLF failed\n");
     return -1;
   }
 
@@ -166,7 +167,7 @@ static int _login(ftp_input_plugin_t *this,
   if (!s)
     return -1;
   rc = _send_command(this, s);
-  free(s);
+  _x_freep_wipe_string(&s);
 
   if (rc / 100 == 2) {
     return 0;
@@ -484,6 +485,8 @@ static void _ftp_dispose (input_plugin_t *this_gen)
   }
 
   _x_freep (&this->mrl);
+  _x_freep_wipe_string(&this->mrl_private);
+
   free (this_gen);
 }
 
@@ -509,7 +512,9 @@ static int _ftp_open (input_plugin_t *this_gen)
   int rc, result = 0;
 
   /* parse mrl */
-  if (!_x_url_parse2(this->mrl, &url)) {
+  rc = _x_url_parse2(this->mrl_private, &url);
+  _x_freep_wipe_string(&this->mrl_private);
+  if (!rc) {
     _x_message(this->stream, XINE_MSG_GENERAL_WARNING, "malformed url", NULL);
     return 0;
   }
@@ -549,7 +554,8 @@ static input_plugin_t *_get_instance (input_class_t *cls_gen, xine_stream_t *str
     return NULL;
   }
 
-  this->mrl           = strdup(mrl);
+  this->mrl_private   = strdup(mrl);
+  this->mrl           = _x_mrl_remove_auth(mrl);
   this->stream        = stream;
   this->xine          = class->xine;
   this->curpos        = 0;
