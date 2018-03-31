@@ -161,8 +161,6 @@ static int open_film_file(demux_film_t *film) {
   /* load the rest of the FILM header */
   if (film->input->read(film->input, film_header, film_header_size) !=
     film_header_size) {
-    free (film->interleave_buffer);
-    free (film->sample_table);
     free (film_header);
     return 0;
   }
@@ -180,8 +178,6 @@ static int open_film_file(demux_film_t *film) {
     /* sanity check the chunk size */
     if (i + chunk_size > film_header_size) {
       xine_log(film->stream->xine, XINE_LOG_MSG, _("invalid FILM chunk size\n"));
-      free (film->interleave_buffer);
-      free (film->sample_table);
       free (film_header);
       return 0;
     }
@@ -340,8 +336,6 @@ static int open_film_file(demux_film_t *film) {
     default:
       xine_log(film->stream->xine, XINE_LOG_MSG, _("unrecognized FILM chunk\n"));
     film_abort:
-      free (film->interleave_buffer);
-      free (film->sample_table);
       free (film_header);
       return 0;
     }
@@ -823,8 +817,8 @@ static int demux_film_seek (demux_plugin_t *this_gen, off_t start_pos, int start
 static void demux_film_dispose (demux_plugin_t *this_gen) {
   demux_film_t *this = (demux_film_t *) this_gen;
 
-  free(this->sample_table);
-  free(this->interleave_buffer);
+  _x_freep(&this->sample_table);
+  _x_freep(&this->interleave_buffer);
   free(this);
 }
 
@@ -877,7 +871,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
   case METHOD_EXPLICIT:
 
     if (!open_film_file(this)) {
-      free (this);
+      demux_film_dispose(&this->demux_plugin);
       return NULL;
     }
 
