@@ -90,11 +90,13 @@ static void check_newpts( demux_pva_t *this, int64_t pts, int video ){
 }
 
 /* returns 1 if the PVA file was opened successfully, 0 otherwise */
-static int open_pva_file(demux_pva_t *this) {
+static int probe_pva_file(input_plugin_t *input) {
   unsigned char preamble[PVA_PREAMBLE_SIZE];
 
-  this->input->seek(this->input, 0, SEEK_SET);
-  if (this->input->read(this->input, preamble, PVA_PREAMBLE_SIZE) !=
+  if (input->seek(input, 0, SEEK_SET) != 0)
+    return 0;
+
+  if (input->read(input, preamble, PVA_PREAMBLE_SIZE) !=
     PVA_PREAMBLE_SIZE)
     return 0;
 
@@ -109,8 +111,6 @@ static int open_pva_file(demux_pva_t *this) {
   /* counter on the first packet should be 0 */
   if (preamble[3] != 0)
     return 0;
-
-  this->data_size = this->input->get_length(this->input);
 
   return 1;
 }
@@ -420,6 +420,18 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
     return NULL;
   }
 
+  switch (stream->content_detection_method) {
+    case METHOD_BY_MRL:
+    case METHOD_BY_CONTENT:
+    case METHOD_EXPLICIT:
+      if (!probe_pva_file(input)) {
+        return NULL;
+      }
+      break;
+    default:
+      return NULL;
+  }
+
   this         = calloc(1, sizeof(demux_pva_t));
   this->stream = stream;
   this->input  = input;
@@ -436,22 +448,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
 
   this->status = DEMUX_FINISHED;
 
-  switch (stream->content_detection_method) {
-
-  case METHOD_BY_MRL:
-  case METHOD_BY_CONTENT:
-  case METHOD_EXPLICIT:
-
-    if (!open_pva_file(this)) {
-      free (this);
-      return NULL;
-    }
-  break;
-
-  default:
-    free (this);
-    return NULL;
-  }
+  this->data_size = input->get_length(this->input);
 
   return &this->demux_plugin;
 }
