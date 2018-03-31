@@ -140,7 +140,6 @@ static int open_wav_file(demux_wav_t *this) {
 
   if (this->input->read(this->input, (void *)this->wave, this->wave_size) !=
     this->wave_size) {
-    free (this->wave);
     return 0;
   }
   _x_waveformatex_le2me(this->wave);
@@ -150,7 +149,6 @@ static int open_wav_file(demux_wav_t *this) {
   }
 
   if (this->wave->nChannels <= 0) {
-    free (this->wave);
     return 0;
   }
 
@@ -158,7 +156,6 @@ static int open_wav_file(demux_wav_t *this) {
   this->data_start = this->data_size = 0;
   if (find_chunk_by_tag(this, data_TAG, NULL, &this->data_start)==0)
   {
-    free (this->wave);
     return 0;
   }
   else
@@ -343,7 +340,7 @@ static int demux_wav_seek (demux_plugin_t *this_gen,
 static void demux_wav_dispose (demux_plugin_t *this_gen) {
   demux_wav_t *this = (demux_wav_t *) this_gen;
 
-  free(this->wave);
+  _x_freep(&this->wave);
   free(this);
 }
 
@@ -406,7 +403,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
   this->status = DEMUX_FINISHED;
 
   if (!open_wav_file(this)) {
-    free (this);
+    demux_wav_dispose(&this->demux_plugin);
     return NULL;
   }
 
