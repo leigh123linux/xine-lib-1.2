@@ -229,7 +229,9 @@ static int demux_mve_send_chunk(demux_plugin_t *this_gen) {
           this->audio_fifo->put (this->audio_fifo, buf);
         }
       }else{
-        this->input->seek(this->input, chunk_size, SEEK_CUR);
+        if (this->input->seek(this->input, chunk_size, SEEK_CUR) < 0) {
+          this->status = DEMUX_FINISHED;
+        }
       }
     } else if (chunk_tag == VGA_TAG) {
       while (chunk_size) {
@@ -263,7 +265,9 @@ static int demux_mve_send_chunk(demux_plugin_t *this_gen) {
       /*text_pts = this->video_pts - WC3_PTS_INC;*/
 
       /* unhandled thus far */
-      this->input->seek(this->input, chunk_size, SEEK_CUR);
+      if (this->input->seek(this->input, chunk_size, SEEK_CUR) < 0) {
+        this->status = DEMUX_FINISHED;
+      }
     } else {
       /* report an unknown chunk and skip it */
       lprintf("encountered unknown chunk: %c%c%c%c\n",
@@ -271,7 +275,9 @@ static int demux_mve_send_chunk(demux_plugin_t *this_gen) {
         (chunk_tag >> 16) & 0xFF,
         (chunk_tag >>  8) & 0xFF,
         (chunk_tag >>  0) & 0xFF);
-      this->input->seek(this->input, chunk_size, SEEK_CUR);
+      if (this->input->seek(this->input, chunk_size, SEEK_CUR) < 0) {
+        this->status = DEMUX_FINISHED;
+      }
     }
   }
 
@@ -372,7 +378,8 @@ static int open_mve_file(demux_mve_t *this) {
   /* load the number of palettes, the only interesting piece of information
    * in the _PC_ chunk; take it for granted that it will always appear at
    * position 0x1C */
-  this->input->seek(this->input, 0x1C, SEEK_SET);
+  if (this->input->seek(this->input, 0x1C, SEEK_SET) != 0x1c)
+    return 0;
   if (this->input->read(this->input, preamble, 4) != 4)
     return 0;
   this->number_of_shots = _X_LE_32(&preamble[0]);
@@ -382,7 +389,8 @@ static int open_mve_file(demux_mve_t *this) {
   this->current_shot = 0;
 
   /* skip the SOND chunk */
-  this->input->seek(this->input, 12, SEEK_CUR);
+  if (this->input->seek(this->input, 12, SEEK_CUR) < 0)
+    return 0;
 
   /* load the palette chunks */
   this->palettes = xine_xcalloc(this->number_of_shots, PALETTE_SIZE *
@@ -477,7 +485,8 @@ static int open_mve_file(demux_mve_t *this) {
 
       case INDX_TAG:
         /* index is not useful for this demuxer */
-        this->input->seek(this->input, chunk_size, SEEK_CUR);
+        if (this->input->seek(this->input, chunk_size, SEEK_CUR) < 0)
+          return 0;
         break;
 
       default:
@@ -487,7 +496,8 @@ static int open_mve_file(demux_mve_t *this) {
           (chunk_tag >> 16) & 0xFF,
           (chunk_tag >>  8) & 0xFF,
           (chunk_tag >>  0) & 0xFF);
-        this->input->seek(this->input, chunk_size, SEEK_CUR);
+        if (this->input->seek(this->input, chunk_size, SEEK_CUR) < 0)
+          return 0;
         break;
     }
   }
@@ -668,7 +678,10 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
       return NULL;
   }
 
-  this         = calloc(1, sizeof(demux_mve_t));
+  this = calloc(1, sizeof(demux_mve_t));
+  if (!this)
+    return NULL;
+
   this->stream = stream;
   this->input  = input;
 
