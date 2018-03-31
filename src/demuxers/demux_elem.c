@@ -53,16 +53,11 @@ typedef struct {
 
   xine_stream_t       *stream;
   fifo_buffer_t       *video_fifo;
-  fifo_buffer_t       *audio_fifo;
   input_plugin_t      *input;
   int                  status;
 
   uint32_t             blocksize;
 } demux_mpeg_elem_t ;
-
-typedef struct {
-  demux_class_t     demux_class;
-} demux_mpeg_elem_class_t;
 
 static int demux_mpeg_elem_next (demux_mpeg_elem_t *this, int preview_mode) {
   buf_element_t *buf;
@@ -116,7 +111,6 @@ static void demux_mpeg_elem_send_headers (demux_plugin_t *this_gen) {
   demux_mpeg_elem_t *this = (demux_mpeg_elem_t *) this_gen;
 
   this->video_fifo  = this->stream->video_fifo;
-  this->audio_fifo  = this->stream->audio_fifo;
 
   this->blocksize = this->input->get_blocksize(this->input);
 
