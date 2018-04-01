@@ -1516,17 +1516,12 @@ static video_decoder_t *open_plugin (video_decoder_class_t *class_gen, xine_stre
 
 void *decode_bitplane_init_class (xine_t *xine, const void *data) {
 
-  video_decoder_class_t *this;
-
-  this = calloc(1, sizeof(video_decoder_class_t));
-  if (!this)
-    return NULL;
-
-  this->open_plugin       = open_plugin;
-  this->identifier        = "bitplane";
-  this->description       = N_("Raw bitplane video decoder plugin");
-  this->dispose           = default_video_decoder_class_dispose;
-
-  return this;
+  static const video_decoder_class_t decode_video_bitplane_class = {
+    .open_plugin       = open_plugin,
+    .identifier        = "bitplane",
+    .description       = N_("Raw bitplane video decoder plugin"),
+    .dispose           = NULL,
+  };
+  return (void *)&decode_video_bitplane_class;
 }
 

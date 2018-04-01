@@ -224,18 +224,13 @@ static video_decoder_t *open_plugin (video_decoder_class_t *class_gen, xine_stre
 
 static void *init_plugin (xine_t *xine, const void *data)
 {
-  video_decoder_class_t *this;
-
-  this = calloc(1, sizeof(video_decoder_class_t));
-  if (!this)
-    return NULL;
-
-  this->open_plugin     = open_plugin;
-  this->identifier      = "libopenhevc";
-  this->description     = N_("HEVC video decoder plugin");
-  this->dispose         = default_video_decoder_class_dispose;
-
-  return this;
+  static const video_decoder_class_t decode_video_openhevc_class = {
+    .open_plugin     = open_plugin,
+    .identifier      = "libopenhevc",
+    .description     = N_("HEVC video decoder plugin"),
+    .dispose         = NULL,
+  };
+  return (void *)&decode_video_openhevc_class;
 }
 
 /*

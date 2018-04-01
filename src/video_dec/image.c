@@ -281,24 +281,14 @@ static video_decoder_t *open_plugin (video_decoder_class_t *class_gen,
  */
 static void *init_class (xine_t *xine, const void *data) {
 
-  video_decoder_class_t *this;
+  static const video_decoder_class_t decode_video_image_class = {
+    .open_plugin     = open_plugin,
+    .identifier      = "imagevdec",
+    .description     = N_("image video decoder plugin"),
+    .dispose         = NULL,
+  };
 
-  this = calloc(1, sizeof(video_decoder_class_t));
-  if (!this)
-    return NULL;
-
-  this->open_plugin     = open_plugin;
-  this->identifier      = "imagevdec";
-  this->description     = N_("image video decoder plugin");
-  this->dispose         = default_video_decoder_class_dispose;
-
-  /*
-   * initialisation of privates
-   */
-
-  lprintf("class opened\n");
-
-  return this;
+  return (void*)&decode_video_image_class;
 }
 
 /*

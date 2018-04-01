@@ -323,18 +323,14 @@ static video_decoder_t *open_plugin (video_decoder_class_t *class_gen, xine_stre
 
 static void *init_plugin_vpx (xine_t *xine, const void *data)
 {
-  video_decoder_class_t *this;
+  static const video_decoder_class_t decode_video_vpx_class = {
+    .open_plugin     = open_plugin,
+    .identifier      = "libvpx",
+    .description     = N_("WebM (VP8/VP9) video decoder plugin"),
+    .dispose         = NULL,
+  };
 
-  this = calloc(1, sizeof(*this));
-  if (!this)
-    return NULL;
-
-  this->open_plugin     = open_plugin;
-  this->identifier      = "libvpx";
-  this->description     = N_("WebM (VP8/VP9) video decoder plugin");
-  this->dispose         = default_video_decoder_class_dispose;
-
-  return this;
+  return (void *)&decode_video_vpx_class;
 }
 
 /*

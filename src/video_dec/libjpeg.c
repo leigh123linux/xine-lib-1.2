@@ -433,16 +433,12 @@ static video_decoder_t *open_plugin (video_decoder_class_t *class_gen,
  */
 static void *init_class (xine_t *xine, const void *data) {
 
-  video_decoder_class_t *this;
-
-  this = calloc(1, sizeof(video_decoder_class_t));
-  if (!this)
-    return NULL;
-
-  this->open_plugin     = open_plugin;
-  this->identifier      = "jpegvdec";
-  this->description     = N_("JPEG image video decoder plugin");
-  this->dispose         = default_video_decoder_class_dispose;
+  static video_decoder_class_t decode_video_libjpeg_class = {
+    .open_plugin     = open_plugin,
+    .identifier      = "jpegvdec",
+    .description     = N_("JPEG image video decoder plugin"),
+    .dispose         = NULL,
+  };
 
   /*
    * initialisation of privates
@@ -454,11 +450,11 @@ static void *init_class (xine_t *xine, const void *data) {
       _("If enabled, you allow xine to downscale JPEG images "
 	"so that those can be viewed with your graphics hardware. "
 	"If scaling is disabled, images will be cropped."),
-      10, NULL, this);
+      10, NULL, NULL);
 
   lprintf("class opened\n");
 
-  return this;
+  return (void *)&decode_video_libjpeg_class;
 }
 
 /*

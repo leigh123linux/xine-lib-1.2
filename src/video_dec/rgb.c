@@ -274,18 +274,14 @@ static video_decoder_t *open_plugin (video_decoder_class_t *class_gen, xine_stre
 
 void *decode_rgb_init_class (xine_t *xine, const void *data) {
 
-  video_decoder_class_t *this;
+  static const video_decoder_class_t decode_video_rgb_class = {
+    .open_plugin     = open_plugin,
+    .identifier      = "RGB",
+    .description     = N_("Raw RGB video decoder plugin"),
+    .dispose         = NULL,
+  };
 
-  this = calloc(1, sizeof(video_decoder_class_t));
-  if (!this)
-    return NULL;
-
-  this->open_plugin     = open_plugin;
-  this->identifier      = "RGB";
-  this->description     = N_("Raw RGB video decoder plugin");
-  this->dispose         = default_video_decoder_class_dispose;
-
-  return this;
+  return (void *)&decode_video_rgb_class;
 }
 
 

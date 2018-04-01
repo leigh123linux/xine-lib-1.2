@@ -1129,19 +1129,15 @@ static video_decoder_t *open_plugin (video_decoder_class_t *class_gen, xine_stre
  */
 void *vc1_init_plugin (xine_t *xine, const void *data) {
 
-  video_decoder_class_t *this;
-
-  this = calloc(1, sizeof(video_decoder_class_t));
-  if (!this)
-    return NULL;
-
-  this->open_plugin     = open_plugin;
-  this->identifier      = "vdpau_vc1";
-  this->description     =
+  static const video_decoder_class_t decode_video_vdpau_vc1_class = {
+    .open_plugin     = open_plugin,
+    .identifier      = "vdpau_vc1",
+    .description     =
         N_("vdpau_vc1: vc1 decoder plugin using VDPAU hardware decoding.\n"
-           "Must be used along with video_out_vdpau.");
-  this->dispose         = default_video_decoder_class_dispose;
+           "Must be used along with video_out_vdpau."),
+    .dispose         = NULL,
+  };
 
-  return this;
+  return (void *)&decode_video_vdpau_vc1_class;
 }
 

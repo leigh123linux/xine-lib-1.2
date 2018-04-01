@@ -2452,20 +2452,16 @@ open_plugin (video_decoder_class_t * class_gen, xine_stream_t * stream)
 void *
 h264_alter_init_plugin (xine_t * xine, const void *data)
 {
-  video_decoder_class_t *this;
+  static const video_decoder_class_t decode_video_vdpau_h264_alter_class = {
+    .open_plugin = open_plugin,
+    .identifier  = "vdpau_h264_alter",
+    .description =
+      N_
+      ("vdpau_h264_alter: H264 decoder plugin using VDPAU hardware decoding.\n"
+       "Must be used along with video_out_vdpau."),
+    .dispose = NULL,
+  };
 
-  this = calloc (1, sizeof (video_decoder_class_t));
-  if (!this)
-    return NULL;
-
-  this->open_plugin = open_plugin;
-  this->identifier = "vdpau_h264_alter";
-  this->description =
-    N_
-    ("vdpau_h264_alter: H264 decoder plugin using VDPAU hardware decoding.\n"
-     "Must be used along with video_out_vdpau.");
-  this->dispose = default_video_decoder_class_dispose;
-
-  return this;
+  return (void *)&decode_video_vdpau_h264_alter_class;
 }
 
