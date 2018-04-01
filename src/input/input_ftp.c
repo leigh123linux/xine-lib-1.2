@@ -695,7 +695,8 @@ static xine_mrl_t **_get_dir (input_class_t *this_gen, const char *filename, int
 
  out:
   _x_url_cleanup(&url);
-  input->input_plugin.dispose(&input->input_plugin);
+  if (input)
+    input->input_plugin.dispose(&input->input_plugin);
   return this->mrls;
 }
 
