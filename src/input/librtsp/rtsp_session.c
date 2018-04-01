@@ -51,7 +51,8 @@
 #include "real.h"
 #include "rmff.h"
 #include "asmrp.h"
-#include <xine/xineutils.h>
+#include <xine/xine_internal.h>
+#include <xine/xine_buffer.h>
 
 #define BUF_SIZE 4096
 #define HEADER_SIZE 4096
