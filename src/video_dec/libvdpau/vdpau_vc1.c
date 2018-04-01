@@ -1077,7 +1077,11 @@ static video_decoder_t *open_plugin (video_decoder_class_t *class_gen, xine_stre
     return NULL;
 
   /* now check if vdpau has free decoder resource */
-  vo_frame_t *img = stream->video_out->get_frame( stream->video_out, 1920, 1080, 1, XINE_IMGFMT_VDPAU, VO_BOTH_FIELDS );
+  vo_frame_t *img = stream->video_out->get_frame( stream->video_out, 1920, 1080, 1, XINE_IMGFMT_VDPAU,
+                                                  VO_BOTH_FIELDS | VO_GET_FRAME_MAY_FAIL );
+  if (!img) {
+    return NULL;
+  }
   vdpau_accel_t *accel = (vdpau_accel_t*)img->accel_data;
   int runtime_nr = accel->vdp_runtime_nr;
   img->free(img);

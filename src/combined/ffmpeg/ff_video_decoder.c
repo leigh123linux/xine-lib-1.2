@@ -2884,7 +2884,8 @@ static video_decoder_t *ff_video_open_plugin (video_decoder_class_t *class_gen, 
     xprintf(this->class->xine, XINE_VERBOSITY_LOG, _("ffmpeg_video_dec: vaapi_mpeg_softdec %d\n"),
           this->class->vaapi_mpeg_softdec );
 
-    this->accel_img  = stream->video_out->get_frame( stream->video_out, 1920, 1080, 1, XINE_IMGFMT_VAAPI, VO_BOTH_FIELDS );
+    this->accel_img  = stream->video_out->get_frame( stream->video_out, 1920, 1080, 1, XINE_IMGFMT_VAAPI,
+                                                     VO_BOTH_FIELDS | VO_GET_FRAME_MAY_FAIL );
 
     if( this->accel_img ) {
       this->accel = (vaapi_accel_t*)this->accel_img->accel_data;

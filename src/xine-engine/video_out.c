@@ -1345,6 +1345,10 @@ static vo_frame_t *vo_get_frame (xine_video_port_t *this_gen,
       width, height, img->format);
     img->lock_counter = 0;
     vo_queue_append (&this->free_img_buf_queue, img);
+
+    /* check if we're allowed to return NULL */
+    if (flags & VO_GET_FRAME_MAY_FAIL)
+      return NULL;
   }
 
   /* update frame usage stats. No need to lock queues for that I guess :-) */

@@ -219,7 +219,7 @@ static void jpeg_decode_data (video_decoder_t *this_gen, buf_element_t *buf) {
                                               width, height,
                                               (double)width/(double)height,
                                               format,
-                                              frame_flags);
+                                              frame_flags | VO_GET_FRAME_MAY_FAIL );
     if (!img) {
       xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
               LOG_MODULE ": get_frame(%dx%d) failed\n", width, height);

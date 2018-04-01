@@ -297,6 +297,7 @@ struct xine_video_port_s {
 #define VO_NEW_SEQUENCE_FLAG   0x0010 /* set after MPEG2 Sequence Header Code (used by XvMC) */
 #define VO_CHROMA_422          0x0020 /* used by VDPAU, default is chroma_420 */
 #define VO_STILL_IMAGE         0x0040
+#define VO_GET_FRAME_MAY_FAIL  0x0080 /* video out may return NULL if frame allocation failed */
 
 /* ((mpeg_color_matrix << 1) | color_range) inside frame.flags bits 12-8 */
 #define VO_FULLRANGE 0x100

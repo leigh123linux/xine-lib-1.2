@@ -1232,7 +1232,7 @@ static void bitplane_decode_data (video_decoder_t *this_gen,
       img = this->stream->video_out->get_frame (this->stream->video_out,
                                         this->width, this->height,
                                         this->ratio, XINE_IMGFMT_YUY2,
-                                        VO_BOTH_FIELDS);
+                                        VO_BOTH_FIELDS | VO_GET_FRAME_MAY_FAIL);
       if (!img) {
         xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
                 LOG_MODULE ": get_frame(%dx%d) failed\n", this->width, this->height);
