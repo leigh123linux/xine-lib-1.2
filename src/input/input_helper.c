@@ -244,8 +244,10 @@ xine_mrl_t **_x_input_get_default_server_mrls(config_values_t *config, const cha
   /* count entries */
   for (n = 1, pt = svrs; pt; pt = strchr(pt + 1, ' '), n++) { }
   mrls = _x_input_alloc_mrls(n);
-  if (!mrls)
+  if (!mrls) {
+    free(svrs);
     return NULL;
+  }
 
   for (n = 0, pt = svrs; pt; ) {
     char *svr = pt;
