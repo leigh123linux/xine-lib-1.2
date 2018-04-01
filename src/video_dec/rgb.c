@@ -193,18 +193,25 @@ static void rgb_decode_data (video_decoder_t *this_gen,
         this->palette_loaded = 1;
       }
 
+      /* crop if allocated frame is smaller than requested */
+      int width = this->width, height = this->height;
+      if (width > img->width)
+        width = img->width;
+      if (height > img->height)
+        height = img->height;
+
       if (this->upside_down) {
         rgb2yuy2_slice (
           this->rgb2yuy2,
           this->buf + (this->height - 1) * this->width, -this->width,
           img->base[0], img->pitches[0],
-          this->width, this->height);
+          width, height);
       } else {
         rgb2yuy2_slice (
           this->rgb2yuy2,
           this->buf, this->width,
           img->base[0], img->pitches[0],
-          this->width, this->height);
+          width, height);
       }
 
       img->draw(img, this->stream);
