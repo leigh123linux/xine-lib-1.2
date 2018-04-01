@@ -47,24 +47,16 @@
 #include <xine/xine_buffer.h>
 
 
-typedef struct {
-  video_decoder_class_t   decoder_class;
-
-  int enable_downscaling;
-
-} jpeg_class_t;
-
-
 typedef struct jpeg_decoder_s {
   video_decoder_t   video_decoder;
-
-  jpeg_class_t     *cls;
 
   xine_stream_t    *stream;
   int               video_open;
 
   unsigned char    *image;
   int               index;
+
+  int               enable_downscaling;
 
 } jpeg_decoder_t;
 
@@ -175,7 +167,7 @@ static void jpeg_decode_data (video_decoder_t *this_gen, buf_element_t *buf) {
     cinfo.out_color_space = JCS_YCbCr;
 
     /* request scaling when image is too large for vo */
-    if (this->cls->enable_downscaling) {
+    if (this->enable_downscaling) {
       cinfo.output_width  = cinfo.image_width;
       cinfo.output_height = cinfo.image_height;
       cinfo.scale_num   = 1;
@@ -406,8 +398,8 @@ static void jpeg_dispose (video_decoder_t *this_gen) {
 static video_decoder_t *open_plugin (video_decoder_class_t *class_gen,
 				     xine_stream_t *stream) {
 
-  jpeg_class_t   *cls = (jpeg_class_t *) class_gen;
   jpeg_decoder_t *this;
+  cfg_entry_t    *cfg_entry;
 
   lprintf("opened\n");
 
@@ -420,7 +412,6 @@ static video_decoder_t *open_plugin (video_decoder_class_t *class_gen,
   this->video_decoder.reset               = jpeg_reset;
   this->video_decoder.discontinuity       = jpeg_discontinuity;
   this->video_decoder.dispose             = jpeg_dispose;
-  this->cls                               = cls;
   this->stream                            = stream;
 
   /*
@@ -428,6 +419,11 @@ static video_decoder_t *open_plugin (video_decoder_class_t *class_gen,
    */
 
   this->image = xine_buffer_init(10240);
+
+  cfg_entry = stream->xine->config->lookup_entry(stream->xine->config, "video.processing.libjpeg_downscaling");
+  if (cfg_entry) {
+    this->enable_downscaling = cfg_entry->num_value;
+  }
 
   return &this->video_decoder;
 }
@@ -437,23 +433,22 @@ static video_decoder_t *open_plugin (video_decoder_class_t *class_gen,
  */
 static void *init_class (xine_t *xine, const void *data) {
 
-  jpeg_class_t *this;
+  video_decoder_class_t *this;
 
-  this = calloc(1, sizeof(jpeg_class_t));
+  this = calloc(1, sizeof(video_decoder_class_t));
   if (!this)
     return NULL;
 
-  this->decoder_class.open_plugin     = open_plugin;
-  this->decoder_class.identifier      = "jpegvdec";
-  this->decoder_class.description     = N_("JPEG image video decoder plugin");
-  this->decoder_class.dispose         = default_video_decoder_class_dispose;
+  this->open_plugin     = open_plugin;
+  this->identifier      = "jpegvdec";
+  this->description     = N_("JPEG image video decoder plugin");
+  this->dispose         = default_video_decoder_class_dispose;
 
   /*
    * initialisation of privates
    */
 
-  this->enable_downscaling =
-    xine->config->register_bool(xine->config,
+  xine->config->register_bool(xine->config,
       "video.processing.libjpeg_downscaling", 1,
       _("allow downscaling of JPEG images (an alternative is to crop)"),
       _("If enabled, you allow xine to downscale JPEG images "
