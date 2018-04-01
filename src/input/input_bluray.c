@@ -1382,15 +1382,11 @@ static int get_optional_data_impl (bluray_input_plugin_t *this, void *data, int 
       return INPUT_OPTIONAL_SUCCESS;
 
     case INPUT_OPTIONAL_DATA_AUDIOLANG:
-      pthread_mutex_lock(&this->title_info_mutex);
       r = get_audio_lang(this, data);
-      pthread_mutex_unlock(&this->title_info_mutex);
       return r;
 
     case INPUT_OPTIONAL_DATA_SPULANG:
-      pthread_mutex_lock(&this->title_info_mutex);
       r = get_spu_lang(this, data);
-      pthread_mutex_unlock(&this->title_info_mutex);
       return r;
 
     default:
