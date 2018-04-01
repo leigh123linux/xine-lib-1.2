@@ -169,7 +169,7 @@ static void vpx_decode_data (video_decoder_t *this_gen, buf_element_t *buf)
 
   if (vpx_img->fmt != VPX_IMG_FMT_I420) {
     xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
-            LOG_MODULE": Unsupported colour space %d\n", vpx_img->fmt);
+            LOG_MODULE ": Unsupported colour space %d\n", vpx_img->fmt);
     return;
   }
 
@@ -183,6 +183,13 @@ static void vpx_decode_data (video_decoder_t *this_gen, buf_element_t *buf)
     return;
   }
 
+  /* crop if allocated frame is smaller than requested */
+  int width = this->width, height = this->height;
+  if (width > img->width)
+    width = img->width;
+  if (height > img->height)
+    height = img->height;
+
   yv12_to_yv12(
                /* Y */
                vpx_img->planes[0], vpx_img->stride[0],
@@ -194,7 +201,7 @@ static void vpx_decode_data (video_decoder_t *this_gen, buf_element_t *buf)
                vpx_img->planes[2], vpx_img->stride[2],
                img->base[2], img->pitches[2],
                /* width x height */
-               this->width, this->height);
+               width, height);
 
   img->pts       = pts;
   img->bad_frame = 0;
