@@ -37,6 +37,14 @@
 */
 #include <xine/xine_internal.h>
 
+#define BUFFER_SIZE (1194 * 1024) /* libmpeg2's buffer size */
+
+/* picture coding type (mpeg2 header) */
+#define I_TYPE 1
+#define P_TYPE 2
+#define B_TYPE 3
+#define D_TYPE 4
+
 /* mpeg frame rate table from lavc */
 static const int frame_rate_tab[][2] = {
     {    0,    0},

@@ -26,14 +26,6 @@
 #include <stdint.h>
 #include <stddef.h>
 
-#define BUFFER_SIZE (1194 * 1024) /* libmpeg2's buffer size */
-
-/* picture coding type (mpeg2 header) */
-#define I_TYPE 1
-#define P_TYPE 2
-#define B_TYPE 3
-#define D_TYPE 4
-
 typedef struct mpeg_parser_s {
   uint8_t        *chunk_buffer;
   uint8_t        *chunk_ptr;
