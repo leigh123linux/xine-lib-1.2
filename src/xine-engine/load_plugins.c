@@ -732,7 +732,8 @@ static void collect_plugins(xine_t *this, const char *path){
               if (file) {
                 _register_plugins_internal(this, file, node, info);
               } else {
-                dlclose(lib);
+                if (lib != NULL)
+                  dlclose(lib);
               }
 	    }
 	    else {
