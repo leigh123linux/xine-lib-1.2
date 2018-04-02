@@ -1745,10 +1745,6 @@ static int _cdda_cddb_retrieve(cdda_input_plugin_t *this) {
   char *dtitle = NULL;
   int err, i;
 
-  if(this == NULL) {
-    return 0;
-  }
-
   if(_cdda_load_cached_cddb_infos(this)) {
     this->cddb.have_cddb_info = 1;
     return 1;
