@@ -535,8 +535,9 @@ static vo_frame_t *vo_get_unblock_frame (vos_t *this) {
         this->display_img_buf_queue.last = prev;
       }
     }
-    vo_frame_dec2_lock_int (this, f);
     pthread_mutex_unlock (&this->display_img_buf_queue.mutex);
+
+    vo_frame_dec2_lock_int (this, f);
     xprintf (this->xine, XINE_VERBOSITY_DEBUG, "video_out: got unblock frame from display queue.\n");
     return f;
   }
