@@ -717,10 +717,11 @@ static int id3v24_parse_ext_header(input_plugin_t *input,
               "id3: invalid extended header, unexpected restriction flag data length\n");
       return 0;
     }
-    if (input->read (input, buf, data_length) == data_length) {
-      /* ignore restrictions */
-      frame_ext_header->restrictions = buf[0];
+    if (input->read (input, buf, data_length) != data_length) {
+      return 0;
     }
+    /* ignore restrictions */
+    frame_ext_header->restrictions = buf[0];
   }
 
   lprintf("ext header: size: %zu, flags: %X, crc: %d, restrictions: %8X\n",
