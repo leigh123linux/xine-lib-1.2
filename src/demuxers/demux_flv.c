@@ -223,7 +223,8 @@ static int open_flv_file(demux_flv_t *this) {
   this->start = _X_BE_32(&buffer[5]);
   this->size = this->input->get_length(this->input);
 
-  this->input->seek(this->input, this->start, SEEK_SET);
+  if (this->input->seek(this->input, this->start, SEEK_SET) != this->start)
+    return 0;
 
   lprintf("  qualified FLV file, repositioned @ offset 0x%" PRIxMAX "\n",
           (intmax_t)this->start);
@@ -842,8 +843,8 @@ static void seek_flv_file (demux_flv_t *this, off_t seek_pos, int seek_pts) {
     }
     x = &this->index[a];
     if ((x->offset >= this->start + 4) && (x->offset + 15 < size)) {
-      this->input->seek (this->input, x->offset, SEEK_SET);
-      this->input->read (this->input, (char *)buf, 15);
+      if (this->input->seek (this->input, x->offset, SEEK_SET) == x->offset) {
+      if (this->input->read (this->input, (char *)buf, 15) == 15) {
       if (!buf[8] && !buf[9] && !buf[10] && (
         ((buf[0] == FLV_TAG_TYPE_VIDEO) && ((buf[11] >> 4) == 1)) ||
         (buf[0] == FLV_TAG_TYPE_AUDIO)
@@ -854,6 +855,8 @@ static void seek_flv_file (demux_flv_t *this, off_t seek_pos, int seek_pts) {
         this->input->seek (this->input, x->offset - 4, SEEK_SET);
         this->cur_pts = x->pts;
         return;
+      }
+      }
       }
     }
     xprintf (this->xine, XINE_VERBOSITY_LOG, _("demux_flv: Not using broken seek index.\n"));
@@ -966,10 +969,12 @@ static void seek_flv_file (demux_flv_t *this, off_t seek_pos, int seek_pts) {
   }
 
   /* we are there!! */
-  this->input->seek (this->input, found + 4, SEEK_SET);
-  this->input->read (this->input, (char *)buf, 4);
-  this->cur_pts = gettimestamp (buf, 0);
-  this->input->seek (this->input, found - 4, SEEK_SET);
+  if (this->input->seek (this->input, found + 4, SEEK_SET) == found + 4) {
+    if (this->input->read (this->input, (char *)buf, 4) == 4) {
+      this->cur_pts = gettimestamp (buf, 0);
+      this->input->seek (this->input, found - 4, SEEK_SET);
+    }
+  }
 
   return;
 }
