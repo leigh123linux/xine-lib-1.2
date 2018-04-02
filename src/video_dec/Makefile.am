@@ -1,6 +1,5 @@
 AUTOMAKE_OPTIONS = subdir-objects
 SUBDIRS = \
-	libmpeg2 \
 	libmpeg2new
 
 include $(top_builddir)/misc/Makefile.plugins
@@ -45,6 +44,10 @@ if ENABLE_RAWVIDEO
 rawvideo_module = xineplug_decode_rawvideo.la
 endif
 
+if ENABLE_LIBMPEG2
+libmpeg2_module = xineplug_decode_mpeg2.la
+endif
+
 xineplug_LTLIBRARIES = $(image_module) \
 	$(gdkpixbuf_module) \
 	$(libjpeg_module) \
@@ -52,6 +55,7 @@ xineplug_LTLIBRARIES = $(image_module) \
 	$(libopenhevc_module) \
 	$(libvpx_module) \
 	$(libmmal_module) \
+	$(libmpeg2_module) \
 	$(vdpau_module) \
 	$(rawvideo_module)
 
@@ -106,3 +110,34 @@ xineplug_decode_vdpau_la_SOURCES = \
 	libvdpau/vdpau_mpeg4.c
 xineplug_decode_vdpau_la_CFLAGS = $(AM_CFLAGS) $(VDPAU_CFLAGS)
 xineplug_decode_vdpau_la_LIBADD = $(XINE_LIB) -lm
+
+xineplug_decode_mpeg2_la_SOURCES = \
+	libmpeg2/cpu_state.c \
+	libmpeg2/decode.c \
+	libmpeg2/header.c \
+	libmpeg2/idct.c \
+	libmpeg2/idct_altivec.c \
+	libmpeg2/idct_mlib.h \
+	libmpeg2/idct_mlib.c \
+	libmpeg2/idct_mmx.c \
+	libmpeg2/motion_comp.c \
+	libmpeg2/motion_comp_altivec.c \
+	libmpeg2/motion_comp_mmx.c \
+	libmpeg2/motion_comp_mlib.c \
+	libmpeg2/motion_comp_vis.c \
+	libmpeg2/mpeg2.h \
+	libmpeg2/mpeg2_internal.h \
+	libmpeg2/slice.c \
+	libmpeg2/slice_xvmc.c \
+	libmpeg2/slice_xvmc_vld.c \
+	libmpeg2/stats.c \
+	libmpeg2/vis.h \
+	libmpeg2/vlc.h \
+	libmpeg2/xine_mpeg2_decoder.c \
+	libmpeg2/xvmc.h \
+	libmpeg2/xvmc_vld.h \
+	libmpeg2/libmpeg2_accel.h \
+	libmpeg2/libmpeg2_accel.c
+
+xineplug_decode_mpeg2_la_LIBADD = $(XINE_LIB) $(MLIB_LIBS) $(LTLIBINTL) -lm
+xineplug_decode_mpeg2_la_CFLAGS = $(AM_CFLAGS) $(MLIB_CFLAGS)
