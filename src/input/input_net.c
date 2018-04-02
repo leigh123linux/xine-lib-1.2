@@ -78,6 +78,7 @@
 #include <xine/xine_internal.h>
 #include <xine/xineutils.h>
 #include <xine/input_plugin.h>
+#include <xine/io_helper.h>
 #include "net_buf_ctrl.h"
 #include "group_network.h"
 #include "input_helper.h"
@@ -110,142 +111,6 @@ typedef struct {
 /* **************************************************************** */
 /*                       Private functions                          */
 /* **************************************************************** */
-
-#ifndef ENABLE_IPV6
-static int host_connect_attempt_ipv4(struct in_addr ia, int port, xine_t *xine) {
-
-  int                s;
-  union {
-    struct sockaddr_in in;
-    struct sockaddr    sa;
-  } sa;
-
-  s = xine_socket_cloexec(PF_INET, SOCK_STREAM, IPPROTO_TCP);
-  if (s==-1) {
-    xine_log(xine, XINE_LOG_MSG,
-             _("input_net: socket(): %s\n"), strerror(errno));
-    return -1;
-  }
-
-  sa.in.sin_family = AF_INET;
-  sa.in.sin_addr   = ia;
-  sa.in.sin_port   = htons(port);
-
-#ifndef WIN32
-  if (connect(s, &sa.sa, sizeof(sa.in))==-1 && errno != EINPROGRESS)
-#else
-  if (connect(s, &sa.sa, sizeof(sa.in))==-1 && WSAGetLastError() != WSAEINPROGRESS)
-#endif
-  {
-    xine_log(xine, XINE_LOG_MSG,
-             _("input_net: connect(): %s\n"), strerror(errno));
-    close(s);
-    return -1;
-  }
-
-  return s;
-}
-#else
-static int host_connect_attempt(int family, struct sockaddr* sin, int addrlen, xine_t *xine) {
-
-  int s = xine_socket_cloexec(family, SOCK_STREAM, IPPROTO_TCP);
-
-  if (s == -1) {
-    xine_log(xine, XINE_LOG_MSG,
-             _("input_net: socket(): %s\n"), strerror(errno));
-    return -1;
-  }
-
-#ifndef WIN32
-  if (connect(s, sin, addrlen)==-1 && errno != EINPROGRESS)
-#else
-  if (connect(s, sin, addrlen)==-1 && WSAGetLastError() != WSAEINPROGRESS)
-#endif
-  {
-    xine_log(xine, XINE_LOG_MSG,
-             _("input_net: connect(): %s\n"), strerror(errno));
-    close(s);
-    return -1;
-  }
-
-  return s;
-}
-#endif
-
-#ifndef ENABLE_IPV6
-static int host_connect_ipv4(const char *host, int port, xine_t *xine) {
-  struct hostent *h;
-  int             i;
-  int             s;
-
-  h = gethostbyname(host);
-  if (h==NULL) {
-    xine_log(xine, XINE_LOG_MSG,
-             _("input_net: unable to resolve '%s'.\n"), host);
-    return -1;
-  }
-
-  for (i=0; h->h_addr_list[i]; i++) {
-    struct in_addr ia;
-    memcpy (&ia, h->h_addr_list[i],4);
-    s = host_connect_attempt_ipv4 (ia, port, xine);
-    if (s != -1)
-      return s;
-  }
-
-  xine_log(xine, XINE_LOG_MSG,
-           _("input_net: unable to connect to '%s'.\n"), host);
-  return -1;
-}
-#endif
-
-static int host_connect(const char *host, int port, xine_t *xine) {
-
-#ifndef ENABLE_IPV6
-  return host_connect_ipv4(host, port, xine);
-#else
-
-  struct addrinfo hints, *res, *tmpaddr;
-  int error;
-  char strport[16];
-  int             s;
-
-  memset(&hints, 0, sizeof(hints));
-  hints.ai_socktype = SOCK_STREAM;
-  hints.ai_family = PF_UNSPEC;
-
-  snprintf(strport, sizeof(strport), "%d", port);
-
-  lprintf("Resolving host '%s' at port '%s'\n", host, strport);
-
-  error = getaddrinfo(host, strport, &hints, &res);
-
-  if (error) {
-
-    xine_log(xine, XINE_LOG_MSG,
-             _("input_net: unable to resolve '%s'.\n"), host);
-    return -1;
-  }
-
-  /* We loop over all addresses and try to connect */
-  tmpaddr = res;
-  while (tmpaddr) {
-
-      s = host_connect_attempt (tmpaddr->ai_family,
-				tmpaddr->ai_addr, tmpaddr->ai_addrlen, xine);
-      if (s != -1)
-	  return s;
-
-      tmpaddr = tmpaddr->ai_next;
-  }
-
-  xine_log(xine, XINE_LOG_MSG,
-           _("input_net: unable to connect to '%s'.\n"), host);
-  return -1;
-
-#endif
-
-}
 
 #define LOW_WATER_MARK  50
 #define HIGH_WATER_MARK 100
@@ -408,7 +273,7 @@ static int net_plugin_open (input_plugin_t *this_gen ) {
     sscanf(pptr,"%d", &port);
   }
 
-  this->fh     = host_connect(filename, port, this->stream->xine);
+  this->fh     = _x_io_tcp_connect(this->stream, filename, port);
   this->curpos = 0;
 
   if (this->fh == -1) {
