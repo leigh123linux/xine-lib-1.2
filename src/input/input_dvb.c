@@ -1021,7 +1021,8 @@ static int tuner_tune_it (tuner_t *this, struct dvb_frontend_parameters
       }
   }
 
-  xine_config_lookup_entry(this->xine, "media.dvb.tuning_timeout", &config_tuning_timeout);
+  if (!xine_config_lookup_entry(this->xine, "media.dvb.tuning_timeout", &config_tuning_timeout))
+    config_tuning_timeout.num_value = 0;
   xprintf(this->xine, XINE_VERBOSITY_DEBUG, "input_dvb: media.dvb.tuning_timeout is %d\n", config_tuning_timeout.num_value );
 
   if( config_tuning_timeout.num_value != 0 ) {
@@ -2759,11 +2760,12 @@ static int dvb_plugin_open(input_plugin_t * this_gen)
     xine_cfg_entry_t lastchannel;
     xine_cfg_entry_t gui_enabled;
 
-    xine_config_lookup_entry(this->stream->xine, "media.dvb.gui_enabled", &gui_enabled);
-    this->dvb_gui_enabled = gui_enabled.num_value;
+    if (xine_config_lookup_entry(this->stream->xine, "media.dvb.gui_enabled", &gui_enabled))
+      this->dvb_gui_enabled = gui_enabled.num_value;
     xprintf(this->class->xine, XINE_VERBOSITY_LOG, _("input_dvb: DVB GUI %s\n"), this->dvb_gui_enabled ? "enabled" : "disabled");
 
-    xine_config_lookup_entry(this->stream->xine, "media.dvb.adapter", &adapter);
+    if (!xine_config_lookup_entry(this->stream->xine, "media.dvb.adapter", &adapter))
+      adapter.num_value = 0;
 
     if (!(tuner = tuner_init(this->class->xine,adapter.num_value))) {
       xprintf(this->class->xine, XINE_VERBOSITY_LOG, _("input_dvb: cannot open dvb device\n"));
@@ -3171,7 +3173,8 @@ static const char * const *dvb_class_get_autoplay_list(input_class_t * this_gen,
     tuner_t *tuner;
     xine_cfg_entry_t adapter;
 
-    xine_config_lookup_entry(class->xine, "media.dvb.adapter", &adapter);
+    if (!xine_config_lookup_entry(class->xine, "media.dvb.adapter", &adapter))
+      adapter.num_value = 0;
 
     if (!(tuner = tuner_init(class->xine,adapter.num_value))) {
        static const char * const mrls[] = {"Sorry, No DVB input device found.", NULL};
