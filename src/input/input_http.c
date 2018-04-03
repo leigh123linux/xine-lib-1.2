@@ -121,9 +121,7 @@ typedef struct {
   config_values_t  *config;
 
   const char       *proxyhost;
-  char             *proxyhost_env;
   int               proxyport;
-  int               proxyport_env;
 
   const char       *proxyuser;
   const char       *proxypassword;
@@ -1011,8 +1009,6 @@ static void http_class_dispose (input_class_t *this_gen) {
   config->unregister_callback(config, "media.network.http_proxy_password");
   config->unregister_callback(config, "media.network.http_no_proxy");
 
-  _x_freep(&this->proxyhost_env);
-
   free (this);
 }
 
@@ -1020,6 +1016,8 @@ void *input_http_init_class (xine_t *xine, const void *data) {
   http_input_class_t  *this;
   config_values_t     *config;
   char                *proxy_env;
+  char                *proxyhost_env = NULL;
+  int                  proxyport_env = DEFAULT_HTTP_PORT;
 
   this = calloc(1, sizeof (http_input_class_t));
 
@@ -1038,41 +1036,37 @@ void *input_http_init_class (xine_t *xine, const void *data) {
    * honour http_proxy envvar
    */
   if((proxy_env = getenv("http_proxy")) && *proxy_env) {
-    int    proxy_port = DEFAULT_HTTP_PORT;
     char  *p;
 
     if(!strncmp(proxy_env, "http://", 7))
       proxy_env += 7;
 
-    this->proxyhost_env = strdup(proxy_env);
+    proxyhost_env = strdup(proxy_env);
 
-    if((p = strrchr(this->proxyhost_env, ':')) && (strlen(p) > 1)) {
+    if((p = strrchr(proxyhost_env, ':')) && (strlen(p) > 1)) {
       *p++ = '\0';
-      proxy_port = (int) strtol(p, &p, 10);
+      proxyport_env = (int) strtol(p, &p, 10);
     }
-
-    this->proxyport_env = proxy_port;
   }
-  else
-    proxy_env = NULL; /* proxy_env can be "" */
 
   /*
    * proxy settings
    */
   this->proxyhost = config->register_string(config,
-					    "media.network.http_proxy_host", proxy_env ? this->proxyhost_env : "",
+					    "media.network.http_proxy_host", proxyhost_env ? proxyhost_env : "",
 					    _("HTTP proxy host"), _("The hostname of the HTTP proxy."), 10,
 					    proxy_host_change_cb, (void *) this);
   this->proxyport = config->register_num(config,
-					 "media.network.http_proxy_port", proxy_env ? this->proxyport_env : DEFAULT_HTTP_PORT,
+					 "media.network.http_proxy_port", proxyport_env,
 					 _("HTTP proxy port"), _("The port number of the HTTP proxy."), 10,
 					 proxy_port_change_cb, (void *) this);
 
   /* registered entries could be empty. Don't ignore envvar */
-  if(!strlen(this->proxyhost) && (proxy_env && strlen(proxy_env))) {
-    config->update_string(config, "media.network.http_proxy_host", this->proxyhost_env);
-    config->update_num(config, "media.network.http_proxy_port", this->proxyport_env);
+  if(!strlen(this->proxyhost) && (proxyhost_env && strlen(proxyhost_env))) {
+    config->update_string(config, "media.network.http_proxy_host", proxyhost_env);
+    config->update_num(config, "media.network.http_proxy_port", proxyport_env);
   }
+  _x_freep(&proxyhost_env);
 
   this->proxyuser = config->register_string(config,
 					    "media.network.http_proxy_user", "", _("HTTP proxy username"),
