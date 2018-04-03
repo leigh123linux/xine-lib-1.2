@@ -118,7 +118,6 @@ typedef struct {
 
   input_class_t     input_class;
 
-  xine_t           *xine;
   config_values_t  *config;
 
   const char       *proxyhost;
@@ -165,7 +164,7 @@ static void no_proxy_list_change_cb(void *this_gen, xine_cfg_entry_t *cfg) {
  * handle no-proxy list config option and returns, if use the proxy or not
  * if error occurred, is expected using the proxy
  */
-static int _x_use_proxy(http_input_class_t *this, const char *host) {
+static int _x_use_proxy(xine_t *xine, http_input_class_t *this, const char *host) {
   const char *target;
   char *no_proxy, *domain, *ptr = NULL;
   struct hostent *info;
@@ -175,7 +174,7 @@ static int _x_use_proxy(http_input_class_t *this, const char *host) {
    * get full host name
    */
   if ((info = gethostbyname(host)) == NULL) {
-    xine_log(this->xine, XINE_LOG_MSG,
+    xine_log(xine, XINE_LOG_MSG,
         _("input_http: gethostbyname(%s) failed: %s\n"), host,
         hstrerror(h_errno));
     return 1;
@@ -613,7 +612,7 @@ static int http_plugin_open (input_plugin_t *this_gen ) {
     _x_message(this->stream, XINE_MSG_GENERAL_WARNING, "malformed url", NULL);
     return 0;
   }
-  use_proxy = use_proxy && _x_use_proxy(this_class, this->url.host);
+  use_proxy = use_proxy && _x_use_proxy(this->stream->xine, this_class, this->url.host);
 
   if (this->url.port == 0)
     this->url.port = DEFAULT_HTTP_PORT;
@@ -724,7 +723,7 @@ static int http_plugin_open (input_plugin_t *this_gen ) {
   buflen = strlen(this->buf);
   if (_x_io_tcp_write (this->stream, this->fh, this->buf, buflen) != buflen) {
     _x_message(this->stream, XINE_MSG_CONNECTION_REFUSED, "couldn't send request", NULL);
-    xprintf(this_class->xine, XINE_VERBOSITY_DEBUG, "input_http: couldn't send request\n");
+    xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG, "input_http: couldn't send request\n");
     return -4;
   }
 
@@ -1024,7 +1023,6 @@ void *input_http_init_class (xine_t *xine, const void *data) {
 
   this = calloc(1, sizeof (http_input_class_t));
 
-  this->xine   = xine;
   this->config = xine->config;
   config       = xine->config;
 
