@@ -122,6 +122,7 @@
 #include <xine/xineutils.h>
 #include <xine/input_plugin.h>
 #include "net_buf_ctrl.h"
+#include "input_helper.h"
 
 #define BUFSIZE 16384
 
@@ -332,9 +333,6 @@ typedef struct {
   osd_object_t	     *background;
 
   xine_event_queue_t *event_queue;
-
-  /* scratch buffer for forward seeking */
-  char                seek_buf[BUFSIZE];
 
   /* Is the GUI enabled at all? */
   int                 dvb_gui_enabled;
@@ -2629,18 +2627,8 @@ static off_t dvb_plugin_seek (input_plugin_t *this_gen, off_t offset,
 
   xprintf(this->class->xine,XINE_VERBOSITY_DEBUG,"seek %" PRIdMAX " bytes, origin %d\n", (intmax_t)offset, origin);
 
-  /* only relative forward-seeking is implemented */
-
-  if ((origin == SEEK_CUR) && (offset >= 0)) {
-
-    for (;((int)offset) - BUFSIZE > 0; offset -= BUFSIZE) {
-      this->curpos += dvb_plugin_read (this_gen, this->seek_buf, BUFSIZE);
-    }
-
-    this->curpos += dvb_plugin_read (this_gen, this->seek_buf, offset);
-  }
-
-  return this->curpos;
+  return _x_input_seek_preview(this_gen, offset, origin,
+                               &this->curpos, -1, -1);
 }
 
 static off_t dvb_plugin_get_length (input_plugin_t *this_gen) {
