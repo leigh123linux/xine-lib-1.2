@@ -159,7 +159,7 @@ static void image_decode_data (video_decoder_t *this_gen, buf_element_t *buf) {
     img = this->stream->video_out->get_frame (this->stream->video_out, width, height,
 					      (double)width / (double)height,
                                               format,
-                                              frame_flags | VO_GET_FRAME_MAY_FAIL);
+                                              frame_flags);
     if (!img) {
       xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
               LOG_MODULE ": get_frame(%dx%d) failed\n", width, height);
