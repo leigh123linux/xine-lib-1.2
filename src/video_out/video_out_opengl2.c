@@ -155,6 +155,11 @@ typedef struct {
   int                cm_state;
   uint8_t            cm_lut[32];
 
+  int                max_video_width;
+  int                max_video_height;
+  int                max_display_width;
+  int                max_display_height;
+
   int                exit_indx;
   int                exiting;
 } opengl2_driver_t;
@@ -1516,6 +1521,10 @@ static int opengl2_get_property( vo_driver_t *this_gen, int property )
       return this->zoom_y;
     case VO_PROP_ASPECT_RATIO:
       return this->sc.user_ratio;
+    case VO_PROP_MAX_VIDEO_WIDTH:
+      return this->max_video_width;
+    case VO_PROP_MAX_VIDEO_HEIGHT:
+      return this->max_video_height;
   }
 
   return -1;
@@ -1758,6 +1767,28 @@ static vo_driver_t *opengl2_open_plugin( video_driver_class_t *class_gen, const 
   if (!this->gl->make_current(this->gl)) {
     xprintf( this->xine, XINE_VERBOSITY_LOG, "video_out_opengl2: display unavailable for initialization\n" );
     goto fail_make_current;
+  }
+
+  {
+    GLint v[1] = {0};
+    glGetIntegerv (GL_MAX_TEXTURE_SIZE, v);
+    if (v[0] > 0) {
+      this->max_video_width  =
+      this->max_video_height = v[0];
+      xprintf (this->xine, XINE_VERBOSITY_DEBUG, "video_out_opengl2: max video size %dx%d.\n",
+        this->max_video_width, this->max_video_height);
+    }
+  }
+
+  {
+    GLint v[2] = {0, 0};
+    glGetIntegerv (GL_MAX_VIEWPORT_DIMS, v);
+    if (v[0] > 0) {
+      this->max_display_width  = v[0];
+      this->max_display_height = v[1] > 0 ? v[1] : v[0];
+      xprintf (this->xine, XINE_VERBOSITY_DEBUG, "video_out_opengl2: max output size %dx%d.\n",
+        this->max_display_width, this->max_display_height);
+    }
   }
 
   glClearColor( 0.0f, 0.0f, 0.0f, 0.0f );
