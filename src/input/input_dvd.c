@@ -853,7 +853,7 @@ static off_t dvd_plugin_get_current_pos (input_plugin_t *this_gen){
   /*dvdnav_status_t result;*/
   lprintf("Called\n");
 
-  if(!this || !this->dvdnav) {
+  if (!this->dvdnav) {
     return 0;
   }
   /*result =*/ dvdnav_get_position(this->dvdnav, &pos, &length);
@@ -865,7 +865,7 @@ static off_t dvd_plugin_seek (input_plugin_t *this_gen, off_t offset, int origin
 
   lprintf("Called\n");
 
-  if(!this || !this->dvdnav) {
+  if (!this->dvdnav) {
     return -1;
   }
 
@@ -878,7 +878,7 @@ static off_t dvd_plugin_seek_time (input_plugin_t *this_gen, int time_offset, in
 
   lprintf("Called\n");
 
-  if(!this || !this->dvdnav || origin != SEEK_SET) {
+  if (!this->dvdnav || origin != SEEK_SET) {
     return -1;
   }
 
@@ -895,7 +895,7 @@ static off_t dvd_plugin_get_length (input_plugin_t *this_gen) {
 
   lprintf("Called\n");
 
-  if(!this || !this->dvdnav) {
+  if (!this->dvdnav) {
     return 0;
   }
   /*result =*/ dvdnav_get_position(this->dvdnav, &pos, &length);
@@ -920,7 +920,7 @@ static void xine_dvd_send_button_update(dvd_input_plugin_t *this, int mode) {
   int32_t button;
   int32_t show;
 
-  if (!this || !this->stream || _x_stream_info_get(this->stream,XINE_STREAM_INFO_IGNORE_SPU))
+  if (_x_stream_info_get(this->stream, XINE_STREAM_INFO_IGNORE_SPU))
     return;
 
   if (!this->stream->spu_decoder_plugin ||
@@ -1071,7 +1071,7 @@ static void dvd_handle_events(dvd_input_plugin_t *this) {
     case XINE_EVENT_INPUT_SELECT:
       {
         pci_t nav_pci;
-        if(!this->stream || !this->stream->spu_decoder_plugin) {
+        if (!this->stream->spu_decoder_plugin) {
           return;
         }
         if (this->stream->spu_decoder_plugin->get_interact_info(this->stream->spu_decoder_plugin, &nav_pci) ) {
@@ -1083,7 +1083,7 @@ static void dvd_handle_events(dvd_input_plugin_t *this) {
     case XINE_EVENT_INPUT_MOUSE_BUTTON:
       {
         pci_t nav_pci;
-        if(!this->stream || !this->stream->spu_decoder_plugin) {
+        if (!this->stream->spu_decoder_plugin) {
           return;
         }
         if (this->stream->spu_decoder_plugin->get_interact_info(this->stream->spu_decoder_plugin, &nav_pci) ) {
@@ -1108,7 +1108,7 @@ static void dvd_handle_events(dvd_input_plugin_t *this) {
 #ifdef INPUT_DEBUG
         printf("input_dvd: BUTTON_FORCE %d\n", *but);
 #endif
-        if(!this->stream || !this->stream->spu_decoder_plugin)
+        if (!this->stream->spu_decoder_plugin)
           return;
         if (this->stream->spu_decoder_plugin->get_interact_info(this->stream->spu_decoder_plugin, &nav_pci) )
           dvdnav_button_select(this->dvdnav, &nav_pci, *but);
@@ -1117,7 +1117,7 @@ static void dvd_handle_events(dvd_input_plugin_t *this) {
     case XINE_EVENT_INPUT_MOUSE_MOVE:
       {
         pci_t nav_pci;
-        if(!this->stream || !this->stream->spu_decoder_plugin)
+        if (!this->stream->spu_decoder_plugin)
           return;
         if (this->stream->spu_decoder_plugin->get_interact_info(this->stream->spu_decoder_plugin, &nav_pci) ) {
 	  xine_input_data_t *input = event->data;
@@ -1144,7 +1144,7 @@ static void dvd_handle_events(dvd_input_plugin_t *this) {
     case XINE_EVENT_INPUT_UP:
       {
         pci_t nav_pci;
-        if(!this->stream || !this->stream->spu_decoder_plugin)
+        if (!this->stream->spu_decoder_plugin)
           return;
         if (this->stream->spu_decoder_plugin->get_interact_info(this->stream->spu_decoder_plugin, &nav_pci) ) {
           dvdnav_upper_button_select(this->dvdnav, &nav_pci);
@@ -1158,7 +1158,7 @@ static void dvd_handle_events(dvd_input_plugin_t *this) {
     case XINE_EVENT_INPUT_DOWN:
       {
         pci_t nav_pci;
-        if(!this->stream || !this->stream->spu_decoder_plugin)
+        if (!this->stream->spu_decoder_plugin)
           return;
         if (this->stream->spu_decoder_plugin->get_interact_info(this->stream->spu_decoder_plugin, &nav_pci) ) {
           dvdnav_lower_button_select(this->dvdnav, &nav_pci);
@@ -1172,7 +1172,7 @@ static void dvd_handle_events(dvd_input_plugin_t *this) {
     case XINE_EVENT_INPUT_LEFT:
       {
         pci_t nav_pci;
-        if(!this->stream || !this->stream->spu_decoder_plugin)
+        if (!this->stream->spu_decoder_plugin)
           return;
         if (this->stream->spu_decoder_plugin->get_interact_info(this->stream->spu_decoder_plugin, &nav_pci) ) {
           dvdnav_left_button_select(this->dvdnav, &nav_pci);
@@ -1186,7 +1186,7 @@ static void dvd_handle_events(dvd_input_plugin_t *this) {
     case XINE_EVENT_INPUT_RIGHT:
       {
         pci_t nav_pci;
-        if(!this->stream || !this->stream->spu_decoder_plugin)
+        if (!this->stream->spu_decoder_plugin)
           return;
         if (this->stream->spu_decoder_plugin->get_interact_info(this->stream->spu_decoder_plugin, &nav_pci) ) {
           dvdnav_right_button_select(this->dvdnav, &nav_pci);
@@ -1227,7 +1227,7 @@ static void dvd_handle_events(dvd_input_plugin_t *this) {
     case XINE_EVENT_INPUT_NUMBER_0:
       {
         pci_t nav_pci;
-        if(!this->stream || !this->stream->spu_decoder_plugin)
+        if (!this->stream->spu_decoder_plugin)
           return;
         if (this->stream->spu_decoder_plugin->get_interact_info(this->stream->spu_decoder_plugin, &nav_pci) ) {
 	  if (dvdnav_button_select_and_activate(this->dvdnav, &nav_pci, this->typed_buttonN) == DVDNAV_STATUS_OK) {
