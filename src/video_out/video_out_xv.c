@@ -63,6 +63,8 @@
 #define LOG
 */
 
+#define DEBUG_EMU
+
 #include "xine.h"
 #include <xine/video_out.h>
 #include <xine/xine_internal.h>
@@ -94,15 +96,18 @@ typedef struct {
 } xv_property_t;
 
 typedef struct {
+  /* public part */
   vo_frame_t         vo_frame;
-
-  int                width, height, format;
+  /* change detection */
   double             ratio;
-
+  int                req_width, req_height, format;
+  /* xv image */
+  int                width, height, xvformat;
   XvImage           *image;
   XShmSegmentInfo    shminfo;
-
-  int                req_width, req_height;
+  /* yv12 backend for yuy2 emulation */
+  uint8_t           *base[3];
+  int                pitches[3];
 } xv_frame_t;
 
 
@@ -148,6 +153,8 @@ struct xv_driver_s {
 
   void              *user_data;
 
+  int                emu_yuy2;
+
   /* color matrix switching */
   uint8_t            cm_lut[32];
   int                cm_active, cm_state;
@@ -181,9 +188,13 @@ static void xv_frame_field (vo_frame_t *vo_img, int which_field) {
   /* not needed for Xv */
 }
 
+static void xv_rem_yuy2_emu (xv_frame_t *f);
+
 static void xv_frame_dispose (vo_frame_t *vo_img) {
   xv_frame_t  *frame = (xv_frame_t *) vo_img ;
   xv_driver_t *this  = (xv_driver_t *) vo_img->driver;
+
+  xv_rem_yuy2_emu (frame);
 
   if (frame->image) {
 
@@ -216,18 +227,27 @@ static vo_frame_t *xv_alloc_frame (vo_driver_t *this_gen) {
   if (!frame)
     return NULL;
 
+  frame->req_width  = 0;
+  frame->req_height = 0;
+  frame->format     = 0;
+  frame->width      = 0;
+  frame->height     = 0;
+  frame->xvformat   = 0;
+  frame->image      = NULL;
+  frame->base[0]    = NULL;
+  frame->vo_frame.proc_slice = NULL;
+  frame->vo_frame.proc_frame = NULL;
+
   pthread_mutex_init (&frame->vo_frame.mutex, NULL);
 
   /*
    * supply required functions
    */
-  frame->vo_frame.proc_slice = NULL;
-  frame->vo_frame.proc_frame = NULL;
   frame->vo_frame.field      = xv_frame_field;
   frame->vo_frame.dispose    = xv_frame_dispose;
   frame->vo_frame.driver     = this_gen;
 
-  return (vo_frame_t *) frame;
+  return &frame->vo_frame;
 }
 
 static int HandleXError (Display *display, XErrorEvent *xevent) {
@@ -433,76 +453,157 @@ static void dispose_ximage (xv_driver_t *this,
   }
 }
 
+static void xv_slice_yuy2_emu (vo_frame_t *vo_img, uint8_t **src) {
+  xv_frame_t  *frame = (xv_frame_t *)vo_img;
+  int y = (src[0] - frame->vo_frame.base[0]) / frame->vo_frame.pitches[0];
+  int h;
+
+  if ((y < 0) || (y >= frame->height))
+    return;
+
+  if (!vo_img->proc_called)
+    vo_img->proc_called = 1;
+
+  h = frame->height - y;
+  h = h > 16 ? 16 : h;
+  yuy2_to_yv12 (src[0], frame->vo_frame.pitches[0],
+    frame->base[0] + y * frame->pitches[0], frame->pitches[0],
+    frame->base[1] + (y >> 1) * frame->pitches[1], frame->pitches[1],
+    frame->base[2] + (y >> 1) * frame->pitches[2], frame->pitches[2],
+    frame->width, h);
+}
+
+static int xv_add_yuy2_emu (xv_frame_t *f) {
+  uint8_t *base;
+  int pitch;
+  if (f->base[0])
+    return 0;
+  pitch = f->image->pitches[0] * 2;
+  base = xine_malloc_aligned (pitch * f->image->height);
+  if (!base)
+    return 1;
+  /* save backend */
+  f->base[0] = f->vo_frame.base[0];
+  f->base[1] = f->vo_frame.base[1];
+  f->base[2] = f->vo_frame.base[2];
+  f->pitches[0] = f->vo_frame.pitches[0];
+  f->pitches[1] = f->vo_frame.pitches[1];
+  f->pitches[2] = f->vo_frame.pitches[2];
+  /* new frontend */
+  f->vo_frame.base[0] = base;
+  f->vo_frame.base[1] =
+  f->vo_frame.base[2] = NULL;
+  f->vo_frame.pitches[0] = pitch;
+  f->vo_frame.pitches[1] =
+  f->vo_frame.pitches[2] = 0;
+  f->format = XINE_IMGFMT_YUY2;
+  f->vo_frame.proc_slice = xv_slice_yuy2_emu;
+  {
+    const union {uint8_t bytes[4]; uint32_t word;} black = {{0, 128, 0, 128}};
+    uint32_t *q = (uint32_t *)base;
+    int i;
+    for (i = pitch * f->image->height / 4; i > 0; i--)
+      *q++ = black.word;
+  }
+  return 0;
+}
+
+static void xv_rem_yuy2_emu (xv_frame_t *f) {
+  if (!f->base[0])
+    return;
+  xine_free_aligned (f->vo_frame.base[0]);
+  f->vo_frame.base[0] = f->base[0];
+  f->vo_frame.base[1] = f->base[1];
+  f->vo_frame.base[2] = f->base[2];
+  f->vo_frame.pitches[0] = f->pitches[0];
+  f->vo_frame.pitches[1] = f->pitches[1];
+  f->vo_frame.pitches[2] = f->pitches[2];
+  f->base[0] = NULL;
+  f->format = XINE_IMGFMT_YV12;
+  f->vo_frame.proc_slice = NULL;
+}
+
 static void xv_update_frame_format (vo_driver_t *this_gen,
 				    vo_frame_t *frame_gen,
 				    uint32_t width, uint32_t height,
 				    double ratio, int format, int flags) {
   xv_driver_t  *this  = (xv_driver_t *) this_gen;
   xv_frame_t   *frame = (xv_frame_t *) frame_gen;
+  int resize;
 
   if (this->use_pitch_alignment) {
     width = (width + 7) & ~0x7;
   }
+  resize = (frame->req_width != width) || (frame->req_height != height);
 
-  if ((frame->req_width != width)
-      || (frame->req_height != height)
-      || (frame->format != format)) {
+  if (resize || (frame->format != format)) {
+    int fmt = format;
+    if ((fmt == XINE_IMGFMT_YUY2) && (this->emu_yuy2 || !this->xv_format_yuy2))
+      fmt = XINE_IMGFMT_YV12;
 
-    /* printf (LOG_MODULE ": updating frame to %d x %d (ratio=%d, format=%08x)\n",width,height,ratio_code,format); */
-
-    LOCK_DISPLAY(this);
-
-    /*
-     * (re-) allocate xvimage
-     */
-
-    if (frame->image) {
-      dispose_ximage (this, &frame->shminfo, frame->image);
-      frame->image = NULL;
-    }
-
-    frame->image = create_ximage (this, &frame->shminfo, width, height, format);
-    if (!frame->image) {
+    if (resize || (frame->xvformat != fmt)) {
+      /* get emulation out of the way first if any */
+      xv_rem_yuy2_emu (frame);
+      /* (re-) allocate xvimage */
+      LOCK_DISPLAY (this);
+      if (frame->image)
+        dispose_ximage (this, &frame->shminfo, frame->image);
+      frame->image = create_ximage (this, &frame->shminfo, width, height, fmt);
       UNLOCK_DISPLAY (this);
-      frame->vo_frame.base[0] = NULL;
-      frame->vo_frame.base[1] = NULL;
-      frame->vo_frame.base[2] = NULL;
-      frame->req_width = 0;
-      frame->vo_frame.width = 0;
-      return;
-    }
-
-    if(format == XINE_IMGFMT_YUY2) {
-      frame->vo_frame.pitches[0] = frame->image->pitches[0];
-      frame->vo_frame.base[0] = frame->image->data + frame->image->offsets[0];
-      {
-        const union {uint8_t bytes[4]; uint32_t word;} black = {{0, 128, 0, 128}};
-        uint32_t *q = (uint32_t *)frame->vo_frame.base[0];
-        int i;
-        for (i = frame->vo_frame.pitches[0] * frame->image->height / 4; i > 0; i--)
-          *q++ = black.word;
+      if (!frame->image) {
+        frame->vo_frame.base[0] = NULL;
+        frame->vo_frame.base[1] = NULL;
+        frame->vo_frame.base[2] = NULL;
+        frame->req_width = 0;
+        frame->vo_frame.width = 0;
+        return;
+      }
+      frame->xvformat = fmt;
+      /* get params, blackfill */
+      if (fmt == XINE_IMGFMT_YUY2) {
+        frame->vo_frame.pitches[0] = frame->image->pitches[0];
+        frame->vo_frame.base[0]    = frame->image->data + frame->image->offsets[0];
+        {
+          const union {uint8_t bytes[4]; uint32_t word;} black = {{0, 128, 0, 128}};
+          uint32_t *q = (uint32_t *)frame->vo_frame.base[0];
+          int i;
+          for (i = frame->vo_frame.pitches[0] * frame->image->height / 4; i > 0; i--)
+            *q++ = black.word;
+        }
+      } else { /* XINE_IMGFMT_YV12 */
+        frame->vo_frame.pitches[0] = frame->image->pitches[0];
+        frame->vo_frame.pitches[1] = frame->image->pitches[2];
+        frame->vo_frame.pitches[2] = frame->image->pitches[1];
+        frame->vo_frame.base[0] = frame->image->data + frame->image->offsets[0];
+        frame->vo_frame.base[1] = frame->image->data + frame->image->offsets[2];
+        frame->vo_frame.base[2] = frame->image->data + frame->image->offsets[1];
+        memset (frame->vo_frame.base[0],   0, frame->vo_frame.pitches[0] *  frame->image->height);
+        memset (frame->vo_frame.base[1], 128, frame->vo_frame.pitches[1] * (frame->image->height >> 1));
+        memset (frame->vo_frame.base[2], 128, frame->vo_frame.pitches[2] * (frame->image->height >> 1));
       }
     }
-    else {
-      frame->vo_frame.pitches[0] = frame->image->pitches[0];
-      frame->vo_frame.pitches[1] = frame->image->pitches[2];
-      frame->vo_frame.pitches[2] = frame->image->pitches[1];
-      frame->vo_frame.base[0] = frame->image->data + frame->image->offsets[0];
-      frame->vo_frame.base[1] = frame->image->data + frame->image->offsets[2];
-      frame->vo_frame.base[2] = frame->image->data + frame->image->offsets[1];
-      memset (frame->vo_frame.base[0], 0, frame->vo_frame.pitches[0] * frame->image->height);
-      memset (frame->vo_frame.base[1], 128, frame->vo_frame.pitches[1] * frame->image->height / 2);
-      memset (frame->vo_frame.base[2], 128, frame->vo_frame.pitches[2] * frame->image->height / 2);
-    }
-
+    /* update emulation */
+    frame->format = format;
+    if (fmt != format) {
+      if (xv_add_yuy2_emu (frame)) {
+        LOCK_DISPLAY (this);
+        dispose_ximage (this, &frame->shminfo, frame->image);
+        UNLOCK_DISPLAY (this);
+        frame->image = NULL;
+        frame->vo_frame.base[0] = NULL;
+        frame->vo_frame.base[1] = NULL;
+        frame->vo_frame.base[2] = NULL;
+        frame->req_width = 0;
+        frame->vo_frame.width = 0;
+        return;
+      }
+    } else
+      xv_rem_yuy2_emu (frame);
     /* allocated frame size may not match requested size */
     frame->req_width  = width;
     frame->req_height = height;
     frame->width  = frame->image->width;
     frame->height = frame->image->height;
-    frame->format = format;
-
-    UNLOCK_DISPLAY(this);
   }
 
   if (frame->vo_frame.width > frame->width)
@@ -1099,6 +1200,7 @@ static void xv_dispose (vo_driver_t *this_gen) {
   }
   UNLOCK_DISPLAY(this);
 
+  /* should do nothing as video_out has sent VO_PROP_DISCARD_FRAMES = -1 before */
   for( i=0; i < VO_NUM_RECENT_FRAMES; i++ ) {
     if( this->recent_frames[i] )
       this->recent_frames[i]->vo_frame.dispose
@@ -1200,6 +1302,13 @@ static void xv_fullrange_cb_config (void *this_gen, xine_cfg_entry_t *entry) {
   this->cm_active = 0;
 }
 
+#ifdef DEBUG_EMU
+static void xv_debug_emu_cb_config (void *this_gen, xine_cfg_entry_t *entry) {
+  xv_driver_t *this = (xv_driver_t *)this_gen;
+  this->emu_yuy2 = entry->num_value;
+}
+#endif
+
 static int xv_open_port (xv_driver_t *this, XvPortID port) {
   {
     int i, formats;
@@ -1239,18 +1348,14 @@ static int xv_open_port (xv_driver_t *this, XvPortID port) {
     UNLOCK_DISPLAY (this);
   }
 
-  /* XXX
-   * Bail out if both YV12 and YUY2 are not supported.
-   * Proper fix would be implementing format conversions.
-   * - decoder should check video output CAP_ flags
-   * - video out could insert automatic conversion filter
-   * - ...
-   */
-  if (!this->xv_format_yuy2 || !this->xv_format_yv12) {
+  /* No yv12: bail out. */
+  if (!this->xv_format_yv12) {
     xprintf (this->xine, XINE_VERBOSITY_LOG,
-      LOG_MODULE ": this adaptor does not support YV12 and YUY2 formats.\n");
+      LOG_MODULE ": this adaptor does not support YV12 format.\n");
     return 0;
   }
+  /* No yuy2: just report. Who can deliver yv12 with little effort shall do that.
+   * Otherwise, accept anyway and emulate. */
 
   {
     int ret;
@@ -1312,10 +1417,25 @@ static vo_driver_t *open_plugin_2 (video_driver_class_t *class_gen, const void *
   if (!this)
     return NULL;
 
-  this->use_shm               = 1;
+  /* 0/NULL inits, for optimizing away. */
+  this->x11_old_error_handler = NULL;
   this->xoverlay              = NULL;
   this->ovl_changed           = 0;
-  this->x11_old_error_handler = NULL;
+  this->xv_format_yv12        = 0;
+  this->xv_format_yuy2        = 0;
+  this->emu_yuy2              = 0;
+  this->fullrange_mode        = 0;
+  for (i = 0; i < XV_NUM_PROPERTIES; i++) {
+    this->props[i].initial_value = 0;
+    this->props[i].value = 0;
+    this->props[i].min   = 0;
+    this->props[i].max   = 0;
+    this->props[i].defer = 0;
+    this->props[i].name  = NULL;
+    this->props[i].entry = NULL;
+  }
+
+  this->use_shm               = 1;
   this->xine                  = class->xine;
   this->display               = visual->display;
   this->screen                = visual->screen;
@@ -1441,14 +1561,7 @@ static vo_driver_t *open_plugin_2 (video_driver_class_t *class_gen, const void *
    */
 
   for (i = 0; i < XV_NUM_PROPERTIES; i++) {
-    this->props[i].initial_value = 0;
-    this->props[i].value = 0;
-    this->props[i].min   = 0;
-    this->props[i].max   = 0;
     this->props[i].atom  = None;
-    this->props[i].defer = 0;
-    this->props[i].name  = NULL;
-    this->props[i].entry = NULL;
     this->props[i].this  = this;
   }
 
@@ -1562,9 +1675,20 @@ static vo_driver_t *open_plugin_2 (video_driver_class_t *class_gen, const void *
     );
     if (this->fullrange_mode)
       this->capabilities |= VO_CAP_FULLRANGE;
-  } else {
-    this->fullrange_mode = 0;
   }
+
+#ifdef DEBUG_EMU
+  this->emu_yuy2 = this->xine->config->register_bool (
+    this->xine->config,
+    "video.output.xv_debug_emu",
+    0,
+    _("Force emulating yuy2"),
+    _("Debug."),
+    10,
+    xv_debug_emu_cb_config,
+    this
+  );
+#endif
 
   /*
    * check max. supported image size
