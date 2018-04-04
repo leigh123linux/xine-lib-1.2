@@ -437,7 +437,10 @@ static off_t _get_current_pos (input_plugin_t *this_gen)
 
 static off_t _scp_seek (input_plugin_t *this_gen, off_t offset, int origin)
 {
-  return -1;
+  ssh_input_plugin_t *this = (ssh_input_plugin_t *) this_gen;
+
+  return _x_input_seek_preview(this_gen, offset, origin,
+                               &this->curpos, this->file_size, this->preview_size);
 }
 
 static off_t _sftp_seek (input_plugin_t *this_gen, off_t offset, int origin)
