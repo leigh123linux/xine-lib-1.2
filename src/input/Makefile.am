@@ -194,7 +194,7 @@ xineplug_inp_stdin_fifo_la_LIBADD = $(XINE_LIB) $(LTLIBINTL) net_buf_ctrl.la
 
 xineplug_inp_dvb_la_SOURCES = input_dvb.c
 xineplug_inp_dvb_la_DEPS = $(XDG_BASEDIR_DEPS)
-xineplug_inp_dvb_la_LIBADD = $(XINE_LIB) $(PTHREAD_LIBS) $(LTLIBINTL) $(XDG_BASEDIR_LIBS) net_buf_ctrl.la
+xineplug_inp_dvb_la_LIBADD = $(XINE_LIB) $(PTHREAD_LIBS) $(LTLIBINTL) $(XDG_BASEDIR_LIBS) net_buf_ctrl.la input_helper.la
 xineplug_inp_dvb_la_CPPFLAGS = $(AM_CPPFLAGS) $(XDG_BASEDIR_CPPFLAGS)
 
 xineplug_inp_cdda_la_SOURCES = input_cdda.c

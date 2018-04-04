@@ -67,7 +67,17 @@ static inline uint32_t _x_input_get_capabilities_seekable (input_plugin_t *this_
   return INPUT_CAP_SEEKABLE;
 }
 
+static inline uint32_t _x_input_get_capabilities_none (input_plugin_t *this_gen)
+{
+  return INPUT_CAP_NOCAP;
+}
+
 static inline uint32_t _x_input_default_get_blocksize (input_plugin_t *this_gen)
+{
+  return 0;
+}
+
+static inline off_t _x_input_default_get_length (input_plugin_t *this_gen)
 {
   return 0;
 }

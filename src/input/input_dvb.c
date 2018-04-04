@@ -2593,34 +2593,6 @@ static off_t dvb_plugin_read (input_plugin_t *this_gen,
   return total;
 }
 
-static buf_element_t *dvb_plugin_read_block (input_plugin_t *this_gen,
-					     fifo_buffer_t *fifo, off_t todo) {
-  /* dvb_input_plugin_t   *this = (dvb_input_plugin_t *) this_gen;  */
-  buf_element_t        *buf = fifo->buffer_pool_alloc (fifo);
-  int                   total_bytes;
-
-  if (todo > buf->max_size)
-    todo = buf->max_size;
-  if (todo < 0) {
-    buf->free_buffer (buf);
-    return NULL;
-  }
-
-  buf->content = buf->mem;
-  buf->type    = BUF_DEMUX_BLOCK;
-
-  total_bytes = dvb_plugin_read (this_gen, buf->content, todo);
-
-  if (total_bytes != todo) {
-    buf->free_buffer (buf);
-    return NULL;
-  }
-
-  buf->size = total_bytes;
-
-  return buf;
-}
-
 static off_t dvb_plugin_seek (input_plugin_t *this_gen, off_t offset,
 			      int origin) {
 
@@ -2630,18 +2602,6 @@ static off_t dvb_plugin_seek (input_plugin_t *this_gen, off_t offset,
 
   return _x_input_seek_preview(this_gen, offset, origin,
                                &this->curpos, -1, -1);
-}
-
-static off_t dvb_plugin_get_length (input_plugin_t *this_gen) {
-  return 0;
-}
-
-static uint32_t dvb_plugin_get_capabilities (input_plugin_t *this_gen) {
-  return 0; /* INPUT_CAP_CHAPTERS */ /* where did INPUT_CAP_AUTOPLAY go ?!? */
-}
-
-static uint32_t dvb_plugin_get_blocksize (input_plugin_t *this_gen) {
-  return 0;
 }
 
 static off_t dvb_plugin_get_current_pos (input_plugin_t *this_gen){
@@ -2715,12 +2675,6 @@ static const char* dvb_plugin_get_mrl (input_plugin_t *this_gen) {
   dvb_input_plugin_t *this = (dvb_input_plugin_t *) this_gen;
 
   return this->mrl;
-}
-
-static int dvb_plugin_get_optional_data (input_plugin_t *this_gen,
-					 void *data, int data_type) {
-
-  return INPUT_OPTIONAL_UNSUPPORTED;
 }
 
 /* allow center cutout zoom for dvb content */
@@ -3124,15 +3078,15 @@ static input_plugin_t *dvb_class_get_instance (input_class_t *class_gen,
   this->epg_updater_stop = 0;
 
   this->input_plugin.open              = dvb_plugin_open;
-  this->input_plugin.get_capabilities  = dvb_plugin_get_capabilities;
   this->input_plugin.read              = dvb_plugin_read;
-  this->input_plugin.read_block        = dvb_plugin_read_block;
   this->input_plugin.seek              = dvb_plugin_seek;
   this->input_plugin.get_current_pos   = dvb_plugin_get_current_pos;
-  this->input_plugin.get_length        = dvb_plugin_get_length;
-  this->input_plugin.get_blocksize     = dvb_plugin_get_blocksize;
   this->input_plugin.get_mrl           = dvb_plugin_get_mrl;
-  this->input_plugin.get_optional_data = dvb_plugin_get_optional_data;
+  this->input_plugin.get_capabilities  = _x_input_get_capabilities_none;
+  this->input_plugin.read_block        = _x_input_default_read_block;
+  this->input_plugin.get_length        = _x_input_default_get_length;
+  this->input_plugin.get_blocksize     = _x_input_default_get_blocksize;
+  this->input_plugin.get_optional_data = _x_input_default_get_optional_data;
   this->input_plugin.dispose           = dvb_plugin_dispose;
   this->input_plugin.input_class       = class_gen;
 
