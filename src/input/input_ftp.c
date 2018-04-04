@@ -446,7 +446,8 @@ static off_t _ftp_seek (input_plugin_t *this_gen, off_t offset, int origin)
 {
   ftp_input_plugin_t *this = (ftp_input_plugin_t *) this_gen;
 
-  return this->curpos;
+  return _x_input_seek_preview(this_gen, offset, origin,
+                               &this->curpos, this->file_size, this->preview_size);
 }
 
 static const char *_ftp_get_mrl (input_plugin_t *this_gen)
