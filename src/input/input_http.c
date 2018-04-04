@@ -108,10 +108,6 @@ typedef struct {
   off_t            shoutcast_pos;
   char            *shoutcast_songtitle;
 
-  /* scratch buffer for forward seeking */
-
-  char             seek_buf[BUFSIZE];
-
 } http_input_plugin_t;
 
 typedef struct {
@@ -493,40 +489,8 @@ static off_t http_plugin_get_current_pos (input_plugin_t *this_gen){
 static off_t http_plugin_seek(input_plugin_t *this_gen, off_t offset, int origin) {
   http_input_plugin_t *this = (http_input_plugin_t *) this_gen;
 
-  if ((origin == SEEK_CUR) && (offset >= 0)) {
-
-    for (;((int)offset) - BUFSIZE > 0; offset -= BUFSIZE) {
-      if( this_gen->read (this_gen, this->seek_buf, BUFSIZE) <= 0 )
-        return this->curpos;
-    }
-
-    this_gen->read (this_gen, this->seek_buf, offset);
-  }
-
-  if (origin == SEEK_SET) {
-
-    if (offset < this->curpos) {
-
-      if( this->curpos <= this->preview_size )
-        this->curpos = offset;
-      else
-        xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG,
-          "http: cannot seek back! (%" PRIdMAX " > %" PRIdMAX ")\n",
-          (intmax_t)this->curpos, (intmax_t)offset);
-
-    } else {
-      offset -= this->curpos;
-
-      for (;((int)offset) - BUFSIZE > 0; offset -= BUFSIZE) {
-        if( this_gen->read (this_gen, this->seek_buf, BUFSIZE) <= 0 )
-          return this->curpos;
-      }
-
-      this_gen->read (this_gen, this->seek_buf, offset);
-    }
-  }
-
-  return this->curpos;
+  return _x_input_seek_preview(this_gen, offset, origin,
+                               &this->curpos, this->contentlength, this->preview_size);
 }
 
 static const char* http_plugin_get_mrl (input_plugin_t *this_gen) {
