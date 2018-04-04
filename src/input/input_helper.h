@@ -24,8 +24,12 @@
 #ifndef XINE_INPUT_HELPER_H
 #define XINE_INPUT_HELPER_H
 
+#include <errno.h>
+#include <sys/types.h>
+
 #include <xine/attributes.h>
 #include <xine/xine_internal.h>
+#include <xine/xineutils.h>
 
 /*
  * mrl array alloc / free helpers
@@ -71,6 +75,84 @@ static inline uint32_t _x_input_default_get_blocksize (input_plugin_t *this_gen)
 static inline int _x_input_default_get_optional_data (input_plugin_t *this_gen, void *data, int data_type)
 {
   return INPUT_OPTIONAL_UNSUPPORTED;
+}
+
+/*
+ * translate (offset, origin) to absolute position
+ */
+static inline off_t _x_input_translate_seek(off_t offset, int origin, off_t curpos, off_t length)
+{
+  switch (origin) {
+    case SEEK_SET: break;
+    case SEEK_CUR: offset += curpos; break;
+    case SEEK_END: offset = (length <= 0) ? (-1) : (offset + length); break;
+    default:       offset = -1;  break;
+  }
+
+  if (offset < 0 || (length > 0 && offset > length)) {
+    errno = EINVAL;
+    return (off_t)-1;
+  }
+
+  return offset;
+}
+
+/*
+ * seek forward by skipping data
+ */
+#define MAX_SKIP_BYTES (10*1024*1024)  // 10 MB
+static inline int _x_input_read_skip(input_plugin_t *input, off_t bytes)
+{
+  char buf[1024];
+  const off_t max = sizeof(buf);
+
+  _x_assert(bytes >= 0);
+
+  if (bytes > MAX_SKIP_BYTES) {
+    /* seeking forward gigabytes would take long time ... */
+    return -1;
+  }
+
+  while (bytes > 0) {
+    off_t got = input->read(input, buf, (bytes > max) ? max : bytes);
+    if (got <= 0)
+      return -1;
+    bytes -= got;
+  }
+
+  _x_assert(bytes == 0);
+  return 0;
+}
+
+/*
+ * generic seek function for non-seekable input plugins
+ */
+static inline off_t _x_input_seek_preview(input_plugin_t *input, off_t offset, int origin,
+                                          off_t *curpos, off_t length, off_t preview_size)
+{
+  offset = _x_input_translate_seek(offset, origin, *curpos, length);
+  if (offset < 0)
+    goto fail;
+
+  /* seek inside preview */
+  if (offset <= preview_size && *curpos <= preview_size) {
+    *curpos = offset;
+    return offset;
+  }
+
+  /* can't seek back */
+  if (offset < *curpos)
+    goto fail;
+
+  if (_x_input_read_skip(input, offset - *curpos) < 0)
+    return -1;
+
+  _x_assert(offset == *curpos);
+  return offset;
+
+ fail:
+  errno = EINVAL;
+  return (off_t)-1;
 }
 
 #endif /* XINE_INPUT_HELPER_H */
