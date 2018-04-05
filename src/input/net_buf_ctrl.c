@@ -466,7 +466,7 @@ static void nbc_alloc_cb (fifo_buffer_t *fifo, void *this_gen) {
   if (this->enabled && this->buffering) {
 
     /* restart playing if one fifo is full (to avoid deadlock) */
-    if (fifo->buffer_pool_num_free <= 1) {
+    if (fifo->buffer_pool_num_free <= FULL_FIFO_MARK) {
       this->progress = 100;
       report_progress (this->stream, 100);
       this->buffering = 0;
