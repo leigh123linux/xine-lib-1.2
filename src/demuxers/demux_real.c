@@ -30,6 +30,8 @@
  *   (C) Alex Beregszaszi <alex@naxine.org>
  *
  *   Based on FFmpeg's libav/rm.c.
+ *
+ * Reworked by Torsten Jager <t.jager@gmx.de>
  */
 
 #ifdef HAVE_CONFIG_H
@@ -113,61 +115,70 @@ typedef struct {
   uint32_t             fourcc;
   uint32_t             buf_type;
   uint32_t             format;
-
-  real_index_entry_t  *index;
+  /* seek index */
   int                  index_entries;
-
+  real_index_entry_t  *index;
+  /* stream info */
   mdpr_t              *mdpr;
+  /* interleaver type and settings */
+  uint32_t             intl;
   int                  sps, cfs, w, h;
   int                  block_align;
   size_t               frame_size;
   uint8_t             *frame_buffer;
   uint32_t             frame_num_bytes;
   uint32_t             sub_packet_cnt;
+
   uint32_t             audio_time;
 } real_stream_t;
 
 typedef struct {
   demux_plugin_t       demux_plugin;
-
+  /* xine engine */
   xine_stream_t       *stream;
   fifo_buffer_t       *video_fifo;
   fifo_buffer_t       *audio_fifo;
-  input_plugin_t      *input;
-  int                  status;
-
+  /* an input or 2 ;-) */
+  input_plugin_t      *input, *in1, *in2;
+  off_t                startpos1;
+  off_t                startpos2;
+  uint32_t             pos1, endpos1, pos2, endpos2;
+  uint32_t             lasttime1, lasttime2;
+  /* seek */
   off_t                index_start;
   off_t                data_start;
   off_t                data_size;
   unsigned int         duration;
-
-  real_stream_t        video_streams[MAX_VIDEO_STREAMS];
-  int                  num_video_streams;
-  real_stream_t       *video_stream;
-
-  real_stream_t        audio_streams[MAX_AUDIO_STREAMS];
-  int                  num_audio_streams;
-  real_stream_t       *audio_stream;
-  int                  audio_need_keyframe;
-
+  /* top level chunk parser */
   unsigned int         current_data_chunk_packet_count;
   unsigned int         next_data_chunk_offset;
   unsigned int         data_chunk_size;
-
-  int                  old_seqnum;
-  int                  packet_size_cur;
-
-  off_t                avg_bitrate;
-
-  int64_t              last_pts[2];
-  int                  send_newpts;
-
-  int                  fragment_size; /* video sub-demux */
-  int                  fragment_count;
+  /* multirate database */
+  int                  num_audio_streams;
+  int                  num_video_streams;
+  real_stream_t        audio_streams[MAX_AUDIO_STREAMS];
+  real_stream_t        video_streams[MAX_VIDEO_STREAMS];
+  /* and what we use of it */
+  real_stream_t       *audio_stream;
+  real_stream_t       *video_stream;
+  int                  audio_id;
+  int                  video_id;
+  /* audio deobfuscation */
+  int                  audio_need_keyframe;
+  /* video deobfuscation */
   uint32_t            *fragment_tab;
   int                  fragment_tab_max;
-
+  int                  fragment_size;
+  int                  fragment_count;
+  int                  old_seqnum;
+  /* timeline */
+  off_t                avg_bitrate;
+  int64_t              last_pts[2];
+  int                  send_newpts;
+  /* redirection */
   int                  reference_mode;
+  /* our status */
+  int                  status;
 } demux_real_t ;
 
 
@@ -331,57 +342,141 @@ static void real_free_mdpr (mdpr_t *mdpr) {
   free (mdpr);
 }
 
-static void real_parse_audio_specific_data (demux_real_t *this,
-					    real_stream_t * stream)
-{
-  if (stream->mdpr->type_specific_len < 46) {
-    xprintf (this->stream->xine, XINE_VERBOSITY_LOG,
-	     "demux_real: audio data size smaller than header length!\n");
-    return;
+static void real_tag_2_str (uint8_t *q, uint32_t tag) {
+  uint32_t z;
+#ifdef WORDS_BIGENDIAN
+  z = tag >> 24;         q[0] = (z >= 32) && (z < 127) ? z : '?';
+  z = (tag >> 16) & 255; q[1] = (z >= 32) && (z < 127) ? z : '?';
+  z = (tag >>  8) & 255; q[2] = (z >= 32) && (z < 127) ? z : '?';
+  z =  tag        & 255; q[3] = (z >= 32) && (z < 127) ? z : '?';
+#else
+  z =  tag        & 255; q[0] = (z >= 32) && (z < 127) ? z : '?';
+  z = (tag >>  8) & 255; q[1] = (z >= 32) && (z < 127) ? z : '?';
+  z = (tag >> 16) & 255; q[2] = (z >= 32) && (z < 127) ? z : '?';
+  z = tag >> 24;         q[3] = (z >= 32) && (z < 127) ? z : '?';
+#endif
+  q[4] = 0;
+}
+
+static int real_parse_audio_specific_data (demux_real_t *this, real_stream_t *stream) {
+  uint8_t *p, *e, b[8];
+  uint32_t version;
+  uint32_t head_size, flavor, coded_frame_size, h, frame_size, subpacket_size;
+  uint32_t samplerate, samplesize, channels, intl, fourcc;
+  uint32_t codecdata_length;
+
+  p = stream->mdpr->type_specific_data;
+  e = p + stream->mdpr->type_specific_len;
+  if (p + 6 > e) goto truncated;
+  version = p[5];
+
+  if (version == 3) {
+    frame_size       = 240;
+    samplerate       = 8000;
+    samplesize       = 16;
+    channels         = 1;
+    intl             = 0;
+    coded_frame_size = 0;
+    h                = 0;
+    subpacket_size   = 0;
+    if (p + 11 > e) goto truncated;
+    p = e - 5;
+    fourcc = _X_ME_32 (p);
+  } else {
+    if (p + 48 > e) goto truncated;
+    p += 20;
+    head_size        = _X_BE_16 (p); p += 2;
+    flavor           = _X_BE_16 (p); p += 2;
+    coded_frame_size = _X_BE_32 (p); p += 4;
+    p += 12;
+    h                = _X_BE_16 (p); p += 2;
+    frame_size       = _X_BE_16 (p); p += 2;
+    subpacket_size   = _X_BE_16 (p); p += 2;
+    p += 2;
+    if (version == 5) p += 6;
+    if (p + 8 > e) goto truncated;
+    samplerate       = _X_BE_16 (p); p += 2;
+    p += 2;
+    samplesize       = _X_BE_16 (p); p += 2;
+    channels         = _X_BE_16 (p); p += 2;
+    if (version == 5) {
+      if (p + 8 > e) goto truncated;
+      intl   = _X_ME_32 (p); p += 4; /* integer ID's */
+      fourcc = _X_ME_32 (p); p += 4;
+    } else {
+      if (p + 10 > e) goto truncated;
+      intl   = _X_ME_32 (p + 1); p += p[0] + 1; /* string ID's */
+      fourcc = _X_ME_32 (p + 1); p += p[0] + 1;
+    }
+    stream->block_align = frame_size;
+    switch (fourcc) {
+      case ME_FOURCC('d','n','e','t'):
+        /* AC3 with swapped byte order */
+      break;
+      case ME_FOURCC('1','4','_','4'):
+        stream->block_align = 20;
+      break;
+      case ME_FOURCC('2','8','_','8'):
+        stream->block_align = coded_frame_size;
+      break;
+      case ME_FOURCC('s','i','p','r'):
+      case ME_FOURCC('a','t','r','c'):
+      case ME_FOURCC('c','o','o','k'):
+        p += 3;
+        if (version == 5) p += 1;
+        if (p + 4 > e) goto truncated;
+        codecdata_length = _X_BE_32 (p); p += 4;
+        stream->block_align = intl == ME_FOURCC('g','e','n','r') ? subpacket_size : coded_frame_size;
+      break;
+      case ME_FOURCC('r','a','a','c'):
+      case ME_FOURCC('r','a','c','p'):
+        /* AAC */
+        p += 3;
+        if (version == 5) p += 1;
+        if (p + 4 > e) goto truncated;
+        codecdata_length = _X_BE_32 (p); p += 4;
+        fourcc = ME_FOURCC('m','p','4','a');
+      break;
+    }
   }
+  if (0) {
+    truncated:
+    xprintf (this->stream->xine, XINE_VERBOSITY_LOG, "demux_real: truncated MDPR chunk\n");
+    return 0;
+  }
+  /* return 4CC */
+  stream->fourcc = fourcc;
+  /* return interleaver type and settings */
+  if (!((intl == ME_FOURCC('g','e','n','r')) || (intl == ME_FOURCC('I','n','t','4'))
+    || (intl == ME_FOURCC('s','i','p','r')))) intl = 0;
+  stream->intl = intl;
 
-  uint8_t * data = stream->mdpr->type_specific_data;
-  const uint32_t coded_frame_size  = _X_BE_32 (data+24);
-  const uint16_t codec_data_length = _X_BE_16 (data+40);
-  const uint16_t coded_frame_size2 = _X_BE_16 (data+42);
-  const uint16_t subpacket_size    = _X_BE_16 (data+44);
+  stream->sps  = subpacket_size;
+  stream->w    = frame_size;
+  stream->h    = h;
+  stream->cfs  = coded_frame_size;
 
-  stream->sps         = subpacket_size;
-  stream->w           = coded_frame_size2;
-  stream->h           = codec_data_length;
-  stream->block_align = coded_frame_size2;
-  stream->cfs         = coded_frame_size;
-
-  switch (stream->buf_type) {
-  case BUF_AUDIO_COOK:
-  case BUF_AUDIO_ATRK:
-    stream->block_align = subpacket_size;
-    break;
-
-  case BUF_AUDIO_14_4:
-    break;
-
-  case BUF_AUDIO_28_8:
-    stream->block_align = stream->cfs;
-    break;
-
-  case BUF_AUDIO_SIPRO:
-    /* this->block_align = 19; */
-    break;
-
-  default:
+  real_tag_2_str (b, fourcc);
+  xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG,
+    "demux_real: stream #%d: audio v%d, [%s] %ubps, %dch, %dHz, %dbit, start %d\n",
+    (int)stream->mdpr->stream_number, version, b,
+    (unsigned int)stream->mdpr->avg_bit_rate, channels, samplerate, samplesize,
+    (int)stream->mdpr->start_time);
+  if (intl) {
+    real_tag_2_str (b, intl);
     xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG,
-	     "demux_real: error, i don't handle buf type 0x%08x\n", stream->buf_type);
+      "            interleaved [%s] %dx%d, align %d, sps %d, cfs %d\n",
+      b, stream->w, stream->h, stream->block_align, stream->sps, stream->cfs);
   }
-
   /*
    * when stream->sps is set it used to do this:
    *   stream->frame_size      = stream->w / stream->sps * stream->h * stream->sps;
    * but it looks pointless? the compiler will probably optimise it away, I suppose?
    */
+  free (stream->frame_buffer);
   if (stream->w < 32768 && stream->h < 32768) {
     stream->frame_size = stream->w * stream->h;
-    stream->frame_buffer = calloc(stream->frame_size, 1);
+    stream->frame_buffer = calloc (stream->frame_size, 1);
   } else {
     stream->frame_size = 0;
     stream->frame_buffer = NULL;
@@ -390,14 +485,14 @@ static void real_parse_audio_specific_data (demux_real_t *this,
   stream->frame_num_bytes = 0;
   stream->sub_packet_cnt = 0;
 
-  if (!stream->frame_buffer)
-    xprintf (this->stream->xine, XINE_VERBOSITY_LOG,
-	     "demux_real: failed to allocate the audio frame buffer!\n");
+  /* XXX: decoder parses these again - skip "unused" warning */
+  (void)head_size;
+  (void)flavor;
+  (void)codecdata_length;
 
-  xprintf (this->stream->xine, XINE_VERBOSITY_LOG,
-           "demux_real: buf type 0x%08x frame size %zu block align %d\n", stream->buf_type,
-	   stream->frame_size, stream->block_align);
-
+  if (!stream->frame_buffer) xprintf (this->stream->xine, XINE_VERBOSITY_LOG,
+    "demux_real: failed to allocate the audio frame buffer!\n");
+  return 1;
 }
 
 static void real_parse_headers (demux_real_t *this) {
@@ -405,6 +500,9 @@ static void real_parse_headers (demux_real_t *this) {
   char           preamble[PREAMBLE_SIZE];
   unsigned int   chunk_type = 0;
   unsigned int   chunk_size;
+  unsigned int   audio_bitrate = 0;
+  unsigned int   video_bitrate = 0;
+  real_stream_t  *stream;
 
   if (INPUT_IS_SEEKABLE(this->input))
     this->input->seek (this->input, 0, SEEK_SET);
@@ -498,6 +596,7 @@ static void real_parse_headers (demux_real_t *this) {
                              this->avg_bitrate);
 
 	} else if (chunk_type == MDPR_TAG) {
+	  uint32_t fourcc = 0;
 	  if (version != 0) {
 	    xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG,
 		    "demux_real: unknown object version in MDPR: 0x%04x\n", version);
@@ -505,73 +604,48 @@ static void real_parse_headers (demux_real_t *this) {
 	    continue;
 	  }
 
-	  mdpr_t *const mdpr = real_parse_mdpr (chunk_buffer, chunk_size);
+	  mdpr_t *const mdpr = real_parse_mdpr ((char *)chunk_buffer, chunk_size);
 
 	  lprintf ("parsing type specific data...\n");
-	  if (!mdpr) {
-	    free (chunk_buffer);
-	    this->status = DEMUX_FINISHED;
-	    return;
-	  }
-	  if(!strcmp(mdpr->mime_type, "audio/X-MP3-draft-00")) {
-	    lprintf ("mpeg layer 3 audio detected...\n");
-
-	    static const uint32_t fourcc = ME_FOURCC('a', 'd', 'u', 0x55);
-	    this->audio_streams[this->num_audio_streams].fourcc = fourcc;
-	    this->audio_streams[this->num_audio_streams].buf_type = _x_formattag_to_buf_audio(fourcc);
-	    this->audio_streams[this->num_audio_streams].index = NULL;
-	    this->audio_streams[this->num_audio_streams].mdpr = mdpr;
-	    this->num_audio_streams++;
-	  } else if(_X_BE_32(mdpr->type_specific_data) == RA_TAG &&
-		    mdpr->type_specific_len >= 6) {
+	  /* identify by mime type */
+	  if (!strcmp (mdpr->mime_type, "audio/X-MP3-draft-00"))
+	    fourcc = ME_FOURCC ('a','d','u',0x55);
+	  else if (!strcmp (mdpr->mime_type, "audio/mpeg4-generic"))
+	    fourcc = ME_FOURCC ('m','p','4','a');
+	  if (fourcc) {
 	    if(this->num_audio_streams == MAX_AUDIO_STREAMS) {
 	      xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG,
 		      "demux_real: maximum number of audio stream exceeded\n");
 	      goto unknown;
 	    }
 
-	    const uint16_t version = _X_BE_16(mdpr->type_specific_data + 4);
-
-	    lprintf("audio version %d detected\n", version);
-
-	    const char *fourcc_ptr = "\0\0\0";
-	    switch(version) {
-            case 3:
-              /* Version 3 header stores fourcc after meta info - cheat by reading backwards from the
-               * end of the header instead of having to parse it all */
-	      if (mdpr->type_specific_len >= 5)
-                fourcc_ptr = mdpr->type_specific_data + mdpr->type_specific_len - 5;
-              break;
-	    case 4: {
-	      if (mdpr->type_specific_len >= 57) {
-	        const uint8_t len = *(mdpr->type_specific_data + 56);
-	        if (mdpr->type_specific_len >= 62 + len)
-	          fourcc_ptr = mdpr->type_specific_data + 58 + len;
-	      }
+            stream = &this->audio_streams[this->num_audio_streams];
+	    stream->fourcc = fourcc;
+	    stream->buf_type = _x_formattag_to_buf_audio(fourcc);
+	    stream->index = NULL;
+	    stream->mdpr = mdpr;
+            if (mdpr->avg_bit_rate > audio_bitrate) { /* select best audio */
+              audio_bitrate = mdpr->avg_bit_rate;
+              this->audio_stream = stream;
+            }
+	    this->num_audio_streams++;
+	  } else if(_X_BE_32(mdpr->type_specific_data) == RA_TAG) {
+	    /* identify by type specific data */
+	    if(this->num_audio_streams == MAX_AUDIO_STREAMS) {
+	      xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG,
+		      "demux_real: maximum number of audio stream exceeded\n");
+	      goto unknown;
 	    }
-              break;
-            case 5:
-	      if (mdpr->type_specific_len >= 70)
-                fourcc_ptr = mdpr->type_specific_data + 66;
-              break;
-            default:
-              lprintf("unsupported audio header version %d\n", version);
-              goto unknown;
-	    }
-	    lprintf("fourcc = %.4s\n", fourcc_ptr);
+            stream = &this->audio_streams[this->num_audio_streams];
+	    stream->mdpr = mdpr;
+	    if (!real_parse_audio_specific_data (this, stream)) goto unknown;
+	    stream->buf_type = _x_formattag_to_buf_audio(stream->fourcc);
+	    stream->index = NULL;
 
-	    const uint32_t fourcc = _X_ME_32(fourcc_ptr);
-
-	    this->audio_streams[this->num_audio_streams].fourcc = fourcc;
-	    this->audio_streams[this->num_audio_streams].buf_type = _x_formattag_to_buf_audio(fourcc);
-	    this->audio_streams[this->num_audio_streams].index = NULL;
-	    this->audio_streams[this->num_audio_streams].mdpr = mdpr;
-
-            if (!this->audio_streams[this->num_audio_streams].buf_type)
-              _x_report_audio_format_tag (this->stream->xine, LOG_MODULE, fourcc);
-
-	    real_parse_audio_specific_data (this,
-					    &this->audio_streams[this->num_audio_streams]);
+            if (mdpr->avg_bit_rate > audio_bitrate) { /* select best audio */
+              audio_bitrate = mdpr->avg_bit_rate;
+              this->audio_stream = stream;
+            }
 	    this->num_audio_streams++;
 
 	  } else if(_X_BE_32(mdpr->type_specific_data + 4) == VIDO_TAG &&
@@ -587,12 +661,26 @@ static void real_parse_headers (demux_real_t *this) {
 	    const uint32_t fourcc = _X_ME_32(mdpr->type_specific_data + 8);
 	    lprintf("fourcc = %.4s\n", (char *) &fourcc);
 
-	    this->video_streams[this->num_video_streams].fourcc = fourcc;
-	    this->video_streams[this->num_video_streams].buf_type = _x_fourcc_to_buf_video(fourcc);
-	    this->video_streams[this->num_video_streams].format = _X_BE_32(mdpr->type_specific_data + 30);
-	    this->video_streams[this->num_video_streams].index = NULL;
-	    this->video_streams[this->num_video_streams].mdpr = mdpr;
+            stream = &this->video_streams[this->num_video_streams];
+	    stream->fourcc = fourcc;
+	    stream->buf_type = _x_fourcc_to_buf_video(fourcc);
+	    stream->format = _X_BE_32(mdpr->type_specific_data + 30);
+	    stream->index = NULL;
+	    stream->mdpr = mdpr;
 
+            {
+              uint8_t b[5];
+              real_tag_2_str (b, fourcc);
+              xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG,
+                "demux_real: stream #%d: video [%s] %ubps, start %d\n",
+                (int)mdpr->stream_number, b, (unsigned int)mdpr->avg_bit_rate,
+                (int)mdpr->start_time);
+            }
+
+            if (mdpr->avg_bit_rate > video_bitrate) { /* select best video */
+              video_bitrate = mdpr->avg_bit_rate;
+              this->video_stream = stream;
+            }
             this->num_video_streams++;
 
             if (!this->video_streams[this->num_video_streams].buf_type)
@@ -615,18 +703,17 @@ static void real_parse_headers (demux_real_t *this) {
 	  }
 
 	  int stream_ptr = 2;
-#define SET_METADATA_STRING(type)					\
-	  do {								\
-	    const uint16_t field_size = _X_BE_16(&chunk_buffer[stream_ptr]); \
-	    stream_ptr += 2;						\
-	    _x_meta_info_n_set(this->stream, type,			\
-			       &chunk_buffer[stream_ptr], field_size);	\
-	    stream_ptr += field_size;					\
-	  } while(0)
+#define SET_METADATA_STRING(type) \
+  do { \
+    const uint16_t field_size = _X_BE_16(&chunk_buffer[stream_ptr]); \
+    stream_ptr += 2; \
+    _x_meta_info_n_set(this->stream, type, (char *)&chunk_buffer[stream_ptr], field_size); \
+    stream_ptr += field_size; \
+  } while(0)
 
 	  /* load the title string */
 	  SET_METADATA_STRING(XINE_META_INFO_TITLE);
-
+	
 	  /* load the author string */
 	  SET_METADATA_STRING(XINE_META_INFO_ARTIST);
 
@@ -679,12 +766,15 @@ static void real_parse_headers (demux_real_t *this) {
     real_parse_index(this);
 
   /* Simple stream selection case - 0/1 audio/video streams */
-  this->video_stream = (this->num_video_streams == 1) ? &this->video_streams[0] : NULL;
-  this->audio_stream = (this->num_audio_streams == 1) ? &this->audio_streams[0] : NULL;
+  if (!this->video_stream)
+    this->video_stream = (this->num_video_streams == 1) ? &this->video_streams[0] : NULL;
+  if (!this->audio_stream)
+    this->audio_stream = (this->num_audio_streams == 1) ? &this->audio_streams[0] : NULL;
 
-  /* In the case of multiple audio/video streams select the first
-     streams found in the file */
-  if((this->num_video_streams > 1) || (this->num_audio_streams > 1)) {
+  /* Last resort in the case of multiple audio/video streams:
+   * select the first streams found in the file */
+  if ((!this->video_stream && (this->num_video_streams > 1))
+    || (!this->audio_stream && (this->num_audio_streams > 1))) {
     int   len, offset;
     off_t original_pos = 0;
     char  search_buffer[MAX_PREVIEW_SIZE];
@@ -759,7 +849,117 @@ static void real_parse_headers (demux_real_t *this) {
     return;
   }
 
+  this->audio_id  = this->audio_stream ? this->audio_stream->mdpr->stream_number : -1;
+  this->video_id  = this->video_stream ? this->video_stream->mdpr->stream_number : -1;
+  this->pos1      = 18;
+  this->endpos1   = chunk_size;
+  this->pos2      = 18;
+  this->endpos2   = chunk_size;
+  this->startpos1 = this->input->get_current_pos (this->input) - 18;
+
+  /* noninterleaved file (1 DATA chunk per stream) ? */
+  if (INPUT_IS_SEEKABLE (this->input)) {
+    uint32_t need = (this->audio_stream ? 1 : 0) | (this->video_stream ? 2 : 0);
+    off_t here = this->startpos1;
+    off_t last_pos = here + 18;
+    this->input->seek (this->input, here, SEEK_SET);
+    while (need) {
+      uint8_t b[20];
+      uint32_t size;
+      if (this->input->read (this->input, b, 18) != 18)
+        break;
+      size = _X_BE_32 (b + 4);
+      if (_X_ME_32 (b) == ME_FOURCC('D','A','T','A')) {
+        int n = 32;
+        while (--n) {
+          int stream, psize;
+          if (this->input->read (this->input, b, 12) != 12)
+            break;
+          psize = _X_BE_16 (b + 2);
+          if (_X_BE_16 (b) < 2) {
+            stream = _X_BE_16 (b + 4);
+            if ((need & 1) && (stream == this->audio_id)) {
+              this->startpos1 = here;
+              this->endpos1 = size;
+              need &= ~1;
+              if (!need)
+                break;
+            } else if ((need & 2) && (stream == this->video_id)) {
+              this->startpos2 = here;
+              this->endpos2 = size;
+              need &= ~2;
+              if (!need)
+                break;
+            }
+          }
+          this->input->seek (this->input, psize - 12, SEEK_CUR);
+        }
+      }
+      here += size;
+      this->input->seek (this->input, here, SEEK_SET);
+    }
+    if (this->startpos1)
+      xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG,
+        "demux_real: audio stream #%d found in DATA chunk @%"PRId64".\n",
+        this->audio_id, (int64_t)this->startpos1);
+    if (this->startpos2)
+      xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG,
+        "demux_real: video stream #%d found in DATA chunk @%"PRId64".\n",
+        this->video_id, (int64_t)this->startpos2);
+    if (this->startpos1) {
+      this->input->seek (this->input, this->startpos1 + 18, SEEK_SET);
+      if (this->startpos2) {
+        if (this->startpos1 != this->startpos2) {
+          /* Noninterleaved file. Try cloning input. */
+          if (this->input->get_capabilities (this->input) & INPUT_CAP_CLONE) {
+            input_plugin_t *in2 = NULL;
+            if (this->input->get_optional_data (this->input, &in2, INPUT_OPTIONAL_DATA_CLONE) == INPUT_OPTIONAL_SUCCESS)
+              this->in2 = in2;
+          }
+          if (this->in2) {
+            this->in2->seek (this->in2, this->startpos2 + 18, SEEK_SET);
+            this->lasttime2 = 0;
+          }
+        }
+      }
+    } else {
+      if (this->startpos2) {
+        this->input->seek (this->input, this->startpos2 + 18, SEEK_SET);
+        this->startpos1 = this->startpos2;
+        this->endpos1 = this->endpos2;
+      } else {
+        /* should not happen */
+        this->input->seek (this->input, last_pos, SEEK_SET);
+      }
+    }
+  }
+
+  /* should not happen */
+  if (!this->endpos1)
+    this->endpos1 = 1;
+  if (!this->endpos2)
+    this->endpos2 = 1;
+
   /* Send headers and set meta info */
+  if (this->video_stream) {
+    _x_stream_info_set(this->stream, XINE_STREAM_INFO_HAS_VIDEO, 1);
+    _x_stream_info_set(this->stream, XINE_STREAM_INFO_VIDEO_FOURCC,
+                         this->video_stream->fourcc);
+    _x_stream_info_set(this->stream, XINE_STREAM_INFO_VIDEO_BITRATE,
+                         this->video_stream->mdpr->avg_bit_rate);
+  } else _x_stream_info_set(this->stream, XINE_STREAM_INFO_HAS_VIDEO, 0);
+
+  if (this->audio_stream) {
+    _x_stream_info_set(this->stream, XINE_STREAM_INFO_HAS_AUDIO, 1);
+    _x_stream_info_set(this->stream, XINE_STREAM_INFO_AUDIO_FOURCC,
+                         this->audio_stream->fourcc);
+    _x_stream_info_set(this->stream, XINE_STREAM_INFO_AUDIO_BITRATE,
+                         this->audio_stream->mdpr->avg_bit_rate);
+  } else _x_stream_info_set(this->stream, XINE_STREAM_INFO_HAS_AUDIO, 0);
+
+  /* send start buffers */
+  _x_demux_control_start(this->stream);
+
   if(this->video_stream) {
     /* Check for recognised codec*/
     if(!this->video_stream->buf_type)
@@ -780,13 +980,6 @@ static void real_parse_headers (demux_real_t *this) {
 
     this->video_fifo->put (this->video_fifo, buf);
 
-    /* Set meta info */
-    _x_stream_info_set(this->stream, XINE_STREAM_INFO_HAS_VIDEO, 1);
-    _x_stream_info_set(this->stream, XINE_STREAM_INFO_VIDEO_FOURCC,
-                         this->video_stream->fourcc);
-    _x_stream_info_set(this->stream, XINE_STREAM_INFO_VIDEO_BITRATE,
-                         this->video_stream->mdpr->avg_bit_rate);
-
     /* Allocate fragment offset table */
     this->fragment_tab = calloc(FRAGMENT_TAB_SIZE, sizeof(uint32_t));
     this->fragment_tab_max = FRAGMENT_TAB_SIZE;
@@ -804,13 +997,21 @@ static void real_parse_headers (demux_real_t *this) {
       buf_element_t *buf = this->audio_fifo->buffer_pool_alloc (this->audio_fifo);
 
       buf->type           = this->audio_stream->buf_type;
-      buf->decoder_flags  = BUF_FLAG_HEADER|BUF_FLAG_FRAME_END;
+      buf->decoder_flags  = BUF_FLAG_HEADER | BUF_FLAG_FRAME_END;
 
+      if (!mdpr->type_specific_len) {
+	/* we dont have anything to tell, maybe it still works */
+	buf->decoder_flags |= BUF_FLAG_STDHEADER | BUF_FLAG_FRAME_END;
+	buf->size = 0;
+	buf->decoder_info[0] = 0;
+	buf->decoder_info[1] = 0;
+	buf->decoder_info[2] = 0;
+	buf->decoder_info[3] = 0;
+      } else if (buf->type == BUF_AUDIO_AAC) {
       /* For AAC we send two header buffers, the first is a standard audio
        * header giving bits per sample, sample rate and number of channels.
        * The second is the codec initialisation data found at the end of
        * the type specific data for the audio stream */
-      if(buf->type == BUF_AUDIO_AAC) {
         const uint16_t version = _X_BE_16(mdpr->type_specific_data + 4);
 
         if(version != 5) {
@@ -842,30 +1043,15 @@ static void real_parse_headers (demux_real_t *this) {
         memcpy(buf->content, mdpr->type_specific_data + 79,
                buf->decoder_info[2]);
 
-      } else if(buf->type == BUF_AUDIO_MP3ADU) {
-	buf->decoder_flags |= BUF_FLAG_STDHEADER | BUF_FLAG_FRAME_END;
-	buf->size = 0;
-	buf->decoder_info[0] = 0;
-	buf->decoder_info[1] = 0;
-	buf->decoder_info[2] = 0;
-	buf->decoder_info[3] = 0;
       } else {
-        memcpy(buf->content, mdpr->type_specific_data,
-               mdpr->type_specific_len);
-
-        buf->size           = mdpr->type_specific_len;
+        memcpy (buf->content, mdpr->type_specific_data, mdpr->type_specific_len);
+        buf->size = mdpr->type_specific_len;
       }
 
       this->audio_fifo->put (this->audio_fifo, buf);
     }
 
-unsupported:
-    /* Set meta info */
-    _x_stream_info_set(this->stream, XINE_STREAM_INFO_HAS_AUDIO, 1);
-    _x_stream_info_set(this->stream, XINE_STREAM_INFO_AUDIO_FOURCC,
-                         this->audio_stream->fourcc);
-    _x_stream_info_set(this->stream, XINE_STREAM_INFO_AUDIO_BITRATE,
-                         this->audio_stream->mdpr->avg_bit_rate);
+unsupported: ;
   }
 }
 
@@ -1038,74 +1224,73 @@ static uint32_t real_get_reordered_pts (demux_real_t *this, uint8_t *hdr, uint32
   return (pts);
 }
 
-static int stream_read_char (demux_real_t *this) {
-  uint8_t ret;
-  this->input->read (this->input, &ret, 1);
-  return ret;
-}
-
-static int stream_read_word (demux_real_t *this) {
-  uint16_t ret;
-  this->input->read (this->input, (char *) &ret, 2);
-  return _X_BE_16(&ret);
-}
-
 static int demux_real_send_chunk(demux_plugin_t *this_gen) {
 
   demux_real_t   *this = (demux_real_t *) this_gen;
-  char            header[DATA_PACKET_HEADER_SIZE];
+
+  uint32_t timestamp;
+  uint32_t stream;
+  uint32_t size;
+
+  int64_t pts;
   int             keyframe, input_time = 0;
-  int             normpos = 0;
+  int             normpos;
+  uint32_t        bytes;
 
   if(this->reference_mode)
     return demux_real_parse_references(this);
 
-  /* load a header from wherever the stream happens to be pointing */
-  if ( this->input->read(this->input, header, DATA_PACKET_HEADER_SIZE) !=
-      DATA_PACKET_HEADER_SIZE) {
-
-    xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG,
-             "demux_real: failed to read data packet header\n");
-
-    this->status = DEMUX_FINISHED;
-    return this->status;
+  {
+    uint8_t header[DATA_PACKET_HEADER_SIZE + 1];
+    uint32_t version;
+    /* load a header from wherever the stream happens to be pointing */
+    if (this->input->read(this->input, header, DATA_PACKET_HEADER_SIZE) != DATA_PACKET_HEADER_SIZE) {
+      xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG,
+        "demux_real: failed to read data packet header\n");
+      goto fail0;
+    }
+    /* Check to see if we've gone past the end of the data chunk */
+    if (_x_is_fourcc(&header[0], "INDX") || _x_is_fourcc(&header[0], "DATA")) {
+      lprintf("finished reading data chunk\n");
+      goto fail0;
+    }
+    bytes = DATA_PACKET_HEADER_SIZE;
+    if (this->input == this->in1)
+      normpos = (uint64_t)this->pos1 * 0xffff / this->endpos1;
+    else
+      normpos = (uint64_t)this->pos2 * 0xffff / this->endpos2;
+    /* check version */
+    version = _X_BE_16 (&header[0]);
+    if (version > 1) {
+      xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG,
+        "demux_real: unknown object version in data packet: 0x%04x\n", version);
+      goto fail0;
+    }
+    /* read the packet information */
+    stream = _X_BE_16 (&header[4]);
+    size   = _X_BE_16 (&header[2]);
+    if (size < DATA_PACKET_HEADER_SIZE)
+      goto fail0;
+    size -= DATA_PACKET_HEADER_SIZE;
+    timestamp = _X_BE_32 (&header[6]);
+    pts       = (int64_t)timestamp * 90;
+    /* Data packet header with version 1 contains 1 extra byte */
+    if (version == 0)
+      keyframe = header[11] & PN_KEYFRAME_FLAG;
+    else {
+      if (this->input->read (this->input, header + DATA_PACKET_HEADER_SIZE, 1) != 1)
+        goto fail0;
+      keyframe = header[DATA_PACKET_HEADER_SIZE] & PN_KEYFRAME_FLAG;
+      size--;
+      bytes += 1;
+    }
   }
-
-  /* Check to see if we've gone past the end of the data chunk */
-  if (_x_is_fourcc(&header[0], "INDX") || _x_is_fourcc(&header[0], "DATA")) {
-    lprintf("finished reading data chunk\n");
-    this->status = DEMUX_FINISHED;
-    return this->status;
-  }
-
-  /* check version */
-  const uint16_t version = _X_BE_16(&header[0]);
-  if(version > 1) {
-    xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG,
-            "demux_real: unknown object version in data packet: 0x%04x\n", version);
-    this->status = DEMUX_FINISHED;
-    return this->status;
-  }
-
-  /* read the packet information */
-  const uint16_t stream   = _X_BE_16(&header[4]);
-  const off_t offset __attr_unused = this->input->get_current_pos(this->input);
-  uint16_t size     = _X_BE_16(&header[2]) - DATA_PACKET_HEADER_SIZE;
-  uint32_t timestamp= _X_BE_32(&header[6]);
-  int64_t pts      = (int64_t) timestamp * 90;
-
-  /* Data packet header with version 1 contains 1 extra byte */
-  if(version == 0)
-    keyframe = header[11] & PN_KEYFRAME_FLAG;
-  else {
-    keyframe = stream_read_char(this) & PN_KEYFRAME_FLAG;
-    size--;
-  }
-
   lprintf ("packet of stream %d, 0x%X bytes @ %"PRIX64", pts = %"PRId64"%s\n",
-           stream, size, offset, pts, keyframe ? ", keyframe" : "");
+    stream, size,
+    this->input == this->in1 ? this->startpos1 + this->pos1 : this->startpos2 + this->pos2,
+    pts, keyframe ? ", keyframe" : "");
 
-  if (this->video_stream && (stream == this->video_stream->mdpr->stream_number)) {
+  if (this->video_stream && (stream == this->video_id)) {
 
     int            vpkg_seqnum = -1;
     int            vpkg_subseq = 0;
@@ -1113,6 +1298,8 @@ static int demux_real_send_chunk(demux_plugin_t *this_gen) {
     uint32_t       decoder_flags;
 
     lprintf ("video chunk detected.\n");
+
+    pts = (int64_t) timestamp * 90;
 
     /* sub-demuxer */
 
@@ -1124,41 +1311,48 @@ static int demux_real_send_chunk(demux_plugin_t *this_gen) {
        * bit 6: 1=short header (only one block?)
        */
 
-      const int vpkg_header = stream_read_char (this); size--;
+      int vpkg_header, vpkg_length, vpkg_offset;
+      uint8_t b[2];
+
+      if (this->input->read (this->input, b, 1) != 1)
+        goto fail0;
+      bytes += 1;
+      vpkg_header = b[0]; size--;
       lprintf ("vpkg_hdr: %02x (size=%d)\n", vpkg_header, size);
 
-      int            vpkg_length, vpkg_offset;
-      if (0x40==(vpkg_header&0xc0)) {
-	/*
-	 * seems to be a very short header
-	 * 2 bytes, purpose of the second byte yet unknown
-	 */
-	 const int bummer __attr_unused = stream_read_char (this);
-	 lprintf ("bummer == %02X\n",bummer);
+      if (0x40 == (vpkg_header & 0xc0)) {
 
-	 vpkg_offset = 0;
-	 vpkg_length = --size;
+        /* seems to be a very short header (2 bytes), purpose of the second byte yet unknown */
+        if (this->input->read (this->input, b, 1) != 1)
+          goto fail0;
+        bytes += 1;
+        lprintf ("bummer == %02X\n", (unsigned int)b[0]);
+        vpkg_offset = 0;
+        vpkg_length = --size;
 
       } else {
 
-	if (0==(vpkg_header & 0x40)) {
-	  /* sub-seqnum (bits 0-6: number of fragment. bit 7: ???) */
-	  vpkg_subseq = stream_read_char (this); size--;
+        if (0 == (vpkg_header & 0x40)) {
+          if (this->input->read (this->input, b, 1) != 1)
+            goto fail0;
+          bytes += 1;
+          /* sub-seqnum (bits 0-6: number of fragment. bit 7: ???) */
+          vpkg_subseq = b[0] & 0x7f; size--;
+        }
 
-	  vpkg_subseq &= 0x7f;
-	}
-
-	/*
-	 * size of the complete packet
-	 * bit 14 is always one (same applies to the offset)
-	 */
-	vpkg_length = stream_read_word (this); size -= 2;
-	if (!(vpkg_length&0xC000)) {
-	  vpkg_length <<= 16;
-	  vpkg_length |=  stream_read_word (this);
-	  size-=2;
-	} else
-	  vpkg_length &= 0x3fff;
+        /* size of the complete packet. bit 14 is always one (same applies to the offset) */
+        if (this->input->read (this->input, b, 2) != 2)
+          goto fail0;
+        bytes += 2;
+        vpkg_length = _X_BE_16 (b); size -= 2;
+        if (!(vpkg_length & 0xC000)) {
+          if (this->input->read (this->input, b, 2) != 2)
+            goto fail0;
+            bytes += 2;
+          vpkg_length <<= 16;
+          vpkg_length |= _X_BE_16 (b); size -= 2;
+        } else
+          vpkg_length &= 0x3fff;
 
 	/*
 	 * offset of the following data inside the complete packet
@@ -1166,16 +1360,24 @@ static int demux_real_send_chunk(demux_plugin_t *this_gen) {
 	 * _end_ of the packet, so it's equal to fragment size!!!
 	 */
 
-	vpkg_offset = stream_read_word (this); size -= 2;
+        if (this->input->read (this->input, b, 2) != 2)
+          goto fail0;
+        bytes += 2;
+        vpkg_offset = _X_BE_16 (b); size -= 2;
 
-	if (!(vpkg_offset&0xC000)) {
-	  vpkg_offset <<= 16;
-	  vpkg_offset |=  stream_read_word (this);
-	  size -= 2;
-	} else
-	  vpkg_offset &= 0x3fff;
+        if (!(vpkg_offset & 0xC000)) {
+          if (this->input->read (this->input, b, 2) != 2)
+            goto fail0;
+          bytes += 2;
+          vpkg_offset <<= 16;
+          vpkg_offset |= _X_BE_16 (b); size -= 2;
+        } else
+          vpkg_offset &= 0x3fff;
 
-	vpkg_seqnum = stream_read_char (this); size--;
+        if (this->input->read (this->input, b, 1) != 1)
+          goto fail0;
+        bytes += 1;
+        vpkg_seqnum = b[0]; size--;
       }
 
       lprintf ("seq=%d, offset=%d, length=%d, size=%d, frag size=%d, flags=%02x\n",
@@ -1198,11 +1400,7 @@ static int demux_real_send_chunk(demux_plugin_t *this_gen) {
         input_time = (int)((int64_t) this->input->get_current_pos(this->input)
                            * 8 * 1000 / this->avg_bitrate);
 
-      const off_t input_length = this->data_start + 18 + this->data_chunk_size;
-      if( input_length > 18 )
-        normpos = (int)((double) this->input->get_current_pos(this->input) * 65535 / input_length);
-
-      check_newpts (this, pts, PTS_VIDEO, 0);
+      decoder_flags = keyframe ? BUF_FLAG_KEYFRAME : 0;
 
       if (this->fragment_size == 0) {
 	lprintf ("new packet starting\n");
@@ -1229,10 +1427,9 @@ static int demux_real_send_chunk(demux_plugin_t *this_gen) {
           this->fragment_count = 0;
         }
 
-	decoder_flags = BUF_FLAG_FRAME_START;
+	decoder_flags |= BUF_FLAG_FRAME_START;
       } else {
 	lprintf ("continuing packet \n");
-	decoder_flags = 0;
       }
 
       /* add entry to fragment offset table */
@@ -1277,9 +1474,9 @@ static int demux_real_send_chunk(demux_plugin_t *this_gen) {
           xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG,
                   "demux_real: failed to read video fragment");
           buf->free_buffer(buf);
-          this->status = DEMUX_FINISHED;
-          return this->status;
+          goto fail0;
         }
+        bytes += buf->size;
 
         /* RV30 and RV40 streams contain some fragments that shouldn't be passed
          * to the decoder. The purpose of these fragments is unknown, but
@@ -1331,8 +1528,7 @@ static int demux_real_send_chunk(demux_plugin_t *this_gen) {
 
     } /* while(size>2) */
 
-  } else if (this->audio_fifo && this->audio_stream &&
-             (stream == this->audio_stream->mdpr->stream_number)) {
+  } else if (this->audio_fifo && this->audio_stream && (stream == this->audio_id)) {
 
     lprintf ("audio chunk detected.\n");
 
@@ -1379,45 +1575,41 @@ static int demux_real_send_chunk(demux_plugin_t *this_gen) {
       input_time = (int)((int64_t) this->input->get_current_pos(this->input)
                          * 8 * 1000 / this->avg_bitrate);
 
-    const off_t input_length = this->data_start + 18 + this->data_chunk_size;
-
-    if( input_length > 18 )
-      normpos = (int)((double) this->input->get_current_pos(this->input) * 65535 / input_length);
-
     check_newpts (this, pts, PTS_AUDIO, 0);
 
     /* Each packet of AAC is made up of several AAC frames preceded by a
-     * header defining the size of the frames */
+     * header defining the size of the frames in bits (!) */
     if(this->audio_stream->buf_type == BUF_AUDIO_AAC) {
-      int i;
+      int i, frames, sizes[16];
+      uint8_t b[32];
 
       /* Upper 4 bits of second byte is frame count */
-      const int frames = (stream_read_word(this) & 0xf0) >> 4;
+      if (this->input->read (this->input, b, 2) != 2)
+        goto fail0;
+      bytes += 2;
+      frames = b[1] >> 4;
 
       /* 2 bytes per frame size */
-      int sizes[frames];
-
-      for(i = 0; i < frames; i++)
-        sizes[i] = stream_read_word(this);
+      if (this->input->read (this->input, b, 2 * frames) != 2 * frames)
+        goto fail0;
+      bytes += 2 * frames;
+      for (i = 0; i < frames; i++)
+        sizes[i] = (_X_BE_16 (b + 2 * i) + 7) >> 3;
 
       for(i = 0; i < frames; i++) {
         if(_x_demux_read_send_data(this->audio_fifo, this->input, sizes[i], pts,
-             this->audio_stream->buf_type, 0, normpos,
+             this->audio_stream->buf_type, !i && keyframe ? BUF_FLAG_KEYFRAME : 0, normpos,
              input_time, this->duration, 0) < 0) {
 
           xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG,
                   "demux_real: failed to read AAC frame\n");
 
-          this->status = DEMUX_FINISHED;
-          return this->status;
+          goto fail0;
         }
-
+        bytes += sizes[i];
         pts = 0; /* Only set pts on first frame */
       }
-    } else if (this->audio_stream->buf_type == BUF_AUDIO_COOK ||
-	       this->audio_stream->buf_type == BUF_AUDIO_ATRK ||
-	       this->audio_stream->buf_type == BUF_AUDIO_28_8 ||
-	       this->audio_stream->buf_type == BUF_AUDIO_SIPRO) {
+    } else if (this->audio_stream->intl) {
       /* reorder */
       uint8_t * buffer = this->audio_stream->frame_buffer;
       int sps = this->audio_stream->sps;
@@ -1434,62 +1626,62 @@ static int demux_real_send_chunk(demux_plugin_t *this_gen) {
         return this->status;
       }
 
-      switch (this->audio_stream->buf_type) {
-      case BUF_AUDIO_28_8:
+      switch (this->audio_stream->intl) {
+      case ME_FOURCC('I','n','t','4'):
 	for (x = 0; x < sph / 2; x++) {
 	  pos = x * 2 * w + spc * cfs;
 	  if(pos + cfs > fs || this->input->read(this->input, buffer + pos, cfs) < cfs) {
 	    xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG,
 		    "demux_real: failed to read audio chunk\n");
 
-	    this->status = DEMUX_FINISHED;
-	    return this->status;
+            goto fail0;
 	  }
+          bytes += cfs;
 	}
 	break;
-      case BUF_AUDIO_COOK:
-      case BUF_AUDIO_ATRK:
+      case ME_FOURCC('g','e','n','r'):
 	for (x = 0; x < w / sps; x++) {
 	  pos = sps * (sph * x + ((sph + 1) / 2) * (spc & 1) + (spc >> 1));
 	  if(pos + sps > fs || this->input->read(this->input, buffer + pos, sps) < sps) {
 	    xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG,
 		    "demux_real: failed to read audio chunk\n");
 
-	    this->status = DEMUX_FINISHED;
-	    return this->status;
+            goto fail0;
 	  }
+          bytes += sps;
 	}
 	break;
-      case BUF_AUDIO_SIPRO:
+      case ME_FOURCC('s','i','p','r'):
 	pos = spc * w;
 	if(pos + w > fs || this->input->read(this->input, buffer + pos, w) < w) {
 	  xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG,
 		  "demux_real: failed to read audio chunk\n");
-
-	  this->status = DEMUX_FINISHED;
-	  return this->status;
+	
+          goto fail0;
 	}
+        bytes += w;
 	if (spc == sph - 1)
-	  demux_real_sipro_swap (buffer, sph * w * 2 / 96);
+	  demux_real_sipro_swap ((char *)buffer, sph * w * 2 / 96);
 	break;
       }
       if(++this->audio_stream->sub_packet_cnt == sph) {
 	this->audio_stream->sub_packet_cnt = 0;
+	printf ("audio: sending %d.%03d\n", input_time / 1000, input_time % 1000);
 	_x_demux_send_data(this->audio_fifo, buffer, this->audio_stream->frame_size,
-                           pts, this->audio_stream->buf_type, 0, normpos, input_time,
-			   this->duration, 0);
+          pts, this->audio_stream->buf_type, keyframe ? BUF_FLAG_KEYFRAME : 0, normpos,
+          input_time, this->duration, 0);
       }
     } else {
       if(_x_demux_read_send_data(this->audio_fifo, this->input, size, pts,
-           this->audio_stream->buf_type, 0, normpos,
+           this->audio_stream->buf_type, keyframe ? BUF_FLAG_KEYFRAME : 0, normpos,
            input_time, this->duration, 0) < 0) {
 
         xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG,
                 "demux_real: failed to read audio chunk\n");
 
-        this->status = DEMUX_FINISHED;
-        return this->status;
+        goto fail0;
       }
+      bytes += size;
 
       /* FIXME: dp->flags = (flags & 0x2) ? 0x10 : 0; */
     }
@@ -1501,7 +1693,23 @@ static int demux_real_send_chunk(demux_plugin_t *this_gen) {
 
 discard:
     this->input->seek(this->input, size, SEEK_CUR);
+    bytes += size;
 
+  }
+
+  /* Every good demuxer also is a muxer ;-) */
+  if (this->input == this->in1) {
+    this->lasttime1 = timestamp;
+    this->pos1     += bytes;
+  } else {
+    this->lasttime2 = timestamp;
+    this->pos2     += bytes;
+  }
+  if (this->in2) {
+    if (this->lasttime1 > this->lasttime2)
+      this->input = this->in2;
+    else
+      this->input = this->in1;
   }
 
 #if 0
@@ -1535,6 +1743,26 @@ discard:
 #endif
 
   return this->status;
+
+  fail0:
+  if (this->input == this->in1) {
+    this->lasttime1 = 0xffffffff;
+    if (this->lasttime2 == 0xffffffff) {
+      this->status = DEMUX_FINISHED;
+      return this->status;
+    }
+    if (this->in2)
+      this->input = this->in2;
+  } else {
+    this->lasttime2 = 0xffffffff;
+    this->input = this->in1;
+    if (this->lasttime1 == 0xffffffff) {
+      this->status = DEMUX_FINISHED;
+      return this->status;
+    }
+  }
+
+  return this->status;
 }
 
 static void demux_real_send_headers(demux_plugin_t *this_gen) {
@@ -1553,8 +1781,6 @@ static void demux_real_send_headers(demux_plugin_t *this_gen) {
   this->avg_bitrate   = 1;
 
 
-  /* send start buffers */
-  _x_demux_control_start(this->stream);
 
   /* send init info to decoders */
 
@@ -1581,72 +1807,91 @@ static int demux_real_seek (demux_plugin_t *this_gen,
   lprintf("seek start_pos=%d, start_time=%d, playing=%d\n",
           (int)start_pos, start_time, playing);
 
-  if((this->input->get_capabilities(this->input) & INPUT_CAP_SEEKABLE) &&
-     ((this->audio_stream && this->audio_stream->index) ||
-      (this->video_stream && this->video_stream->index))) {
+  /* TODO: noninterleaved seek */
+  this->input = this->in1;
 
-    start_pos = (off_t) ( (double) start_pos / 65535 *
-                this->input->get_length (this->input) );
+  if (this->input->get_capabilities(this->input) & INPUT_CAP_SEEKABLE) {
 
-    /* video index has priority over audio index */
-    if(this->video_stream && this->video_stream->index) {
-      index = this->video_stream->index;
-      entries = this->video_stream->index_entries;
-      if(this->audio_stream)
-        other_index = this->audio_stream->index;
+    if (!start_pos && !start_time) {
 
-      /* when seeking by video index the first audio chunk won't necesserily
-       * be a keyframe which would upset the decoder */
-      this->audio_need_keyframe = 1;
-    } else {
-      index = this->audio_stream->index;
-      entries = this->audio_stream->index_entries;
-      if(this->video_stream)
-        other_index = this->video_stream->index;
-    }
+      /* We can always return to the beginning. */
+      this->lasttime1 = 0;
+      this->pos1 = 18;
+      this->pos2 = 18;
+      this->in1->seek (this->in1, this->startpos1 + 18, SEEK_SET);
+      if (this->in2) {
+        this->lasttime2 = 0;
+        this->in2->seek (this->in2, this->startpos2 + 18, SEEK_SET);
+      }
 
-    /* FIXME: binary search would be quicker */
-    if(start_pos) {
-      while((i < entries - 1) && (index[i+1].offset < start_pos))
-        i++;
-    } else if(start_time) {
-      while((i < entries - 1) && (index[i+1].timestamp < start_time))
-        i++;
-    }
+    } else if ((this->audio_stream && this->audio_stream->index) ||
+               (this->video_stream && this->video_stream->index)) {
 
-    /* make sure we don't skip past audio/video at start of file */
-    if((i == 0) && other_index && (other_index[0].offset < index[0].offset))
-      index = other_index;
+      start_pos = (off_t)((double) start_pos / 65535 * this->input->get_length (this->input));
 
-    this->input->seek(this->input, index[i].offset, SEEK_SET);
+      /* video index has priority over audio index */
+      if (this->video_stream && this->video_stream->index) {
+        index = this->video_stream->index;
+        entries = this->video_stream->index_entries;
+        if (this->audio_stream)
+          other_index = this->audio_stream->index;
+      } else {
+        index = this->audio_stream->index;
+        entries = this->audio_stream->index_entries;
+        if (this->video_stream)
+          other_index = this->video_stream->index;
+      }
 
-    if(playing) {
-      if(this->audio_stream)
-        this->audio_stream->sub_packet_cnt = 0;
+      /* FIXME: binary search would be quicker */
+      if (start_pos) {
+        while ((i < entries - 1) && (index[i+1].offset < start_pos))
+          i++;
+      } else if (start_time) {
+        while ((i < entries - 1) && (index[i+1].timestamp < start_time))
+          i++;
+      }
 
-      _x_demux_flush_engine(this->stream);
-    }
-  }
-  else if (!playing && this->input->seek_time != NULL) {
+      /* make sure we don't skip past audio/video at start of file */
+      if ((i == 0) && other_index && (other_index[0].offset < index[0].offset))
+        index = other_index;
+
+      this->input->seek(this->input, index[i].offset, SEEK_SET);
+      this->pos1 = index[i].offset - this->startpos1;
+      this->lasttime1 = 0;
+
+
+    } else return this->status;
+
+  } else if (!playing && this->input->seek_time != NULL) {
+
     /* RTSP supports only time based seek */
     if (start_pos && !start_time)
       start_time = (int64_t) this->duration * start_pos / 65535;
 
     this->input->seek_time(this->input, start_time, SEEK_SET);
-  }
 
-  this->send_newpts     = PTS_BOTH;
-  this->old_seqnum      = -1;
-  this->fragment_size   = 0;
+  } else return this->status;
+
+  this->send_newpts         = PTS_BOTH;
+  this->old_seqnum          = -1;
+  this->fragment_size       = 0;
+  this->fragment_count      = 0;
+  this->audio_need_keyframe = 1;
+  this->audio_stream->sub_packet_cnt = 0;
+
+  if (playing)
+    _x_demux_flush_engine (this->stream);
 
   this->status          = DEMUX_OK;
-
   return this->status;
 }
 
 static void demux_real_dispose (demux_plugin_t *this_gen) {
   demux_real_t *this = (demux_real_t *) this_gen;
   int i;
+
+  if (this->in2)
+    this->in2->dispose (this->in2);
 
   for(i = 0; i < this->num_video_streams; i++) {
     real_free_mdpr(this->video_streams[i].mdpr);
@@ -1706,7 +1951,7 @@ static int real_check_stream_type(input_plugin_t *input)
   memmem(haystack, haystacklen, needle, sizeof(needle))
 
   if( my_strnstr(buf, len, "pnm://") || my_strnstr(buf, len, "rtsp://") ||
-      my_strnstr(buf, len, "<smil>") || !strncmp(buf, "http://", MIN(7, len)) )
+      my_strnstr(buf, len, "<smil>") || !strncmp((char *)buf, "http://", MIN(7, len)) )
     return 2;
 
   return 0;
@@ -1715,6 +1960,7 @@ static int real_check_stream_type(input_plugin_t *input)
 static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *stream,
                                     input_plugin_t *input) {
 
+  demux_real_t *this;
   /* discover stream type */
   const int stream_type = real_check_stream_type(input);
 
@@ -1738,17 +1984,39 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
     return NULL;
   }
 
-  demux_real_t *this = calloc(1, sizeof(demux_real_t));
-  this->stream = stream;
-  this->input  = input;
+  this = calloc (1, sizeof (demux_real_t));
+  if (!this)
+    return NULL;
 
+  this->status              = 0;
+  this->num_audio_streams   = 0;
+  this->num_video_streams   = 0;
+  this->audio_stream        = NULL;
+  this->video_stream        = NULL;
+  this->startpos1      = 0;
+  this->startpos2      = 0;
+  this->audio_need_keyframe = 0;
+  this->current_data_chunk_packet_count = 0;
+  this->last_pts[0]         = 0;
+  this->last_pts[1]         = 0;
+  this->send_newpts         = 0;
+  this->fragment_count      = 0;
+  this->fragment_tab        = NULL;
+  this->fragment_tab_max    = 0;
+  this->reference_mode      = 0;
+  this->in2                 = NULL;
+  this->lasttime1           = 0;
+
+  this->stream = stream;
+  this->input  =
+  this->in1    = input;
+
+  this->lasttime2 = 0xffffffff;
 
   if(stream_type == 2){
     this->reference_mode = 1;
     lprintf("reference stream detected\n");
-  }else
-    this->reference_mode = 0;
-
+  }
 
   this->demux_plugin.send_headers      = demux_real_send_headers;
   this->demux_plugin.send_chunk        = demux_real_send_chunk;
@@ -1780,4 +2048,3 @@ void *demux_real_init_class (xine_t *xine, const void *data) {
 
   return (void *)&demux_real_class;
 }
-
