@@ -317,6 +317,11 @@ struct input_plugin_s {
  */
 #define INPUT_CAP_NO_CACHE             0x00000200
 
+/*
+ * INPUT_CAP_CLONE:
+ *   open a second input plugin instance on the same source.
+ */
+#define INPUT_CAP_CLONE                0x00000400
 
 #define INPUT_IS_SEEKABLE(input) (((input)->get_capabilities(input) & INPUT_CAP_SEEKABLE) != 0)
 
@@ -333,6 +338,8 @@ struct input_plugin_s {
 #define INPUT_OPTIONAL_DATA_DEMUX_MIME_TYPE 9
 /* buffer is a const char **; the string is static or freed by the input plugin. */
 #define INPUT_OPTIONAL_DATA_DEMUXER   10
+/* buffer is a struct input_plugin_s **; release by calling ptr->dispose (ptr). */
+#define INPUT_OPTIONAL_DATA_CLONE     11
 
 #define MAX_MRL_ENTRIES 255
 #define MAX_PREVIEW_SIZE 4096
