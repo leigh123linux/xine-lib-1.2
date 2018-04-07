@@ -49,6 +49,8 @@ typedef struct {
   int               buf_len;           /* data size */
   int               buf_pos;
 
+  int               is_clone;
+
   /* Statistics */
   int               read_call;
   int               main_read_call;
@@ -323,14 +325,6 @@ static const char* cache_plugin_get_mrl (input_plugin_t *this_gen) {
   return this->main_input_plugin->get_mrl(this->main_input_plugin);
 }
 
-static int cache_plugin_get_optional_data (input_plugin_t *this_gen,
-					  void *data, int data_type) {
-  cache_input_plugin_t *this = (cache_input_plugin_t *)this_gen;
-
-  return this->main_input_plugin->get_optional_data(
-    this->main_input_plugin, data, data_type);
-}
-
 /*
  * dispose main input plugin and self
  */
@@ -344,7 +338,11 @@ static void cache_plugin_dispose(input_plugin_t *this_gen) {
   xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG,
 	  LOG_MODULE": seek_calls: %d, main input seek calls: %d\n", this->seek_call, this->main_seek_call);
 
-  _x_free_input_plugin(this->stream, this->main_input_plugin);
+  if (this->is_clone)
+    this->main_input_plugin->dispose (this->main_input_plugin);
+  else
+    _x_free_input_plugin (this->stream, this->main_input_plugin);
+
   _x_freep(&this->buf);
   free(this);
 }
@@ -353,12 +351,13 @@ static void cache_plugin_dispose(input_plugin_t *this_gen) {
 /*
  * create self instance,
  */
-input_plugin_t *_x_cache_plugin_get_instance (xine_stream_t *stream) {
+static int cache_plugin_get_optional_data (input_plugin_t *this_gen, void *data, int data_type);
+
+static input_plugin_t *cache_plugin_new (xine_stream_t *stream, input_plugin_t *main_plugin) {
   cache_input_plugin_t *this;
-  input_plugin_t *main_plugin = stream->input_plugin;
 
   /* check given input plugin */
-  if (!stream->input_plugin) {
+  if (!main_plugin) {
     xine_log(stream->xine, XINE_LOG_MSG, _(LOG_MODULE": input plugin not defined!\n"));
     return NULL;
   }
@@ -404,3 +403,42 @@ input_plugin_t *_x_cache_plugin_get_instance (xine_stream_t *stream) {
   return &this->input_plugin;
 }
 
+input_plugin_t *_x_cache_plugin_get_instance (xine_stream_t *stream) {
+  input_plugin_t *main_plugin = stream->input_plugin;
+
+  return cache_plugin_new (stream, main_plugin);
+}
+
+static int cache_plugin_get_optional_data (input_plugin_t *this_gen,
+					  void *data, int data_type) {
+  cache_input_plugin_t *this = (cache_input_plugin_t *)this_gen;
+
+  if (data_type == INPUT_OPTIONAL_DATA_CLONE) {
+    input_plugin_t *new_main = NULL, *new_cache = NULL;
+    if (!data)
+      return INPUT_OPTIONAL_UNSUPPORTED;
+    if (!(this->main_input_plugin->get_capabilities (this->main_input_plugin) & INPUT_CAP_CLONE))
+      return INPUT_OPTIONAL_UNSUPPORTED;
+    if (this->main_input_plugin->get_optional_data (this->main_input_plugin,
+      &new_main, INPUT_OPTIONAL_DATA_CLONE) != INPUT_OPTIONAL_SUCCESS)
+      return INPUT_OPTIONAL_UNSUPPORTED;
+    if (!new_main)
+      return INPUT_OPTIONAL_UNSUPPORTED;
+    new_cache = cache_plugin_new (this->stream, new_main);
+    if (!new_cache) {
+      input_plugin_t **q = data;
+      *q = new_main;
+      return INPUT_OPTIONAL_SUCCESS;
+    }
+    this = (cache_input_plugin_t *)new_cache;
+    this->is_clone = 1;
+    {
+      input_plugin_t **q = data;
+      *q = new_cache;
+    }
+    return INPUT_OPTIONAL_SUCCESS;
+  }
+
+  return this->main_input_plugin->get_optional_data(
+    this->main_input_plugin, data, data_type);
+}
