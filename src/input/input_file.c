@@ -98,11 +98,11 @@ static uint32_t file_input_get_capabilities (input_plugin_t *this_gen) {
 
 #ifdef _MSC_VER
     /*return INPUT_CAP_SEEKABLE | INPUT_CAP_GET_DIR;*/
-	return INPUT_CAP_SEEKABLE;
+	return INPUT_CAP_CLONE | INPUT_CAP_SEEKABLE;
 #else
   if (fstat (this->fh, &buf) == 0) {
     if (S_ISREG(buf.st_mode))
-      return INPUT_CAP_SEEKABLE;
+      return INPUT_CAP_CLONE | INPUT_CAP_SEEKABLE;
     else
       return 0;
   } else
@@ -308,11 +308,6 @@ static const char* file_input_get_mrl (input_plugin_t *this_gen) {
   return this->mrl;
 }
 
-static int file_input_get_optional_data (input_plugin_t *this_gen, void *data, int data_type) {
-
-  return INPUT_OPTIONAL_UNSUPPORTED;
-}
-
 static void file_input_dispose (input_plugin_t *this_gen ) {
   file_input_plugin_t *this = (file_input_plugin_t *) this_gen;
 
@@ -416,6 +411,8 @@ static int file_input_open (input_plugin_t *this_gen ) {
   return 1;
 }
 
+static int file_input_get_optional_data (input_plugin_t *this_gen, void *data, int data_type);
+
 static input_plugin_t *file_input_get_instance (input_class_t *cls_gen, xine_stream_t *stream,
 				    const char *data) {
 
@@ -449,6 +446,23 @@ static input_plugin_t *file_input_get_instance (input_class_t *cls_gen, xine_str
   this->input_plugin.input_class        = cls_gen;
 
   return &this->input_plugin;
+}
+
+static int file_input_get_optional_data (input_plugin_t *this_gen, void *data, int data_type) {
+  if ((data_type == INPUT_OPTIONAL_DATA_CLONE) && data) {
+    file_input_plugin_t *this = (file_input_plugin_t *) this_gen;
+    input_plugin_t *new = file_input_get_instance (this->input_plugin.input_class, this->stream, this->mrl);
+    if (new) {
+      if (new->open (new) < 0) {
+        new->dispose (new);
+      } else {
+        input_plugin_t **q = data;
+        *q = new;
+        return INPUT_OPTIONAL_SUCCESS;
+      }
+    }
+  }
+  return INPUT_OPTIONAL_UNSUPPORTED;
 }
 
 
