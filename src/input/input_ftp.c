@@ -404,6 +404,16 @@ static off_t _ftp_read (input_plugin_t *this_gen, void *buf_gen, off_t len)
   off_t got = 0;
   int rc;
 
+  /* read from preview ? */
+  if (this->curpos < this->preview_size) {
+    if (len > (this->preview_size - this->curpos))
+      got = this->preview_size - this->curpos;
+    else
+      got = len;
+
+    memcpy (buf, &this->preview[this->curpos], got);
+  }
+
   while (got < len) {
     rc = _x_io_tcp_read(this->stream, this->fd_data, buf + got, len - got);
     if (rc <= 0) {
