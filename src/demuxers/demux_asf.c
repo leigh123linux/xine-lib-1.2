@@ -2048,7 +2048,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen,
      * try to get a preview of the data
      */
 
-    len = _x_demux_read_header(input, buf, sizeof(buf));
+    len = _x_demux_read_header (input, buf, MAX_PREVIEW_SIZE);
     if (len < sizeof(GUID))
       return 0;
 
