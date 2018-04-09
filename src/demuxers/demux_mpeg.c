@@ -492,7 +492,10 @@ static void parse_mpeg2_packet (demux_mpeg_t *this, int stream_id, int64_t scr) 
       int track = p[0] & 0x0f;
 
       /* read rest of header - AC3 */
-      this->input->read (this->input, p + 1, 3);
+      if (this->input->read (this->input, p + 1, 3) != 3) {
+        this->status = DEMUX_FINISHED;
+        return;
+      }
       len -= 4;
 
       /* register */
@@ -538,7 +541,10 @@ static void parse_mpeg2_packet (demux_mpeg_t *this, int stream_id, int64_t scr) 
 
       int track = p[0] & 0x0f;
 
-      this->input->read (this->input, p + 1, 6);
+      if (this->input->read (this->input, p + 1, 6) != 6) {
+        this->status = DEMUX_FINISHED;
+        return;
+      }
       len -= 7;
 
       /* register */
@@ -926,7 +932,10 @@ static uint32_t parse_pack(demux_mpeg_t *this) {
 
     /* stuffing bytes */
     stuffing = tbuf[9] & 0x03;
-    this->input->read (this->input, &tbuf[12], 2 + stuffing);
+    if (this->input->read (this->input, &tbuf[12], 2 + stuffing) != 2 + stuffing) {
+      this->status = DEMUX_FINISHED;
+      return 0;
+    }
 
     /* system header */
     buf = _X_BE_32 (tbuf + 10 + stuffing);
@@ -1010,7 +1019,10 @@ static uint32_t parse_pack_preview (demux_mpeg_t *this, int *num_buffers) {
 
     /* stuffing bytes */
     stuffing = tbuf[9] & 0x03;
-    this->input->read (this->input, &tbuf[12], 2 + stuffing);
+    if (this->input->read (this->input, &tbuf[12], 2 + stuffing) != 2 + stuffing) {
+      this->status = DEMUX_FINISHED;
+      return 0;
+    }
 
     /* system header */
     buf = _X_BE_32 (tbuf + 10 + stuffing);
