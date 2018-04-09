@@ -1312,45 +1312,40 @@ static int demux_real_send_chunk(demux_plugin_t *this_gen) {
        */
 
       int vpkg_header, vpkg_length, vpkg_offset;
-      uint8_t b[2];
-
-      if (this->input->read (this->input, b, 1) != 1)
-        goto fail0;
-      bytes += 1;
-      vpkg_header = b[0]; size--;
+      uint8_t b[16], *p = b, *q = b;
+#define NEEDBYTES(n) { \
+  int need = n - (q - p); \
+  if (need > 0) { \
+    if (this->input->read (this->input, q, need) != need) \
+      goto fail0; \
+    q += need; \
+  } \
+}
+      NEEDBYTES (2);
+      vpkg_header = *p++;
       lprintf ("vpkg_hdr: %02x (size=%d)\n", vpkg_header, size);
 
       if (0x40 == (vpkg_header & 0xc0)) {
 
         /* seems to be a very short header (2 bytes), purpose of the second byte yet unknown */
-        if (this->input->read (this->input, b, 1) != 1)
-          goto fail0;
-        bytes += 1;
-        lprintf ("bummer == %02X\n", (unsigned int)b[0]);
+        lprintf ("bummer == %02X\n", (unsigned int)*p);
+        p++;
         vpkg_offset = 0;
-        vpkg_length = --size;
+        vpkg_length = size - 2;
 
       } else {
 
         if (0 == (vpkg_header & 0x40)) {
-          if (this->input->read (this->input, b, 1) != 1)
-            goto fail0;
-          bytes += 1;
           /* sub-seqnum (bits 0-6: number of fragment. bit 7: ???) */
-          vpkg_subseq = b[0] & 0x7f; size--;
+          vpkg_subseq = (*p++) & 0x7f;
         }
 
         /* size of the complete packet. bit 14 is always one (same applies to the offset) */
-        if (this->input->read (this->input, b, 2) != 2)
-          goto fail0;
-        bytes += 2;
-        vpkg_length = _X_BE_16 (b); size -= 2;
+        NEEDBYTES (5);
+        vpkg_length = _X_BE_16 (p); p += 2;
         if (!(vpkg_length & 0xC000)) {
-          if (this->input->read (this->input, b, 2) != 2)
-            goto fail0;
-            bytes += 2;
           vpkg_length <<= 16;
-          vpkg_length |= _X_BE_16 (b); size -= 2;
+          vpkg_length |= _X_BE_16 (p); p += 2;
         } else
           vpkg_length &= 0x3fff;
 
@@ -1359,26 +1354,24 @@ static int demux_real_send_chunk(demux_plugin_t *this_gen) {
 	 * Note: if (hdr&0xC0)==0x80 then offset is relative to the
 	 * _end_ of the packet, so it's equal to fragment size!!!
 	 */
-
-        if (this->input->read (this->input, b, 2) != 2)
-          goto fail0;
-        bytes += 2;
-        vpkg_offset = _X_BE_16 (b); size -= 2;
-
+        NEEDBYTES (3);
+        vpkg_offset = _X_BE_16 (p); p += 2;
         if (!(vpkg_offset & 0xC000)) {
-          if (this->input->read (this->input, b, 2) != 2)
-            goto fail0;
-          bytes += 2;
+          NEEDBYTES (3);
           vpkg_offset <<= 16;
-          vpkg_offset |= _X_BE_16 (b); size -= 2;
+          vpkg_offset |= _X_BE_16 (p); p += 2;
         } else
           vpkg_offset &= 0x3fff;
 
-        if (this->input->read (this->input, b, 1) != 1)
-          goto fail0;
-        bytes += 1;
-        vpkg_seqnum = b[0]; size--;
+        vpkg_seqnum = *p++;
       }
+
+      bytes += p - b;
+      size  -= p - b;
+#undef NEEDBYTES
+
+      /* not (yet) needed */
+      (void)vpkg_subseq;
 
       lprintf ("seq=%d, offset=%d, length=%d, size=%d, frag size=%d, flags=%02x\n",
                vpkg_seqnum, vpkg_offset, vpkg_length, size, this->fragment_size,
