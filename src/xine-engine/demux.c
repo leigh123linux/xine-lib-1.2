@@ -491,31 +491,40 @@ int _x_demux_stop_thread (xine_stream_t *stream) {
   return 0;
 }
 
-int _x_demux_read_header( input_plugin_t *input, void *buffer, off_t size){
-  int read_size;
-  unsigned char *buf;
+int _x_demux_read_header (input_plugin_t *input, void *buffer, off_t size) {
+  int want_size = size;
 
-  if (!input || !size || size > MAX_PREVIEW_SIZE)
+  if (!input || !buffer || (want_size <= 0))
     return 0;
 
   if (input->get_capabilities(input) & INPUT_CAP_SEEKABLE) {
-    input->seek(input, 0, SEEK_SET);
-    read_size = input->read(input, buffer, size);
-    input->seek(input, 0, SEEK_SET);
-  } else if (input->get_capabilities(input) & INPUT_CAP_PREVIEW) {
-    if (size < MAX_PREVIEW_SIZE) {
-      buf = malloc(MAX_PREVIEW_SIZE);
-      read_size = input->get_optional_data(input, buf, INPUT_OPTIONAL_DATA_PREVIEW);
-      read_size = MIN (read_size, size);
-      memcpy(buffer, buf, read_size);
-      free(buf);
-    } else {
-      read_size = input->get_optional_data(input, buffer, INPUT_OPTIONAL_DATA_PREVIEW);
-    }
-  } else {
-    return 0;
+    input->seek (input, 0, SEEK_SET);
+    want_size = input->read (input, buffer, want_size);
+    input->seek (input, 0, SEEK_SET);
+    return want_size;
   }
-  return read_size;
+
+  if (input->get_capabilities(input) & INPUT_CAP_PREVIEW) {
+    if (want_size < MAX_PREVIEW_SIZE) {
+      int read_size;
+      uint8_t *temp = malloc (MAX_PREVIEW_SIZE);
+      if (!temp)
+        return 0;
+      read_size = input->get_optional_data (input, temp, INPUT_OPTIONAL_DATA_PREVIEW);
+      if (read_size <= 0) {
+        free (temp);
+        return 0;
+      }
+      if (read_size < want_size)
+        want_size = read_size;
+      memcpy (buffer, temp, want_size);
+      free (temp);
+      return want_size;
+    }
+    return input->get_optional_data (input, buffer, INPUT_OPTIONAL_DATA_PREVIEW);
+  }
+
+  return 0;
 }
 
 int _x_demux_check_extension (const char *mrl, const char *extensions){
