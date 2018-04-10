@@ -593,7 +593,8 @@ static void find_moov_atom(input_plugin_t *input, off_t *moov_offset,
       }
 
       /* rewind the stream so we can keep looking */
-      input->seek(input, -ATOM_PREAMBLE_SIZE, SEEK_CUR);
+      if (input->seek(input, -ATOM_PREAMBLE_SIZE, SEEK_CUR) < 0)
+        return;
     }
 
     /* if the moov atom is found, log the position and break from the loop */
@@ -637,16 +638,18 @@ static void find_moov_atom(input_plugin_t *input, off_t *moov_offset,
     } else
       atom_size -= ATOM_PREAMBLE_SIZE;
 
-    input->seek(input, atom_size, SEEK_CUR);
+    if (input->seek(input, atom_size, SEEK_CUR) < 0)
+      return;
   }
+
+  /* reset to the start of the stream on the way out */
+  if (input->seek(input, 0, SEEK_SET) != 0)
+    return;
 
   if ((*moov_offset == -1) && (free_moov_offset != -1)) {
     *moov_offset = free_moov_offset;
     *moov_size = free_moov_size;
   }
-
-  /* reset to the start of the stream on the way out */
-  input->seek(input, 0, SEEK_SET);
 }
 
 /* create a qt_info structure or return NULL if no memory */
@@ -774,7 +777,8 @@ static int is_qt_file(input_plugin_t *qt_file) {
     /* check that the next atom in the chunk contains alphanumeric
      * characters in the atom type field; if not, disqualify the file
      * as a QT file */
-    qt_file->seek(qt_file, moov_atom_offset + ATOM_PREAMBLE_SIZE, SEEK_SET);
+    if (qt_file->seek(qt_file, moov_atom_offset + ATOM_PREAMBLE_SIZE, SEEK_SET) < 0)
+      return 0;
     if (qt_file->read(qt_file, atom_preamble, ATOM_PREAMBLE_SIZE) !=
       ATOM_PREAMBLE_SIZE)
       return 0;
@@ -2348,7 +2352,8 @@ static int fragment_scan (qt_info *info, input_plugin_t *input) {
     return 0;
 
   for (pos = 0; pos < fsize; pos += atomsize) {
-    input->seek (input, pos, SEEK_SET);
+    if (input->seek (input, pos, SEEK_SET) != pos)
+      break;
     if (input->read (input, buf, 16) != 16)
       break;
     atomsize = _X_BE_32 (buf);
@@ -2846,8 +2851,12 @@ static int demux_qt_send_chunk(demux_plugin_t *this_gen) {
     }
 
     remaining_sample_bytes = trak->frames[i].size;
-    if (trak->frames[i].offset != current_pos)
-      this->input->seek (this->input, trak->frames[i].offset, SEEK_SET);
+    if (trak->frames[i].offset != current_pos) {
+      if (this->input->seek (this->input, trak->frames[i].offset, SEEK_SET) < 0) {
+        /* Do not stop demuxing. Maybe corrupt file or broken track. */
+        return this->status;
+      }
+    }
 
     if (i + 1 < trak->frame_count) {
       /* frame duration is the pts diff between this video frame and
@@ -2933,8 +2942,12 @@ static int demux_qt_send_chunk(demux_plugin_t *this_gen) {
 
     remaining_sample_bytes = trak->frames[i].size;
 
-    if (trak->frames[i].offset != current_pos)
-      this->input->seek (this->input, trak->frames[i].offset, SEEK_SET);
+    if (trak->frames[i].offset != current_pos) {
+      if (this->input->seek (this->input, trak->frames[i].offset, SEEK_SET) < 0) {
+        /* Do not stop demuxing. Maybe corrupt file or broken track. */
+        return this->status;
+      }
+    }
 
     debug_audio_demux("  qt: sending off audio frame %d from offset 0x%"PRIX64", %d bytes, media id %d, %"PRId64" pts\n",
       i,
