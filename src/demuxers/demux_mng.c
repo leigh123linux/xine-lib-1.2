@@ -275,7 +275,23 @@ static demux_plugin_t* open_plugin(demux_class_t *class_gen, xine_stream_t *stre
 
   demux_mng_t    *this;
 
+  switch (stream->content_detection_method) {
+    case METHOD_BY_CONTENT:
+    case METHOD_EXPLICIT:
+      if (!INPUT_IS_SEEKABLE(input))
+        return NULL;
+      break;
+
+    case METHOD_BY_MRL:
+      break;
+    default:
+      return NULL;
+  }
+
   this         = calloc(1, sizeof(demux_mng_t));
+  if (!this)
+    return NULL;
+
   this->stream = stream;
   this->input  = input;
 
@@ -290,24 +306,6 @@ static demux_plugin_t* open_plugin(demux_class_t *class_gen, xine_stream_t *stre
   this->demux_plugin.demux_class       = class_gen;
 
   this->status = DEMUX_FINISHED;
-
-  switch (stream->content_detection_method) {
-    case METHOD_BY_CONTENT:
-    case METHOD_EXPLICIT:
-      if (!INPUT_IS_SEEKABLE(this->input)) {
-        free(this);
-        return NULL;
-      }
-    break;
-
-    case METHOD_BY_MRL:
-    break;
-
-    default:
-      free(this);
-      return NULL;
-    break;
-  }
 
   if ((this->mngh = mng_initialize(this, mymng_alloc, mymng_free, MNG_NULL)) == MNG_NULL) {
     free(this);
