@@ -1761,7 +1761,9 @@ static qt_error build_frame_table(qt_trak *trak,
     n = trak->chunk_offset_count;
     if (!n)
       return QT_OK;
-    for (i = 0; i < trak->sample_to_chunk_count - 1; i++) {
+    if (!trak->sample_to_chunk_count)
+      return QT_OK;
+    for (i = 0; i < (int)trak->sample_to_chunk_count - 1; i++) {
       int s = trak->sample_to_chunk_table[i].samples_per_chunk;
       if ((samples_per_frame != 1) && (s % samples_per_frame))
         return QT_OK; /* unaligned chunk, should not happen */
@@ -1827,7 +1829,7 @@ static qt_error build_frame_table(qt_trak *trak,
       /* iterate from the first chunk of the current table entry to
        * the first chunk of the next table entry */
       chunk_start = trak->sample_to_chunk_table[i].first_chunk;
-      if (i < trak->sample_to_chunk_count - 1)
+      if (i < (int)trak->sample_to_chunk_count - 1)
         chunk_end =
           trak->sample_to_chunk_table[i + 1].first_chunk;
       else
@@ -2026,7 +2028,7 @@ static qt_error build_frame_table(qt_trak *trak,
         /* iterate from the first chunk of the current table entry to
          * the first chunk of the next table entry */
         chunk_start = trak->sample_to_chunk_table[i].first_chunk;
-        if (i < trak->sample_to_chunk_count - 1)
+        if (i < (int)trak->sample_to_chunk_count - 1)
           chunk_end =
             trak->sample_to_chunk_table[i + 1].first_chunk;
         else
@@ -3320,6 +3322,9 @@ static int binary_seek(qt_trak *trak, off_t start_pos, int start_time) {
   int best_index;
   int left, middle, right;
   int found;
+
+  if (!trak->frame_count)
+    return QT_OK;
 
   /* perform a binary search on the trak, testing the offset
    * boundaries first; offset request has precedent over time request */
