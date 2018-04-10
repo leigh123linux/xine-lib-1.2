@@ -92,14 +92,14 @@ typedef struct {
  * @retval 1 The file has been identified as a valid modplug file
  * @todo Just Protracker files are detected right now.
  */
-static int probe_mod_file(demux_mod_t *this) {
+static int probe_mod_file(input_plugin_t *input) {
   /* We need the value present at offset 1080, of size 4 */
   union {
     uint8_t buffer[1080+4]; /* The raw buffer */
     uint32_t values[(1080+4)/sizeof(uint32_t)];
   } header;
 
-  if (_x_demux_read_header(this->input, header.buffer, 1080+4) != 1080+4)
+  if (_x_demux_read_header(input, header.buffer, 1080+4) != 1080+4)
       return 0;
 
   /* Magic numbers taken from GNU file's magic description */
@@ -156,7 +156,6 @@ static int open_mod_file(demux_mod_t *this) {
 
   if(total_read != this->filesize) {
     xine_log(this->stream->xine, XINE_LOG_PLUGIN, "modplug - filesize error\n");
-    free(this->buffer);
     return 0;
   }
 
@@ -171,7 +170,6 @@ static int open_mod_file(demux_mod_t *this) {
   this->mpfile = ModPlug_Load(this->buffer, this->filesize);
   if (this->mpfile==NULL) {
     xine_log(this->stream->xine, XINE_LOG_PLUGIN, "modplug - load error\n");
-    free(this->buffer);
     return 0;
   }
 
@@ -282,11 +280,12 @@ static int demux_mod_seek (demux_plugin_t *this_gen,
 static void demux_mod_dispose (demux_plugin_t *this_gen) {
   demux_mod_t *this = (demux_mod_t *) this_gen;
 
-  ModPlug_Unload(this->mpfile);
-  free(this->buffer);
-  free(this->title);
-  free(this->artist);
-  free(this->copyright);
+  if (this->mpfile)
+    ModPlug_Unload(this->mpfile);
+  _x_freep(&this->buffer);
+  _x_freep(&this->title);
+  _x_freep(&this->artist);
+  _x_freep(&this->copyright);
   free(this);
 }
 
@@ -320,7 +319,20 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
     return NULL;
   }
 
+  switch (stream->content_detection_method) {
+    case METHOD_EXPLICIT:
+    case METHOD_BY_MRL:
+    case METHOD_BY_CONTENT:
+      if (!probe_mod_file(input))
+        return NULL;
+    default:
+      return NULL;
+  }
+
   this         = calloc(1, sizeof(demux_mod_t));
+  if (!this)
+    return NULL;
+
   this->stream = stream;
   this->input  = input;
 
@@ -338,18 +350,8 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
 
   xprintf(stream->xine, XINE_VERBOSITY_DEBUG, "TEST mod decode\n");
 
-  switch (stream->content_detection_method) {
-
-  case METHOD_EXPLICIT:
-  case METHOD_BY_MRL:
-  break;
-
-  case METHOD_BY_CONTENT:
-    if (probe_mod_file(this) && open_mod_file(this))
-      break;
-    /* fall through */
-  default:
-    free (this);
+  if (!open_mod_file(this)) {
+    demux_mod_dispose(&this->demux_plugin);
     return NULL;
   }
 
