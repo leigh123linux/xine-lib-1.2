@@ -3520,6 +3520,17 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
     return NULL;
   }
 
+  switch (stream->content_detection_method) {
+    case METHOD_BY_CONTENT:
+    case METHOD_BY_MRL:
+    case METHOD_EXPLICIT:
+      if (!is_qt_file(input))
+        return NULL;
+      break;
+    default:
+      return NULL;
+  }
+
   this         = calloc(1, sizeof(demux_qt_t));
   this->stream = stream;
   this->input  = input;
@@ -3544,18 +3555,15 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
 
   this->status = DEMUX_FINISHED;
 
+  if ((this->qt = create_qt_info (this)) == NULL) {
+    free (this);
+    return NULL;
+  }
+
   switch (stream->content_detection_method) {
 
   case METHOD_BY_CONTENT:
 
-    if (!is_qt_file(this->input)) {
-      free (this);
-      return NULL;
-    }
-    if ((this->qt = create_qt_info (this)) == NULL) {
-      free (this);
-      return NULL;
-    }
     last_error = open_qt_file(this->qt, this->input, this->bandwidth);
     if (last_error == QT_DRM_NOT_SUPPORTED) {
 
@@ -3573,28 +3581,14 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
 
   break;
 
-  case METHOD_BY_MRL:
-  case METHOD_EXPLICIT: {
-
-    if (!is_qt_file(this->input)) {
-      free (this);
-      return NULL;
-    }
-    if ((this->qt = create_qt_info (this)) == NULL) {
-      free (this);
-      return NULL;
-    }
+  default:
     if (open_qt_file(this->qt, this->input, this->bandwidth) != QT_OK) {
       free_qt_info (this->qt);
       free (this);
       return NULL;
     }
-  }
-  break;
 
-  default:
-    free (this);
-    return NULL;
+  break;
   }
 
   if (this->qt->fragment_count > 0)
