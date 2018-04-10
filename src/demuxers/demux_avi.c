@@ -413,6 +413,9 @@ static int64_t get_audio_pts (demux_avi_t *this, int track, uint32_t posc,
 
   lprintf("get_audio_pts: track=%d, posc=%d, postot=%" PRIdMAX ", posb=%d\n", track, posc, (intmax_t)postot, posb);
 
+  if (at->dwRate == 0)
+    return 0;
+
   if ((at->dwSampleSize == 0) && (at->dwScale > 1)) {
     /* variable bitrate */
     lprintf("get_audio_pts: VBR: nBlockAlign=%d, dwSampleSize=%d, dwScale=%d, dwRate=%d\n",
