@@ -3510,9 +3510,8 @@ static int demux_qt_get_optional_data(demux_plugin_t *this_gen,
 }
 
 static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *stream,
-                                    input_plugin_t *input_gen) {
+                                    input_plugin_t *input) {
 
-  input_plugin_t *input = (input_plugin_t *) input_gen;
   demux_qt_t     *this;
   xine_cfg_entry_t entry;
   qt_error last_error;
