@@ -109,7 +109,10 @@ static void demux_image_send_headers (demux_plugin_t *this_gen) {
 
   _x_demux_control_start(this->stream);
 
-  this->input->seek (this->input, 0, SEEK_SET);
+  if (this->input->seek (this->input, 0, SEEK_SET) != 0) {
+    this->status = DEMUX_FINISHED;
+    return;
+  }
   this->bytes_left = this->input->get_length (this->input);
   if (this->bytes_left < 0)
     this->bytes_left = 0;

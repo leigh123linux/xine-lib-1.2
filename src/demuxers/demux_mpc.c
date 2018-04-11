@@ -149,7 +149,8 @@ static int open_mpc_file(demux_mpc_t *this) {
   lprintf("first frame size: %u\n", first_frame_size);
 
   /* Move input to start of data (to nearest multiple of 4) */
-  this->input->seek(this->input, 28+id3v2_size, SEEK_SET);
+  if (this->input->seek(this->input, 28+id3v2_size, SEEK_SET) < 0)
+    return 0;
 
   /* Set stream info */
   _x_stream_info_set(this->stream, XINE_STREAM_INFO_HAS_AUDIO, 1);

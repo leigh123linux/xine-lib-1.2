@@ -860,7 +860,8 @@ static int detect_mpgaudio_file(input_plugin_t *input,
      * try to skip by seeking.
      */
     if (INPUT_IS_SEEKABLE (input)) {
-      input->seek (input, 10 + tag_size, SEEK_SET);
+      if (input->seek (input, 10 + tag_size, SEEK_SET) < 0)
+        return 0;
       preview_len = input->read (input, buf, MAX_PREVIEW_SIZE);
       if (!sniff_buffer_looks_like_mp3 (buf, preview_len, version, layer)) {
         lprintf ("sniff_buffer_looks_like_mp3 failed\n");
@@ -918,7 +919,10 @@ static void demux_mpgaudio_send_headers (demux_plugin_t *this_gen) {
     }
 
     /* seek back to the beginning */
-    this->input->seek (this->input, 0, SEEK_SET);
+    if (this->input->seek (this->input, 0, SEEK_SET) != 0) {
+      this->status = DEMUX_FINISHED;
+      return;
+    }
 
     /*
      * send preview buffers

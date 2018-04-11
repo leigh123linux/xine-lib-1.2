@@ -87,17 +87,17 @@ static int open_fli_file(demux_fli_t *this) {
     return 0;
 
   /* file is qualified; skip over the signature bytes in the stream */
-  this->input->seek(this->input, FLI_HEADER_SIZE, SEEK_SET);
+  if (this->input->seek(this->input, FLI_HEADER_SIZE, SEEK_SET) != FLI_HEADER_SIZE)
+    return 0;
 
   /* check if this is a special FLI file from Magic Carpet game */
   if (_X_LE_16(&this->fli_header[16]) == FLI_CHUNK_MAGIC_1) {
     /* if the input is non-seekable, do not bother with playing the
      * special file type */
-    if (INPUT_IS_SEEKABLE(this->input)) {
-      this->input->seek(this->input, FLI_HEADER_SIZE_MC, SEEK_SET);
-    } else {
+    if (!INPUT_IS_SEEKABLE(this->input))
       return 0;
-    }
+    if (this->input->seek(this->input, FLI_HEADER_SIZE_MC, SEEK_SET) < 0)
+      return 0;
 
     /* use a contrived internal FLI type, 0xAF13 */
     this->magic_number = FLI_FILE_MAGIC_3;
@@ -209,8 +209,11 @@ static int demux_fli_send_chunk(demux_plugin_t *this_gen) {
       this->video_fifo->put(this->video_fifo, buf);
     }
     this->pts_counter += this->frame_pts_inc;
-  } else
-    this->input->seek(this->input, chunk_size, SEEK_CUR);
+  } else {
+    if (this->input->seek(this->input, chunk_size, SEEK_CUR) < 0) {
+      this->status = DEMUX_FINISHED;
+    }
+  }
 
   return this->status;
 }

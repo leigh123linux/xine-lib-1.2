@@ -190,7 +190,9 @@ static int demux_pva_send_chunk(demux_plugin_t *this_gen) {
 
     /* audio */
     if(!this->audio_fifo) {
-      this->input->seek(this->input, chunk_size, SEEK_CUR);
+      if (this->input->seek(this->input, chunk_size, SEEK_CUR) < 0) {
+        this->status = DEMUX_FINISHED;
+      }
       return this->status;
     }
 
@@ -236,7 +238,10 @@ static int demux_pva_send_chunk(demux_plugin_t *this_gen) {
     }
 
     /* skip rest of header */
-    this->input->seek (this->input, header_len, SEEK_CUR);
+    if (this->input->seek (this->input, header_len, SEEK_CUR) < 0) {
+      this->status = DEMUX_FINISHED;
+      return this->status;
+    }
 
     buf = this->input->read_block (this->input, this->audio_fifo, chunk_size);
 
@@ -256,7 +261,10 @@ static int demux_pva_send_chunk(demux_plugin_t *this_gen) {
   } else {
 
     /* unknown, skip it */
-    this->input->seek(this->input, chunk_size, SEEK_CUR);
+    if (this->input->seek(this->input, chunk_size, SEEK_CUR) < 0) {
+      this->status = DEMUX_FINISHED;
+      return this->status;
+    }
 
   }
 

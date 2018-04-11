@@ -153,10 +153,12 @@ static void demux_raw_dv_send_headers (demux_plugin_t *this_gen) {
     return;
 
   if (INPUT_IS_SEEKABLE(this->input)) {
-    this->input->seek(this->input, 0, SEEK_SET);
+    if (this->input->seek(this->input, 0, SEEK_SET) != 0)
+      return;
     if( this->input->read (this->input, scratch, NTSC_FRAME_SIZE) != NTSC_FRAME_SIZE )
       return;
-    this->input->seek(this->input, 0, SEEK_SET);
+    if (this->input->seek(this->input, 0, SEEK_SET) != 0)
+      return;
   }
   else {
     if( this->input->read (this->input, scratch, NTSC_FRAME_SIZE) != NTSC_FRAME_SIZE )

@@ -1046,7 +1046,8 @@ static int demux_mpeg_block_estimate_rate (demux_mpeg_block_t *this) {
      they should continue to be so throughout.
    */
 
-  this->input->seek (this->input, pos, SEEK_SET);
+  if (this->input->seek (this->input, pos, SEEK_SET) != pos)
+    return 0;
 
   while ( (buf = this->input->read_block (this->input, this->video_fifo, blocksize))
 	  && count < MAX_SAMPLES && reads++ < MAX_READS ) {
@@ -1181,14 +1182,16 @@ static int demux_mpeg_detect_blocksize(demux_mpeg_block_t *this,
 				       input_plugin_t *input)
 {
   uint8_t scratch[4];
-  input->seek(input, 2048, SEEK_SET);
+  if (input->seek(input, 2048, SEEK_SET) != 2048)
+    return 0;
   if (input->read(input, scratch, 4) != 4)
     return 0;
 
   if (scratch[0] || scratch[1]
       || (scratch[2] != 0x01) || (scratch[3] != 0xba)) {
 
-    input->seek(input, 2324, SEEK_SET);
+    if (input->seek(input, 2324, SEEK_SET) != 2324)
+      return 0;
     if (input->read(input, scratch, 4) != 4)
       return 0;
     if (scratch[0] || scratch[1]
@@ -1233,7 +1236,8 @@ static void demux_mpeg_block_send_headers (demux_plugin_t *this_gen) {
 
     int num_buffers = NUM_PREVIEW_BUFFERS;
 
-    this->input->seek (this->input, 0, SEEK_SET);
+    if (this->input->seek (this->input, 0, SEEK_SET) != 0)
+      return;
 
     this->status = DEMUX_OK ;
     while ( (num_buffers>0) && (this->status == DEMUX_OK) ) {
@@ -1387,7 +1391,10 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
         return NULL;
       }
 
-      input->seek(input, 0, SEEK_SET);
+      if (input->seek(input, 0, SEEK_SET) != 0) {
+        free (this);
+        return NULL;
+      }
       if (input->read(input, scratch, 5)) {
 	lprintf("open_plugin:read worked\n");
 
@@ -1406,7 +1413,10 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
           return NULL;
         }
 
-        input->seek(input, 0, SEEK_SET);
+        if (input->seek(input, 0, SEEK_SET) != 0) {
+          free (this);
+          return NULL;
+        }
 
         lprintf("open_plugin:Accepting detection_method XINE_DEMUX_CONTENT_STRATEGY blocksize=%d\n",
                 this->blocksize);

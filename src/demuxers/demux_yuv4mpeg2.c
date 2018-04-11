@@ -228,7 +228,8 @@ static int open_yuv4mpeg2_file(demux_yuv4mpeg2_t *this) {
   }
 
   /* file is qualified; seek to first frame */
-  this->input->seek(this->input, this->data_start, SEEK_SET);
+  if (this->input->seek(this->input, this->data_start, SEEK_SET) != this->data_start)
+    return 0;
 
   return 1;
 }

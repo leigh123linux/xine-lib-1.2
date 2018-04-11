@@ -146,7 +146,8 @@ static int open_vmd_file(demux_vmd_t *this) {
    * independently */
   toc_offset = _X_LE_32(&vmd_header[812]);
   this->frame_count = _X_LE_16(&vmd_header[6]);
-  this->input->seek(this->input, toc_offset + this->frame_count * 6, SEEK_SET);
+  if (this->input->seek(this->input, toc_offset + this->frame_count * 6, SEEK_SET) < 0)
+    return 0;
 
   /* while we have the toal number of blocks, calculate the total running
    * time */
@@ -222,7 +223,11 @@ static int demux_vmd_send_chunk(demux_plugin_t *this_gen) {
 
   frame = &this->frame_table[this->current_frame];
   /* position the stream (will probably be there already) */
-  this->input->seek(this->input, frame->frame_offset, SEEK_SET);
+  if (this->input->seek(this->input, frame->frame_offset, SEEK_SET) < 0) {
+    /* skip to next frame */
+    this->current_frame++;
+    return this->status;
+  }
   remaining_bytes = frame->frame_size;
 
   if (!frame->is_audio_frame) {

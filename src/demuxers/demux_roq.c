@@ -150,13 +150,15 @@ static int open_roq_file(demux_roq_t *this) {
     }
 
     /* skip the rest of the chunk */
-    this->input->seek(this->input, chunk_size, SEEK_CUR);
+    if (this->input->seek(this->input, chunk_size, SEEK_CUR) < 0)
+      break;
   }
 
   /* after all is said and done, if there is a width and a height,
    * regard it as being a valid file and reset to the first chunk */
   if (this->bih.biWidth && this->bih.biHeight) {
-    this->input->seek(this->input, 8, SEEK_SET);
+    if (this->input->seek(this->input, 8, SEEK_SET) != 8)
+      return 0;
   } else {
     return 0;
   }

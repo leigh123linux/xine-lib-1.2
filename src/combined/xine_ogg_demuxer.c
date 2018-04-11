@@ -1823,7 +1823,8 @@ static void demux_ogg_send_headers (demux_plugin_t *this_gen) {
   this->num_spu_streams   = 0;
   this->avg_bitrate       = 1;
 
-  this->input->seek (this->input, 0, SEEK_SET);
+  if (this->input->seek (this->input, 0, SEEK_SET) != 0)
+    this->status = DEMUX_FINISHED;
 
   if (this->status == DEMUX_OK) {
     _x_demux_control_start(this->stream);

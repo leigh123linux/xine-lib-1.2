@@ -84,7 +84,9 @@ static mng_bool mymng_open_stream(mng_handle mngh){
     if (!INPUT_IS_SEEKABLE(this->input)) {
       return MNG_FALSE;
     }
-    this->input->seek(this->input, 0, SEEK_SET);
+    if (this->input->seek(this->input, 0, SEEK_SET) != 0) {
+      return MNG_FALSE;
+    }
   }
 
   return MNG_TRUE;

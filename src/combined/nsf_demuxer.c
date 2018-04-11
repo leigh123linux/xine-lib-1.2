@@ -88,7 +88,8 @@ typedef struct {
 static int open_nsf_file(demux_nsf_t *this) {
   unsigned char header[NSF_HEADER_SIZE];
 
-  this->input->seek(this->input, 0, SEEK_SET);
+  if (this->input->seek(this->input, 0, SEEK_SET) != 0)
+    return 0;
   if (this->input->read(this->input, header, NSF_HEADER_SIZE) !=
     NSF_HEADER_SIZE)
     return 0;

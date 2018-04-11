@@ -139,7 +139,8 @@ static int demux_vox_seek (demux_plugin_t *this_gen, off_t start_pos, int start_
     this->status = DEMUX_OK;
 
     /* start at the beginning of the file */
-    this->input->seek(this->input, 0, SEEK_SET);
+    if (this->input->seek(this->input, 0, SEEK_SET) != 0)
+      this->status = DEMUX_FINISHED;
   }
 
   return this->status;

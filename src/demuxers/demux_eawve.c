@@ -104,7 +104,8 @@ static int process_header(demux_eawve_t *this){
   uint8_t header[12];
 
   if (this->input->get_current_pos(this->input) != 0)
-    this->input->seek(this->input, 0, SEEK_SET);
+    if (this->input->seek(this->input, 0, SEEK_SET) != 0)
+      return 0;
 
   if (this->input->read(this->input, header, sizeof(header)) != sizeof(header))
     return 0;

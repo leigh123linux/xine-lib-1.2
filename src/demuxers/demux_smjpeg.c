@@ -105,7 +105,8 @@ static int open_smjpeg_file(demux_smjpeg_t *this) {
     return 0;
 
   /* file is qualified; jump over the header + version to the duration */
-  this->input->seek(this->input, sizeof(SMJPEG_SIGNATURE) + 4, SEEK_SET);
+  if (this->input->seek(this->input, sizeof(SMJPEG_SIGNATURE) + 4, SEEK_SET) < 0)
+    return 0;
   if (this->input->read(this->input, header_chunk, 4) != 4)
     return 0;
   this->duration = _X_BE_32(&header_chunk[0]);
@@ -169,7 +170,8 @@ static int open_smjpeg_file(demux_smjpeg_t *this) {
        * of the chunk */
       if (this->input->read(this->input, header_chunk, 4) != 4)
         return 0;
-      this->input->seek(this->input, _X_BE_32(&header_chunk[0]), SEEK_CUR);
+      if (this->input->seek(this->input, _X_BE_32(&header_chunk[0]), SEEK_CUR) < 0)
+        return 0;
       break;
     }
   }
@@ -285,8 +287,10 @@ static int demux_smjpeg_send_chunk(demux_plugin_t *this_gen) {
   } else {
 
     /* skip the chunk if it can't be handled */
-    this->input->seek(this->input, remaining_sample_bytes, SEEK_CUR);
-
+    if (this->input->seek(this->input, remaining_sample_bytes, SEEK_CUR) < 0) {
+      this->status = DEMUX_FINISHED;
+      return this->status;
+    }
   }
 
   if (chunk_tag == vidD_TAG)

@@ -119,7 +119,8 @@ static void demux_mpeg_elem_send_headers (demux_plugin_t *this_gen) {
   if (INPUT_IS_SEEKABLE(this->input)) {
     int num_buffers = NUM_PREVIEW_BUFFERS;
 
-    this->input->seek (this->input, 0, SEEK_SET);
+    if (this->input->seek (this->input, 0, SEEK_SET) != 0)
+      return;
 
     this->status = DEMUX_OK ;
     while ((num_buffers > 0) && (this->status == DEMUX_OK)) {

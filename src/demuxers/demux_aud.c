@@ -109,7 +109,8 @@ anyway.
     return 0;
 
   /* file is qualified; skip over the header bytes in the stream */
-  this->input->seek(this->input, AUD_HEADER_SIZE, SEEK_SET);
+  if (this->input->seek(this->input, AUD_HEADER_SIZE, SEEK_SET) != AUD_HEADER_SIZE)
+    return 0;
 
   /* flag 0 indicates stereo */
   this->audio_channels = (header[10] & 0x1) + 1;

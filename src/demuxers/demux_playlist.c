@@ -558,7 +558,8 @@ static void demux_playlist_send_headers (demux_plugin_t *this_gen) {
 
   _x_demux_control_start (this->stream);
 
-  this->input->seek (this->input, 0, SEEK_SET);
+  if (this->input->seek (this->input, 0, SEEK_SET) != 0)
+    this->status = DEMUX_FINISHED;
 }
 
 

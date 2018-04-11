@@ -181,7 +181,8 @@ static int open_str_file(demux_str_t *this) {
 
   memset(this->channel_type, 0, sizeof(this->channel_type));
 
-  this->input->seek(this->input, 0, SEEK_SET);
+  if (this->input->seek(this->input, 0, SEEK_SET) != 0)
+    return 0;
   if (this->input->read(this->input, check_bytes, STR_CHECK_BYTES) !=
       STR_CHECK_BYTES) {
     lprintf("read error\n");
@@ -273,8 +274,11 @@ static int open_str_file(demux_str_t *this) {
 
     /* seek to the next sector and read in the header */
     local_offset = 0;
-    this->input->seek(this->input, this->data_start +
-		      ((sector+1) * CD_RAW_SECTOR_SIZE), SEEK_SET);
+    if (this->input->seek(this->input, this->data_start +
+                          ((sector+1) * CD_RAW_SECTOR_SIZE), SEEK_SET) < 0) {
+      lprintf("sector %d seek error\n", sector);
+      return 0;
+    }
     if (this->input->read(this->input, check_bytes, 0x30) != 0x30) {
       lprintf("sector %d read error\n", sector);
       return 0;

@@ -322,7 +322,8 @@ static int open_idcin_file(demux_idcin_t *this) {
     this->wave.wBitsPerSample);
 
   /* file is qualified; skip over the signature bytes in the stream */
-  this->input->seek(this->input, IDCIN_HEADER_SIZE, SEEK_SET);
+  if (this->input->seek(this->input, IDCIN_HEADER_SIZE, SEEK_SET) != IDCIN_HEADER_SIZE)
+    return 0;
 
   /* read the Huffman table */
   if (this->input->read(this->input, this->huffman_table, HUFFMAN_TABLE_SIZE) !=

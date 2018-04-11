@@ -668,7 +668,9 @@ static int open_iff_file(demux_iff_t *this) {
     return 0;
 
   /* file is qualified; skip over the header bytes in the stream */
-  this->input->seek(this->input, IFF_SIGNATURE_SIZE, SEEK_SET);
+  if (this->input->seek(this->input, IFF_SIGNATURE_SIZE, SEEK_SET)
+      != IFF_SIGNATURE_SIZE)
+    return 0;
 
   return read_iff_chunk( this );
 
