@@ -151,18 +151,17 @@ static void demux_raw_dv_send_headers (demux_plugin_t *this_gen) {
   scratch = (unsigned char *) malloc(NTSC_FRAME_SIZE);
   if (scratch == NULL )
     return;
-
   if (INPUT_IS_SEEKABLE(this->input)) {
     if (this->input->seek(this->input, 0, SEEK_SET) != 0)
-      return;
+      goto out;
     if( this->input->read (this->input, scratch, NTSC_FRAME_SIZE) != NTSC_FRAME_SIZE )
-      return;
+      goto out;
     if (this->input->seek(this->input, 0, SEEK_SET) != 0)
-      return;
+      goto out;
   }
   else {
     if( this->input->read (this->input, scratch, NTSC_FRAME_SIZE) != NTSC_FRAME_SIZE )
-      return;
+      goto out;
     if( !(scratch[3] & 0x80) )
       i = NTSC_FRAME_SIZE;
     else
@@ -171,7 +170,7 @@ static void demux_raw_dv_send_headers (demux_plugin_t *this_gen) {
     i -= NTSC_FRAME_SIZE;
     while (i > 0) {
       if( this->input->read (this->input, scratch2, 4) != 4 )
-        return;
+        goto out;
       i -= 4;
     }
   }
@@ -288,6 +287,8 @@ static void demux_raw_dv_send_headers (demux_plugin_t *this_gen) {
     _x_stream_info_set(this->stream, XINE_STREAM_INFO_HAS_AUDIO, 1);
   }
 
+ out:
+  free(scratch);
 }
 
 static int demux_raw_dv_seek (demux_plugin_t *this_gen,
