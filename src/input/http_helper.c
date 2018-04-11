@@ -37,7 +37,7 @@ const char *_x_url_user_agent (const char *url)
   return NULL;
 }
 
-int _x_parse_url (const char *url,
+static int _x_parse_url (const char *url,
                   char **proto, char** host, int *port,
                   char **user, char **password, char **uri,
                   const char **user_agent)
