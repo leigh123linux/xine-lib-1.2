@@ -343,8 +343,31 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
                                     input_plugin_t *input) {
 
   demux_raw_dv_t *this;
+  uint8_t buf[8];
 
-  this         = calloc(1, sizeof(demux_raw_dv_t));
+  switch (stream->content_detection_method) {
+
+    case METHOD_BY_CONTENT:
+      if (_x_demux_read_header(input, buf, 8) != 8)
+        return NULL;
+
+      /* DIF (DV) movie file */
+      if (memcmp(buf, "\x1F\x07\x00", 3) != 0 || !(buf[4] ^ 0x01))
+        return NULL;
+      break;
+
+    case METHOD_BY_MRL:
+    case METHOD_EXPLICIT:
+      break;
+
+    default:
+      return NULL;
+  }
+
+  this = calloc(1, sizeof(demux_raw_dv_t));
+  if (!this)
+    return NULL;
+
   this->stream = stream;
   this->input  = input;
 
@@ -359,33 +382,6 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
   this->demux_plugin.demux_class       = class_gen;
 
   this->status = DEMUX_FINISHED;
-
-  switch (stream->content_detection_method) {
-
-  case METHOD_BY_CONTENT: {
-    uint8_t buf[8];
-
-    if (_x_demux_read_header(input, buf, 8) != 8) {
-      free (this);
-      return NULL;
-    }
-
-    /* DIF (DV) movie file */
-    if (memcmp(buf, "\x1F\x07\x00", 3) != 0 || !(buf[4] ^ 0x01)) {
-      free (this);
-      return NULL;
-    }
-  }
-  break;
-
-  case METHOD_BY_MRL:
-  case METHOD_EXPLICIT:
-  break;
-
-  default:
-    free (this);
-    return NULL;
-  }
 
   if (!INPUT_IS_SEEKABLE(this->input)) {
     /* "live" DV streams require more prebuffering */
