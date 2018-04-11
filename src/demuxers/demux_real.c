@@ -1870,7 +1870,8 @@ static int demux_real_seek (demux_plugin_t *this_gen,
   this->fragment_size       = 0;
   this->fragment_count      = 0;
   this->audio_need_keyframe = 1;
-  this->audio_stream->sub_packet_cnt = 0;
+  if (this->audio_stream)
+    this->audio_stream->sub_packet_cnt = 0;
 
   if (playing)
     _x_demux_flush_engine (this->stream);
