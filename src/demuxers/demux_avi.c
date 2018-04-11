@@ -416,13 +416,15 @@ static int64_t get_audio_pts (demux_avi_t *this, int track, uint32_t posc,
   if ((at->dwSampleSize == 0) && (at->dwScale > 1)) {
     /* variable bitrate */
     lprintf("get_audio_pts: VBR: nBlockAlign=%d, dwSampleSize=%d, dwScale=%d, dwRate=%d\n",
-            at->wavex->nBlockAlign, at->dwSampleSize, at->dwScale, at->dwRate);
+            at->wavex ? at->wavex->nBlockAlign : 0,
+            at->dwSampleSize, at->dwScale, at->dwRate);
     return (int64_t)(90000.0 * (double)(posc + at->dwStart) *
       (double)at->dwScale / (double)at->dwRate);
   } else {
     /* constant bitrate */
     lprintf("get_audio_pts: CBR: nBlockAlign=%d, dwSampleSize=%d, dwScale=%d, dwRate=%d\n",
-            at->wavex->nBlockAlign, at->dwSampleSize, at->dwScale, at->dwRate);
+            at->wavex ? at->wavex->nBlockAlign : 0,
+            at->dwSampleSize, at->dwScale, at->dwRate);
     if( at->wavex && at->wavex->nBlockAlign ) {
       return (int64_t)((double)((postot + posb) / (double)at->wavex->nBlockAlign + at->dwStart) *
         (double)at->dwScale / (double)at->dwRate * 90000.0);
