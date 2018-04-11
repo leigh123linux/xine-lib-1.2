@@ -325,6 +325,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
     case METHOD_BY_CONTENT:
       if (!probe_mod_file(input))
         return NULL;
+      break;
     default:
       return NULL;
   }
