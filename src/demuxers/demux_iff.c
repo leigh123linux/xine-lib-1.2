@@ -133,8 +133,6 @@ typedef struct {
 
   off_t                data_start;
   off_t                data_size;
-
-  int                  seek_flag;  /* this is set when a seek just occurred */
 } demux_iff_t;
 
 
@@ -608,7 +606,6 @@ static int open_iff_file(demux_iff_t *this) {
   this->running_time                    = 0;
   this->data_start                      = 0;
   this->data_size                       = 0;
-  this->seek_flag                       = 0;
   this->audio_interleave_buffer         = 0;
   this->audio_interleave_buffer_size    = 0;
   this->audio_read_buffer               = 0;
@@ -1099,7 +1096,6 @@ static int demux_iff_seek (demux_plugin_t *this_gen,
   switch( this->iff_type ) {
     case IFF_8SVX_CHUNK:
     case IFF_16SV_CHUNK:
-      this->seek_flag                   = 1;
       this->status                      = DEMUX_OK;
       _x_demux_flush_engine (this->stream);
 
@@ -1116,7 +1112,6 @@ static int demux_iff_seek (demux_plugin_t *this_gen,
     case IFF_ILBM_CHUNK:
     case IFF_ANIM_CHUNK:
       /* disable seeking for ILBM and ANIM */
-      this->seek_flag                   = 0;
       if( !playing ) {
         this->status = DEMUX_OK;
       }
