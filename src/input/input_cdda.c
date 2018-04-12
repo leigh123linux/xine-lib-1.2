@@ -1597,8 +1597,10 @@ static void _cdda_parse_cddb_info (cdda_input_plugin_t *this, char *buffer, char
       this->cddb.disc_category = strdup (pt + 1);
   }
   else if (sscanf (buffer, "TTITLE%d=%s", &track_no, &buf[0]) == 2) {
-    char *pt = strchr(buffer, '=');
-    this->cddb.track[track_no].title = _cdda_append (this->cddb.track[track_no].title, pt + 1);
+    if (track_no >= 0 && track_no < this->cddb.num_tracks) {
+      char *pt = strchr(buffer, '=');
+      this->cddb.track[track_no].title = _cdda_append (this->cddb.track[track_no].title, pt + 1);
+    }
   }
   else if (!strncmp (buffer, "EXTD=", 5))
   {
