@@ -168,7 +168,8 @@ static int open_aiff_file(demux_aiff_t *this) {
       this->data_start = this->input->get_current_pos(this->input);
       this->data_size = this->audio_frames * this->audio_channels *
         (this->audio_bits / 8);
-      this->running_time = (this->audio_frames / this->audio_sample_rate) * 1000;
+      if (this->audio_sample_rate)
+        this->running_time = (this->audio_frames / this->audio_sample_rate) * 1000;
 
       /* we should send only complete frames to decoder, as it
        * doesn't handle underconsumption yet */

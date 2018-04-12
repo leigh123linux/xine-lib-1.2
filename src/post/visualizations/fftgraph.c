@@ -232,6 +232,8 @@ static int fftgraph_port_open(xine_audio_port_t *port_gen, xine_stream_t *stream
   this->ratio = (double)FFTGRAPH_WIDTH / (double)FFTGRAPH_HEIGHT;
 
   this->channels = _x_ao_mode2channels(mode);
+  if (this->channels < 1)
+    this->channels = 1;
   if( this->channels > MAXCHANNELS )
     this->channels = MAXCHANNELS;
   this->lines_per_channel = FFTGRAPH_HEIGHT / this->channels;

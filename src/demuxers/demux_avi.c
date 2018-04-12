@@ -432,6 +432,8 @@ static int64_t get_audio_pts (demux_avi_t *this, int track, uint32_t posc,
       return (int64_t)((double)((postot + posb) / (double)at->wavex->nBlockAlign + at->dwStart) *
         (double)at->dwScale / (double)at->dwRate * 90000.0);
     } else {
+      if (!at->dwSampleSize)
+        return 0;
       return (int64_t)((double)((postot + posb) / (double)at->dwSampleSize + at->dwStart) *
         (double)at->dwScale / (double)at->dwRate * 90000.0);
     }
