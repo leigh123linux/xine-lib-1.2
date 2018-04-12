@@ -1062,8 +1062,16 @@ static int32_t parse_private_stream_1(demux_mpeg_pes_t *this, uint8_t *p, buf_el
       if( !this->preview_mode )
         check_newpts( this, this->pts, PTS_AUDIO );
 
-      this->audio_fifo->put (this->audio_fifo, buf);
-      lprintf ("A52 PACK put on fifo\n");
+      if (this->audio_fifo) {
+        this->audio_fifo->put (this->audio_fifo, buf);
+        lprintf ("A52 PACK put on fifo\n");
+      } else {
+        buf->free_buffer(buf);
+        /* skip tail */
+        if (this->input->seek (this->input, this->packet_len - size, SEEK_CUR) < 0)
+          return -1;
+        return this->packet_len + result;
+      }
 
       if (size == this->packet_len) {
         return this->packet_len + result;
@@ -1088,12 +1096,8 @@ static int32_t parse_private_stream_1(demux_mpeg_pes_t *this, uint8_t *p, buf_el
         buf->type      = BUF_AUDIO_A52;
         buf->pts       = 0;
 
-        if(this->audio_fifo) {
-          this->audio_fifo->put (this->audio_fifo, buf);
-          lprintf ("A52 PACK put on fifo\n");
-        } else {
-          buf->free_buffer(buf);
-        }
+        this->audio_fifo->put (this->audio_fifo, buf);
+        lprintf ("A52 PACK put on fifo\n");
       }
 
       return this->packet_len + result;
