@@ -543,6 +543,7 @@ static int read_iff_chunk(demux_iff_t *this) {
               this->audio_bytes_per_second         = this->audio_channels *
                                                      (this->audio_bits / 8) *
                                                      this->vhdr->samplesPerSec;
+              if (this->audio_channels > 0 && this->vhdr->samplesPerSec > 0)
               this->running_time        = ((this->vhdr->oneShotHiSamples +
                                             this->vhdr->repeatHiSamples) *
                                            1000 / this->vhdr->samplesPerSec) /
