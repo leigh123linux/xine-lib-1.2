@@ -87,8 +87,6 @@ static int open_flac_file(demux_flac_t *flac) {
   unsigned char *streaminfo = flac->streaminfo + sizeof(xine_waveformatex);
   int i;
 
-  flac->seekpoints = NULL;
-
   /* fetch the file signature, 4 bytes will read both the fLaC
    * signature and the */
   if (_x_demux_read_header(flac->input, &signature, 4) != 4)
@@ -540,6 +538,10 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
   }
 
   this         = calloc(1, sizeof(demux_flac_t));
+  if (!this)
+    return NULL;
+
+  this->seekpoints = NULL;
   this->stream = stream;
   this->input  = input;
 
