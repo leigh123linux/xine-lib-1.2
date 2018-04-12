@@ -297,6 +297,8 @@ static int read_iff_chunk(demux_iff_t *this) {
           /* not yet implemented */
           break;
         case IFF_CHAN_CHUNK:
+          if (!this->vhdr)
+            break;
           this->chan_settings           = _X_BE_32(&buffer[0]);
           switch( this->chan_settings ) {
             case STEREO:
@@ -321,6 +323,8 @@ static int read_iff_chunk(demux_iff_t *this) {
           }
           break;
         case IFF_PAN_CHUNK:
+          if (!this->vhdr)
+            break;
           this->chan_settings           = PAN;
           this->pan_sposition           = _X_BE_32(&buffer[0]);
           this->audio_channels          = 2;
@@ -521,6 +525,8 @@ static int read_iff_chunk(demux_iff_t *this) {
           break;
         case IFF_BODY_CHUNK:
         case IFF_DLTA_CHUNK:
+          if (!this->vhdr)
+            break;
           this->data_start              = this->input->get_current_pos(this->input);
           this->data_size               = junk_size;
           switch( this->iff_type )
