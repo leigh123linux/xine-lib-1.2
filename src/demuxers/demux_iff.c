@@ -1112,6 +1112,7 @@ static int demux_iff_seek (demux_plugin_t *this_gen,
       this->audio_position              = (start_pos < 0) ? 0 :
                                           ((start_pos >= this->data_size) ?
                                            this->data_size : start_pos);
+      break;
     case IFF_ILBM_CHUNK:
     case IFF_ANIM_CHUNK:
       /* disable seeking for ILBM and ANIM */
