@@ -360,10 +360,12 @@ void draw_line_xmmx (Pixel *data, int x1, int y1, int x2, int y2, int col, int s
 				xx = x >> 16;
 				p = &(data[(screenx * y) + xx]);
 				DRAWMETHOD;
+#if 0
 				if (xx < (screenx - 1)) {
 					p++;
 					/* DRAWMETHOD; */
 				}
+#endif
 				x += dx;
 			}
 			goto end_of_line;
@@ -376,10 +378,12 @@ void draw_line_xmmx (Pixel *data, int x1, int y1, int x2, int y2, int col, int s
 				yy = y >> 16;
 				p = &(data[(screenx * yy) + x]);
 				DRAWMETHOD;
+#if 0
 				if (yy < (screeny - 1)) {
 					p += screeny;
 					/* DRAWMETHOD; */
 				}
+#endif
 				y += dy;
 			}
 		}
@@ -397,10 +401,12 @@ void draw_line_xmmx (Pixel *data, int x1, int y1, int x2, int y2, int col, int s
 				xx = x >> 16;
 				p = &(data[(screenx * y) + xx]);
 				DRAWMETHOD;
+#if 0
 				if (xx < (screenx - 1)) {
 					p--;
 					/* DRAWMETHOD; */
 				}
+#endif
 				x += dx;
 			}
 			goto end_of_line;
@@ -413,10 +419,12 @@ void draw_line_xmmx (Pixel *data, int x1, int y1, int x2, int y2, int col, int s
 				yy = y >> 16;
 				p = &(data[(screenx * yy) + x]);
 				DRAWMETHOD;
+#if 0
 				if (yy < (screeny - 1)) {
 					p += screeny;
 					/* DRAWMETHOD; */
 				}
+#endif
 				y += dy;
 			}
 			goto end_of_line;

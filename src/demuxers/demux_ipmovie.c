@@ -414,7 +414,7 @@ static int process_ipmovie_chunk(demux_ipmovie_t *this) {
       case OPCODE_SET_DECODING_MAP:
         lprintf("set decoding map\n");
 
-        current_file_pos = this->input->get_current_pos(this->input);
+        //current_file_pos = this->input->get_current_pos(this->input);
         lprintf("sending decoding map along with duration %d\n",
           this->frame_pts_inc);
 

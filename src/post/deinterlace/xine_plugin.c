@@ -842,7 +842,7 @@ static int deinterlace_draw(vo_frame_t *frame, xine_stream_t *stream)
       if (this->recent_frame[0] && !this->recent_frame[0]->progressive_frame &&
           this->tvtime->curmethod->delaysfield)
       {
-	skip = deinterlace_build_output_field(
+        deinterlace_build_output_field(
           this, port, stream,
           frame, yuy2_frame,
           fields[0], 0,

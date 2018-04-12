@@ -141,10 +141,12 @@ void draw_line (Pixel *data, int x1, int y1, int x2, int y2, int col, int screen
 	xx = x >> 16;
 	p = &(data[(screenx * y) + xx]);
 	DRAWMETHOD;
+#if 0
 	if (xx < (screenx - 1)) {
 	  p++;
 	  /* DRAWMETHOD; */
 	}
+#endif
 	x += dx;
       }
       return;
@@ -157,10 +159,12 @@ void draw_line (Pixel *data, int x1, int y1, int x2, int y2, int col, int screen
 	yy = y >> 16;
 	p = &(data[(screenx * yy) + x]);
 	DRAWMETHOD;
+#if 0
 	if (yy < (screeny - 1)) {
 	  p += screeny;
 	  /* DRAWMETHOD; */
 	}
+#endif
 	y += dy;
       }
     }
@@ -178,10 +182,12 @@ void draw_line (Pixel *data, int x1, int y1, int x2, int y2, int col, int screen
 	xx = x >> 16;
 	p = &(data[(screenx * y) + xx]);
 	DRAWMETHOD;
+#if 0
 	if (xx < (screenx - 1)) {
 	  p--;
 	  /* DRAWMETHOD; */
 	}
+#endif
 	x += dx;
       }
       return;
@@ -194,10 +200,12 @@ void draw_line (Pixel *data, int x1, int y1, int x2, int y2, int col, int screen
 	yy = y >> 16;
 	p = &(data[(screenx * yy) + x]);
 	DRAWMETHOD;
+#if 0
 	if (yy < (screeny - 1)) {
 	  p += screeny;
 	  /* DRAWMETHOD; */
 	}
+#endif
 	y += dy;
       }
       return;
