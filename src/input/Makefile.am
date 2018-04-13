@@ -178,7 +178,7 @@ xineplug_inp_network_la_LIBADD = $(XINE_LIB) $(NET_LIBS) $(LTLIBINTL) \
 	libreal.la librtsp.la http_helper.la input_helper.la net_buf_ctrl.la
 
 xineplug_inp_rtp_la_SOURCES = input_rtp.c
-xineplug_inp_rtp_la_LIBADD = $(XINE_LIB) $(NET_LIBS) $(PTHREAD_LIBS) $(LTLIBINTL) net_buf_ctrl.la
+xineplug_inp_rtp_la_LIBADD = $(XINE_LIB) $(NET_LIBS) $(PTHREAD_LIBS) $(LTLIBINTL) net_buf_ctrl.la input_helper.la
 
 xineplug_inp_mms_la_SOURCES = input_mms.c mms.c mms.h mmsh.c mmsh.h
 xineplug_inp_mms_la_LIBADD = $(XINE_LIB) $(LTLIBICONV) $(LTLIBINTL) $(ASFHEADER_LIB) http_helper.la net_buf_ctrl.la

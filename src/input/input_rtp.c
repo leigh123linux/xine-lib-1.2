@@ -103,6 +103,7 @@
 #include <xine/xineutils.h>
 #include <xine/input_plugin.h>
 #include "net_buf_ctrl.h"
+#include "input_helper.h"
 
 #ifdef __GNUC__
 #define LOG_MSG(xine, message, args...) {                         \
@@ -526,32 +527,6 @@ static off_t rtp_plugin_read (input_plugin_t *this_gen,
   return copied;
 }
 
-static buf_element_t *rtp_plugin_read_block (input_plugin_t *this_gen,
-					     fifo_buffer_t *fifo, off_t todo) {
-  buf_element_t        *buf = fifo->buffer_pool_alloc (fifo);
-  int                   total_bytes;
-
-  if (todo > buf->max_size)
-    todo = buf->max_size;
-  if (todo < 0) {
-    buf->free_buffer (buf);
-    return NULL;
-  }
-
-  buf->content = buf->mem;
-  buf->type    = BUF_DEMUX_BLOCK;
-
-  total_bytes = rtp_plugin_read (this_gen, buf->content, todo);
-
-  if (total_bytes != todo) {
-    buf->free_buffer (buf);
-    return NULL;
-  }
-
-  buf->size = total_bytes;
-
-  return buf;
-}
 
 /*
  *
@@ -577,22 +552,6 @@ static off_t rtp_plugin_get_current_pos (input_plugin_t *this_gen){
   rtp_input_plugin_t *this = (rtp_input_plugin_t *) this_gen;
 
   return this->curpos;
-}
-
-/*
- *
- */
-static uint32_t rtp_plugin_get_capabilities (input_plugin_t *this_gen) {
-
-  return INPUT_CAP_PREVIEW;
-}
-
-/*
- *
- */
-static uint32_t rtp_plugin_get_blocksize (input_plugin_t *this_gen) {
-
-  return 0;
 }
 
 /*
@@ -764,13 +723,13 @@ static input_plugin_t *rtp_class_get_instance (input_class_t *cls_gen,
   this->curpos = 0;
 
   this->input_plugin.open              = rtp_plugin_open;
-  this->input_plugin.get_capabilities  = rtp_plugin_get_capabilities;
+  this->input_plugin.get_capabilities  = _x_input_get_capabilities_preview;
   this->input_plugin.read              = rtp_plugin_read;
-  this->input_plugin.read_block        = rtp_plugin_read_block;
+  this->input_plugin.read_block        = _x_input_default_read_block;
   this->input_plugin.seek              = rtp_plugin_seek;
   this->input_plugin.get_current_pos   = rtp_plugin_get_current_pos;
   this->input_plugin.get_length        = rtp_plugin_get_length;
-  this->input_plugin.get_blocksize     = rtp_plugin_get_blocksize;
+  this->input_plugin.get_blocksize     = _x_input_default_get_blocksize;
   this->input_plugin.get_mrl           = rtp_plugin_get_mrl;
   this->input_plugin.get_optional_data = rtp_plugin_get_optional_data;
   this->input_plugin.dispose           = rtp_plugin_dispose;
