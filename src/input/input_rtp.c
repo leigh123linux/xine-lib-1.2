@@ -145,7 +145,7 @@ typedef struct {
 
   pthread_t         reader_thread;
 
-  int		    curpos;
+  off_t             curpos;
   int               rtp_running;
 
   char              preview[MAX_PREVIEW_SIZE];
