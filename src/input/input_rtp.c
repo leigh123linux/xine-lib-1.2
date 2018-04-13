@@ -532,9 +532,12 @@ static off_t rtp_plugin_read (input_plugin_t *this_gen,
  *
  */
 static off_t rtp_plugin_seek (input_plugin_t *this_gen,
-			      off_t offset, int origin) {
+                              off_t offset, int origin) {
 
-  return -1;
+  rtp_input_plugin_t *this = (rtp_input_plugin_t *) this_gen;
+
+  return _x_input_seek_preview(this_gen, offset, origin,
+                               &this->curpos, -1, -1);
 }
 
 /*
