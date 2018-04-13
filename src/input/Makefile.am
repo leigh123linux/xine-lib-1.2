@@ -233,5 +233,5 @@ xineplug_inp_nfs_la_LIBADD = $(XINE_LIB) $(LIBNFS_LIBS) $(LTLIBINTL) input_helpe
 xineplug_inp_nfs_la_CFLAGS = $(AM_CFLAGS) $(LIBNFS_CFLAGS)
 
 xineplug_inp_ssh_la_SOURCES = input_ssh.c
-xineplug_inp_ssh_la_LIBADD = $(XINE_LIB) $(LIBSSH2_LIBS) $(LTLIBINTL) http_helper.la input_helper.la
+xineplug_inp_ssh_la_LIBADD = $(XINE_LIB) $(LIBSSH2_LIBS) $(LTLIBINTL) http_helper.la input_helper.la net_buf_ctrl.la
 xineplug_inp_ssh_la_CFLAGS = $(AM_CFLAGS) $(LIBSSH2_CFLAGS)

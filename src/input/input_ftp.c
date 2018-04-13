@@ -43,6 +43,7 @@
 #include "group_network.h"
 #include "http_helper.h"
 #include "input_helper.h"
+#include "net_buf_ctrl.h"
 
 #define DEFAULT_FTP_PORT 21
 
@@ -51,6 +52,7 @@ typedef struct {
 
   xine_t          *xine;
   xine_stream_t   *stream;
+  nbc_t           *nbc;
 
   char            *mrl;
   char            *mrl_private;
@@ -495,6 +497,11 @@ static void _ftp_dispose (input_plugin_t *this_gen)
     this->fd = -1;
   }
 
+  if (this->nbc) {
+    nbc_close(this->nbc);
+    this->nbc = NULL;
+  }
+
   _x_freep (&this->mrl);
   _x_freep_wipe_string(&this->mrl_private);
 
@@ -585,6 +592,11 @@ static input_plugin_t *_get_instance (input_class_t *cls_gen, xine_stream_t *str
   this->input_plugin.get_optional_data = _ftp_get_optional_data;
   this->input_plugin.dispose           = _ftp_dispose;
   this->input_plugin.input_class       = cls_gen;
+
+  if (stream) {
+    /* not needed for directory browsing */
+    this->nbc = nbc_init (stream);
+  }
 
   return &this->input_plugin;
 }
