@@ -166,18 +166,9 @@ struct ivtv_ioctl_codec {
 typedef struct pvrscr_s pvrscr_t;
 
 typedef struct {
-
-  input_class_t     input_class;
-
-  const char       *devname;
-
-} pvr_input_class_t;
-
-
-typedef struct {
   input_plugin_t      input_plugin;
 
-  pvr_input_class_t  *class;
+  char               *devname;
 
   xine_stream_t      *stream;
 
@@ -742,7 +733,7 @@ static int pvr_play_file(pvr_input_plugin_t *this, fifo_buffer_t *fifo, uint8_t 
          this->play_fd = xine_open_cloexec(filename, O_RDONLY);
          if( this->play_fd == -1 ) {
            xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
-		   _("input_pvr: error opening pvr file (%s)\n"), filename);
+                   _("input_pvr: error opening pvr file (%s)\n"), filename);
            free(filename);
            return 0;
          }
@@ -1013,10 +1004,10 @@ static void pvr_event_handler (pvr_input_plugin_t *this) {
 
         /* as of ivtv 0.10.6: must close and reopen to set input */
         close(this->dev_fd);
-        this->dev_fd = xine_open_cloexec(this->class->devname, O_RDWR);
+        this->dev_fd = xine_open_cloexec(this->devname, O_RDWR);
         if (this->dev_fd < 0) {
           xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG,
-                  "input_pvr: error opening device %s\n", this->class->devname );
+                  "input_pvr: error opening device %s\n", this->devname );
         } else {
           if( ioctl(this->dev_fd, VIDIOC_S_INPUT, &this->input) == 0 ) {
             lprintf("Tuner Input set to:%d\n", v4l2_data->input);
@@ -1163,11 +1154,11 @@ static void pvr_event_handler (pvr_input_plugin_t *this) {
 
        /* how lame. we must close and reopen to change bitrate. */
        close(this->dev_fd);
-       this->dev_fd = xine_open_cloexec(this->class->devname, O_RDWR);
+       this->dev_fd = xine_open_cloexec(this->devname, O_RDWR);
        if (this->dev_fd == -1) {
          pthread_mutex_unlock(&this->dev_lock);
          xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
-		 _("input_pvr: error opening device %s\n"), this->class->devname );
+                 _("input_pvr: error opening device %s\n"), this->devname );
          return;
        }
 
@@ -1389,6 +1380,7 @@ static void pvr_plugin_dispose (input_plugin_t *this_gen ) {
   _x_freep (&this->mrl);
   _x_freep (&this->tmp_prefix);
   _x_freep (&this->save_prefix);
+  _x_freep (&this->devname);
 
   ite = xine_list_front (this->saved_shows);
   while (ite) {
@@ -1423,10 +1415,10 @@ static int pvr_plugin_open (input_plugin_t *this_gen ) {
 
   this->saved_id = 0;
 
-  this->dev_fd = xine_open_cloexec(this->class->devname, O_RDWR);
+  this->dev_fd = xine_open_cloexec(this->devname, O_RDWR);
   if (this->dev_fd == -1) {
     xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
-	    _("input_pvr: error opening device %s\n"), this->class->devname );
+            _("input_pvr: error opening device %s\n"), this->devname );
     return 0;
   }
 
@@ -1479,7 +1471,6 @@ static int pvr_plugin_open (input_plugin_t *this_gen ) {
 static input_plugin_t *pvr_class_get_instance (input_class_t *cls_gen, xine_stream_t *stream,
 				    const char *data) {
 
-  pvr_input_class_t   *cls = (pvr_input_class_t *) cls_gen;
   pvr_input_plugin_t  *this;
   char                *mrl;
   char                *aux;
@@ -1491,7 +1482,6 @@ static input_plugin_t *pvr_class_get_instance (input_class_t *cls_gen, xine_stre
   aux = &mrl[5];
 
   this = calloc(1, sizeof (pvr_input_plugin_t));
-  this->class        = cls;
   this->stream       = stream;
   this->dev_fd       = -1;
   this->mrl          = mrl;
@@ -1547,6 +1537,16 @@ static input_plugin_t *pvr_class_get_instance (input_class_t *cls_gen, xine_stre
   pthread_cond_init  (&this->has_valid_data,NULL);
   pthread_cond_init  (&this->wake_pvr,NULL);
 
+  {
+    xine_cfg_entry_t dev;
+    if (xine_config_lookup_entry(stream->xine, "media.wintv_pvr.device", &dev) &&
+        dev.str_value && strlen(dev.str_value) > 0) {
+      this->devname = strdup(dev.str_value);
+    } else {
+      this->devname = strdup(PVR_DEVICE);
+    }
+  }
+
   return &this->input_plugin;
 }
 
@@ -1556,27 +1556,25 @@ static input_plugin_t *pvr_class_get_instance (input_class_t *cls_gen, xine_stre
  */
 static void *init_plugin (xine_t *xine, const void *data) {
 
-  pvr_input_class_t  *this;
+  static const input_class_t input_pvr_class = {
+    .get_instance       = pvr_class_get_instance,
+    .identifier         = "pvr",
+    .description        = N_("WinTV-PVR 250/350 input plugin"),
+    .get_dir            = NULL,
+    .get_autoplay_list  = NULL,
+    .dispose            = NULL,
+    .eject_media        = NULL,
+  };
 
-  this = calloc(1, sizeof (pvr_input_class_t));
+  xine->config->register_filename(xine->config,
+                                  "media.wintv_pvr.device",
+                                  PVR_DEVICE, XINE_CONFIG_STRING_IS_DEVICE_NAME,
+                                  _("device used for WinTV-PVR 250/350 (pvr plugin)"),
+                                  _("The path to the device of your WinTV card."),
+                                  10, NULL,
+                                  NULL);
 
-  this->devname = xine->config->register_filename(xine->config,
-				    "media.wintv_pvr.device",
-				    PVR_DEVICE, XINE_CONFIG_STRING_IS_DEVICE_NAME,
-				    _("device used for WinTV-PVR 250/350 (pvr plugin)"),
-				    _("The path to the device of your WinTV card."),
-				    10, NULL,
-				    NULL);
-
-  this->input_class.get_instance       = pvr_class_get_instance;
-  this->input_class.identifier         = "pvr";
-  this->input_class.description        = N_("WinTV-PVR 250/350 input plugin");
-  this->input_class.get_dir            = NULL;
-  this->input_class.get_autoplay_list  = NULL;
-  this->input_class.dispose            = default_input_class_dispose;
-  this->input_class.eject_media        = NULL;
-
-  return this;
+  return (void *)&input_pvr_class;
 }
 
 /*
