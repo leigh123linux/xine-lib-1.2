@@ -10,6 +10,7 @@ AC_DEFUN([XINE_INPUT_PLUGINS], [
     dnl - v4l is Linux only
 
     default_enable_dvb=no
+    default_enable_dvd=yes
     default_enable_gnomevfs=yes
     default_enable_samba=yes
     default_enable_v4l=no
@@ -129,6 +130,9 @@ AC_DEFUN([XINE_INPUT_PLUGINS], [
     AM_CONDITIONAL([ENABLE_V4L2], [test x"$have_v4l2" = x"yes"])
 
     dnl dvdnav
+    XINE_ARG_ENABLE([dvd], [Disable DVD support])
+    AM_CONDITIONAL([ENABLE_DVD], [test x"$enable_dvd" != x"no"])
+ 
     dnl XXX: This could be cleaned up so that code does not have to ifdef so much
     XINE_ARG_WITH([external-dvdnav], [Use external dvdnav library])
     if test x"$with_external_dvdnav" != x"no"; then

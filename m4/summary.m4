@@ -20,10 +20,12 @@ AC_DEFUN([XINE_LIB_SUMMARY], [
         fi
     fi
     echo "   - ftp"
+    if test x"$enable_dvd" != x"no"; then
     if test x"$with_external_dvdnav" != x"no"; then
         echo "   - dvd (external libs)"
     else
         echo "   - dvd (*INTERNAL* libs)"
+    fi
     fi
     test x"$enable_vdr" != x"no"    && echo "   - vdr"
     test x"$have_dvb" = x"yes"      && echo "   - dvb"
