@@ -738,6 +738,7 @@ pnm_t *pnm_connect(xine_stream_t *stream, const char *mrl) {
   p->port=7070;
   p->url=strdup(mrl);
   p->packet=0;
+  p->s = -1;
 
   slash=strchr(mrl_ptr,'/');
   colon=strchr(mrl_ptr,':');
@@ -766,11 +767,7 @@ pnm_t *pnm_connect(xine_stream_t *stream, const char *mrl) {
 
   if (fd == -1) {
     xprintf (p->stream->xine, XINE_VERBOSITY_LOG, _("input_pnm: failed to connect '%s'\n"), p->host);
-    free(p->path);
-    free(p->host);
-    free(p->url);
-    free(p);
-    return NULL;
+    goto fail;
   }
   p->s=fd;
 
@@ -796,10 +793,7 @@ pnm_t *pnm_connect(xine_stream_t *stream, const char *mrl) {
 
  fail:
   xprintf (p->stream->xine, XINE_VERBOSITY_LOG, _("input_pnm: failed to set up stream\n"));
-  free(p->path);
-  free(p->host);
-  free(p->url);
-  free(p);
+  pnm_close(p);
   return NULL;
 }
 
