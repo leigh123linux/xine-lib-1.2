@@ -30,24 +30,10 @@
 #include "config.h"
 #endif
 
-#include <unistd.h>
 #include <stdio.h>
-#ifdef HAVE_SYS_SOCKET_H
-#include <sys/socket.h>
-#endif
-#ifdef HAVE_NETINET_IN_H
-#include <netinet/in.h>
-#endif
-#ifdef HAVE_NETDB_H
-#include <netdb.h>
-#endif
 #include <string.h>
 #include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <errno.h>
 #include <stdlib.h>
-#include <time.h>
 
 #if defined(HAVE_ICONV) && defined(HAVE_NL_LANGINFO)
 #define USE_ICONV

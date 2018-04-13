@@ -42,32 +42,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <fcntl.h>
 #include <string.h>
-#ifdef HAVE_SYS_SOCKET_H
-#include <sys/socket.h>
-#endif
-#ifdef HAVE_NETINET_IN_H
-#include <netinet/in.h>
-#endif
-
-#ifdef ENABLE_IPV6
-#include <sys/types.h>
-#endif
-
-#ifdef HAVE_ARPA_INET_H
-#include <arpa/inet.h>
-#endif
-#ifdef HAVE_NETDB_H
-#include <netdb.h>
-#endif
-
-#ifdef WIN32
-#include <winsock.h>
-#endif
-
-#include <errno.h>
-#include <sys/time.h>
 
 #define LOG_MODULE "input_net"
 #define LOG_VERBOSE
