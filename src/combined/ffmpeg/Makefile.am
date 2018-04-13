@@ -16,7 +16,6 @@ EXTRA_DIST = xine_video.list xine_audio.list mkcodeclist.pl
 noinst_HEADERS = ffmpeg_compat.h
 
 if ENABLE_FFMPEG
-if ENABLE_POSTPROC
 
 BUILT_SOURCES = $(ff_generated)
 
@@ -69,5 +68,4 @@ report: avcodec_audio.list avcodec_video.list
 
 .PHONY: report
 
-endif
 endif

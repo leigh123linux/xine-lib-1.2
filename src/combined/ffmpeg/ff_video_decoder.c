@@ -44,11 +44,13 @@
 #include "ffmpeg_decoder.h"
 #include "ff_mpeg_parser.h"
 
+#ifdef HAVE_POSTPROC
 #ifdef HAVE_FFMPEG_AVUTIL_H
 # include <postprocess.h>
 #else
 # include <libpostproc/postprocess.h>
 # include <libavutil/mem.h>
+#endif
 #endif
 
 #ifdef HAVE_VA_VA_X11_H
@@ -80,7 +82,9 @@ typedef struct ff_video_decoder_s ff_video_decoder_t;
 typedef struct ff_video_class_s {
   video_decoder_class_t   decoder_class;
 
+#ifdef HAVE_POSTPROC
   int                     pp_quality;
+#endif
   int                     thread_count;
   int8_t                  skip_loop_filter_enum;
   int8_t                  choose_speed_over_accuracy;
@@ -110,7 +114,9 @@ struct ff_video_decoder_s {
   uint8_t           decoder_ok:1;
   uint8_t           decoder_init_mode:1;
   uint8_t           is_mpeg12:1;
+#ifdef HAVE_POSTPROC
   uint8_t           pp_available:1;
+#endif
   uint8_t           is_direct_rendering_disabled:1;  /* used only to avoid flooding log */
   uint8_t           cs_convert_init:1;
   uint8_t           assume_bad_field_picture:1;
@@ -131,10 +137,12 @@ struct ff_video_decoder_s {
   AVCodecContext   *context;
   AVCodec          *codec;
 
+#ifdef HAVE_POSTPROC
   int               pp_quality;
   int               pp_flags;
   pp_context       *our_context;
   pp_mode          *our_mode;
+#endif /* HAVE_POSTPROC */
 
   /* mpeg-es parsing */
   mpeg_parser_t    *mpeg_parser;
@@ -1125,11 +1133,13 @@ static void thread_count_cb(void *user_data, xine_cfg_entry_t *entry) {
     class->thread_count = 8;
 }
 
+#ifdef HAVE_POSTPROC
 static void pp_quality_cb(void *user_data, xine_cfg_entry_t *entry) {
   ff_video_class_t   *class = (ff_video_class_t *) user_data;
 
   class->pp_quality = entry->num_value;
 }
+#endif
 
 static void dri_cb(void *user_data, xine_cfg_entry_t *entry) {
   ff_video_class_t   *class = (ff_video_class_t *) user_data;
@@ -1137,6 +1147,7 @@ static void dri_cb(void *user_data, xine_cfg_entry_t *entry) {
   class->enable_dri = entry->num_value;
 }
 
+#ifdef HAVE_POSTPROC
 static void pp_change_quality (ff_video_decoder_t *this) {
   this->pp_quality = this->class->pp_quality;
 
@@ -1161,8 +1172,10 @@ static void pp_change_quality (ff_video_decoder_t *this) {
     }
   }
 }
+#endif /* HAVE_POSTPROC */
 
 static void init_postprocess (ff_video_decoder_t *this) {
+#ifdef HAVE_POSTPROC
 #if defined(ARCH_X86)
   uint32_t cpu_caps;
 #endif
@@ -1200,6 +1213,7 @@ static void init_postprocess (ff_video_decoder_t *this) {
 
   /* Set level */
   pp_change_quality(this);
+#endif /* HAVE_POSTPROC */
 }
 
 static int ff_handle_mpeg_sequence(ff_video_decoder_t *this, mpeg_parser_t *parser) {
@@ -2083,6 +2097,7 @@ static void ff_handle_mpeg12_buffer (ff_video_decoder_t *this, buf_element_t *bu
   }
 }
 
+#ifdef HAVE_POSTPROC
 static void ff_postprocess (ff_video_decoder_t *this, AVFrame *av_frame, vo_frame_t *img) {
   int qstride, qtype;
   int8_t *qtable;
@@ -2106,6 +2121,7 @@ static void ff_postprocess (ff_video_decoder_t *this, AVFrame *av_frame, vo_fram
                   qtable, qstride, this->our_mode, this->our_context,
                   av_frame->pict_type | (qtype ? PP_PICT_TYPE_QP2 : 0));
 }
+#endif /* HAVE_POSTPROC */
 
 static void ff_handle_buffer (ff_video_decoder_t *this, buf_element_t *buf) {
   uint8_t *chunk_buf = this->buf;
@@ -2328,6 +2344,7 @@ static void ff_handle_buffer (ff_video_decoder_t *this, buf_element_t *buf) {
         }
 
         /* post processing */
+#ifdef HAVE_POSTPROC
         if(this->pp_quality != this->class->pp_quality && this->context->pix_fmt != PIX_FMT_VAAPI_VLD)
           pp_change_quality(this);
 
@@ -2347,7 +2364,9 @@ static void ff_handle_buffer (ff_video_decoder_t *this, buf_element_t *buf) {
             free_img = 1;
           }
           ff_postprocess (this, this->av_frame, img);
-        } else if (free_img) {
+        } else
+#endif /* HAVE_POSTPROC */
+        if (free_img) {
           /* colorspace conversion or copy */
           ff_convert_frame(this, img, this->av_frame);
         }
@@ -2559,6 +2578,7 @@ static void ff_flush_internal (ff_video_decoder_t *this, int display) {
     }
 
     /* post processing */
+#ifdef HAVE_POSTPROC
     if (this->pp_quality != this->class->pp_quality && this->context->pix_fmt != PIX_FMT_VAAPI_VLD)
       pp_change_quality (this);
     if (this->pp_available && this->pp_quality && this->context->pix_fmt != PIX_FMT_VAAPI_VLD) {
@@ -2572,7 +2592,9 @@ static void ff_flush_internal (ff_video_decoder_t *this, int display) {
         free_img = 1;
       }
       ff_postprocess (this, this->av_frame2, img);
-    } else if (free_img) {
+    } else
+#endif /* HAVE_POSTPROC */
+    if (free_img) {
       /* colorspace conversion or copy */
       ff_convert_frame (this, img, this->av_frame2);
     }
@@ -2771,11 +2793,13 @@ static void ff_dispose (video_decoder_t *this_gen) {
     free(this->buf);
   this->buf = NULL;
 
+#ifdef HAVEPOSTPROC
   if(this->our_context)
     pp_free_context(this->our_context);
 
   if(this->our_mode)
     pp_free_mode(this->our_mode);
+#endif /* HAVE_POSTPROC */
 
   mpeg_parser_dispose(this->mpeg_parser);
 
@@ -2817,9 +2841,11 @@ static video_decoder_t *ff_video_open_plugin (video_decoder_class_t *class_gen, 
   this->decoder_ok      = 0;
   this->is_mpeg12       = 0;
   this->aspect_ratio    = 0;
+#ifdef HAVE_POSTPROC
   this->pp_quality      = 0;
   this->our_context     = NULL;
   this->our_mode        = NULL;
+#endif
   this->mpeg_parser     = NULL;
   this->set_stream_info = 0;
   this->rgb2yuy2        = NULL;
@@ -2909,7 +2935,9 @@ static void dispose_video_class (video_decoder_class_t *this_gen) {
   ff_video_class_t *this = (ff_video_class_t *)this_gen;
   config_values_t *config = this->xine->config;
 
+#ifdef HAVE_POSTPROC
   config->unregister_callback (config, "video.processing.ffmpeg_pp_quality");
+#endif
   config->unregister_callback (config, "video.processing.ffmpeg_thread_count");
   config->unregister_callback (config, "video.processing.ffmpeg_skip_loop_filter");
   config->unregister_callback (config, "video.processing.ffmpeg_choose_speed_over_accuracy");
@@ -2944,6 +2972,7 @@ void *init_video_plugin (xine_t *xine, const void *data) {
    * moment */
   config = xine->config;
 
+#ifdef HAVE_POSTPROC
   this->pp_quality = xine->config->register_range(config, "video.processing.ffmpeg_pp_quality", 3,
     0, PP_QUALITY_MAX,
     _("MPEG-4 postprocessing quality"),
@@ -2953,6 +2982,7 @@ void *init_video_plugin (xine_t *xine, const void *data) {
       "too heavy post processing can actually make the image worse by blurring it "
       "too much."),
     10, pp_quality_cb, this);
+#endif /* HAVE_POSTPROC */
 
   this->thread_count = xine->config->register_num(config, "video.processing.ffmpeg_thread_count", 1,
     _("FFmpeg video decoding thread count"),
