@@ -528,7 +528,7 @@ static cdrom_toc * init_cdrom_toc(void) {
 static void free_cdrom_toc(cdrom_toc *toc) {
 
   if ( toc ) {
-    free(toc->toc_entries);
+    _x_freep(&toc->toc_entries);
     free(toc);
   }
 }
@@ -2013,15 +2013,15 @@ static void _cdda_free_cddb_info(cdda_input_plugin_t *this) {
     int t;
 
     for(t = 0; t < this->cddb.num_tracks; t++) {
-      free(this->cddb.track[t].title);
+      _x_freep(&this->cddb.track[t].title);
     }
 
-    free(this->cddb.track);
-    free(this->cddb.cdiscid);
-    free(this->cddb.disc_title);
-    free(this->cddb.disc_artist);
-    free(this->cddb.disc_category);
-    free(this->cddb.disc_year);
+    _x_freep(&this->cddb.track);
+    _x_freep(&this->cddb.cdiscid);
+    _x_freep(&this->cddb.disc_title);
+    _x_freep(&this->cddb.disc_artist);
+    _x_freep(&this->cddb.disc_category);
+    _x_freep(&this->cddb.disc_year);
 
   }
 }
@@ -2373,9 +2373,9 @@ static void cdda_plugin_dispose (input_plugin_t *this_gen ) {
 
   cdda_close(this);
 
-  free(this->mrl);
+  _x_freep(&this->mrl);
 
-  free(this->cdda_device);
+  _x_freep(&this->cdda_device);
   if (this->class) {
     cdda_input_class_t *inp = (cdda_input_class_t *) this->class;
     inp->ip = NULL;
@@ -2547,12 +2547,9 @@ static void free_autoplay_list(cdda_input_class_t *this)
   if (this->autoplaylist) {
     unsigned int i;
     for( i = 0; this->autoplaylist[i]; i++ ) {
-      free( this->autoplaylist[i] );
-      this->autoplaylist[i] = NULL;
+      _x_freep( &this->autoplaylist[i] );
     }
-
-    free(this->autoplaylist);
-    this->autoplaylist = NULL;
+    _x_freep(&this->autoplaylist);
   }
 }
 
@@ -2670,8 +2667,7 @@ static input_plugin_t *cdda_class_get_instance (input_class_t *cls_gen, xine_str
         track = atoi (lastslash + 1);
         *lastslash = 0;
         if (lastslash == cdda_device) {
-          free (cdda_device);
-          cdda_device = NULL;
+          _x_freep (&cdda_device);
         }
       } else {
         track = -1;
