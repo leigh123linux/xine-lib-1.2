@@ -1687,6 +1687,11 @@ static int play_internal (xine_stream_t *stream, int start_pos, int start_time) 
   if (_x_get_speed(stream) != XINE_SPEED_NORMAL)
     set_speed_internal (stream, XINE_FINE_SPEED_NORMAL);
 
+  /* ignore speed changes (net_buf_ctrl causes deadlocks while seeking ...) */
+  pthread_mutex_lock(&stream->speed_change_lock);
+  stream->ignore_speed_change = 1;
+  pthread_mutex_unlock(&stream->speed_change_lock);
+
   stream->xine->port_ticket->acquire(stream->xine->port_ticket, 1);
 
   /* only flush/discard output ports on master streams */
@@ -1730,6 +1735,9 @@ static int play_internal (xine_stream_t *stream, int start_pos, int start_time) 
   }
 
   stream->xine->port_ticket->release(stream->xine->port_ticket, 1);
+  pthread_mutex_lock(&stream->speed_change_lock);
+  stream->ignore_speed_change = 0;
+  pthread_mutex_unlock(&stream->speed_change_lock);
 
   /* before resuming the demuxer, set first_frame_flag */
   pthread_mutex_lock (&stream->first_frame_lock);
