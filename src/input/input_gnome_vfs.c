@@ -340,35 +340,30 @@ gnomevfs_klass_get_instance (input_class_t *klass_gen, xine_stream_t *stream,
 static void
 *init_input_class (xine_t *xine, const void *data)
 {
-        input_class_t *this;
+  static const input_class_t input_gnomevfs_class = {
+    .get_instance       = gnomevfs_klass_get_instance,
+    .identifier         = "gnomevfs",
+    .description        = N_("gnome-vfs input plugin as shipped with xine"),
+    .get_dir            = NULL,
+    .get_autoplay_list  = NULL,
+    .dispose            = NULL,
+  };
 
-	xprintf (xine, XINE_VERBOSITY_DEBUG, "gnome_vfs init_input_class\n");
+  xprintf (xine, XINE_VERBOSITY_DEBUG, "gnome_vfs init_input_class\n");
 
-	/* Don't initialise gnome-vfs, only gnome-vfs enabled applications
-	 * should be using it */
-	if (gnome_vfs_initialized () == FALSE) {
-		xprintf (xine, XINE_VERBOSITY_DEBUG, "gnome-vfs not initialised\n");
-		return NULL;
-	}
+  /* Don't initialise gnome-vfs, only gnome-vfs enabled applications
+   * should be using it */
+  if (gnome_vfs_initialized () == FALSE) {
+    xprintf (xine, XINE_VERBOSITY_DEBUG, "gnome-vfs not initialised\n");
+    return NULL;
+  }
 
 #if !GLIB_CHECK_VERSION(2,32,0)
-	if (!g_thread_supported ())
-		g_thread_init (NULL);
+  if (!g_thread_supported ())
+    g_thread_init (NULL);
 #endif
 
-        this = calloc(1, sizeof(*this));
-        if (!this) {
-          return NULL;
-        }
-
-        this->get_instance       = gnomevfs_klass_get_instance;
-        this->identifier         = "gnomevfs";
-        this->description        = N_("gnome-vfs input plugin as shipped with xine");
-        this->get_dir            = NULL;
-        this->get_autoplay_list  = NULL;
-        this->dispose            = default_input_class_dispose;
-
-        return this;
+  return (void *)&input_gnomevfs_class;
 }
 
 static const input_info_t input_info_gnomevfs = {

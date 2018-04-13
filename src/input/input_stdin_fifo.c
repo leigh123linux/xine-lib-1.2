@@ -427,19 +427,16 @@ static input_plugin_t *stdin_class_get_instance (input_class_t *class_gen,
  */
 static void *stdin_plugin_init_class (xine_t *xine, const void *data) {
 
-  input_class_t  *this;
-
-  this = calloc(1, sizeof (input_class_t));
-
-  this->get_instance       = stdin_class_get_instance;
-  this->identifier         = "stdin_fifo";
-  this->description        = N_("stdin streaming input plugin");
-  this->get_dir            = NULL;
-  this->get_autoplay_list  = NULL;
-  this->dispose            = default_input_class_dispose;
-  this->eject_media        = NULL;
-
-  return this;
+  static const input_class_t input_stdin_class = {
+    .get_instance       = stdin_class_get_instance,
+    .identifier         = "stdin_fifo",
+    .description        = N_("stdin streaming input plugin"),
+    .get_dir            = NULL,
+    .get_autoplay_list  = NULL,
+    .dispose            = NULL,
+    .eject_media        = NULL,
+  };
+  return (void *)&input_stdin_class;
 }
 
 /*

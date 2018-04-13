@@ -302,20 +302,16 @@ static input_plugin_t *net_class_get_instance (input_class_t *cls_gen, xine_stre
 
 void *input_net_init_class (xine_t *xine, const void *data) {
 
-  input_class_t *this;
+  static const input_class_t input_net_class = {
+    .get_instance      = net_class_get_instance,
+    .description       = N_("net input plugin as shipped with xine"),
+    .identifier        = "TCP",
+    .get_dir           = NULL,
+    .get_autoplay_list = NULL,
+    .dispose           = NULL,
+    .eject_media       = NULL,
+  };
 
-  this = calloc(1, sizeof(*this));
-  if (!this)
-    return NULL;
-
-  this->get_instance      = net_class_get_instance;
-  this->description       = N_("net input plugin as shipped with xine");
-  this->identifier        = "TCP";
-  this->get_dir           = NULL;
-  this->get_autoplay_list = NULL;
-  this->dispose           = default_input_class_dispose;
-  this->eject_media       = NULL;
-
-  return this;
+  return (void *)&input_net_class;
 }
 

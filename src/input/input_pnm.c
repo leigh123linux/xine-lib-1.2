@@ -240,18 +240,16 @@ static input_plugin_t *pnm_class_get_instance (input_class_t *cls_gen, xine_stre
 
 void *input_pnm_init_class (xine_t *xine, const void *data) {
 
-  input_class_t  *this;
+  static const input_class_t input_pnm_class = {
+    .get_instance       = pnm_class_get_instance,
+    .identifier         = "pnm",
+    .description        = N_("pnm streaming input plugin"),
+    .get_dir            = NULL,
+    .get_autoplay_list  = NULL,
+    .dispose            = NULL,
+    .eject_media        = NULL,
+  };
 
-  this = calloc(1, sizeof (input_class_t));
-
-  this->get_instance       = pnm_class_get_instance;
-  this->identifier         = "pnm";
-  this->description        = N_("pnm streaming input plugin");
-  this->get_dir            = NULL;
-  this->get_autoplay_list  = NULL;
-  this->dispose            = default_input_class_dispose;
-  this->eject_media        = NULL;
-
-  return this;
+  return (void *)&input_pnm_class;
 }
 
