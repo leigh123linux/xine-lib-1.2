@@ -59,7 +59,6 @@ struct rtsp_s {
   char         *user_agent;
 
   char         *server;
-  unsigned int  server_state;
   uint32_t      server_caps;
 
   unsigned int  cseq;
@@ -467,7 +466,7 @@ rtsp_t *rtsp_connect(xine_stream_t *stream, const char *mrl, const char *user_ag
   s->mrl=strdup(mrl);
 
   s->server=NULL;
-  s->server_state=0;
+  s->s = -1;
   s->server_caps=0;
 
   s->cseq=0;
@@ -536,8 +535,6 @@ rtsp_t *rtsp_connect(xine_stream_t *stream, const char *mrl, const char *user_ag
     return NULL;
   }
 
-  s->server_state=RTSP_CONNECTED;
-
   /* now lets send an options request. */
   rtsp_schedule_field(s, "CSeq: 1");
   rtsp_schedule_field(s, s->user_agent);
@@ -560,7 +557,7 @@ rtsp_t *rtsp_connect(xine_stream_t *stream, const char *mrl, const char *user_ag
 
 void rtsp_close(rtsp_t *s) {
 
-  if (s->server_state)
+  if (s->s >= 0)
     _x_io_tcp_close(s->stream, s->s); /* TODO: send a TEAROFF */
   free(s->path);
   free(s->host);
