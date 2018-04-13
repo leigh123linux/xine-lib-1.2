@@ -79,7 +79,7 @@ static int _x_io_tcp_connect_ipv4(xine_stream_t *stream, const char *host, int p
 #ifndef WIN32
     if (fcntl (s, F_SETFL, fcntl (s, F_GETFL) | O_NONBLOCK) == -1) {
       _x_message(stream, XINE_MSG_CONNECTION_REFUSED, "can't put socket in non-blocking mode", strerror(errno), NULL);
-      close(s);
+      _x_io_tcp_close(NULL, s);
       return -1;
     }
 #else
@@ -91,7 +91,7 @@ static int _x_io_tcp_connect_ipv4(xine_stream_t *stream, const char *host, int p
 
       if (rc == SOCKET_ERROR) {
         _x_message(stream, XINE_MSG_CONNECTION_REFUSED, "can't put socket in non-blocking mode", strerror(errno), NULL);
-        close(s);
+        _x_io_tcp_close(NULL, s);
         return -1;
       }
     }
@@ -116,7 +116,7 @@ static int _x_io_tcp_connect_ipv4(xine_stream_t *stream, const char *host, int p
 #endif /* WIN32 */
 
       _x_message(stream, XINE_MSG_CONNECTION_REFUSED, strerror(errno), NULL);
-      close(s);
+      _x_io_tcp_close(NULL, s);
       continue;
     }
 
@@ -175,7 +175,7 @@ int _x_io_tcp_connect(xine_stream_t *stream, const char *host, int port) {
 #ifndef WIN32
 	if (fcntl (s, F_SETFL, fcntl (s, F_GETFL) | O_NONBLOCK) == -1) {
 	  _x_message(stream, XINE_MSG_CONNECTION_REFUSED, "can't put socket in non-blocking mode", strerror(errno), NULL);
-          close(s);
+          _x_io_tcp_close(NULL, s);
           freeaddrinfo(res);
 	  return -1;
 	}
@@ -187,7 +187,7 @@ int _x_io_tcp_connect(xine_stream_t *stream, const char *host, int port) {
 
 	if (rc == SOCKET_ERROR) {
 	  _x_message(stream, XINE_MSG_CONNECTION_REFUSED, "can't put socket in non-blocking mode", strerror(errno), NULL);
-          close(s);
+          _x_io_tcp_close(NULL, s);
           freeaddrinfo(res);
 	  return -1;
 	}
@@ -208,7 +208,7 @@ int _x_io_tcp_connect(xine_stream_t *stream, const char *host, int port) {
 #endif /* WIN32 */
 
       error = errno;
-      close(s);
+      _x_io_tcp_close(NULL, s);
       tmpaddr = tmpaddr->ai_next;
       continue;
     }
@@ -482,4 +482,48 @@ int _x_io_tcp_read_line(xine_stream_t *stream, int sock, char *str, int size) {
   str[i] = '\0';
 
   return (r != -1) ? i : (int)r;
+}
+
+int _x_io_tcp_close(xine_stream_t *stream, int fd)
+{
+  struct {
+    int l_onoff;    /* linger active */
+    int l_linger;   /* how many seconds to linger for */
+  } linger = { 0, 0 };
+  int r;
+
+  if (fd == -1) {
+    errno = EINVAL;
+    return -1;
+  }
+
+  /* disable lingering (hard close) */
+  r = setsockopt(fd, SOL_SOCKET, SO_LINGER, &linger, sizeof(struct linger));
+  if (r < 0 && stream) {
+#ifdef WIN32
+    xprintf(stream->xine, XINE_VERBOSITY_DEBUG,
+            "io_helper: disabling linger failed: %d\n",
+            WSAGetLastError());
+#else
+    xprintf(stream->xine, XINE_VERBOSITY_DEBUG,
+            "io_helper: disabling linger failed: %s (%d)\n",
+            strerror(errno), errno);
+#endif
+  }
+
+#ifdef WIN32
+  r = closesocket(fd);
+  if (r != 0 && stream) {
+    xprintf(stream->xine, XINE_VERBOSITY_DEBUG, "io_helper: error closing socket %s (%d)\n",
+            WSAGetLastError());
+  }
+#else
+  r = close(fd);
+  if (r < 0 && stream) {
+    xprintf(stream->xine, XINE_VERBOSITY_DEBUG, "io_helper: error closing socket %s (%d)\n",
+            strerror(errno), errno);
+  }
+#endif
+
+  return r;
 }

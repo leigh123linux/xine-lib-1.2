@@ -138,4 +138,9 @@ off_t _x_io_file_write (xine_stream_t *stream, int fd, const void *buf, off_t to
  */
 int _x_io_tcp_read_line(xine_stream_t *stream, int sock, char *str, int size) XINE_PROTECTED XINE_USED;
 
+/*
+ * Close socket
+ */
+int _x_io_tcp_close(xine_stream_t *stream, int fd) XINE_PROTECTED;
+
 #endif
