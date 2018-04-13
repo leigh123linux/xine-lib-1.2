@@ -56,8 +56,10 @@ typedef struct {
 
   char            *mrl;
   char            *mrl_private;
+  char            *uri;
   off_t            curpos;
   off_t            file_size;
+  int              cap_rest;
 
   int              fd;
   int              fd_data;
@@ -372,12 +374,57 @@ static int _ftp_size(ftp_input_plugin_t *this, const char *uri)
   return 0;
 }
 
-static int _retr(ftp_input_plugin_t *this, const char *uri)
+static int _abor(ftp_input_plugin_t *this)
+{
+  int rc;
+
+  rc = _write_command(this, "ABOR");
+  if (rc < 0)
+    return rc;
+
+  if (this->fd_data >= 0) {
+    _x_io_tcp_close(this->stream, this->fd_data);
+    this->fd_data = -1;
+    /* this should return response code for initial RETR (426 or 226) if transferring */
+    rc = _read_response(this);
+  }
+
+  if (rc >= 0) {
+    /* read ABRT response code */
+    rc = _read_response(this);
+  }
+
+  return rc;
+}
+
+static int _rest(ftp_input_plugin_t *this, off_t offset)
+{
+  char *cmd;
+  int rc;
+
+  cmd = _x_asprintf("REST %" PRIu64, (uint64_t)offset);
+  if (!cmd)
+    return -1;
+  rc = _send_command(this, cmd);
+  free(cmd);
+
+  if (rc < 0 || (rc/100) > 3) {
+    return -1;
+  }
+
+  this->curpos = offset;
+  this->cap_rest = 1;
+  return 0;
+}
+
+static int _retr(ftp_input_plugin_t *this, const char *uri, off_t offset)
 {
   int rc;
   char *cmd;
 
-  _ftp_size(this, uri);
+  /* issue REST command even if starting from offset 0.
+   * (to test REST support) */
+  _rest(this, offset);
 
   rc = _connect_data(this, 'I');
   if (rc < 0)
@@ -469,8 +516,27 @@ static off_t _ftp_seek (input_plugin_t *this_gen, off_t offset, int origin)
 {
   ftp_input_plugin_t *this = (ftp_input_plugin_t *) this_gen;
 
-  return _x_input_seek_preview(this_gen, offset, origin,
-                               &this->curpos, this->file_size, this->preview_size);
+  off_t r =  _x_input_seek_preview(this_gen, offset, origin,
+                                   &this->curpos, this->file_size, this->preview_size);
+
+  if (r < 0 && this->cap_rest) {
+    offset = _x_input_translate_seek(offset, origin, this->curpos, this->file_size);
+    if (offset < 0)
+      return -1;
+
+    xprintf(this->xine, XINE_VERBOSITY_LOG, LOG_MODULE ": "
+            "restarting transfer (seek from %" PRIu64 " to %" PRIu64 "\n",
+            (uint64_t)this->curpos, (uint64_t)offset);
+
+    if (_abor(this) < 0)
+      return -1;
+    if (_retr(this, this->uri, offset) < 0)
+      return 0;
+    this->preview_size = 0;
+    return this->curpos;
+  }
+
+  return r;
 }
 
 static const char *_ftp_get_mrl (input_plugin_t *this_gen)
@@ -514,6 +580,7 @@ static void _ftp_dispose (input_plugin_t *this_gen)
   }
 
   _x_freep (&this->mrl);
+  _x_freep (&this->uri);
   _x_freep_wipe_string(&this->mrl_private);
 
   free (this_gen);
@@ -554,12 +621,19 @@ static int _ftp_open (input_plugin_t *this_gen)
   if (rc < 0)
     goto out;
 
-  rc = _retr(this, url.uri);
+  _ftp_size(this, url.uri);
+
+  rc = _retr(this, url.uri, 0);
   if (rc < 0)
     goto out;
 
   rc = _fill_preview(this);
   if (rc < 0)
+    goto out;
+
+  /* save URI for seeking (= ABRT + REST + RETR) */
+  this->uri = strdup(url.uri);
+  if (!this->uri)
     goto out;
 
   result = 1;
