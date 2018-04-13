@@ -118,6 +118,10 @@ if ENABLE_NFS
 in_nfs = xineplug_inp_nfs.la
 endif
 
+if ENABLE_DVD
+in_dvd = xineplug_inp_dvd.la
+endif
+
 if WITH_EXTERNAL_DVDNAV
 DVD_CFLAGS  = $(DVDNAV_CFLAGS) $(DVDREAD_CFLAGS)
 link_dvdnav = $(DVDNAV_LIBS) $(DVDREAD_LIBS)
@@ -140,7 +144,7 @@ endif
 
 xineplug_LTLIBRARIES = \
 	$(in_builtins) \
-	xineplug_inp_dvd.la \
+	$(in_dvd) \
 	$(in_vcd) \
 	$(in_vcdo) \
 	$(in_v4l) \
