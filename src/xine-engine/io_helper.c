@@ -466,7 +466,7 @@ int _x_io_tcp_read_line(xine_stream_t *stream, int sock, char *str, int size) {
   if( size <= 0 )
     return 0;
 
-  while ((r = xio_rw_abort(stream, sock, XIO_TCP_READ, &c, NULL, 1)) != -1) {
+  while ((r = xio_rw_abort(stream, sock, XIO_TCP_READ, &c, NULL, 1)) == 1) {
     if (c == '\r' || c == '\n')
       break;
     if (i+1 == size)
@@ -476,7 +476,7 @@ int _x_io_tcp_read_line(xine_stream_t *stream, int sock, char *str, int size) {
     i++;
   }
 
-  if (r != -1 && c == '\r')
+  if (r == 1 && c == '\r')
     r = xio_rw_abort(stream, sock, XIO_TCP_READ, &c, NULL, 1);
 
   str[i] = '\0';
