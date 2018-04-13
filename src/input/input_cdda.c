@@ -519,6 +519,8 @@ static cdrom_toc * init_cdrom_toc(void) {
   cdrom_toc *toc;
 
   toc = calloc(1, sizeof (cdrom_toc));
+  if (!toc)
+    return NULL;
   toc->first_track = toc->last_track = toc->total_tracks = 0;
   toc->toc_entries = NULL;
 
@@ -2022,8 +2024,9 @@ static void _cdda_free_cddb_info(cdda_input_plugin_t *this) {
     _x_freep(&this->cddb.disc_artist);
     _x_freep(&this->cddb.disc_category);
     _x_freep(&this->cddb.disc_year);
-
   }
+
+  this->cddb.num_tracks = 0;
 }
 /*
  * ********** END OF CDDB ***************
@@ -2397,6 +2400,8 @@ static int cdda_plugin_open (input_plugin_t *this_gen ) {
 
   /* get the CD TOC */
   toc = init_cdrom_toc();
+  if (!toc)
+    return 0;
 
   if( this->cdda_device )
     cdda_device = this->cdda_device;
@@ -2462,12 +2467,12 @@ static int cdda_plugin_open (input_plugin_t *this_gen ) {
    */
   _cdda_free_cddb_info(this);
 
-  this->cddb.num_tracks = toc->total_tracks;
-
-  if(this->cddb.num_tracks) {
+  if (toc->total_tracks) {
     int t;
 
-    this->cddb.track = (trackinfo_t *) calloc(this->cddb.num_tracks, sizeof(trackinfo_t));
+    this->cddb.track = (trackinfo_t *) calloc(toc->total_tracks, sizeof(trackinfo_t));
+    if (this->cddb.track)
+      this->cddb.num_tracks = toc->total_tracks;
 
     for(t = 0; t < this->cddb.num_tracks; t++) {
       int length = (toc->toc_entries[t].first_frame_minute * CD_SECONDS_PER_MINUTE +
@@ -2568,6 +2573,8 @@ static const char * const * cdda_class_get_autoplay_list (input_class_t *this_ge
 
   /* get the CD TOC */
   toc = init_cdrom_toc();
+  if (!toc)
+    return NULL;
 
   fd = -1;
 
@@ -2577,6 +2584,10 @@ static const char * const * cdda_class_get_autoplay_list (input_class_t *this_ge
      * gets called, before a plugin instance has been created;
      * let's create a dummy instance in such a condition */
     ip = calloc(1, sizeof(cdda_input_plugin_t));
+    if (!ip) {
+      free_cdrom_toc(toc);
+      return NULL;
+    }
     ip->stream = NULL;
     ip->fd = -1;
     ip->net_fd = -1;
@@ -2681,6 +2692,10 @@ static input_plugin_t *cdda_class_get_instance (input_class_t *cls_gen, xine_str
     return NULL;
 
   this = calloc(1, sizeof (cdda_input_plugin_t));
+  if (!this) {
+    free(cdda_device);
+    return NULL;
+  }
 
   class->ip = this;
   this->stream      = stream;
@@ -2758,7 +2773,9 @@ static void *init_plugin (xine_t *xine, const void *data) {
   config_values_t     *config;
 
   this = calloc(1, sizeof (cdda_input_class_t));
-
+  if (!this)
+    return NULL;
+  
   this->xine   = xine;
   this->config = xine->config;
   config       = xine->config;
