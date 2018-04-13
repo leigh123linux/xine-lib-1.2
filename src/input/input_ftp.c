@@ -96,7 +96,7 @@ static int _read_response(ftp_input_plugin_t *this)
   return rc;
 }
 
-static int _send_command(ftp_input_plugin_t *this, const char *cmd)
+static int _write_command(ftp_input_plugin_t *this, const char *cmd)
 {
   size_t len;
   int rc = -1;
@@ -118,6 +118,17 @@ static int _send_command(ftp_input_plugin_t *this, const char *cmd)
             "send CRLF failed\n");
     return -1;
   }
+
+  return 0;
+}
+
+static int _send_command(ftp_input_plugin_t *this, const char *cmd)
+{
+  int rc;
+
+  rc = _write_command(this, cmd);
+  if (rc < 0)
+    return rc;
 
   rc = _read_response(this);
   return rc;
