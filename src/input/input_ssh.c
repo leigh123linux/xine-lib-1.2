@@ -521,11 +521,7 @@ static void _dispose (input_plugin_t *this_gen)
   }
 
   if (this->fd != -1) {
-#ifdef WIN32
-    closesocket(this->fd);
-#else
-    close(this->fd);
-#endif
+    _x_io_tcp_close(this->stream, this->fd);
     this->fd = -1;
   }
 

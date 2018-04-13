@@ -486,12 +486,12 @@ static void _ftp_dispose (input_plugin_t *this_gen)
 {
   ftp_input_plugin_t *this = (ftp_input_plugin_t *) this_gen;
 
-  if (this->fd_data > 0) {
-    close(this->fd_data);
+  if (this->fd_data >= 0) {
+    _x_io_tcp_close(this->stream, this->fd_data);
     this->fd_data = -1;
   }
-  if (this->fd > 0) {
-    close(this->fd);
+  if (this->fd >= 0) {
+    _x_io_tcp_close(this->stream, this->fd);
     this->fd = -1;
   }
 

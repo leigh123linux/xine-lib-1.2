@@ -540,7 +540,8 @@ static int mmsh_connect_int(mmsh_t *this, int bandwidth) {
   if (!interp_header (this))
     return 0;
 
-  close (this->s);
+  _x_io_tcp_close (this->stream, this->s);
+  this->s = -1;
   report_progress (this->stream, 20);
 
   asf_header_choose_streams (this->asf_header, bandwidth,
@@ -675,7 +676,7 @@ mmsh_t *mmsh_connect (xine_stream_t *stream, const char *url, int bandwidth) {
 fail:
   lprintf("mmsh_connect: failed\n" );
   if (this->s != -1)
-    close(this->s);
+    _x_io_tcp_close(this->stream, this->s);
 
   _x_url_cleanup(&this->url);
 
@@ -707,7 +708,8 @@ static int get_media_packet (mmsh_t *this) {
         if (this->chunk_seq_number == 0)
           return 0;
 
-        close(this->s);
+        _x_io_tcp_close(this->stream, this->s);
+        this->s = -1;
 
         if (mmsh_tcp_connect(this))
           return 0;
@@ -854,7 +856,7 @@ void mmsh_close (mmsh_t *this) {
   lprintf("mmsh_close\n");
 
   if (this->s != -1)
-    close(this->s);
+    _x_io_tcp_close(this->stream, this->s);
 
   if (this->asf_header)
     asf_header_delete(this->asf_header);

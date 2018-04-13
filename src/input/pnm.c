@@ -861,7 +861,8 @@ int pnm_peek_header (pnm_t *this, char *data, int maxsize) {
 
 void pnm_close(pnm_t *p) {
 
-  if (p->s >= 0) close(p->s);
+  if (p->s >= 0)
+    _x_io_tcp_close(p->stream, p->s);
   free(p->path);
   free(p->host);
   free(p->url);

@@ -206,7 +206,7 @@ static void net_plugin_dispose (input_plugin_t *this_gen ) {
   net_input_plugin_t *this = (net_input_plugin_t *) this_gen;
 
   if (this->fh != -1) {
-    close(this->fh);
+    _x_io_tcp_close(this->stream, this->fh);
     this->fh = -1;
   }
 

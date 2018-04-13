@@ -906,7 +906,7 @@ fail:
 #endif
 
   if (this->s != -1)
-    close (this->s);
+    _x_io_tcp_close (this->stream, this->s);
 
   _x_url_cleanup(&this->url);
 
@@ -1136,7 +1136,7 @@ int mms_read (mms_t *this, char *data, int len) {
 void mms_close (mms_t *this) {
 
   if (this->s != -1)
-    close (this->s);
+    _x_io_tcp_close (this->stream, this->s);
 
   _x_url_cleanup(&this->url);
 

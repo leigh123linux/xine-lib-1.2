@@ -576,7 +576,8 @@ rtsp_t *rtsp_connect(xine_stream_t *stream, const char *mrl, const char *user_ag
 
 void rtsp_close(rtsp_t *s) {
 
-  if (s->server_state) close(s->s); /* TODO: send a TEAROFF */
+  if (s->server_state)
+    _x_io_tcp_close(s->stream, s->s); /* TODO: send a TEAROFF */
   free(s->path);
   free(s->host);
   free(s->mrl);

@@ -1734,7 +1734,7 @@ static void _cdda_cddb_socket_close(cdda_input_plugin_t *this) {
   if((this == NULL) || (this->cddb.fd < 0))
     return;
 
-  close(this->cddb.fd);
+  _x_io_tcp_close(this->stream, this->cddb.fd);
   this->cddb.fd = -1;
 }
 

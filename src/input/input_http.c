@@ -522,7 +522,7 @@ static void http_plugin_dispose (input_plugin_t *this_gen ) {
   http_input_plugin_t *this = (http_input_plugin_t *) this_gen;
 
   if (this->fh != -1) {
-    close(this->fh);
+    _x_io_tcp_close(this->stream, this->fh);
     this->fh = -1;
   }
 
