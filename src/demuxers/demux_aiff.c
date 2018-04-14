@@ -99,21 +99,27 @@ static int extended_to_int(const unsigned char p[10])
 }
 
 /* returns 1 if the AIFF file was opened successfully, 0 otherwise */
-static int open_aiff_file(demux_aiff_t *this) {
+static int probe_aiff_file(input_plugin_t *input) {
 
   unsigned char signature[AIFF_SIGNATURE_SIZE];
-  unsigned char preamble[PREAMBLE_SIZE];
-  unsigned int chunk_type;
-  unsigned int chunk_size;
-  unsigned char extended_sample_rate[10];
 
-  if (_x_demux_read_header(this->input, signature, AIFF_SIGNATURE_SIZE) != AIFF_SIGNATURE_SIZE)
+  if (_x_demux_read_header(input, signature, AIFF_SIGNATURE_SIZE) != AIFF_SIGNATURE_SIZE)
     return 0;
 
   /* check the signature */
   if( !_x_is_fourcc(&signature[0], "FORM") ||
       !_x_is_fourcc(&signature[8], "AIFF") )
     return 0;
+
+  return 1;
+}
+
+static int open_aiff_file(demux_aiff_t *this) {
+
+  unsigned char preamble[PREAMBLE_SIZE];
+  unsigned int chunk_type;
+  unsigned int chunk_size;
+  unsigned char extended_sample_rate[10];
 
   /* file is qualified; skip over the header bytes in the stream */
   this->input->seek(this->input, AIFF_SIGNATURE_SIZE, SEEK_SET);
@@ -360,6 +366,17 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
 
   demux_aiff_t   *this;
 
+  switch (stream->content_detection_method) {
+    case METHOD_BY_MRL:
+    case METHOD_BY_CONTENT:
+    case METHOD_EXPLICIT:
+      if (!probe_aiff_file(input))
+        return NULL;
+      break;
+    default:
+      return NULL;
+  }
+
   this         = calloc(1, sizeof(demux_aiff_t));
   this->stream = stream;
   this->input  = input;
@@ -376,20 +393,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
 
   this->status = DEMUX_FINISHED;
 
-  switch (stream->content_detection_method) {
-
-  case METHOD_BY_MRL:
-  case METHOD_BY_CONTENT:
-  case METHOD_EXPLICIT:
-
-    if (!open_aiff_file(this)) {
-      free (this);
-      return NULL;
-    }
-
-  break;
-
-  default:
+  if (!open_aiff_file(this)) {
     free (this);
     return NULL;
   }
