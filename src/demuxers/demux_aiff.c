@@ -122,7 +122,8 @@ static int open_aiff_file(demux_aiff_t *this) {
   unsigned char extended_sample_rate[10];
 
   /* file is qualified; skip over the header bytes in the stream */
-  this->input->seek(this->input, AIFF_SIGNATURE_SIZE, SEEK_SET);
+  if (this->input->seek(this->input, AIFF_SIGNATURE_SIZE, SEEK_SET) != AIFF_SIGNATURE_SIZE)
+    return 0;
 
   /* audio type is PCM unless proven otherwise */
   this->audio_type = BUF_AUDIO_LPCM_BE;
@@ -170,7 +171,8 @@ static int open_aiff_file(demux_aiff_t *this) {
 
       /* audio data has been located; proceed to demux loop after
        * skipping 8 more bytes (2 more 4-byte numbers) */
-      this->input->seek(this->input, 8, SEEK_CUR);
+      if (this->input->seek(this->input, 8, SEEK_CUR) < 0)
+        return 0;
       this->data_start = this->input->get_current_pos(this->input);
       this->data_size = this->audio_frames * this->audio_channels *
         (this->audio_bits / 8);
@@ -186,7 +188,8 @@ static int open_aiff_file(demux_aiff_t *this) {
 	chunk_size++;
 
       /* unrecognized; skip it */
-      this->input->seek(this->input, chunk_size, SEEK_CUR);
+      if (this->input->seek(this->input, chunk_size, SEEK_CUR) < 0)
+        return 0;
     }
   }
 
