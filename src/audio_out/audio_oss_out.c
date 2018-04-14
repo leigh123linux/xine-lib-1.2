@@ -199,7 +199,13 @@ static int ao_oss_open(ao_driver_t *this_gen,
   }
 
   /* We wanted non blocking open but now put it back to normal */
-  fcntl(this->audio_fd, F_SETFL, fcntl(this->audio_fd, F_GETFL)&~O_NONBLOCK);
+  {
+    int val = fcntl(this->audio_fd, F_GETFL);
+    if (val != -1)
+      val = fcntl(this->audio_fd, F_SETFL, val & ~O_NONBLOCK);
+    if (val == -1)
+      lprintf("error restoring blocking mode: %s\n", strerror(errno));
+  }
 
   /*
    * configure audio device
