@@ -59,13 +59,10 @@ typedef struct {
   demux_plugin_t       demux_plugin;
 
   xine_stream_t       *stream;
-  fifo_buffer_t       *video_fifo;
   fifo_buffer_t       *audio_fifo;
   input_plugin_t      *input;
   int                  status;
 
-  unsigned int         audio_type;
-  unsigned int         audio_frames;
   unsigned int         audio_sample_rate;
   unsigned int         audio_bits;
   unsigned int         audio_channels;
@@ -120,14 +117,12 @@ static int open_aiff_file(demux_aiff_t *this) {
   unsigned int chunk_type;
   unsigned int chunk_size;
   unsigned char extended_sample_rate[10];
+  unsigned int  audio_frames = 0;
 
   /* file is qualified; skip over the header bytes in the stream */
   if (this->input->seek(this->input, AIFF_SIGNATURE_SIZE, SEEK_SET) != AIFF_SIGNATURE_SIZE)
     return 0;
 
-  /* audio type is PCM unless proven otherwise */
-  this->audio_type = BUF_AUDIO_LPCM_BE;
-  this->audio_frames = 0;
   this->audio_channels = 0;
   this->audio_bits = 0;
   this->audio_sample_rate = 0;
@@ -159,7 +154,7 @@ static int open_aiff_file(demux_aiff_t *this) {
       }
 
       this->audio_channels = _X_BE_16(&buffer[0]);
-      this->audio_frames = _X_BE_32(&buffer[2]);
+      audio_frames = _X_BE_32(&buffer[2]);
       this->audio_bits = _X_BE_16(&buffer[6]);
       memcpy(&extended_sample_rate, &buffer[8], sizeof(extended_sample_rate));
       this->audio_sample_rate = extended_to_int(extended_sample_rate);
@@ -174,10 +169,10 @@ static int open_aiff_file(demux_aiff_t *this) {
       if (this->input->seek(this->input, 8, SEEK_CUR) < 0)
         return 0;
       this->data_start = this->input->get_current_pos(this->input);
-      this->data_size = this->audio_frames * this->audio_channels *
+      this->data_size = audio_frames * this->audio_channels *
         (this->audio_bits / 8);
       if (this->audio_sample_rate)
-        this->running_time = (this->audio_frames / this->audio_sample_rate) * 1000;
+        this->running_time = (audio_frames / this->audio_sample_rate) * 1000;
 
       break;
 
@@ -235,7 +230,7 @@ static int demux_aiff_send_chunk (demux_plugin_t *this_gen) {
     }
 
     buf = this->audio_fifo->buffer_pool_alloc (this->audio_fifo);
-    buf->type = this->audio_type;
+    buf->type = BUF_AUDIO_LPCM_BE;
     if( this->data_size )
       buf->extra_info->input_normpos = (int)( (double) current_file_pos * 65535 / this->data_size);
     buf->extra_info->input_time = current_pts / 90;
@@ -272,7 +267,6 @@ static void demux_aiff_send_headers(demux_plugin_t *this_gen) {
   demux_aiff_t *this = (demux_aiff_t *) this_gen;
   buf_element_t *buf;
 
-  this->video_fifo  = this->stream->video_fifo;
   this->audio_fifo  = this->stream->audio_fifo;
 
   this->status = DEMUX_OK;
@@ -291,9 +285,9 @@ static void demux_aiff_send_headers(demux_plugin_t *this_gen) {
   _x_demux_control_start(this->stream);
 
   /* send init info to decoders */
-  if (this->audio_fifo && this->audio_type) {
+  if (this->audio_fifo) {
     buf = this->audio_fifo->buffer_pool_alloc (this->audio_fifo);
-    buf->type = this->audio_type;
+    buf->type = BUF_AUDIO_LPCM_BE;
     buf->decoder_flags = BUF_FLAG_HEADER|BUF_FLAG_STDHEADER|BUF_FLAG_FRAME_END;
     buf->decoder_info[0] = 0;
     buf->decoder_info[1] = this->audio_sample_rate;
