@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2000-2017 the xine project
+ * Copyright (C) 2000-2018 the xine project
  *
  * This file is part of xine, a free video player.
  *
@@ -144,11 +144,11 @@ static int asf_reader_get_64(asf_reader_t *reader, uint64_t *value) {
   return 1;
 }
 
-static int asf_reader_get_guid(asf_reader_t *reader, GUID *value) {
+static int asf_reader_get_guid (asf_reader_t *reader, uint8_t *value) {
   if ((reader->size - reader->pos) < 16)
     return 0;
 
-  asf_get_guid(reader->buffer + reader->pos, value);
+  memcpy (value, reader->buffer + reader->pos, 16);
   reader->pos += 16;
   return 1;
 }
@@ -211,31 +211,6 @@ static size_t asf_reader_get_size(asf_reader_t *reader) {
   return reader->size - reader->pos;
 }
 
-void asf_get_guid(uint8_t *buffer, GUID *value) {
-  int i;
-
-  value->Data1 = _X_LE_32(buffer);
-  value->Data2 = _X_LE_16(buffer + 4);
-  value->Data3 = _X_LE_16(buffer + 6);
-  for(i = 0; i < 8; i++) {
-    value->Data4[i] = *(buffer + i + 8);
-  }
-}
-
-int asf_find_object_id (GUID *g) {
-  int i;
-
-  for (i = 1; i < GUID_END; i++) {
-    if (!memcmp(g, &guids[i].guid, sizeof(GUID))) {
-      lprintf ("asf_find_object_id: %s\n", guids[i].name);
-      return i;
-    }
-  }
-  lprintf ("asf_find_object_id: unknown GUID: 0x%04X, 0x%02X, 0x%02X, {0x%01X, 0x%01X, 0x%01X, 0x%01X, 0x%01X, 0x%01X, 0x%01X, 0x%01X}\n",
-    g->Data1, g->Data2, g->Data3, g->Data4[0], g->Data4[1], g->Data4[2], g->Data4[3], g->Data4[4], g->Data4[5], g->Data4[6], g->Data4[7]);
-  return GUID_ERROR;
-}
-
 /* Manage id mapping */
 static int asf_header_get_stream_id(asf_header_t *header_pub, uint16_t stream_number) {
   asf_header_internal_t *header = (asf_header_internal_t *)header_pub;
@@ -275,7 +250,7 @@ static int asf_header_parse_file_properties(asf_header_t *header, uint8_t *buffe
 
   asf_reader_init(&reader, buffer, buffer_len);
  
-  asf_reader_get_guid(&reader, &asf_file->file_id);
+  asf_reader_get_guid(&reader, asf_file->file_id);
   asf_reader_get_64(&reader, &asf_file->file_size);
 
   /* creation date */
@@ -325,7 +300,7 @@ static int asf_header_parse_stream_properties(asf_header_t *header, uint8_t *buf
   asf_reader_t reader;
   uint16_t flags = 0;
   uint32_t junk;
-  GUID guid;
+  uint8_t guid[16];
   asf_stream_t *asf_stream = NULL;
   int stream_id;
 
@@ -340,10 +315,10 @@ static int asf_header_parse_stream_properties(asf_header_t *header, uint8_t *buf
 
   asf_reader_init(&reader, buffer, buffer_len);
 
-  asf_reader_get_guid(&reader, &guid);
-  asf_stream->stream_type = asf_find_object_id(&guid);
-  asf_reader_get_guid(&reader, &guid);
-  asf_stream->error_correction_type = asf_find_object_id(&guid);
+  asf_reader_get_guid (&reader, guid);
+  asf_stream->stream_type = asf_guid_2_num (guid);
+  asf_reader_get_guid (&reader, guid);
+  asf_stream->error_correction_type = asf_guid_2_num (guid);
 
   asf_reader_get_64(&reader, &asf_stream->time_offset);
   asf_reader_get_32(&reader, &asf_stream->private_data_length);
@@ -365,8 +340,8 @@ static int asf_header_parse_stream_properties(asf_header_t *header, uint8_t *buf
 
   lprintf("Stream_properties\n");
   lprintf("  stream_number:                     %d\n", asf_stream->stream_number);
-  lprintf("  stream_type:                       %s\n", guids[asf_stream->stream_type].name);
-  lprintf("  error_correction_type:             %s\n", guids[asf_stream->error_correction_type].name);
+  lprintf("  stream_type:                       %s\n", asf_guid_name (asf_stream->stream_type));
+  lprintf("  error_correction_type:             %s\n", asf_guid_name (asf_stream->error_correction_type));
   lprintf("  time_offset:                       %"PRIu64"\n", asf_stream->time_offset);
   lprintf("  private_data_length:               %"PRIu32"\n", asf_stream->private_data_length);
   lprintf("  error_correction_data_length:      %"PRIu32"\n", asf_stream->error_correction_data_length);
@@ -454,11 +429,8 @@ static int asf_header_parse_stream_extended_properties(asf_header_t *header, uin
   /* skip payload extensions */
   if (asf_stream_extension->payload_extension_system_count) {
     for (i = 0; i < asf_stream_extension->payload_extension_system_count; i++) {
-      GUID guid;
-      uint16_t data_size;
       uint32_t length = 0;
-      asf_reader_get_guid(&reader, &guid);
-      asf_reader_get_16(&reader, &data_size);
+      asf_reader_skip (&reader, 16 + 2); /* guid, data_size */
       asf_reader_get_32(&reader, &length);
       asf_reader_skip(&reader, length);
     }
@@ -471,15 +443,15 @@ static int asf_header_parse_stream_extended_properties(asf_header_t *header, uin
 
   /* embeded stream properties */
   if (asf_reader_get_size(&reader) >= 24) {
-    GUID guid;
+    uint8_t guid[16];
     uint64_t object_length = 0;
 
-    asf_reader_get_guid(&reader, &guid);
+    asf_reader_get_guid (&reader, guid);
     asf_reader_get_64(&reader, &object_length);
 
     /* check length validity */
     if (asf_reader_get_size(&reader) == (object_length - 24)) {
-      int object_id = asf_find_object_id(&guid);
+      asf_guid_t object_id = asf_guid_2_num (guid);
       switch (object_id) {
         case GUID_ASF_STREAM_PROPERTIES:
           asf_header_parse_stream_properties(header, asf_reader_get_buffer(&reader), object_length - 24);
@@ -618,8 +590,6 @@ static int asf_header_parse_metadata(asf_header_t *header_pub, uint8_t *buffer, 
 static int asf_header_parse_header_extension(asf_header_t *header, uint8_t *buffer, int buffer_len) {
   asf_reader_t reader;
 
-  GUID junk1;
-  uint16_t junk2;
   uint32_t data_length;
 
   if (buffer_len < 22)
@@ -627,16 +597,15 @@ static int asf_header_parse_header_extension(asf_header_t *header, uint8_t *buff
 
   asf_reader_init(&reader, buffer, buffer_len);
 
-  asf_reader_get_guid(&reader, &junk1);
-  asf_reader_get_16(&reader, &junk2);
+  asf_reader_skip (&reader, 16 + 2); /* guid + junk */
   asf_reader_get_32(&reader, &data_length);
 
   lprintf("parse_asf_header_extension: length: %"PRIu32"\n", data_length);
 
   while (!asf_reader_eos(&reader)) {
 
-    GUID guid;
-    int object_id;
+    uint8_t guid[16];
+    asf_guid_t object_id;
     uint64_t object_length = 0, object_data_length;
 
     if (asf_reader_get_size(&reader) < 24) {
@@ -644,11 +613,11 @@ static int asf_header_parse_header_extension(asf_header_t *header, uint8_t *buff
       return 0;
     }
 
-    asf_reader_get_guid(&reader, &guid);
+    asf_reader_get_guid (&reader, guid);
     asf_reader_get_64(&reader, &object_length);
 
     object_data_length = object_length - 24;
-    object_id = asf_find_object_id(&guid);
+    object_id = asf_guid_2_num (guid);
     switch (object_id) {
       case GUID_EXTENDED_STREAM_PROPERTIES:
         asf_header_parse_stream_extended_properties(header, asf_reader_get_buffer(&reader), object_data_length);
@@ -745,8 +714,8 @@ asf_header_t *asf_header_new (uint8_t *buffer, int buffer_len) {
 
   while (!asf_reader_eos(&reader)) {
 
-    GUID guid;
-    int object_id;
+    uint8_t guid[16];
+    asf_guid_t object_id;
     uint64_t object_length = 0, object_data_length;
 
     if (asf_reader_get_size(&reader) < 24) {
@@ -754,12 +723,12 @@ asf_header_t *asf_header_new (uint8_t *buffer, int buffer_len) {
       goto exit_error;
     }
 
-    asf_reader_get_guid(&reader, &guid);
+    asf_reader_get_guid (&reader, guid);
     asf_reader_get_64(&reader, &object_length);
 
     object_data_length = object_length - 24;
 
-    object_id = asf_find_object_id(&guid);
+    object_id = asf_guid_2_num (guid);
     switch (object_id) {
     
       case GUID_ASF_FILE_PROPERTIES:
@@ -923,7 +892,7 @@ void asf_header_disable_streams (asf_header_t *header_pub, int video_id, int aud
   int i;
 
   for (i = 0; i < header->pub.stream_count; i++) {
-    int stream_type = header->pub.streams[i]->stream_type;
+    asf_guid_t stream_type = header->pub.streams[i]->stream_type;
 
     if (((stream_type == GUID_ASF_VIDEO_MEDIA) && (i != video_id)) ||
       ((stream_type == GUID_ASF_AUDIO_MEDIA) && (i != audio_id))) {
@@ -937,3 +906,241 @@ void asf_header_disable_streams (asf_header_t *header_pub, int video_id, int aud
     }
   }
 }
+
+static const asf_guid_t sorted_nums[] = {
+  GUID_ERROR,
+  GUID_ASF_NO_ERROR_CORRECTION,
+  GUID_ASF_JFIF_MEDIA,
+  GUID_ASF_MUTEX_BITRATE,
+  GUID_ASF_MARKER,
+  GUID_ASF_MUTEX_UKNOWN,
+  GUID_ASF_RESERVED_1,
+  GUID_ASF_EXTENDED_CONTENT_ENCRYPTION,
+  GUID_ASF_RESERVED_MARKER,
+  GUID_ASF_FILE_TRANSFER_MEDIA,
+  GUID_ASF_SCRIPT_COMMAND,
+  GUID_ASF_HEADER,
+  GUID_ASF_CONTENT_DESCRIPTION,
+  GUID_ADVANCED_CONTENT_ENCRYPTION,
+  GUID_ASF_ERROR_CORRECTION,
+  GUID_ASF_DATA,
+  GUID_ASF_CODEC_LIST,
+  GUID_GROUP_MUTUAL_EXCLUSION,
+  GUID_ASF_AUDIO_MEDIA,
+  GUID_ASF_EXTENDED_CONTENT_DESCRIPTION,
+  GUID_ASF_AUDIO_CONCEAL_NONE,
+  GUID_ASF_CODEC_COMMENT1_HEADER,
+  GUID_ASF_AUDIO_SPREAD,
+  GUID_STREAM_PRIORITIZATION,
+  GUID_COMPATIBILITY,
+  GUID_TIMECODE_INDEX_PARAMETERS,
+  GUID_ASF_PADDING,
+  GUID_ASF_SIMPLE_INDEX,
+  GUID_ASF_STREAM_PROPERTIES,
+  GUID_METADATA_LIBRARY,
+  GUID_ASF_FILE_PROPERTIES,
+  GUID_LANGUAGE_LIST,
+  GUID_MEDIA_OBJECT_INDEX_PARAMETERS,
+  GUID_ASF_HEADER_EXTENSION,
+  GUID_ASF_COMMAND_MEDIA,
+  GUID_ASF_VIDEO_MEDIA,
+  GUID_EXTENDED_STREAM_PROPERTIES,
+  GUID_ASF_STREAM_BITRATE_PROPERTIES,
+  GUID_ADVANCED_MUTUAL_EXCLUSION,
+  GUID_TIMECODE_INDEX,
+  GUID_ASF_2_0_HEADER,
+  GUID_INDEX,
+  GUID_ASF_BITRATE_MUTUAL_EXCLUSION,
+  GUID_INDEX_PARAMETERS,
+  GUID_ASF_DEGRADABLE_JPEG_MEDIA,
+  GUID_ASF_BINARY_MEDIA,
+  GUID_ASF_RESERVED_SCRIPT_COMMNAND,
+  GUID_BANDWIDTH_SHARING,
+  GUID_METADATA,
+  GUID_MEDIA_OBJECT_INDEX
+};
+
+static const uint8_t sorted_guids[] = {
+  0x00,0x00,0x00,0x00, 0x00,0x00, 0x00,0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, /* GUID_ERROR */
+  0x00,0x57,0xfb,0x20, 0x55,0x5b, 0xcf,0x11, 0xa8, 0xfd, 0x00, 0x80, 0x5f, 0x5c, 0x44, 0x2b, /* GUID_ASF_NO_ERROR_CORRECTION */
+  0x00,0xe1,0x1b,0xb6, 0x4e,0x5b, 0xcf,0x11, 0xa8, 0xfd, 0x00, 0x80, 0x5f, 0x5c, 0x44, 0x2b, /* GUID_ASF_JFIF_MEDIA */
+  0x01,0x2a,0xe2,0xd6, 0xda,0x35, 0xd1,0x11, 0x90, 0x34, 0x00, 0xa0, 0xc9, 0x03, 0x49, 0xbe, /* GUID_ASF_MUTEX_BITRATE */
+  0x01,0xcd,0x87,0xf4, 0x51,0xa9, 0xcf,0x11, 0x8e, 0xe6, 0x00, 0xc0, 0x0c, 0x20, 0x53, 0x65, /* GUID_ASF_MARKER */
+  0x02,0x2a,0xe2,0xd6, 0xda,0x35, 0xd1,0x11, 0x90, 0x34, 0x00, 0xa0, 0xc9, 0x03, 0x49, 0xbe, /* GUID_ASF_MUTEX_UKNOWN */
+  0x11,0xd2,0xd3,0xab, 0xba,0xa9, 0xcf,0x11, 0x8e, 0xe6, 0x00, 0xc0, 0x0c, 0x20, 0x53, 0x65, /* GUID_ASF_RESERVED_1 */
+  0x14,0xe6,0x8a,0x29, 0x22,0x26, 0x17,0x4c, 0xb9, 0x35, 0xda, 0xe0, 0x7e, 0xe9, 0x28, 0x9c, /* GUID_ASF_EXTENDED_CONTENT_ENCRYPTION */
+  0x20,0xdb,0xfe,0x4c, 0xf6,0x75, 0xcf,0x11, 0x9c, 0x0f, 0x00, 0xa0, 0xc9, 0x03, 0x49, 0xcb, /* GUID_ASF_RESERVED_MARKER */
+  0x2c,0x22,0xbd,0x91, 0x1c,0xf2, 0x7a,0x49, 0x8b, 0x6d, 0x5a, 0xa8, 0x6b, 0xfc, 0x01, 0x85, /* GUID_ASF_FILE_TRANSFER_MEDIA */
+  0x30,0x1a,0xfb,0x1e, 0x62,0x0b, 0xd0,0x11, 0xa3, 0x9b, 0x00, 0xa0, 0xc9, 0x03, 0x48, 0xf6, /* GUID_ASF_SCRIPT_COMMAND */
+  0x30,0x26,0xb2,0x75, 0x8e,0x66, 0xcf,0x11, 0xa6, 0xd9, 0x00, 0xaa, 0x00, 0x62, 0xce, 0x6c, /* GUID_ASF_HEADER */
+  0x33,0x26,0xb2,0x75, 0x8e,0x66, 0xcf,0x11, 0xa6, 0xd9, 0x00, 0xaa, 0x00, 0x62, 0xce, 0x6c, /* GUID_ASF_CONTENT_DESCRIPTION */
+  0x33,0x85,0x05,0x43, 0x81,0x69, 0xe6,0x49, 0x9b, 0x74, 0xad, 0x12, 0xcb, 0x86, 0xd5, 0x8c, /* GUID_ADVANCED_CONTENT_ENCRYPTION */
+  0x35,0x26,0xb2,0x75, 0x8e,0x66, 0xcf,0x11, 0xa6, 0xd9, 0x00, 0xaa, 0x00, 0x62, 0xce, 0x6c, /* GUID_ASF_ERROR_CORRECTION */
+  0x36,0x26,0xb2,0x75, 0x8e,0x66, 0xcf,0x11, 0xa6, 0xd9, 0x00, 0xaa, 0x00, 0x62, 0xce, 0x6c, /* GUID_ASF_DATA */
+  0x40,0x52,0xd1,0x86, 0x1d,0x31, 0xd0,0x11, 0xa3, 0xa4, 0x00, 0xa0, 0xc9, 0x03, 0x48, 0xf6, /* GUID_ASF_CODEC_LIST */
+  0x40,0x5a,0x46,0xd1, 0x79,0x5a, 0x38,0x43, 0xb7, 0x1b, 0xe3, 0x6b, 0x8f, 0xd6, 0xc2, 0x49, /* GUID_GROUP_MUTUAL_EXCLUSION */
+  0x40,0x9e,0x69,0xf8, 0x4d,0x5b, 0xcf,0x11, 0xa8, 0xfd, 0x00, 0x80, 0x5f, 0x5c, 0x44, 0x2b, /* GUID_ASF_AUDIO_MEDIA */
+  0x40,0xa4,0xd0,0xd2, 0x07,0xe3, 0xd2,0x11, 0x97, 0xf0, 0x00, 0xa0, 0xc9, 0x5e, 0xa8, 0x50, /* GUID_ASF_EXTENDED_CONTENT_DESCRIPTION */
+  0x40,0xa4,0xf1,0x49, 0xce,0x4e, 0xd0,0x11, 0xa3, 0xac, 0x00, 0xa0, 0xc9, 0x03, 0x48, 0xf6, /* GUID_ASF_AUDIO_CONCEAL_NONE */
+  0x41,0x52,0xd1,0x86, 0x1d,0x31, 0xd0,0x11, 0xa3, 0xa4, 0x00, 0xa0, 0xc9, 0x03, 0x48, 0xf6, /* GUID_ASF_CODEC_COMMENT1_HEADER */
+  0x50,0xcd,0xc3,0xbf, 0x8f,0x61, 0xcf,0x11, 0x8b, 0xb2, 0x00, 0xaa, 0x00, 0xb4, 0xe2, 0x20, /* GUID_ASF_AUDIO_SPREAD */
+  0x5b,0xd1,0xfe,0xd4, 0xd3,0x88, 0x4f,0x45, 0x81, 0xf0, 0xed, 0x5c, 0x45, 0x99, 0x9e, 0x24, /* GUID_STREAM_PRIORITIZATION */
+  0x5d,0x8b,0xf1,0x26, 0x84,0x45, 0xec,0x47, 0x9f, 0x5f, 0x0e, 0x65, 0x1f, 0x04, 0x52, 0xc9, /* GUID_COMPATIBILITY */
+  0x6d,0x49,0x5e,0xf5, 0x97,0x97, 0x5d,0x4b, 0x8c, 0x8b, 0x60, 0x4d, 0xf9, 0x9b, 0xfb, 0x24, /* GUID_TIMECODE_INDEX_PARAMETERS */
+  0x74,0xd4,0x06,0x18, 0xdf,0xca, 0x09,0x45, 0xa4, 0xba, 0x9a, 0xab, 0xcb, 0x96, 0xaa, 0xe8, /* GUID_ASF_PADDING */
+  0x90,0x08,0x00,0x33, 0xb1,0xe5, 0xcf,0x11, 0x89, 0xf4, 0x00, 0xa0, 0xc9, 0x03, 0x49, 0xcb, /* GUID_ASF_SIMPLE_INDEX */
+  0x91,0x07,0xdc,0xb7, 0xb7,0xa9, 0xcf,0x11, 0x8e, 0xe6, 0x00, 0xc0, 0x0c, 0x20, 0x53, 0x65, /* GUID_ASF_STREAM_PROPERTIES */
+  0x94,0x1c,0x23,0x44, 0x98,0x94, 0xd1,0x49, 0xa1, 0x41, 0x1d, 0x13, 0x4e, 0x45, 0x70, 0x54, /* GUID_METADATA_LIBRARY */
+  0xa1,0xdc,0xab,0x8c, 0x47,0xa9, 0xcf,0x11, 0x8e, 0xe4, 0x00, 0xc0, 0x0c, 0x20, 0x53, 0x65, /* GUID_ASF_FILE_PROPERTIES */
+  0xa9,0x46,0x43,0x7c, 0xe0,0xef, 0xfc,0x4b, 0xb2, 0x29, 0x39, 0x3e, 0xde, 0x41, 0x5c, 0x85, /* GUID_LANGUAGE_LIST */
+  0xad,0x3b,0x20,0x6b, 0x11,0x3f, 0xe4,0x48, 0xac, 0xa8, 0xd7, 0x61, 0x3d, 0xe2, 0xcf, 0xa7, /* GUID_MEDIA_OBJECT_INDEX_PARAMETERS */
+  0xb5,0x03,0xbf,0x5f, 0x2e,0xa9, 0xcf,0x11, 0x8e, 0xe3, 0x00, 0xc0, 0x0c, 0x20, 0x53, 0x65, /* GUID_ASF_HEADER_EXTENSION */
+  0xc0,0xcf,0xda,0x59, 0xe6,0x59, 0xd0,0x11, 0xa3, 0xac, 0x00, 0xa0, 0xc9, 0x03, 0x48, 0xf6, /* GUID_ASF_COMMAND_MEDIA */
+  0xc0,0xef,0x19,0xbc, 0x4d,0x5b, 0xcf,0x11, 0xa8, 0xfd, 0x00, 0x80, 0x5f, 0x5c, 0x44, 0x2b, /* GUID_ASF_VIDEO_MEDIA */
+  0xcb,0xa5,0xe6,0x14, 0x72,0xc6, 0x32,0x43, 0x83, 0x99, 0xa9, 0x69, 0x52, 0x06, 0x5b, 0x5a, /* GUID_EXTENDED_STREAM_PROPERTIES */
+  0xce,0x75,0xf8,0x7b, 0x8d,0x46, 0xd1,0x11, 0x8d, 0x82, 0x00, 0x60, 0x97, 0xc9, 0xa2, 0xb2, /* GUID_ASF_STREAM_BITRATE_PROPERTIES */
+  0xcf,0x49,0x86,0xa0, 0x75,0x47, 0x70,0x46, 0x8a, 0x16, 0x6e, 0x35, 0x35, 0x75, 0x66, 0xcd, /* GUID_ADVANCED_MUTUAL_EXCLUSION */
+  0xd0,0x3f,0xb7,0x3c, 0x4a,0x0c, 0x03,0x48, 0x95, 0x3d, 0xed, 0xf7, 0xb6, 0x22, 0x8f, 0x0c, /* GUID_TIMECODE_INDEX */
+  0xd1,0x29,0xe2,0xd6, 0xda,0x35, 0xd1,0x11, 0x90, 0x34, 0x00, 0xa0, 0xc9, 0x03, 0x49, 0xbe, /* GUID_ASF_2_0_HEADER */
+  0xd3,0x29,0xe2,0xd6, 0xda,0x35, 0xd1,0x11, 0x90, 0x34, 0x00, 0xa0, 0xc9, 0x03, 0x49, 0xbe, /* GUID_INDEX */
+  0xdc,0x29,0xe2,0xd6, 0xda,0x35, 0xd1,0x11, 0x90, 0x34, 0x00, 0xa0, 0xc9, 0x03, 0x49, 0xbe, /* GUID_ASF_BITRATE_MUTUAL_EXCLUSION */
+  0xdf,0x29,0xe2,0xd6, 0xda,0x35, 0xd1,0x11, 0x90, 0x34, 0x00, 0xa0, 0xc9, 0x03, 0x49, 0xbe, /* GUID_INDEX_PARAMETERS */
+  0xe0,0x7d,0x90,0x35, 0x15,0xe4, 0xcf,0x11, 0xa9, 0x17, 0x00, 0x80, 0x5f, 0x5c, 0x44, 0x2b, /* GUID_ASF_DEGRADABLE_JPEG_MEDIA */
+  0xe2,0x65,0xfb,0x3a, 0xef,0x47, 0xf2,0x40, 0xac, 0x2c, 0x70, 0xa9, 0x0d, 0x71, 0xd3, 0x43, /* GUID_ASF_BINARY_MEDIA */
+  0xe3,0xcb,0x1a,0x4b, 0x0b,0x10, 0xd0,0x11, 0xa3, 0x9b, 0x00, 0xa0, 0xc9, 0x03, 0x48, 0xf6, /* GUID_ASF_RESERVED_SCRIPT_COMMNAND */
+  0xe6,0x09,0x96,0xa6, 0x7b,0x51, 0xd2,0x11, 0xb6, 0xaf, 0x00, 0xc0, 0x4f, 0xd9, 0x08, 0xe9, /* GUID_BANDWIDTH_SHARING */
+  0xea,0xcb,0xf8,0xc5, 0xaf,0x5b, 0x77,0x48, 0x84, 0x67, 0xaa, 0x8c, 0x44, 0xfa, 0x4c, 0xca, /* GUID_METADATA */
+  0xf8,0x03,0xb1,0xfe, 0xad,0x12, 0x64,0x4c, 0x84, 0x0f, 0x2a, 0x1d, 0x2f, 0x7a, 0xd4, 0x8c, /* GUID_MEDIA_OBJECT_INDEX */
+};
+
+asf_guid_t asf_guid_2_num (const uint8_t *guid) {
+  int b = 0, m = -1, l, e = sizeof (sorted_guids) >> 4;
+  do {
+    const uint8_t *p, *q;
+    int i;
+    l = m;
+    m = (b + e) >> 1;
+    p = sorted_guids + (m << 4);
+    q = guid;
+    i = 16;
+    do {
+      int d = (int)*q++ - (int)*p++;
+      if (d < 0) {
+        e = m;
+        break;
+      } else if (d > 0) {
+        b = m;
+        break;
+      }
+      i--;
+    } while (i);
+    if (!i)
+      return sorted_nums[m];
+  } while (m != l);
+  return sorted_nums[0];
+}
+
+static const char tab_hex[16] = "0123456789abcdef";
+
+void asf_guid_2_str (uint8_t *str, const uint8_t *guid) {
+  *str++ = tab_hex[guid[3] >> 4];
+  *str++ = tab_hex[guid[3] & 15];
+  *str++ = tab_hex[guid[2] >> 4];
+  *str++ = tab_hex[guid[2] & 15];
+  *str++ = tab_hex[guid[1] >> 4];
+  *str++ = tab_hex[guid[1] & 15];
+  *str++ = tab_hex[guid[0] >> 4];
+  *str++ = tab_hex[guid[0] & 15];
+  *str++ = '-';
+  *str++ = tab_hex[guid[5] >> 4];
+  *str++ = tab_hex[guid[5] & 15];
+  *str++ = tab_hex[guid[4] >> 4];
+  *str++ = tab_hex[guid[4] & 15];
+  *str++ = '-';
+  *str++ = tab_hex[guid[7] >> 4];
+  *str++ = tab_hex[guid[7] & 15];
+  *str++ = tab_hex[guid[6] >> 4];
+  *str++ = tab_hex[guid[6] & 15];
+  *str++ = '-';
+  guid += 8;
+  int i = 8;
+  while (i > 0) {
+    *str++ = tab_hex[guid[0] >> 4];
+    *str++ = tab_hex[guid[0] & 15];
+    guid++;
+    i--;
+  }
+  *str = 0;
+}
+
+
+static const char * guid_names[] = {
+  "error",
+  /* base ASF objects */
+  "header",
+  "data",
+  "simple index",
+  "index",
+  "media object index",
+  "timecode index",
+  /* header ASF objects */
+  "file properties",
+  "stream header",
+  "header extension",
+  "codec list",
+  "script command",
+  "marker",
+  "bitrate mutual exclusion",
+  "error correction",
+  "content description",
+  "extended content description",
+  "stream bitrate properties", /* (http://get.to/sdp) */
+  "extended content encryption",
+  "padding",
+  /* stream properties object stream type */
+  "audio media",
+  "video media",
+  "command media",
+  "JFIF media (JPEG)",
+  "Degradable JPEG media",
+  "File Transfer media",
+  "Binary media",
+  /* stream properties object error correction */
+  "no error correction",
+  "audio spread",
+  /* mutual exclusion object exlusion type */
+  "mutex bitrate",
+  "mutex unknown",
+  /* header extension */
+  "reserved_1",
+  /* script command */
+  "reserved script command",
+  /* marker object */
+  "reserved marker",
+  /* various */
+  "audio conceal none",
+  "codec comment1 header",
+  "asf 2.0 header",
+  /* header extension GUIDs */ 
+  "extended stream properties",
+  "advanced mutual exclusion",
+  "group mutual exclusion",
+  "stream prioritization",
+  "bandwidth sharing",
+  "language list",
+  "metadata",
+  "metadata library",
+  "index parameters",
+  "media object index parameters",
+  "timecode index parameters",
+  "advanced content encryption",
+  /* exotic stuff */
+  "compatibility",
+};
+
+const char *asf_guid_name (asf_guid_t num) {
+  if ((num < 0) || (num >= GUID_END))
+    num = GUID_ERROR;
+  return guid_names[num];
+}
+
