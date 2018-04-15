@@ -98,23 +98,7 @@ static off_t rtsp_plugin_seek (input_plugin_t *this_gen, off_t offset, int origi
   lprintf ("seek %"PRId64" bytes, origin %d\n", offset, origin);
 
   /* only realtive forward-seeking is implemented */
-
-  if ((origin == SEEK_CUR) && (offset >= 0)) {
-
-    for (;((int)offset) - BUFSIZE > 0; offset -= BUFSIZE) {
-      off_t n = rtsp_plugin_read (this_gen, this->scratch, BUFSIZE);
-      if (n <= 0)
-	return this->curpos;
-      this->curpos += n;
-    }
-
-    off_t n = rtsp_plugin_read (this_gen, this->scratch, offset);
-    if (n <= 0)
-      return this->curpos;
-    this->curpos += n;
-  }
-
-  return this->curpos;
+  return _x_input_seek_preview(this_gen, offset, origin, &this->curpos, -1, -1);
 }
 
 static off_t rtsp_plugin_seek_time (input_plugin_t *this_gen, int time_offset, int origin) {
