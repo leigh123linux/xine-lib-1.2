@@ -41,6 +41,7 @@
 #include <xine/xineutils.h>
 #include <xine/input_plugin.h>
 
+#include "net_buf_ctrl.h"
 #include "http_helper.h"
 #include "input_helper.h"
 
@@ -55,6 +56,8 @@ typedef struct {
   char            *mrl_private;
   off_t            curpos;
   off_t            file_size;
+
+  nbc_t           *nbc;
 
   /* ssh */
   int                  fd;
@@ -499,6 +502,11 @@ static void _dispose (input_plugin_t *this_gen)
 {
   ssh_input_plugin_t *this = (ssh_input_plugin_t *) this_gen;
 
+  if (this->nbc) {
+    nbc_close (this->nbc);
+    this->nbc = NULL;
+  }
+
   if (this->sftp_handle) {
     while (libssh2_sftp_close(this->sftp_handle) == LIBSSH2_ERROR_EAGAIN);
     this->sftp_handle = NULL;
@@ -639,6 +647,11 @@ static input_plugin_t *_get_instance (input_class_t *cls_gen, xine_stream_t *str
   this->stream = stream;
   this->fd     = -1;
   this->xine   = stream ? stream->xine : NULL;
+
+  if (stream) {
+    /* not needed for directory browsing */
+    this->nbc = nbc_init (stream);
+  }
 
   this->input_plugin.open              = _open_plugin;
   this->input_plugin.read_block        = _x_input_default_read_block;
