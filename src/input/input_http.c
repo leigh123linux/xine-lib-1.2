@@ -88,6 +88,9 @@ typedef struct {
   /** Set to 1 if the stream is ShoutCast. */
   unsigned int     shoutcast_mode:1;
 
+  /* set to 1 if server replied with Accept-Ranges: bytes */
+  unsigned int     accept_range:1;
+
   /* ShoutCast */
   int              shoutcast_metaint;
   off_t            shoutcast_pos;
@@ -465,6 +468,9 @@ static uint32_t http_plugin_get_capabilities (input_plugin_t *this_gen) {
       !strncmp(this->url.uri + strlen(this->url.uri) - 4, ".nsv", 4))
     caps |= INPUT_CAP_RIP_FORBIDDEN;
 
+  if (this->accept_range) {
+    caps |= INPUT_CAP_SLOW_SEEKABLE;
+  }
   return caps;
 }
 
@@ -484,11 +490,70 @@ static void http_close(http_input_plugin_t * this)
   _x_url_cleanup(&this->url);
 }
 
+static int http_restart(http_input_plugin_t * this, off_t abs_offset)
+{
+  /* save old stream */
+  int   old_fh = this->fh;
+  off_t old_pos = this->curpos;
+
+  xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG,
+          "input_http: seek to %" PRId64 ": reconnecting ...\n",
+          (int64_t)abs_offset);
+
+  this->fh = -1;
+  http_close(this);
+
+  this->curpos = abs_offset;
+  if (this->input_plugin.open(&this->input_plugin) != 1) {
+    xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
+            "input_http: seek to %" PRId64 " failed (http request failed)\n",
+            (int64_t)abs_offset);
+    goto fail;
+  }
+
+  if (this->curpos != abs_offset) {
+    /* something went wrong ... */
+    xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
+            "input_http: seek to %" PRId64 " failed (server returned invalid range)\n",
+            (int64_t)abs_offset);
+    _x_io_tcp_close(this->stream, this->fh);
+    goto fail;
+  }
+
+  /* close old connection */
+  _x_io_tcp_close(this->stream, old_fh);
+
+  return 0;
+
+ fail:
+  /* restore old stream */
+  this->fh = old_fh;
+  this->curpos = old_pos;
+  return -1;
+}
+
 static off_t http_plugin_seek(input_plugin_t *this_gen, off_t offset, int origin) {
   http_input_plugin_t *this = (http_input_plugin_t *) this_gen;
+  off_t abs_offset;
 
-  return _x_input_seek_preview(this_gen, offset, origin,
-                               &this->curpos, this->contentlength, this->preview_size);
+  abs_offset = _x_input_seek_preview(this_gen, offset, origin,
+                                     &this->curpos, this->contentlength, this->preview_size);
+
+  if (abs_offset < 0 && this->accept_range) {
+
+    abs_offset = _x_input_translate_seek(offset, origin, this->curpos, this->contentlength);
+    if (abs_offset < 0) {
+      xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
+              "input_http: invalid seek request (%d, %" PRId64 ")\n",
+              origin, (int64_t)offset);
+      return -1;
+    }
+
+    if (http_restart(this, abs_offset) < 0)
+      return -1;
+  }
+
+  return abs_offset;
 }
 
 static const char* http_plugin_get_mrl (input_plugin_t *this_gen) {
@@ -603,8 +668,6 @@ static int http_plugin_open (input_plugin_t *this_gen ) {
   else
     this->fh = _x_io_tcp_connect (this->stream, this->url.host, this->url.port);
 
-  this->curpos = 0;
-
   if (this->fh == -1)
     return -2;
 
@@ -650,6 +713,15 @@ static int http_plugin_open (input_plugin_t *this_gen ) {
     snprintf (buf + buflen, sizeof(buf) - buflen, "Host: %s\015\012",
               this->url.host);
 
+  if (this->curpos > 0) {
+      /* restart from offset */
+      buflen = strlen(buf);
+      snprintf (buf + buflen, sizeof(buf) - buflen, "Range: bytes=%" PRId64 "-\015\012",
+                (int64_t)this->curpos/*, (int64_t)this->contentlength - 1*/);
+      xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG, "input_http: requesting restart from offset %" PRId64 "\n",
+              (int64_t)this->curpos);
+  }
+
   buflen = strlen(buf);
   if (use_proxy && this_class->proxyuser && strlen(this_class->proxyuser)) {
     char *proxyauth;
@@ -691,6 +763,7 @@ static int http_plugin_open (input_plugin_t *this_gen ) {
   /* read and parse reply */
   done = 0; len = 0; linenum = 0;
   this->contentlength = 0;
+  this->curpos = 0;
 
   while (!done) {
     /* fprintf (stderr, "input_http: read...\n"); */
@@ -770,6 +843,39 @@ static int http_plugin_open (input_plugin_t *this_gen ) {
               contentlength);
 	    this->contentlength = (off_t)contentlength;
 	  }
+        }
+
+        if (!strncasecmp(buf, "Content-Range", 13)) {
+          intmax_t contentlength, range_start, range_end;
+          if (sscanf(buf, "Content-Range: bytes %" SCNdMAX "-%" SCNdMAX "/%" SCNdMAX,
+                     &range_start, &range_end, &contentlength) == 3) {
+            this->curpos = range_start;
+            this->contentlength = contentlength;
+            if (contentlength != range_end + 1) {
+              xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
+                      "input_http: Reveived invalid content range: \'%s\'\n", buf);
+              /* truncate - there won't be more data anyway */
+              this->contentlength = range_end + 1;
+            } else {
+              xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG,
+                      "input_http: Stream starting at offset %" PRIdMAX "\n", range_start);
+            }
+          } else {
+            xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
+                    "input_http: Error parsing \'%s\'\n", buf);
+          }
+        }
+
+        if (!strncasecmp(buf, "Accept-Ranges", 13)) {
+          if (strstr(buf + 14, "bytes")) {
+            xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG,
+                    "input_http: Server supports request ranges. Enabling seeking support.\n");
+            this->accept_range = 1;
+          } else {
+            xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
+                    "input_http: Unknown value in header \'%s\'\n", buf + 14);
+            this->accept_range = 0;
+          }
         }
 
         if (!strncasecmp(buf, "Location: ", 10)) {
@@ -890,6 +996,12 @@ static int http_plugin_open (input_plugin_t *this_gen ) {
       http_close(this);
       return http_plugin_open(this_gen);
     }
+  }
+
+  if (this->curpos > 0) {
+    /* restarting after seek */
+    this->preview_size = 0;
+    return 1;
   }
 
   /*
