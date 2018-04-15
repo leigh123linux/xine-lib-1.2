@@ -273,7 +273,7 @@ static int asf_header_parse_file_properties(asf_header_t *header, uint8_t *buffe
   header->file = asf_file;
 
   lprintf("File properties\n");
-  lprintf("  file_id:                           %04X\n", asf_file->file_id.Data1);
+  lprintf("  file_id:                           %04X\n", _X_LE_16(&asf_file->file_id[4]));
   lprintf("  file_size:                         %"PRIu64"\n", asf_file->file_size);
   lprintf("  data_packet_count:                 %"PRIu64"\n", asf_file->data_packet_count);
   lprintf("  play_duration:                     %"PRIu64"\n", asf_file->play_duration);
