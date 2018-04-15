@@ -329,9 +329,6 @@ typedef struct {
 
   cdda_input_plugin_t *ip;
 
-  int                  show_hidden_files;
-  char                *origin_path;
-
   char               **autoplaylist;
 
 } cdda_input_class_t;
