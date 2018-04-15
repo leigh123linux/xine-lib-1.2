@@ -54,6 +54,7 @@
 #include "mms.h"
 #include "mmsh.h"
 #include "net_buf_ctrl.h"
+#include "input_helper.h"
 
 #define LOG_MODULE "input_mms"
 
@@ -123,39 +124,8 @@ static off_t mms_plugin_read (input_plugin_t *this_gen,
   return n;
 }
 
-static buf_element_t *mms_plugin_read_block (input_plugin_t *this_gen,
-                                             fifo_buffer_t *fifo, off_t todo) {
-  /*mms_input_plugin_t   *this = (mms_input_plugin_t *) this_gen; */
-  buf_element_t        *buf = fifo->buffer_pool_alloc (fifo);
-  int                   total_bytes;
-
-  lprintf ("mms_plugin_read_block: %"PRId64" bytes...\n", todo);
-
-  if (todo > buf->max_size)
-    todo = buf->max_size;
-  if (todo < 0) {
-    buf->free_buffer (buf);
-    return NULL;
-  }
-
-  buf->content = buf->mem;
-  buf->type = BUF_DEMUX_BLOCK;
-
-  total_bytes = mms_plugin_read (this_gen, (char*)buf->content, todo);
-
-  if (total_bytes != todo) {
-    buf->free_buffer (buf);
-    return NULL;
-  }
-
-  buf->size = total_bytes;
-
-  return buf;
-}
-
 static off_t mms_plugin_seek (input_plugin_t *this_gen, off_t offset, int origin) {
   mms_input_plugin_t   *this = (mms_input_plugin_t *) this_gen;
-  off_t                 dest = 0;
   off_t                 curpos = 0;
 
   lprintf ("mms_plugin_seek: %"PRId64" offset, %d origin...\n", offset, origin);
@@ -170,49 +140,8 @@ static off_t mms_plugin_seek (input_plugin_t *this_gen, off_t offset, int origin
       break;
   }
 
-  switch (origin) {
-    case SEEK_SET:
-      dest = offset;
-      break;
-    case SEEK_CUR:
-      dest = curpos + offset;
-      break;
-    default:
-      printf ("input_mms: unknown origin in seek!\n");
-      return curpos;
-  }
-
-  if (curpos > dest) {
-    printf ("input_mms: cannot seek back!\n");
-    return curpos;
-  }
-
-  while (curpos < dest) {
-    int n = 0;
-    int diff;
-
-    diff = dest - curpos;
-
-    if (diff > 1024)
-      diff = 1024;
-
-    switch (this->protocol) {
-      case PROTOCOL_MMST:
-        n = mms_read (this->mms, this->scratch, diff);
-        break;
-      case PROTOCOL_MMSH:
-        n = mmsh_read (this->mmsh, this->scratch, diff);
-        break;
-    }
-
-    curpos += n;
-
-    if (n < diff)
-      return curpos;
-
-  }
-
-  return curpos;
+  return _x_input_seek_preview(this_gen, offset, origin,
+                               &curpos, -1, -1);
 }
 
 static off_t mms_plugin_seek_time (input_plugin_t *this_gen, int time_offset, int origin) {
@@ -257,14 +186,6 @@ static off_t mms_plugin_get_length (input_plugin_t *this_gen) {
 
   return length;
 
-}
-
-static uint32_t mms_plugin_get_capabilities (input_plugin_t *this_gen) {
-  return INPUT_CAP_PREVIEW;
-}
-
-static uint32_t mms_plugin_get_blocksize (input_plugin_t *this_gen) {
-  return 0;
 }
 
 static off_t mms_plugin_get_current_pos (input_plugin_t *this_gen){
@@ -430,14 +351,14 @@ static input_plugin_t *mms_class_get_instance (input_class_t *cls_gen, xine_stre
   }
 
   this->input_plugin.open              = mms_plugin_open;
-  this->input_plugin.get_capabilities  = mms_plugin_get_capabilities;
+  this->input_plugin.get_capabilities  = _x_input_get_capabilities_preview;
   this->input_plugin.read              = mms_plugin_read;
-  this->input_plugin.read_block        = mms_plugin_read_block;
+  this->input_plugin.read_block        = _x_input_default_read_block;
   this->input_plugin.seek              = mms_plugin_seek;
   this->input_plugin.seek_time         = mms_plugin_seek_time;
   this->input_plugin.get_current_pos   = mms_plugin_get_current_pos;
   this->input_plugin.get_length        = mms_plugin_get_length;
-  this->input_plugin.get_blocksize     = mms_plugin_get_blocksize;
+  this->input_plugin.get_blocksize     = _x_input_default_get_blocksize;
   this->input_plugin.get_mrl           = mms_plugin_get_mrl;
   this->input_plugin.dispose           = mms_plugin_dispose;
   this->input_plugin.get_optional_data = mms_plugin_get_optional_data;

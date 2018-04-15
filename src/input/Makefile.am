@@ -181,7 +181,7 @@ xineplug_inp_rtp_la_SOURCES = input_rtp.c
 xineplug_inp_rtp_la_LIBADD = $(XINE_LIB) $(NET_LIBS) $(PTHREAD_LIBS) $(LTLIBINTL) net_buf_ctrl.la input_helper.la
 
 xineplug_inp_mms_la_SOURCES = input_mms.c mms.c mms.h mmsh.c mmsh.h
-xineplug_inp_mms_la_LIBADD = $(XINE_LIB) $(LTLIBICONV) $(LTLIBINTL) $(ASFHEADER_LIB) http_helper.la net_buf_ctrl.la
+xineplug_inp_mms_la_LIBADD = $(XINE_LIB) $(LTLIBICONV) $(LTLIBINTL) $(ASFHEADER_LIB) http_helper.la net_buf_ctrl.la input_helper.la
 
 xineplug_inp_vcd_la_SOURCES = vcd/xineplug_inp_vcd.c vcd/vcdplayer.c vcd/vcdplayer.h vcd/vcdio.c vcd/vcdio.h
 xineplug_inp_vcd_la_LIBADD = $(XINE_LIB) $(LTLIBINTL) $(LIBCDIO_LIBS) $(LIBVCD_LIBS) $(LIBVCDINFO_LIBS) $(LIBISO9660_LIBS) -lm
