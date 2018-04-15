@@ -75,9 +75,6 @@ typedef struct {
   off_t            curpos;
   off_t            contentlength;
 
-  char             preview[MAX_PREVIEW_SIZE];
-  off_t            preview_size;
-
   char            *mime_type;
   const char      *user_agent;
   xine_url_t       url;
@@ -95,6 +92,9 @@ typedef struct {
   int              shoutcast_metaint;
   off_t            shoutcast_pos;
   char            *shoutcast_songtitle;
+
+  off_t            preview_size;
+  char             preview[MAX_PREVIEW_SIZE];
 
 } http_input_plugin_t;
 
