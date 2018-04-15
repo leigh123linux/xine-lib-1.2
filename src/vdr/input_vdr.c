@@ -119,9 +119,6 @@ struct vdr_input_plugin_s
   off_t               curpos;
   char                seek_buf[ BUF_SIZE ];
 
-  char               *preview;
-  off_t               preview_size;
-
   enum funcs          cur_func;
   off_t               cur_size;
   off_t               cur_done;
@@ -1563,19 +1560,6 @@ static off_t vdr_plugin_read(input_plugin_t *this_gen,
   lprintf ("reading %lld bytes...\n", len);
 #endif
   total=0;
-  if (this->curpos < this->preview_size)
-  {
-    n = this->preview_size - this->curpos;
-    if (n > (len - total))
-      n = len - total;
-#ifdef LOG_READ
-    lprintf ("%lld bytes from preview (which has %lld bytes)\n",
-            n, this->preview_size);
-#endif
-    memcpy (&buf[total], &this->preview[this->curpos], n);
-    this->curpos += n;
-    total += n;
-  }
 
   if( (len-total) > 0 )
   {
@@ -1700,9 +1684,6 @@ static off_t vdr_plugin_seek(input_plugin_t *this_gen, off_t offset, int origin)
   {
     if (offset < this->curpos)
     {
-      if (this->curpos <= this->preview_size)
-        this->curpos = offset;
-      else
         lprintf("cannot seek back! (%" PRId64 " > %" PRId64 ")\n",
                 (int64_t)this->curpos, (int64_t)offset);
     }
@@ -2228,8 +2209,6 @@ static int vdr_plugin_open(input_plugin_t *this_gen)
    * => create plugin instance
    */
 
-  this->preview      = NULL;
-  this->preview_size = 0;
   this->curpos       = 0;
 
   return 1;
