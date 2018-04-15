@@ -40,6 +40,7 @@
 #include <xine/xineutils.h>
 #include <xine/input_plugin.h>
 #include "net_buf_ctrl.h"
+#include "input_helper.h"
 
 #define BUFSIZE                 1024
 #if defined(WIN32) || defined(__CYGWIN__)
@@ -66,8 +67,6 @@ typedef struct {
 
   off_t            preview_size;
   char             preview[MAX_PREVIEW_SIZE];
-
-  char             seek_buf[BUFSIZE];
 } stdin_input_plugin_t;
 
 static off_t stdin_plugin_get_current_pos (input_plugin_t *this_gen);
@@ -213,53 +212,11 @@ static off_t stdin_plugin_seek (input_plugin_t *this_gen, off_t offset, int orig
 
   lprintf ("seek %"PRId64" offset, %d origin...\n", offset, origin);
 
-  if ((origin == SEEK_CUR) && (offset >= 0)) {
-
-    for (;((int)offset) - BUFSIZE > 0; offset -= BUFSIZE) {
-      if( this_gen->read (this_gen, this->seek_buf, BUFSIZE) <= 0 )
-        return this->curpos;
-    }
-
-    this_gen->read (this_gen, this->seek_buf, offset);
-  }
-
-  if (origin == SEEK_SET) {
-
-    if (offset < this->curpos) {
-
-      if( this->curpos <= this->preview_size )
-        this->curpos = offset;
-      else
-        xprintf (this->xine, XINE_VERBOSITY_LOG,
-                 _("stdin: cannot seek back! (%" PRIdMAX " > %" PRIdMAX ")\n"),
-                 (intmax_t)this->curpos, (intmax_t)offset);
-
-    } else {
-      offset -= this->curpos;
-
-      for (;((int)offset) - BUFSIZE > 0; offset -= BUFSIZE) {
-        if( this_gen->read (this_gen, this->seek_buf, BUFSIZE) <= 0 )
-          return this->curpos;
-      }
-
-      this_gen->read (this_gen, this->seek_buf, offset);
-    }
-  }
-
-  return this->curpos;
+  return _x_input_seek_preview (this_gen, offset, origin,
+                                &this->curpos, -1, this->preview_size);
 }
 
 static off_t stdin_plugin_get_length(input_plugin_t *this_gen) {
-
-  return 0;
-}
-
-static uint32_t stdin_plugin_get_capabilities(input_plugin_t *this_gen) {
-
-  return INPUT_CAP_PREVIEW;
-}
-
-static uint32_t stdin_plugin_get_blocksize(input_plugin_t *this_gen) {
 
   return 0;
 }
@@ -407,13 +364,13 @@ static input_plugin_t *stdin_class_get_instance (input_class_t *class_gen,
   this->requery_timeout = 0;
 
   this->input_plugin.open              = stdin_plugin_open;
-  this->input_plugin.get_capabilities  = stdin_plugin_get_capabilities;
+  this->input_plugin.get_capabilities  = _x_input_get_capabilities_preview;
   this->input_plugin.read              = stdin_plugin_read;
   this->input_plugin.read_block        = stdin_plugin_read_block;
   this->input_plugin.seek              = stdin_plugin_seek;
   this->input_plugin.get_current_pos   = stdin_plugin_get_current_pos;
   this->input_plugin.get_length        = stdin_plugin_get_length;
-  this->input_plugin.get_blocksize     = stdin_plugin_get_blocksize;
+  this->input_plugin.get_blocksize     = _x_input_default_get_blocksize;
   this->input_plugin.get_mrl           = stdin_plugin_get_mrl;
   this->input_plugin.dispose           = stdin_plugin_dispose;
   this->input_plugin.get_optional_data = stdin_plugin_get_optional_data;
