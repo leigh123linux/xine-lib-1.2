@@ -818,7 +818,7 @@ static video_decoder_t *open_plugin (video_decoder_class_t *class_gen, xine_stre
             "failed to commit input format: %s (%d)\n",
             mmal_status_to_string(status), status);
     mmal_dispose(&this->video_decoder);
-    return NULL;
+    return (video_decoder_t *)1;
   }
 
   input->buffer_size = input->buffer_size_recommended;
@@ -830,7 +830,7 @@ static video_decoder_t *open_plugin (video_decoder_class_t *class_gen, xine_stre
             "failed to enable input port: %s (%d)\n",
             mmal_status_to_string(status), status);
     mmal_dispose(&this->video_decoder);
-    return NULL;
+    return (video_decoder_t *)1;
   }
 
   return &this->video_decoder;
