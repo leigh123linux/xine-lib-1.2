@@ -474,6 +474,16 @@ static off_t http_plugin_get_current_pos (input_plugin_t *this_gen){
   return this->curpos;
 }
 
+static void http_close(http_input_plugin_t * this)
+{
+  if (this->fh != -1) {
+    _x_io_tcp_close(this->stream, this->fh);
+    this->fh = -1;
+  }
+
+  _x_url_cleanup(&this->url);
+}
+
 static off_t http_plugin_seek(input_plugin_t *this_gen, off_t offset, int origin) {
   http_input_plugin_t *this = (http_input_plugin_t *) this_gen;
 
@@ -511,10 +521,7 @@ static int http_plugin_get_optional_data (input_plugin_t *this_gen,
 static void http_plugin_dispose (input_plugin_t *this_gen ) {
   http_input_plugin_t *this = (http_input_plugin_t *) this_gen;
 
-  if (this->fh != -1) {
-    _x_io_tcp_close(this->stream, this->fh);
-    this->fh = -1;
-  }
+  http_close(this);
 
   if (this->nbc) {
     nbc_close (this->nbc);
@@ -522,7 +529,6 @@ static void http_plugin_dispose (input_plugin_t *this_gen ) {
   }
 
   _x_freep (&this->mrl);
-  _x_url_cleanup(&this->url);
   _x_freep (&this->mime_type);
   free (this);
 }
@@ -589,6 +595,8 @@ static int http_plugin_open (input_plugin_t *this_gen ) {
   }
 
 #endif
+
+  _x_assert(this->fh < 0);
 
   if (use_proxy)
     this->fh = _x_io_tcp_connect (this->stream, this_class->proxyhost, proxyport);
@@ -772,6 +780,7 @@ static int http_plugin_open (input_plugin_t *this_gen ) {
           href = _x_canonicalise_url (this->mrl, href);
           free(this->mrl);
           this->mrl = href;
+          http_close(this);
           return http_plugin_open(this_gen);
         }
 
@@ -879,6 +888,7 @@ static int http_plugin_open (input_plugin_t *this_gen ) {
       href = _x_canonicalise_url (this->mrl, urlbuf);
       free(this->mrl);
       this->mrl = href;
+      http_close(this);
       return http_plugin_open(this_gen);
     }
   }
