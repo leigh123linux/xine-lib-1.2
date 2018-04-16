@@ -1107,7 +1107,11 @@ static int ImlibPaletteLUTGet(xshm_driver_t *this) {
     char *retval = xcb_get_property_value(prop_reply);
 
     j = 1 + retval[0]*4;
-    this->yuv2rgb_cmap = xine_xcalloc(sizeof(uint8_t), 32 * 32 * 32);
+    this->yuv2rgb_cmap = calloc(sizeof(uint8_t), 32 * 32 * 32);
+    if (!this->yuv2rgb_cmap) {
+      free(prop_reply);
+      return 0;
+    }
     for (i = 0; i < 32 * 32 * 32 && j < num_ret; i++)
       this->yuv2rgb_cmap[i] = retval[1+4*retval[j++]+3];
 
@@ -1388,7 +1392,11 @@ static vo_driver_t *xshm_open_plugin(video_driver_class_t *class_gen, const void
  * class functions
  */
 static void *xshm_init_class (xine_t *xine, const void *visual_gen) {
-  xshm_class_t	       *this = (xshm_class_t *) calloc(1, sizeof(xshm_class_t));
+  xshm_class_t *this;
+
+  this = calloc(1, sizeof(xshm_class_t));
+  if (!this)
+    return NULL;
 
   this->driver_class.open_plugin     = xshm_open_plugin;
   this->driver_class.identifier      = "XShm";
