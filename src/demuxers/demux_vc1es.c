@@ -79,7 +79,6 @@ typedef struct {
   input_plugin_t      *input;
   int                  status;
   int                  mode;
-  int                  first_chunk;
   uint8_t              private[PRIVATE_SIZE];
   uint32_t             video_step;
 
@@ -95,23 +94,18 @@ static int demux_vc1_es_next_smp( demux_vc1_es_t *this )
   uint8_t head[SCRATCH_SIZE];
   int start_flag = 1;
 
-  if ( this->first_chunk ) {
-    this->input->read( this->input, head, SCRATCH_SIZE );
-    this->first_chunk = 0;
-  }
+  if (this->input->read( this->input, head, 8 ) != 8)
+    return 0;
 
-  done = this->input->read( this->input, head, 8 );
   frame_size = _X_LE_24( head );
   pts = _X_LE_32( head+4 );
 
-  done = 0;
   while ( frame_size>0 ) {
     buf = this->video_fifo->buffer_pool_alloc(this->video_fifo);
     off_t read = (frame_size>buf->max_size) ? buf->max_size : frame_size;
     done = this->input->read( this->input, buf->mem, read );
     if ( done<=0 ) {
       buf->free_buffer( buf );
-      this->status = DEMUX_FINISHED;
       return 0;
     }
     buf->size = done;
@@ -145,7 +139,6 @@ static int demux_vc1_es_next_ap( demux_vc1_es_t *this )
 
   if (done <= 0) {
     buf->free_buffer (buf);
-    this->status = DEMUX_FINISHED;
     return 0;
   }
 
@@ -338,8 +331,10 @@ static demux_plugin_t *open_plugin( demux_class_t *class_gen, xine_stream_t *str
   }
 
   this = calloc(1, sizeof(demux_vc1_es_t));
+  if (!this)
+    return NULL;
+
   this->mode = found;
-  this->first_chunk = 1;
   if ( found==MODE_SMP ) {
     xine_fast_memcpy( this->private+8, scratch+12, 4 ); /* height */
     xine_fast_memcpy( this->private+4, scratch+16, 4 ); /* width */
@@ -360,6 +355,9 @@ static demux_plugin_t *open_plugin( demux_class_t *class_gen, xine_stream_t *str
   this->demux_plugin.demux_class       = class_gen;
 
   this->status = DEMUX_FINISHED;
+
+  if ( input->seek( input, SCRATCH_SIZE, SEEK_SET ) != SCRATCH_SIZE )
+    return NULL;
 
   return &this->demux_plugin;
 }
