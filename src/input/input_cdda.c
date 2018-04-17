@@ -2489,7 +2489,8 @@ static int cdda_plugin_open (input_plugin_t *this_gen ) {
     _x_meta_info_set_utf8(this->stream, XINE_META_INFO_ALBUM, this->cddb.disc_title);
   }
 
-  if(this->cddb.track[this->track].title) {
+  if (this->track < this->cddb.num_tracks &&
+      this->cddb.track[this->track].title) {
     /* Check for track 'titles' of the form <artist> / <title>. */
     char *pt;
     pt = strstr(this->cddb.track[this->track].title, " / ");
