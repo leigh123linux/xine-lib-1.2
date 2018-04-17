@@ -2038,8 +2038,7 @@ static int cdda_open(cdda_input_plugin_t *this_gen,
 
   *fdd = -1;
 
-  if (this_gen)
-    this_gen->fd = -1;
+  this_gen->fd = -1;
 
   /* We use O_NONBLOCK for when /proc/sys/dev/cdrom/check_media is at 1 on
    * Linux systems */
@@ -2048,8 +2047,7 @@ static int cdda_open(cdda_input_plugin_t *this_gen,
     return -1;
   }
 
-  if (this_gen)
-    this_gen->fd = fd;
+  this_gen->fd = fd;
 
 #ifdef CDROM_SELECT_SPEED
   if (this_gen->stream) {
@@ -2070,15 +2068,11 @@ static int cdda_open(cdda_input_plugin_t *this_gen,
 
   *fdd = -1;
 
-  if (this_gen) {
-    this_gen->fd = -1;
-    this_gen->h_device_handle = NULL;
-    this_gen->i_sid = 0;
-    this_gen->hASPI = NULL;
-    this_gen->lpSendCommand = NULL;
-  }
-  else
-      return -1;
+  this_gen->fd = -1;
+  this_gen->h_device_handle = NULL;
+  this_gen->i_sid = 0;
+  this_gen->hASPI = NULL;
+  this_gen->lpSendCommand = NULL;
 
   /* We are going to assume that we are opening a
    * device and not a file!
