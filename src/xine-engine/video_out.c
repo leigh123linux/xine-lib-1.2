@@ -2450,7 +2450,9 @@ static void vo_open (xine_video_port_t *this_gen, xine_stream_t *stream) {
   xprintf (this->xine, XINE_VERBOSITY_DEBUG, "video_out: vo_open (%p)\n", (void*)stream);
 
   this->video_opened = 1;
+  pthread_mutex_lock (&this->display_img_buf_queue.mutex);
   this->discard_frames = 0;
+  pthread_mutex_unlock (&this->display_img_buf_queue.mutex);
   this->last_delivery_pts = 0;
   this->warn_threshold_event_sent = this->warn_threshold_exceeded = 0;
   if (!this->overlay_enabled && (stream == XINE_ANON_STREAM || stream == NULL || stream->spu_channel_user > -2))
