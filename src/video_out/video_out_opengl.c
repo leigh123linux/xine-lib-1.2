@@ -678,8 +678,8 @@ static int render_image_envtex (opengl_driver_t *this, opengl_frame_t *frame) {
       ! this->tex_width || ! this->tex_height) {
     ret = render_image_tex (this, frame);
     /* Texture matrix has to skale/shift tex origin + swap y coords */
-    mTex[0]  =  this->tex_width ? ( 1.0 * frame->width  / this->tex_width)  :  1.0;
-    mTex[5]  =  this->tex_width ? (-1.0 * frame->height / this->tex_height) : -1.0;
+    mTex[0]  =  this->tex_width  ? ( 1.0 * frame->width  / this->tex_width)  :  1.0;
+    mTex[5]  =  this->tex_height ? (-1.0 * frame->height / this->tex_height) : -1.0;
     mTex[12] = (-2.0 * mTex[0]) / mTex[0];
     mTex[13] =  -mTex[5];
     glMatrixMode  (GL_TEXTURE);
