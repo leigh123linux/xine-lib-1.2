@@ -247,11 +247,12 @@ extern void (*packed444_to_nonpremultiplied_packed4444_scanline)( uint8_t *outpu
  * using linear interpolation to compensate for a change in pixel
  * aspect ratio.
  */
+#if 0
 extern void (*aspect_adjust_packed4444_scanline)( uint8_t *output,
                                                   uint8_t *input,
                                                   int width,
                                                   double pixel_aspect );
-
+#endif
 /**
  * Convert a packed 4:4:4 surface to a packed 4:2:2 surface using
  * nearest neighbour chroma downsampling.

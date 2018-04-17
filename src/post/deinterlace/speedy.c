@@ -120,10 +120,12 @@ void (*composite_bars_packed4444_scanline)( uint8_t *output,
 void (*packed444_to_nonpremultiplied_packed4444_scanline)( uint8_t *output,
                                                            uint8_t *input,
                                                            int width, int alpha );
+#if 0
 void (*aspect_adjust_packed4444_scanline)( uint8_t *output,
                                            uint8_t *input,
                                            int width,
                                            double pixel_aspect );
+#endif
 void (*packed444_to_packed422_scanline)( uint8_t *output,
                                          uint8_t *input,
                                          int width );
@@ -2352,6 +2354,7 @@ static void packed444_to_nonpremultiplied_packed4444_scanline_c( uint8_t *output
     }
 }
 
+#if 0
 static void aspect_adjust_packed4444_scanline_c( uint8_t *output,
                                                  uint8_t *input,
                                                  int width,
@@ -2397,7 +2400,7 @@ static void aspect_adjust_packed4444_scanline_c( uint8_t *output,
         w++;
     }
 }
-
+#endif
 /**
  * Sub-pixel data bar renderer.  There are 128 bars.
  */
@@ -2608,7 +2611,9 @@ void setup_speedy_calls( uint32_t accel, int verbose )
     subpix_blit_vertical_packed422_scanline = subpix_blit_vertical_packed422_scanline_c;
     composite_bars_packed4444_scanline = composite_bars_packed4444_scanline_c;
     packed444_to_nonpremultiplied_packed4444_scanline = packed444_to_nonpremultiplied_packed4444_scanline_c;
+#if 0
     aspect_adjust_packed4444_scanline = aspect_adjust_packed4444_scanline_c;
+#endif
     packed444_to_packed422_scanline = packed444_to_packed422_scanline_c;
     packed422_to_packed444_scanline = packed422_to_packed444_scanline_c;
     packed422_to_packed444_rec601_scanline = packed422_to_packed444_rec601_scanline_c;
