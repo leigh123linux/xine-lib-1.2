@@ -107,7 +107,7 @@ typedef struct {
   unsigned int         audio_type;
   unsigned int         audio_frame_count;
 
-  palette_entry_t      palette[PALETTE_COUNT];
+  palette_entry_t      palette[PALETTE_COUNT + 1];
   unsigned char       *decode_map;
   int                  decode_map_size;
   int                  new_palette;
