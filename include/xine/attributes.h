@@ -101,7 +101,19 @@
 
 /* Format attributes */
 #ifdef SUPPORT_ATTRIBUTE_FORMAT
-# define XINE_FORMAT_PRINTF(fmt,var) __attribute__((__format__(__printf__, fmt, var)))
+# if defined(__MINGW32__)
+#  if defined(__USE_MINGW_ANSI_STDIO) && __USE_MINGW_ANSI_STDIO
+#    ifndef __MINGW_PRINTF_FORMAT
+#     define __MINGW_PRINTF_FORMAT gnu_printf
+#   endif
+#  endif
+#  ifndef __MINGW_PRINTF_FORMAT
+#   define __MINGW_PRINTF_FORMAT __printf__
+#  endif
+#  define XINE_FORMAT_PRINTF(fmt,var) __attribute__((__format__(__MINGW_PRINTF_FORMAT, fmt, var)))
+# else
+#  define XINE_FORMAT_PRINTF(fmt,var) __attribute__((__format__(__printf__, fmt, var)))
+# endif
 # define XINE_FORMAT_SCANF(fmt,var) __attribute__((__format__(__scanf__, fmt, var)))
 #else
 # define XINE_FORMAT_PRINTF(fmt,var)
