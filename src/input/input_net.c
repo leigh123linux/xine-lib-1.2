@@ -41,7 +41,6 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
 #include <string.h>
 
 #define LOG_MODULE "input_net"
@@ -222,11 +221,10 @@ static int net_plugin_open (input_plugin_t *this_gen ) {
    * fill preview buffer
    */
   while ((toread > 0) && (trycount < 10)) {
-#ifndef WIN32
-    this->preview_size += read (this->fh, this->preview + this->preview_size, toread);
-#else
-    this->preview_size += recv (this->fh, this->preview + this->preview_size, toread, 0);
-#endif
+    int got = _x_io_tcp_read (this->stream, this->fh, this->preview + this->preview_size, toread);
+    if (got < 0)
+      break;
+    this->preview_size += got;
     trycount++;
     toread = MAX_PREVIEW_SIZE - this->preview_size;
   }
