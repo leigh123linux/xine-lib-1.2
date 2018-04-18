@@ -2358,6 +2358,8 @@ static void *video_out_loop (void *this_gen) {
   }
   pthread_mutex_unlock(&this->grab_lock);
 
+  this->xine->config->unregister_callback(this->xine->config, "engine.decoder.disable_flush_from_video_out");
+
   return NULL;
 }
 
