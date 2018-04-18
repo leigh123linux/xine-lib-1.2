@@ -486,10 +486,7 @@ int _x_io_tcp_read_line(xine_stream_t *stream, int sock, char *str, int size) {
 
 int _x_io_tcp_close(xine_stream_t *stream, int fd)
 {
-  struct {
-    int l_onoff;    /* linger active */
-    int l_linger;   /* how many seconds to linger for */
-  } linger = { 0, 0 };
+  struct linger linger = { 0, 0 };
   int r;
 
   if (fd == -1) {
@@ -498,7 +495,7 @@ int _x_io_tcp_close(xine_stream_t *stream, int fd)
   }
 
   /* disable lingering (hard close) */
-  r = setsockopt(fd, SOL_SOCKET, SO_LINGER, &linger, sizeof(struct linger));
+  r = setsockopt(fd, SOL_SOCKET, SO_LINGER, (void *)&linger, sizeof(linger));
   if (r < 0 && stream) {
 #ifdef WIN32
     xprintf(stream->xine, XINE_VERBOSITY_DEBUG,
@@ -514,7 +511,7 @@ int _x_io_tcp_close(xine_stream_t *stream, int fd)
 #ifdef WIN32
   r = closesocket(fd);
   if (r != 0 && stream) {
-    xprintf(stream->xine, XINE_VERBOSITY_DEBUG, "io_helper: error closing socket %s (%d)\n",
+    xprintf(stream->xine, XINE_VERBOSITY_DEBUG, "io_helper: error closing socket (%d)\n",
             WSAGetLastError());
   }
 #else
