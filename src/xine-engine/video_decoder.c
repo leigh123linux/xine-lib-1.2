@@ -526,6 +526,8 @@ static void *video_decoder_loop (void *stream_gen) {
 
   running_ticket->release (running_ticket, 0);
 
+  stream->xine->config->unregister_callback(stream->xine->config, "engine.decoder.disable_flush_at_discontinuity");
+
   return NULL;
 }
 
