@@ -2194,7 +2194,7 @@ static int cdda_open(cdda_input_plugin_t *this_gen,
                   else
 		    {
 		      FreeLibrary( hASPI );
-		      lprintf( "%s: is not a cdrom drive", cdda_device[0] );
+		      lprintf( "%c: is not a cdrom drive", cdda_device[0] );
 		      return -1;
 		    }
 		}
