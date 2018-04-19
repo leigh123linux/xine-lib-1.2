@@ -398,6 +398,11 @@ AC_CACHE_CHECK([type of request parameter for ioctl()], [ac_cv_ioctl_request], [
 ])
 AC_DEFINE_UNQUOTED([IOCTL_REQUEST_TYPE], [$ac_cv_ioctl_request], [Type of the request parameter for ioctl()])
 
+case "$host_os" in
+    linux*)
+        AC_DEFINE([HAVE_ZERO_SAFE_MEM], 1, [Define to 1 if clear mem interpretes as 0, 0f or NULL safely.])
+        ;;
+esac
 
 dnl ---------------------
 dnl checks for structures

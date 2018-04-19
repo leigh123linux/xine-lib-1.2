@@ -2931,7 +2931,7 @@ xine_video_port_t *_x_vo_new_port (xine_t *xine, vo_driver_t *driver, int grabon
   this = calloc(1, sizeof(vos_t)) ;
   if (!this)
     return NULL;
-
+#ifndef HAVE_ZERO_SAFE_MEM
   /* Do these first, when compiler still knows "this" is all zeroed.
    * Let it optimize away this on most systems where clear mem
    * interpretes as 0, 0f or NULL safely.
@@ -2958,6 +2958,7 @@ xine_video_port_t *_x_vo_new_port (xine_t *xine, vo_driver_t *driver, int grabon
   this->ready_num             = 0;
   this->need_flush_signal     = 0;
   this->last_flushed          = NULL;
+#endif
 
   this->xine   = xine;
   this->clock  = xine->clock;

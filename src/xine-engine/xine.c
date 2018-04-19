@@ -542,7 +542,7 @@ static xine_ticket_t *XINE_MALLOC ticket_init(void) {
   port_ticket = calloc (1, sizeof (xine_ticket_private_t));
   if (!port_ticket)
     return NULL;
-
+#ifndef HAVE_ZERO_SAFE_MEM
   port_ticket->t.ticket_revoked     = 0;
   port_ticket->holder_thread_count  = 0;
   port_ticket->tickets_granted      = 0;
@@ -557,7 +557,7 @@ static xine_ticket_t *XINE_MALLOC ticket_init(void) {
       port_ticket->revoke_cb_data[i]   = NULL;
     }
   }
-
+#endif
   port_ticket->t.acquire_nonblocking  = ticket_acquire_nonblocking;
   port_ticket->t.acquire              = ticket_acquire;
   port_ticket->t.release_nonblocking  = ticket_release_nonblocking;
@@ -898,7 +898,7 @@ xine_stream_t *xine_stream_new (xine_t *this, xine_audio_port_t *ao, xine_video_
   stream = calloc (1, sizeof (*stream));
   if (!stream)
     goto err_null;
-
+#ifndef HAVE_ZERO_SAFE_MEM
   /* Do these first, when compiler still knows stream is all zeroed.
    * Let it optimize away this on most systems where clear mem
    * interpretes as 0, 0f or NULL safely.
@@ -927,6 +927,7 @@ xine_stream_t *xine_stream_new (xine_t *this, xine_audio_port_t *ao, xine_video_
       stream->s.meta_info_public[i]   = stream->s.meta_info[i]   = NULL;
     }
   }
+#endif
   /* no need to memset again
   _x_extra_info_reset (&stream->ei[0]);
   _x_extra_info_reset (&stream->ei[1]);
@@ -1996,12 +1997,13 @@ xine_t *xine_new (void) {
   this = calloc(1, sizeof (xine_t));
   if (!this)
     return NULL;
-
+#ifndef HAVE_ZERO_SAFE_MEM
   this->plugin_catalog = NULL;
   this->save_path      = NULL;
   this->streams        = NULL;
   this->clock          = NULL;
   this->port_ticket    = NULL;
+#endif
 
 #ifdef ENABLE_NLS
   /*

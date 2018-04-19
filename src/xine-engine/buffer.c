@@ -811,7 +811,7 @@ fifo_buffer_t *_x_fifo_buffer_new (int num_buffers, uint32_t buf_size) {
   this = calloc(1, sizeof(fifo_buffer_t));
   if (!this)
     return NULL;
-
+#ifndef HAVE_ZERO_SAFE_MEM
   /* Do these first, when compiler still knows "this" is all zeroed.
    * Let it optimize away this on most systems where clear mem
    * interpretes as 0, 0f or NULL safely.
@@ -827,6 +827,7 @@ fifo_buffer_t *_x_fifo_buffer_new (int num_buffers, uint32_t buf_size) {
   this->alloc_cb_data[0]        = NULL;
   this->get_cb_data[0]          = NULL;
   this->put_cb_data[0]          = NULL;
+#endif
 
   /* printf ("Allocating %d buffers of %ld bytes in one chunk\n", num_buffers, (long int) buf_size); */
   multi_buffer = xine_mallocz_aligned (num_buffers * (buf_size + sizeof (be_ei_t)));

@@ -2319,7 +2319,7 @@ xine_audio_port_t *_x_ao_new_port (xine_t *xine, ao_driver_t *driver,
   this = calloc(1, sizeof(aos_t)) ;
   if (!this)
     return NULL;
-
+#ifndef HAVE_ZERO_SAFE_MEM
   /* Do these first, when compiler still knows "this" is all zeroed.
    * Let it optimize away this on most systems where clear mem
    * interpretes as 0, 0f or NULL safely.
@@ -2345,6 +2345,7 @@ xine_audio_port_t *_x_ao_new_port (xine_t *xine, ao_driver_t *driver,
   this->eq_gain[8]             = 0;
   this->eq_gain[9]             = 0;
   this->eq_i                   = 0;
+#endif
 
   this->driver                = driver;
   this->xine                  = xine;
