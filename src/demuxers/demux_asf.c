@@ -329,15 +329,6 @@ static void asf_send_video_header (demux_asf_t *this, int stream) {
   }
 }
 
-static void asf_tag_2_str (uint8_t *sf, uint32_t tag) {
-  uint8_t z;
-  z =  tag        & 255; sf[0] = (z >= 32) && (z <= 127) ? z : '?';
-  z = (tag >>  8) & 255; sf[1] = (z >= 32) && (z <= 127) ? z : '?';
-  z = (tag >> 16) & 255; sf[2] = (z >= 32) && (z <= 127) ? z : '?';
-  z =  tag >> 24;        sf[3] = (z >= 32) && (z <= 127) ? z : '?';
-  sf[4] = 0;
-}
-
 static int asf_read_header (demux_asf_t *this) {
   int i;
   {
@@ -422,16 +413,15 @@ static int asf_read_header (demux_asf_t *this) {
     switch (asf_stream->stream_type) {
     case GUID_ASF_AUDIO_MEDIA:
     {
-      uint8_t sf[5];
       xine_waveformatex *fx = (xine_waveformatex *)asf_stream->private_data;
       if (!fx || (asf_stream->private_data_length < sizeof (*fx)))
         break;
       _x_waveformatex_le2me (fx);
       demux_stream->buf_type = _x_formattag_to_buf_audio (fx->wFormatTag);
-      asf_tag_2_str (sf, fx->wFormatTag);
       xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG,
-        "demux_asf: audio stream #%d: [%s] %dHz %dchannels %dbit\n", (int)asf_stream->stream_number,
-        sf, (int)fx->nSamplesPerSec, (int)fx->nChannels, (int)fx->wBitsPerSample);
+        "demux_asf: audio stream #%d: [0x%0x] %dbps %dch %dHz %dbit\n", (int)asf_stream->stream_number,
+        (unsigned int)fx->wFormatTag, (int)this->asf_header->bitrates[i], (int)fx->nChannels,
+        (int)fx->nSamplesPerSec, (int)fx->wBitsPerSample);
       if (!demux_stream->buf_type) {
         demux_stream->buf_type = BUF_AUDIO_UNKNOWN;
         _x_report_audio_format_tag (this->stream->xine, LOG_MODULE, fx->wFormatTag);
@@ -475,7 +465,6 @@ static int asf_read_header (demux_asf_t *this) {
          * 40 bytes : bmiheader
          * XX bytes : optional palette
          */
-        uint8_t sf[5];
 	uint32_t width, height;
 	/*uint16_t bmiheader_size;*/
 	xine_bmiheader *bmiheader;
@@ -497,10 +486,13 @@ static int asf_read_header (demux_asf_t *this) {
 	/* FIXME: check if (bmi_header_size == bmiheader->biSize) ? */
 
 	demux_stream->buf_type = _x_fourcc_to_buf_video(bmiheader->biCompression);
-        asf_tag_2_str (sf, bmiheader->biCompression);
-        xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG,
-          "demux_asf: video stream #%d: [%s] %d x %d\n", (int)asf_stream->stream_number,
-          sf, (int)width, (int)height);
+        {
+          uint8_t sf[20];
+          _x_tag32_me2str (sf, bmiheader->biCompression);
+          xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG,
+            "demux_asf: video stream #%d: [%s] %dbps %d x %d\n", (int)asf_stream->stream_number,
+            sf, (int)this->asf_header->bitrates[i], (int)width, (int)height);
+        }
 	if( !demux_stream->buf_type ) {
 	  demux_stream->buf_type = BUF_VIDEO_UNKNOWN;
 	  _x_report_video_fourcc (this->stream->xine, LOG_MODULE, bmiheader->biCompression);

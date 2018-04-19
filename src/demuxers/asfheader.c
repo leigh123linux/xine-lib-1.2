@@ -50,118 +50,114 @@
 #include "bswap.h"
 #include "asfheader.h"
 
-#ifndef HAVE_ICONV
+/* #define TEST_INTERNAL_ICONV */
+#if !defined(HAVE_ICONV) || defined(TEST_INTERNAL_ICONV)
 
-/* dummy conversion perserving ASCII only */
+/* manual straightforward utf16 -> utf8 conversion */
 
-#define iconv_open(TO, FROM) 0
-#define iconv(CD, INBUF, INLEFT, OUTBUF, OUTLEFT) iconv_internal(INBUF, INLEFT, OUTBUF, OUTLEFT)
-#define iconv_close(CD)
-#ifdef ICONV_CONST
-#  undef ICONV_CONST
-#endif
-#define ICONV_CONST const
+#  define iconv_open(TO, FROM) 0
+#  define iconv(CD, INBUF, INLEFT, OUTBUF, OUTLEFT) iconv_internal(INBUF, INLEFT, OUTBUF, OUTLEFT)
+#  define iconv_close(CD)
+#  ifdef ICONV_CONST
+#    undef ICONV_CONST
+#  endif
+#  define ICONV_CONST const
 
+#  if !defined(HAVE_ICONV)
 typedef int iconv_t;
+#  endif
 
-size_t iconv_internal(const char **inbuf, size_t *inbytesleft, char **outbuf, size_t *outbytesleft) {
-  size_t i, n;
-  const char *ins;
-  char *outs;
-
-  n = *inbytesleft / 2 > *outbytesleft ? *outbytesleft : *inbytesleft / 2;
-  for (i = n, ins = *inbuf, outs = *outbuf; i > 0; i--) {
-    outs[0] = ((ins[0] & 0x80) || ins[1]) ? '?' : ins[0];
-    ins += 2;
-    outs++;
+static size_t iconv_internal (const char **inbuf, size_t *inbytesleft, char **outbuf, size_t *outbytesleft) {
+  const uint8_t *p = (const uint8_t *)*inbuf;
+  uint8_t *q = (uint8_t *)*outbuf;
+  uint32_t a = (*inbytesleft) >> 1;
+  uint32_t b = *outbytesleft;
+  while (a) {
+    uint32_t z = _X_LE_16 (p);
+    if (z & 0xff80) {
+      if (z & 0xf800) {
+        /* 1110xxxx 10xxxxxx 10xxxxxx */
+        if (b < 3)
+          break;
+        *q++ = 0xe0 | (z >> 12);
+        *q++ = 0x80 | ((z >> 6) & 0x3f);
+        *q++ = 0x80 | (z & 0x3f);
+        b -= 3;
+      } else {
+        /* 110xxxxx 10xxxxxx */
+        if (b < 2)
+          break;
+        *q++ = 0xc0 | (z >> 6);
+        *q++ = 0x80 | (z & 0x3f);
+        b -= 2;
+      }
+    } else {
+      /* 0xxxxxxx */
+      if (!b)
+        break;
+      *q++ = z;
+      b -= 1;
+    }
+    p += 2;
+    a -= 1;
   }
-  *inbuf = ins;
-  *outbuf = outs;
-  (*inbytesleft) -= (2 * n);
-  (*outbytesleft) -= n;
-
+  *inbuf = (const char *)p;
+  *outbuf = (char *)q;
+  *inbytesleft = a << 1;
+  *outbytesleft = b;
+  /* We just did a generic 1:1 conversion that is fully reversible.
+   * Furthermore, code below only tests for (size_t)-1.
+   */
   return 0;
 }
 #endif
 
 
-typedef struct asf_header_internal_s asf_header_internal_t;
-struct asf_header_internal_s {
-  asf_header_t            pub;
+typedef struct {
+  const uint8_t *buffer;
+  const uint8_t *p;
+  const uint8_t *end;
+} asf_reader_t;
+
+typedef struct {
+  asf_header_t pub;
 
   /* private part */
-  int                     number_count;
-  uint16_t                numbers[ASF_MAX_NUM_STREAMS];
-  uint8_t                *bitrate_pointers[ASF_MAX_NUM_STREAMS];
-};
+  uint8_t     *raw_data;
+  int          number_count;
+  uint16_t     numbers[ASF_MAX_NUM_STREAMS];
+  uint32_t     bitrate_offsets[ASF_MAX_NUM_STREAMS];
+} asf_header_internal_t;
 
 
-typedef struct asf_reader_s asf_reader_t;
-struct asf_reader_s {
-  uint8_t *buffer;
-  size_t   pos;
-  size_t   size;
-};
-
-
-static void asf_reader_init(asf_reader_t *reader, uint8_t *buffer, int size) {
-  reader->buffer = buffer;
-  reader->pos = 0;
-  reader->size = size;
+static void asf_reader_init (asf_reader_t *reader, const uint8_t *buffer, int size) {
+  if (size < 0)
+    size = 0;
+  reader->buffer =
+  reader->p      = buffer;
+  reader->end    = buffer + size;
 }
 
-#if 0
-static int asf_reader_get_8(asf_reader_t *reader, uint8_t *value) {
-  if ((reader->size - reader->pos) < 1)
-    return 0;
-  *value = *(reader->buffer + reader->pos);
-  reader->pos += 1;
-  return 1;
-}
-#endif
-
-static int asf_reader_get_16(asf_reader_t *reader, uint16_t *value) {
-  if ((reader->size - reader->pos) < 2)
-    return 0;
-  *value = _X_LE_16(reader->buffer + reader->pos);
-  reader->pos += 2;
-  return 1;
-}
-
-static int asf_reader_get_32(asf_reader_t *reader, uint32_t *value) {
-  if ((reader->size - reader->pos) < 4)
-    return 0;
-  *value = _X_LE_32(reader->buffer + reader->pos);
-  reader->pos += 4;
-  return 1;
-}
-
-static int asf_reader_get_64(asf_reader_t *reader, uint64_t *value) {
-  if ((reader->size - reader->pos) < 8)
-    return 0;
-  *value = _X_LE_64(reader->buffer + reader->pos);
-  reader->pos += 8;
-  return 1;
-}
-
-static int asf_reader_get_guid (asf_reader_t *reader, uint8_t *value) {
-  if ((reader->size - reader->pos) < 16)
-    return 0;
-
-  memcpy (value, reader->buffer + reader->pos, 16);
-  reader->pos += 16;
-  return 1;
-}
-
-static uint8_t *asf_reader_get_bytes(asf_reader_t *reader, size_t size) {
-  uint8_t *buffer;
-
-  if ((reader->size - reader->pos) < size)
+static const uint8_t *asf_reader_get_block (asf_reader_t *reader, uint32_t n) {
+  const uint8_t *p;
+  if ((uint32_t)(reader->end - reader->p) < n)
     return NULL;
-  if (! (buffer = malloc(size)) )
+  p = reader->p;
+  reader->p += n;
+  return p;
+}
+
+static uint8_t *asf_reader_get_bytes (asf_reader_t *reader, uint32_t size) {
+  uint8_t *buffer;
+  if (!size)
     return NULL;
-  memcpy(buffer, reader->buffer + reader->pos, size);
-  reader->pos += size;
+  if ((uint32_t)(reader->end - reader->p) < size)
+    return NULL;
+  buffer = malloc (size);
+  if (!buffer)
+    return NULL;
+  memcpy (buffer, reader->p, size);
+  reader->p += size;
   return buffer;
 }
 
@@ -171,15 +167,17 @@ static char *asf_reader_get_string(asf_reader_t *reader, size_t size, iconv_t cd
   size_t inbytesleft, outbytesleft;
   char scratch[2048];
 
-  if ((size == 0) ||((reader->size - reader->pos) < size))
+  if ((size == 0) || ((uint32_t)(reader->end - reader->p) < size))
     return NULL;
 
-  inbuf = (char *)reader->buffer + reader->pos;
+  inbuf = (char *)reader->p;
   inbytesleft = size;
   outbuf = scratch;
-  outbytesleft = sizeof(scratch);
-  reader->pos += size;
+  outbytesleft = sizeof (scratch) - 1;
+  reader->p += size;
   if (iconv (cd, (ICONV_CONST char **)&inbuf, &inbytesleft, &outbuf, &outbytesleft) != (size_t)-1) {
+    /* Those utf16 input strings normally are 0 terminated, but just in case... */
+    scratch[sizeof (scratch) - 1 - outbytesleft] = 0;
     return strdup(scratch);
   } else {
     lprintf("iconv error\n");
@@ -187,28 +185,25 @@ static char *asf_reader_get_string(asf_reader_t *reader, size_t size, iconv_t cd
   }
 }
 
-static int asf_reader_skip(asf_reader_t *reader, size_t size) {
-  if ((reader->size - reader->pos) < size) {
-    reader->pos = reader->size;
+static int asf_reader_skip (asf_reader_t *reader, uint32_t size) {
+  if ((uint32_t)(reader->end - reader->p) < size) {
+    reader->p = reader->end;
     return 0;
   }
-  reader->pos += size;
+  reader->p += size;
   return size;
 }
 
-static uint8_t *asf_reader_get_buffer(asf_reader_t *reader) {
-  return (reader->buffer + reader->pos);
+static const uint8_t *asf_reader_get_buffer(asf_reader_t *reader) {
+  return reader->p;
 }
 
-static int asf_reader_eos(asf_reader_t *reader) {
-  if (reader->pos < reader->size)
-    return 0;
-  else
-    return 1;
+static int asf_reader_eos (asf_reader_t *reader) {
+  return reader->p >= reader->end;
 }
 
 static size_t asf_reader_get_size(asf_reader_t *reader) {
-  return reader->size - reader->pos;
+  return reader->end - reader->p;
 }
 
 /* Manage id mapping */
@@ -233,40 +228,39 @@ static int asf_header_get_stream_id(asf_header_t *header_pub, uint16_t stream_nu
   return header->number_count - 1;
 }
 
-static int asf_header_parse_file_properties(asf_header_t *header, uint8_t *buffer, int buffer_len) {
+static int asf_header_parse_file_properties(asf_header_t *header, const uint8_t *buffer, int buffer_len) {
   asf_reader_t reader;
   asf_file_t *asf_file;
+  const uint8_t *p;
   uint32_t flags = 0;
 
-  if (buffer_len < 80) {
-    lprintf("invalid asf file properties object\n");
+  asf_reader_init (&reader, buffer, buffer_len);
+  p = asf_reader_get_block (&reader, 16 + 8 + 8 + 8 + 8 + 8 + 8 + 4 + 4 + 4 + 4);
+  if (!p)
     return 0;
-  }
 
-  if (! (asf_file = malloc(sizeof(asf_file_t))) ) {
+  asf_file = malloc (sizeof (*asf_file));
+  if (!asf_file) {
     lprintf("cannot allocate asf_file_struct\n");
     return 0;
   }
 
-  asf_reader_init(&reader, buffer, buffer_len);
- 
-  asf_reader_get_guid(&reader, asf_file->file_id);
-  asf_reader_get_64(&reader, &asf_file->file_size);
+  /* full init here, no need to 0 first. */
+  memcpy (asf_file->file_id, p, 16);          p += 16;
+  asf_file->file_size         = _X_LE_64 (p); p +=  8;
 
-  /* creation date */
-  asf_reader_skip(&reader, 8);
-  asf_reader_get_64(&reader, &asf_file->data_packet_count);
-  asf_reader_get_64(&reader, &asf_file->play_duration);
-  asf_reader_get_64(&reader, &asf_file->send_duration);
-  asf_reader_get_64(&reader, &asf_file->preroll);
+  /* creation date */                         p +=  8;
+  asf_file->data_packet_count = _X_LE_64 (p); p +=  8;
+  asf_file->play_duration     = _X_LE_64 (p); p +=  8;
+  asf_file->send_duration     = _X_LE_64 (p); p +=  8;
+  asf_file->preroll           = _X_LE_64 (p); p +=  8;
   
-  asf_reader_get_32(&reader, &flags);
-  asf_reader_get_32(&reader, &asf_file->packet_size);
+  flags                       = _X_LE_32 (p); p +=  4;
+  asf_file->packet_size       = _X_LE_32 (p); p +=  4;
 
-  /* duplicated packet size */
-  asf_reader_skip(&reader, 4);
-  asf_reader_get_32(&reader, &asf_file->max_bitrate);
-  
+  /* duplicated packet size */                p +=  4;
+  asf_file->max_bitrate       = _X_LE_32 (p); p +=  4;
+
   asf_file->broadcast_flag = flags & 0x1;
   asf_file->seekable_flag = flags & 0x2;
 
@@ -288,55 +282,55 @@ static int asf_header_parse_file_properties(asf_header_t *header, uint8_t *buffe
 
 static void asf_header_delete_stream_properties(asf_stream_t *asf_stream) {
   if (asf_stream) {
-    if (asf_stream->private_data)
-      free(asf_stream->private_data);
-    if (asf_stream->error_correction_data)
-      free(asf_stream->error_correction_data);
-    free(asf_stream);
+    free (asf_stream->private_data);
+    free (asf_stream->error_correction_data);
+    free (asf_stream);
   }
 }
 
-static int asf_header_parse_stream_properties(asf_header_t *header, uint8_t *buffer, int buffer_len) {
+static int asf_header_parse_stream_properties (asf_header_t *header, const uint8_t *buffer, int buffer_len) {
   asf_reader_t reader;
+  const uint8_t *p;
   uint16_t flags = 0;
-  uint32_t junk;
-  uint8_t guid[16];
   asf_stream_t *asf_stream = NULL;
   int stream_id;
 
-  if (buffer_len < 54)
+  asf_reader_init (&reader, buffer, buffer_len);
+  p = asf_reader_get_block (&reader, 16 + 16 + 8 + 4 + 4 + 2 + 4);
+  if (!p)
     goto exit_error;
 
-  if (! (asf_stream = malloc(sizeof(asf_stream_t))) )
+  asf_stream = malloc (sizeof (*asf_stream));
+  if (!asf_stream)
     goto exit_error;
 
   asf_stream->private_data = NULL;
   asf_stream->error_correction_data = NULL;
 
-  asf_reader_init(&reader, buffer, buffer_len);
+  asf_stream->stream_type           = asf_guid_2_num (p); p += 16;
+  asf_stream->error_correction_type = asf_guid_2_num (p); p += 16;
 
-  asf_reader_get_guid (&reader, guid);
-  asf_stream->stream_type = asf_guid_2_num (guid);
-  asf_reader_get_guid (&reader, guid);
-  asf_stream->error_correction_type = asf_guid_2_num (guid);
+  asf_stream->time_offset                  = _X_LE_64 (p); p += 8;
+  asf_stream->private_data_length          = _X_LE_32 (p); p += 4;
+  asf_stream->error_correction_data_length = _X_LE_32 (p); p += 4;
 
-  asf_reader_get_64(&reader, &asf_stream->time_offset);
-  asf_reader_get_32(&reader, &asf_stream->private_data_length);
-  asf_reader_get_32(&reader, &asf_stream->error_correction_data_length);
-
-  asf_reader_get_16(&reader, &flags);
+  flags = _X_LE_16 (p); p += 2;
   asf_stream->stream_number = flags & 0x7F;
   asf_stream->encrypted_flag = flags >> 15;
 
-  asf_reader_get_32(&reader, &junk);
+  /* junk */ p += 4;
 
-  asf_stream->private_data = asf_reader_get_bytes(&reader, asf_stream->private_data_length);
-  if (!asf_stream->private_data)
-    goto exit_error;
+  if (asf_stream->private_data_length) {
+    asf_stream->private_data = asf_reader_get_bytes (&reader, asf_stream->private_data_length);
+    if (!asf_stream->private_data)
+      goto exit_error;
+  }
 
-  asf_stream->error_correction_data = asf_reader_get_bytes(&reader, asf_stream->error_correction_data_length);
-  if (!asf_stream->error_correction_data)
-    goto exit_error;
+  if (asf_stream->error_correction_data_length) {
+    asf_stream->error_correction_data = asf_reader_get_bytes(&reader, asf_stream->error_correction_data_length);
+    if (!asf_stream->error_correction_data)
+      goto exit_error;
+  }
 
   lprintf("Stream_properties\n");
   lprintf("  stream_number:                     %d\n", asf_stream->stream_number);
@@ -362,78 +356,87 @@ exit_error:
 }
 
 static void asf_header_delete_stream_extended_properties(asf_stream_extension_t *asf_stream_extension) {
-  int i;
-
-  if (asf_stream_extension->stream_name_count > 0) {
-    for (i = 0; i < asf_stream_extension->stream_name_count; i++) {
-      free(asf_stream_extension->stream_names[i]);
+  if (asf_stream_extension) {
+    if (asf_stream_extension->stream_names) {
+      int i;
+      for (i = 0; i < asf_stream_extension->stream_name_count; i++)
+        free (asf_stream_extension->stream_names[i]);
+      free (asf_stream_extension->stream_names);
     }
-    free(asf_stream_extension->stream_names);
+    free (asf_stream_extension);
   }
-  free(asf_stream_extension);
 }
 
-static int asf_header_parse_stream_extended_properties(asf_header_t *header, uint8_t *buffer, int buffer_len) {
+static int asf_header_parse_stream_extended_properties (asf_header_t *header, const uint8_t *buffer, int buffer_len) {
   asf_reader_t reader;
+  const uint8_t *p;
   uint32_t flags = 0;
   uint16_t stream_number = 0;
   int i;
   int stream_id;
   asf_stream_extension_t *asf_stream_extension;
 
-  if (buffer_len < 64)
+  asf_reader_init (&reader, buffer, buffer_len);
+  p = asf_reader_get_block (&reader, 2 * 8 + 7 * 4 + 4 + 2 + 2 + 8 + 2 + 2);
+  if (!p)
     return 0;
 
-  if (! (asf_stream_extension = malloc(sizeof(asf_stream_extension_t))) )
+  asf_stream_extension = malloc (sizeof (*asf_stream_extension));
+  if (!asf_stream_extension)
     return 0;
 
-  asf_reader_init(&reader, buffer, buffer_len);
+  asf_stream_extension->stream_names = NULL;
 
-  asf_reader_get_64(&reader, &asf_stream_extension->start_time);
-  asf_reader_get_64(&reader, &asf_stream_extension->end_time);
+  asf_stream_extension->start_time = _X_LE_64 (p); p += 8;
+  asf_stream_extension->end_time   = _X_LE_64 (p); p += 8;
 
-  asf_reader_get_32(&reader, &asf_stream_extension->data_bitrate);
-  asf_reader_get_32(&reader, &asf_stream_extension->buffer_size);
-  asf_reader_get_32(&reader, &asf_stream_extension->initial_buffer_fullness);
-  asf_reader_get_32(&reader, &asf_stream_extension->alternate_data_bitrate);
-  asf_reader_get_32(&reader, &asf_stream_extension->alternate_buffer_size);
-  asf_reader_get_32(&reader, &asf_stream_extension->alternate_initial_buffer_fullness);
-  asf_reader_get_32(&reader, &asf_stream_extension->max_object_size);
+  asf_stream_extension->data_bitrate                      = _X_LE_32 (p); p += 4;
+  asf_stream_extension->buffer_size                       = _X_LE_32 (p); p += 4;
+  asf_stream_extension->initial_buffer_fullness           = _X_LE_32 (p); p += 4;
+  asf_stream_extension->alternate_data_bitrate            = _X_LE_32 (p); p += 4;
+  asf_stream_extension->alternate_buffer_size             = _X_LE_32 (p); p += 4;
+  asf_stream_extension->alternate_initial_buffer_fullness = _X_LE_32 (p); p += 4;
+  asf_stream_extension->max_object_size                   = _X_LE_32 (p); p += 4;
 
   /* 4 flags */
-  asf_reader_get_32(&reader, &flags);
+  flags = _X_LE_32 (p); p += 4;
   asf_stream_extension->reliable_flag = flags  & 1;
   asf_stream_extension->seekable_flag = (flags >> 1) & 1;
   asf_stream_extension->no_cleanpoints_flag = (flags >> 2) & 1;
   asf_stream_extension->resend_live_cleanpoints_flag = (flags >> 3) & 1;
 
-  asf_reader_get_16(&reader, &stream_number);
+  stream_number                     = _X_LE_16 (p); p += 2;
+  asf_stream_extension->language_id = _X_LE_16 (p); p += 2;
 
-  asf_reader_get_16(&reader, &asf_stream_extension->language_id);
-  asf_reader_get_64(&reader, &asf_stream_extension->average_time_per_frame);
+  asf_stream_extension->average_time_per_frame = _X_LE_64 (p); p += 8;
 
-  asf_reader_get_16(&reader, &asf_stream_extension->stream_name_count);
-  asf_reader_get_16(&reader, &asf_stream_extension->payload_extension_system_count);
+  asf_stream_extension->stream_name_count              = _X_LE_16 (p); p += 2;
+  asf_stream_extension->payload_extension_system_count = _X_LE_16 (p); p += 2;
 
   /* get stream names */
   if (asf_stream_extension->stream_name_count) {
-    asf_stream_extension->stream_names = malloc (asf_stream_extension->stream_name_count * sizeof(void*));
+    asf_stream_extension->stream_names = malloc (asf_stream_extension->stream_name_count * sizeof (void*));
     for (i = 0; i < asf_stream_extension->stream_name_count; i++) {
-      uint16_t lang_index, length = 0;
-      asf_reader_get_16(&reader, &lang_index);
-      asf_reader_get_16(&reader, &length);
-      asf_stream_extension->stream_names[i] = (char*)asf_reader_get_bytes(&reader, length); /* store them */
+      char *name;
+      uint16_t length;
+      p = asf_reader_get_block (&reader, 2 + 2); /* lang_index, length */
+      if (!p)
+        break;
+      length = _X_LE_16 (p + 2);
+      name = (char*)asf_reader_get_bytes (&reader, length); /* store them */
+      if (asf_stream_extension->stream_names)
+        asf_stream_extension->stream_names[i] = name;
     }
   }
 
   /* skip payload extensions */
-  if (asf_stream_extension->payload_extension_system_count) {
-    for (i = 0; i < asf_stream_extension->payload_extension_system_count; i++) {
-      uint32_t length = 0;
-      asf_reader_skip (&reader, 16 + 2); /* guid, data_size */
-      asf_reader_get_32(&reader, &length);
-      asf_reader_skip(&reader, length);
-    }
+  for (i = 0; i < asf_stream_extension->payload_extension_system_count; i++) {
+    uint32_t length;
+    p = asf_reader_get_block (&reader, 16 + 2 + 4); /* guid, data_size, length */
+    if (!p)
+      break;
+    length = _X_LE_32 (p + 16 + 2);
+    asf_reader_skip (&reader, length);
   }
 
   stream_id = asf_header_get_stream_id(header, stream_number);
@@ -442,16 +445,12 @@ static int asf_header_parse_stream_extended_properties(asf_header_t *header, uin
   }
 
   /* embeded stream properties */
-  if (asf_reader_get_size(&reader) >= 24) {
-    uint8_t guid[16];
-    uint64_t object_length = 0;
-
-    asf_reader_get_guid (&reader, guid);
-    asf_reader_get_64(&reader, &object_length);
-
+  p = asf_reader_get_block (&reader, 16 + 8);
+  if (p) {
+    uint64_t object_length = _X_LE_64 (p + 16);
     /* check length validity */
     if (asf_reader_get_size(&reader) == (object_length - 24)) {
-      asf_guid_t object_id = asf_guid_2_num (guid);
+      asf_guid_t object_id = asf_guid_2_num (p);
       switch (object_id) {
         case GUID_ASF_STREAM_PROPERTIES:
           asf_header_parse_stream_properties(header, asf_reader_get_buffer(&reader), object_length - 24);
@@ -492,20 +491,21 @@ static int asf_header_parse_stream_extended_properties(asf_header_t *header, uin
   return 1;
 }
 
-static int asf_header_parse_stream_bitrate_properties(asf_header_t *header_pub, uint8_t *buffer, int buffer_len) {
+static int asf_header_parse_stream_bitrate_properties (asf_header_t *header_pub, const uint8_t *buffer, int buffer_len) {
   asf_header_internal_t *header = (asf_header_internal_t *)header_pub;
   asf_reader_t reader;
+  const uint8_t *p;
   uint16_t bitrate_count = 0;
   int i;
   int stream_id;
 
-  if (buffer_len < 2)
+  asf_reader_init (&reader, buffer, buffer_len);
+  p = asf_reader_get_block (&reader, 2);
+  if (!p)
     return 0;
-
-  asf_reader_init(&reader, buffer, buffer_len);
-  asf_reader_get_16(&reader, &bitrate_count);
-
-  if (buffer_len < (2 + 6 * bitrate_count))
+  bitrate_count = _X_LE_16 (p);
+  p = asf_reader_get_block (&reader, 6 * bitrate_count);
+  if (!p)
     return 0;
 
   lprintf ("  bitrate count: %d\n", bitrate_count);
@@ -514,39 +514,40 @@ static int asf_header_parse_stream_bitrate_properties(asf_header_t *header_pub, 
     uint16_t flags = 0;
     uint32_t bitrate = 0;
     int stream_number;
-    uint8_t *bitrate_pointer;
+    uint32_t bitrate_offs;
 
-    asf_reader_get_16(&reader, &flags);
+    flags = _X_LE_16 (p); p += 2;
     stream_number = flags & 0x7f;
 
-    bitrate_pointer = asf_reader_get_buffer(&reader);
-    asf_reader_get_32(&reader, &bitrate);
+    bitrate_offs = p - (const uint8_t *)(header->raw_data);
+    bitrate = _X_LE_32 (p); p += 4;
     lprintf ("  stream num %d, bitrate %"PRIu32"\n", stream_number, bitrate);
 
     stream_id = asf_header_get_stream_id(&header->pub, stream_number);
     if (stream_id >= 0) {
       header->pub.bitrates[stream_id] = bitrate;
-      header->bitrate_pointers[stream_id] = bitrate_pointer;
+      header->bitrate_offsets[stream_id] = bitrate_offs;
     }
   }
   return 1;
 }
 
-static int asf_header_parse_metadata(asf_header_t *header_pub, uint8_t *buffer, int buffer_len)
+static int asf_header_parse_metadata (asf_header_t *header_pub, const uint8_t *buffer, int buffer_len)
 {
   asf_header_internal_t *header = (asf_header_internal_t *)header_pub;
   asf_reader_t reader;
+  const uint8_t *p;
   uint16_t i, records_count = 0;
-  iconv_t iconv_cd;
 
   if (buffer_len < 2)
     return 0;
 
-  if ((iconv_cd = iconv_open ("UTF-8", "UCS-2LE")) == (iconv_t)-1)
+  asf_reader_init (&reader, buffer, buffer_len);
+  p = asf_reader_get_block (&reader, 2);
+  if (!p)
     return 0;
 
-  asf_reader_init(&reader, buffer, buffer_len);
-  asf_reader_get_16(&reader, &records_count);
+  records_count = _X_LE_16 (p);
 
   for (i = 0; i < records_count; i++)
   {
@@ -554,70 +555,83 @@ static int asf_header_parse_metadata(asf_header_t *header_pub, uint8_t *buffer, 
     uint32_t data_len = 0;
     int stream_id;
 
-    asf_reader_get_16 (&reader, &index); 
-    asf_reader_get_16 (&reader, &stream); 
+    p = asf_reader_get_block (&reader, 4 * 2 + 4);
+    if (!p)
+      break;
+
+    index     = _X_LE_16 (p); p += 2;
+    stream    = _X_LE_16 (p); p += 2;
     stream &= 0x7f;
-    asf_reader_get_16 (&reader, &name_len); 
-    asf_reader_get_16 (&reader, &data_type); 
-    asf_reader_get_32 (&reader, &data_len); 
+    name_len  = _X_LE_16 (p); p += 2;
+    data_type = _X_LE_16 (p); p += 2;
+    data_len  = _X_LE_32 (p); p += 4;
 
     stream_id = asf_header_get_stream_id (&header->pub, stream);
 
-    if (data_len >= 4)
-    {
-      char *name = asf_reader_get_string (&reader, name_len, iconv_cd);
-      if (name && !strcmp (name, "AspectRatioX"))
-      {
-        asf_reader_get_32 (&reader, &header->pub.aspect_ratios[stream_id].x);
-        data_len -= 4;
+    if (data_len >= 4) {
+      static const uint8_t name_ar[] = {'A',0,'s',0,'p',0,'e',0,'c',0,'t',0,'R',0,'a',0,'t',0,'i',0,'o',0};
+      static const uint8_t name_x[]  = {'X',0,0,0};
+      static const uint8_t name_y[]  = {'Y',0,0,0};
+      const uint8_t *p = asf_reader_get_block (&reader, name_len);
+      if (p && (name_len >= sizeof (name_ar) + sizeof (name_x)) && !memcmp (p, name_ar, sizeof (name_ar))) {
+        if (!memcmp (p + sizeof (name_ar), name_x, sizeof (name_x))) {
+          p = asf_reader_get_block (&reader, 4);
+          if (!p)
+            break;
+          header->pub.aspect_ratios[stream_id].x = _X_LE_32 (p);
+          data_len -= 4;
+        }
+        else if (!memcmp (p + sizeof (name_ar), name_y, sizeof (name_y))) {
+          p = asf_reader_get_block (&reader, 4);
+          if (!p)
+            break;
+          header->pub.aspect_ratios[stream_id].y = _X_LE_32 (p);
+          data_len -= 4;
+        }
       }
-      else if (name && !strcmp (name, "AspectRatioY"))
-      {
-        asf_reader_get_32 (&reader, &header->pub.aspect_ratios[stream_id].y);
-        data_len -= 4;
-      }
-      free (name);
+      asf_reader_skip (&reader, data_len);
+    } else {
+      /* avoid uint32_t overflow */
+      asf_reader_skip (&reader, name_len);
       asf_reader_skip (&reader, data_len);
     }
-    else
-      asf_reader_skip (&reader, data_len + name_len);
   }
 
-  iconv_close (iconv_cd);
   return 1;
 }
 
-static int asf_header_parse_header_extension(asf_header_t *header, uint8_t *buffer, int buffer_len) {
+static int asf_header_parse_header_extension (asf_header_t *header, const uint8_t *buffer, int buffer_len) {
   asf_reader_t reader;
-
+  const uint8_t *p;
   uint32_t data_length;
 
-  if (buffer_len < 22)
+  asf_reader_init (&reader, buffer, buffer_len);
+  p = asf_reader_get_block (&reader, 16 + 2 + 4); /* guid, junk, data_length */
+  if (!p)
     return 0;
-
-  asf_reader_init(&reader, buffer, buffer_len);
-
-  asf_reader_skip (&reader, 16 + 2); /* guid + junk */
-  asf_reader_get_32(&reader, &data_length);
-
+  data_length = _X_LE_32 (p + 16 + 2);
   lprintf("parse_asf_header_extension: length: %"PRIu32"\n", data_length);
 
   while (!asf_reader_eos(&reader)) {
 
-    uint8_t guid[16];
     asf_guid_t object_id;
-    uint64_t object_length = 0, object_data_length;
+    uint64_t object_length;
+    uint32_t object_data_length;
 
-    if (asf_reader_get_size(&reader) < 24) {
+    p = asf_reader_get_block (&reader, 16 + 8);
+    if (!p) {
       printf("invalid buffer size\n");
       return 0;
     }
 
-    asf_reader_get_guid (&reader, guid);
-    asf_reader_get_64(&reader, &object_length);
-
+    object_length      = _X_LE_64 (p + 16);
+    if (object_length & ~(uint64_t)0xffffffff)
+      return 0;
+    if ((uint32_t)object_length < 24)
+      return 0;
     object_data_length = object_length - 24;
-    object_id = asf_guid_2_num (guid);
+    object_id          = asf_guid_2_num (p);
+
     switch (object_id) {
       case GUID_EXTENDED_STREAM_PROPERTIES:
         asf_header_parse_stream_extended_properties(header, asf_reader_get_buffer(&reader), object_data_length);
@@ -636,7 +650,7 @@ static int asf_header_parse_header_extension(asf_header_t *header, uint8_t *buff
       case GUID_TIMECODE_INDEX_PARAMETERS:
       case GUID_ADVANCED_CONTENT_ENCRYPTION:
       case GUID_COMPATIBILITY:
-	    case GUID_ASF_PADDING:
+      case GUID_ASF_PADDING:
         break;
       default:
         lprintf ("unexpected object\n");
@@ -647,17 +661,20 @@ static int asf_header_parse_header_extension(asf_header_t *header, uint8_t *buff
   return 1;
 }
 
-static int asf_header_parse_content_description(asf_header_t *header_pub, uint8_t *buffer, int buffer_len) {
+static int asf_header_parse_content_description (asf_header_t *header_pub, const uint8_t *buffer, int buffer_len) {
   asf_header_internal_t *header = (asf_header_internal_t *)header_pub;
   asf_reader_t reader;
+  const uint8_t *p;
   asf_content_t *content;
   uint16_t title_length = 0, author_length = 0, copyright_length = 0, description_length = 0, rating_length = 0;
   iconv_t iconv_cd;
 
-  if (buffer_len < 10)
+  asf_reader_init (&reader, buffer, buffer_len);
+  p = asf_reader_get_block (&reader, 5 * 2);
+  if (!p)
     return 0;
 
-  content = calloc(1, sizeof(asf_content_t));
+  content = malloc (sizeof (*content));
   if (!content)
     return 0;
 
@@ -666,12 +683,12 @@ static int asf_header_parse_content_description(asf_header_t *header_pub, uint8_
     return 0;
   }
 
-  asf_reader_init(&reader, buffer, buffer_len);
-  asf_reader_get_16(&reader, &title_length);
-  asf_reader_get_16(&reader, &author_length);
-  asf_reader_get_16(&reader, &copyright_length);
-  asf_reader_get_16(&reader, &description_length);
-  asf_reader_get_16(&reader, &rating_length);
+  /* full init here, no need to 0 first. */
+  title_length       = _X_LE_16 (p);
+  author_length      = _X_LE_16 (p + 2);
+  copyright_length   = _X_LE_16 (p + 4);
+  description_length = _X_LE_16 (p + 6);
+  rating_length      = _X_LE_16 (p + 8);
 
   content->title = asf_reader_get_string(&reader, title_length, iconv_cd);
   content->author = asf_reader_get_string(&reader, author_length, iconv_cd);
@@ -696,39 +713,61 @@ asf_header_t *asf_header_new (uint8_t *buffer, int buffer_len) {
 
   asf_header_internal_t *asf_header;
   asf_reader_t reader;
+  const uint8_t *p;
   uint32_t object_count;
-  uint16_t junk;
-
+#ifndef HAVE_ZERO_SAFE_MEM
+  int i;
+#endif
   lprintf("parsing_asf_header\n");
   if (buffer_len < 6) {
     printf("invalid buffer size\n");
     return NULL;
   }
 
-  if (! (asf_header = calloc(1, sizeof(asf_header_internal_t))) )
+  asf_header = calloc (1, sizeof (*asf_header));
+  if (!asf_header)
     return NULL;
+#ifndef HAVE_ZERO_SAFE_MEM
+  asf_header->pub.file         = NULL;
+  asf_header->pub.content      = NULL;
+  asf_header->pub.stream_count = 0;
+  asf_header->number_count     = 0;
+  for (i = 0; i < ASF_MAX_NUM_STREAMS; i++) {
+    asf_header->pub.streams[i]           = NULL;
+    asf_header->pub.stream_extensions[i] = NULL;
+    asf_header->pub.bitrates[i]          = 0;
+    asf_header->pub.aspect_ratios[i].x   = 0;
+    asf_header->pub.aspect_ratios[i].y   = 0;
+    asf_header->numbers[i]               = 0;
+    asf_header->bitrate_offsets[i]       = 0;
+  }
+#endif
+  asf_header->raw_data = buffer;
 
-  asf_reader_init(&reader, buffer, buffer_len);
-  asf_reader_get_32(&reader, &object_count);
-  asf_reader_get_16(&reader, &junk);
+  asf_reader_init (&reader, buffer, buffer_len);
+  p = asf_reader_get_block (&reader, 4 + 2);
+  object_count = _X_LE_32 (p);
 
   while (!asf_reader_eos(&reader)) {
 
-    uint8_t guid[16];
     asf_guid_t object_id;
-    uint64_t object_length = 0, object_data_length;
+    uint64_t object_length;
+    uint32_t object_data_length;
 
-    if (asf_reader_get_size(&reader) < 24) {
+    p = asf_reader_get_block (&reader, 16 + 8);
+    if (!p) {
       printf("invalid buffer size\n");
       goto exit_error;
     }
 
-    asf_reader_get_guid (&reader, guid);
-    asf_reader_get_64(&reader, &object_length);
-
+    object_length      = _X_LE_64 (p + 16);
+    if (object_length & ~(uint64_t)0xffffffff)
+      goto exit_error;
+    if ((uint32_t)object_length < 24)
+      goto exit_error;
     object_data_length = object_length - 24;
+    object_id = asf_guid_2_num (p);
 
-    object_id = asf_guid_2_num (guid);
     switch (object_id) {
     
       case GUID_ASF_FILE_PROPERTIES:
@@ -793,37 +832,28 @@ static void asf_header_delete_file_properties(asf_file_t *asf_file) {
 }
 
 static void asf_header_delete_content(asf_content_t *asf_content) {
-  if (asf_content->title)
-    free(asf_content->title);
-  if (asf_content->author)
-    free(asf_content->author);
-  if (asf_content->copyright)
-    free(asf_content->copyright);
-  if (asf_content->description)
-    free(asf_content->description);
-  if (asf_content->rating)
-    free(asf_content->rating);
-  free(asf_content);
+  if (asf_content) {
+    free (asf_content->title);
+    free (asf_content->author);
+    free (asf_content->copyright);
+    free (asf_content->description);
+    free (asf_content->rating);
+    free (asf_content);
+  }
 }
 
 void asf_header_delete (asf_header_t *header_pub) {
   asf_header_internal_t *header = (asf_header_internal_t *)header_pub;
-  int i;
-
-  if (header->pub.file)
-    asf_header_delete_file_properties(header->pub.file);
-
-  if (header->pub.content)
-    asf_header_delete_content(header->pub.content);
-
-  for (i = 0; i < ASF_MAX_NUM_STREAMS; i++) {
-    if (header->pub.streams[i])
-      asf_header_delete_stream_properties(header->pub.streams[i]);
-    if (header->pub.stream_extensions[i])
-      asf_header_delete_stream_extended_properties(header->pub.stream_extensions[i]);
+  if (header) {
+    int i;
+    asf_header_delete_file_properties (header->pub.file);
+    asf_header_delete_content (header->pub.content);
+    for (i = 0; i < ASF_MAX_NUM_STREAMS; i++) {
+      asf_header_delete_stream_properties (header->pub.streams[i]);
+      asf_header_delete_stream_extended_properties (header->pub.stream_extensions[i]);
+    }
+    free (header);
   }
-  
-  free(header);
 }
 
 /* Given a bandwidth, select the best stream */
@@ -834,7 +864,7 @@ static int asf_header_choose_stream (asf_header_internal_t *header, int stream_t
 
   max_lt = min_gt = -1;
   for (i = 0; i < header->pub.stream_count; i++) {
-    if (header->pub.streams[i]->stream_type == stream_type) {
+    if ((int)header->pub.streams[i]->stream_type == stream_type) {
       if (header->pub.bitrates[i] <= bandwidth) {
         if ((max_lt == -1) || (header->pub.bitrates[i] > header->pub.bitrates[max_lt]))
           max_lt = i;
@@ -894,9 +924,13 @@ void asf_header_disable_streams (asf_header_t *header_pub, int video_id, int aud
   for (i = 0; i < header->pub.stream_count; i++) {
     asf_guid_t stream_type = header->pub.streams[i]->stream_type;
 
-    if (((stream_type == GUID_ASF_VIDEO_MEDIA) && (i != video_id)) ||
-      ((stream_type == GUID_ASF_AUDIO_MEDIA) && (i != audio_id))) {
-      uint8_t *bitrate_pointer = header->bitrate_pointers[i];
+    if (header->bitrate_offsets[i] &&
+      (((stream_type == GUID_ASF_VIDEO_MEDIA) && (i != video_id)) ||
+       ((stream_type == GUID_ASF_AUDIO_MEDIA) && (i != audio_id)))) {
+      /* XXX: Only used by input/mmsh.c. Tweak the raw header data for later reinterpretation
+       * by demuxer. Do NOT call this after freeing raw buffer!!
+       */
+      uint8_t *bitrate_pointer = header->raw_data + header->bitrate_offsets[i];
       /* disable  the stream */
       lprintf("stream %d disabled\n", header->pub.streams[i]->stream_number);
       *bitrate_pointer++ = 0;
@@ -1139,7 +1173,7 @@ static const char * guid_names[] = {
 };
 
 const char *asf_guid_name (asf_guid_t num) {
-  if ((num < 0) || (num >= GUID_END))
+  if (num >= GUID_END)
     num = GUID_ERROR;
   return guid_names[num];
 }
