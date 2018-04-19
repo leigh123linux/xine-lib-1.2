@@ -765,6 +765,14 @@ static __inline int _x_is_fourcc(const void *ptr, const void *tag) {
   return memcmp(ptr, tag, 4) == 0;
 }
 
+/**
+ * @brief Make string from machine endian 32bit tag, eg a fourcc or a chunk ID.
+ * @param s   Pointer to string buffer of at least 20 bytes.
+ * @param tag The 32bit tag value in native byte order.
+ * @return    The length of target string written to s, without the trailing \0.
+ */
+size_t _x_tag32_me2str (char *s, uint32_t tag) XINE_PROTECTED;
+
 #ifdef __cplusplus
 }
 #endif

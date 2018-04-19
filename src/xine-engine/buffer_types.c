@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2000-2017 the xine project
+ * Copyright (C) 2000-2018 the xine project
  *
  * This file is part of xine, a free video player.
  *
@@ -1388,3 +1388,28 @@ void _x_waveformatex_le2me( xine_waveformatex *wavex ) {
   wavex->cbSize = le2me_16(wavex->cbSize);
 }
 
+size_t _x_tag32_me2str (char *s, uint32_t tag) {
+  static const uint8_t tab_hex[16] = "0123456789abcdef";
+  union {uint32_t w; uint8_t b[4];} u;
+  uint8_t *q = (uint8_t *)s;
+  int i;
+  if (!q)
+    return 0;
+  u.w = tag;
+  for (i = 0; i < 4; i++) {
+    uint8_t z = u.b[i];
+    if ((z < 32) || (z > 127)) {
+      *q++ = '\\';
+      *q++ = 'x';
+      *q++ = tab_hex[z >> 4];
+      *q++ = tab_hex[z & 15];
+    } else if (z == '\\') {
+      *q++ = '\\';
+      *q++ = '\\';
+    } else {
+      *q++ = z;
+    }
+  }
+  *q = 0;
+  return q - (uint8_t *)s;
+}
