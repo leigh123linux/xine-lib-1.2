@@ -46,12 +46,10 @@ xine_event_t *xine_event_get  (xine_event_queue_t *queue) {
   return event;
 }
 
-xine_event_t *xine_event_wait (xine_event_queue_t *queue) {
+static xine_event_t *xine_event_wait_locked (xine_event_queue_t *queue) {
 
   xine_event_t  *event;
   xine_list_iterator_t ite;
-
-  pthread_mutex_lock (&queue->lock);
 
   while ( !(ite = xine_list_front (queue->events)) ) {
     pthread_cond_wait (&queue->new_event, &queue->lock);
@@ -61,6 +59,15 @@ xine_event_t *xine_event_wait (xine_event_queue_t *queue) {
 
   xine_list_remove (queue->events, ite);
 
+  return event;
+}
+
+xine_event_t *xine_event_wait (xine_event_queue_t *queue) {
+
+  xine_event_t  *event;
+
+  pthread_mutex_lock (&queue->lock);
+  event = xine_event_wait_locked(queue);
   pthread_mutex_unlock (&queue->lock);
 
   return event;
@@ -213,28 +220,34 @@ static void *listener_loop (void *queue_gen) {
   xine_event_queue_t *queue = (xine_event_queue_t *) queue_gen;
   int running = 1;
 
+  pthread_mutex_lock (&queue->lock);
+
   while (running) {
 
     xine_event_t *event;
 
-    event = xine_event_wait (queue);
+    event = xine_event_wait_locked (queue);
 
     if (event->type == XINE_EVENT_QUIT)
       running = 0;
 
     queue->callback_running = 1;
-    queue->callback (queue->user_data, event);
-    queue->callback_running = 0;
 
+    pthread_mutex_unlock (&queue->lock);
+
+    queue->callback (queue->user_data, event);
     xine_event_free (event);
 
     pthread_mutex_lock (&queue->lock);
+
+    queue->callback_running = 0;
+
     if (xine_list_empty (queue->events)) {
       pthread_cond_signal (&queue->events_processed);
     }
-    pthread_mutex_unlock (&queue->lock);
   }
 
+  pthread_mutex_unlock (&queue->lock);
   return NULL;
 }
 
