@@ -25,6 +25,10 @@
 */
 
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "types.h"
 #include "nes6502.h"
 #include "dis6502.h"

@@ -24,6 +24,10 @@
 ** $Id: nes_apu.c,v 1.4 2005/05/07 09:11:39 valtri Exp $
 */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <string.h>
 #include "types.h"
 #include "log.h"

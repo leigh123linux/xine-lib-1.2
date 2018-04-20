@@ -25,6 +25,10 @@
 ** $Id: vrc7_snd.c,v 1.2 2003/12/05 15:55:01 f1rmb Exp $
 */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <stdio.h>
 #include "types.h"
 #include "vrc7_snd.h"

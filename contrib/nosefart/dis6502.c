@@ -24,6 +24,10 @@
 ** $Id: dis6502.c,v 1.2 2003/12/05 15:55:01 f1rmb Exp $
 */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "types.h"
 #include "log.h"
 #include "nes6502.h"

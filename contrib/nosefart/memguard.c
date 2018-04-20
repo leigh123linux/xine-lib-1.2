@@ -26,6 +26,10 @@
 ** $Id: memguard.c,v 1.4 2004/02/20 19:53:39 komadori Exp $
 */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "types.h"
 
 /* undefine macro definitions, so we get real calls */
