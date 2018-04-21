@@ -298,7 +298,8 @@ typedef struct {
   unsigned int current_frame;
 
   /* trak timescale */
-  unsigned int timescale;
+  int timescale;
+  int ptsoffs_mul;
 
   /* flags that indicate how a trak is supposed to be used */
   unsigned int flags;
@@ -955,7 +956,13 @@ static qt_error parse_trak_atom (qt_trak *trak,
   unsigned char *atoms[14];
 
   /* initialize trak structure */
-  trak->id = -1;
+#ifdef HAVE_ZERO_SAFE_MEM
+  {
+    qt_info *info = trak->info;
+    memset (trak, 0, sizeof (*trak));
+    trak->info = info;
+  }
+#else
   trak->edit_list_count = 0;
   trak->edit_list_table = NULL;
   trak->chunk_offset_count = 0;
@@ -980,13 +987,15 @@ static qt_error parse_trak_atom (qt_trak *trak,
   trak->frames = NULL;
   trak->frame_count = 0;
   trak->current_frame = 0;
-  trak->timescale = 1;
   trak->flags = 0;
   trak->object_type_id = 0;
   trak->decoder_config = NULL;
   trak->decoder_config_len = 0;
   trak->stsd_atoms_count = 0;
   trak->stsd_atoms = NULL;
+#endif
+  trak->id = -1;
+  trak->timescale = 1;
 
   /* default type */
   trak->type = MEDIA_OTHER;
@@ -1066,12 +1075,12 @@ static qt_error parse_trak_atom (qt_trak *trak,
     debug_atom_load ("demux_qt: mdhd atom\n");
     if (version == 0) {
       if (atomsize >= 30) {
-        trak->timescale = _X_BE_32 (&atom[20]);
+        trak->timescale = _X_BE_32 (&atom[20]) & 0x7fffffff;
         trak->lang      = _X_BE_16 (&atom[28]);
       }
     } else if (version == 1) {
       if (atomsize >= 42) {
-        trak->timescale = _X_BE_32 (&atom[28]);
+        trak->timescale = _X_BE_32 (&atom[28]) & 0x7fffffff;
         trak->lang      = _X_BE_16 (&atom[40]);
       }
     }
@@ -1723,7 +1732,10 @@ static qt_error build_frame_table (qt_trak *trak, unsigned int global_timescale)
       (trak->type != MEDIA_AUDIO))
     return QT_OK;
 
-  /* SANITY TEST */
+  /* Simplified ptsoffs conversion, no rounding error cumulation. */
+  trak->ptsoffs_mul = 90000 * (1 << 12) / trak->timescale;
+
+  /* Edit list sanity test. */
   if (trak->sample_to_chunk_count) {
     unsigned int i;
     sample_to_chunk_table_t *e = trak->sample_to_chunk_table + trak->sample_to_chunk_count;
@@ -1746,7 +1758,7 @@ static qt_error build_frame_table (qt_trak *trak, unsigned int global_timescale)
   /* AUDIO and OTHER frame types follow the same rules; VIDEO and vbr audio
    * frame types follow a different set */
   if ((trak->type == MEDIA_VIDEO) ||
-      (trak->properties->audio.vbr)) {
+      ((trak->type == MEDIA_AUDIO) && (trak->properties->audio.vbr))) {
     /* maintain counters for each of the subtracks within the trak */
     int *media_id_counts = NULL;
     qt_frame *frame;
@@ -1788,10 +1800,12 @@ static qt_error build_frame_table (qt_trak *trak, unsigned int global_timescale)
     if (!trak->frame_count)
       return QT_OK;
 
-    trak->frames = calloc(trak->frame_count, sizeof(qt_frame));
+    /* 1 more for convenient end marker. */
+    trak->frames = calloc (trak->frame_count + 1, sizeof (qt_frame));
     if (!trak->frames)
       return QT_NO_MEMORY;
     frame = trak->frames;
+    frame->pts = 0;
     trak->current_frame = 0;
 
     media_id_counts = calloc (trak->stsd_atoms_count + 1, sizeof (int));
@@ -1913,11 +1927,22 @@ static qt_error build_frame_table (qt_trak *trak, unsigned int global_timescale)
             frame->ptsoffs = ptsoffs_value;
             ptsoffs_countdown--;
 
+            if (!trak->edit_list_count) {
+              frame->pts = frame->pts * 90000 / trak->timescale;
+              frame->ptsoffs = (frame->ptsoffs * trak->ptsoffs_mul) >> 12;
+            }
+
             frame++;
             samples_per_chunk -= samples_per_frame;
           }
         }
       }
+      /* provide append time for fragments */
+      trak->fragment_dts = pts_value;
+      /* convenience frame */
+      frame->pts = pts_value;
+      if (!trak->edit_list_count)
+        frame->pts = frame->pts * 90000 / trak->timescale;
     }
 
     /* was the last chunk incomplete? */
@@ -1925,22 +1950,36 @@ static qt_error build_frame_table (qt_trak *trak, unsigned int global_timescale)
       trak->frame_count = trak->samples;
 
     /* fill in the keyframe information */
-    {
+    if (!trak->edit_list_count) {
+      unsigned int u;
+      unsigned char *p = trak->sync_sample_table;
+      for (u = 0; u < trak->sync_sample_count; u++) {
+        unsigned int fr = _X_BE_32 (p); p += 4;
+        if ((fr > 0) && (fr <= trak->frame_count)) {
+          trak->frames[fr - 1].keyframe = 1;
+          /* we already have xine pts, register them */
+          qt_keyframes_add (trak, trak->frames + fr - 1);
+        }
+      }
+    } else {
       unsigned int u;
       unsigned char *p = trak->sync_sample_table;
       for (u = 0; u < trak->sync_sample_count; u++) {
         unsigned int fr = _X_BE_32 (p); p += 4;
         if ((fr > 0) && (fr <= trak->frame_count))
-            trak->frames[fr - 1].keyframe = 1;
+          trak->frames[fr - 1].keyframe = 1;
       }
     }
 
-    /* fix up pts information w.r.t. the edit list table */
-    /* supported: initial trak delay, gaps, and skipped intervals. */
-    /* not supported: repeating and reordering intervals. */
-    if (trak->frame_count && trak->edit_list_table && (trak->edit_list_count > 0)) {
-      unsigned int i = 0, j = 0, edit_list_index, key_index, p;
+    if (trak->frame_count && trak->edit_list_count) {
+
+      /* Fix up pts information w.r.t. the edit list table.
+       * Supported: initial trak delay, gaps, and skipped intervals.
+       * Not supported: repeating and reordering intervals.
+       * Also, make xine timestamps right here and avoid an extra pass. */
+      unsigned int edit_list_index;
       int64_t edit_list_pts = 0;
+      qt_frame *keyf, *f, *sf = trak->frames, *tf = sf, *ef = sf + trak->frame_count;
       for (edit_list_index = 0; edit_list_index < trak->edit_list_count; edit_list_index++) {
         int64_t edit_list_media_time, edit_list_duration, offs = 0;
         /* duration is in global timescale units; convert to trak timescale */
@@ -1955,67 +1994,80 @@ static qt_error build_frame_table (qt_trak *trak, unsigned int global_timescale)
         }
         /* extend last edit to end of trak, why? */
         if (edit_list_index == trak->edit_list_count - 1)
-          edit_list_duration = 0x7fffffffffffffffll;
+          edit_list_duration = ef->pts - edit_list_pts;
         /* skip interval */
-        key_index = i;
-        for (; i < trak->frame_count; i++) {
-          offs = trak->frames[i].pts;
-          offs += trak->frames[i].ptsoffs;
+        keyf = sf;
+        for (; sf < ef; sf++) {
+          offs = sf->pts;
+          offs += sf->ptsoffs;
           offs -= edit_list_media_time;
-          if (trak->frames[i].keyframe)
-            key_index = i;
+          if (sf->keyframe)
+            keyf = sf;
           if (offs >= 0)
             break;
         }
-        if (i == trak->frame_count)
+        if (sf == ef)
           break;
-        offs -= trak->frames[i].ptsoffs;
+        offs -= sf->ptsoffs;
         edit_list_pts += offs;
         /* insert decoder preroll area */
-        for (p = key_index; p < i; p++) {
-          if (p != j)
-            trak->frames[j] = trak->frames[p];
-          trak->frames[j++].pts = edit_list_pts;
+        for (f = keyf; f < sf; f++) {
+          if (f != tf)
+            *tf = *f;
+          tf->pts = edit_list_pts * 90000 / trak->timescale;
+          tf->ptsoffs = (tf->ptsoffs * trak->ptsoffs_mul) >> 12;
+          tf++;
         }
         /* insert interval */
-        for (; i < trak->frame_count - 1; i++) {
-          int64_t d = trak->frames[i + 1].pts - trak->frames[i].pts;
-          if (i != j)
-            trak->frames[j] = trak->frames[i];
-          trak->frames[j++].pts = edit_list_pts;
-          edit_list_pts += d;
-          edit_list_duration -= d;
-          if (edit_list_duration <= 0)
-            break;
-        }
-        if ((i == trak->frame_count - 1) && (edit_list_duration > 0)) {
-          if (i != j)
-            trak->frames[j] = trak->frames[i];
-          trak->frames[j++].pts = edit_list_pts;
-          i++;
+        if (sf == tf) {
+          /* no frames skipped yet (usual case) */
+          for (; sf < ef; sf++) {
+            int64_t d = sf[1].pts - sf[0].pts;
+            sf[0].pts = edit_list_pts * 90000 / trak->timescale;
+            sf[0].ptsoffs = (sf[0].ptsoffs * trak->ptsoffs_mul) >> 12;
+            if (sf[0].keyframe && trak->sync_sample_table)
+              qt_keyframes_add (trak, sf);
+            edit_list_pts += d;
+            edit_list_duration -= d;
+            if (edit_list_duration <= 0)
+              break;
+          }
+          tf = sf;
+        } else {
+          /* shift out skipped frames */
+          for (; sf < ef; sf++) {
+            int64_t d = sf[1].pts - sf[0].pts;
+            tf[0] = sf[0];
+            tf[0].pts = edit_list_pts * 90000 / trak->timescale;
+            tf[0].ptsoffs = (tf[0].ptsoffs * trak->ptsoffs_mul) >> 12;
+            if (tf[0].keyframe && trak->sync_sample_table)
+              qt_keyframes_add (trak, tf);
+            tf++;
+            edit_list_pts += d;
+            edit_list_duration -= d;
+            if (edit_list_duration <= 0)
+              break;
+          }
         }
         edit_list_pts -= offs;
-        edit_list_pts += edit_list_duration;
+        if (edit_list_index < trak->edit_list_count - 1)
+          edit_list_pts += edit_list_duration;
       }
-      trak->frame_count = j;
+      trak->fragment_dts = edit_list_pts;
+      /* convenience frame */
+      tf->pts            = edit_list_pts * 90000 / trak->timescale;
+      trak->frame_count  = tf - trak->frames;
     }
-          
-    /* compute final pts values */
+#ifdef DEBUG_EDIT_LIST
     {
       unsigned int u;
-      for (u = 0; u < trak->frame_count; u++) {
-        trak->frames[u].pts *= (int)90000;
-        trak->frames[u].pts /= (int)trak->timescale;
-        if (trak->frames[u].ptsoffs) {
-          int64_t t = (int64_t)trak->frames[u].ptsoffs * (int)90000;
-          trak->frames[u].ptsoffs = t / (int)trak->timescale;
-        }
-        debug_edit_list ("  final pts for sample %u = %"PRId64"\n", u, trak->frames[u].pts);
-        if (trak->frames[u].keyframe && trak->sync_sample_table)
-          qt_keyframes_add (trak, &trak->frames[u]);
+      qt_frame *f = trak->frames;
+      for (u = 0; u <= trak->frame_count; u++) {
+        debug_edit_list ("  final pts for sample %u = %"PRId64"\n", u, f->pts);
+        f++;
       }
     }
-
+#endif
     /* decide which video properties atom to use */
     {
       unsigned int u;
@@ -2032,9 +2084,10 @@ static qt_error build_frame_table (qt_trak *trak, unsigned int global_timescale)
     /* in this case, the total number of frames is equal to the number of
      * chunks */
     trak->frame_count = trak->chunk_offset_count;
-    trak->frames = calloc(trak->frame_count, sizeof(qt_frame));
+    trak->frames = calloc (trak->frame_count + 1, sizeof (qt_frame));
     if (!trak->frames)
       return QT_NO_MEMORY;
+    trak->frames[0].pts = 0;
 
     if (trak->type == MEDIA_AUDIO) {
       unsigned int u;
@@ -2079,7 +2132,15 @@ static qt_error build_frame_table (qt_trak *trak, unsigned int global_timescale)
 
           af++;
         }
+        /* convenience frame */
+        af->pts = audio_frame_counter;
+        af->pts *= 90000;
+        af->pts /= trak->timescale;
       }
+      /* provide append time for fragments */
+      trak->fragment_dts = audio_frame_counter;
+    } else {
+      trak->fragment_dts = 0;
     }
 
     {
@@ -2128,7 +2189,7 @@ static qt_trak *find_trak_by_id (qt_info *info, int id) {
 }
 
 static int parse_mvex_atom (qt_info *info, unsigned char *mvex_atom, unsigned int bufsize) {
-  unsigned int i, j, mvex_size;
+  unsigned int i, mvex_size;
   uint32_t traknum = 0, subtype, subsize = 0;
   qt_trak *trak;
 
@@ -2160,10 +2221,19 @@ static int parse_mvex_atom (qt_info *info, unsigned char *mvex_atom, unsigned in
         trak->default_sample_duration          = _X_BE_32 (&mvex_atom[i + 8 + 12]);
         trak->default_sample_size              = _X_BE_32 (&mvex_atom[i + 8 + 16]);
         trak->default_sample_flags             = _X_BE_32 (&mvex_atom[i + 8 + 20]);
-        j = trak->frame_count;
-        trak->fragment_dts = (j >= 2) ? 2 * trak->frames[j - 1].pts - trak->frames[j - 2].pts : 0;
-        trak->fragment_dts *= trak->timescale;
-        trak->fragment_dts /= 90000;
+        if (!trak->frame_count) {
+          trak->fragment_dts = 0;
+          /* no frames defined yet. apply initial delay if present. */
+          if (trak->edit_list_table && (trak->edit_list_count > 0)
+            && (trak->edit_list_table[0].media_time == -1ll)) {
+            /* duration is in global timescale units; convert to trak timescale */
+            int64_t d;
+            d = trak->edit_list_table[0].track_duration;
+            d *= trak->timescale;
+            d /= info->timescale;
+            trak->fragment_dts = d;
+          }
+        }
         trak->fragment_frames = trak->frame_count;
         info->fragment_count = -1;
         break;
@@ -2175,17 +2245,14 @@ static int parse_mvex_atom (qt_info *info, unsigned char *mvex_atom, unsigned in
 }
 
 static int parse_traf_atom (qt_info *info, unsigned char *traf_atom, unsigned int trafsize, off_t moofpos) {
-  unsigned int i, n, done = 0, samples;
-  uint32_t subtype, subsize = 0, tfhd_flags, trun_flags;
+  unsigned int i, done = 0;
+  uint32_t subtype, subsize = 0;
   uint32_t sample_description_index = 0;
-  uint32_t default_sample_duration = 0, sample_duration;
-  uint32_t default_sample_size = 0, sample_size;
-  uint32_t default_sample_flags = 0, first_sample_flags, sample_flags;
+  uint32_t default_sample_duration = 0;
+  uint32_t default_sample_size = 0;
+  uint32_t default_sample_flags = 0;
   off_t base_data_offset = 0, data_pos = 0;
-  int64_t sample_dts;
-  unsigned char *p;
   qt_trak *trak = NULL;
-  qt_frame *frame;
 
   for (i = 8; i + 8 <= trafsize; i += subsize) {
     subsize = _X_BE_32 (&traf_atom[i]);
@@ -2196,20 +2263,25 @@ static int parse_traf_atom (qt_info *info, unsigned char *traf_atom, unsigned in
       break;
     switch (subtype) {
 
-      case TFHD_ATOM:
+      case TFHD_ATOM: {
+        uint32_t tfhd_flags;
+        unsigned char *p;
         if (subsize < 8 + 8)
           break;
         p = traf_atom + i + 8;
         tfhd_flags = _X_BE_32 (p); p += 4;
         trak = find_trak_by_id (info, _X_BE_32 (p)); p += 4;
-        n = 8 + 8;
-        if (tfhd_flags & 1) n += 8;
-        if (tfhd_flags & 2) n += 4;
-        if (tfhd_flags & 8) n += 4;
-        if (tfhd_flags & 0x10) n += 4;
-        if (tfhd_flags & 0x20) n += 4;
-        if (subsize < n)
-          trak = NULL;
+        {
+          unsigned int n;
+          n = ((tfhd_flags << 3) & 8)
+            + ((tfhd_flags << 1) & 4)
+            + ((tfhd_flags >> 1) & 4)
+            + ((tfhd_flags >> 2) & 4)
+            + ((tfhd_flags >> 3) & 4)
+            + 8 + 8;
+          if (subsize < n)
+            trak = NULL;
+        }
         if (!trak)
           break;
         if (tfhd_flags & 1)
@@ -2234,8 +2306,16 @@ static int parse_traf_atom (qt_info *info, unsigned char *traf_atom, unsigned in
         else
           default_sample_flags = trak->default_sample_flags;
         break;
+      }
 
-      case TRUN_ATOM:
+      case TRUN_ATOM: {
+        uint32_t trun_flags;
+        uint32_t samples;
+        uint32_t sample_duration, sample_size;
+        uint32_t first_sample_flags, sample_flags;
+        int64_t  sample_dts;
+        unsigned char *p;
+        qt_frame *frame;
         /* get head */
         if (!trak)
           break;
@@ -2244,11 +2324,14 @@ static int parse_traf_atom (qt_info *info, unsigned char *traf_atom, unsigned in
         p = traf_atom + i + 8;
         trun_flags = _X_BE_32 (p); p += 4;
         samples    = _X_BE_32 (p); p += 4;
-        n = 8 + 8;
-        if (trun_flags & 1) n += 4;
-        if (trun_flags & 4) n += 4;
-        if (subsize < n)
-          break;
+        {
+          unsigned int n;
+          n = ((trun_flags << 2) & 4)
+            + ( trun_flags       & 4)
+            + 8 + 8;
+          if (subsize < n)
+            break;
+        }
         if (trun_flags & 1) {
           uint32_t o = _X_BE_32 (p);
           p += 4;
@@ -2259,27 +2342,31 @@ static int parse_traf_atom (qt_info *info, unsigned char *traf_atom, unsigned in
         else
           first_sample_flags = default_sample_flags;
         /* truncation paranoia */
-        n = 0;
-        if (trun_flags & 0x100) n += 4;
-        if (trun_flags & 0x200) n += 4;
-        if (trun_flags & 0x400) n += 4;
-        if (trun_flags & 0x800) n += 4;
-        if (n) {
-          n = (i + subsize - (p - traf_atom)) / n;
-          if (samples > n) samples = n;
+        {
+          unsigned int n;
+          n = ((trun_flags >> 6) & 4)
+            + ((trun_flags >> 7) & 4)
+            + ((trun_flags >> 8) & 4)
+            + ((trun_flags >> 9) & 4);
+          if (n) {
+            n = (i + subsize - (p - traf_atom)) / n;
+            if (samples > n) samples = n;
+          }
         }
         if (!samples)
           break;
         /* enlarge frame table in steps of 64k frames, to avoid a flood of reallocations */
         frame = trak->frames;
-        n = trak->frame_count + samples;
-        if (n > (unsigned int)trak->fragment_frames) {
-          n = (n + 0xffff) & ~0xffff;
-          frame = realloc (trak->frames, n * sizeof (*frame));
-          if (!frame)
-            break;
-          trak->fragment_frames = n;
-          trak->frames = frame;
+        {
+          unsigned int n = trak->frame_count + samples;
+          if (n + 1 > (unsigned int)trak->fragment_frames) {
+            n = (n + 1 + 0xffff) & ~0xffff;
+            frame = realloc (trak->frames, n * sizeof (*frame));
+            if (!frame)
+              break;
+            trak->fragment_frames = n;
+            trak->frames = frame;
+          }
         }
         /* get defaults */
         frame += trak->frame_count;
@@ -2306,7 +2393,7 @@ static int parse_traf_atom (qt_info *info, unsigned char *traf_atom, unsigned in
           if (trun_flags & 0x800) {
             uint32_t o = _X_BE_32 (p);
             p += 4;
-            frame->ptsoffs = (int64_t)((int32_t)o) * (int32_t)90000 / (int32_t)trak->timescale;
+            frame->ptsoffs = ((int)o * trak->ptsoffs_mul) >> 12;
           } else
             frame->ptsoffs = 0;
           if (frame->keyframe)
@@ -2315,8 +2402,11 @@ static int parse_traf_atom (qt_info *info, unsigned char *traf_atom, unsigned in
           (trak->frame_count)++;
         }
         trak->fragment_dts = sample_dts;
+        /* convenience frame */
+        frame->pts = sample_dts * 90000 / trak->timescale;
         done++;
         break;
+      }
 
       default: ;
     }
@@ -2883,19 +2973,10 @@ static int demux_qt_send_chunk(demux_plugin_t *this_gen) {
       }
     }
 
-    if (i + 1 < trak->frame_count) {
-      /* frame duration is the pts diff between this video frame and
-       * the next video frame */
-      frame_duration  = trak->frames[i + 1].pts;
-      frame_duration -= trak->frames[i].pts;
-    } else if (i) {
-      /* reuse last frame duration */
-      frame_duration  = trak->frames[i].pts;
-      frame_duration -= trak->frames[i - 1].pts;
-    } else {
-      /* give the last and only frame some fixed duration */
-      frame_duration = 12000;
-    }
+    /* frame duration is the pts diff between this video frame and the next video frame
+     * or the convenience frame at the end of list */
+    frame_duration  = trak->frames[i + 1].pts;
+    frame_duration -= trak->frames[i].pts;
 
     /* Due to the edit lists, some successive frames have the same pts
      * which would ordinarily cause frame_duration to be 0 which can
