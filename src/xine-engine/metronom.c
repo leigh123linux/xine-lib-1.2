@@ -385,7 +385,7 @@ static void metronom_handle_discontinuity (metronom_t *this, int type,
         t = this->video_vpts > this->audio_vpts ? this->video_vpts : this->audio_vpts;
         t -= this->prebuffer + cur_time;
         pthread_mutex_unlock (&this->lock);
-        if ((t <= 0) || (t > 90000))
+        if ((t <= 0) || (t > 135000))
           break;
         xprintf (this->xine, XINE_VERBOSITY_DEBUG,
           "metronom: gapless switch: wait %"PRId64" pts.\n", t);
