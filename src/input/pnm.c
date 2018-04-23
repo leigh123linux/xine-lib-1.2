@@ -626,6 +626,11 @@ static int pnm_get_stream_chunk(pnm_t *p) {
   {
     int size=_X_BE_16 (&p->buffer[1]);
 
+    if (size < 5)
+      return 0;
+    if (size + 3 >= BUF_SIZE)
+      return 0;
+
     if (_x_io_tcp_read (p->stream, p->s, &p->buffer[8], size-5) != size-5)
       return 0;
     p->buffer[size+3]=0;
