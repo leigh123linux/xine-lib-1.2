@@ -2338,12 +2338,18 @@ static void *video_out_loop (void *this_gen) {
   }
 
   /* dont let folks wait forever in vain */
+
+  pthread_mutex_lock (&this->display_img_buf_queue.mutex);
   if (this->discard_frames)
     pthread_cond_broadcast (&this->done_flushing);
+  pthread_mutex_unlock (&this->display_img_buf_queue.mutex);
+
+  pthread_mutex_lock (&this->trigger_drawing_mutex);
   if (this->step) {
     this->step = 0;
     pthread_cond_broadcast (&this->done_stepping);
   }
+  pthread_mutex_unlock (&this->trigger_drawing_mutex);
 
   if (this->last_flushed) {
     if (!vo_frame_dec2_lock_int (this, this->last_flushed))
