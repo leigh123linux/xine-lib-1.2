@@ -71,7 +71,8 @@ xine_mrl_t **_x_input_realloc_mrls(xine_mrl_t ***p, size_t n)
   size_t old_n;
 
   if (!old_m) {
-    return _x_input_alloc_mrls(n);
+    *p = _x_input_alloc_mrls(n);
+    return *p;
   }
 
   /* count old entries */
