@@ -700,18 +700,210 @@ static void *scp_init_class(xine_t *xine, const void *data)
  * SFTP class
  */
 
+typedef struct {
+
+  input_class_t     input_class;
+  xine_t           *xine;
+
+  /* browser */
+  xine_mrl_t        **mrls;
+
+} sftp_input_class_t;
+
+static ssh_input_plugin_t *_open_input(sftp_input_class_t *this,
+                                       xine_url_t *url, const char *mrl, int *nFiles)
+{
+  ssh_input_plugin_t *input;
+
+  input = (ssh_input_plugin_t *)this->input_class.get_instance(&this->input_class, NULL, mrl);
+  if (!input)
+    return NULL;
+
+  input->xine = this->xine;
+
+  if (_ssh_connect(input, url))
+    goto fail;
+  if (_sftp_session_init(input))
+    goto fail;
+
+  libssh2_session_set_blocking(input->session, 1);
+
+  return input;
+
+ fail:
+  input->input_plugin.dispose(&input->input_plugin);
+  return NULL;
+}
+
+static int _read_dir(sftp_input_class_t *this,
+                     ssh_input_plugin_t *input,
+                     const char *mrl, const char *uri, int *nFiles)
+{
+  LIBSSH2_SFTP_ATTRIBUTES attr;
+  LIBSSH2_SFTP_HANDLE *dir;
+  xine_mrl_t **mrls = NULL;
+  size_t mrls_size = 0;
+  size_t n = 0;
+  char file[1024];
+  int show_hidden_files;
+  int rc;
+
+  rc = libssh2_sftp_stat(input->sftp_session, uri, &attr);
+  if (rc) {
+    xprintf(this->xine, XINE_VERBOSITY_LOG, LOG_MODULE ": "
+            "remote stat failed for '%s': %d\n", uri, rc);
+    return -1;
+  }
+
+  if (!LIBSSH2_SFTP_S_ISDIR(attr.permissions)) {
+    xprintf(this->xine, XINE_VERBOSITY_LOG, LOG_MODULE ": "
+            "'%s' is not a directory\n", uri);
+
+    this->mrls = _x_input_alloc_mrls(1);
+    if (this->mrls) {
+      this->mrls[0]->type   = mrl_net | mrl_file | mrl_file_normal;
+      this->mrls[0]->mrl    = strdup(mrl);
+      *nFiles = 1;
+    }
+    return 0;
+  }
+
+  dir = libssh2_sftp_opendir(input->sftp_session, uri);
+  if (!dir) {
+    xprintf(this->xine, XINE_VERBOSITY_LOG, LOG_MODULE ": "
+            "error opening directory '%s': %d\n", uri, rc);
+    return -1;
+  }
+
+  show_hidden_files = _x_input_get_show_hidden_files(this->xine->config);
+
+  /* add link to back */
+
+  mrls_size += 64;
+  mrls = _x_input_alloc_mrls(mrls_size);
+  if (!mrls)
+    goto fail;
+
+  mrls[n]->type   = mrl_net | mrl_file | mrl_file_directory;
+  mrls[n]->origin = strdup(mrl);
+  mrls[n]->mrl    = _x_asprintf("%s/..", mrl);
+  n++;
+
+  /* read directory */
+
+  while ( 0 != (rc = libssh2_sftp_readdir(dir, file, sizeof(file), &attr))) {
+
+    if (rc < 0 ) {
+      if (rc == LIBSSH2_ERROR_BUFFER_TOO_SMALL) {
+        xprintf(this->xine, XINE_VERBOSITY_LOG, LOG_MODULE ": "
+                "ignoring too long file name");
+        continue;
+      }
+      if (rc == LIBSSH2_ERROR_EAGAIN)
+        continue;
+      xprintf(this->xine, XINE_VERBOSITY_LOG, LOG_MODULE ": "
+              "directory '%s' read failed: %d", uri, rc);
+      break;
+    }
+
+    if (!show_hidden_files && file[0] == '.')
+      continue;
+    if (!strcmp(file, ".") || !strcmp(file, ".."))
+      continue;
+
+    if (n >= mrls_size) {
+      mrls_size += 64;
+      if (!_x_input_realloc_mrls(&mrls, mrls_size))
+        break;
+    }
+
+    int type = LIBSSH2_SFTP_S_ISDIR( attr.permissions ) ? mrl_file_directory : mrl_file_normal;
+
+    mrls[n]->type   = type | mrl_net | mrl_file;
+    mrls[n]->origin = strdup(mrl);
+    mrls[n]->mrl    = _x_asprintf("%s/%s", mrl, file);
+    mrls[n]->size   = attr.filesize;
+    n++;
+  }
+
+ fail:
+
+  if (n > 2)
+    _x_input_sort_mrls(mrls + 1, n - 1);
+
+  if (dir)
+    libssh2_sftp_close(dir);
+
+  *nFiles = n;
+  this->mrls = mrls;
+
+  return 0;
+}
+
+static xine_mrl_t **_get_dir (input_class_t *this_gen, const char *filename, int *nFiles)
+{
+  sftp_input_class_t *this = (sftp_input_class_t *) this_gen;
+  ssh_input_plugin_t *input = NULL;
+  xine_url_t url;
+
+  _x_input_free_mrls(&this->mrls);
+  *nFiles = 0;
+
+  if (!filename || !strcmp(filename, "sftp:/") || !strcmp(filename, "sftp://")) {
+    this->mrls = _x_input_get_default_server_mrls(this->xine->config, "sftp://", nFiles);
+    if (!this->mrls)
+      xprintf(this->xine, XINE_VERBOSITY_LOG, LOG_MODULE ": "
+              "missing sftp mrl\n");
+    return this->mrls;
+  }
+
+  if (!_x_url_parse2(filename, &url)) {
+    xprintf(this->xine, XINE_VERBOSITY_LOG, LOG_MODULE ": "
+            "malformed url '%s'", filename);
+    return NULL;
+  }
+
+  input = _open_input(this, &url, filename, nFiles);
+  if (!input)
+    goto out;
+
+  _read_dir(this, input, filename, url.uri, nFiles);
+
+ out:
+  _x_url_cleanup(&url);
+  if (input) {
+    input->input_plugin.dispose(&input->input_plugin);
+  }
+
+  return this->mrls;
+}
+
+static void _dispose_class_sftp(input_class_t *this_gen)
+{
+  sftp_input_class_t *this = (sftp_input_class_t *) this_gen;
+
+  _x_input_free_mrls(&this->mrls);
+  free(this_gen);
+}
+
 static void *sftp_init_class(xine_t *xine, const void *data)
 {
-  input_class_t *this;
+  sftp_input_class_t *this;
 
   this = calloc(1, sizeof(*this));
   if (!this)
     return NULL;
 
-  this->get_instance      = _get_instance;
-  this->description       = N_("SFTP input plugin");
-  this->identifier        = "SFTP";
-  this->dispose           = default_input_class_dispose;
+  this->input_class.get_instance      = _get_instance;
+  this->input_class.description       = N_("SFTP input plugin");
+  this->input_class.identifier        = "SFTP";
+  this->input_class.get_dir           = _get_dir;
+  this->input_class.dispose           = _dispose_class_sftp;
+
+  this->xine = xine;
+
+  _x_input_register_show_hidden_files(xine->config);
+  _x_input_register_default_servers(xine->config);
 
   return this;
 }
