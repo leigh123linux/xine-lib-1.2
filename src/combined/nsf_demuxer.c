@@ -65,7 +65,6 @@ typedef struct {
   demux_plugin_t       demux_plugin;
 
   xine_stream_t       *stream;
-  fifo_buffer_t       *video_fifo;
   fifo_buffer_t       *audio_fifo;
   input_plugin_t      *input;
   int                  status;
@@ -169,7 +168,6 @@ static void demux_nsf_send_headers(demux_plugin_t *this_gen) {
   buf_element_t *buf;
   char copyright[100];
 
-  this->video_fifo = this->stream->video_fifo;
   this->audio_fifo = this->stream->audio_fifo;
 
   this->status = DEMUX_OK;
