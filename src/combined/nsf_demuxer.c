@@ -280,11 +280,6 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
   demux_nsf_t   *this;
   unsigned char header[NSF_HEADER_SIZE];
 
-  if (!INPUT_IS_SEEKABLE(input)) {
-    xprintf(stream->xine, XINE_VERBOSITY_DEBUG, "input not seekable, can not handle!\n");
-    return NULL;
-  }
-
   switch (stream->content_detection_method) {
     case METHOD_BY_MRL:
     case METHOD_BY_CONTENT:
