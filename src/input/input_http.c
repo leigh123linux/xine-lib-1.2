@@ -914,8 +914,10 @@ static int http_plugin_open (input_plugin_t *this_gen ) {
 
   lprintf("preview_size=%"PRId64"\n", this->preview_size);
   this->curpos = 0;
-  if (*mime_type)
+  if (*mime_type) {
+    free(this->mime_type);
     this->mime_type = strdup (mime_type);
+  }
 
   return 1;
 }
