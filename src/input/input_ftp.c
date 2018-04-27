@@ -643,6 +643,13 @@ static int _ftp_open (input_plugin_t *this_gen)
   return result;
 }
 
+static uint32_t _ftp_get_capabilities (input_plugin_t *this_gen)
+{
+  ftp_input_plugin_t *this = (ftp_input_plugin_t *)this_gen;
+
+  return INPUT_CAP_PREVIEW | (this->cap_rest ? INPUT_CAP_SLOW_SEEKABLE : 0);
+}
+
 static input_plugin_t *_get_instance (input_class_t *cls_gen, xine_stream_t *stream, const char *mrl)
 {
   ftp_input_class_t *class = (ftp_input_class_t *)cls_gen;
@@ -666,7 +673,7 @@ static input_plugin_t *_get_instance (input_class_t *cls_gen, xine_stream_t *str
   this->fd_data       = -1;
 
   this->input_plugin.open              = _ftp_open;
-  this->input_plugin.get_capabilities  = _x_input_get_capabilities_preview;
+  this->input_plugin.get_capabilities  = _ftp_get_capabilities;
   this->input_plugin.read              = _ftp_read;
   this->input_plugin.read_block        = _x_input_default_read_block;
   this->input_plugin.seek              = _ftp_seek;
