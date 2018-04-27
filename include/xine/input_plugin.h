@@ -323,7 +323,21 @@ struct input_plugin_s {
  */
 #define INPUT_CAP_CLONE                0x00000400
 
+/*
+ * INPUT_CAP_SLOW_SEEKABLE:
+ *   Like INPUT_CAP_SEEKABLE, but seeking may be expensive.
+ *   Short forward seeks are fast (ex. implemented by skipping data).
+ *   Seeking back or far forward is expensive.
+ *
+ *   This type of seeking should be used only when user issues seek request
+ *   and the destination offset is known (no binary search etc. required).
+ *   Another use case could be when header is located at the end of file.
+ *
+ */
+#define INPUT_CAP_SLOW_SEEKABLE        0x00000800
+
 #define INPUT_IS_SEEKABLE(input) (((input)->get_capabilities(input) & INPUT_CAP_SEEKABLE) != 0)
+#define INPUT_IS_SLOW_SEEKABLE(input) (((input)->get_capabilities(input) & (INPUT_CAP_SEEKABLE | INPUT_CAP_SLOW_SEEKABLE)) != 0)
 
 #define INPUT_OPTIONAL_UNSUPPORTED    0
 #define INPUT_OPTIONAL_SUCCESS        1
