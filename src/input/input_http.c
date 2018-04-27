@@ -850,11 +850,10 @@ static int http_plugin_open (input_plugin_t *this_gen ) {
 
       if (len == -1)
 	done = 1;
-      else
-	len = 0;
+      len = 0;
     } else
       len ++;
-    if ( len >= sizeof(buf) ) {
+    if ( len >= (int)sizeof(buf) ) {
        _x_message(this->stream, XINE_MSG_PERMISSION_ERROR, this->mrl, NULL);
        xine_log (this->stream->xine, XINE_LOG_MSG,
          _("input_http: buffer exhausted after %zu bytes."), sizeof(buf));
