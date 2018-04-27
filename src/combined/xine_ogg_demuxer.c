@@ -397,7 +397,7 @@ static void ogg_handle_event (demux_ogg_t *this) {
           int c_chap = this->chapter_info->current_chapter;
           if (c_chap+1 < this->chapter_info->max_chapter) {
             int start_time = this->chapter_info->entries[c_chap+1].start_pts / 90;
-            this->demux_plugin.seek((demux_plugin_t *)this, 0, start_time, 1);
+            this->demux_plugin.seek(&this->demux_plugin, 0, start_time, 1);
           }
         }
       }
@@ -408,7 +408,7 @@ static void ogg_handle_event (demux_ogg_t *this) {
           int c_chap = this->chapter_info->current_chapter;
           if (c_chap >= 1) {
             int start_time = this->chapter_info->entries[c_chap-1].start_pts / 90;
-            this->demux_plugin.seek((demux_plugin_t *)this, 0, start_time, 1);
+            this->demux_plugin.seek(&this->demux_plugin, 0, start_time, 1);
           }
         }
       }
