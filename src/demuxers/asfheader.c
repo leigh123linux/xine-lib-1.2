@@ -566,6 +566,10 @@ static int asf_header_parse_metadata (asf_header_t *header_pub, const uint8_t *b
     data_type = _X_LE_16 (p); p += 2;
     data_len  = _X_LE_32 (p); p += 4;
 
+    /* not used yet */
+    (void)index;
+    (void)data_type;
+
     stream_id = asf_header_get_stream_id (&header->pub, stream);
 
     if (data_len >= 4) {
@@ -611,6 +615,8 @@ static int asf_header_parse_header_extension (asf_header_t *header, const uint8_
     return 0;
   data_length = _X_LE_32 (p + 16 + 2);
   lprintf("parse_asf_header_extension: length: %"PRIu32"\n", data_length);
+  /* used in LOG mode only */
+  (void)data_length;
 
   while (!asf_reader_eos(&reader)) {
 
@@ -747,6 +753,8 @@ asf_header_t *asf_header_new (uint8_t *buffer, int buffer_len) {
   asf_reader_init (&reader, buffer, buffer_len);
   p = asf_reader_get_block (&reader, 4 + 2);
   object_count = _X_LE_32 (p);
+  /* not used yet */
+  (void)object_count;
 
   while (!asf_reader_eos(&reader)) {
 
