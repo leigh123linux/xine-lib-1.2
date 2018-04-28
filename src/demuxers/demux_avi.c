@@ -693,6 +693,13 @@ static audio_index_entry_t *audio_cur_index_entry(demux_avi_t *this,
   return &(AVI_A->audio_idx.aindex[AVI_A->audio_posc]);
 }
 
+static void free_superindex(avisuperindex_chunk **p) {
+  if (*p) {
+    _x_freep(&(*p)->aIndex);
+  }
+  _x_freep(p);
+}
+
 static void AVI_close(avi_t *AVI){
   int i;
 
@@ -700,7 +707,10 @@ static void AVI_close(avi_t *AVI){
   _x_freep(&AVI->video_idx.vindex);
   _x_freep(&AVI->bih);
 
+  free_superindex(&AVI->video_superindex);
+
   for(i=0; i<AVI->n_audio; i++) {
+    free_superindex(&AVI->audio[i]->audio_superindex);
     _x_freep(&AVI->audio[i]->audio_idx.aindex);
     _x_freep(&AVI->audio[i]->wavex);
     _x_freep(&AVI->audio[i]);

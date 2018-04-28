@@ -330,6 +330,9 @@ static demux_plugin_t *open_plugin( demux_class_t *class_gen, xine_stream_t *str
     return NULL;
   }
 
+  if ( input->seek( input, SCRATCH_SIZE, SEEK_SET ) != SCRATCH_SIZE )
+    return NULL;
+
   this = calloc(1, sizeof(demux_vc1_es_t));
   if (!this)
     return NULL;
@@ -355,9 +358,6 @@ static demux_plugin_t *open_plugin( demux_class_t *class_gen, xine_stream_t *str
   this->demux_plugin.demux_class       = class_gen;
 
   this->status = DEMUX_FINISHED;
-
-  if ( input->seek( input, SCRATCH_SIZE, SEEK_SET ) != SCRATCH_SIZE )
-    return NULL;
 
   return &this->demux_plugin;
 }
