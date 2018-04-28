@@ -96,6 +96,22 @@
 #  define _X_LE_32(x) ({ uint32_t tempi; __builtin_memcpy (&tempi, (x), 4); tempi; })
 #  define _X_LE_64(x) ({ uint64_t tempi; __builtin_memcpy (&tempi, (x), 8); tempi; })
 # endif
+# if defined(ARCH_X86)
+  /* These machines have true (u)int16_t. */
+# undef _X_BE_16
+# undef _X_LE_16
+#  define _X_BE_16(x) ({ \
+    uint16_t tempi; \
+    __builtin_memcpy (&tempi, (x), 2); \
+    __asm__ __volatile__ ( \
+      "rolw\t$8, %0" \
+      : "=r" (tempi) \
+      : "0"  (tempi) \
+      : "cc" \
+    ); \
+    tempi; })
+#  define _X_LE_16(x) ({ uint16_t tempi; __builtin_memcpy (&tempi, (x), 2); tempi; })
+# endif
 #endif
 
 #ifdef WORDS_BIGENDIAN
