@@ -3091,15 +3091,17 @@ xine_keyframes_entry_t *xine_keyframes_get (xine_stream_t *stream, int *size) {
 int _x_keyframes_set (xine_stream_t *stream, xine_keyframes_entry_t *list, int size) {
   int n = (size + KF_MASK) & ~KF_MASK;
   pthread_mutex_lock (&stream->index_mutex);
-  free (stream->index_array);
+  if (stream->index_array) {
+    xprintf (stream->xine, XINE_VERBOSITY_DEBUG,
+      "keyframes: deleting index.\n");
+    free (stream->index_array);
+  }
   stream->index_lastadd = 0;
   stream->index_array = (list && (n > 0)) ? malloc (n * sizeof (xine_keyframes_entry_t)) : NULL;
   if (!stream->index_array) {
     stream->index_used = 0;
     stream->index_size = 0;
     pthread_mutex_unlock (&stream->index_mutex);
-    xprintf (stream->xine, XINE_VERBOSITY_DEBUG,
-      "keyframes: deleting index.\n");
     return 1;
   }
   memcpy (stream->index_array, list, size * sizeof (xine_keyframes_entry_t));
