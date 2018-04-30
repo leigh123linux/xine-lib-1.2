@@ -44,19 +44,16 @@ typedef struct {
   int                  height;
   double               ratio;
   int                  format;
-  xine_t               *xine;
 } vo_none_frame_t;
 
 typedef struct {
   vo_driver_t          vo_driver;
-  config_values_t     *config;
   int                  ratio;
   xine_t               *xine;
 } vo_none_driver_t;
 
 typedef struct {
   video_driver_class_t  driver_class;
-  config_values_t      *config;
   xine_t               *xine;
 } vo_none_class_t;
 
@@ -253,7 +250,6 @@ static vo_driver_t *vo_none_open_plugin(video_driver_class_t *driver_class, cons
 
   driver = calloc(1, sizeof(vo_none_driver_t));
 
-  driver->config = class->config;
   driver->xine   = class->xine;
   driver->ratio  = XINE_VO_ASPECT_AUTO;
 
@@ -287,7 +283,6 @@ static void *vo_none_init_class (xine_t *xine, const void *visual) {
   this->driver_class.description     = N_("xine video output plugin which displays nothing");
   this->driver_class.dispose         = default_video_driver_class_dispose;
 
-  this->config                       = xine->config;
   this->xine                         = xine;
 
   return this;
