@@ -1142,6 +1142,10 @@ static qt_error parse_trak_atom (qt_trak *trak,
         isize = atomsize;
       p->properties_atom      = item;
       p->properties_atom_size = isize;
+#ifndef HAVE_ZERO_SAFE_MEM
+      p->decoder_config_len   = 0;
+      p->decoder_config       = NULL;
+#endif
       p->media_id             = k + 1;
       p->codec_fourcc         = _X_ME_32 (item + 4);
       _x_tag32_me2str (p->codec_str, p->codec_fourcc);
@@ -1318,15 +1322,30 @@ static qt_error parse_trak_atom (qt_trak *trak,
         if (isize < 0x22)
           break;
 
-        /* fetch audio parameters */
-        p->s.audio.sample_rate  = _X_BE_16 (item + 0x20);
-        p->s.audio.channels     = item[0x19];
-        p->s.audio.bits         = item[0x1b];
+        /* fetch audio parameters, assume uncompressed */
+        p->s.audio.sample_rate        = _X_BE_16 (item + 0x20);
+        p->s.audio.channels           =
+        p->s.audio.samples_per_frame  =
+        p->s.audio.samples_per_packet = item[0x19];
+        p->s.audio.bits               = item[0x1b];
+        p->s.audio.bytes_per_sample   =
+        p->s.audio.bytes_per_packet   = p->s.audio.bits / 8;
+        p->s.audio.bytes_per_frame    = p->s.audio.bytes_per_sample * p->s.audio.samples_per_frame;
 
+        /* 24-bit audio doesn't always declare itself properly, and can be big- or little-endian */
+        if ((p->codec_fourcc == IN24_FOURCC) && (isize >= 0x52)) {
+          p->s.audio.bits = 24;
+          if (_X_BE_32 (item + 0x4c) == ENDA_ATOM && item[0x51])
+            p->codec_fourcc = NI42_FOURCC;
+        }
         p->codec_buftype = _x_formattag_to_buf_audio (p->codec_fourcc);
+
+        /* see if the trak deserves a promotion to VBR */
+        p->s.audio.vbr = (_X_BE_16 (item + 0x1c) == 0xFFFE) ? 1 : 0;
         /* in mp4 files the audio fourcc is always 'mp4a' - the codec is
          * specified by the object type id field in the esds atom */
         if (p->codec_fourcc == MP4A_FOURCC) {
+          p->s.audio.vbr = 1;
           if (p->object_type_id == 221) {
             p->codec_buftype = BUF_AUDIO_VORBIS;
             memcpy (p->codec_str, "vorbis", 7);
@@ -1335,24 +1354,26 @@ static qt_error parse_trak_atom (qt_trak *trak,
             memcpy (p->codec_str, "mp3", 4);
           }
         }
-
-        /* 24-bit audio doesn't always declare itself properly, and can be big- or little-endian */
-        if ((p->codec_fourcc == IN24_FOURCC) && (isize >= 0x52)) {
-          p->s.audio.bits = 24;
-          if (_X_BE_32 (item + 0x4c) == ENDA_ATOM && item[0x51])
-            p->codec_fourcc = NI42_FOURCC;
+        /* if this is MP4 audio, mark the trak as VBR */
+        else if ((p->codec_fourcc == SAMR_FOURCC) ||
+                 (p->codec_fourcc == AC_3_FOURCC) ||
+                 (p->codec_fourcc == EAC3_FOURCC) ||
+                 (p->codec_fourcc == QCLP_FOURCC)) {
+          p->s.audio.vbr = 1;
         }
 
-        /* assume uncompressed audio parameters */
-        p->s.audio.bytes_per_sample   = p->s.audio.bits / 8;
-        p->s.audio.samples_per_frame  = p->s.audio.channels;
-        p->s.audio.bytes_per_frame    = p->s.audio.bytes_per_sample * p->s.audio.samples_per_frame;
-        p->s.audio.samples_per_packet = p->s.audio.samples_per_frame;
-        p->s.audio.bytes_per_packet   = p->s.audio.bytes_per_sample;
+        else if (p->codec_fourcc == ALAC_FOURCC) {
+          p->s.audio.vbr = 1;
+          if (isize >= 0x24 + 36) {
+            /* further, FFmpeg's ALAC decoder requires 36 out-of-band bytes */
+            p->decoder_config_len = 36;
+            p->decoder_config = item + 0x24;
+          }
+        }
 
         /* special case time: A lot of CBR audio codecs stored in the
          * early days lacked the extra header; compensate */
-        if (p->codec_fourcc == IMA4_FOURCC) {
+        else if (p->codec_fourcc == IMA4_FOURCC) {
           p->s.audio.samples_per_packet = 64;
           p->s.audio.bytes_per_packet   = 34;
           p->s.audio.bytes_per_frame    = 34 * p->s.audio.channels;
@@ -1382,6 +1403,11 @@ static qt_error parse_trak_atom (qt_trak *trak,
           p->s.audio.bytes_per_frame    = 1 * p->s.audio.channels;
           p->s.audio.bytes_per_sample   = 2;
           p->s.audio.samples_per_frame  = 2 * p->s.audio.channels;
+        }
+
+        else if (p->codec_fourcc == DRMS_FOURCC) {
+          last_error = QT_DRM_NOT_SUPPORTED;
+          goto free_trak;
         }
 
         /* it's time to dig a little deeper to determine the real audio
@@ -1414,30 +1440,11 @@ static qt_error parse_trak_atom (qt_trak *trak,
                p->s.audio.samples_per_packet;
         }
 
-        /* see if the trak deserves a promotion to VBR */
-        p->s.audio.vbr = (_X_BE_16 (item + 0x1c) == 0xFFFE) ? 1 : 0;
-
-        /* if this is MP4 audio, mark the trak as VBR */
-        if ((p->codec_fourcc == MP4A_FOURCC) ||
-            (p->codec_fourcc == SAMR_FOURCC) ||
-            (p->codec_fourcc == AC_3_FOURCC) ||
-            (p->codec_fourcc == EAC3_FOURCC) ||
-            (p->codec_fourcc == QCLP_FOURCC))
-          p->s.audio.vbr = 1;
-
-        else if ((p->codec_fourcc == ALAC_FOURCC) && (isize >= 0x24 + 36)) {
-          p->s.audio.vbr = 1;
-          /* further, FFmpeg's ALAC decoder requires 36 out-of-band bytes */
-          p->decoder_config_len = 36;
-          p->decoder_config = item + 0x24;
-        }
-
-        else if (p->codec_fourcc == DRMS_FOURCC) {
-          last_error = QT_DRM_NOT_SUPPORTED;
-          goto free_trak;
-        }
-
         /* check for a MS-style WAVE format header */
+#ifndef HAVE_ZERO_SAFE_MEM
+        p->s.audio.wave_size = 0;
+        p->s.audio.wave = NULL;
+#endif
         if ((isize >= 0x50) &&
           (_X_BE_32 (item + 0x38) == WAVE_ATOM) &&
           (_X_BE_32 (item + 0x40) == FRMA_ATOM) &&
@@ -1455,13 +1462,7 @@ static qt_error parse_trak_atom (qt_trak *trak,
             }
             memcpy (p->s.audio.wave, item + 0x50, wave_size);
             _x_waveformatex_le2me (p->s.audio.wave);
-          } else {
-            p->s.audio.wave_size = 0;
-            p->s.audio.wave = NULL;
           }
-        } else {
-          p->s.audio.wave_size = 0;
-          p->s.audio.wave = NULL;
         }
 
         k++;
