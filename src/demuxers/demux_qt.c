@@ -374,6 +374,9 @@ struct qt_info_s {
   unsigned int modification_time;
   unsigned int timescale;  /* base clock frequency is Hz */
   unsigned int duration;
+  int32_t      msecs;
+  uint32_t     normpos_mul;
+  uint32_t     normpos_shift;
 
   int64_t moov_first_offset;
 
@@ -662,6 +665,8 @@ static qt_info *create_qt_info (demux_qt_t *demux) {
   info->creation_time     = 0;
   info->modification_time = 0;
   info->duration          = 0;
+  info->normpos_mul       = 0;
+  info->normpos_shift     = 0;
   info->trak_count        = 0;
   info->traks             = NULL;
   info->artist            = NULL;
@@ -680,6 +685,7 @@ static qt_info *create_qt_info (demux_qt_t *demux) {
   info->last_error        = QT_OK;
   info->demux             = demux;
   info->timescale         = 1;
+  info->msecs             = 1;
   info->video_trak        = -1;
   info->audio_trak        = -1;
   info->chosen_reference  = -1;
@@ -1708,6 +1714,36 @@ static qt_error parse_reference_atom (qt_info *info,
   return QT_OK;
 }
 
+static void qt_normpos_init (qt_info *info) {
+  uint32_t n = info->msecs, dbits = 32, sbits;
+  while (!(n & 0x80000000))
+    dbits--, n <<= 1;
+  /* _mul setup limit:    sbits <= 64 - 16
+   * mbits = 16 + sbits - dbits;
+   * _mul usage limit:    mbits <= 64 - dbits
+   *                      16 + sbits - dbits <= 64 - dbits
+   *                      sbits <= 48
+   * usage simplifiction: mbits <= 32
+   *                      16 + sbits - dbits <= 32
+   *                      sbits <= 16 + dbits
+   */
+  sbits = 16 + dbits - 1; /* safety */
+  info->normpos_shift = sbits;
+  info->normpos_mul   = ((uint64_t)0xffff << sbits) / (uint32_t)info->msecs;
+}
+
+static int32_t qt_msec_2_normpos (qt_info *info, int32_t msec) {
+  return ((uint64_t)msec * info->normpos_mul) >> info->normpos_shift;
+}
+
+static int32_t qt_pts_2_msecs (int64_t pts) {
+#ifdef ARCH_X86_32
+  return (pts * (int32_t)((((uint32_t)1 << 31) + 22) / 45)) >> 32;
+#else
+  return pts / 90;
+#endif
+}
+
 #define KEYFRAMES_SIZE 1024
 static void qt_keyframes_add (qt_trak *trak, qt_frame *f) {
   xine_keyframes_entry_t *e = trak->keyframes_list;
@@ -1719,8 +1755,7 @@ static void qt_keyframes_add (qt_trak *trak, qt_frame *f) {
     trak->keyframes_size += KEYFRAMES_SIZE;
   }
   e += trak->keyframes_used++;
-  e->msecs = f->pts / 90;
-  e->normpos = (trak->info->demux->data_size > 0) ? QTF_OFFSET(f[0]) * 65335 / trak->info->demux->data_size : 0;
+  e->msecs = qt_pts_2_msecs (f->pts);
 }
 
 static void qt_keyframes_size (qt_trak *trak, uint32_t n) {
@@ -1738,8 +1773,7 @@ static void qt_keyframes_size (qt_trak *trak, uint32_t n) {
 static void qt_keyframes_simple_add (qt_trak *trak, qt_frame *f) {
   xine_keyframes_entry_t *e = trak->keyframes_list;
   e += trak->keyframes_used++;
-  e->msecs = f->pts / 90;
-  e->normpos = (trak->info->demux->data_size > 0) ? QTF_OFFSET(f[0]) * 65335 / trak->info->demux->data_size : 0;
+  e->msecs = qt_pts_2_msecs (f->pts);
 }
 
 static qt_error build_frame_table (qt_trak *trak, unsigned int global_timescale) {
@@ -2722,39 +2756,62 @@ static void parse_moov_atom(qt_info *info, unsigned char *moov_atom,
     fragment_scan (info, input);
   }
 
+  /* get real duration */
+  {
+    qt_trak *trak = info->traks;
+    uint32_t n;
+    for (n = info->trak_count; n; n--) {
+      if (trak->frame_count) {
+        int32_t msecs = qt_pts_2_msecs (trak->frames[trak->frame_count].pts);
+        if (msecs > info->msecs)
+          info->msecs = msecs;
+      }
+      trak++;
+    }
+  }
+  qt_normpos_init (info);
+
   for (i = 0; i < info->trak_count; i++) {
+    qt_trak *trak = info->traks + i;
 #if DEBUG_DUMP_MOOV
     unsigned int j;
     /* dump the frame table in debug mode */
-    for (j = 0; j < info->traks[i].frame_count; j++)
+    for (j = 0; j < trak->frame_count; j++)
       debug_frame_table("      %d: %8X bytes @ %"PRIX64", %"PRId64" pts, media id %d%s\n",
         j,
-        info->traks[i].frames[j].size,
-        QTF_OFFSET(info->traks[i].frames[j]),
-        info->traks[i].frames[j].pts,
-        (int)QTF_MEDIA_ID(info->traks[i].frames[j]),
-        (QTF_KEYFRAME(info->traks[i].frames[j])) ? " (keyframe)" : "");
+        trak->frames[j].size,
+        QTF_OFFSET(trak[0].frames[j]),
+        trak->frames[j].pts,
+        (int)QTF_MEDIA_ID(trak[0].frames[j]),
+        (QTF_KEYFRAME(trak[0].frames[j])) ? " (keyframe)" : "");
 #endif
     /* decide which audio trak and which video trak has the most frames */
-    if ((info->traks[i].type == MEDIA_VIDEO) &&
-        (info->traks[i].frame_count > max_video_frames)) {
+    if ((trak->type == MEDIA_VIDEO) &&
+        (trak->frame_count > max_video_frames)) {
 
       info->video_trak = i;
-      max_video_frames = info->traks[i].frame_count;
+      max_video_frames = trak->frame_count;
 
-      if (info->traks[i].keyframes_list)
-        _x_keyframes_set (info->demux->stream, info->traks[i].keyframes_list, info->traks[i].keyframes_used);
+      if (trak->keyframes_list) {
+        xine_keyframes_entry_t *e = trak->keyframes_list;
+        uint32_t n = trak->keyframes_used;
+        while (n--) {
+          e->normpos = qt_msec_2_normpos (info, e->msecs);
+          e++;
+        }
+        _x_keyframes_set (info->demux->stream, trak->keyframes_list, trak->keyframes_used);
+      }
 
-    } else if ((info->traks[i].type == MEDIA_AUDIO) &&
-               (info->traks[i].frame_count > max_audio_frames)) {
+    } else if ((trak->type == MEDIA_AUDIO) &&
+               (trak->frame_count > max_audio_frames)) {
 
       info->audio_trak = i;
-      max_audio_frames = info->traks[i].frame_count;
+      max_audio_frames = trak->frame_count;
     }
 
-    free (info->traks[i].keyframes_list);
-    info->traks[i].keyframes_list = NULL;
-    info->traks[i].keyframes_size = 0;
+    free (trak->keyframes_list);
+    trak->keyframes_list = NULL;
+    trak->keyframes_size = 0;
   }
 
   /* check for references */
@@ -3091,10 +3148,8 @@ static int demux_qt_send_chunk(demux_plugin_t *this_gen) {
     while (remaining_sample_bytes) {
       buf = this->video_fifo->buffer_pool_size_alloc (this->video_fifo, remaining_sample_bytes);
       buf->type = trak->properties->codec_buftype;
-      if( this->data_size )
-        buf->extra_info->input_normpos = (int)((double)(QTF_OFFSET(trak->frames[i]) - this->data_start)
-                                                * 65535 / this->data_size);
-      buf->extra_info->input_time = trak->frames[i].pts / 90;
+      buf->extra_info->input_time = qt_pts_2_msecs (trak->frames[i].pts);
+      buf->extra_info->input_normpos = qt_msec_2_normpos (&this->qt, buf->extra_info->input_time);
       buf->pts = trak->frames[i].pts + (int64_t)trak->frames[i].ptsoffs;
 
       buf->decoder_flags |= BUF_FLAG_FRAMERATE;
@@ -3154,9 +3209,8 @@ static int demux_qt_send_chunk(demux_plugin_t *this_gen) {
     while (remaining_sample_bytes) {
       buf = this->audio_fifo->buffer_pool_size_alloc (this->audio_fifo, remaining_sample_bytes);
       buf->type = trak->properties->codec_buftype;
-      if( this->data_size )
-        buf->extra_info->input_normpos = (int)((double)(QTF_OFFSET(trak->frames[i]) - this->data_start)
-                                                * 65535 / this->data_size);
+      buf->extra_info->input_time = qt_pts_2_msecs (trak->frames[i].pts);
+      buf->extra_info->input_normpos = qt_msec_2_normpos (&this->qt, buf->extra_info->input_time);
       /* The audio chunk is often broken up into multiple 8K buffers when
        * it is sent to the audio decoder. Only attach the proper timestamp
        * to the first buffer. This is for the linear PCM decoder which
@@ -3166,7 +3220,6 @@ static int demux_qt_send_chunk(demux_plugin_t *this_gen) {
       if ((buf->type == BUF_AUDIO_LPCM_BE) ||
           (buf->type == BUF_AUDIO_LPCM_LE)) {
         if (first_buf) {
-          buf->extra_info->input_time = trak->frames[i].pts / 90;
           buf->pts = trak->frames[i].pts;
           first_buf = 0;
         } else {
@@ -3174,7 +3227,6 @@ static int demux_qt_send_chunk(demux_plugin_t *this_gen) {
           buf->pts = 0;
         }
       } else {
-        buf->extra_info->input_time = trak->frames[i].pts / 90;
         buf->pts = trak->frames[i].pts;
       }
 
@@ -3495,11 +3547,14 @@ static int binary_seek(qt_trak *trak, off_t start_pos, int start_time) {
 
   int best_index;
   int left, middle, right;
+#ifdef QT_OFFSET_SEEK
   int found;
+#endif
 
   if (!trak->frame_count)
     return QT_OK;
 
+#ifdef QT_OFFSET_SEEK
   /* perform a binary search on the trak, testing the offset
    * boundaries first; offset request has precedent over time request */
   if (start_pos) {
@@ -3526,8 +3581,14 @@ static int binary_seek(qt_trak *trak, off_t start_pos, int start_time) {
 
       best_index = middle;
     }
-  } else {
-    int64_t pts = 90 * start_time;
+  } else
+#else
+  if (start_pos) {
+    start_time = (uint64_t)(start_pos & 0xffff) * (uint32_t)trak->info->msecs / 0xffff;
+  }
+#endif
+  {
+    int64_t pts = (int64_t)90 * start_time;
 
     if (pts <= trak->frames[0].pts)
       best_index = 0;
@@ -3562,8 +3623,10 @@ static int demux_qt_seek (demux_plugin_t *this_gen,
   int i;
   int64_t keyframe_pts = -1;
 
+#ifdef QT_OFFSET_SEEK
   start_pos = (off_t) ( (double) start_pos / 65535 *
               this->data_size );
+#endif
 
   /* short-circuit any attempts to seek in a non-seekable stream, including
    * seeking in the forward direction; this may change later */
@@ -3642,13 +3705,8 @@ static int demux_qt_get_status (demux_plugin_t *this_gen) {
 }
 
 static int demux_qt_get_stream_length (demux_plugin_t *this_gen) {
-
   demux_qt_t *this = (demux_qt_t *) this_gen;
-
-  if (this->qt.timescale == 0)
-    return 0;
-
-  return (int)((int64_t) 1000 * this->qt.duration / this->qt.timescale);
+  return this->qt.msecs;
 }
 
 static uint32_t demux_qt_get_capabilities(demux_plugin_t *this_gen) {
