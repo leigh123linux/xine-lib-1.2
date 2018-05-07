@@ -203,12 +203,14 @@ static int process_ipmovie_chunk(demux_ipmovie_t *this) {
 
       case OPCODE_END_OF_STREAM:
         lprintf("end of stream\n");
-        this->input->seek(this->input, opcode_size, SEEK_CUR);
+        if (this->input->seek(this->input, opcode_size, SEEK_CUR) < 0)
+          return CHUNK_BAD;
         break;
 
       case OPCODE_END_OF_CHUNK:
         lprintf("end of chunk\n");
-        this->input->seek(this->input, opcode_size, SEEK_CUR);
+        if (this->input->seek(this->input, opcode_size, SEEK_CUR) < 0)
+          return CHUNK_BAD;
         break;
 
       case OPCODE_CREATE_TIMER:
@@ -261,7 +263,8 @@ static int process_ipmovie_chunk(demux_ipmovie_t *this) {
 
       case OPCODE_START_STOP_AUDIO:
         lprintf("start/stop audio\n");
-        this->input->seek(this->input, opcode_size, SEEK_CUR);
+        if (this->input->seek(this->input, opcode_size, SEEK_CUR) < 0)
+          return CHUNK_BAD;
         break;
 
       case OPCODE_INIT_VIDEO_BUFFERS:
@@ -296,12 +299,14 @@ static int process_ipmovie_chunk(demux_ipmovie_t *this) {
       case OPCODE_UNKNOWN_14:
       case OPCODE_UNKNOWN_15:
         lprintf("unknown (but documented) opcode %02X\n", opcode_type);
-        this->input->seek(this->input, opcode_size, SEEK_CUR);
+        if (this->input->seek(this->input, opcode_size, SEEK_CUR) < 0)
+          return CHUNK_BAD;
         break;
 
       case OPCODE_SEND_BUFFER:
         lprintf("send buffer\n");
-        this->input->seek(this->input, opcode_size, SEEK_CUR);
+        if (this->input->seek(this->input, opcode_size, SEEK_CUR) < 0)
+          return CHUNK_BAD;
         break;
 
       case OPCODE_AUDIO_FRAME:
@@ -314,7 +319,8 @@ static int process_ipmovie_chunk(demux_ipmovie_t *this) {
           opcode_size -= 6;
           this->audio_frame_count +=
             (opcode_size / this->wave.nChannels / (this->wave.wBitsPerSample / 8));
-          this->input->seek(this->input, 6, SEEK_CUR);
+          if (this->input->seek(this->input, 6, SEEK_CUR) < 0)
+            return CHUNK_BAD;
         } else
           this->audio_frame_count +=
             (opcode_size - 6) / this->wave.nChannels;
@@ -353,23 +359,27 @@ static int process_ipmovie_chunk(demux_ipmovie_t *this) {
             this->audio_fifo->put (this->audio_fifo, buf);
           }
         }else{
-          this->input->seek(this->input, opcode_size, SEEK_CUR);
+          if (this->input->seek(this->input, opcode_size, SEEK_CUR) < 0)
+            return CHUNK_BAD;
         }
         break;
 
       case OPCODE_SILENCE_FRAME:
         lprintf("silence frame\n");
-        this->input->seek(this->input, opcode_size, SEEK_CUR);
+        if (this->input->seek(this->input, opcode_size, SEEK_CUR) < 0)
+          return CHUNK_BAD;
         break;
 
       case OPCODE_INIT_VIDEO_MODE:
         lprintf("initialize video mode\n");
-        this->input->seek(this->input, opcode_size, SEEK_CUR);
+        if (this->input->seek(this->input, opcode_size, SEEK_CUR) < 0)
+          return CHUNK_BAD;
         break;
 
       case OPCODE_CREATE_GRADIENT:
         lprintf("create gradient\n");
-        this->input->seek(this->input, opcode_size, SEEK_CUR);
+        if (this->input->seek(this->input, opcode_size, SEEK_CUR) < 0)
+          return CHUNK_BAD;
         break;
 
       case OPCODE_SET_PALETTE:
@@ -408,7 +418,8 @@ static int process_ipmovie_chunk(demux_ipmovie_t *this) {
 
       case OPCODE_SET_PALETTE_COMPRESSED:
         lprintf("set palette compressed\n");
-        this->input->seek(this->input, opcode_size, SEEK_CUR);
+        if (this->input->seek(this->input, opcode_size, SEEK_CUR) < 0)
+          return CHUNK_BAD;
         break;
 
       case OPCODE_SET_DECODING_MAP:
@@ -533,7 +544,8 @@ static int open_ipmovie_file(demux_ipmovie_t *this) {
     return 0;
 
   /* file is qualified; skip over the signature bytes (+ 6 unknown) in the stream */
-  this->input->seek(this->input, IPMOVIE_SIGNATURE_SIZE+6, SEEK_SET);
+  if (this->input->seek(this->input, IPMOVIE_SIGNATURE_SIZE+6, SEEK_SET) < 0)
+    return 0;
 
   /* process the first chunk which should be CHUNK_INIT_VIDEO */
   if (process_ipmovie_chunk(this) != CHUNK_INIT_VIDEO)
