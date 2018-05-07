@@ -2499,7 +2499,7 @@ static int demux_ts_seek (demux_plugin_t *this_gen,
   start_pos = (off_t) ( (double) start_pos / 65535 *
               this->input->get_length (this->input) );
 
-  if (this->input->get_capabilities(this->input) & INPUT_CAP_SEEKABLE) {
+  if (this->input->get_capabilities(this->input) & (INPUT_CAP_SEEKABLE | INPUT_CAP_SLOW_SEEKABLE)) {
 
     if ((!start_pos) && (start_time)) {
 
