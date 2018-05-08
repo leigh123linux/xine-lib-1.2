@@ -25,7 +25,8 @@ noinst_LTLIBRARIES = \
 	http_helper.la \
 	input_helper.la \
 	media_helper.la \
-	net_buf_ctrl.la
+	net_buf_ctrl.la \
+	xine_tls.la
 
 http_helper_la_SOURCES = http_helper.c http_helper.h
 http_helper_la_LIBADD = $(XINE_LIB) $(LTLIBINTL)
@@ -38,6 +39,10 @@ media_helper_la_LIBADD = $(XINE_LIB) $(LTLIBINTL)
 
 net_buf_ctrl_la_SOURCES = net_buf_ctrl.c net_buf_ctrl.h
 net_buf_ctrl_la_LIBADD = $(XINE_LIB) $(LTLIBINTL) $(PTHREAD_LIBS)
+
+xine_tls_la_SOURCES = xine_tls.c xine_tls.h
+xine_tls_la_CFLAGS = $(AM_CFLAGS) $(GNUTLS_CFLAGS)
+xine_tls_la_LIBADD = $(XINE_LIB) $(LTLIBINTL) $(GNUTLS_LIBS)
 
 #
 #
@@ -186,7 +191,7 @@ xineplug_inp_network_la_SOURCES = \
 	pnm.c \
 	pnm.h
 xineplug_inp_network_la_LIBADD = $(XINE_LIB) $(NET_LIBS) $(LTLIBINTL) \
-	libreal.la librtsp.la http_helper.la input_helper.la net_buf_ctrl.la
+	libreal.la librtsp.la http_helper.la input_helper.la net_buf_ctrl.la xine_tls.la
 
 xineplug_inp_rtp_la_SOURCES = input_rtp.c
 xineplug_inp_rtp_la_LIBADD = $(XINE_LIB) $(NET_LIBS) $(PTHREAD_LIBS) $(LTLIBINTL) net_buf_ctrl.la input_helper.la
