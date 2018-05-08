@@ -45,6 +45,8 @@
 #include <xine/input_plugin.h>
 #include <xine/video_out.h>
 
+#include "input_helper.h"
+
 /* describe tests here */
 static const char * const test_names[] = {
   "test://",
@@ -558,10 +560,6 @@ static int test_make (test_input_plugin_t * this) {
 
 /* instance functions */
 
-static uint32_t test_plugin_get_capabilities (input_plugin_t *this_gen) {
-  return INPUT_CAP_SEEKABLE;
-}
-
 static off_t test_plugin_read (input_plugin_t *this_gen, void *buf, off_t len) {
   test_input_plugin_t *this = (test_input_plugin_t *) this_gen;
 
@@ -599,39 +597,16 @@ static off_t test_plugin_read (input_plugin_t *this_gen, void *buf, off_t len) {
   return len;
 }
 
-static buf_element_t *test_plugin_read_block (input_plugin_t *this_gen, fifo_buffer_t *fifo,
-  off_t todo) {
-  test_input_plugin_t *this = (test_input_plugin_t *) this_gen;
-  buf_element_t *buf;
-
-  if (!this->buf || (todo < 0)) return NULL;
-
-  buf = fifo->buffer_pool_alloc (fifo);
-  if (todo > buf->max_size) todo = buf->max_size;
-  buf->type = BUF_DEMUX_BLOCK;
-  test_plugin_read (this_gen, buf->content, todo);
-
-  return buf;
-}
-
 static off_t test_plugin_seek (input_plugin_t *this_gen, off_t offset, int origin) {
   test_input_plugin_t *this = (test_input_plugin_t *) this_gen;
-  off_t newpos = offset;
 
-  switch (origin) {
-    case SEEK_SET: break;
-    case SEEK_CUR: newpos += this->filepos; break;
-    case SEEK_END: newpos += this->filesize; break;
-    default: newpos = -1;
+  offset = _x_input_translate_seek(offset, origin, this->filepos, this->filesize);
+
+  if (offset >= 0) {
+    this->filepos = offset;
   }
 
-  if ((newpos < 0) || (newpos > this->filesize)) {
-    errno = EINVAL;
-    return (off_t)-1;
-  }
-
-  this->filepos = newpos;
-  return newpos;
+  return offset;
 }
 
 static off_t test_plugin_get_current_pos (input_plugin_t *this_gen) {
@@ -646,20 +621,10 @@ static off_t test_plugin_get_length (input_plugin_t *this_gen) {
   return this->filesize;
 }
 
-static uint32_t test_plugin_get_blocksize (input_plugin_t *this_gen) {
-  return 0;
-}
-
 static const char *test_plugin_get_mrl (input_plugin_t *this_gen) {
   test_input_plugin_t *this = (test_input_plugin_t *) this_gen;
 
   return test_names[this->index];
-}
-
-static int test_plugin_get_optional_data (input_plugin_t *this_gen, void *data,
-  int data_type) {
-
-  return INPUT_OPTIONAL_UNSUPPORTED;
 }
 
 static void test_plugin_dispose (input_plugin_t *this_gen ) {
@@ -690,15 +655,15 @@ static input_plugin_t *test_class_get_instance (input_class_t *cls_gen,
   this->index = i;
 
   this->input_plugin.open               = test_plugin_open;
-  this->input_plugin.get_capabilities   = test_plugin_get_capabilities;
+  this->input_plugin.get_capabilities   = _x_input_get_capabilities_seekable;
   this->input_plugin.read               = test_plugin_read;
-  this->input_plugin.read_block         = test_plugin_read_block;
+  this->input_plugin.read_block         = _x_input_default_read_block;
   this->input_plugin.seek               = test_plugin_seek;
   this->input_plugin.get_current_pos    = test_plugin_get_current_pos;
   this->input_plugin.get_length         = test_plugin_get_length;
-  this->input_plugin.get_blocksize      = test_plugin_get_blocksize;
+  this->input_plugin.get_blocksize      = _x_input_default_get_blocksize;
   this->input_plugin.get_mrl            = test_plugin_get_mrl;
-  this->input_plugin.get_optional_data  = test_plugin_get_optional_data;
+  this->input_plugin.get_optional_data  = _x_input_default_get_optional_data;
   this->input_plugin.dispose            = test_plugin_dispose;
   this->input_plugin.input_class        = cls_gen;
 

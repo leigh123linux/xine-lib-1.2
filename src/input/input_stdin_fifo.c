@@ -176,35 +176,6 @@ static off_t stdin_plugin_read (input_plugin_t *this_gen, void *buf_gen, off_t l
   return done;
 }
 
-static buf_element_t *stdin_plugin_read_block (input_plugin_t *this_gen, fifo_buffer_t *fifo,
-					       off_t todo) {
-
-  off_t                 total_bytes;
-  /* stdin_input_plugin_t  *this = (stdin_input_plugin_t *) this_gen; */
-  buf_element_t         *buf = fifo->buffer_pool_alloc (fifo);
-
-  if (todo > buf->max_size)
-    todo = buf->max_size;
-  if (todo < 0) {
-    buf->free_buffer (buf);
-    return NULL;
-  }
-
-  buf->content = buf->mem;
-  buf->type = BUF_DEMUX_BLOCK;
-
-  total_bytes = stdin_plugin_read (this_gen, (char*)buf->content, todo);
-
-  if (total_bytes != todo) {
-    buf->free_buffer (buf);
-    return NULL;
-  }
-
-  buf->size = total_bytes;
-
-  return buf;
-}
-
 /* forward reference */
 static off_t stdin_plugin_seek (input_plugin_t *this_gen, off_t offset, int origin) {
 
@@ -366,7 +337,7 @@ static input_plugin_t *stdin_class_get_instance (input_class_t *class_gen,
   this->input_plugin.open              = stdin_plugin_open;
   this->input_plugin.get_capabilities  = _x_input_get_capabilities_preview;
   this->input_plugin.read              = stdin_plugin_read;
-  this->input_plugin.read_block        = stdin_plugin_read_block;
+  this->input_plugin.read_block        = _x_input_default_read_block;
   this->input_plugin.seek              = stdin_plugin_seek;
   this->input_plugin.get_current_pos   = stdin_plugin_get_current_pos;
   this->input_plugin.get_length        = stdin_plugin_get_length;

@@ -49,6 +49,8 @@
 #include <xine/compat.h>
 #include <xine/input_plugin.h>
 
+#include "input_helper.h"
+
 #define MAXFILES      65535
 
 #ifndef WIN32
@@ -64,7 +66,6 @@ typedef struct {
   xine_t           *xine;
 
   const char       *origin_path;
-  int               show_hidden_files;
 
   int               mrls_allocated_entries;
   xine_mrl_t      **mrls;
@@ -165,21 +166,20 @@ static off_t file_input_read (input_plugin_t *this_gen, void *buf, off_t len) {
 
 static buf_element_t *file_input_read_block (input_plugin_t *this_gen, fifo_buffer_t *fifo, off_t todo) {
 
-  file_input_plugin_t  *this = (file_input_plugin_t *) this_gen;
-  buf_element_t        *buf = fifo->buffer_pool_alloc (fifo);
-
-  if (todo > buf->max_size)
-    todo = buf->max_size;
-  if (todo < 0) {
-    buf->free_buffer (buf);
-    return NULL;
-  }
-
-  buf->type = BUF_DEMUX_BLOCK;
-
 #ifdef HAVE_MMAP
   if ( file_input_check_mmap(this) ) {
+    file_input_plugin_t  *this = (file_input_plugin_t *) this_gen;
+    buf_element_t        *buf = fifo->buffer_pool_alloc (fifo);
     off_t len = todo;
+
+    if (todo > buf->max_size)
+      todo = buf->max_size;
+    if (todo < 0) {
+      buf->free_buffer (buf);
+      return NULL;
+    }
+
+    buf->type = BUF_DEMUX_BLOCK;
 
     if ( (this->mmap_curr + len) > (this->mmap_base + this->mmap_len) )
       len = (this->mmap_base + this->mmap_len) - this->mmap_curr;
@@ -195,34 +195,12 @@ static buf_element_t *file_input_read_block (input_plugin_t *this_gen, fifo_buff
     /* free(buf->mem); buf->mem = NULL; */
 
     this->mmap_curr += len;
-  } else
-#endif
-  {
-    off_t num_bytes, total_bytes = 0;
 
-    buf->content = buf->mem;
-
-    while (total_bytes < todo) {
-      num_bytes = read (this->fh, buf->mem + total_bytes, todo-total_bytes);
-      if (num_bytes <= 0) {
-	if (num_bytes < 0) {
-	  xine_log (this->stream->xine, XINE_LOG_MSG,
-		    _("input_file: read error (%s)\n"), strerror(errno));
-	  _x_message(this->stream, XINE_MSG_READ_ERROR,
-                     this->mrl, NULL);
-	}
-	buf->free_buffer (buf);
-	buf = NULL;
-	break;
-      }
-      total_bytes += num_bytes;
-    }
-
-    if( buf != NULL )
-      buf->size = total_bytes;
+    return buf;
   }
+#endif
 
-  return buf;
+  return _x_input_default_read_block(this_gen, fifo, todo);
 }
 
 static off_t file_input_seek (input_plugin_t *this_gen, off_t offset, int origin) {
@@ -283,10 +261,6 @@ static off_t file_input_get_length (input_plugin_t *this_gen) {
     return buf.st_size;
   } else
     perror ("system call fstat");
-  return 0;
-}
-
-static uint32_t file_input_get_blocksize (input_plugin_t *this_gen) {
   return 0;
 }
 
@@ -439,7 +413,7 @@ static input_plugin_t *file_input_get_instance (input_class_t *cls_gen, xine_str
   this->input_plugin.seek               = file_input_seek;
   this->input_plugin.get_current_pos    = file_input_get_current_pos;
   this->input_plugin.get_length         = file_input_get_length;
-  this->input_plugin.get_blocksize      = file_input_get_blocksize;
+  this->input_plugin.get_blocksize      = _x_input_default_get_blocksize;
   this->input_plugin.get_mrl            = file_input_get_mrl;
   this->input_plugin.get_optional_data  = file_input_get_optional_data;
   this->input_plugin.dispose            = file_input_dispose;
@@ -495,11 +469,7 @@ static int file_input_get_optional_data (input_plugin_t *this_gen, void *data, i
 /*
  * Callback for config changes.
  */
-static void file_input_hidden_bool_cb (void *data, xine_cfg_entry_t *cfg) {
-  file_input_class_t *this = (file_input_class_t *) data;
 
-  this->show_hidden_files = cfg->num_value;
-}
 static void file_input_origin_change_cb (void *data, xine_cfg_entry_t *cfg) {
   file_input_class_t *this = (file_input_class_t *) data;
 
@@ -660,9 +630,12 @@ static xine_mrl_t **file_input_class_get_dir (input_class_t *this_gen, const cha
   int                   num_files       = -1;
   int                 (*func) ()        = file_input_sortfiles_default;
   int                   already_tried   = 0;
+  int                   show_hidden_files;
 
   *nFiles = 0;
   memset(current_dir, 0, sizeof(current_dir));
+
+  show_hidden_files = _x_input_get_show_hidden_files(this->xine->config);
 
   /*
    * No origin location, so got the content of the current directory
@@ -715,7 +688,7 @@ static xine_mrl_t **file_input_class_get_dir (input_class_t *this_gen, const cha
     if(file_input_is_dir(fullfilename)) {
 
       /* if user don't want to see hidden files, ignore them */
-      if(this->show_hidden_files == 0 &&
+      if (show_hidden_files == 0 &&
 	 ((strlen(pdirent->d_name) > 1)
 	  && (pdirent->d_name[0] == '.' &&  pdirent->d_name[1] != '.'))) {
 	;
@@ -755,7 +728,7 @@ static xine_mrl_t **file_input_class_get_dir (input_class_t *this_gen, const cha
 	    && (pdirent->d_name[0] == '.' &&  pdirent->d_name[1] != '.')) {
 
       /* if user don't want to see hidden files, ignore them */
-      if(this->show_hidden_files) {
+      if (show_hidden_files) {
 
 	hide_files[num_hide_files].origin = strdup(current_dir);
 	hide_files[num_hide_files].mrl    = _x_asprintf("%s%s", current_dir_slashed, pdirent->d_name);
@@ -948,7 +921,6 @@ static void file_input_class_dispose (input_class_t *this_gen) {
   config_values_t     *config = this->xine->config;
 
   config->unregister_callback(config, "media.files.origin_path");
-  config->unregister_callback(config, "media.files.show_hidden_files");
 
   while(this->mrls_allocated_entries) {
     this->mrls_allocated_entries--;
@@ -995,12 +967,7 @@ static void *file_input_init_plugin (xine_t *xine, const void *data) {
 						0, file_input_origin_change_cb, (void *) this);
   }
 
-  this->show_hidden_files = config->register_bool(config,
-						  "media.files.show_hidden_files",
-						  0, _("list hidden files"),
-						  _("If enabled, the browser to select the file to "
-						    "play will also show hidden files."),
-						  10, file_input_hidden_bool_cb, (void *) this);
+  _x_input_register_show_hidden_files(config);
 
   return this;
 }

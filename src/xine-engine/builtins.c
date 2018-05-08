@@ -38,6 +38,8 @@
 #undef LOG_MODULE
 #include "../input/net_buf_ctrl.c"
 #undef LOG_MODULE
+#include "../input/input_helper.c"
+#undef LOG_MODULE
 #include "../input/input_file.c"
 #undef LOG_MODULE
 #include "../input/input_stdin_fifo.c"

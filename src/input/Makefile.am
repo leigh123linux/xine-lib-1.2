@@ -162,10 +162,10 @@ xineplug_LTLIBRARIES = \
 	xineplug_inp_cdda.la
 
 xineplug_inp_file_la_SOURCES = input_file.c
-xineplug_inp_file_la_LIBADD = $(XINE_LIB) $(LTLIBINTL)
+xineplug_inp_file_la_LIBADD = $(XINE_LIB) $(LTLIBINTL) input_helper.la
 
 xineplug_inp_test_la_SOURCES = input_test.c
-xineplug_inp_test_la_LIBADD = $(XINE_LIB) $(LTLIBINTL)
+xineplug_inp_test_la_LIBADD = $(XINE_LIB) $(LTLIBINTL) input_helper.la
 
 xineplug_inp_dvd_la_SOURCES = input_dvd.c
 xineplug_inp_dvd_la_LIBADD = $(XINE_LIB) $(link_dvdnav) $(PTHREAD_LIBS) $(DYNAMIC_LD_LIBS) $(LTLIBINTL) media_helper.la
@@ -199,7 +199,7 @@ xineplug_inp_vcdo_la_SOURCES = input_vcd.c
 xineplug_inp_vcdo_la_LIBADD = $(XINE_LIB) $(LTLIBINTL) media_helper.la
 
 xineplug_inp_stdin_fifo_la_SOURCES = input_stdin_fifo.c
-xineplug_inp_stdin_fifo_la_LIBADD = $(XINE_LIB) $(LTLIBINTL) net_buf_ctrl.la
+xineplug_inp_stdin_fifo_la_LIBADD = $(XINE_LIB) $(LTLIBINTL) net_buf_ctrl.la input_helper.la
 
 xineplug_inp_dvb_la_SOURCES = input_dvb.c
 xineplug_inp_dvb_la_DEPS = $(XDG_BASEDIR_DEPS)
