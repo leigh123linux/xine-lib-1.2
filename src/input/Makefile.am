@@ -122,6 +122,10 @@ if ENABLE_DVD
 in_dvd = xineplug_inp_dvd.la
 endif
 
+if ENABLE_MMS
+in_mms = xineplug_inp_mms.la
+endif
+
 if WITH_EXTERNAL_DVDNAV
 DVD_CFLAGS  = $(DVDNAV_CFLAGS) $(DVDREAD_CFLAGS)
 link_dvdnav = $(DVDNAV_LIBS) $(DVDREAD_LIBS)
@@ -153,7 +157,7 @@ xineplug_LTLIBRARIES = \
 	$(in_nfs) \
 	$(in_smb) \
 	$(in_ssh) \
-	xineplug_inp_mms.la \
+	$(in_mms) \
 	$(in_rtp) \
 	xineplug_inp_network.la \
 	$(in_pvr) \

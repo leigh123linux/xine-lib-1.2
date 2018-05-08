@@ -12,6 +12,7 @@ AC_DEFUN([XINE_INPUT_PLUGINS], [
     default_enable_dvb=no
     default_enable_dvd=yes
     default_enable_gnomevfs=yes
+    default_enable_mms=yes
     default_enable_samba=yes
     default_enable_v4l=no
     default_enable_v4l2=no
@@ -132,7 +133,11 @@ AC_DEFUN([XINE_INPUT_PLUGINS], [
     dnl dvdnav
     XINE_ARG_ENABLE([dvd], [Disable DVD support])
     AM_CONDITIONAL([ENABLE_DVD], [test x"$enable_dvd" != x"no"])
- 
+
+    dnl mms
+    XINE_ARG_ENABLE([mms], [Disable MMS support])
+    AM_CONDITIONAL([ENABLE_MMS], [test x"$enable_mms" != x"no"])
+
     dnl XXX: This could be cleaned up so that code does not have to ifdef so much
     XINE_ARG_WITH([external-dvdnav], [Use external dvdnav library])
     if test x"$with_external_dvdnav" != x"no"; then
