@@ -171,7 +171,16 @@ xineplug_inp_dvd_la_SOURCES = input_dvd.c
 xineplug_inp_dvd_la_LIBADD = $(XINE_LIB) $(link_dvdnav) $(PTHREAD_LIBS) $(DYNAMIC_LD_LIBS) $(LTLIBINTL) media_helper.la
 xineplug_inp_dvd_la_CFLAGS = $(AM_CFLAGS) $(DVD_CFLAGS)
 
-xineplug_inp_network_la_SOURCES = group_network.c group_network.h input_net.c input_http.c input_pnm.c pnm.c pnm.h input_rtsp.c input_ftp.c
+xineplug_inp_network_la_SOURCES = \
+	group_network.c \
+	group_network.h \
+	input_ftp.c \
+	input_http.c \
+	input_net.c \
+	input_pnm.c \
+	input_rtsp.c \
+	pnm.c \
+	pnm.h
 xineplug_inp_network_la_LIBADD = $(XINE_LIB) $(NET_LIBS) $(LTLIBINTL) \
 	libreal.la librtsp.la http_helper.la input_helper.la net_buf_ctrl.la
 
