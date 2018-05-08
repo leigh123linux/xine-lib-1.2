@@ -24,6 +24,7 @@ AC_DEFUN([XINE_INPUT_PLUGINS], [
     default_enable_avformat=yes
     default_enable_sftp=yes
     default_enable_nfs=yes
+    default_enable_tls=yes
     default_with_external_dvdnav=yes
 
     case "$host_os" in
@@ -249,4 +250,19 @@ AC_DEFUN([XINE_INPUT_PLUGINS], [
     fi
     AM_CONDITIONAL(ENABLE_NFS, test "x$have_libnfs" = "xyes")
 
+    dnl TLS support (ftps, https)
+    XINE_ARG_ENABLE([tls], [Enable TLS support using gnutls (enables secure http (https) and ftp (ftps)])
+    if test "x$enable_tls" != "xno"; then
+        PKG_CHECK_MODULES([GNUTLS], [gnutls >= 3.3.0], [have_gnutls=yes], [have_gnutls=no])
+        if test x"$hard_enable_tls" = x"yes" && test x"$have_gnutls" != x"yes"; then
+            AC_MSG_ERROR([TLS support requested, but gnutls not found])
+        fi
+        AC_SUBST(GNUTLS_CFLAGS)
+        AC_SUBST(GNUTLS_LIBS)
+    fi
+    if test x"$have_gnutls" = x"yes"; then
+      AC_DEFINE([HAVE_GNUTLS], 1, [Define this if you have gnutls installed])
+      dnl prepare for other TLS implementations ...
+      AC_DEFINE([HAVE_TLS], 1, [Define this if you have tls support compiled in])
+    fi
 ])
