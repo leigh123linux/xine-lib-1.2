@@ -42,6 +42,9 @@ const plugin_info_t xine_plugin_info[] EXPORTED = {
   { PLUGIN_INPUT,                       18, "rtsp", XINE_VERSION_CODE, NULL, input_rtsp_init_class },
   { PLUGIN_INPUT,                       18, "pnm",  XINE_VERSION_CODE, NULL, input_pnm_init_class },
   { PLUGIN_INPUT,                       18, "ftp",  XINE_VERSION_CODE, NULL, input_ftp_init_class },
+#ifdef HAVE_TLS
+  { PLUGIN_INPUT,                       18, "ftpes", XINE_VERSION_CODE, NULL, input_ftpes_init_class },
+#endif
   { PLUGIN_NONE, 0, "", 0, NULL, NULL }
 };
 

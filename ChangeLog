@@ -1,4 +1,5 @@
   * Add TLS support using gnutls.
+  * Add ftp input plugin (ftp://) with TLS support (ftpes://)
   * Add tls:// input plugin (raw TLS over TCP).
   * Add seeking support to http input plugin.
   * XML parser fixes.

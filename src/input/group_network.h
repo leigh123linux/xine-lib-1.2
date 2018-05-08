@@ -28,3 +28,4 @@ void *input_http_init_class (xine_t *xine, const void *data);
 void *input_rtsp_init_class (xine_t *xine, const void *data);
 void *input_pnm_init_class  (xine_t *xine, const void *data);
 void *input_ftp_init_class  (xine_t *xine, const void *data);
+void *input_ftpes_init_class(xine_t *xine, const void *data);

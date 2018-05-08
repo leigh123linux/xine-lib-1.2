@@ -44,6 +44,7 @@
 #include "http_helper.h"
 #include "input_helper.h"
 #include "net_buf_ctrl.h"
+#include "tls/xine_tls.h"
 
 #define DEFAULT_FTP_PORT 21
 
@@ -61,7 +62,7 @@ typedef struct {
   off_t            file_size;
   int              cap_rest;
 
-  int              fd;
+  xine_tls_t       *tls;
   int              fd_data;
   char             buf[1024];
 
@@ -85,7 +86,7 @@ static int _read_response(ftp_input_plugin_t *this)
   int rc;
 
   do {
-    rc = _x_io_tcp_read_line(this->stream, this->fd, this->buf, sizeof(this->buf));
+    rc = _x_tls_read_line(this->tls, this->buf, sizeof(this->buf));
     if (rc < 4)
       return -1;
     lprintf("<<< '%s'\n", this->buf);
@@ -107,14 +108,14 @@ static int _write_command(ftp_input_plugin_t *this, const char *cmd)
   this->buf[0] = 0;
 
   len = strlen(cmd);
-  rc = _x_io_tcp_write(this->stream, this->fd, cmd, len);
+  rc = _x_tls_write(this->tls, cmd, len);
   if ((size_t)rc != len) {
     xprintf(this->xine, XINE_VERBOSITY_LOG, LOG_MODULE ": "
             "send failed\n");
     return -1;
   }
 
-  rc = _x_io_tcp_write(this->stream, this->fd, "\r\n", 2);
+  rc = _x_tls_write(this->tls, "\r\n", 2);
   if (rc != 2) {
     xprintf(this->xine, XINE_VERBOSITY_LOG, LOG_MODULE ": "
             "send CRLF failed\n");
@@ -133,6 +134,19 @@ static int _send_command(ftp_input_plugin_t *this, const char *cmd)
     return rc;
 
   rc = _read_response(this);
+  return rc;
+}
+
+static int _auth_tls(ftp_input_plugin_t *this, const char *host)
+{
+  int rc;
+
+  rc = _send_command(this, "AUTH TLS");
+  if (rc < 0 || (rc/100) > 3) {
+    return -1;
+  }
+
+  rc = _x_tls_handshake(this->tls, host, -1);
   return rc;
 }
 
@@ -193,12 +207,21 @@ static int _login(ftp_input_plugin_t *this,
 static int _ftp_connect(ftp_input_plugin_t *this, xine_url_t *url)
 {
   const char *user, *pass;
-  int rc;
+  int rc, fd = -1;
 
-  rc = _connect(this, &this->fd, url->host, url->port);
+  rc = _connect(this, &fd, url->host, url->port);
   if (rc < 0) {
     xprintf(this->xine, XINE_VERBOSITY_LOG, LOG_MODULE ": "
             "Connect to %s failed\n", this->mrl);
+    if (fd >= 0)
+      _x_io_tcp_close(this->stream, fd);
+    return -1;
+  }
+
+  this->tls = _x_tls_init(this->xine, this->stream, fd);
+  if (!this->tls) {
+    if (fd >= 0)
+      _x_io_tcp_close(this->stream, fd);
     return -1;
   }
 
@@ -208,6 +231,24 @@ static int _ftp_connect(ftp_input_plugin_t *this, xine_url_t *url)
     xprintf(this->xine, XINE_VERBOSITY_LOG, LOG_MODULE ": "
             "FTP connect failed: %s\n", this->buf);
     return -1;
+  }
+
+  if (!strcasecmp(url->proto, "ftpes")) {
+    if (_auth_tls(this, url->host) < 0) {
+      const char *help = NULL;
+      if (_x_tls_get_verify_tls_cert(this->xine->config)) {
+        help = "Disabling \'media.network.verify_tls_certificate\' may help.";
+      }
+      _x_message(this->stream, XINE_MSG_SECURITY,
+                 this->mrl, "TLS handshake failed. ", help,
+                 NULL);
+      xprintf(this->xine, XINE_VERBOSITY_LOG, LOG_MODULE ": "
+              "TLS handshake failed but TLS was requested for '%s'. %s\n",
+              this->mrl, help ? help : "");
+      return -1;
+    }
+    xprintf(this->xine, XINE_VERBOSITY_LOG, LOG_MODULE ": "
+            "AUTH TLS succeed. Control connection is now encrypted.\n");
   }
 
   if (!url->user) {
@@ -569,10 +610,8 @@ static void _ftp_dispose (input_plugin_t *this_gen)
     _x_io_tcp_close(this->stream, this->fd_data);
     this->fd_data = -1;
   }
-  if (this->fd >= 0) {
-    _x_io_tcp_close(this->stream, this->fd);
-    this->fd = -1;
-  }
+
+  _x_tls_close(&this->tls);
 
   if (this->nbc) {
     nbc_close(this->nbc);
@@ -655,7 +694,11 @@ static input_plugin_t *_get_instance (input_class_t *cls_gen, xine_stream_t *str
   ftp_input_class_t *class = (ftp_input_class_t *)cls_gen;
   ftp_input_plugin_t *this;
 
-  if (strncasecmp (mrl, "ftp://", 6)) {
+  if (strncasecmp (mrl, "ftp://", 6)
+#ifdef HAVE_TLS
+      && strncasecmp (mrl, "ftpes://", 8)
+#endif
+      ) {
     return NULL;
   }
 
@@ -669,7 +712,7 @@ static input_plugin_t *_get_instance (input_class_t *cls_gen, xine_stream_t *str
   this->stream        = stream;
   this->xine          = class->xine;
   this->curpos        = 0;
-  this->fd            = -1;
+  this->tls           = NULL;
   this->fd_data       = -1;
 
   this->input_plugin.open              = _ftp_open;
@@ -779,19 +822,13 @@ static xine_mrl_t **_get_files(ftp_input_plugin_t *this, const char *uri, int *n
   return mrls;
 }
 
-static xine_mrl_t **_get_dir (input_class_t *this_gen, const char *filename, int *nFiles)
+static xine_mrl_t **_get_dir_common (input_class_t *this_gen, const char *filename, int *nFiles)
 {
   ftp_input_class_t *this = (ftp_input_class_t *) this_gen;
   ftp_input_plugin_t *input;
   xine_url_t url;
 
-  *nFiles = 0;
-  _x_input_free_mrls(&this->mrls);
-
-  if (!filename || !strcmp(filename, "ftp:/") || !strcmp(filename, "ftp://")) {
-    this->mrls = _x_input_get_default_server_mrls(this->xine->config, "ftp://", nFiles);
-    return this->mrls;
-  }
+  _x_assert(filename != NULL);
 
   if (!_x_url_parse2(filename, &url)) {
     xprintf(this->xine, XINE_VERBOSITY_LOG, LOG_MODULE ": "
@@ -814,6 +851,38 @@ static xine_mrl_t **_get_dir (input_class_t *this_gen, const char *filename, int
     input->input_plugin.dispose(&input->input_plugin);
   return this->mrls;
 }
+
+static xine_mrl_t **_get_dir (input_class_t *this_gen, const char *filename, int *nFiles)
+{
+  ftp_input_class_t *this = (ftp_input_class_t *) this_gen;
+
+  *nFiles = 0;
+  _x_input_free_mrls(&this->mrls);
+
+  if (!filename || !strcmp(filename, "ftp:/") || !strcmp(filename, "ftp://")) {
+    this->mrls = _x_input_get_default_server_mrls(this->xine->config, "ftp:/", nFiles);
+    return this->mrls;
+  }
+
+  return _get_dir_common(this_gen, filename, nFiles);
+}
+
+#ifdef HAVE_TLS
+static xine_mrl_t **_get_dir_es (input_class_t *this_gen, const char *filename, int *nFiles)
+{
+  ftp_input_class_t *this = (ftp_input_class_t *) this_gen;
+
+  *nFiles = 0;
+  _x_input_free_mrls(&this->mrls);
+
+  if (!filename || !strcmp(filename, "ftpes:/") || !strcmp(filename, "ftpes://")) {
+    this->mrls = _x_input_get_default_server_mrls(this->xine->config, "ftpes:/", nFiles);
+    return this->mrls;
+  }
+
+  return _get_dir_common(this_gen, filename, nFiles);
+}
+#endif
 
 static void _dispose_class (input_class_t *this_gen)
 {
@@ -848,3 +917,21 @@ void *input_ftp_init_class(xine_t *xine, const void *data)
 
   return this;
 }
+
+#ifdef HAVE_TLS
+void *input_ftpes_init_class(xine_t *xine, const void *data)
+{
+  ftp_input_class_t *this;
+
+  this = input_ftp_init_class(xine, data);
+  if (this) {
+    this->input_class.description       = N_("FTPES input plugin");
+    this->input_class.identifier        = "FTPES";
+    this->input_class.get_dir           = _get_dir_es;
+  }
+
+  _x_tls_register_config_keys(xine->config);
+
+  return this;
+}
+#endif
