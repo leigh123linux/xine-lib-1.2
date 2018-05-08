@@ -8,10 +8,17 @@ AC_DEFUN([XINE_LIB_SUMMARY], [
 
     dnl Input
     echo " * input plugins:"
-    echo "   - file          - net"
-    echo "   - stdin_fifo    - rtp"
-    echo "   - http          - mms"
-    echo "   - pnm           - rtsp"
+    echo "   - file          - stdin_fifo"
+    dnl network
+    echo "   - rtsp          - rtp"
+    echo "   - net           - pnm"
+    echo "   - http          - ftp"
+    echo "   - mms"
+    test x"$have_libssh2" = x"yes"   && echo "   - sftp          - scp"
+    test x"$have_libnfs" = x"yes"    && echo "   - nfs"
+    test x"$have_samba" = x"yes"     && echo "   - smb"
+    dnl optical discs
+    echo "   - cdda"
     if test x"$enable_vcd" != x"no"; then
         if test x"$enable_vcdo" != x"no"; then
             echo "   - vcdo          - vcd"
@@ -19,7 +26,6 @@ AC_DEFUN([XINE_LIB_SUMMARY], [
             echo "   - vcd"
         fi
     fi
-    echo "   - ftp"
     if test x"$enable_dvd" != x"no"; then
     if test x"$with_external_dvdnav" != x"no"; then
         echo "   - dvd (external libs)"
@@ -27,17 +33,13 @@ AC_DEFUN([XINE_LIB_SUMMARY], [
         echo "   - dvd (*INTERNAL* libs)"
     fi
     fi
-    test x"$enable_vdr" != x"no"    && echo "   - vdr"
-    test x"$have_dvb" = x"yes"      && echo "   - dvb"
-    test x"$have_gnomevfs" = x"yes" && echo "   - gnome-vfs"
-    test x"$have_samba" = x"yes"    && echo "   - smb"
-    test x"$have_v4l" = x"yes"      && echo "   - v4l"
-    test x"$have_v4l2" = x"yes"     && echo "   - v4l2"
-    echo "   - cdda"
     test x"$have_libbluray" = x"yes" && echo "   - bluray"
-    test x"$have_libssh2" = x"yes"   && echo "   - sftp"
-    test x"$have_libssh2" = x"yes"   && echo "   - scp"
-    test x"$have_libnfs" = x"yes"    && echo "   - nfs"
+    dnl misc
+    test x"$have_dvb" = x"yes"       && echo "   - dvb"
+    test x"$have_v4l" = x"yes"       && echo "   - v4l"
+    test x"$have_v4l2" = x"yes"      && echo "   - v4l2"
+    test x"$enable_vdr" != x"no"     && echo "   - vdr"
+    test x"$have_gnomevfs" = x"yes"  && echo "   - gnome-vfs"
     test x"$enable_ffmpeg" != x"no" -a x"$have_avformat" = x"yes" && echo "   - avio (libavformat)"
     echo "   - test"
     echo ""
