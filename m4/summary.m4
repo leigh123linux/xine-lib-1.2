@@ -13,6 +13,7 @@ AC_DEFUN([XINE_LIB_SUMMARY], [
     echo "   - rtsp          - rtp"
     echo "   - net           - pnm"
     echo "   - http          - ftp"
+    if test x"$have_gnutls" = x"yes" && echo "   - https"
     test x"$have_libssh2" = x"yes"   && echo "   - sftp          - scp"
     test x"$have_libnfs" = x"yes"    && echo "   - nfs"
     test x"$enable_mms" != x"no"     && echo "   - mms"
