@@ -159,13 +159,15 @@
 /*
 #define LOG
 */
-/* #define LOG_DYNAMIC_PMT */
+#define LOG_DYNAMIC_PMT
 
 #include "group_video.h"
 
 #include <xine/xine_internal.h>
 #include <xine/xineutils.h>
 #include <xine/demux.h>
+
+#include "bswap.h"
 
 /*
   #define TS_LOG
@@ -176,6 +178,33 @@
   #define TS_HEADER_LOG // prints out the Transport packet header.
 */
 
+/* Packet readers: 1 (original), 2 (fast experimental) */
+#define TS_PACKET_READER 2
+
+#if ((defined(__GNUC__) && (__GNUC__ >= 4)) || defined(__clang__)) && defined(ARCH_X86)
+static void demux_ts_small_memcpy (void *d, const void *s, size_t l) {
+  __asm__ __volatile__ (
+    "cld\n\trep movsb"
+    : "=D" (d), "=S" (s), "=c" (l)
+    : "0"  (d), "1"  (s), "2"  (l)
+    : "cc"
+  );
+}
+#else
+#  define demux_ts_small_memcpy(d,s,l) memcpy (d, s, l)
+#endif
+
+/* transport stream packet layer */
+#define TSP_sync_byte          0xff000000
+#define TSP_transport_error    0x00800000
+#define TSP_payload_unit_start 0x00400000
+#define TSP_transport_priority 0x00200000
+#define TSP_pid                0x001fff00
+#define TSP_scrambling_control 0x000000c0
+#define TSP_adaptation_field_1 0x00000020
+#define TSP_adaptation_field_0 0x00000010
+#define TSP_continuity_counter 0x0000000f
+
 /*
  *  The maximum number of PIDs we are prepared to handle in a single program
  *  is the number that fits in a single-packet PMT.
@@ -185,15 +214,21 @@
 /* more PIDS are needed due "auto-detection". 40 spare media entries  */
 #define MAX_PIDS ((BODY_SIZE - 1 - 13) / 4) + 40
 
-#define MAX_PMTS 128
+#define MAX_PMTS 126
 #define PAT_BUF_SIZE (4 * MAX_PMTS + 20)
 
 #define SYNC_BYTE   0x47
 
-#define MIN_SYNCS 3
-#define NPKT_PER_READ 96  // 96*188 = 94*192
+#if TS_PACKET_READER == 1
+#  define MIN_SYNCS 3
+#  define NPKT_PER_READ 96  // 96*188 = 94*192
+#  define BUF_SIZE (NPKT_PER_READ * (PKT_SIZE + 4))
+#endif
 
-#define BUF_SIZE (NPKT_PER_READ * (PKT_SIZE + 4))
+#if TS_PACKET_READER == 2
+   /* smallest common multiple of 188 and 192 is 9024 */
+#  define BUF_SIZE (2 * 9024)
+#endif
 
 #define CORRUPT_PES_THRESHOLD 10
 
@@ -301,9 +336,9 @@
  */
 typedef struct {
   unsigned int     pid;
-  fifo_buffer_t   *fifo;
   uint32_t         type;
   int64_t          pts;
+  fifo_buffer_t   *fifo;
   buf_element_t   *buf;
   unsigned int     counter;
   uint16_t         descriptor_tag; /* +0x100 for PES stream IDs (no available TS descriptor tag?) */
@@ -366,8 +401,8 @@ typedef struct {
   uint32_t         last_pat_crc;
   uint32_t         transport_stream_id;
   /* programs */
-  uint32_t         program_number[MAX_PMTS];
-  uint32_t         pmt_pid[MAX_PMTS];
+  uint32_t         program_number[MAX_PMTS + 1];
+  uint32_t         pmt_pid[MAX_PMTS + 1];
   uint8_t         *pmt[MAX_PMTS];
   int              pmt_write_pos[MAX_PMTS];
   uint32_t         last_pmt_crc;
@@ -403,12 +438,13 @@ typedef struct {
 
   /* dvb */
   xine_event_queue_t *event_queue;
+
+#if TS_PACKET_READER == 1
   /* For syncronisation */
   int32_t packet_number;
   /* NEW: var to keep track of number of last read packets */
   int32_t npkt_read;
-
-  uint8_t buf[BUF_SIZE]; /* == PKT_SIZE * NPKT_PER_READ */
+#endif
 
   off_t   frame_pos; /* current ts packet position in input stream (bytes from beginning) */
 
@@ -416,6 +452,17 @@ typedef struct {
   off_t        tbre_bytes, tbre_lastpos;
   int64_t      tbre_time, tbre_lasttime;
   unsigned int tbre_mode, tbre_pid;
+
+  /* 0x00 | media_index    (video/audio/subtitle)
+   * 0x80 | pmt_index      (pmt)
+   * 0xff                  (special/unused) */
+  uint8_t pid_index[0x2000];
+
+#if TS_PACKET_READER == 2
+  int     buf_pos;
+  int     buf_size;
+#endif
+  uint8_t buf[BUF_SIZE]; /* == PKT_SIZE * NPKT_PER_READ */
 
 } demux_ts_t;
 
@@ -440,14 +487,18 @@ static int demux_ts_dynamic_pmt_find (demux_ts_t *this,
   int pid, int type, unsigned int descriptor_tag) {
   unsigned int i;
   demux_ts_media *m;
-  for (i = 0; i < this->media_num; i++) {
+  /* do we already have this one? */
+  pid &= 0x1fff;
+  i = this->pid_index[pid];
+  if (!(i & 0x80)) {
     m = &this->media[i];
-    if ((m->pid == pid) && ((m->type & BUF_MAJOR_MASK) == type)) {
+    if (((int)m->pid == pid) && ((m->type & BUF_MAJOR_MASK) == (unsigned int)type)) {
       /* mark this media decriptor for reuse */
       m->keep = 1;
       return i;
     }
   }
+  i = this->media_num;
   if (i < MAX_PIDS) {
     /* prepare new media descriptor */
 #ifdef LOG_DYNAMIC_PMT
@@ -455,8 +506,9 @@ static int demux_ts_dynamic_pmt_find (demux_ts_t *this,
     if (type == BUF_VIDEO_BASE) name = "video";
     else if (type == BUF_AUDIO_BASE) name = "audio";
     else if (type == BUF_SPU_BASE) name = "subtitle";
-    printf ("demux_ts: new %s pid %d\n", name, pid);
+    xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG, "demux_ts: new %s pid %d\n", name, pid);
 #endif
+    this->pid_index[pid] = i;
     m = &this->media[i];
     if (type == BUF_AUDIO_BASE) {
       /* allocate new audio track as well */
@@ -491,13 +543,16 @@ static int demux_ts_dynamic_pmt_find (demux_ts_t *this,
     return i;
   }
   /* table full */
+#ifdef LOG_DYNAMIC_PMT
+  xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG, "demux_ts: media descriptor table full.\n");
+#endif
   return -1;
 }
 
 static void demux_ts_dynamic_pmt_clean (demux_ts_t *this) {
   int i, count = 0, tracks = 0, spus = 0;
   /* densify media table */
-  for (i = 0; i < this->media_num; i++) {
+  for (i = 0; i < (int)this->media_num; i++) {
     demux_ts_media *m = &this->media[i];
     int type = m->type & BUF_MAJOR_MASK;
     int chan = m->type & 0xff;
@@ -523,6 +578,7 @@ static void demux_ts_dynamic_pmt_clean (demux_ts_t *this) {
         }
       }
       if (i > count) {
+        this->pid_index[m->pid & 0x1fff] = count;
         this->media[count] = *m;
         m->buf = NULL;
         m->pid = INVALID_PID;
@@ -535,24 +591,26 @@ static void demux_ts_dynamic_pmt_clean (demux_ts_t *this) {
       if (type == BUF_VIDEO_BASE) name = "video";
       else if (type == BUF_AUDIO_BASE) name = "audio";
       else if (type == BUF_SPU_BASE) name = "subtitle";
-      printf ("demux_ts: dropped %s pid %d\n", name, m->pid);
+      xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG, "demux_ts: dropped %s pid %d\n", name, m->pid);
 #endif
+      this->pid_index[m->pid & 0x1fff] = 0xff;
+      m->pid = INVALID_PID;
       if (m->buf) {
         m->buf->free_buffer (m->buf);
         m->buf = NULL;
       }
-      m->pid = INVALID_PID;
     }
   }
   if ((tracks < this->audio_tracks_count) && this->audio_fifo) {
     /* at least 1 audio track removed, tell audio decoder loop */
     reset_track_map(this->audio_fifo);
 #ifdef LOG_DYNAMIC_PMT
-    printf ("demux_ts: new audio track map\n");
+    xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG, "demux_ts: new audio track map\n");
 #endif
   }
 #ifdef LOG_DYNAMIC_PMT
-  printf ("demux_ts: using %d pids, %d audio %d subtitle channels\n", count, tracks, spus);
+  xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG,
+    "demux_ts: using %d pids, %d audio %d subtitle channels\n", count, tracks, spus);
 #endif
   /* adjust table sizes */
   this->media_num = count;
@@ -563,7 +621,13 @@ static void demux_ts_dynamic_pmt_clean (demux_ts_t *this) {
 
 static void demux_ts_dynamic_pmt_clear (demux_ts_t *this) {
   unsigned int i;
+#ifdef LOG_DYNAMIC_PMT
+  if (this->media_num)
+    xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG,
+      "demux_ts: deleting %u media descriptors.\n", this->media_num);
+#endif
   for (i = 0; i < this->media_num; i++) {
+    this->pid_index[this->media[i].pid & 0x1fff] = 0xff;
     if (this->media[i].buf) {
       this->media[i].buf->free_buffer (this->media[i].buf);
       this->media[i].buf = NULL;
@@ -625,30 +689,24 @@ static void demux_ts_tbre_update (demux_ts_t *this, unsigned int mode, int64_t n
 
 static void check_newpts( demux_ts_t *this, int64_t pts, int video )
 {
-  int64_t diff;
 
 #ifdef TS_LOG
   printf ("demux_ts: check_newpts %lld, send_newpts %d, buf_flag_seek %d\n",
 	  pts, this->send_newpts, this->buf_flag_seek);
 #endif
 
-  diff = pts - this->last_pts[video];
-
-  if( pts &&
-      (this->send_newpts || (this->last_pts[video] && abs(diff)>WRAP_THRESHOLD) ) ) {
-
-    if (this->buf_flag_seek) {
-      _x_demux_control_newpts(this->stream, pts, BUF_FLAG_SEEK);
-      this->buf_flag_seek = 0;
-    } else {
-      _x_demux_control_newpts(this->stream, pts, 0);
+  if (pts) {
+    int64_t diff = pts - this->last_pts[video];
+    if (this->send_newpts || (this->last_pts[video] && (abs (diff) > WRAP_THRESHOLD))) {
+      if (this->buf_flag_seek) {
+        _x_demux_control_newpts (this->stream, pts, BUF_FLAG_SEEK);
+        this->buf_flag_seek = 0;
+      } else {
+        _x_demux_control_newpts (this->stream, pts, 0);
+      }
+      this->send_newpts = 0;
+      this->last_pts[1 - video] = 0;
     }
-    this->send_newpts = 0;
-    this->last_pts[1-video] = 0;
-  }
-
-  if( pts )
-  {
     /* don't detect a discontinuity only for video respectively audio. It's also a discontinuity
        indication when audio and video pts differ to much e. g. when a pts wrap happens.
        The original code worked well when the wrap happend like this:
@@ -756,9 +814,15 @@ static void demux_ts_update_spu_channel(demux_ts_t *this)
   this->video_fifo->put(this->video_fifo, buf);
 }
 
-static void demux_ts_send_buffer(demux_ts_media *m, int flags)
-{
+static void demux_ts_send_buffer (demux_ts_t *this, demux_ts_media *m, int flags) {
   if (m->buf) {
+    /* test/tell discontinuity right before sending it.
+     * dont bother this on every ts packet. :-) */
+    uint32_t t = m->type & BUF_MAJOR_MASK;
+    if (t == BUF_VIDEO_BASE)
+      check_newpts (this, m->pts, PTS_VIDEO);
+    else if (t == BUF_AUDIO_BASE)
+      check_newpts (this, m->pts, PTS_AUDIO);
     m->buf->content = m->buf->mem;
     m->buf->type = m->type;
     m->buf->decoder_flags |= flags;
@@ -776,9 +840,8 @@ static void demux_ts_send_buffer(demux_ts_media *m, int flags)
   }
 }
 
-static void demux_ts_flush_media(demux_ts_media *m)
-{
-  demux_ts_send_buffer(m, BUF_FLAG_FRAME_END);
+static void demux_ts_flush_media (demux_ts_t *this, demux_ts_media *m) {
+  demux_ts_send_buffer (this, m, BUF_FLAG_FRAME_END);
 }
 
 static void post_sequence_end(fifo_buffer_t *fifo, uint32_t video_type) {
@@ -806,7 +869,7 @@ static void demux_ts_flush(demux_ts_t *this)
 {
   unsigned int i;
   for (i = 0; i < this->media_num; ++i) {
-    demux_ts_flush_media(&this->media[i]);
+    demux_ts_flush_media (this, &this->media[i]);
     this->media[i].corrupted_pes = 1;
   }
 
@@ -823,8 +886,7 @@ static void demux_ts_flush(demux_ts_t *this)
  *
  * We can cope with the stupidity of SPTSs which contain NITs.
  */
-static void demux_ts_parse_pat (demux_ts_t*this, unsigned char *original_pkt,
-                                unsigned char *pkt, unsigned int pusi, int len) {
+static void demux_ts_parse_pat (demux_ts_t*this, unsigned char *pkt, unsigned int pusi, int len) {
 #ifdef TS_PAT_LOG
   uint32_t       table_id;
   uint32_t       version_number;
@@ -839,8 +901,6 @@ static void demux_ts_parse_pat (demux_ts_t*this, unsigned char *original_pkt,
   uint32_t       calc_crc32;
 
   unsigned char *program;
-  unsigned int   program_number;
-  unsigned int   pmt_pid;
   unsigned int   program_count;
 
   /* reassemble the section */
@@ -861,7 +921,7 @@ static void demux_ts_parse_pat (demux_ts_t*this, unsigned char *original_pkt,
   }
   if (len > PAT_BUF_SIZE - this->pat_write_pos)
     len = PAT_BUF_SIZE - this->pat_write_pos;
-  memcpy (this->pat + this->pat_write_pos, pkt, len);
+  demux_ts_small_memcpy (this->pat + this->pat_write_pos, pkt, len);
   this->pat_write_pos +=len;
 
   /* lets see if we got the section length already */
@@ -921,10 +981,7 @@ static void demux_ts_parse_pat (demux_ts_t*this, unsigned char *original_pkt,
   }
 
   /* Check CRC. */
-  crc32  = (uint32_t) pkt[section_length - 4] << 24;
-  crc32 |= (uint32_t) pkt[section_length - 3] << 16;
-  crc32 |= (uint32_t) pkt[section_length - 2] << 8;
-  crc32 |= (uint32_t) pkt[section_length - 1];
+  crc32 = _X_BE_32 (pkt + section_length - 4);
 
   calc_crc32 = htonl (xine_crc32_ieee (0xffffffff, pkt, section_length - 4));
   if (crc32 != calc_crc32) {
@@ -953,6 +1010,9 @@ static void demux_ts_parse_pat (demux_ts_t*this, unsigned char *original_pkt,
   this->last_pat_crc = crc32;
   this->transport_stream_id = transport_stream_id;
 
+  /* Unregister previous pmts. */
+  for (program_count = 0; this->pmt_pid[program_count] != INVALID_PID; program_count++)
+    this->pid_index[this->pmt_pid[program_count]] = 0xff;
   /*
    * Process all programs in the program loop.
    */
@@ -960,14 +1020,18 @@ static void demux_ts_parse_pat (demux_ts_t*this, unsigned char *original_pkt,
   for (program = pkt + 8;
        (program < pkt + section_length - 4) && (program_count < MAX_PMTS);
        program += 4) {
-    program_number = ((unsigned int)program[0] << 8) | program[1];
-    pmt_pid = (((unsigned int)program[2] & 0x1f) << 8) | program[3];
+    uint32_t v = _X_BE_32 (program);
+    uint32_t program_number = v >> 16;
+    uint32_t pmt_pid = v & 0x1fff;
 
     /*
      * completely skip NIT pids.
      */
     if (program_number == 0x0000)
       continue;
+
+    /* register this pmt */
+    this->pid_index[pmt_pid] = 0x80 | program_count;
 
     /*
      * Add the program number to the table if we haven't already
@@ -1003,10 +1067,8 @@ static void demux_ts_parse_pat (demux_ts_t*this, unsigned char *original_pkt,
   }
 
   /* Add "end of table" markers. */
-  if (program_count < MAX_PMTS) {
-    this->program_number[program_count] = INVALID_PROGRAM;
-    this->pmt_pid[program_count] = INVALID_PID;
-  }
+  this->program_number[program_count] = INVALID_PROGRAM;
+  this->pmt_pid[program_count] = INVALID_PID;
 }
 
 static int demux_ts_parse_pes_header (xine_t *xine, demux_ts_media *m,
@@ -1016,6 +1078,13 @@ static int demux_ts_parse_pes_header (xine_t *xine, demux_ts_media *m,
   uint32_t       header_len;
   int64_t        pts;
   uint32_t       stream_id;
+
+  if (xine->verbosity == 4) {
+    int i;
+    printf ("demux_ts: PES header ");
+    for (i = 0; i < ((int)buf[8] + 9); i++) printf ("%02x ", (unsigned int)buf[i]);
+    printf ("\n");
+  }
 
   if (packet_len < 9) {
     xprintf (xine, XINE_VERBOSITY_DEBUG,
@@ -1027,17 +1096,18 @@ static int demux_ts_parse_pes_header (xine_t *xine, demux_ts_media *m,
 
   /* we should have a PES packet here */
 
-  if (p[0] || p[1] || (p[2] != 1)) {
+  stream_id = _X_BE_32 (p);
+  if ((stream_id >> 8) != 1) {
     xprintf (xine, XINE_VERBOSITY_DEBUG,
-	     "demux_ts: error %02x %02x %02x (should be 0x000001) \n", p[0], p[1], p[2]);
+	     "demux_ts: pes header error 0x%06x (should be 0x000001) \n", stream_id >> 8);
     return 0 ;
   }
 
-  stream_id  = p[3];
+  stream_id &= 0xff;
   header_len = p[8] + 9;
 
   /* sometimes corruption on header_len causes segfault in memcpy below */
-  if (header_len > packet_len) {
+  if ((int)header_len > packet_len) {
     xprintf (xine, XINE_VERBOSITY_DEBUG,
              "demux_ts: illegal value for PES_header_data_length (0x%x)\n", header_len - 9);
     return 0;
@@ -1049,22 +1119,22 @@ static int demux_ts_parse_pes_header (xine_t *xine, demux_ts_media *m,
 #endif
 
   if (p[7] & 0x80) { /* pts avail */
+    uint32_t v;
 
     if (header_len < 14) {
       return 0;
     }
 
-    pts  = (int64_t)(p[ 9] & 0x0E) << 29 ;
-    pts |=  p[10]         << 22 ;
-    pts |= (p[11] & 0xFE) << 14 ;
-    pts |=  p[12]         <<  7 ;
-    pts |= (p[13] & 0xFE) >>  1 ;
+    pts = (uint64_t)(p[9] & 0x0e) << 29;
+    v = _X_BE_32 (p + 10);
+    v = ((v >> 1) & 0x7fff) | ((v >> 2) & 0x3fff8000);
+    pts |= v;
 
   } else
     pts = 0;
 
   /* code works but not used in xine
-     if (p[7] & 0x40) {
+     if ((p[7] & 0x40) && (header_len >= 19)) {
 
      DTS  = (p[14] & 0x0E) << 29 ;
      DTS |=  p[15]         << 22 ;
@@ -1278,8 +1348,7 @@ static void update_extra_info(demux_ts_t *this, demux_ts_media *m)
  */
 static void demux_ts_buffer_pes(demux_ts_t*this, unsigned char *ts,
                                 unsigned int mediaIndex,
-                                unsigned int pus,
-                                unsigned int cc,
+                                unsigned int tsp_head,
                                 unsigned int len) {
 
   demux_ts_media *m = &this->media[mediaIndex];
@@ -1293,41 +1362,40 @@ static void demux_ts_buffer_pes(demux_ts_t*this, unsigned char *ts,
 
   /* By checking the CC here, we avoid the need to check for the no-payload
      case (i.e. adaptation field only) when it does not get bumped. */
-  if (m->counter != INVALID_CC) {
-    if ((m->counter & 0x0f) != cc) {
-      xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG,
-	      "demux_ts: PID 0x%.4x: unexpected cc %d (expected %d)\n", m->pid, cc, m->counter);
+  {
+    uint32_t cc = tsp_head & TSP_continuity_counter;
+    if (m->counter != INVALID_CC) {
+      if ((m->counter & 0x0f) != cc) {
+        xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG,
+          "demux_ts: PID 0x%.4x: unexpected cc %d (expected %d)\n", m->pid, cc, m->counter);
+      }
     }
+    m->counter = cc;
+    m->counter++;
   }
-  m->counter = cc;
-  m->counter++;
 
-  if (pus) { /* new PES packet */
+  if (tsp_head & TSP_payload_unit_start) { /* new PES packet */
+    int pes_header_len;
 
-    demux_ts_flush_media(m);
+    demux_ts_flush_media (this, m);
 
     /* allocate the buffer here, as pes_header needs a valid buf for dvbsubs */
     m->buf = m->fifo->buffer_pool_alloc(m->fifo);
 
-    int pes_header_len = demux_ts_parse_pes_header(this->stream->xine, m, ts, len);
+    pes_header_len = demux_ts_parse_pes_header(this->stream->xine, m, ts, len);
 
     if (pes_header_len <= 0) {
       m->buf->free_buffer(m->buf);
       m->buf = NULL;
-
       m->corrupted_pes = 1;
       xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG,
               "demux_ts: PID 0x%.4x: corrupted pes encountered\n", m->pid);
     } else {
-
       m->corrupted_pes = 0;
-
       /* skip PES header */
       ts  += pes_header_len;
       len -= pes_header_len;
-
-      update_extra_info(this, m);
-
+      update_extra_info (this, m);
       /* rate estimation */
       if ((this->tbre_pid == INVALID_PID) && (this->audio_fifo == m->fifo))
         this->tbre_pid = m->pid;
@@ -1339,60 +1407,59 @@ static void demux_ts_buffer_pes(demux_ts_t*this, unsigned char *ts,
   if (!m->corrupted_pes) {
     int room = m->buf->max_size - m->buf->size;
 
-    if (len > room) {
+    /* append data */
+    if ((int)len > room) {
       if (room > 0)
-        memcpy (m->buf->mem + m->buf->size, ts, room);
+        demux_ts_small_memcpy (m->buf->mem + m->buf->size, ts, room);
       m->pes_bytes_left -= m->buf->max_size;
       m->buf->size = m->buf->max_size;
-      demux_ts_send_buffer (m, 0);
+      demux_ts_send_buffer (this, m, 0);
       m->buf = m->fifo->buffer_pool_alloc (m->fifo);
       m->buf->decoder_flags = BUF_FLAG_MERGE;
-      memcpy (m->buf->mem, ts + room, len - room);
+      demux_ts_small_memcpy (m->buf->mem, ts + room, len - room);
       m->buf->size = len - room;
     } else {
-      memcpy (m->buf->mem + m->buf->size, ts, len);
+      demux_ts_small_memcpy (m->buf->mem + m->buf->size, ts, len);
       m->buf->size += len;
     }
 
-    if (m->pes_bytes_left > 0 && m->buf->size >= m->pes_bytes_left) {
-      /* PES payload complete */
-      m->pes_bytes_left -= m->buf->size;
-      demux_ts_flush_media(m);
-      /* skip rest data - there shouldn't be any */
-      m->corrupted_pes = 1;
-    } else {
-
+    /* flush now? */
+    do {
+      if ((m->pes_bytes_left > 0) && (m->buf->size >= m->pes_bytes_left)) {
+        /* PES payload complete */
+        m->pes_bytes_left -= m->buf->size;
+        /* skip rest data - there shouldn't be any */
+        m->corrupted_pes = 1;
+        break;
+      }
       /* If video data ends to sequence end code, flush buffer. */
       /* (there won't be any more data -> no pusi -> last buffer is never flushed) */
       if (m->pid == this->videoPid && m->buf->size > 4 && m->buf->mem[m->buf->size-4] == 0) {
-
         if (m->type == BUF_VIDEO_MPEG) {
           if (!memcmp(&m->buf->mem[m->buf->size-4], "\x00\x00\x01\xb7", 4)) {
-            xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG,
-                    "demux_ts: PID 0x%.4x: flushing after MPEG end of sequence code\n", m->pid);
-            demux_ts_flush_media(m);
-            m->buf = m->fifo->buffer_pool_alloc(m->fifo);
+            xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG,
+              "demux_ts: PID 0x%.4x: flushing after MPEG end of sequence code\n", m->pid);
+            break;
           }
-
         } else if (m->type == BUF_VIDEO_H264) {
           if ((!memcmp(&m->buf->mem[m->buf->size-4], "\x00\x00\x01\x0a", 4)) ||
-              (m->buf->size > 5 &&
-               !memcmp(&m->buf->mem[m->buf->size-5], "\x00\x00\x01\x0a", 4))) {
-            xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG,
-                    "demux_ts: PID 0x%.4x: flushing after H.264 end of sequence code\n", m->pid);
-            demux_ts_flush_media(m);
-            m->buf = m->fifo->buffer_pool_alloc(m->fifo);
+            ((m->buf->size > 5) && !memcmp(&m->buf->mem[m->buf->size-5], "\x00\x00\x01\x0a", 4))) {
+            xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG,
+              "demux_ts: PID 0x%.4x: flushing after H.264 end of sequence code\n", m->pid);
+            break;
           }
         } else if (m->type == BUF_VIDEO_VC1) {
           if (!memcmp(&m->buf->mem[m->buf->size-4], "\x00\x00\x01\x0a", 4)) {
-            xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG,
-                    "demux_ts: PID 0x%.4x: flushing after VC-1 end of sequence code\n", m->pid);
-            demux_ts_flush_media(m);
-            m->buf = m->fifo->buffer_pool_alloc(m->fifo);
+            xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG,
+              "demux_ts: PID 0x%.4x: flushing after VC-1 end of sequence code\n", m->pid);
+            break;
           }
         }
       }
-    }
+      return;
+    } while (0);
+    demux_ts_flush_media (this, m);
+    m->buf = m->fifo->buffer_pool_alloc (m->fifo);
   }
 }
 
@@ -1447,29 +1514,6 @@ static void demux_ts_get_reg_desc(demux_ts_t *this, uint32_t *dest,
   *dest = 0;
 }
 
-static inline int ts_payloadsize(unsigned char * tsp)
-{
-  if (!(tsp[3] & 0x10))
-     return 0;
-  if (tsp[3] & 0x20) {
-     if (tsp[4] > 183)
-       return 0;
-     else
-       return 183 - tsp[4];
-  }
-  return 184;
-}
-
-/* check if an apid is in the list of known apids */
-static int apid_check(demux_ts_t*this, unsigned int pid) {
-  int i;
-  for (i = 0; i < this->audio_tracks_count; i++) {
-    if (this->audio_tracks[i].pid == pid)
-      return i;
-  }
-  return -1;
-}
-
 /*
  * NAME demux_ts_parse_pmt
  *
@@ -1480,7 +1524,6 @@ static int apid_check(demux_ts_t*this, unsigned int pid) {
  * FIXME: Implement support for multi section PMT.
  */
 static void demux_ts_parse_pmt (demux_ts_t     *this,
-                                unsigned char *originalPkt,
                                 unsigned char *pkt,
                                 unsigned int   pusi,
                                 int            plen,
@@ -1528,7 +1571,7 @@ static void demux_ts_parse_pmt (demux_ts_t     *this,
   }
   if (plen > 4098 - this->pmt_write_pos[program_count])
     plen = 4098 - this->pmt_write_pos[program_count];
-  memcpy (this->pmt[program_count] + this->pmt_write_pos[program_count], pkt, plen);
+  demux_ts_small_memcpy (this->pmt[program_count] + this->pmt_write_pos[program_count], pkt, plen);
   this->pmt_write_pos[program_count] += plen;
 
   /* lets see if we got the section length already */
@@ -1543,7 +1586,7 @@ static void demux_ts_parse_pmt (demux_ts_t     *this,
   }
 
   /* lets see if we got the section complete */
-  if (this->pmt_write_pos[program_count] < section_length)
+  if (this->pmt_write_pos[program_count] < (int)section_length)
     return;
 
   /* OK now parse it */
@@ -1581,15 +1624,12 @@ static void demux_ts_parse_pmt (demux_ts_t     *this,
   }
 
   /* Check CRC. */
-  crc32  = (uint32_t) pkt[section_length - 4] << 24;
-  crc32 |= (uint32_t) pkt[section_length - 3] << 16;
-  crc32 |= (uint32_t) pkt[section_length - 2] << 8;
-  crc32 |= (uint32_t) pkt[section_length - 1];
+  crc32 = _X_BE_32 (pkt + section_length - 4);
 
   calc_crc32 = htonl (xine_crc32_ieee (0xffffffff, pkt, section_length - 4));
   if (crc32 != calc_crc32) {
     xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG,
-      "demux_ts: demux error! PMT with invalid CRC32: packet_crc32: %#.8x calc_crc32: %#.8x\n",
+      "demux_ts: error! PMT with invalid CRC32: packet_crc32: %#.8x calc_crc32: %#.8x\n",
       crc32, calc_crc32);
     return;
   }
@@ -1601,7 +1641,7 @@ static void demux_ts_parse_pmt (demux_ts_t     *this,
     /* several programs can share the same PMT pid */
 #ifdef TS_PMT_LOG
 printf("Program Number is %i, looking for %i\n",program_number,this->program_number[program_count]);
-      printf ("ts_demux: waiting for next PMT on this PID...\n");
+      printf ("demux_ts: waiting for next PMT on this PID...\n");
 #endif
     return;
   }
@@ -1676,6 +1716,12 @@ printf("Program Number is %i, looking for %i\n",program_number,this->program_num
     case ISO_14496_PART10_VIDEO:
     case STREAM_VIDEO_HEVC:
     case STREAM_VIDEO_VC1:
+      if (1) {
+	unsigned int i;
+	printf ("demux_ts: pmt video descriptor ");
+	for (i = 0; i < coded_length; i++) printf ("%02x ", stream[i]);
+	printf ("\n");
+      }
       if (this->videoPid == INVALID_PID) {
 #ifdef TS_PMT_LOG
         printf ("demux_ts: PMT video pid 0x%.4x type %2.2x\n", pid, stream[0]);
@@ -1693,6 +1739,12 @@ printf("Program Number is %i, looking for %i\n",program_number,this->program_num
     case ISO_13818_AUDIO:
     case ISO_13818_PART7_AUDIO:
     case ISO_14496_PART3_AUDIO:
+      if (this->stream->xine->verbosity == 4) {
+	unsigned int i;
+	printf ("demux_ts: pmt audio descriptor ");
+	for (i = 0; i < coded_length; i++) printf ("%02x ", stream[i]);
+	printf ("\n");
+      }
       if (this->audio_tracks_count < MAX_AUDIO_TRACKS) {
 
         mi = demux_ts_dynamic_pmt_find (this, pid, BUF_AUDIO_BASE, stream[0]);
@@ -1775,7 +1827,7 @@ printf("Program Number is %i, looking for %i\n",program_number,this->program_num
 	    if (mi < 0) break;
 
             for (pos = i + 2;
-		 pos + 8 <= i + 2 + stream[i + 1]
+		 pos + 8 <= (int)i + 2 + stream[i + 1]
 		   && this->spu_langs_count < MAX_SPU_LANGS;
 		 pos += 8)
 	      {
@@ -1925,6 +1977,7 @@ printf("Program Number is %i, looking for %i\n",program_number,this->program_num
   xine_event_send( this->stream, &ui_event );
 }
 
+#if TS_PACKET_READER == 1
 static int sync_correct(demux_ts_t*this, uint8_t *buf, int32_t npkt_read) {
 
   int p = 0;
@@ -2012,7 +2065,6 @@ static int sync_detect(demux_ts_t*this, uint8_t *buf, int32_t npkt_read) {
   return sync_ok;
 }
 
-
 /*
  *  Main synchronisation routine.
  */
@@ -2081,6 +2133,7 @@ static unsigned char * demux_synchronise(demux_ts_t* this) {
   this->packet_number++;
   return return_pointer;
 }
+#endif
 
 
 static int64_t demux_ts_adaptation_field_parse(uint8_t *data,
@@ -2138,11 +2191,9 @@ static int64_t demux_ts_adaptation_field_parse(uint8_t *data,
     if (adaptation_field_length < offset + 6)
       return -1;
 
-    PCR  = (((int64_t) data[offset]) & 0xFF) << 25;
-    PCR += (int64_t) ((data[offset+1] & 0xFF) << 17);
-    PCR += (int64_t) ((data[offset+2] & 0xFF) << 9);
-    PCR += (int64_t) ((data[offset+3] & 0xFF) << 1);
-    PCR += (int64_t) ((data[offset+4] & 0x80) >> 7);
+    PCR   = _X_BE_32 (data + offset);
+    PCR <<= 1;
+    PCR  |= data[offset + 4] >> 7;
 
 #ifdef TS_LOG
     EPCR = ((data[offset+4] & 0x1) << 8) | data[offset+5];
@@ -2157,11 +2208,9 @@ static int64_t demux_ts_adaptation_field_parse(uint8_t *data,
     if (adaptation_field_length < offset + 6)
       return PCR;
 
-    OPCR = data[offset] << 25;
-    OPCR |= data[offset+1] << 17;
-    OPCR |= data[offset+2] << 9;
-    OPCR |= data[offset+3] << 1;
-    OPCR |= (data[offset+4] >> 7) & 0x01;
+    OPCR   = _X_BE_32 (data + offset);
+    OPCR <<= 1;
+    OPCR  |= data[offset + 4] >> 7;
     EOPCR = ((data[offset+4] & 0x1) << 8) | data[offset+5];
 
     printf ("demux_ts: OPCR: %u, EOPCR: %u\n",
@@ -2187,93 +2236,213 @@ static int64_t demux_ts_adaptation_field_parse(uint8_t *data,
   return PCR;
 }
 
+#if TS_PACKET_READER == 2
+static int sync_ts (const uint8_t *buf, int len) {
+  int offs = len - 377;
+  while (offs > 0) {
+    if ((buf[0] == SYNC_BYTE) && (buf[188] == SYNC_BYTE) && (buf[376] == SYNC_BYTE))
+      return len - 377 - offs;
+    buf++;
+    offs--;
+  }
+  return -1;
+}
+
+static int sync_hdmv (const uint8_t *buf, int len) {
+  int offs = len - 385;
+  while (offs > 0) {
+    if ((buf[0] == SYNC_BYTE) && (buf[192] == SYNC_BYTE) && (buf[384] == SYNC_BYTE))
+      return len - 385 - offs;
+    buf++;
+    offs--;
+  }
+  return -1;
+}
+
+static uint8_t *sync_next (demux_ts_t *this) {
+  int reread = 3;
+  int rescan = 8;
+  while (1) {
+    uint8_t *p = this->buf + this->buf_pos;
+    int left = this->buf_size - this->buf_pos;
+    if (this->hdmv) {
+      /* next packet already there? */
+      if ((left >= 192) && (p[0] == SYNC_BYTE)) {
+        this->buf_pos += 192;
+        this->frame_pos += 192;
+        return p;
+      }
+      if (left <= 0) {
+        this->buf_pos = 0;
+        this->buf_size = 0;
+      } else {
+        int n;
+        if (p[0] != SYNC_BYTE) {
+          /* skip junk already there */
+          n = sync_hdmv (p, left);
+          if (n >= 0) {
+            this->frame_pos += 192;
+            this->buf_pos += n + 192;
+            p += n;
+            return p;
+          }
+          /* wrong mode ?? */
+          if (sync_ts (p, left) >= 0) {
+            this->hdmv = 0;
+            continue;
+          }
+          if (left > 192)
+            left = 192;
+          this->buf_pos = this->buf_size - left;
+          /* return without error, allow engine to stop */
+          if (--rescan <= 0)
+            return NULL;
+        }
+        this->buf_size = left;
+        /* align */
+        n = this->buf_pos;
+        if (n > 0) {
+          this->buf_pos = 0;
+          if (left <= n)
+            memcpy (this->buf, this->buf + n, left);
+          else
+            memmove (this->buf, this->buf + n, left);
+        }
+      }
+    } else { /* plain ts */
+      /* next packet already there? */
+      if ((left >= 188) && (p[0] == SYNC_BYTE)) {
+        this->buf_pos += 188;
+        this->frame_pos += 188;
+        return p;
+      }
+      if (left <= 0) {
+        this->buf_pos = 0;
+        this->buf_size = 0;
+      } else {
+        int n;
+        if (p[0] != SYNC_BYTE) {
+          /* skip junk already there */
+          n = sync_ts (p, left);
+          if (n >= 0) {
+            this->frame_pos += 188;
+            this->buf_pos += n + 188;
+            p += n;
+            return p;
+          }
+          /* wrong mode ?? */
+          if (sync_hdmv (p, left) >= 0) {
+            this->hdmv = 1;
+            continue;
+          }
+          if (left > 188)
+            left = 188;
+          this->buf_pos = this->buf_size - left;
+          /* return without error, allow engine to stop */
+          if (--rescan <= 0)
+            return NULL;
+        }
+        this->buf_size = left;
+        /* align */
+        n = this->buf_pos;
+        if (n > 0) {
+          this->buf_pos = 0;
+          if (left <= n)
+            memcpy (this->buf, this->buf + n, left);
+          else
+            memmove (this->buf, this->buf + n, left);
+        }
+      }
+    }
+    /* refill */
+    this->frame_pos = this->input->get_current_pos (this->input);
+    {
+      int n = this->input->read (this->input, this->buf + this->buf_size, BUF_SIZE - this->buf_size);
+      if (n <= 0) {
+        if (--reread <= 0) {
+          demux_ts_flush (this);
+          this->status = DEMUX_FINISHED;
+          return NULL;
+        }
+      }
+      this->buf_size += n;
+    }
+  }
+}
+#endif
+
 /* transport stream packet layer */
 static void demux_ts_parse_packet (demux_ts_t*this) {
 
   unsigned char *originalPkt;
-  unsigned int   sync_byte;
-  unsigned int   transport_error_indicator;
-  unsigned int   payload_unit_start_indicator;
-#ifdef TS_HEADER_LOG
-  unsigned int   transport_priority;
-#endif
-  unsigned int   pid;
-  unsigned int   transport_scrambling_control;
-  unsigned int   adaptation_field_control;
-  unsigned int   continuity_counter;
+  uint32_t       tsp_head;
+  uint32_t       pid;
   unsigned int   data_offset;
   unsigned int   data_len;
-  uint32_t       program_count;
+  uint32_t       index;
   int i;
 
   /* get next synchronised packet, or NULL */
+#if TS_PACKET_READER == 2
+  originalPkt = sync_next (this);
+#elif TS_PACKET_READER == 1
   originalPkt = demux_synchronise(this);
+#endif
   if (originalPkt == NULL)
     return;
 
-  sync_byte                      = originalPkt[0];
-  transport_error_indicator      = (originalPkt[1]  >> 7) & 0x01;
-  payload_unit_start_indicator   = (originalPkt[1] >> 6) & 0x01;
-#ifdef TS_HEADER_LOG
-  transport_priority             = (originalPkt[1] >> 5) & 0x01;
-#endif
-  pid                            = ((originalPkt[1] << 8) |
-				    originalPkt[2]) & 0x1fff;
-  transport_scrambling_control   = (originalPkt[3] >> 6)  & 0x03;
-  adaptation_field_control       = (originalPkt[3] >> 4) & 0x03;
-  continuity_counter             = originalPkt[3] & 0x0f;
-
+  tsp_head = _X_BE_32 (originalPkt);
+  pid      = (tsp_head & TSP_pid) >> 8;
 
 #ifdef TS_HEADER_LOG
-  printf("demux_ts:ts_header:sync_byte=0x%.2x\n",sync_byte);
-  printf("demux_ts:ts_header:transport_error_indicator=%d\n", transport_error_indicator);
-  printf("demux_ts:ts_header:payload_unit_start_indicator=%d\n", payload_unit_start_indicator);
-  printf("demux_ts:ts_header:transport_priority=%d\n", transport_priority);
-  printf("demux_ts:ts_header:pid=0x%.4x\n", pid);
-  printf("demux_ts:ts_header:transport_scrambling_control=0x%.1x\n", transport_scrambling_control);
-  printf("demux_ts:ts_header:adaptation_field_control=0x%.1x\n", adaptation_field_control);
-  printf("demux_ts:ts_header:continuity_counter=0x%.1x\n", continuity_counter);
+  printf ("demux_ts:ts_header:sync_byte=0x%.2x\n",
+    tsp_head >> 24);
+  printf ("demux_ts:ts_header:transport_error_indicator=%d\n",
+    !!(tsp_head & TSP_transport_error));
+  printf ("demux_ts:ts_header:payload_unit_start_indicator=%d\n",
+    !!(tsp_head & TSP_payload_unit_start));
+  printf ("demux_ts:ts_header:transport_priority=%d\n",
+    !!(tsp_head & TSP_transport_priority));
+  printf ("demux_ts:ts_header:pid=0x%.4x\n", pid);
+  printf ("demux_ts:ts_header:transport_scrambling_control=0x%.1x\n",
+    (tsp_head & TSP_scrambling_control) >> 6);
+  printf ("demux_ts:ts_header:adaptation_field_control=0x%.1x\n",
+    (tsp_head & (TSP_adaptation_field_1 | TSP_adaptation_field_0)) >> 4);
+  printf ("demux_ts:ts_header:continuity_counter=0x%.1x\n",
+    tsp_head & TSP_continuity_counter);
 #endif
   /*
    * Discard packets that are obviously bad.
    */
-  if (sync_byte != SYNC_BYTE) {
+  if ((tsp_head >> 24) != SYNC_BYTE) {
     xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG,
-	     "demux error! invalid ts sync byte %.2x\n", sync_byte);
+      "demux_ts: error! invalid ts sync byte %.2x\n", tsp_head >> 24);
     return;
   }
-  if (transport_error_indicator) {
-    xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG, "demux error! transport error\n");
+  if (tsp_head & TSP_transport_error) {
+    xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG, "demux_ts: error! transport error\n");
     return;
-  }
-  if (pid == 0x1ffb) {
-      /* printf ("demux_ts: PSIP table. Program Guide etc....not supported yet. PID = 0x1ffb\n"); */
-      return;
   }
 
-  if (transport_scrambling_control) {
-    if (this->videoPid == pid) {
-      xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG,
-	       "demux_ts: selected videoPid is scrambled; skipping...\n");
-    }
-    for (i=0; i < this->scrambled_npids; i++) {
-      if (this->scrambled_pids[i] == pid) return;
+  if (tsp_head & TSP_scrambling_control) {
+    for (i = 0; i < (int)this->scrambled_npids; i++) {
+      if (this->scrambled_pids[i] == pid)
+        return;
     }
     if (this->scrambled_npids < MAX_PIDS) {
       this->scrambled_pids[this->scrambled_npids] = pid;
       this->scrambled_npids++;
+      xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG, "demux_ts: PID 0x%.4x is scrambled!\n", pid);
     }
-
-    xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG, "demux_ts: PID 0x%.4x is scrambled!\n", pid);
     return;
   }
 
   data_offset = 4;
 
-  if( adaptation_field_control & 0x2 ){
+  if (tsp_head & TSP_adaptation_field_1) {
     uint32_t adaptation_field_length = originalPkt[4];
     if (adaptation_field_length > PKT_SIZE - 5) {
-      xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG, "demux: invalid adaptation field length\n");
+      xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG, "demux_ts: invalid adaptation field length\n");
       return;
     }
 
@@ -2294,80 +2463,66 @@ static void demux_ts_parse_packet (demux_ts_t*this) {
     }
   }
 
-  if (! (adaptation_field_control & 0x1)) {
+  if (!(tsp_head & TSP_adaptation_field_0)) {
     return;
   }
 
   data_len = PKT_SIZE - data_offset;
+  index = this->pid_index[pid];
 
-  /* PAT */
-  if (pid == 0) {
-    demux_ts_parse_pat(this, originalPkt, originalPkt + data_offset,
-		       payload_unit_start_indicator, data_len);
+  /* Do the demuxing in descending order of packet frequency! */
+  if (!(index & 0x80)) {
+    do {
+      if (pid == this->videoPid) {
+#ifdef TS_LOG
+        printf ("demux_ts: Video pid: 0x%.4x\n", pid);
+#endif
+        break;
+      }
+      if ((this->media[index].type & BUF_MAJOR_MASK) == BUF_AUDIO_BASE) {
+#ifdef TS_LOG
+        printf ("demux_ts: Audio pid: 0x%.4x\n", pid);
+#endif
+        break;
+      }
+      if (pid == this->spu_pid) {
+        /* DVBSUB */
+#ifdef TS_LOG
+        printf ("demux_ts: SPU pid: 0x%.4x\n", pid);
+#endif
+        break;
+      }
+      return;
+    } while (0);
+    demux_ts_buffer_pes (this, originalPkt + data_offset, index, tsp_head, data_len);
+  }
+
+  if (index != 0xff) {
+    /* PMT */
+    index &= 0x7f;
+#ifdef TS_LOG
+    printf ("demux_ts: PMT prog: 0x%.4x pid: 0x%.4x\n", this->program_number[index], this->pmt_pid[index]);
+#endif
+    demux_ts_parse_pmt (this, originalPkt + data_offset, tsp_head & TSP_payload_unit_start, data_len, index);
     return;
   }
 
-  /* PMT */
-  program_count=0;
-  while (program_count < MAX_PMTS &&
-          (this->program_number[program_count] != INVALID_PROGRAM)) {
-    if (pid == this->pmt_pid[program_count]) {
-
+  if (pid == NULL_PID) {
 #ifdef TS_LOG
-      printf ("demux_ts: PMT prog: 0x%.4x pid: 0x%.4x\n",
-              this->program_number[program_count],
-              this->pmt_pid[program_count]);
+    printf ("demux_ts: Null Packet\n");
 #endif
-      demux_ts_parse_pmt (this, originalPkt, originalPkt + data_offset,
-                          payload_unit_start_indicator, data_len,
-                          program_count);
-      return;
-    }
-    program_count++;
+    return;
   }
 
-  {
-    /*
-     * Do the demuxing in descending order of packet frequency!
-     */
-    int index;
-    if (pid == this->videoPid) {
-#ifdef TS_LOG
-      printf ("demux_ts: Video pid: 0x%.4x\n", pid);
-#endif
-      check_newpts(this, this->media[this->videoMedia].pts, PTS_VIDEO);
-      demux_ts_buffer_pes (this, originalPkt+data_offset, this->videoMedia,
-			   payload_unit_start_indicator, continuity_counter,
-			   data_len);
-      return;
-    }
-    else if ((index = apid_check(this, pid)) > -1) {
-#ifdef TS_LOG
-      printf ("demux_ts: Audio pid: 0x%.4x\n", pid);
-#endif
-      check_newpts(this, this->media[this->audio_tracks[index].media_index].pts, PTS_AUDIO);
-      demux_ts_buffer_pes (this, originalPkt+data_offset,
-               this->audio_tracks[index].media_index,
-			   payload_unit_start_indicator, continuity_counter,
-			   data_len);
-      return;
-    }
-    else if (pid == NULL_PID) {
-#ifdef TS_LOG
-      printf ("demux_ts: Null Packet\n");
-#endif
-      return;
-    }
-    /* DVBSUB */
-    else if (pid == this->spu_pid) {
-#ifdef TS_LOG
-      printf ("demux_ts: SPU pid: 0x%.4x\n", pid);
-#endif
-      demux_ts_buffer_pes (this, originalPkt+data_offset, this->spu_media,
-			   payload_unit_start_indicator, continuity_counter,
-			   data_len);
-      return;
-    }
+  /* PAT */
+  if (pid == 0) {
+    demux_ts_parse_pat (this, originalPkt + data_offset, tsp_head & TSP_payload_unit_start, data_len);
+    return;
+  }
+
+  if (pid == 0x1ffb) {
+    /* printf ("demux_ts: PSIP table. Program Guide etc....not supported yet. PID = 0x1ffb\n"); */
+    return;
   }
 }
 
@@ -2513,6 +2668,10 @@ static int demux_ts_seek (demux_plugin_t *this_gen,
     } else {
       this->input->seek (this->input, start_pos, SEEK_SET);
     }
+#if TS_PACKET_READER == 2
+    this->buf_pos  = 0;
+    this->buf_size = 0;
+#endif
   }
 
   this->send_newpts = 1;
@@ -2566,6 +2725,7 @@ static int demux_ts_get_stream_length (demux_plugin_t *this_gen) {
 
 static uint32_t demux_ts_get_capabilities(demux_plugin_t *this_gen)
 {
+  (void)this_gen;
   return DEMUX_CAP_AUDIOLANG | DEMUX_CAP_SPULANG;
 }
 
@@ -2629,7 +2789,7 @@ static int detect_ts(uint8_t *buf, size_t len, int ts_size)
   for (i = 0; i < ts_size; i++) {
     try_again = 0;
     if (buf[i] == SYNC_BYTE) {
-      for (j = 1; j < packs; j++) {
+      for (j = 1; j < (int)packs; j++) {
 	if (buf[i + j*ts_size] != SYNC_BYTE) {
 	  try_again = 1;
 	  break;
@@ -2686,7 +2846,22 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen,
    * if we reach this point, the input has been accepted.
    */
 
-  this            = calloc(1, sizeof(*this));
+  this            = calloc (1, sizeof (*this));
+  if (!this)
+    return NULL;
+
+#ifndef HAVE_ZERO_SAFE_MEM
+  this->last_pat_crc       = 0;
+  this->scrambled_npids    = 0;
+  this->audio_tracks_count = 0;
+  this->last_pmt_crc       = 0;
+  this->spu_langs_count    = 0;
+#  if TS_PACKET_READER == 2
+  this->buf_pos            = 0;
+  this->buf_size           = 0;
+#  endif
+#endif
+
   this->stream    = stream;
   this->input     = input;
 
@@ -2704,26 +2879,28 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen,
    * Initialise our specialised data.
    */
 
-  this->last_pat_crc = 0;
   this->transport_stream_id = -1;
 
   for (i = 0; i < MAX_PIDS; i++) {
     this->media[i].pid = INVALID_PID;
+#ifndef HAVE_ZERO_SAFE_MEM
     this->media[i].buf = NULL;
+#endif
   }
 
   for (i = 0; i < MAX_PMTS; i++) {
-    this->program_number[i]          = INVALID_PROGRAM;
-    this->pmt_pid[i]                 = INVALID_PID;
-    this->pmt[i]                     = NULL;
-    this->pmt_write_pos[i]           = 0;
+    this->program_number[i] = INVALID_PROGRAM;
+    this->pmt_pid[i]        = INVALID_PID;
+#ifndef HAVE_ZERO_SAFE_MEM
+    this->pmt[i]            = NULL;
+    this->pmt_write_pos[i]  = 0;
+#endif
   }
 
-  this->scrambled_npids = 0;
+  memset (this->pid_index, 0xff, sizeof (this->pid_index));
+
   this->videoPid = INVALID_PID;
   this->pcr_pid = INVALID_PID;
-  this->audio_tracks_count = 0;
-  this->last_pmt_crc = 0;
 
   this->rate = 1000000; /* byte/sec */
   this->tbre_pid = INVALID_PID;
@@ -2732,7 +2909,6 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen,
 
   /* DVBSUB */
   this->spu_pid = INVALID_PID;
-  this->spu_langs_count = 0;
   this->current_spu_channel = -1;
 
   /* dvb */
@@ -2750,6 +2926,8 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen,
  * ts demuxer class
  */
 void *demux_ts_init_class (xine_t *xine, const void *data) {
+  (void)xine;
+  (void)data;
 
   static const demux_class_t demux_ts_class = {
     .open_plugin     = open_plugin,
@@ -2767,4 +2945,3 @@ void *demux_ts_init_class (xine_t *xine, const void *data) {
 
   return (void *)&demux_ts_class;
 }
-
