@@ -197,7 +197,7 @@ static int ebml_read_elem_data(ebml_parser_t *ebml, void *buf, int64_t len) {
 int ebml_skip(ebml_parser_t *ebml, ebml_elem_t *elem) {
   if (ebml->input->seek(ebml->input, elem->len, SEEK_CUR) < 0) {
     xprintf(ebml->xine, XINE_VERBOSITY_LOG,
-            "ebml: seek error\n");
+            "ebml: seek error (failed skipping %" PRId64 " bytes)\n", (int64_t)elem->len);
     return 0;
   }
 
@@ -383,7 +383,7 @@ int ebml_check_header(ebml_parser_t *ebml) {
 
   if (master.id != EBML_ID_EBML) {
     xprintf(ebml->xine, XINE_VERBOSITY_LOG,
-            "ebml: invalid master element\n");
+            "ebml: invalid master element 0x%x\n", master.id);
     return 0;
   }
 
