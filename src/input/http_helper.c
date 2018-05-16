@@ -25,10 +25,42 @@
 #endif
 
 #include <string.h>
+#include <ctype.h>
 
 #include <xine/xine_internal.h>
 #include "http_helper.h"
 
+static inline int _get_hex(char c)
+{
+  if (c >= '0' && c <= '9')
+    return c - '0';
+  if (c >= 'a' && c <= 'f')
+    return c + 10 - 'a';
+  if (c >= 'A' && c <= 'F')
+    return c + 10 - 'A';
+  return 0;
+}
+
+static inline char *unescape(const char *s, size_t len)
+{
+  char *r, *d;
+
+  r = malloc(len + 1);
+  if (r) {
+    for (d = r; *s && len; len--) {
+      if (s[0] == '%' && len >= 3 && isxdigit(s[1]) && isxdigit(s[2])) {
+        *d++ = (_get_hex(s[1]) << 4) | _get_hex(s[2]);
+        s += 3;
+        len -= 2;
+      } else {
+        *d++ = *s++;
+      }
+    }
+    *d = 0;
+  }
+
+  return r;
+}
 
 const char *_x_url_user_agent (const char *url)
 {
@@ -93,12 +125,12 @@ static int _x_parse_url (const char *url,
   if (at) {
     authcolon = strchr(start, ':');
     if(authcolon && authcolon < at) {
-      *user = strndup(start, authcolon - start);
-      *password = strndup(authcolon + 1, at - authcolon - 1);
+      *user = unescape(start, authcolon - start);
+      *password = unescape(authcolon + 1, at - authcolon - 1);
       if ((authcolon == start) || (at == (authcolon + 1))) goto error;
     } else {
       /* no password */
-      *user = strndup(start, at - start);
+      *user = unescape(start, at - start);
       if (at == start) goto error;
     }
     start = at + 1;
