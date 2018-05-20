@@ -166,8 +166,13 @@ static int demux_slave_next (demux_slave_t *this) {
       n = size;
     if( n )
       memcpy(buf->content, p, n);
-    if( n < size )
-      this->input->read(this->input, &buf->content[n], size-n);
+    if( n < size ) {
+      if (this->input->read(this->input, &buf->content[n], size-n) != (size-n)) {
+        buf->free_buffer(buf);
+        this->status = DEMUX_FINISHED;
+        return 0;
+      }
+    }
 
     p += n;
     n = this->scratch_used - (p-this->scratch);
@@ -223,8 +228,12 @@ static int demux_slave_next (demux_slave_t *this) {
       n = size;
     if( n )
       memcpy(this->decoder_info_ptr[i], p, n);
-    if( n < size )
-      this->input->read(this->input, (char *)this->decoder_info_ptr[i]+n, size-n);
+    if( n < size ) {
+      if (this->input->read(this->input, (char *)this->decoder_info_ptr[i]+n, size-n) != (size-n)) {
+        this->status = DEMUX_FINISHED;
+        return 0;
+      }
+    }
 
     p += n;
     n = this->scratch_used - (p-this->scratch);
