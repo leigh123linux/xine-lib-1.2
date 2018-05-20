@@ -167,8 +167,8 @@ static off_t file_input_read (input_plugin_t *this_gen, void *buf, off_t len) {
 static buf_element_t *file_input_read_block (input_plugin_t *this_gen, fifo_buffer_t *fifo, off_t todo) {
 
 #ifdef HAVE_MMAP
+  file_input_plugin_t  *this = (file_input_plugin_t *) this_gen;
   if ( file_input_check_mmap(this) ) {
-    file_input_plugin_t  *this = (file_input_plugin_t *) this_gen;
     buf_element_t        *buf = fifo->buffer_pool_alloc (fifo);
     off_t len = todo;
 
