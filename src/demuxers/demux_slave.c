@@ -323,32 +323,34 @@ static int demux_slave_get_optional_data(demux_plugin_t *this_gen,
 static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *stream,
                                     input_plugin_t *input) {
 
+  static const char slave_id_str[] = "master xine v1\n";
+  const size_t      slave_id_str_len = strlen(slave_id_str);
   demux_slave_t *this;
-  static char slave_id_str[] = "master xine v1\n";
-
-  this         = calloc(1, sizeof(demux_slave_t));
+  char           scratch[sizeof(slave_id_str)];
 
   switch (stream->content_detection_method) {
 
-  case METHOD_BY_CONTENT: {
-
-    if (_x_demux_read_header(input, this->scratch, SCRATCH_SIZE) > 0) {
-      if (!strncmp(this->scratch,slave_id_str,strlen(slave_id_str)))
-        break;
-    }
-
-    free (this);
-    return NULL;
-  }
+  case METHOD_BY_CONTENT:
+    if (_x_demux_read_header(input, scratch, slave_id_str_len) != slave_id_str_len)
+      return NULL;
+    if (memcmp(scratch, slave_id_str, slave_id_str_len))
+      return NULL;
+    break;
 
   case METHOD_BY_MRL:
   case METHOD_EXPLICIT:
-  break;
+    break;
 
   default:
-    free (this);
     return NULL;
   }
+
+  if (input->read(input, scratch, slave_id_str_len) != slave_id_str_len)
+    return NULL;
+
+  this  = calloc(1, sizeof(demux_slave_t));
+  if (!this)
+    return NULL;
 
   this->stream = stream;
   this->input  = input;
@@ -366,7 +368,6 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
 
   this->status = DEMUX_FINISHED;
 
-  this->input->read(this->input, this->scratch,strlen(slave_id_str));
   this->scratch_used = 0;
 
   memset(this->decoder_info, 0, sizeof(this->decoder_info));
