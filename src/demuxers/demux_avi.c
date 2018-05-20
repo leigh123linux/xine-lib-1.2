@@ -580,13 +580,15 @@ static int idx_grow(demux_avi_t *this, int (*stopper)(demux_avi_t *, void *),
        */
 
       if (this->input->read(this->input, data2, 4) != 4) {
+      read_failed:
         lprintf("read failed\n");
         break;
       }
       tmp = data2[3] | (data2[2]<<8) | (data2[1]<<16) | (data2[0]<<24);
       switch(this->avi->video_type) {
         case BUF_VIDEO_MSMPEG4_V1:
-          this->input->read(this->input, data2, 4);
+          if (this->input->read(this->input, data2, 4) != 4)
+            goto read_failed;
           tmp = data2[3] | (data2[2]<<8) | (data2[1]<<16) | (data2[0]<<24);
           tmp = tmp << 5;
           /* fall through */
