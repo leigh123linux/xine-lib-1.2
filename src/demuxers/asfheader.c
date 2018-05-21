@@ -754,6 +754,9 @@ asf_header_t *asf_header_new (uint8_t *buffer, int buffer_len) {
 
   asf_reader_init (&reader, buffer, buffer_len);
   p = asf_reader_get_block (&reader, 4 + 2);
+  if (!p)
+    goto exit_error;
+
   object_count = _X_LE_32 (p);
   /* not used yet */
   (void)object_count;
