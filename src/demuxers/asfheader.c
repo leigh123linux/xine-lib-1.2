@@ -574,7 +574,7 @@ static int asf_header_parse_metadata (asf_header_t *header_pub, const uint8_t *b
 
     stream_id = asf_header_get_stream_id (&header->pub, stream);
 
-    if (data_len >= 4) {
+    if (stream_id >= 0 && data_len >= 4) {
       static const uint8_t name_ar[] = {'A',0,'s',0,'p',0,'e',0,'c',0,'t',0,'R',0,'a',0,'t',0,'i',0,'o',0};
       static const uint8_t name_x[]  = {'X',0,0,0};
       static const uint8_t name_y[]  = {'Y',0,0,0};
