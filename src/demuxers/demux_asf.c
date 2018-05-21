@@ -1361,20 +1361,12 @@ static asf_error_t asf_parse_packet_payload (demux_asf_t *this,
   return ASF_OK;
 }
 
-/*
- * parse a m$ http reference
- * format :
- * [Reference]
- * Ref1=http://www.blabla.com/blabla
- */
-static int demux_asf_parse_http_references( demux_asf_t *this) {
+static size_t demux_asf_read_file(demux_asf_t *this, char **pbuf)
+{
   char           *buf = NULL;
-  char           *ptr, *end;
-  int             buf_size = 0;
-  int             buf_used = 0;
+  size_t          buf_size = 0;
+  size_t          buf_used = 0;
   int             len;
-  char           *href = NULL;
-  int             free_href = 0;
 
   /* read file to memory.
    * warning: dumb code, but hopefuly ok since reference file is small */
@@ -1396,11 +1388,29 @@ static int demux_asf_parse_http_references( demux_asf_t *this) {
       break;
   } while( len > 0 );
 
-  if(buf_used)
+  if (buf)
     buf[buf_used] = '\0';
+  *pbuf = buf;
+
+  return buf_used;
+}
+
+/*
+ * parse a m$ http reference
+ * format :
+ * [Reference]
+ * Ref1=http://www.blabla.com/blabla
+ */
+static int demux_asf_parse_http_references( demux_asf_t *this) {
+  char           *buf = NULL;
+  char           *ptr, *end;
+  char           *href = NULL;
+  int             free_href = 0;
+
+  demux_asf_read_file(this, &buf);
 
   ptr = buf;
-  if (!strncmp(ptr, "[Reference]", 11)) {
+  if (ptr && !strncmp(ptr, "[Reference]", 11)) {
 
     const char *const mrl = this->input->get_mrl(this->input);
     if (!strncmp(mrl, "http", 4)) {
@@ -1445,49 +1455,22 @@ failure:
  */
 static int demux_asf_parse_asf_references( demux_asf_t *this) {
   char           *buf = NULL;
-  char           *ptr;
-  int             buf_size = 0;
-  int             buf_used = 0;
-  int             len;
-  int             i;
+  size_t          i;
 
-  /* read file to memory.
-   * warning: dumb code, but hopefuly ok since reference file is small */
-  do {
-    void *tmp;
-    buf_size += 1024;
-    tmp = realloc(buf, buf_size+1);
-    if (!tmp)
-      break;
-    buf = tmp;
+  demux_asf_read_file(this, &buf);
 
-    len = this->input->read(this->input, &buf[buf_used], buf_size-buf_used);
-
-    if( len > 0 )
-      buf_used += len;
-
-    /* 50k of reference file? no way. something must be wrong */
-    if( buf_used > 50*1024 )
-      break;
-  } while( len > 0 );
-
-  if(buf_used)
-    buf[buf_used] = '\0';
-
-  ptr = buf;
-  if (!strncmp(ptr, "ASF ", 4)) {
-    ptr += 4;
+  if (buf && !strncmp(buf, "ASF ", 4)) {
 
     /* find the end of the string */
-    for (i = 4; i < buf_used; i++) {
+    for (i = 4; buf[i]; i++) {
       if ((buf[i] == ' ') || (buf[i] == '\r') || (buf[i] == '\n')) {
         buf[i] = '\0';
         break;
       }
     }
 
-    xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG, "demux_asf: asf ref: %s\n", ptr);
-    _x_demux_send_mrl_reference (this->stream, 0, ptr, NULL, 0, 0);
+    xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG, "demux_asf: asf ref: %s\n", buf + 4);
+    _x_demux_send_mrl_reference (this->stream, 0, buf + 4, NULL, 0, 0);
   }
 
   free (buf);
@@ -1525,36 +1508,14 @@ static uint32_t asx_get_time_value (const xml_node_t *node)
 static int demux_asf_parse_asx_references( demux_asf_t *this) {
 
   char           *buf = NULL;
-  int             buf_size = 0;
-  int             buf_used = 0;
-  int             len;
+  size_t          buf_used;
   xml_node_t     *xml_tree, *asx_entry, *asx_ref;
   xml_parser_t   *xml_parser;
   int             result;
 
-
-  /* read file to memory.
-   * warning: dumb code, but hopefuly ok since reference file is small */
-  do {
-    void *tmp;
-    buf_size += 1024;
-    tmp = realloc(buf, buf_size+1);
-    if (!tmp)
-      break;
-    buf = tmp;
-
-    len = this->input->read(this->input, &buf[buf_used], buf_size-buf_used);
-
-    if( len > 0 )
-      buf_used += len;
-
-    /* 50k of reference file? no way. something must be wrong */
-    if( buf_used > 50*1024 )
-      break;
-  } while( len > 0 );
-
-  if(buf_used)
-    buf[buf_used] = '\0';
+  buf_used = demux_asf_read_file(this, &buf);
+  if (!buf || buf_used < 1)
+    goto failure;
 
   xml_parser = xml_parser_init_r(buf, buf_used, XML_PARSER_CASE_INSENSITIVE);
   if((result = xml_parser_build_tree_r(xml_parser, &xml_tree)) != XML_PARSER_OK) {
