@@ -399,7 +399,12 @@ static int demux_yuv4mpeg2_get_optional_data(demux_plugin_t *this_gen,
 
 static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *stream,
                                     input_plugin_t *input) {
-  demux_yuv4mpeg2_t *this = calloc(1, sizeof(demux_yuv4mpeg2_t));
+  demux_yuv4mpeg2_t *this;
+
+  this = calloc(1, sizeof(demux_yuv4mpeg2_t));
+  if (!this)
+    return NULL;
+
   this->stream = stream;
   this->input  = input;
 

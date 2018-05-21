@@ -3012,7 +3012,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen,
    * if we reach this point, the input has been accepted.
    */
 
-  this            = calloc (1, sizeof (*this));
+  this = calloc (1, sizeof (*this));
   if (!this)
     return NULL;
 

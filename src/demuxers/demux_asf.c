@@ -1379,8 +1379,12 @@ static int demux_asf_parse_http_references( demux_asf_t *this) {
   /* read file to memory.
    * warning: dumb code, but hopefuly ok since reference file is small */
   do {
+    void *tmp;
     buf_size += 1024;
-    buf = realloc(buf, buf_size+1);
+    tmp = realloc(buf, buf_size+1);
+    if (!tmp)
+      break;
+    buf = tmp;
 
     len = this->input->read(this->input, &buf[buf_used], buf_size-buf_used);
 
@@ -1450,8 +1454,12 @@ static int demux_asf_parse_asf_references( demux_asf_t *this) {
   /* read file to memory.
    * warning: dumb code, but hopefuly ok since reference file is small */
   do {
+    void *tmp;
     buf_size += 1024;
-    buf = realloc(buf, buf_size+1);
+    tmp = realloc(buf, buf_size+1);
+    if (!tmp)
+      break;
+    buf = tmp;
 
     len = this->input->read(this->input, &buf[buf_used], buf_size-buf_used);
 
@@ -1528,8 +1536,12 @@ static int demux_asf_parse_asx_references( demux_asf_t *this) {
   /* read file to memory.
    * warning: dumb code, but hopefuly ok since reference file is small */
   do {
+    void *tmp;
     buf_size += 1024;
-    buf = realloc(buf, buf_size+1);
+    tmp = realloc(buf, buf_size+1);
+    if (!tmp)
+      break;
+    buf = tmp;
 
     len = this->input->read(this->input, &buf[buf_used], buf_size-buf_used);
 

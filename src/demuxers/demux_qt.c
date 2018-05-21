@@ -3769,9 +3769,10 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
       return NULL;
   }
 
-  this         = calloc (1, sizeof (demux_qt_t));
+  this = calloc (1, sizeof (demux_qt_t));
   if (!this)
     return NULL;
+
   this->stream = stream;
   this->input  = input;
 

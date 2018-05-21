@@ -1104,9 +1104,10 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
                                     input_plugin_t *input) {
   demux_flv_t *this;
 
-  this         = calloc (1, sizeof (demux_flv_t) + 32 + TEMPBUFSIZE);
+  this = calloc (1, sizeof (demux_flv_t) + 32 + TEMPBUFSIZE);
   if (!this)
     return NULL;
+
   this->tempbuf = (uint8_t *)(((uintptr_t)this + sizeof (demux_flv_t) + 31) & ~(uintptr_t)31);
   this->xine   = stream->xine;
   this->stream = stream;
