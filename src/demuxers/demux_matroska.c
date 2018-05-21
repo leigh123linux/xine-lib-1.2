@@ -2815,6 +2815,7 @@ static int parse_top_level_head(demux_matroska_t *this, int *next_level) {
 static int parse_top_level(demux_matroska_t *this, int *next_level) {
   ebml_parser_t *ebml = this->ebml;
   ebml_elem_t elem;
+  off_t cluster_pos, cluster_len;
 
   if (!ebml_read_elem_head(ebml, &elem))
     return 0;
@@ -2843,10 +2844,20 @@ static int parse_top_level(demux_matroska_t *this, int *next_level) {
       break;
     case MATROSKA_ID_CLUSTER:
       lprintf("Cluster\n");
+      cluster_pos = this->input->get_current_pos(this->input);
+      cluster_len = elem.len;
       if (!ebml_read_master (ebml, &elem))
         return 0;
-      if (!parse_cluster(this))
-        return 0;
+      if (!parse_cluster(this)) {
+        off_t fail_pos = this->input->get_current_pos(this->input);
+        off_t skip = cluster_pos + cluster_len - fail_pos;
+        xprintf(ebml->xine, XINE_VERBOSITY_LOG, LOG_MODULE
+                "parse_cluster failed ! Skipping %" PRId64 " bytes\n", (int64_t)skip);
+        if (this->input->seek(ebml->input, skip, SEEK_CUR) < 0) {
+          xprintf(ebml->xine, XINE_VERBOSITY_LOG,
+                  "seek error (skipping %" PRId64 " bytes)\n", (int64_t)skip);
+        }
+      }
       break;
     case MATROSKA_ID_CUES:
       lprintf("Skipping Cues\n");
