@@ -276,13 +276,13 @@ static xine_health_check_t* _x_health_check_dma (xine_health_check_t* hc) {
 
 
 static xine_health_check_t* _x_health_check_x (xine_health_check_t* hc) {
-  char* env_display = getenv("DISPLAY");
+  const char *env_display = getenv("DISPLAY");
 
   hc->title       = "Check for X11 environment";
   hc->explanation = "Make sure you're running X11, if this is an ssh connection,\n"
                     "make sure you have X11 forwarding enabled (ssh -X ...)";
 
-  if (strlen (env_display) == 0) {
+  if (!env_display || strlen (env_display) == 0) {
     set_hc_result (hc, XINE_HEALTH_CHECK_FAIL, "FAILED - DISPLAY environment variable not set.");
   }
   else {
