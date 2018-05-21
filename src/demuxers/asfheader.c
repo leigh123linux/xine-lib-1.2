@@ -426,6 +426,8 @@ static int asf_header_parse_stream_extended_properties (asf_header_t *header, co
       name = (char*)asf_reader_get_bytes (&reader, length); /* store them */
       if (asf_stream_extension->stream_names)
         asf_stream_extension->stream_names[i] = name;
+      else
+        free(name);
     }
   }
 
