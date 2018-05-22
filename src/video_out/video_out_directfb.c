@@ -1782,7 +1782,7 @@ static inline int convert_caps (DFBDisplayLayerCapabilities caps)
 static vo_driver_t *open_plugin_fb (video_driver_class_t *class_gen, const void *visual_gen) {
   directfb_class_t  *class  = (directfb_class_t *) class_gen;
   directfb_driver_t *this;
-  char              *args[] = { "xine", "--dfb:" DIRECTFB_OPTIONS };
+  const char        *args[] = { "xine", "--dfb:" DIRECTFB_OPTIONS };
   int                argn   = 2;
   char             **argp   = (char **) args;
   fb_visual_t       *visual = (fb_visual_t *) visual_gen;
@@ -1955,7 +1955,7 @@ static const vo_info_t vo_info_directfb_fb = {
 static vo_driver_t *open_plugin_x11 (video_driver_class_t *class_gen, const void *visual_gen) {
   directfb_class_t  *class  = (directfb_class_t *) class_gen;
   directfb_driver_t *this;
-  char              *args[] = { "xine", "--dfb:" XDIRECTFB_OPTIONS };
+  const char        *args[] = { "xine", "--dfb:" XDIRECTFB_OPTIONS };
   int                argn   = 2;
   char             **argp   = (char **) args;
   x11_visual_t      *visual = (x11_visual_t *) visual_gen;
