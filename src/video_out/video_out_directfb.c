@@ -750,6 +750,7 @@ static void directfb_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen
   frame->locked = 1;
 }
 
+#ifndef DIRECTFB_X11
 /* directfb_display_frame2(): output to underlay */
 static void directfb_display_frame2 (vo_driver_t *this_gen, vo_frame_t *frame_gen) {
   directfb_driver_t       *this   = (directfb_driver_t *) this_gen;
@@ -875,6 +876,7 @@ static void directfb_display_frame2 (vo_driver_t *this_gen, vo_frame_t *frame_ge
                         (int  *)&frame->vo_frame.pitches[0]);
   frame->locked = 1;
 }
+#endif
 
 static int directfb_get_property (vo_driver_t *this_gen, int property) {
   directfb_driver_t *this = (directfb_driver_t *) this_gen;
@@ -1428,6 +1430,7 @@ static DFBEnumerationResult find_underlay (DFBDisplayLayerID id,
   return DFENUM_OK;
 }
 
+#if 0
 static DFBEnumerationResult find_subpicture (DFBDisplayLayerID id,
                                              DFBDisplayLayerDescription dsc, void *ctx) {
   DFBDisplayLayerID *ret_id = (DFBDisplayLayerID *) ctx;
@@ -1442,7 +1445,9 @@ static DFBEnumerationResult find_subpicture (DFBDisplayLayerID id,
 
   return DFENUM_OK;
 }
+#endif
 
+#ifndef DIRECTFB_X11
 static void init_subpicture (directfb_driver_t *this) {
   DFBResult ret;
 
@@ -1530,6 +1535,7 @@ static void init_subpicture (directfb_driver_t *this) {
            _("video_out_directfb: using hardware subpicture acceleration.\n"));
   }
 }
+#endif
 
 static DFBResult init_device (directfb_driver_t *this) {
   IDirectFBSurface           *surface;
@@ -1738,6 +1744,7 @@ static DFBResult init_device (directfb_driver_t *this) {
   return DFB_OK;
 }
 
+#ifndef DIRECTFB_X11
 static void directfb_frame_output_cb (void *user_data, int video_width, int video_height,
                                       double video_pixel_aspect, int *dest_x, int *dest_y,
                                       int *dest_width, int *dest_height,
@@ -1753,6 +1760,7 @@ static void directfb_frame_output_cb (void *user_data, int video_width, int vide
   *win_x             = 0;
   *win_y             = 0;
 }
+#endif
 
 /*** DirectFB plugin functions ***/
 
@@ -1770,6 +1778,7 @@ static inline int convert_caps (DFBDisplayLayerCapabilities caps)
   return vo;
 }
 
+#ifndef DIRECTFB_X11
 static vo_driver_t *open_plugin_fb (video_driver_class_t *class_gen, const void *visual_gen) {
   directfb_class_t  *class  = (directfb_class_t *) class_gen;
   directfb_driver_t *this;
@@ -1907,6 +1916,7 @@ static vo_driver_t *open_plugin_fb (video_driver_class_t *class_gen, const void 
 
   return &this->vo_driver;
 }
+#endif
 
 #ifndef DIRECTFB_X11
 static void *init_class_fb (xine_t *xine, const void *visual_gen) {
