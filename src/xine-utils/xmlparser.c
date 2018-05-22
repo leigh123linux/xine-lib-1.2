@@ -261,7 +261,6 @@ static int xml_parser_get_node_internal (xml_parser_t *xml_parser,
   int parse_res;
   int bypass_get_token = 0;
   int retval = 0; /* used when state==4; non-0 if there are missing </...> */
-  xml_node_t *subtree = NULL;
   xml_node_t *current_subtree = NULL;
   xml_property_t *current_property = NULL;
   xml_property_t *properties = NULL;
@@ -358,7 +357,9 @@ static int xml_parser_get_node_internal (xml_parser_t *xml_parser,
 	case (T_SEPAR):
 	  /* nothing */
 	  break;
-	case (T_M_STOP_1):
+        case (T_M_STOP_1): {
+          xml_node_t *subtree;
+
 	  /* new subtree */
 	  subtree = new_xml_node();
 
@@ -390,9 +391,11 @@ static int xml_parser_get_node_internal (xml_parser_t *xml_parser,
 	  }
 	  state = STATE_IDLE;
 	  break;
-	case (T_M_STOP_2):
+        }
+        case (T_M_STOP_2): {
 	  /* new leaf */
 	  /* new subtree */
+          xml_node_t *subtree;
 	  new_leaf:
 	  subtree = new_xml_node();
 
@@ -413,6 +416,7 @@ static int xml_parser_get_node_internal (xml_parser_t *xml_parser,
 	  }
 	  state = STATE_IDLE;
 	  break;
+        }
 	case (T_IDENT):
 	  /* save property name */
 	  new_prop:
