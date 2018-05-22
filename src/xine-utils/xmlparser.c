@@ -376,6 +376,7 @@ static int xml_parser_get_node_internal (xml_parser_t *xml_parser,
 						    subtree, root_names, rec + 1, flags);
 	  free (root_names[rec + 1]);
 	  if (parse_res == -1 || parse_res > 0) {
+            xml_parser_free_tree_rec(subtree, 1);
 	    return parse_res;
 	  }
 	  if (current_subtree == NULL) {
