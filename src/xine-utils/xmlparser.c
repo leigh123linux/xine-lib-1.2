@@ -282,6 +282,7 @@ static int xml_parser_get_node_internal (xml_parser_t *xml_parser,
 	  /* do nothing */
 	  break;
 	case (T_EOF):
+          xml_parser_free_props(properties);
 	  return retval; /* normal end */
 	  break;
 	case (T_M_START_1):
@@ -313,6 +314,7 @@ static int xml_parser_get_node_internal (xml_parser_t *xml_parser,
 	  break;
 	default:
 	  lprintf("error: unexpected token \"%s\", state %d\n", tok, state);
+          xml_parser_free_props(properties);
 	  return -1;
 	  break;
 	}
@@ -322,6 +324,7 @@ static int xml_parser_get_node_internal (xml_parser_t *xml_parser,
       case STATE_Q_NODE:
 	switch (res) {
 	case (T_IDENT):
+          xml_parser_free_props(properties);
 	  properties = NULL;
 	  current_property = NULL;
 
@@ -346,6 +349,7 @@ static int xml_parser_get_node_internal (xml_parser_t *xml_parser,
 	  break;
 	default:
 	  lprintf("error: unexpected token \"%s\", state %d\n", tok, state);
+          xml_parser_free_props(properties);
 	  return -1;
 	  break;
 	}
@@ -368,6 +372,7 @@ static int xml_parser_get_node_internal (xml_parser_t *xml_parser,
 
 	  /* set node propertys */
 	  subtree->props = properties;
+          properties = NULL;
 	  lprintf("info: rec %d new subtree %s\n", rec, node_name);
 	  root_names[rec + 1] = strdup (node_name);
 	  parse_res = xml_parser_get_node_internal (xml_parser, token_buffer, token_buffer_size,
@@ -380,9 +385,11 @@ static int xml_parser_get_node_internal (xml_parser_t *xml_parser,
 	    return parse_res;
 	  }
 	  if (current_subtree == NULL) {
+            _x_assert(current_node->child == NULL);
 	    current_node->child = subtree;
 	    current_subtree = subtree;
 	  } else {
+            _x_assert(current_subtree->next == NULL);
 	    current_subtree->next = subtree;
 	    current_subtree = subtree;
 	  }
@@ -405,13 +412,16 @@ static int xml_parser_get_node_internal (xml_parser_t *xml_parser,
 
 	  /* set node propertys */
 	  subtree->props = properties;
+          properties = NULL;
 
 	  lprintf("info: rec %d new subtree %s\n", rec, node_name);
 
 	  if (current_subtree == NULL) {
+            _x_assert(current_node->child == NULL);
 	    current_node->child = subtree;
 	    current_subtree = subtree;
 	  } else {
+            _x_assert(current_subtree->next == NULL);
 	    current_subtree->next = subtree;
 	    current_subtree = subtree;
 	  }
@@ -436,6 +446,7 @@ static int xml_parser_get_node_internal (xml_parser_t *xml_parser,
 	  break;
 	default:
 	  lprintf("error: unexpected token \"%s\", state %d\n", tok, state);
+          xml_parser_free_props(properties);
 	  return -1;
 	  break;
 	}
@@ -453,6 +464,7 @@ static int xml_parser_get_node_internal (xml_parser_t *xml_parser,
 	  goto new_prop;
 	default:
 	  lprintf("error: unexpected token \"%s\", state %d\n", tok, state);
+          xml_parser_free_props(properties);
 	  return -1;
 	  break;
 	}
@@ -485,11 +497,13 @@ static int xml_parser_get_node_internal (xml_parser_t *xml_parser,
 	  else
 	  {
 	    lprintf("error: xml struct, tok=%s, waited_tok=%s\n", tok, root_names[rec]);
+            xml_parser_free_props(properties);
 	    return -1;
 	  }
 	  break;
 	default:
 	  lprintf("error: unexpected token \"%s\", state %d\n", tok, state);
+          xml_parser_free_props(properties);
 	  return -1;
 	  break;
 	}
@@ -503,6 +517,7 @@ static int xml_parser_get_node_internal (xml_parser_t *xml_parser,
 	  break;
 	default:
 	  lprintf("error: unexpected token \"%s\", state %d\n", tok, state);
+          xml_parser_free_props(properties);
 	  return -1;
 	  break;
 	}
@@ -538,6 +553,7 @@ static int xml_parser_get_node_internal (xml_parser_t *xml_parser,
 	  break;
 	default:
 	  lprintf("error: unexpected token \"%s\", state %d\n", tok, state);
+          xml_parser_free_props(properties);
 	  return -1;
 	  break;
 	}
@@ -573,6 +589,7 @@ static int xml_parser_get_node_internal (xml_parser_t *xml_parser,
 	  break;
 	default:
 	  lprintf("error: unexpected token \"%s\", state %d\n", tok, state);
+          xml_parser_free_props(properties);
 	  return -1;
 	  break;
 	}
@@ -603,6 +620,7 @@ static int xml_parser_get_node_internal (xml_parser_t *xml_parser,
 	  break;
 	default:
 	  lprintf("error: unexpected token \"%s\", state %d\n", tok, state);
+          xml_parser_free_props(properties);
 	  return -1;
 	  break;
 	}
@@ -640,6 +658,7 @@ static int xml_parser_get_node_internal (xml_parser_t *xml_parser,
 	  break;
         default:
 	  lprintf("error: unexpected token \"%s\", state %d\n", tok, state);
+          xml_parser_free_props(properties);
 	  return -1;
 	  break;
 	}
@@ -653,6 +672,7 @@ static int xml_parser_get_node_internal (xml_parser_t *xml_parser,
 	  break;
 	default:
 	  lprintf("error: unexpected token \"%s\", state %d\n", tok, state);
+          xml_parser_free_props(properties);
 	  return -1;
 	  break;
 	}
@@ -661,15 +681,18 @@ static int xml_parser_get_node_internal (xml_parser_t *xml_parser,
 
       default:
 	lprintf("error: unknown parser state, state=%d\n", state);
+        xml_parser_free_props(properties);
 	return -1;
       }
     }
     /* lex error */
     lprintf("error: lexer error\n");
+    xml_parser_free_props(properties);
     return -1;
   } else {
     /* max recursion */
     lprintf("error: max recursion\n");
+    xml_parser_free_props(properties);
     return -1;
   }
 }
