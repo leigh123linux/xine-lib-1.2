@@ -52,10 +52,10 @@
 #include <xine/xine_internal.h>
 #include <xine/xineutils.h>
 #include <xine/input_plugin.h>
-#include <xine/io_helper.h>
 #include "net_buf_ctrl.h"
 #include "group_network.h"
 #include "input_helper.h"
+#include "xine_tls.h"
 
 #define NET_BS_LEN 2324
 
@@ -64,16 +64,16 @@ typedef struct {
 
   xine_stream_t   *stream;
 
-  int              fh;
+  xine_tls_t      *tls;
   char            *mrl;
   char            *host_port;
-
-  char             preview[MAX_PREVIEW_SIZE];
-  off_t            preview_size;
 
   off_t            curpos;
 
   nbc_t           *nbc;
+
+  off_t            preview_size;
+  char             preview[MAX_PREVIEW_SIZE];
 
 } net_input_plugin_t;
 
@@ -109,7 +109,7 @@ static off_t net_plugin_read (input_plugin_t *this_gen,
   }
 
   if( (len-total) > 0 ) {
-    n = _x_read_abort (this->stream, this->fh, &buf[total], len-total);
+    n = _x_tls_read (this->tls, &buf[total], len-total);
 
     xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG, "input_net: got %" PRIdMAX " bytes (%" PRIdMAX "/%" PRIdMAX " bytes read)\n", (intmax_t)n, (intmax_t)total, (intmax_t)len);
 
@@ -122,16 +122,6 @@ static off_t net_plugin_read (input_plugin_t *this_gen,
     total += n;
   }
   return total;
-}
-
-static off_t net_plugin_get_length (input_plugin_t *this_gen) {
-
-  return 0;
-}
-
-static uint32_t net_plugin_get_capabilities (input_plugin_t *this_gen) {
-
-  return INPUT_CAP_PREVIEW;
 }
 
 static uint32_t net_plugin_get_blocksize (input_plugin_t *this_gen) {
@@ -179,13 +169,10 @@ static int net_plugin_get_optional_data (input_plugin_t *this_gen,
 static void net_plugin_dispose (input_plugin_t *this_gen ) {
   net_input_plugin_t *this = (net_input_plugin_t *) this_gen;
 
-  if (this->fh != -1) {
-    _x_io_tcp_close(this->stream, this->fh);
-    this->fh = -1;
-  }
+  _x_tls_close (&this->tls);
 
-  free (this->mrl);
-  free (this->host_port);
+  _x_freep (&this->mrl);
+  _x_freep (&this->host_port);
 
   if (this->nbc) {
     nbc_close (this->nbc);
@@ -210,18 +197,23 @@ static int net_plugin_open (input_plugin_t *this_gen ) {
     sscanf(pptr,"%d", &port);
   }
 
-  this->fh     = _x_io_tcp_connect(this->stream, filename, port);
   this->curpos = 0;
 
-  if (this->fh == -1) {
+  this->tls = _x_tls_connect(this->stream->xine, this->stream, filename, port);
+  if (!this->tls) {
     return 0;
+  }
+
+  if (!strncasecmp(this->mrl, "tls", 3)) {
+    if (_x_tls_handshake(this->tls, filename, -1) < 0)
+      return 0;
   }
 
   /*
    * fill preview buffer
    */
   while ((toread > 0) && (trycount < 10)) {
-    int got = _x_io_tcp_read (this->stream, this->fh, this->preview + this->preview_size, toread);
+    int got = _x_tls_read (this->tls, this->preview + this->preview_size, toread);
     if (got < 0)
       break;
     this->preview_size += got;
@@ -240,7 +232,12 @@ static input_plugin_t *net_class_get_instance (input_class_t *cls_gen, xine_stre
   nbc_t *nbc = NULL;
   const char *filename;
 
-  if (!strncasecmp (mrl, "tcp://", 6)) {
+  if (!strncasecmp (mrl, "tcp://", 6)
+#ifdef HAVE_TLS
+      || !strncasecmp (mrl, "tls://", 6)
+#endif
+      ) {
+
     filename = &mrl[6];
 
     if((!filename) || (strlen(filename) == 0)) {
@@ -272,18 +269,18 @@ static input_plugin_t *net_class_get_instance (input_class_t *cls_gen, xine_stre
   this->mrl           = strdup(mrl);
   this->host_port     = strdup(filename);
   this->stream        = stream;
-  this->fh            = -1;
+  this->tls           = NULL;
   this->curpos        = 0;
   this->nbc           = nbc;
   this->preview_size  = 0;
 
   this->input_plugin.open              = net_plugin_open;
-  this->input_plugin.get_capabilities  = net_plugin_get_capabilities;
+  this->input_plugin.get_capabilities  = _x_input_get_capabilities_preview;
   this->input_plugin.read              = net_plugin_read;
   this->input_plugin.read_block        = _x_input_default_read_block;
   this->input_plugin.seek              = net_plugin_seek;
   this->input_plugin.get_current_pos   = net_plugin_get_current_pos;
-  this->input_plugin.get_length        = net_plugin_get_length;
+  this->input_plugin.get_length        = _x_input_default_get_length;
   this->input_plugin.get_blocksize     = net_plugin_get_blocksize;
   this->input_plugin.get_mrl           = net_plugin_get_mrl;
   this->input_plugin.get_optional_data = net_plugin_get_optional_data;
@@ -313,3 +310,21 @@ void *input_net_init_class (xine_t *xine, const void *data) {
   return (void *)&input_net_class;
 }
 
+#ifdef HAVE_TLS
+void *input_tls_init_class (xine_t *xine, const void *data) {
+
+  static const input_class_t input_tls_class = {
+    .get_instance      = net_class_get_instance,
+    .description       = N_("tls input plugin"),
+    .identifier        = "TLS",
+    .get_dir           = NULL,
+    .get_autoplay_list = NULL,
+    .dispose           = NULL,
+    .eject_media       = NULL,
+  };
+
+  _x_tls_register_config_keys(xine->config);
+
+  return (void *)&input_tls_class;
+}
+#endif
