@@ -632,6 +632,10 @@ static int xml_parser_get_node_internal (xml_parser_t *xml_parser,
 	case (T_C_STOP):
 	  state = STATE_IDLE;
 	  break;
+        case (T_EOF):
+          lprintf("error: unterminated comment, state %d\n", state);
+          xml_parser_free_props(properties);
+          return -1;
 	default:
 	  break;
 	}
