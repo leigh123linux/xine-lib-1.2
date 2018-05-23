@@ -1,4 +1,5 @@
   * Add seeking support to http input plugin.
+  * XML parser fixes.
 
 xine-lib (1.2.9) 2018-01-11
   * Add LIBXINE_VERBOSITY environment var override.

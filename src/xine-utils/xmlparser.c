@@ -886,9 +886,13 @@ static void xml_parser_dump_node (const xml_node_t *node, int indent) {
 
   p = node->props;
   while (p) {
-    char *value = xml_escape_string (p->value, XML_ESCAPE_SINGLE_QUOTE);
-    printf ("%s='%s'", p->name, value);
-    free (value);
+    if (p->value) {
+      char *value = xml_escape_string (p->value, XML_ESCAPE_SINGLE_QUOTE);
+      printf ("%s='%s'", p->name, value);
+      free (value);
+    } else {
+      printf ("%s", p->name);
+    }
     p = p->next;
     if (p) {
       printf ("\n%*s", indent+2+(int)l, "");
