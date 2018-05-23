@@ -900,6 +900,12 @@ static void xml_parser_dump_node (const xml_node_t *node, int indent) {
   }
   printf (">\n");
 
+  if (node->data) {
+    char *value = xml_escape_string (node->data, XML_ESCAPE_SINGLE_QUOTE);
+    printf ("%*s\"%s\"\n", indent + 2, "", value);
+    free(value);
+  }
+
   n = node->child;
   while (n) {
 
