@@ -712,7 +712,7 @@ static int http_plugin_open (input_plugin_t *this_gen ) {
 
   _x_assert(this->tls == NULL);
 
-  this->tls = _x_tls_init(this->stream, fh);
+  this->tls = _x_tls_init(this->xine, this->stream, fh);
   if (!this->tls) {
     _x_io_tcp_close(this->stream, fh);
     return -2;

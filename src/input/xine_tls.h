@@ -40,8 +40,8 @@ typedef struct xine_tls xine_tls_t;
  * TCP connection
  */
 
-xine_tls_t *_x_tls_connect(xine_stream_t *stream, const char *host, int port);
-xine_tls_t *_x_tls_init(xine_stream_t *stream, int fd);
+xine_tls_t *_x_tls_connect(xine_t *xine, xine_stream_t *stream, const char *host, int port);
+xine_tls_t *_x_tls_init(xine_t *xine, xine_stream_t *stream, int fd);
 void        _x_tls_close(xine_tls_t **);  /* note: associated socket is also closed */
 
 ssize_t _x_tls_read(xine_tls_t *, void *data, size_t len);

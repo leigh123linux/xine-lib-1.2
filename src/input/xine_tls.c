@@ -42,6 +42,7 @@
 
 
 struct xine_tls {
+  xine_t        *xine;
   xine_stream_t *stream;
   int            fd;
 
@@ -62,7 +63,7 @@ static int handle_gnutls_error(xine_tls_t *t, int err)
       errno = EAGAIN;
       return -1;
     default:
-      xprintf(t->stream->xine, XINE_VERBOSITY_LOG, LOG_MODULE ": %s\n", gnutls_strerror(err));
+      xprintf(t->xine, XINE_VERBOSITY_LOG, LOG_MODULE ": %s\n", gnutls_strerror(err));
       break;
   }
 
@@ -195,7 +196,7 @@ void _x_tls_close(xine_tls_t **pt)
   }
 }
 
-xine_tls_t *_x_tls_init(xine_stream_t *stream, int fd)
+xine_tls_t *_x_tls_init(xine_t *xine, xine_stream_t *stream, int fd)
 {
   xine_tls_t *t;
 
@@ -205,12 +206,13 @@ xine_tls_t *_x_tls_init(xine_stream_t *stream, int fd)
   }
 
   t->stream = stream;
+  t->xine   = xine;
   t->fd     = fd;
 
   return t;
 }
 
-xine_tls_t *_x_tls_connect(xine_stream_t *stream, const char *host, int port)
+xine_tls_t *_x_tls_connect(xine_t *xine, xine_stream_t *stream, const char *host, int port)
 {
   xine_tls_t *tls;
   int fh;
@@ -220,7 +222,7 @@ xine_tls_t *_x_tls_connect(xine_stream_t *stream, const char *host, int port)
     return NULL;
   }
 
-  tls = _x_tls_init(stream, fh);
+  tls = _x_tls_init(xine, stream, fh);
   if (!tls) {
     _x_io_tcp_close(stream, fh);
   }
@@ -231,7 +233,7 @@ xine_tls_t *_x_tls_connect(xine_stream_t *stream, const char *host, int port)
 int _x_tls_handshake(xine_tls_t *t, const char *host, int verify)
 {
 #ifndef HAVE_GNUTLS
-  xprintf(t->stream->xine, XINE_VERBOSITY_LOG, LOG_MODULE ": "
+  xprintf(t->xine, XINE_VERBOSITY_LOG, LOG_MODULE ": "
           "No TLS support (gnutls disabled in configure)\n");
   return -1;
 #else /* HAVE_GNUTLS */
@@ -241,7 +243,7 @@ int _x_tls_handshake(xine_tls_t *t, const char *host, int verify)
 
   ret = gnutls_global_init();
   if (ret) {
-    xprintf(t->stream->xine, XINE_VERBOSITY_LOG, LOG_MODULE ": "
+    xprintf(t->xine, XINE_VERBOSITY_LOG, LOG_MODULE ": "
             "gnutls_global_init() failed: %s (%d)\n",
             gnutls_strerror(ret), ret);
     return -1;
@@ -265,7 +267,7 @@ int _x_tls_handshake(xine_tls_t *t, const char *host, int verify)
 
   ret = gnutls_handshake(t->session);
   if (ret) {
-    xprintf(t->stream->xine, XINE_VERBOSITY_LOG, LOG_MODULE ": "
+    xprintf(t->xine, XINE_VERBOSITY_LOG, LOG_MODULE ": "
             "TLS handshake failed: %s (%d)\n",
             gnutls_strerror(ret), ret);
     return -1;
@@ -273,24 +275,24 @@ int _x_tls_handshake(xine_tls_t *t, const char *host, int verify)
 
   t->need_shutdown = 1;
 
-  if (verify < 0)
-    verify = _x_tls_get_verify_tls_cert(t->stream->xine->config);
+  if (verify < 0 && t->xine)
+    verify = _x_tls_get_verify_tls_cert(t->xine->config);
 
   if (verify) {
     unsigned int status;
     if ((ret = gnutls_certificate_verify_peers2(t->session, &status)) < 0) {
-      xprintf(t->stream->xine, XINE_VERBOSITY_LOG, LOG_MODULE ": "
+      xprintf(t->xine, XINE_VERBOSITY_LOG, LOG_MODULE ": "
               "Unable to verify peer certificate: %s (%d)\n",
               gnutls_strerror(ret), ret);
       return -2;
     }
     if (status & GNUTLS_CERT_INVALID) {
-      xprintf(t->stream->xine, XINE_VERBOSITY_LOG, LOG_MODULE ": "
+      xprintf(t->xine, XINE_VERBOSITY_LOG, LOG_MODULE ": "
               "Peer certificate failed verification\n");
       return -2;
     }
     if (gnutls_certificate_type_get(t->session) != GNUTLS_CRT_X509) {
-      xprintf(t->stream->xine, XINE_VERBOSITY_LOG, LOG_MODULE ": "
+      xprintf(t->xine, XINE_VERBOSITY_LOG, LOG_MODULE ": "
               "Unsupported certificate type\n");
       return -2;
     }
@@ -304,7 +306,7 @@ int _x_tls_handshake(xine_tls_t *t, const char *host, int verify)
       ret = gnutls_x509_crt_check_hostname(cert, host);
       gnutls_x509_crt_deinit(cert);
       if (!ret) {
-        xprintf(t->stream->xine, XINE_VERBOSITY_LOG, LOG_MODULE ": "
+        xprintf(t->xine, XINE_VERBOSITY_LOG, LOG_MODULE ": "
                 "The certificate does not match hostname %s\n",
                 host);
         return -3;
