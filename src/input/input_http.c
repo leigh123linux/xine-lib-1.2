@@ -69,6 +69,7 @@ typedef struct {
   input_plugin_t   input_plugin;
 
   xine_stream_t   *stream;
+  xine_t          *xine;
 
   char            *mrl;
 
@@ -107,7 +108,7 @@ typedef struct {
 
   input_class_t     input_class;
 
-  config_values_t  *config;
+  xine_t           *xine;
 
   const char       *proxyhost;
   int               proxyport;
@@ -238,7 +239,7 @@ static int http_plugin_read_metainf (http_input_plugin_t *this) {
   char metadata_buf[255 * 16];
   unsigned char len = 0;
   char *title_end;
-  char *songtitle;
+  const char *songtitle;
   const char *radio;
   xine_event_t uevent;
   xine_ui_data_t data;
@@ -256,6 +257,9 @@ static int http_plugin_read_metainf (http_input_plugin_t *this) {
     metadata_buf[len * 16] = '\0';
 
     lprintf ("http_plugin_read_metainf: %s\n", metadata_buf);
+
+    if (!this->stream)
+      return 1;
 
     /* Extract the title of the current song */
     if ((songtitle = strstr(metadata_buf, "StreamTitle="))) {
@@ -335,7 +339,8 @@ static off_t http_plugin_read_int (http_input_plugin_t *this,
        * servers.
        */
       if ( this->is_lastfm &&
-	   memmem(&buf[read_bytes], nlen, "SYNC", 4) != NULL ) {
+           memmem(&buf[read_bytes], nlen, "SYNC", 4) != NULL &&
+           this->stream != NULL) {
 	/* Tell frontend to update the UI */
 	const xine_event_t event = {
 	  .type = XINE_EVENT_UI_CHANNELS_CHANGED,
@@ -361,9 +366,9 @@ static off_t http_plugin_read_int (http_input_plugin_t *this,
   return read_bytes;
 
 error:
-  if (!_x_action_pending(this->stream))
+  if (this->stream && !_x_action_pending(this->stream))
     _x_message (this->stream, XINE_MSG_READ_ERROR, this->url.host, NULL);
-  xine_log (this->stream->xine, XINE_LOG_MSG, _("input_http: read error %d\n"), errno);
+  xine_log (this->xine, XINE_LOG_MSG, _("input_http: read error %d\n"), errno);
   return read_bytes;
 }
 
@@ -447,7 +452,7 @@ static int resync_nsv(http_input_plugin_t *this) {
   if (pos == 3) {
     lprintf("NSV stream resynced\n");
   } else {
-    xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG,
+    xprintf(this->xine, XINE_VERBOSITY_DEBUG,
       "http: cannot resync NSV stream!\n");
     return 0;
   }
@@ -494,7 +499,7 @@ static int http_restart(http_input_plugin_t * this, off_t abs_offset)
   xine_tls_t *old_tls = this->tls;
   off_t old_pos = this->curpos;
 
-  xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG, LOG_MODULE ": "
+  xprintf(this->xine, XINE_VERBOSITY_DEBUG, LOG_MODULE ": "
           "seek to %" PRId64 ": reconnecting ...\n",
           (int64_t)abs_offset);
 
@@ -503,7 +508,7 @@ static int http_restart(http_input_plugin_t * this, off_t abs_offset)
 
   this->curpos = abs_offset;
   if (this->input_plugin.open(&this->input_plugin) != 1) {
-    xprintf(this->stream->xine, XINE_VERBOSITY_LOG, LOG_MODULE ": "
+    xprintf(this->xine, XINE_VERBOSITY_LOG, LOG_MODULE ": "
             "seek to %" PRId64 " failed (http request failed)\n",
             (int64_t)abs_offset);
     _x_tls_close(&this->tls);
@@ -512,7 +517,7 @@ static int http_restart(http_input_plugin_t * this, off_t abs_offset)
 
   if (this->curpos != abs_offset) {
     /* something went wrong ... */
-    xprintf(this->stream->xine, XINE_VERBOSITY_LOG, LOG_MODULE ": "
+    xprintf(this->xine, XINE_VERBOSITY_LOG, LOG_MODULE ": "
             "seek to %" PRId64 " failed (server returned invalid range)\n",
             (int64_t)abs_offset);
     _x_tls_close(&this->tls);
@@ -542,7 +547,7 @@ static off_t http_plugin_seek(input_plugin_t *this_gen, off_t offset, int origin
 
     abs_offset = _x_input_translate_seek(offset, origin, this->curpos, this->contentlength);
     if (abs_offset < 0) {
-      xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
+      xprintf(this->xine, XINE_VERBOSITY_LOG,
               "input_http: invalid seek request (%d, %" PRId64 ")\n",
               origin, (int64_t)offset);
       return -1;
@@ -602,6 +607,9 @@ static void report_progress (xine_stream_t *stream, int p) {
   xine_event_t             event;
   xine_progress_data_t     prg;
 
+  if (!stream)
+    return;
+
   prg.description = _("Connecting HTTP server...");
   prg.percent = p;
 
@@ -634,7 +642,7 @@ static int http_plugin_open (input_plugin_t *this_gen ) {
     _x_message(this->stream, XINE_MSG_GENERAL_WARNING, "malformed url", NULL);
     return 0;
   }
-  use_proxy = use_proxy && _x_use_proxy(this->stream->xine, this_class, this->url.host);
+  use_proxy = use_proxy && _x_use_proxy(this->xine, this_class, this->url.host);
 
   use_tls = !strcasecmp (this->url.proto, "https");
 
@@ -678,7 +686,7 @@ static int http_plugin_open (input_plugin_t *this_gen ) {
   {
     uint32_t         timeout, progress;
     xine_cfg_entry_t cfgentry;
-    if (xine_config_lookup_entry (this->stream->xine, "media.network.timeout", &cfgentry)) {
+    if (xine_config_lookup_entry (this->xine, "media.network.timeout", &cfgentry)) {
       timeout = cfgentry.num_value * 1000;
     } else {
       timeout = 30000; /* 30K msecs = 30 secs */
@@ -715,10 +723,10 @@ static int http_plugin_open (input_plugin_t *this_gen ) {
     int r = _x_tls_handshake(this->tls, this->url.host, -1);
     if (r < 0) {
       _x_message(this->stream, XINE_MSG_CONNECTION_REFUSED, "TLS handshake failed", NULL);
-      xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG, LOG_MODULE ": TLS handshake failed\n");
+      xprintf(this->xine, XINE_VERBOSITY_DEBUG, LOG_MODULE ": TLS handshake failed\n");
       return -4;
     }
-    xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG, LOG_MODULE ": TLS handshake succeed, connection is encrypted\n");
+    xprintf(this->xine, XINE_VERBOSITY_DEBUG, LOG_MODULE ": TLS handshake succeed, connection is encrypted\n");
   }
 
   /*
@@ -750,7 +758,7 @@ static int http_plugin_open (input_plugin_t *this_gen ) {
       buflen = strlen(buf);
       snprintf (buf + buflen, sizeof(buf) - buflen, "Range: bytes=%" PRId64 "-\015\012",
                 (int64_t)this->curpos/*, (int64_t)this->contentlength - 1*/);
-      xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG, "input_http: requesting restart from offset %" PRId64 "\n",
+      xprintf(this->xine, XINE_VERBOSITY_DEBUG, "input_http: requesting restart from offset %" PRId64 "\n",
               (int64_t)this->curpos);
   }
 
@@ -787,7 +795,7 @@ static int http_plugin_open (input_plugin_t *this_gen ) {
 
   if (_x_tls_write(this->tls, buf, buflen) != buflen) {
     _x_message(this->stream, XINE_MSG_CONNECTION_REFUSED, "couldn't send request", NULL);
-    xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG, LOG_MODULE ": couldn't send request\n");
+    xprintf(this->xine, XINE_VERBOSITY_DEBUG, LOG_MODULE ": couldn't send request\n");
     return -4;
   }
 
@@ -836,36 +844,36 @@ static int http_plugin_open (input_plugin_t *this_gen ) {
 		    &httpcode, httpstatus) != 2)
 	   ) {
 	    _x_message(this->stream, XINE_MSG_CONNECTION_REFUSED, "invalid http answer", NULL);
-	    xine_log (this->stream->xine, XINE_LOG_MSG,
+            xine_log (this->xine, XINE_LOG_MSG,
 		      _("input_http: invalid http answer\n"));
 	    return -6;
 	}
 
 	if (httpcode >= 300 && httpcode < 400) {
-	  xine_log (this->stream->xine, XINE_LOG_MSG,
+          xine_log (this->xine, XINE_LOG_MSG,
 		    _("input_http: 3xx redirection: >%d %s<\n"),
 		    httpcode, httpstatus);
 	} else if (httpcode == 404) {
 	  _x_message(this->stream, XINE_MSG_FILE_NOT_FOUND, this->mrl, NULL);
-	  xine_log (this->stream->xine, XINE_LOG_MSG,
+          xine_log (this->xine, XINE_LOG_MSG,
 		    _("input_http: http status not 2xx: >%d %s<\n"),
 		                        httpcode, httpstatus);
 	  return -7;
 	} else if (httpcode == 401) {
-	  xine_log (this->stream->xine, XINE_LOG_MSG,
+          xine_log (this->xine, XINE_LOG_MSG,
 		    _("input_http: http status not 2xx: >%d %s<\n"),
 		    httpcode, httpstatus);
           /* don't return - there may be a WWW-Authenticate header... */
 	} else if (httpcode == 403) {
           _x_message(this->stream, XINE_MSG_PERMISSION_ERROR, this->mrl, NULL);
-	  xine_log (this->stream->xine, XINE_LOG_MSG,
+          xine_log (this->xine, XINE_LOG_MSG,
 		    _("input_http: http status not 2xx: >%d %s<\n"),
 		    httpcode, httpstatus);
 	  return -8;
 	} else if (httpcode < 200 || httpcode >= 300) {
 	  _x_message(this->stream, XINE_MSG_CONNECTION_REFUSED, "http status not 2xx: ",
 	               httpstatus, NULL);
-	  xine_log (this->stream->xine, XINE_LOG_MSG,
+          xine_log (this->xine, XINE_LOG_MSG,
 		    _("input_http: http status not 2xx: >%d %s<\n"),
 		    httpcode, httpstatus);
 	  return -9;
@@ -875,7 +883,7 @@ static int http_plugin_open (input_plugin_t *this_gen ) {
 	  intmax_t contentlength;
 
           if (sscanf(buf, "Content-Length: %" SCNdMAX , &contentlength) == 1) {
-	    xine_log (this->stream->xine, XINE_LOG_MSG,
+	    xine_log (this->xine, XINE_LOG_MSG,
               _("input_http: content length = %" PRIdMAX " bytes\n"),
               contentlength);
 	    this->contentlength = (off_t)contentlength;
@@ -889,27 +897,27 @@ static int http_plugin_open (input_plugin_t *this_gen ) {
             this->curpos = range_start;
             this->contentlength = contentlength;
             if (contentlength != range_end + 1) {
-              xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
+              xprintf(this->xine, XINE_VERBOSITY_LOG,
                       "input_http: Reveived invalid content range: \'%s\'\n", buf);
               /* truncate - there won't be more data anyway */
               this->contentlength = range_end + 1;
             } else {
-              xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG,
+              xprintf(this->xine, XINE_VERBOSITY_DEBUG,
                       "input_http: Stream starting at offset %" PRIdMAX "\n", range_start);
             }
           } else {
-            xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
+            xprintf(this->xine, XINE_VERBOSITY_LOG,
                     "input_http: Error parsing \'%s\'\n", buf);
           }
         }
 
         if (!strncasecmp(buf, "Accept-Ranges", 13)) {
           if (strstr(buf + 14, "bytes")) {
-            xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG,
+            xprintf(this->xine, XINE_VERBOSITY_DEBUG,
                     "input_http: Server supports request ranges. Enabling seeking support.\n");
             this->accept_range = 1;
           } else {
-            xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
+            xprintf(this->xine, XINE_VERBOSITY_LOG,
                     "input_http: Unknown value in header \'%s\'\n", buf + 14);
             this->accept_range = 0;
           }
@@ -941,6 +949,7 @@ static int http_plugin_open (input_plugin_t *this_gen ) {
 	}
 
         /* Icecast / ShoutCast Stuff */
+        if (this->stream) {
         if (!strncasecmp(buf, TAG_ICY_NAME, sizeof(TAG_ICY_NAME) - 1)) {
           _x_meta_info_set(this->stream, XINE_META_INFO_ALBUM,
                            (buf + sizeof(TAG_ICY_NAME) - 1 +
@@ -965,6 +974,7 @@ static int http_plugin_open (input_plugin_t *this_gen ) {
           _x_meta_info_set(this->stream, XINE_META_INFO_COMMENT,
                            (buf + sizeof(TAG_ICY_NOTICE2) - 1 +
                             (*(buf + sizeof(TAG_ICY_NOTICE2) - 1) == ' ')));
+        }
         }
 
         /* metadata interval (in byte) */
@@ -998,7 +1008,7 @@ static int http_plugin_open (input_plugin_t *this_gen ) {
       len ++;
     if ( len >= (int)sizeof(buf) ) {
        _x_message(this->stream, XINE_MSG_PERMISSION_ERROR, this->mrl, NULL);
-       xine_log (this->stream->xine, XINE_LOG_MSG,
+       xine_log (this->xine, XINE_LOG_MSG,
          _("input_http: buffer exhausted after %zu bytes."), sizeof(buf));
        return -10;
     }
@@ -1056,7 +1066,7 @@ static int http_plugin_open (input_plugin_t *this_gen ) {
   }
   if (this->preview_size < 0) {
     this->preview_size = 0;
-    xine_log (this->stream->xine, XINE_LOG_MSG, _("input_http: read error %d\n"), errno);
+    xine_log (this->xine, XINE_LOG_MSG, _("input_http: read error %d\n"), errno);
     return -12;
   }
 
@@ -1075,7 +1085,7 @@ static int http_plugin_open (input_plugin_t *this_gen ) {
  */
 static input_plugin_t *http_class_get_instance (input_class_t *cls_gen, xine_stream_t *stream,
 				    const char *mrl) {
-  /* http_input_class_t  *cls = (http_input_class_t *) cls_gen;*/
+  http_input_class_t  *cls = (http_input_class_t *)cls_gen;
   http_input_plugin_t *this;
 
   if (strncasecmp (mrl, "http://", 7) &&
@@ -1097,8 +1107,11 @@ static input_plugin_t *http_class_get_instance (input_class_t *cls_gen, xine_str
   }
 
   this->stream = stream;
+  this->xine   = cls->xine;
   this->tls    = NULL;
-  this->nbc    = nbc_init (this->stream);
+  if (stream) {
+    this->nbc  = nbc_init (stream);
+  }
 
   this->input_plugin.open              = http_plugin_open;
   this->input_plugin.get_capabilities  = http_plugin_get_capabilities;
@@ -1118,7 +1131,7 @@ static input_plugin_t *http_class_get_instance (input_class_t *cls_gen, xine_str
 
 static void http_class_dispose (input_class_t *this_gen) {
   http_input_class_t  *this = (http_input_class_t *) this_gen;
-  config_values_t     *config = this->config;
+  config_values_t     *config = this->xine->config;
 
   config->unregister_callback(config, "media.network.http_proxy_host");
   config->unregister_callback(config, "media.network.http_proxy_port");
@@ -1138,7 +1151,7 @@ void *input_http_init_class (xine_t *xine, const void *data) {
 
   this = calloc(1, sizeof (http_input_class_t));
 
-  this->config = xine->config;
+  this->xine   = xine;
   config       = xine->config;
 
   this->input_class.get_instance       = http_class_get_instance;
