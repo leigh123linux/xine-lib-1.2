@@ -332,7 +332,16 @@ static void demux_ts_small_memcpy (void *d, const void *s, size_t l) {
 #undef  MAX
 #define MAX(a,b) ((a)>(b)?(a):(b))
 
-/* seek helpers */
+/* seek helpers: try to figure out the type of each video frame from its
+ * first ts packet (~150 bytes). the basic idea is:
+ * mpeg-ts shall support broadcasting. unlike streaming, client has no
+ * return channel to request setup info by. instead, pat and pmt repeat
+ * every half second, and video decoder configuration aka sequence head
+ * repeats before each keyframe.
+ * if easy to do, read frame type directly.
+ * also, consider some special cases of related info.
+ * if this seems to work during normal business, use it to find next
+ * keyframe after seek as well. */
 
 typedef enum {
   FRAMETYPE_UNKNOWN = 0,
@@ -342,6 +351,16 @@ typedef enum {
 } frametype_t;
 
 static frametype_t frametype_h264 (const uint8_t *f, uint32_t len) {
+  static const uint8_t t[16] = {
+    FRAMETYPE_UNKNOWN, FRAMETYPE_I,
+    FRAMETYPE_UNKNOWN, FRAMETYPE_P,
+    FRAMETYPE_UNKNOWN, FRAMETYPE_B,
+    FRAMETYPE_UNKNOWN, FRAMETYPE_UNKNOWN,
+    FRAMETYPE_UNKNOWN, FRAMETYPE_UNKNOWN,
+    FRAMETYPE_UNKNOWN, FRAMETYPE_UNKNOWN,
+    FRAMETYPE_UNKNOWN, FRAMETYPE_UNKNOWN,
+    FRAMETYPE_UNKNOWN, FRAMETYPE_UNKNOWN
+  };
   const uint8_t *e = f + len - 5;
   while (f <= e) {
     uint32_t v = _X_BE_32 (f);
@@ -351,17 +370,88 @@ static frametype_t frametype_h264 (const uint8_t *f, uint32_t len) {
     v &= 0x1f; /* nal unit type */
     if (v == 7) /* sequence parameter set */
       return FRAMETYPE_I;
+    if ((v == 1) || (v == 5)) /* (non) IDR slice, no use to scan further */
+      break;
     f += 4 - 1;
     if (v != 9) /* access unit delimiter */
       continue;
-    v = f[0] >> 4;
-    if (v == 1)
-      return FRAMETYPE_I;
-    if (v == 3)
-      return FRAMETYPE_P;
-    if (v == 5)
-      return FRAMETYPE_B;
+    v = t[f[0] >> 4];
+    if (v != FRAMETYPE_UNKNOWN)
+      return v;
     f += 1;
+  }
+  return FRAMETYPE_UNKNOWN;
+}
+
+static frametype_t frametype_h265 (const uint8_t *f, uint32_t len) {
+  static const uint8_t t[8] = {
+    FRAMETYPE_UNKNOWN, FRAMETYPE_I, FRAMETYPE_P, FRAMETYPE_P, FRAMETYPE_B,
+    FRAMETYPE_UNKNOWN, FRAMETYPE_UNKNOWN, FRAMETYPE_UNKNOWN
+  };
+  const uint8_t *e = f + len - 5;
+  while (f <= e) {
+    uint32_t v = _X_BE_32 (f);
+    f += 1;
+    if ((v >> 8) != 1)
+      continue;
+    v = (v & 0x7e) >> 1; /* nal unit type */
+    if (v == 32) /* video parameter set */
+      return FRAMETYPE_I;
+    if (v == 33) /* sequence parameter set */
+      return FRAMETYPE_I;
+    if ((v >= 16) && (v <= 23)) /* IRAP slice */
+      return FRAMETYPE_I;
+    f += 4 - 1;
+    if (v == 39) /* slice extra info prefix */
+      continue;
+    if (v != 35) /* access unit delimiter */
+      continue;
+    /* misusing nal unit temporal id as a frame type indicator,
+     * as we only have data from first ts packet.
+     * seems to be better than nothing with some dvb streams. */
+    v = t[f[0] & 7];
+    if (v != FRAMETYPE_UNKNOWN)
+      return v;
+    f += 1;
+  }
+  return FRAMETYPE_UNKNOWN;
+}
+
+static frametype_t frametype_mpeg (const uint8_t *f, uint32_t len) {
+  static const uint8_t t[8] = {
+    FRAMETYPE_UNKNOWN, FRAMETYPE_I, FRAMETYPE_P, FRAMETYPE_B,
+    FRAMETYPE_UNKNOWN, FRAMETYPE_UNKNOWN, FRAMETYPE_UNKNOWN, FRAMETYPE_UNKNOWN
+  };
+  const uint8_t *e = f + len - 4 - 2;
+  while (f <= e) {
+    uint32_t v = _X_BE_32 (f);
+    f += 1;
+    if ((v >> 8) != 1)
+      continue;
+    v &= 0xff; /* nal unit type */
+    if (v == 0xb3) /* sequence head */
+      return FRAMETYPE_I;
+    f += 4 - 1;
+    if (v != 0) /* picture start */
+      continue;
+    return t[(f[1] & 0x38) >> 3];
+  }
+  return FRAMETYPE_UNKNOWN;
+}
+
+static frametype_t frametype_vc1 (const uint8_t *f, uint32_t len) {
+  const uint8_t *e = f + len - 4 - 1;
+  while (f <= e) {
+    uint32_t v = _X_BE_32 (f);
+    f += 1;
+    if ((v >> 8) != 1)
+      continue;
+    v &= 0xff; /* nal unit type */
+    if (v == 15) /* sequence head */
+      return FRAMETYPE_I;
+    if (v == 13) /* frame start */
+      break;
+    f += 4 - 1;
   }
   return FRAMETYPE_UNKNOWN;
 }
@@ -623,14 +713,17 @@ static int demux_ts_dynamic_pmt_find (demux_ts_t *this,
       }
     } else if (type == BUF_VIDEO_BASE) {
       xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG, "demux_ts: new video pid %d\n", pid);
-      this->get_frametype = NULL;
+      this->get_frametype = frametype_mpeg;
       m->fifo = this->stream->video_fifo;
       switch (descriptor_tag) {
-        case ISO_14496_PART2_VIDEO:  m->video_type = BUF_VIDEO_MPEG4;      break;
+        case ISO_14496_PART2_VIDEO:  m->video_type = BUF_VIDEO_MPEG4;
+                                     this->get_frametype = NULL;           break;
         case ISO_14496_PART10_VIDEO: m->video_type = BUF_VIDEO_H264;
                                      this->get_frametype = frametype_h264; break;
-        case STREAM_VIDEO_VC1:       m->sure_type  = BUF_VIDEO_VC1;        break;
-        case STREAM_VIDEO_HEVC:      m->sure_type  = BUF_VIDEO_HEVC;       break;
+        case STREAM_VIDEO_VC1:       m->sure_type  = BUF_VIDEO_VC1;
+                                     this->get_frametype = frametype_vc1;  break;
+        case STREAM_VIDEO_HEVC:      m->sure_type  = BUF_VIDEO_HEVC;
+                                     this->get_frametype = frametype_h265; break;
         default: ;
       }
     } else {
