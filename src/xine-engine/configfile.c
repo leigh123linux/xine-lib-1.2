@@ -1412,34 +1412,6 @@ static char* config_get_serialized_entry (config_values_t *this, const char *key
 
 }
 
-static size_t get_int(uint8_t *buffer, size_t buffer_size, size_t pos, int *value) {
-  int32_t value_int32;
-
-  if ((pos + sizeof(int32_t)) > buffer_size)
-    return 0;
-
-  value_int32 = _X_LE_32(&buffer[pos]);
-  *value = (int)value_int32;
-  return sizeof(int32_t);
-}
-
-static size_t get_string(uint8_t *buffer, int buffer_size, size_t pos, char **value) {
-  int len;
-  size_t bytes = get_int(buffer, buffer_size, pos, &len);
-  *value = NULL;
-
-  if (!bytes || (len < 0) || (len > 1024*64))
-    return 0;
-
-  char *str = malloc(len + 1);
-  pos += bytes;
-  memcpy(str, &buffer[pos], len);
-  str[len] = 0;
-
-  *value = str;
-  return bytes + len;
-}
-
 static char* config_register_serialized_entry (config_values_t *this, const char *value) {
   /*
       fields serialized :
@@ -1467,60 +1439,84 @@ static char* config_register_serialized_entry (config_values_t *this, const char
   char  *help = NULL;
   char **enum_values = NULL;
 
-  int    bytes;
-  size_t pos;
-  void  *output = NULL;
-  size_t output_len;
   int    value_count = 0;
   int    i;
 
+  uint8_t *output, *p;
+  int    left;
+  int32_t  i32;
+
   output = malloc ((strlen (value) * 3 + 3) / 4 + 1);
-  output_len = xine_base64_decode (value, output);
-  {
-    uint8_t *q = output;
-    q[output_len] = 0;
-  }
+  if (!output)
+    return NULL;
+  left = xine_base64_decode (value, output);
+  p = output;
+  p[left] = 0;
 
-  pos = 0;
-  pos += bytes = get_int(output, output_len, pos, &type);
-  if (!bytes) goto exit;
+  /* we need at least 7 ints and 4 string lengths */
+  left -= 11 * 4;
+  if (left < 0)
+    goto exit;
 
-  pos += bytes = get_int(output, output_len, pos, &range_min);
-  if (!bytes) goto exit;
+  i32 = _X_LE_32 (p); p += 4; type        = i32;
+  i32 = _X_LE_32 (p); p += 4; range_min   = i32;
+  i32 = _X_LE_32 (p); p += 4; range_max   = i32;
+  i32 = _X_LE_32 (p); p += 4; exp_level   = i32;
+  i32 = _X_LE_32 (p); p += 4; num_default = i32;
+  i32 = _X_LE_32 (p); p += 4; num_value   = i32;
 
-  pos += bytes = get_int(output, output_len, pos, &range_max);
-  if (!bytes) goto exit;
+  i32 = _X_LE_32 (p); p += 4;
+  if ((i32 < 0) || (i32 > (64 << 10)))
+    goto exit;
+  left -= i32;
+  if (left < 0)
+    goto exit;
+  key = (char *)p; p += i32;
 
-  pos += bytes = get_int(output, output_len, pos, &exp_level);
-  if (!bytes) goto exit;
+  i32 = _X_LE_32 (p); p[0] = 0; p += 4;
+  if ((i32 < 0) || (i32 > (64 << 10)))
+    goto exit;
+  left -= i32;
+  if (left < 0)
+    goto exit;
+  str_default = (char *)p; p += i32;
 
-  pos += bytes = get_int(output, output_len, pos, &num_default);
-  if (!bytes) goto exit;
+  i32 = _X_LE_32 (p); p[0] = 0; p += 4;
+  if ((i32 < 0) || (i32 > (64 << 10)))
+    goto exit;
+  left -= i32;
+  if (left < 0)
+    goto exit;
+  description = (char *)p; p += i32;
 
-  pos += bytes = get_int(output, output_len, pos, &num_value);
-  if (!bytes) goto exit;
+  i32 = _X_LE_32 (p); p[0] = 0; p += 4;
+  if ((i32 < 0) || (i32 > (64 << 10)))
+    goto exit;
+  left -= i32;
+  if (left < 0)
+    goto exit;
+  help = (char *)p; p += i32;
 
-  pos += bytes = get_string(output, output_len, pos, &key);
-  if (!bytes) goto exit;
-
-  pos += bytes = get_string(output, output_len, pos, &str_default);
-  if (!bytes) goto exit;
-
-  pos += bytes = get_string(output, output_len, pos, &description);
-  if (!bytes) goto exit;
-
-  pos += bytes = get_string(output, output_len, pos, &help);
-  if (!bytes) goto exit;
-
-  pos += bytes = get_int(output, output_len, pos, &value_count);
-  if (!bytes) goto exit;
-  if ((value_count < 0) || (value_count > 256)) goto exit;
-
-  enum_values = calloc (value_count + 1, sizeof(void*));
+  i32 = _X_LE_32 (p); p[0] = 0; p += 4; value_count = i32;
+  if ((value_count < 0) || (value_count > 256))
+    goto exit;
+  left -= value_count * 4;
+  if (left < 0)
+    goto exit;
+  enum_values = malloc ((value_count + 1) * sizeof (void *));
+  if (!enum_values)
+    goto exit;
   for (i = 0; i < value_count; i++) {
-    pos += bytes = get_string(output, output_len, pos, &enum_values[i]);
-    if (!bytes) goto exit;
+    i32 = _X_LE_32 (p); p[0] = 0; p += 4;
+    if ((i32 < 0) || (i32 > (64 << 10)))
+      goto exit;
+    left -= i32;
+    if (left < 0)
+      goto exit;
+    enum_values[i] = (char *)p; p += i32;
   }
+  /* yes we have that byte. */
+  p[0] = 0;
   enum_values[value_count] = NULL;
 
 #ifdef LOG
@@ -1571,18 +1567,11 @@ static char* config_register_serialized_entry (config_values_t *this, const char
   }
 
 exit:
+  if (key)
+    key = strdup (key);
   /* cleanup */
-  free(str_default);
-  free(description);
-  free(help);
   free(output);
-
-  if (enum_values) {
-    for (i = 0; i < value_count; i++) {
-      free(enum_values[i]);
-    }
-    free(enum_values);
-  }
+  free(enum_values);
 
   return key;
 }
