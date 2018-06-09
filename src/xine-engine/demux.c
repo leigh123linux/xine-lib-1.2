@@ -119,34 +119,6 @@ void _x_demux_flush_engine (xine_stream_t *stream) {
 }
 
 
-static struct timespec _x_compute_interval(unsigned int millisecs) {
-  struct timespec ts;
-#ifdef WIN32
-  FILETIME ft;
-  ULARGE_INTEGER ui;
-
-  GetSystemTimeAsFileTime(&ft);
-  ui.u.LowPart  = ft.dwLowDateTime;
-  ui.u.HighPart = ft.dwHighDateTime;
-  ui.QuadPart  += millisecs * 10000;
-  ts.tv_sec = ui.QuadPart / 10000000;
-  ts.tv_sec = (ui.QuadPart % 10000000)*100;
-#elif _POSIX_TIMERS > 0
-  clock_gettime(CLOCK_REALTIME, &ts);
-  uint64_t ttimer = (uint64_t)ts.tv_sec*1000 + ts.tv_nsec/1000000 + millisecs;
-  ts.tv_sec = ttimer/1000;
-  ts.tv_nsec = (ttimer%1000)*1000000;
-#else
-  struct timeval tv;
-  gettimeofday(&tv, NULL);
-  uint64_t ttimer = (uint64_t)tv.tv_sec*1000 + tv.tv_usec/1000 + millisecs;
-  ts.tv_sec = ttimer/1000;
-  ts.tv_nsec = (ttimer%1000)*1000000;
-#endif
-  return ts;
-}
-
-
 void _x_demux_control_newpts( xine_stream_t *stream, int64_t pts, uint32_t flags ) {
 
   buf_element_t *buf;
@@ -232,13 +204,15 @@ void _x_demux_control_headers_done (xine_stream_t *stream) {
 
   while ((stream->header_count_audio < header_count_audio) ||
          (stream->header_count_video < header_count_video)) {
+    struct timespec ts = {0, 0};
+    int ret_wait;
 
     lprintf ("waiting for headers. v:%d %d   a:%d %d\n",
 	     stream->header_count_video, header_count_video,
 	     stream->header_count_audio, header_count_audio);
 
-    struct timespec ts = _x_compute_interval(1000);
-    int ret_wait;
+    xine_gettime (&ts);
+    ts.tv_sec += 1;
 
     /* use timedwait to workaround buggy pthread broadcast implementations */
     ret_wait = pthread_cond_timedwait (&stream->counter_changed, &stream->counter_lock, &ts);
@@ -325,26 +299,41 @@ static void *demux_loop (void *stream_gen) {
   int finished_count_video = 0;
   int non_user;
 
+  int iterations = 0;
+
+  struct timespec seek_time = {0, 0};
+
   lprintf ("loop starting...\n");
+
+  xprintf (stream->xine, XINE_VERBOSITY_DEBUG,
+    "demux: starting stream %p.\n", (void *)stream);
 
   pthread_mutex_lock( &stream->demux_lock );
   stream->emergency_brake = 0;
 
   /* do-while needed to seek after demux finished */
   do {
+    xine_gettime (&seek_time);
 
     /* main demuxer loop */
     status = stream->demux_plugin->get_status(stream->demux_plugin);
     while(status == DEMUX_OK && stream->demux_thread_running &&
           !stream->emergency_brake) {
 
+      iterations++;
       status = stream->demux_plugin->send_chunk(stream->demux_plugin);
 
       /* someone may want to interrupt us */
       if (_x_action_pending(stream)) {
-        struct timespec ts;
-	ts = _x_compute_interval(100);
+        struct timespec ts = {0, 0};
+        xine_gettime (&ts);
+        ts.tv_nsec += 100000000;
+        if (ts.tv_nsec >= 1000000000) {
+          ts.tv_nsec -= 1000000000;
+          ts.tv_sec  += 1;
+        }
         pthread_cond_timedwait (&stream->demux_resume, &stream->demux_lock, &ts);
+        xine_gettime (&seek_time);
       }
     }
 
@@ -360,22 +349,71 @@ static void *demux_loop (void *stream_gen) {
           ((stream->video_fifo->size(stream->video_fifo)) ||
            (stream->audio_fifo->size(stream->audio_fifo))) &&
           status == DEMUX_FINISHED && !stream->emergency_brake){
-      pthread_mutex_unlock( &stream->demux_lock );
-      xine_usec_sleep(100000);
-      pthread_mutex_lock( &stream->demux_lock );
+      struct timespec ts = {0, 0};
+      xine_gettime (&ts);
+      ts.tv_nsec += 100000000;
+      if (ts.tv_nsec >= 1000000000) {
+        ts.tv_nsec -= 1000000000;
+        ts.tv_sec  += 1;
+      }
+      pthread_cond_timedwait (&stream->demux_resume, &stream->demux_lock, &ts);
       status = stream->demux_plugin->get_status(stream->demux_plugin);
     }
 
-    /* delay sending finished event - used for image presentations */
-    while(stream->demux_thread_running &&
-          status == DEMUX_FINISHED && stream->delay_finish_event != 0){
-      pthread_mutex_unlock( &stream->demux_lock );
-      xine_usec_sleep(100000);
-      if( stream->delay_finish_event > 0 )
-        stream->delay_finish_event--;
-      pthread_mutex_lock( &stream->demux_lock );
-      status = stream->demux_plugin->get_status(stream->demux_plugin);
-    }
+    if (stream->demux_thread_running && (status == DEMUX_FINISHED)) do {
+      struct timespec ts = {0, 0};
+      if (stream->delay_finish_event > 0) {
+        /* delay sending finished event - used for image presentations */
+        xine_gettime (&ts);
+        ts.tv_sec  +=  stream->delay_finish_event / 10;
+        ts.tv_nsec += (stream->delay_finish_event % 10) * 100000000;
+        if (ts.tv_nsec >= 1000000000) {
+          ts.tv_nsec -= 1000000000;
+          ts.tv_sec  += 1;
+        }
+        stream->delay_finish_event = 0;
+      } else if (stream->delay_finish_event < 0) {
+        /* infinitely delay sending finished event - used for image presentations */
+        stream->delay_finish_event = 0;
+        xine_gettime (&ts);
+        do {
+          ts.tv_sec += 1;
+          pthread_cond_timedwait (&stream->demux_resume, &stream->demux_lock, &ts);
+          status = stream->demux_plugin->get_status (stream->demux_plugin);
+        } while (stream->demux_thread_running && (status == DEMUX_FINISHED));
+        break;
+      } else {
+        /* stream end may well happen during xine_play () (seek close to end).
+         * Lets not confuse frontend, and delay that message a bit. */
+        ts = seek_time;
+        ts.tv_nsec += 300000000;
+        if (ts.tv_nsec >= 1000000000) {
+          ts.tv_nsec -= 1000000000;
+          ts.tv_sec  += 1;
+        }
+        xine_gettime (&seek_time);
+        if (seek_time.tv_sec > ts.tv_sec)
+          break;
+        if ((seek_time.tv_sec == ts.tv_sec) && (seek_time.tv_nsec >= ts.tv_nsec))
+          break;
+        xprintf (stream->xine, XINE_VERBOSITY_DEBUG,
+          "demux: very short seek segment, delaying finish message.\n");
+        /* there may be no first frame at all here.
+         * make sure xine_play returns first. */
+        pthread_mutex_lock (&stream->first_frame_lock);
+        if (stream->first_frame_flag) {
+          stream->first_frame_flag = 0;
+          pthread_cond_broadcast(&stream->first_frame_reached);
+        }
+        pthread_mutex_unlock (&stream->first_frame_lock);
+      }
+      do {
+        int e = pthread_cond_timedwait (&stream->demux_resume, &stream->demux_lock, &ts);
+        status = stream->demux_plugin->get_status (stream->demux_plugin);
+        if (e == ETIMEDOUT)
+          break;
+      } while (stream->demux_thread_running && (status == DEMUX_FINISHED));
+    } while (0);
 
   } while( status == DEMUX_OK && stream->demux_thread_running &&
            !stream->emergency_brake);
@@ -400,13 +438,14 @@ static void *demux_loop (void *stream_gen) {
   pthread_mutex_unlock( &stream->demux_lock );
 
   pthread_mutex_lock (&stream->counter_lock);
-  struct timespec ts;
   unsigned int max_iterations = 0;
-  int ret_wait;
   while ((stream->finished_count_audio < finished_count_audio) ||
          (stream->finished_count_video < finished_count_video)) {
+    int ret_wait;
+    struct timespec ts = {0, 0};
     lprintf ("waiting for finisheds.\n");
-    ts = _x_compute_interval(1000);
+    xine_gettime (&ts);
+    ts.tv_sec += 1;
     ret_wait = pthread_cond_timedwait (&stream->counter_changed, &stream->counter_lock, &ts);
 
     if (ret_wait == ETIMEDOUT && demux_unstick_ao_loop (stream) && ++max_iterations > 4) {
@@ -417,6 +456,10 @@ static void *demux_loop (void *stream_gen) {
     }
   }
   pthread_mutex_unlock (&stream->counter_lock);
+
+  xprintf (stream->xine, XINE_VERBOSITY_DEBUG,
+    "demux: %s stream %p after %d iterations.\n",
+    non_user ? "finished" : "stopped", (void *)stream, iterations);
 
   _x_handle_stream_end(stream, non_user);
   return NULL;
@@ -801,3 +844,4 @@ void _x_demux_send_mrl_reference (xine_stream_t *stream, int alternative,
 
   free (data.e);
 }
+
