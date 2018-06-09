@@ -1664,7 +1664,8 @@ static int play_internal (xine_stream_t *stream, int start_pos, int start_time) 
   int        demux_status;
   int        demux_thread_running;
 
-  xprintf (stream->xine, XINE_VERBOSITY_DEBUG, "xine_play\n");
+  xprintf (stream->xine, XINE_VERBOSITY_DEBUG,
+    "xine_play (%d.%03d, %d)\n", start_time / 1000, start_time % 1000, start_pos);
 
   if (!stream->demux_plugin) {
     xine_log (stream->xine, XINE_LOG_MSG, _("xine_play: no demux available\n"));
