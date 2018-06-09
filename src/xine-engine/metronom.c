@@ -1159,7 +1159,7 @@ metronom_t * _x_metronom_init (int have_video, int have_audio, xine_t *xine) {
   metronom_t *this = calloc(1, sizeof (metronom_t));
   if (!this)
     return NULL;
-
+#ifndef HAVE_ZERO_SAFE_MEM
   /* Do these first, when compiler still knows "this" is all zeroed.
    * Let it optimize away this on most systems where clear mem
    * interpretes as 0, 0f or NULL safely.
@@ -1177,7 +1177,7 @@ metronom_t * _x_metronom_init (int have_video, int have_audio, xine_t *xine) {
   this->last_audio_pts              = 0;
   this->audio_vpts_rmndr            = 0;
   this->audio_discontinuity_count   = 0;
-
+#endif
   this->set_audio_rate             = metronom_set_audio_rate;
   this->got_video_frame            = metronom_got_video_frame;
   this->got_audio_samples          = metronom_got_audio_samples;
