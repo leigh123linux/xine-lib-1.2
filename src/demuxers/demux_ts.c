@@ -2931,6 +2931,13 @@ static int demux_ts_seek (demux_plugin_t *this_gen,
         }
       }
     }
+    /* seek is called from outside the demux thread.
+     * DEMUX_FINISHED here may be a leftover from previous run, or the result of a seek
+     * behind last keyframe. but that would trigger an annoying error message, and keep
+     * user stuck until an explicit new seek, stop or open.
+     * instead, defer a possible error to send_chunk () what will trigger a regular
+     * stream end/switch. */
+    this->status = DEMUX_OK;
   }
 
   this->send_newpts = 1;
