@@ -341,7 +341,7 @@ static void ticket_renew (xine_ticket_t *tgen, int irrevocable) {
       /* If registered threads are safe: Wait for ticket reissue, 
        * and dont burn cpu in endless retries.
        * If registered threads are still running around: Fall through. */
-      if (!this->tickets_granted)
+      while (this->pending_revocations && !this->tickets_granted)
         pthread_cond_wait (&this->issued, &this->lock);
       break;
     }
