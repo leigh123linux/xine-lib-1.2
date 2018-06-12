@@ -29,7 +29,7 @@
 
 #include "config.h"
 
-#if HAVE_MLIB
+#ifdef HAVE_MLIB
 
 #include <stdio.h>
 #include <stdlib.h>

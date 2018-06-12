@@ -177,7 +177,7 @@ static int yuv2rgb_configure (yuv2rgb_t *this_gen,
     if (!this->v_buffer)
       return 0;
 
-#if HAVE_MLIB
+#ifdef HAVE_MLIB
     /* Only need these if we are resizing and in mlib code */
     this->mlib_buffer = xine_malloc_aligned (source_width * source_height * 4);
     if (!this->mlib_buffer)
@@ -3451,7 +3451,7 @@ yuv2rgb_factory_t* yuv2rgb_factory_init (int mode, int swapped,
 #endif
   }
 #endif
-#if HAVE_MLIB
+#ifdef HAVE_MLIB
   if ((this->yuv2rgb_fun == NULL) && (mm & MM_ACCEL_MLIB)) {
 
     yuv2rgb_init_mlib (this);
