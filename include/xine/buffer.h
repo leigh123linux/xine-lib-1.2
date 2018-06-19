@@ -665,6 +665,16 @@ struct fifo_buffer_s
    * - renew it when revoked.
    */
   buf_element_t *(*tget) (fifo_buffer_t *fifo, xine_ticket_t *ticket);
+
+  /* Try to enlarge an allocated buf.
+   * There are 2 possible results:
+   * a) The buffer has been enlarged, and NULL is returned.
+   * b) The buffer cannot be enlarged due to internal memory fragmentation,
+   *    and a new buffer for the extra data is returned.
+   *    No need for an extra buffer_pool_size_alloc ().
+   * Any result may still be smaller, do check buf->max_size.
+   */
+  buf_element_t *(*buffer_pool_realloc) (buf_element_t *buf, size_t new_size);
 } ;
 
 /**

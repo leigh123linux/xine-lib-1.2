@@ -135,22 +135,16 @@ static void buffer_pool_free (buf_element_t *element) {
  * allocate a buffer from buffer pool
  */
 
-static buf_element_t *buffer_pool_size_alloc (fifo_buffer_t *this, size_t size) {
+static buf_element_t *buffer_pool_size_alloc_int (fifo_buffer_t *this, int n) {
 
-  int i, n;
+  int i;
   be_ei_t *buf;
-
-  n = size ? ((int)size + this->buffer_pool_buf_size - 1) / this->buffer_pool_buf_size : 1;
-  if (n > (this->buffer_pool_capacity >> 2))
-    n = this->buffer_pool_capacity >> 2;
-  if (n < 1)
-    n = 1;
-
-  pthread_mutex_lock (&this->buffer_pool_mutex);
 
   for (i = 0; this->alloc_cb[i]; i++)
     this->alloc_cb[i] (this, this->alloc_cb_data[i]);
 
+  if (n < 1)
+    n = 1;
   /* we always keep one free buffer for emergency situations like
    * decoder flushes that would need a buffer in buffer_pool_try_alloc() */
   n += 2;
@@ -230,6 +224,15 @@ static buf_element_t *buffer_pool_size_alloc (fifo_buffer_t *this, size_t size) 
   return &buf->elem;
 }
 
+static buf_element_t *buffer_pool_size_alloc (fifo_buffer_t *this, size_t size) {
+  int n = size ? ((int)size + this->buffer_pool_buf_size - 1) / this->buffer_pool_buf_size : 1;
+  if (n > (this->buffer_pool_capacity >> 2))
+    n = this->buffer_pool_capacity >> 2;
+  pthread_mutex_lock (&this->buffer_pool_mutex);
+  return buffer_pool_size_alloc_int (this, n);
+}
+
+
 static buf_element_t *buffer_pool_alloc (fifo_buffer_t *this) {
   be_ei_t *buf;
   int i;
@@ -270,6 +273,72 @@ static buf_element_t *buffer_pool_alloc (fifo_buffer_t *this) {
   _x_extra_info_reset (buf->elem.extra_info);
 
   return &buf->elem;
+}
+
+static buf_element_t *buffer_pool_realloc (buf_element_t *buf, size_t new_size) {
+  fifo_buffer_t *this;
+  buf_element_t **last_buf;
+  be_ei_t *old_buf = (be_ei_t *)buf, *new_buf, *want_buf;
+  int n;
+
+  if (!old_buf)
+    return NULL;
+  if ((int)new_size <= old_buf->elem.max_size)
+    return NULL;
+  if (old_buf->elem.free_buffer != buffer_pool_free)
+    return NULL;
+  this = (fifo_buffer_t *)old_buf->elem.source;
+  if (!this)
+    return NULL;
+
+  n = ((int)new_size + this->buffer_pool_buf_size - 1) / this->buffer_pool_buf_size;
+  /* limit size to keep pool fluent */
+  if (n > (this->buffer_pool_capacity >> 3))
+    n = this->buffer_pool_capacity >> 3;
+  n -= old_buf->nbufs;
+
+  want_buf = old_buf + old_buf->nbufs;
+  last_buf = &this->buffer_pool_top;
+  pthread_mutex_lock (&this->buffer_pool_mutex);
+  while (1) {
+    new_buf = (be_ei_t *)(*last_buf);
+    if (!new_buf)
+      break;
+    if (new_buf == want_buf)
+      break;
+    if (new_buf > want_buf) {
+      new_buf = NULL;
+      break;
+    }
+    new_buf += new_buf->nbufs;
+    last_buf = &(new_buf[-1].elem.next);
+  }
+
+  if (new_buf) do {
+    int s;
+    /* save emergecy buf */
+    if (n > this->buffer_pool_num_free - 1)
+      n = this->buffer_pool_num_free - 1;
+    if (n < 1)
+      break;
+    s = new_buf->nbufs - n;
+    if (s > 0) {
+      new_buf += n;
+      new_buf->nbufs = s;
+      *last_buf = &new_buf->elem;
+    } else {
+      n = new_buf->nbufs;
+      new_buf += n;
+      *last_buf = new_buf[-1].elem.next;
+    }
+    this->buffer_pool_num_free -= n;
+    pthread_mutex_unlock (&this->buffer_pool_mutex);
+    old_buf->nbufs += n;
+    old_buf->elem.max_size = old_buf->nbufs * this->buffer_pool_buf_size;
+    return NULL;
+  } while (0);
+
+  return buffer_pool_size_alloc_int (this, n);
 }
 
 /*
@@ -405,7 +474,7 @@ static void fifo_buffer_insert (fifo_buffer_t *fifo, buf_element_t *element) {
  * insert buffer element to fifo buffer (demuxers MUST NOT call this one)
  */
 static void dummy_fifo_buffer_insert (fifo_buffer_t *fifo, buf_element_t *element) {
-
+  (void)fifo;
   element->free_buffer(element);
 }
 
@@ -865,6 +934,7 @@ fifo_buffer_t *_x_fifo_buffer_new (int num_buffers, uint32_t buf_size) {
   this->buffer_pool_alloc      = buffer_pool_alloc;
   this->buffer_pool_try_alloc  = buffer_pool_try_alloc;
   this->buffer_pool_size_alloc = buffer_pool_size_alloc;
+  this->buffer_pool_realloc    = buffer_pool_realloc;
 
   this->buffer_pool_large_wait  = LARGE_NUM;
 
@@ -915,4 +985,3 @@ void _x_free_buf_elements(buf_element_t *head) {
     }
   }
 }
-
