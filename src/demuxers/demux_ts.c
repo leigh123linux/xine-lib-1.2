@@ -604,6 +604,9 @@ typedef struct {
   FILE *vhdfile;
 #endif
 
+  /* statistics */
+  int     enlarge_total, enlarge_ok;
+
   uint8_t pat[PAT_BUF_SIZE];
 
   /* 0x00 | media_index    (video/audio/subtitle)
@@ -1594,15 +1597,23 @@ static void demux_ts_buffer_pes (demux_ts_t*this, const uint8_t *ts,
 
     /* append data */
     if ((int)len > room) {
-      if (room > 0)
-        demux_ts_small_memcpy (m->buf->mem + m->buf->size, ts, room);
-      m->pes_bytes_left -= m->buf->max_size;
-      m->buf->size = m->buf->max_size;
-      demux_ts_send_buffer (this, m, 0);
-      m->buf = m->fifo->buffer_pool_alloc (m->fifo);
-      m->buf->decoder_flags = BUF_FLAG_MERGE;
-      demux_ts_small_memcpy (m->buf->mem, ts + room, len - room);
-      m->buf->size = len - room;
+      buf_element_t *new_buf = m->fifo->buffer_pool_realloc (m->buf, m->buf->size + len);
+      this->enlarge_total++;
+      if (!new_buf) {
+        this->enlarge_ok++;
+        demux_ts_small_memcpy (m->buf->mem + m->buf->size, ts, len);
+        m->buf->size += len;
+      } else {
+        if (room > 0)
+          demux_ts_small_memcpy (m->buf->mem + m->buf->size, ts, room);
+        m->pes_bytes_left -= m->buf->max_size;
+        m->buf->size = m->buf->max_size;
+        demux_ts_send_buffer (this, m, 0);
+        m->buf = new_buf;
+        /* m->buf->decoder_flags = BUF_FLAG_MERGE; */
+        demux_ts_small_memcpy (m->buf->mem, ts + room, len - room);
+        m->buf->size = len - room;
+      }
     } else {
       demux_ts_small_memcpy (m->buf->mem + m->buf->size, ts, len);
       m->buf->size += len;
@@ -2771,6 +2782,11 @@ static void demux_ts_dispose (demux_plugin_t *this_gen) {
     fclose (this->vhdfile);
 #endif
 
+  if (this->enlarge_total)
+    xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG,
+      "demux_ts: %d of %d buffer enlarges worked.\n",
+      this->enlarge_ok, this->enlarge_total);
+
   free(this_gen);
 }
 
@@ -3129,6 +3145,8 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen,
   this->buf_pos            = 0;
   this->buf_size           = 0;
 #  endif
+  this->enlarge_total      = 0;
+  this->enlarge_ok         = 0;
 #endif
 
   this->stream    = stream;
