@@ -392,7 +392,9 @@ static input_plugin_t *v4l2_class_get_instance(input_class_t *gen_cls, xine_stre
     lprintf("We can handle %s!\n", mrl);
 
     this = calloc(1, sizeof(v4l2_input_plugin_t));
-    _x_assert(this);
+    if (!this)
+      return NULL;
+
     this->mrl = strdup(mrl);
     this->input_plugin.open = v4l2_input_open;
     this->input_plugin.get_capabilities = v4l2_input_get_capabilities;
