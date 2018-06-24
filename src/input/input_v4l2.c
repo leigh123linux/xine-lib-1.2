@@ -369,16 +369,7 @@ static off_t v4l2_input_seek(input_plugin_t *this_gen, off_t offset, int origin)
     return -1;
 }
 
-static off_t v4l2_input_seek_time(input_plugin_t *this_gen, int time_offset, int origin) {
-    return -1;
-}
-
 static off_t v4l2_input_pos(input_plugin_t *this_gen) {
-    /* TODO */
-    return 0;
-}
-
-static int v4l2_input_time(input_plugin_t *this_gen) {
     /* TODO */
     return 0;
 }
@@ -411,9 +402,9 @@ static input_plugin_t *v4l2_class_get_instance(input_class_t *gen_cls, xine_stre
     this->input_plugin.read = v4l2_input_read;
     this->input_plugin.read_block = v4l2_input_read_block;
     this->input_plugin.seek = v4l2_input_seek;
-    this->input_plugin.seek_time = v4l2_input_seek_time;
+    this->input_plugin.seek_time = NULL;
     this->input_plugin.get_current_pos = v4l2_input_pos;
-    this->input_plugin.get_current_time = v4l2_input_time;
+    this->input_plugin.get_current_time = NULL;
     this->input_plugin.get_length = v4l2_input_length;
     this->input_plugin.get_optional_data = v4l2_input_get_optional_data;
     this->input_plugin.input_class = gen_cls;
