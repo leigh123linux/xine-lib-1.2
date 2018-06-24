@@ -271,7 +271,6 @@ typedef struct {
 
 typedef struct {
   input_plugin_t       input_plugin;
-  input_class_t       *class;
   xine_stream_t       *stream;
 
   struct  {
@@ -1741,7 +1740,7 @@ static void _cdda_cddb_socket_close(cdda_input_plugin_t *this) {
  * Try to talk with CDDB server (to retrieve disc/tracks titles).
  */
 static int _cdda_cddb_retrieve(cdda_input_plugin_t *this) {
-  cdda_input_class_t *this_class = (cdda_input_class_t *)this->class;
+  cdda_input_class_t *this_class = (cdda_input_class_t *)this->input_plugin.input_class;
   char buffer[2048], buffercache[32768], *m, *p;
   char *dtitle = NULL;
   int err, i;
@@ -2370,8 +2369,8 @@ static void cdda_plugin_dispose (input_plugin_t *this_gen ) {
   _x_freep(&this->mrl);
 
   _x_freep(&this->cdda_device);
-  if (this->class) {
-    cdda_input_class_t *inp = (cdda_input_class_t *) this->class;
+  if (this->input_plugin.input_class) {
+    cdda_input_class_t *inp = (cdda_input_class_t *) this->input_plugin.input_class;
     inp->ip = NULL;
   }
 
@@ -2699,7 +2698,6 @@ static input_plugin_t *cdda_class_get_instance (input_class_t *cls_gen, xine_str
   this->cddb.track = NULL;
   this->fd         = -1;
   this->net_fd     = -1;
-  this->class      = (input_class_t *) class;
 
   this->input_plugin.open               = cdda_plugin_open;
   this->input_plugin.get_capabilities   = cdda_plugin_get_capabilities;
