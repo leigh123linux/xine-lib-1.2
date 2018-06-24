@@ -388,22 +388,20 @@ static int file_input_open (input_plugin_t *this_gen ) {
 static int file_input_get_optional_data (input_plugin_t *this_gen, void *data, int data_type);
 
 static input_plugin_t *file_input_get_instance (input_class_t *cls_gen, xine_stream_t *stream,
-				    const char *data) {
+                                                const char *mrl) {
 
   /* file_input_class_t  *cls = (file_input_class_t *) cls_gen; */
   file_input_plugin_t *this;
-  char                *mrl = strdup(data);
 
   lprintf("file_input_get_instance\n");
 
   if ((strncasecmp (mrl, "file:", 5)) && strstr (mrl, ":/") && (strstr (mrl, ":/") < strchr(mrl, '/'))) {
-    free (mrl);
     return NULL;
   }
 
   this = (file_input_plugin_t *) calloc(1, sizeof (file_input_plugin_t));
   this->stream = stream;
-  this->mrl    = mrl;
+  this->mrl    = strdup(mrl);
   this->fh     = -1;
 
   this->input_plugin.open               = file_input_open;
