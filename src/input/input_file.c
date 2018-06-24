@@ -400,6 +400,9 @@ static input_plugin_t *file_input_get_instance (input_class_t *cls_gen, xine_str
   }
 
   this = (file_input_plugin_t *) calloc(1, sizeof (file_input_plugin_t));
+  if (!this)
+    return NULL;
+
   this->stream = stream;
   this->mrl    = strdup(mrl);
   this->fh     = -1;
@@ -936,6 +939,8 @@ static void *file_input_init_plugin (xine_t *xine, const void *data) {
   config_values_t     *config;
 
   this = (file_input_class_t *) calloc(1, sizeof (file_input_class_t));
+  if (!this)
+    return NULL;
 
   this->xine   = xine;
   config       = xine->config;

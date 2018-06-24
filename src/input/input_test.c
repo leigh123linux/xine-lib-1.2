@@ -651,6 +651,9 @@ static input_plugin_t *test_class_get_instance (input_class_t *cls_gen,
   if (i == TEST_FILES) return NULL;
 
   this = (test_input_plugin_t *) calloc(1, sizeof (test_input_plugin_t));
+  if (!this)
+    return NULL;
+
   this->stream = stream;
   this->index = i;
 
@@ -714,6 +717,8 @@ static void *test_init_plugin (xine_t *xine, const void *data) {
   test_input_class_t *this;
 
   this = (test_input_class_t *) calloc(1, sizeof (test_input_class_t));
+  if (!this)
+    return NULL;
 
   this->xine   = xine;
 
