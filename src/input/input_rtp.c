@@ -127,9 +127,9 @@ typedef struct {
   char             *mrl;
   config_values_t  *config;
 
-  char             *filename;
+  const char       *address;
   int               port;
-  char             *interface;    /* For multicast,  eth0, eth1 etc */
+  const char       *interface;    /* For multicast,  eth0, eth1 etc */
   int               is_rtp;
 
   int               fh;
@@ -626,12 +626,12 @@ static int rtp_plugin_open (input_plugin_t *this_gen ) {
   _x_assert(this->rtp_running == 0);
 
   LOG_MSG(this->stream->xine,
-	  _("Opening >filename:%s port:%d interface:%s<\n"),
-	  this->filename,
+          _("Opening >address:%s port:%d interface:%s<\n"),
+          this->address,
 	  this->port,
 	  this->interface);
 
-  this->fh = host_connect(this->filename, this->port,
+  this->fh = host_connect(this->address, this->port,
 			  this->interface, this->stream->xine);
 
   if (this->fh == -1) return 0;
@@ -657,7 +657,7 @@ static input_plugin_t *rtp_class_get_instance (input_class_t *cls_gen,
 					       xine_stream_t *stream,
 					       const char *data) {
   rtp_input_plugin_t *this;
-  char               *filename = NULL;
+  char               *address = NULL;
   char               *pptr;
   char               *iptr;
   char               *mrl;
@@ -667,21 +667,21 @@ static input_plugin_t *rtp_class_get_instance (input_class_t *cls_gen,
 
   mrl = strdup(data);
   if (!strncasecmp (mrl, "rtp://", 6)) {
-    filename = &mrl[6];
+    address = &mrl[6];
     is_rtp = 1;
   }
   else if (!strncasecmp (mrl, "udp://", 6)) {
-    filename = &mrl[6];
+    address = &mrl[6];
     is_rtp = 0;
   }
 
-  if (filename == NULL || strlen(filename) == 0) {
+  if (address == NULL || strlen(address) == 0) {
     free(mrl);
     return NULL;
   }
 
   /* Locate the port number */
-  pptr=strchr(filename, ':');
+  pptr = strchr(address, ':');
   iptr = NULL;
   if (pptr) {
     *pptr++ = '\0';
@@ -704,7 +704,7 @@ static input_plugin_t *rtp_class_get_instance (input_class_t *cls_gen,
   this = calloc(1, sizeof(rtp_input_plugin_t));
   this->stream       = stream;
   this->mrl          = mrl;
-  this->filename     = filename;
+  this->address      = address;
   this->port         = port;
   this->is_rtp       = is_rtp;
   this->fh           = -1;
