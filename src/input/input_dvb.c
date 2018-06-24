@@ -2805,7 +2805,7 @@ static int dvb_plugin_open(input_plugin_t * this_gen)
 	  } else {
 	    /* just default to channel 0 */
             xprintf(this->stream->xine, XINE_VERBOSITY_LOG, _("input_dvb: invalid channel specification, defaulting to last viewed channel.\n"));
-                xine_config_lookup_entry(this->stream->xine, "media.dvb.remember_channel", &lastchannel);
+            if (xine_config_lookup_entry(this->stream->xine, "media.dvb.remember_channel", &lastchannel)) {
                 if (lastchannel.num_value) {
                   if (xine_config_lookup_entry(this->stream->xine, "media.dvb.last_channel", &lastchannel)){
                     this->channel = lastchannel.num_value -1;
@@ -2816,6 +2816,7 @@ static int dvb_plugin_open(input_plugin_t * this_gen)
                     this->channel = 0;
                   }
                 }
+            }
 	  }
         }
 
