@@ -518,12 +518,12 @@ static void store_vid_frame (buf_element_t *frame)
   pthread_mutex_unlock (&this->vid_frames_lock);
 }
 
-static int extract_mrl(v4l_input_plugin_t *this, char *mrl)
+static int extract_mrl(v4l_input_plugin_t *this, const char *mrl)
 {
   char   *tuner_name = NULL;
   int     frequency  = 0;
-  char   *locator    = NULL;
-  char   *begin      = NULL;
+  const char   *locator    = NULL;
+  const char   *begin      = NULL;
 
   if (mrl == NULL) {
     lprintf("Someone passed an empty mrl\n");
@@ -1721,20 +1721,18 @@ static input_plugin_t *v4l_class_get_instance (input_class_t *cls_gen,
 #ifdef HAVE_ALSA
   cfg_entry_t        *entry;
 #endif
-  char               *mrl     = strdup(data);
 
   /* Example mrl:  v4l:/Television/62500 */
-  if(!mrl || strncasecmp(mrl, "v4l:/", 5)) {
-    free(mrl);
+  if(!data || strncasecmp(data, "v4l:/", 5)) {
     return NULL;
   }
 
   this = calloc(1, sizeof (v4l_input_plugin_t));
-
-  extract_mrl(this, mrl);
+  if (!this)
+    return NULL;
 
   this->stream        = stream;
-  this->mrl           = mrl;
+  this->mrl           = strdup(data);
   this->video_buf     = NULL;
   this->video_fd      = -1;
   this->radio_fd      = -1;
@@ -1743,6 +1741,8 @@ static input_plugin_t *v4l_class_get_instance (input_class_t *cls_gen,
 #ifdef HAVE_ALSA
   this->pcm_data      = NULL;
   this->pcm_hwparams  = NULL;
+
+  extract_mrl(this, this->mrl);
 
   /* Audio */
   this->pcm_stream    = SND_PCM_STREAM_CAPTURE;
