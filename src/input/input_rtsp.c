@@ -243,18 +243,15 @@ static input_plugin_t *rtsp_class_get_instance (input_class_t *cls_gen, xine_str
  */
 void *input_rtsp_init_class (xine_t *xine, const void *data) {
 
-  input_class_t  *this;
-
-  this = calloc(1, sizeof (input_class_t));
-
-  this->get_instance       = rtsp_class_get_instance;
-  this->identifier         = "rtsp";
-  this->description        = N_("rtsp streaming input plugin");
-  this->get_dir            = NULL;
-  this->get_autoplay_list  = NULL;
-  this->dispose            = default_input_class_dispose;
-  this->eject_media        = NULL;
-
-  return this;
+  static const input_class_t input_rtsp_class = {
+    .get_instance       = rtsp_class_get_instance,
+    .identifier         = "rtsp",
+    .description        = N_("rtsp streaming input plugin"),
+    .get_dir            = NULL,
+    .get_autoplay_list  = NULL,
+    .dispose            = NULL,
+    .eject_media        = NULL,
+  };
+  return (void *)&input_rtsp_class;
 }
 

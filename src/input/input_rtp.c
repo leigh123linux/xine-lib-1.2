@@ -750,19 +750,17 @@ static input_plugin_t *rtp_class_get_instance (input_class_t *cls_gen,
  */
 static void *init_class (xine_t *xine, const void *data) {
 
-  input_class_t  *this;
+  static const input_class_t input_rtp_class = {
+    .get_instance      = rtp_class_get_instance,
+    .description       = N_("RTP and UDP input plugin as shipped with xine"),
+    .identifier        = "RTP/UDP",
+    .get_dir           = NULL,
+    .get_autoplay_list = NULL,
+    .dispose           = NULL,
+    .eject_media       = NULL,
+  };
 
-  this         = calloc(1, sizeof(input_class_t));
-
-  this->get_instance      = rtp_class_get_instance;
-  this->description       = N_("RTP and UDP input plugin as shipped with xine");
-  this->identifier        = "RTP/UDP";
-  this->get_dir           = NULL;
-  this->get_autoplay_list = NULL;
-  this->dispose           = default_input_class_dispose;
-  this->eject_media       = NULL;
-
-  return this;
+  return (void *)&input_rtp_class;
 }
 
 /*

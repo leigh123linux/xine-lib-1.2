@@ -682,18 +682,14 @@ static input_plugin_t *_get_instance (input_class_t *cls_gen, xine_stream_t *str
 
 static void *scp_init_class(xine_t *xine, const void *data)
 {
-  input_class_t *this;
+  static const input_class_t input_scp_class = {
+    .get_instance      = _get_instance,
+    .description       = N_("SCP input plugin"),
+    .identifier        = "SCP",
+    .dispose           = NULL,
+  };
 
-  this = calloc(1, sizeof(*this));
-  if (!this)
-    return NULL;
-
-  this->get_instance      = _get_instance;
-  this->description       = N_("SCP input plugin");
-  this->identifier        = "SCP";
-  this->dispose           = default_input_class_dispose;
-
-  return this;
+  return (void *)&input_scp_class;
 }
 
 /*

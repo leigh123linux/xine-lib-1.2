@@ -1892,18 +1892,17 @@ static input_plugin_t *v4l_class_get_radio_instance (input_class_t *cls_gen,
  */
 static void *init_video_class (xine_t *xine, void *data)
 {
-  input_class_t      *this;
+  static const input_class_t v4l_video_input_class = {
+    .get_instance       = v4l_class_get_video_instance,
+    .identifier         = "v4l",
+    .description        = N_("v4l tv input plugin"),
+    .get_dir            = NULL,
+    .get_autoplay_list  = NULL,
+    .dispose            = NULL,
+    .eject_media        = NULL,
+  };
+
   config_values_t    *config = xine->config;
-
-  this = calloc(1, sizeof (input_class_t));
-
-  this->get_instance       = v4l_class_get_video_instance;
-  this->identifier         = "v4l";
-  this->description        = N_("v4l tv input plugin");
-  this->get_dir            = NULL;
-  this->get_autoplay_list  = NULL;
-  this->dispose            = default_input_class_dispose;
-  this->eject_media        = NULL;
 
   config->register_filename (config, "media.video4linux.video_device",
 			   VIDEO_DEV, XINE_CONFIG_STRING_IS_DEVICE_NAME,
@@ -1923,23 +1922,22 @@ static void *init_video_class (xine_t *xine, void *data)
                         _("Selects the TV standard of the input signals. "
                         "Either: AUTO, PAL, NTSC or SECAM. "), 20, NULL, NULL);
 
-  return this;
+  return (void *)&v4l_video_input_class;
 }
 
 static void *init_radio_class (xine_t *xine, void *data)
 {
-  input_class_t *this;
+  static const input_class_t v4l_video_input_class = {
+    .get_instance       = v4l_class_get_radio_instance,
+    .identifier         = "v4l",
+    .description        = N_("v4l radio input plugin"),
+    .get_dir            = NULL,
+    .get_autoplay_list  = NULL,
+    .dispose            = NULL,
+    .eject_media        = NULL,
+  };
+
   config_values_t *config = xine->config;
-
-  this = calloc (1, sizeof (input_class_t));
-
-  this->get_instance       = v4l_class_get_radio_instance;
-  this->identifier         = "v4l";
-  this->description        = N_("v4l radio input plugin");
-  this->get_dir            = NULL;
-  this->get_autoplay_list  = NULL;
-  this->dispose            = default_input_class_dispose;
-  this->eject_media        = NULL;
 
   config->register_filename (config, "media.video4linux.radio_device",
 			   RADIO_DEV, XINE_CONFIG_STRING_IS_DEVICE_NAME,
@@ -1947,7 +1945,7 @@ static void *init_radio_class (xine_t *xine, void *data)
 			   _("The path to your Video4Linux radio device."),
 			   10, NULL, NULL);
 
-  return this;
+  return (void *)&v4l_radio_input_class;
 }
 
 /*

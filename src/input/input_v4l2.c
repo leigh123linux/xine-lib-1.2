@@ -423,19 +423,17 @@ static input_plugin_t *v4l2_class_get_instance(input_class_t *gen_cls, xine_stre
 }
 
 static void *v4l2_init_class(xine_t *xine, const void *data) {
-    input_class_t *this;
+    static const input_class_t v4l2_input_class = {
+        .get_instance      = v4l2_class_get_instance,
+        .description       = N_("v4l2 input plugin"),
+        .identifier        = "v4l2",
+        .get_dir           = NULL,
+        .get_autoplay_list = NULL,
+        .dispose           = NULL,
+        .eject_media       = NULL,
+    };
 
-    this = calloc(1, sizeof(input_class_t));
-
-    this->get_instance      = v4l2_class_get_instance;
-    this->description       = N_("v4l2 input plugin");
-    this->identifier        = "v4l2";
-    this->get_dir           = NULL;
-    this->get_autoplay_list = NULL;
-    this->dispose           = default_input_class_dispose;
-    this->eject_media       = NULL;
-
-    return this;
+    return (void *)&v4l2_input_class;
 }
 
 const input_info_t input_info_v4l2 = {
