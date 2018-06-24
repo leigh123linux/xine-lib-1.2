@@ -304,8 +304,6 @@ typedef struct {
 typedef struct {
   input_plugin_t      input_plugin;
 
-  dvb_input_class_t  *class;
-
   xine_stream_t      *stream;
 
   char               *mrl;
@@ -2134,7 +2132,7 @@ static int switch_channel(dvb_input_plugin_t *this, int channel) {
    }
 
   if (!tuner_set_channel (this, &this->channels[channel])) {
-    xprintf (this->class->xine, XINE_VERBOSITY_LOG,
+    xprintf (this->stream->xine, XINE_VERBOSITY_LOG,
 	     _("input_dvb: tuner_set_channel failed\n"));
     pthread_mutex_unlock (&this->channel_change_mutex);
     return 0;
@@ -2146,7 +2144,7 @@ static int switch_channel(dvb_input_plugin_t *this, int channel) {
   event.data = &data;
   event.data_length = sizeof (xine_pids_data_t);
 
-  xprintf (this->class->xine, XINE_VERBOSITY_DEBUG, "input_dvb: sending event\n");
+  xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG, "input_dvb: sending event\n");
 
   xine_event_send (this->stream, &event);
 
@@ -2160,7 +2158,7 @@ static int switch_channel(dvb_input_plugin_t *this, int channel) {
   event.data_length = sizeof(ui_data);
   xine_event_send(this->stream, &event);
 
-  xprintf(this->class->xine,XINE_VERBOSITY_DEBUG,"ui title event sent\n");
+  xprintf(this->stream->xine,XINE_VERBOSITY_DEBUG,"ui title event sent\n");
 
   this->channel = channel;
 
@@ -2220,15 +2218,15 @@ static void do_record (dvb_input_plugin_t *this) {
 
         if((dir = opendir(savedir.str_value))==NULL){
           snprintf (filename, 256, "%s/%s_%s.ts",xine_get_homedir(),this->channels[this->channel].name, dates);
-          xprintf(this->class->xine,XINE_VERBOSITY_LOG,"savedir is wrong... saving to home directory\n");
+          xprintf(this->stream->xine,XINE_VERBOSITY_LOG,"savedir is wrong... saving to home directory\n");
         } else {
           closedir(dir);
           snprintf (filename, 256, "%s/%s_%s.ts",savedir.str_value,this->channels[this->channel].name, dates);
-          xprintf(this->class->xine,XINE_VERBOSITY_LOG,"saving to savedir\n");
+          xprintf(this->stream->xine,XINE_VERBOSITY_LOG,"saving to savedir\n");
         }
     } else {
         snprintf (filename, 256, "%s/%s_%s.ts",xine_get_homedir(),this->channels[this->channel].name, dates);
-        xprintf(this->class->xine,XINE_VERBOSITY_LOG,"Saving to HomeDir\n");
+        xprintf(this->stream->xine,XINE_VERBOSITY_LOG,"Saving to HomeDir\n");
     }
     /* remove spaces from name */
     while((filename[x]!=0) && x<255){
@@ -2260,7 +2258,7 @@ static void dvb_event_handler (dvb_input_plugin_t *this) {
 
   while ((event = xine_event_get (this->event_queue))) {
 
-    xprintf(this->class->xine,XINE_VERBOSITY_DEBUG,"got event %08x\n", event->type);
+    xprintf(this->stream->xine,XINE_VERBOSITY_DEBUG,"got event %08x\n", event->type);
 
     if (this->fd < 0) {
       xine_event_free (event);
@@ -2501,7 +2499,7 @@ static off_t dvb_plugin_read (input_plugin_t *this_gen,
   if (this->dvb_gui_enabled)
       dvb_event_handler (this);
 #ifdef LOG_READS
-  xprintf(this->class->xine,XINE_VERBOSITY_DEBUG,
+  xprintf(this->stream->xine,XINE_VERBOSITY_DEBUG,
 	  "input_dvb: reading %" PRIdMAX " bytes...\n", (intmax_t)len);
 #endif
 
@@ -2516,7 +2514,7 @@ static off_t dvb_plugin_read (input_plugin_t *this_gen,
 
       if (!this->tuned_in) {
 	  pthread_mutex_unlock( &this->channel_change_mutex );
-	  xprintf(this->class->xine, XINE_VERBOSITY_LOG,
+          xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
 		  "input_dvb: Channel \"%s\" could not be tuned in. "
 		  "Possibly erroneus settings in channels.conf "
 		  "(frequency changed?).\n",
@@ -2525,7 +2523,7 @@ static off_t dvb_plugin_read (input_plugin_t *this_gen,
       }
 
       if (poll(&pfd, 1, 1500) < 1) {
-	  xprintf(this->class->xine, XINE_VERBOSITY_LOG,
+          xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
 		  "input_dvb:  No data available.  Signal Lost??  \n");
 	  _x_demux_control_end(this->stream, BUF_FLAG_END_USER);
 	  this->read_failcount++;
@@ -2536,7 +2534,7 @@ static off_t dvb_plugin_read (input_plugin_t *this_gen,
       /* signal/stream regained after loss -
 	 kick the net_buf_control layer. */
 	  this->read_failcount=0;
-	  xprintf(this->class->xine,XINE_VERBOSITY_LOG,
+          xprintf(this->stream->xine,XINE_VERBOSITY_LOG,
 		  "input_dvb: Data resumed...\n");
 	  _x_demux_control_start(this->stream);
       }
@@ -2545,7 +2543,7 @@ static off_t dvb_plugin_read (input_plugin_t *this_gen,
 	  n = read (this->fd, &buf[total], len-total);
       } else
 	  if (pfd.revents & POLLERR) {
-	      xprintf(this->class->xine, XINE_VERBOSITY_LOG,
+              xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
 		      "input_dvb:  No data available.  Signal Lost??  \n");
 	      _x_demux_control_end(this->stream, BUF_FLAG_END_USER);
 	      this->read_failcount++;
@@ -2553,7 +2551,7 @@ static off_t dvb_plugin_read (input_plugin_t *this_gen,
 	  }
 
 #ifdef LOG_READS
-      xprintf(this->class->xine,XINE_VERBOSITY_DEBUG,
+      xprintf(this->stream->xine,XINE_VERBOSITY_DEBUG,
 	      "input_dvb: got %" PRIdMAX " bytes (%" PRIdMAX "/%" PRIdMAX " bytes read)\n",
 	      (intmax_t)n, (intmax_t)total, (intmax_t)len);
 #endif
@@ -2562,7 +2560,7 @@ static off_t dvb_plugin_read (input_plugin_t *this_gen,
 	  this->curpos += n;
 	  total += n;
       } else if (n < 0 && errno == EOVERFLOW) {
-	  xprintf(this->class->xine, XINE_VERBOSITY_LOG,
+          xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
 		  "input_dvb:  EOVERFLOW returned.  Not reading fast/often enough?  \n");
       } else if (n < 0 && errno!=EAGAIN) {
 	  break;
@@ -2574,7 +2572,7 @@ static off_t dvb_plugin_read (input_plugin_t *this_gen,
   if ((this->record_fd > -1) && (!this->record_paused))
     if (write (this->record_fd, buf, total) != total) {
       do_record(this);
-      xprintf(this->class->xine, XINE_VERBOSITY_LOG,
+      xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
 	      "input_dvb: Recording failed\n");
     }
 
@@ -2598,7 +2596,7 @@ static off_t dvb_plugin_seek (input_plugin_t *this_gen, off_t offset,
 
   dvb_input_plugin_t *this = (dvb_input_plugin_t *) this_gen;
 
-  xprintf(this->class->xine,XINE_VERBOSITY_DEBUG,"seek %" PRIdMAX " bytes, origin %d\n", (intmax_t)offset, origin);
+  xprintf(this->stream->xine,XINE_VERBOSITY_DEBUG,"seek %" PRIdMAX " bytes, origin %d\n", (intmax_t)offset, origin);
 
   return _x_input_seek_preview(this_gen, offset, origin,
                                &this->curpos, -1, -1);
@@ -2716,13 +2714,13 @@ static int dvb_plugin_open(input_plugin_t * this_gen)
 
     if (xine_config_lookup_entry(this->stream->xine, "media.dvb.gui_enabled", &gui_enabled))
       this->dvb_gui_enabled = gui_enabled.num_value;
-    xprintf(this->class->xine, XINE_VERBOSITY_LOG, _("input_dvb: DVB GUI %s\n"), this->dvb_gui_enabled ? "enabled" : "disabled");
+    xprintf(this->stream->xine, XINE_VERBOSITY_LOG, _("input_dvb: DVB GUI %s\n"), this->dvb_gui_enabled ? "enabled" : "disabled");
 
     if (!xine_config_lookup_entry(this->stream->xine, "media.dvb.adapter", &adapter))
       adapter.num_value = 0;
 
-    if (!(tuner = tuner_init(this->class->xine,adapter.num_value))) {
-      xprintf(this->class->xine, XINE_VERBOSITY_LOG, _("input_dvb: cannot open dvb device\n"));
+    if (!(tuner = tuner_init(this->stream->xine,adapter.num_value))) {
+      xprintf(this->stream->xine, XINE_VERBOSITY_LOG, _("input_dvb: cannot open dvb device\n"));
       return 0;
     }
 
@@ -2734,7 +2732,7 @@ static int dvb_plugin_open(input_plugin_t * this_gen)
       * and assume that its format is valid for our tuner type
       */
 
-      if (!(channels = load_channels(this->class->xine, this->stream, &num_channels, tuner->feinfo.type)))
+      if (!(channels = load_channels(this->stream->xine, this->stream, &num_channels, tuner->feinfo.type)))
       {
         /* failed to load the channels */
 	 tuner_dispose(tuner);
@@ -2745,7 +2743,7 @@ static int dvb_plugin_open(input_plugin_t * this_gen)
       {
         /* dvb://<number> format: load channels from ~/.xine/channels.conf */
 	if (this->channel >= num_channels) {
-          xprintf(this->class->xine, XINE_VERBOSITY_LOG,
+          xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
 	            _("input_dvb: channel %d out of range, defaulting to 0\n"),
 		    this->channel);
           this->channel = 0;
@@ -2756,7 +2754,7 @@ static int dvb_plugin_open(input_plugin_t * this_gen)
 	if (*channame) {
 	  /* try to find the specified channel */
 	  int idx = 0;
-	  xprintf(this->class->xine, XINE_VERBOSITY_LOG,
+          xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
 	          _("input_dvb: searching for channel %s\n"), channame);
 
 	  while (idx < num_channels) {
@@ -2779,7 +2777,7 @@ static int dvb_plugin_open(input_plugin_t * this_gen)
 	    size_t chanlen = strlen(channame);
 	    size_t offset = 0;
 
-	    xprintf(this->class->xine, XINE_VERBOSITY_LOG,
+            xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
 		     _("input_dvb: exact match for %s not found: trying partial matches\n"), channame);
 
             do {
@@ -2787,34 +2785,34 @@ static int dvb_plugin_open(input_plugin_t * this_gen)
 	      while (idx < num_channels) {
 	        if (strlen(channels[idx].name) > offset) {
 		  if (strncasecmp(channels[idx].name + offset, channame, chanlen) == 0) {
-                     xprintf(this->class->xine, XINE_VERBOSITY_LOG, _("input_dvb: found matching channel %s\n"), channels[idx].name);
+                     xprintf(this->stream->xine, XINE_VERBOSITY_LOG, _("input_dvb: found matching channel %s\n"), channels[idx].name);
                      break;
                   }
 		}
 		idx++;
               }
 	      offset++;
-	      xprintf(this->class->xine,XINE_VERBOSITY_LOG,"%zd,%d,%d\n", offset, idx, num_channels);
+              xprintf(this->stream->xine,XINE_VERBOSITY_LOG,"%zd,%d,%d\n", offset, idx, num_channels);
             }
             while ((offset < 6) && (idx == num_channels));
               if (idx < num_channels) {
                 this->channel = idx;
               } else {
-                xprintf(this->class->xine, XINE_VERBOSITY_LOG, _("input_dvb: channel %s not found in channels.conf, defaulting.\n"), channame);
+                xprintf(this->stream->xine, XINE_VERBOSITY_LOG, _("input_dvb: channel %s not found in channels.conf, defaulting.\n"), channame);
                 this->channel = 0;
               }
             }
 	  } else {
 	    /* just default to channel 0 */
-	    xprintf(this->class->xine, XINE_VERBOSITY_LOG, _("input_dvb: invalid channel specification, defaulting to last viewed channel.\n"));
-                xine_config_lookup_entry(this->class->xine, "media.dvb.remember_channel", &lastchannel);
+            xprintf(this->stream->xine, XINE_VERBOSITY_LOG, _("input_dvb: invalid channel specification, defaulting to last viewed channel.\n"));
+                xine_config_lookup_entry(this->stream->xine, "media.dvb.remember_channel", &lastchannel);
                 if (lastchannel.num_value) {
-                  if (xine_config_lookup_entry(this->class->xine, "media.dvb.last_channel", &lastchannel)){
+                  if (xine_config_lookup_entry(this->stream->xine, "media.dvb.last_channel", &lastchannel)){
                     this->channel = lastchannel.num_value -1;
                     if (this->channel < 0 || this->channel >= num_channels)
                       this->channel = 0; /* out of range? default */
                   }else{
-                    xprintf(this->class->xine, XINE_VERBOSITY_LOG, _("input_dvb: invalid channel specification, defaulting to channel 0\n"));
+                    xprintf(this->stream->xine, XINE_VERBOSITY_LOG, _("input_dvb: invalid channel specification, defaulting to channel 0\n"));
                     this->channel = 0;
                   }
                 }
@@ -2826,7 +2824,7 @@ static int dvb_plugin_open(input_plugin_t * this_gen)
 	 * This is dvbs://<channel name>:<qpsk tuning parameters>
 	 */
 	if (tuner->feinfo.type != FE_QPSK) {
-	  xprintf(this->class->xine, XINE_VERBOSITY_LOG, _("input_dvb: dvbs mrl specified but the tuner doesn't appear to be QPSK (DVB-S)\n"));
+          xprintf(this->stream->xine, XINE_VERBOSITY_LOG, _("input_dvb: dvbs mrl specified but the tuner doesn't appear to be QPSK (DVB-S)\n"));
 	  tuner_dispose(tuner);
 	  return 0;
 	}
@@ -2845,7 +2843,7 @@ static int dvb_plugin_open(input_plugin_t * this_gen)
 	 * This is dvbt://<channel name>:<ofdm tuning parameters>
 	 */
 	 if (tuner->feinfo.type != FE_OFDM) {
-	   xprintf(this->class->xine, XINE_VERBOSITY_LOG, _("input_dvb: dvbt mrl specified but the tuner doesn't appear to be OFDM (DVB-T)\n"));
+           xprintf(this->stream->xine, XINE_VERBOSITY_LOG, _("input_dvb: dvbt mrl specified but the tuner doesn't appear to be OFDM (DVB-T)\n"));
 	   tuner_dispose(tuner);
 	   return 0;
          }
@@ -2866,7 +2864,7 @@ static int dvb_plugin_open(input_plugin_t * this_gen)
        */
        if (tuner->feinfo.type != FE_QAM)
        {
-         xprintf(this->class->xine, XINE_VERBOSITY_LOG,
+         xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
 	 _("input_dvb: dvbc mrl specified but the tuner doesn't appear to be QAM (DVB-C)\n"));
          tuner_dispose(tuner);
          return 0;
@@ -2889,7 +2887,7 @@ static int dvb_plugin_open(input_plugin_t * this_gen)
        */
        if (tuner->feinfo.type != FE_ATSC)
        {
-         xprintf(this->class->xine, XINE_VERBOSITY_LOG,
+         xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
 	 _("input_dvb: dvba mrl specified but the tuner doesn't appear to be ATSC (DVB-A)\n"));
          tuner_dispose(tuner);
          return 0;
@@ -2916,13 +2914,13 @@ static int dvb_plugin_open(input_plugin_t * this_gen)
     this->num_channels = num_channels;
 
     if (!tuner_set_channel(this, &this->channels[this->channel])) {
-      xprintf(this->class->xine, XINE_VERBOSITY_LOG,
+      xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
 	   _("input_dvb: tuner_set_channel failed\n"));
       return 0;
     }
 
     if ((this->fd = xine_open_cloexec(this->tuner->dvr_device, O_RDONLY |O_NONBLOCK)) < 0) {
-      xprintf(this->class->xine, XINE_VERBOSITY_LOG,
+      xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
              _("input_dvb: cannot open dvr device '%s'\n"), this->tuner->dvr_device);
       return 0;
     }
@@ -2944,8 +2942,7 @@ static int dvb_plugin_open(input_plugin_t * this_gen)
       this->epg_updater_stop = 0;
       if (pthread_create(&this->epg_updater_thread, NULL,
 		         epg_data_updater, this) != 0) {
-	  xprintf(
-	      this->class->xine, XINE_VERBOSITY_LOG,
+          xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
 	      _("input_dvb: cannot create EPG updater thread\n"));
 	  return 0;
       }
@@ -3044,7 +3041,6 @@ static input_plugin_t *dvb_class_get_instance (input_class_t *class_gen,
 				    xine_stream_t *stream,
 				    const char *data) {
 
-  dvb_input_class_t  *class = (dvb_input_class_t *) class_gen;
   dvb_input_plugin_t *this;
   const char         *mrl = data;
 
@@ -3061,7 +3057,6 @@ static input_plugin_t *dvb_class_get_instance (input_class_t *class_gen,
 
   this->stream       = stream;
   this->mrl          = strdup(mrl);
-  this->class        = class;
   this->tuner        = NULL;
   this->channels     = NULL;
   this->fd           = -1;
