@@ -710,9 +710,7 @@ static input_plugin_t *rtp_class_get_instance (input_class_t *cls_gen,
   this->fh           = -1;
   this->rtp_running  = 0;
   this->preview_size = 0;
-  this->interface = NULL;
-
-  if (iptr) this->interface = iptr;
+  this->interface    = iptr;
 
   pthread_mutex_init(&this->buffer_ring_mut, NULL);
 
