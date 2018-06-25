@@ -1130,7 +1130,7 @@ static uint8_t *(*blend_yuv_grow_extra_data(alphablend_t *extra_data, int osd_wi
     header = calloc(1, needed_buffer_size);
     if (!header) {
       extra_data->buffer_size = 0;
-      return 0;
+      return NULL;
     }
     extra_data->buffer_size = needed_buffer_size;
     extra_data->buffer = header;
@@ -2161,7 +2161,7 @@ void _x_alphablend_init(alphablend_t *extra_data, xine_t *xine)
 {
   config_values_t *config = xine->config;
 
-  extra_data->buffer = 0;
+  extra_data->buffer = NULL;
   extra_data->buffer_size = 0;
   extra_data->offset_x = 0;
   extra_data->offset_y = 0;
