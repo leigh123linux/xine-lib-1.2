@@ -389,6 +389,21 @@ static void _insert_node (xine_t *this,
     }
   }
 
+  /* validate special_info pointers */
+  switch (plugin_type) {
+  case PLUGIN_AUDIO_DECODER:
+  case PLUGIN_VIDEO_DECODER:
+  case PLUGIN_SPU_DECODER:
+    decoder_old = info->special_info;
+    if (!decoder_old->supported_types) {
+      xprintf (this, XINE_VERBOSITY_LOG,
+               "load_plugins: decoder plugin from %s is broken: special_info->supported_types = NULL\n",
+               file ? file->filename : "xine-lib");
+      return;
+    }
+    break;
+  }
+
   entry = calloc(1, sizeof(plugin_node_t));
   entry->info         = calloc(1, sizeof(plugin_info_t));
   *(entry->info)      = *info;
