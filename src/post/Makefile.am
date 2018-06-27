@@ -29,7 +29,7 @@ xineplug_post_visualizations_la_SOURCES = \
 	visualizations/tdaudioanalyzer.c \
 	visualizations/visualizations.c \
 	visualizations/visualizations.h
-xineplug_post_visualizations_la_LIBADD = $(XINE_LIB) $(PTHREAD_LIBS) -lm
+xineplug_post_visualizations_la_LIBADD = $(XINE_LIB) $(PTHREAD_LIBS) $(MVEC_LIB) -lm
 
 xineplug_post_audio_filters_la_SOURCES = \
 	audio/audio_filters.c \
@@ -43,7 +43,7 @@ xineplug_post_audio_filters_la_SOURCES = \
 	audio/volnorm.c \
 	audio/window.c \
 	audio/window.h
-xineplug_post_audio_filters_la_LIBADD = $(XINE_LIB) $(PTHREAD_LIBS) $(LTLIBINTL) -lm
+xineplug_post_audio_filters_la_LIBADD = $(XINE_LIB) $(PTHREAD_LIBS) $(LTLIBINTL) $(MVEC_LIB) -lm
 
 xineplug_post_mosaico_la_SOURCES = mosaico/mosaico.c
 xineplug_post_mosaico_la_LIBADD = $(XINE_LIB) $(PTHREAD_LIBS) $(LTLIBINTL)
@@ -167,7 +167,7 @@ xineplug_post_planar_la_SOURCES = \
 	planar/planar.h \
 	planar/unsharp.c \
 	$(pp_module_sources)
-xineplug_post_planar_la_LIBADD  = $(XINE_LIB) $(pp_module_libs) -lm $(PTHREAD_LIBS) $(LTLIBINTL) $(PLANAR_X86_LIB)
+xineplug_post_planar_la_LIBADD  = $(XINE_LIB) $(pp_module_libs) $(MVEC_LIB) -lm $(PTHREAD_LIBS) $(LTLIBINTL) $(PLANAR_X86_LIB)
 xineplug_post_planar_la_DEPS = $(pp_module_deps)
 xineplug_post_planar_la_CFLAGS  = $(AM_CFLAGS) $(pp_module_cflags)
 xineplug_post_planar_la_LDFLAGS = $(AM_LDFLAGS) $(IMPURE_TEXT_LDFLAGS)
