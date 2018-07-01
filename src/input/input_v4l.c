@@ -1927,7 +1927,7 @@ static void *init_video_class (xine_t *xine, void *data)
 
 static void *init_radio_class (xine_t *xine, void *data)
 {
-  static const input_class_t v4l_video_input_class = {
+  static const input_class_t v4l_radio_input_class = {
     .get_instance       = v4l_class_get_radio_instance,
     .identifier         = "v4l",
     .description        = N_("v4l radio input plugin"),
