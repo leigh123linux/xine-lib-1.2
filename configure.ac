@@ -940,6 +940,8 @@ if test x"$libm_is_fast_math_safe" = x"yes" ; then
     O3_CFLAGS="$O3_CFLAGS -ffast-math"
 fi
 
+ac_save_LIBS="$LIBS"
+LIBS="$LIBS -lm"
 AC_MSG_CHECKING([whether libmvec is needed])
 AC_LINK_IFELSE([AC_LANG_PROGRAM([[
     #include <stdlib.h>
@@ -966,6 +968,7 @@ if test x"$MVEC_LIB" != x; then
     [mvec_hax=yes; AC_DEFINE([MVEC_GLIBC_HAX], [], [Define this if there's a compilation error caused by 'missing' libmvec symbols])])
     AC_MSG_RESULT([$mvec_hax])
 fi
+LIBS="$ac_save_LIBS"
 
 AC_SUBST(O1_CFLAGS)
 AC_SUBST(O2_CFLAGS)
