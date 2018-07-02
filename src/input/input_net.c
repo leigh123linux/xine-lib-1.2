@@ -52,10 +52,10 @@
 #include <xine/xine_internal.h>
 #include <xine/xineutils.h>
 #include <xine/input_plugin.h>
+#include "tls/xine_tls.h"
 #include "net_buf_ctrl.h"
 #include "group_network.h"
 #include "input_helper.h"
-#include "xine_tls.h"
 
 #define NET_BS_LEN 2324
 

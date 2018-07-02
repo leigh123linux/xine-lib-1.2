@@ -40,7 +40,7 @@ media_helper_la_LIBADD = $(XINE_LIB) $(LTLIBINTL)
 net_buf_ctrl_la_SOURCES = net_buf_ctrl.c net_buf_ctrl.h
 net_buf_ctrl_la_LIBADD = $(XINE_LIB) $(LTLIBINTL) $(PTHREAD_LIBS)
 
-xine_tls_la_SOURCES = xine_tls.c xine_tls.h
+xine_tls_la_SOURCES = tls/xine_tls.c tls/xine_tls.h
 xine_tls_la_CFLAGS = $(AM_CFLAGS) $(GNUTLS_CFLAGS)
 xine_tls_la_LIBADD = $(XINE_LIB) $(LTLIBINTL) $(GNUTLS_LIBS)
 
