@@ -161,53 +161,6 @@ struct metronom_s {
 
   void (*exit) (metronom_t *self);
 
-#ifdef METRONOM_INTERNAL
-  /*
-   * metronom internal stuff
-   */
-  xine_t         *xine;
-
-  metronom_t     *master;
-
-  int64_t         pts_per_smpls;
-
-  int64_t         video_vpts;
-  int64_t         spu_vpts;
-  int64_t         audio_vpts;
-  int64_t         audio_vpts_rmndr;  /* the remainder for integer division */
-
-  int64_t         vpts_offset;
-
-  int64_t         video_drift;
-  int64_t         video_drift_step;
-
-  int             audio_samples;
-  int64_t         audio_drift_step;
-
-  int64_t         prebuffer;
-  int64_t         av_offset;
-  int64_t         spu_offset;
-
-  pthread_mutex_t lock;
-
-  int             have_video;
-  int             have_audio;
-  int             video_discontinuity_count;
-  int             audio_discontinuity_count;
-  int             discontinuity_handled_count;
-  pthread_cond_t  video_discontinuity_reached;
-  pthread_cond_t  audio_discontinuity_reached;
-
-  int             force_video_jump;
-  int             force_audio_jump;
-
-  int64_t         img_duration;
-  int             img_cpt;
-  int64_t         last_video_pts;
-  int64_t         last_audio_pts;
-
-  int             video_mode;
-#endif
 };
 
 /*

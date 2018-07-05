@@ -39,7 +39,6 @@
 #define LOG
 #define LOG_AUDIO
 */
-#define METRONOM_INTERNAL
 #define METRONOM_CLOCK_INTERNAL
 
 #include <xine/xine_internal.h>
@@ -319,8 +318,65 @@ static int metronom_set_speed (metronom_clock_t *this, int speed) {
   return true_speed;
 }
 
+/*
+ * metronom
+ */
 
-static void metronom_set_audio_rate (metronom_t *this, int64_t pts_per_smpls) {
+typedef struct {
+
+  metronom_t metronom;
+
+  /*
+   * metronom internal stuff
+   */
+  xine_t         *xine;
+
+  metronom_t     *master;
+
+  int64_t         pts_per_smpls;
+
+  int64_t         video_vpts;
+  int64_t         spu_vpts;
+  int64_t         audio_vpts;
+  int64_t         audio_vpts_rmndr;  /* the remainder for integer division */
+
+  int64_t         vpts_offset;
+
+  int64_t         video_drift;
+  int64_t         video_drift_step;
+
+  int             audio_samples;
+  int64_t         audio_drift_step;
+
+  int64_t         prebuffer;
+  int64_t         av_offset;
+  int64_t         spu_offset;
+
+  pthread_mutex_t lock;
+
+  int             have_video;
+  int             have_audio;
+  int             video_discontinuity_count;
+  int             audio_discontinuity_count;
+  int             discontinuity_handled_count;
+  pthread_cond_t  video_discontinuity_reached;
+  pthread_cond_t  audio_discontinuity_reached;
+
+  int             force_video_jump;
+  int             force_audio_jump;
+
+  int64_t         img_duration;
+  int             img_cpt;
+  int64_t         last_video_pts;
+  int64_t         last_audio_pts;
+
+  int             video_mode;
+
+} metronom_impl_t;
+
+static void metronom_set_audio_rate (metronom_t *this_gen, int64_t pts_per_smpls) {
+  metronom_impl_t *this = (metronom_impl_t *)this_gen;
+
   pthread_mutex_lock (&this->lock);
 
   this->pts_per_smpls = pts_per_smpls;
@@ -330,7 +386,8 @@ static void metronom_set_audio_rate (metronom_t *this, int64_t pts_per_smpls) {
   lprintf("%" PRId64 " pts per %d samples\n", pts_per_smpls, AUDIO_SAMPLE_NUM);
 }
 
-static int64_t metronom_got_spu_packet (metronom_t *this, int64_t pts) {
+static int64_t metronom_got_spu_packet (metronom_t *this_gen, int64_t pts) {
+  metronom_impl_t *this = (metronom_impl_t *)this_gen;
   int64_t vpts;
 
   pthread_mutex_lock (&this->lock);
@@ -358,7 +415,7 @@ static int64_t metronom_got_spu_packet (metronom_t *this, int64_t pts) {
   return vpts;
 }
 
-static void metronom_handle_discontinuity (metronom_t *this, int type,
+static void metronom_handle_discontinuity (metronom_impl_t *this, int type,
                                            int64_t disc_off) {
   int64_t cur_time;
 
@@ -468,8 +525,9 @@ static void metronom_handle_discontinuity (metronom_t *this, int type,
   this->last_audio_pts = 0;
 }
 
-static void metronom_handle_video_discontinuity (metronom_t *this, int type,
-						 int64_t disc_off) {
+static void metronom_handle_video_discontinuity (metronom_t *this_gen, int type,
+                                                 int64_t disc_off) {
+  metronom_impl_t *this = (metronom_impl_t *)this_gen;
 
   if (type == DISC_GAPLESS) {
     /* this would cause deadlock in metronom_handle_discontinuity()
@@ -513,8 +571,9 @@ static void metronom_handle_video_discontinuity (metronom_t *this, int type,
   pthread_mutex_unlock (&this->lock);
 }
 
-static void metronom_got_video_frame (metronom_t *this, vo_frame_t *img) {
+static void metronom_got_video_frame (metronom_t *this_gen, vo_frame_t *img) {
 
+  metronom_impl_t *this = (metronom_impl_t *)this_gen;
   int64_t pts = img->pts;
 
   pthread_mutex_lock (&this->lock);
@@ -661,8 +720,9 @@ static void metronom_got_video_frame (metronom_t *this, vo_frame_t *img) {
       img->pts, (int)img->duration, img->vpts);
 }
 
-static void metronom_handle_audio_discontinuity (metronom_t *this, int type,
-						 int64_t disc_off) {
+static void metronom_handle_audio_discontinuity (metronom_t *this_gen, int type,
+                                                 int64_t disc_off) {
+  metronom_impl_t *this = (metronom_impl_t *)this_gen;
 
   if (type == DISC_GAPLESS) {
     metronom_handle_discontinuity (this, type, disc_off);
@@ -706,9 +766,10 @@ static void metronom_handle_audio_discontinuity (metronom_t *this, int type,
   pthread_mutex_unlock (&this->lock);
 }
 
-static int64_t metronom_got_audio_samples (metronom_t *this, int64_t pts,
-					   int nsamples) {
+static int64_t metronom_got_audio_samples (metronom_t *this_gen, int64_t pts,
+                                           int nsamples) {
 
+  metronom_impl_t *this = (metronom_impl_t *)this_gen;
   int64_t vpts;
 
   lprintf("got %d audio samples, pts is %" PRId64 ", last pts = %" PRId64 "\n", nsamples, pts, this->last_audio_pts);
@@ -807,7 +868,9 @@ static int64_t metronom_got_audio_samples (metronom_t *this, int64_t pts,
   return vpts;
 }
 
-static void metronom_set_option (metronom_t *this, int option, int64_t value) {
+static void metronom_set_option (metronom_t *this_gen, int option, int64_t value) {
+
+  metronom_impl_t *this = (metronom_impl_t *)this_gen;
 
   if (option == METRONOM_LOCK) {
     if (value) {
@@ -884,8 +947,9 @@ static void metronom_clock_set_option (metronom_clock_t *this,
   pthread_mutex_unlock (&this->lock);
 }
 
-static int64_t metronom_get_option (metronom_t *this, int option) {
+static int64_t metronom_get_option (metronom_t *this_gen, int option) {
 
+  metronom_impl_t *this = (metronom_impl_t *)this_gen;
   int64_t result;
   int mutex_locked;
 
@@ -951,7 +1015,8 @@ static int64_t metronom_clock_get_option (metronom_clock_t *this, int option) {
   return 0;
 }
 
-static void metronom_set_master(metronom_t *this, metronom_t *master) {
+static void metronom_set_master(metronom_t *this_gen, metronom_t *master) {
+  metronom_impl_t *this = (metronom_impl_t *)this_gen;
   metronom_t *old_master = this->master;
 
   pthread_mutex_lock(&this->lock);
@@ -1128,7 +1193,9 @@ static void metronom_unregister_scr (metronom_clock_t *this, scr_plugin_t *scr) 
     metronom_stop_sync_thread (this_priv);
 }
 
-static void metronom_exit (metronom_t *this) {
+static void metronom_exit (metronom_t *this_gen) {
+
+  metronom_impl_t *this = (metronom_impl_t *)this_gen;
 
   pthread_mutex_destroy (&this->lock);
   pthread_cond_destroy (&this->video_discontinuity_reached);
@@ -1157,7 +1224,7 @@ static void metronom_clock_exit (metronom_clock_t *this) {
 
 metronom_t * _x_metronom_init (int have_video, int have_audio, xine_t *xine) {
 
-  metronom_t *this = calloc(1, sizeof (metronom_t));
+  metronom_impl_t *this = calloc(1, sizeof (metronom_impl_t));
   if (!this)
     return NULL;
 #ifndef HAVE_ZERO_SAFE_MEM
@@ -1179,16 +1246,16 @@ metronom_t * _x_metronom_init (int have_video, int have_audio, xine_t *xine) {
   this->audio_vpts_rmndr            = 0;
   this->audio_discontinuity_count   = 0;
 #endif
-  this->set_audio_rate             = metronom_set_audio_rate;
-  this->got_video_frame            = metronom_got_video_frame;
-  this->got_audio_samples          = metronom_got_audio_samples;
-  this->got_spu_packet             = metronom_got_spu_packet;
-  this->handle_audio_discontinuity = metronom_handle_audio_discontinuity;
-  this->handle_video_discontinuity = metronom_handle_video_discontinuity;
-  this->set_option                 = metronom_set_option;
-  this->get_option                 = metronom_get_option;
-  this->set_master                 = metronom_set_master;
-  this->exit                       = metronom_exit;
+  this->metronom.set_audio_rate             = metronom_set_audio_rate;
+  this->metronom.got_video_frame            = metronom_got_video_frame;
+  this->metronom.got_audio_samples          = metronom_got_audio_samples;
+  this->metronom.got_spu_packet             = metronom_got_spu_packet;
+  this->metronom.handle_audio_discontinuity = metronom_handle_audio_discontinuity;
+  this->metronom.handle_video_discontinuity = metronom_handle_video_discontinuity;
+  this->metronom.set_option                 = metronom_set_option;
+  this->metronom.get_option                 = metronom_get_option;
+  this->metronom.set_master                 = metronom_set_master;
+  this->metronom.exit                       = metronom_exit;
 
   this->xine                       = xine;
 
@@ -1209,7 +1276,7 @@ metronom_t * _x_metronom_init (int have_video, int have_audio, xine_t *xine) {
   this->audio_vpts = this->prebuffer;
   pthread_cond_init (&this->audio_discontinuity_reached, NULL);
 
-  return this;
+  return &this->metronom;
 }
 
 
