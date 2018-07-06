@@ -23,12 +23,20 @@
 #ifndef HAVE_NET_BUF_CTRL_H
 #define HAVE_NET_BUF_CTRL_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <xine/xine_internal.h>
 
 typedef struct nbc_s nbc_t;
 
 nbc_t *nbc_init (xine_stream_t *xine);
 
-void nbc_close (nbc_t *this);
+void nbc_close (nbc_t *nbc);
 
+#ifdef __cplusplus
+}
 #endif
+
+#endif /* HAVE_NET_BUF_CTRL_H */
