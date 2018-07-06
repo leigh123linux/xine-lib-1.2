@@ -38,10 +38,6 @@
 #define PARAM3_DEFAULT 6.0
 #define MAX_LINE_WIDTH 2048
 
-#ifdef MVEC_GLIBC_HAX
-/* It's this or a link-time failure */
-__asm__ ("_ZGVbN2vv___pow_finite = _ZGVbN2vv_pow");
-#endif
 
 typedef struct post_plugin_denoise3d_s post_plugin_denoise3d_t;
 
@@ -87,7 +83,7 @@ struct post_plugin_denoise3d_s {
 
 #define ABS(A) ( (A) > 0 ? (A) : -(A) )
 
-static void PrecalcCoefs(int *Ct, double Dist25)
+static void ATTR_NO_FAST_VECTOR_MATH PrecalcCoefs(int *Ct, double Dist25)
 {
     int i;
     double Gamma, Simil;

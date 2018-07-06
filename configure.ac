@@ -901,80 +901,132 @@ AC_SUBST(PASS2_CFLAGS)
 
 test x"$DEFAULT_OCFLAGS" = x"" && DEFAULT_OCFLAGS="O3_CFLAGS"
 
+
 dnl -ffast-math fails in broken build environments due to missing stuff like _foo_pow_finite ().
 dnl We dont want to kill that feature generally either because stuff like faad will benefit a
 dnl lot from inlined fsin/fcos instructions. -Ox affects that code as well, so test it this late
 dnl when we know the final optimization level.
-have_fast_math="no"
-libm_is_fast_math_safe="no"
-CC_CHECK_CFLAGS([-ffast-math], [have_fast_math="yes"])
-if test x"$have_fast_math" = x"yes" ; then
+
+ac_save_CFLAGS="$CFLAGS"
+ac_save_LIBS="$LIBS"
+dnl ugly but "$$DEFAULT_OCFLAGS" wont work here I guess.
+test x"$DEFAULT_OCFLAGS" = x"O0_CFLAGS" && CFLAGS="$CFLAGS $O0_CFLAGS -ffast-math"
+test x"$DEFAULT_OCFLAGS" = x"O1_CFLAGS" && CFLAGS="$CFLAGS $O1_CFLAGS -ffast-math"
+test x"$DEFAULT_OCFLAGS" = x"O2_CFLAGS" && CFLAGS="$CFLAGS $O2_CFLAGS -ffast-math"
+test x"$DEFAULT_OCFLAGS" = x"O3_CFLAGS" && CFLAGS="$CFLAGS $O3_CFLAGS -ffast-math"
+
+dnl Test for libmvec, for unaware libm.
+AC_MSG_CHECKING([for libmvec])
+fast_math_res="no"
+MVEC_LIB=
+LIBS="$ac_save_LIBS -lm -lmvec"
+AC_LINK_IFELSE([AC_LANG_PROGRAM([[
+#include <stdlib.h>
+#include <stdio.h>
+#include <math.h>
+]],[[
+]])], [fast_math_res="yes"; MVEC_LIB="-lmvec"])
+AC_MSG_RESULT([$fast_math_res])
+AC_SUBST(MVEC_LIB)
+LIBS="$ac_save_LIBS -lm $MVEC_LIB"
+
+fast_math_hack=
+while test y = y ; do
+
+    fast_math_res="no"
+    CC_CHECK_CFLAGS([-ffast-math], [fast_math_res="yes"])
+    test x"$fast_math_res" = x"yes" || break
+
     AC_MSG_CHECKING([whether libm supports -ffast-math])
-    ac_save_CFLAGS="$CFLAGS"
-    ac_save_LIBS="$LIBS"
-    dnl ugly but "$$DEFAULT_OCFLAGS" wont work here I guess.
-    test x"$DEFAULT_OCFLAGS" = x"O0_CFLAGS" && CFLAGS="$CFLAGS $O0_CFLAGS -ffast-math"
-    test x"$DEFAULT_OCFLAGS" = x"O1_CFLAGS" && CFLAGS="$CFLAGS $O1_CFLAGS -ffast-math"
-    test x"$DEFAULT_OCFLAGS" = x"O2_CFLAGS" && CFLAGS="$CFLAGS $O2_CFLAGS -ffast-math"
-    test x"$DEFAULT_OCFLAGS" = x"O3_CFLAGS" && CFLAGS="$CFLAGS $O3_CFLAGS -ffast-math"
-    LIBS="$LIBS -lm"
+    fast_math_res="no"
     dnl Make sure gcc does not optimize away all this.
     AC_LINK_IFELSE([AC_LANG_PROGRAM([[
-        #include <stdlib.h>
-        #include <stdio.h>
-        #include <math.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <math.h>
     ]],[[
-        double a, b;
-        a = 0.88 * rand ();
-        b = 0.99 * rand ();
-        a = pow (sin (a), cos (sqrt (b)));
-        printf ("%lf\n", a);
-    ]])], [libm_is_fast_math_safe="yes"])
-    CFLAGS="$ac_save_CFLAGS"
-    LIBS="$ac_save_LIBS"
-    AC_MSG_RESULT([$libm_is_fast_math_safe])
-fi
-if test x"$libm_is_fast_math_safe" = x"yes" ; then
+double a, b;
+a = 0.88 * rand ();
+b = 0.99 * rand ();
+a = pow (sin (a), cos (sqrt (b)));
+printf ("%lf\n", a);
+    ]])], [fast_math_res="yes"])
+    AC_MSG_RESULT([$fast_math_res])
+    test x"$fast_math_res" = x"yes" || break
+
+    AC_MSG_CHECKING([whether compiler autovectorization supports -ffast-math])
+    fast_math_res="no"
+    AC_LINK_IFELSE([AC_LANG_PROGRAM([[
+#include <stdlib.h>
+#include <stdio.h>
+#include <math.h>
+static void maketable (int *tab, double e) {
+    int i;
+    for (i = -256; i <= 255; i++) {
+        double base = 1.0 - (i < 0 ? -i : i) / 255.0;
+        tab[256 + i] = pow (base, e) * 65536;
+    }
+}
+    ]],[[
+int tab[512], i;
+double e = 0.0000000005 * rand ();
+maketable (tab, e);
+for (i = 0; i < 512; i++)
+    e += tab[i];
+printf ("%lf\n", e);
+    ]])], [fast_math_res="yes"])
+    AC_MSG_RESULT([$fast_math_res])
+    test x"$fast_math_res" = x"yes" && break
+
+    fast_math_hack="__attribute__((optimize(no-fast-math)))"
+    AC_MSG_CHECKING([whether __attribute__((optimize(no-fast-math))) works])
+    fast_math_res="no"
+    AC_LINK_IFELSE([AC_LANG_PROGRAM([[
+#include <stdlib.h>
+#include <stdio.h>
+#include <math.h>
+static void __attribute__((optimize(no-fast-math))) maketable (int *tab, double e) {
+    int i;
+    for (i = -256; i <= 255; i++) {
+        double base = 1.0 - (i < 0 ? -i : i) / 255.0;
+        tab[256 + i] = pow (base, e) * 65536;
+    }
+}
+    ]],[[
+int tab[512], i;
+double e = 0.0000000005 * rand ();
+maketable (tab, e);
+for (i = 0; i < 512; i++)
+    e += tab[i];
+printf ("%lf\n", e);
+    ]])], [fast_math_res="yes"])
+    AC_MSG_RESULT([$fast_math_res])
+    test x"$fast_math_res" = x"yes" && break
+
+    fast_math_hack=
+    break
+
+done
+
+CFLAGS="$ac_save_CFLAGS"
+LIBS="$ac_save_LIBS"
+
+if test x"$fast_math_res" = x"yes" ; then
     O1_CFLAGS="$O1_CFLAGS -ffast-math"
     O2_CFLAGS="$O2_CFLAGS -ffast-math"
     O3_CFLAGS="$O3_CFLAGS -ffast-math"
 fi
+AC_DEFINE_UNQUOTED([ATTR_NO_FAST_VECTOR_MATH], [$fast_math_hack], [Define to a function attribute that turns off -ffast-math when needed for autovectorized code.])
 
-ac_save_LIBS="$LIBS"
-LIBS="$LIBS -lm"
-AC_MSG_CHECKING([whether libmvec is needed])
-AC_LINK_IFELSE([AC_LANG_PROGRAM([[
-    #include <stdlib.h>
-    #include <stdio.h>
-    #include <math.h>
-]],[[
-    float a, b;
-    a = 0.88 * rand ();
-    b = 0.99 * rand ();
-    a = pow (sin (a), cos (sqrt (b)));
-    printf ("%lf\n", a);
-]])], [MVEC_LIB=], [MVEC_LIB=-lmvec])
-AC_MSG_RESULT([$MVEC_LIB])
-AC_SUBST(MVEC_LIB)
-if test x"$MVEC_LIB" != x; then
-    AC_MSG_CHECKING([whether libmvec workarounds are needed])
-    AC_LINK_IFELSE([AC_LANG_PROGRAM([[
-        #include <stdlib.h>
-        #include <stdio.h>
-        #include <math.h>
-    ]],[[
-        _ZGVbN2vv___pow_finite(1, 1);
-    ]])], [mvec_hax=no],
-    [mvec_hax=yes; AC_DEFINE([MVEC_GLIBC_HAX], [], [Define this if there's a compilation error caused by 'missing' libmvec symbols])])
-    AC_MSG_RESULT([$mvec_hax])
-fi
-LIBS="$ac_save_LIBS"
+dnl end of -ffast-math stuff
+
 
 AC_SUBST(O1_CFLAGS)
 AC_SUBST(O2_CFLAGS)
 AC_SUBST(O3_CFLAGS)
 DEFAULT_OCFLAGS='$('$DEFAULT_OCFLAGS')'
 AC_SUBST(DEFAULT_OCFLAGS)
+
 
 if test x"$arch_x86" != x"no" && test x"$enable_macosx_universal" = x"no"; then
      AC_DEFINE([ARCH_X86], [], [Define this if you're running x86 architecture])
@@ -1544,3 +1596,4 @@ mv -f libtool.tmp libtool
 chmod +x libtool
 
 XINE_LIB_SUMMARY
+
