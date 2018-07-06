@@ -42,308 +42,425 @@
 /*
 #define LOG
 */
+/* #define DEBUG_CONFIG_FIND */
 
 #include <xine/xineutils.h>
 #include <xine/xine_internal.h>
 
+/* FIXME: static data, no expiry ?! */
 static const xine_config_entry_translation_t *config_entry_translation_user = NULL;
-static const xine_config_entry_translation_t config_entry_translation[] = {
-  { "audio.a52_pass_through",			"" },
-  { "audio.alsa_a52_device",			"audio.device.alsa_passthrough_device" },
-  { "audio.alsa_default_device",		"audio.device.alsa_default_device" },
-  { "audio.alsa_front_device",			"audio.device.alsa_front_device" },
-  { "audio.alsa_mixer_name",			"audio.device.alsa_mixer_name" },
-  { "audio.alsa_mmap_enable",			"audio.device.alsa_mmap_enable" },
-  { "audio.alsa_surround40_device",		"audio.device.alsa_surround40_device" },
-  { "audio.alsa_surround51_device",		"audio.device.alsa_surround51_device" },
-  { "audio.av_sync_method",			"audio.synchronization.av_sync_method" },
-  { "audio.directx_device",			"" },
-  { "audio.esd_latency",			"audio.device.esd_latency" },
-  { "audio.five_channel",			"" },
-  { "audio.five_lfe_channel",			"" },
-  { "audio.force_rate",				"audio.synchronization.force_rate" },
-  { "audio.four_channel",			"" },
-  { "audio.four_lfe_channel",			"" },
-  { "audio.irixal_gap_tolerance",		"audio.device.irixal_gap_tolerance" },
-  { "audio.mixer_name",				"" },
-  { "audio.mixer_number",			"audio.device.oss_mixer_number" },
-  { "audio.mixer_volume",			"audio.volume.mixer_volume" },
-  { "audio.num_buffers",			"engine.buffers.audio_num_buffers" },
-  { "audio.oss_device_name",			"audio.device.oss_device_name" },
-  { "audio.oss_device_num",			"" },
-  { "audio.oss_device_number",			"audio.device.oss_device_number" },
-  { "audio.oss_pass_through_bug",		"" },
-  { "audio.passthrough_offset",			"audio.synchronization.passthrough_offset" },
-  { "audio.remember_volume",			"audio.volume.remember_volume" },
-  { "audio.resample_mode",			"audio.synchronization.resample_mode" },
-  { "audio.speaker_arrangement",		"audio.output.speaker_arrangement" },
-  { "audio.sun_audio_device",			"audio.device.sun_audio_device" },
-  { "codec.a52_dynrng",				"audio.a52.dynamic_range" },
-  { "codec.a52_level",				"audio.a52.level" },
-  { "codec.a52_surround_downmix",		"audio.a52.surround_downmix" },
-  { "codec.ffmpeg_pp_quality",			"video.processing.ffmpeg_pp_quality" },
-  { "codec.real_codecs_path",			"decoder.external.real_codecs_path" },
-  { "codec.win32_path",				"decoder.external.win32_codecs_path" },
-  { "dxr3.alt_play_mode",			"dxr3.playback.alt_play_mode" },
-  { "dxr3.color_interval",			"dxr3.output.keycolor_interval" },
-  { "dxr3.correct_durations",			"dxr3.playback.correct_durations" },
-  { "dxr3.devicename",				"" },
-  { "dxr3.enc_add_bars",			"dxr3.encoding.add_bars" },
-  { "dxr3.enc_alt_play_mode",			"dxr3.encoding.alt_play_mode" },
-  { "dxr3.enc_swap_fields",			"dxr3.encoding.swap_fields" },
-  { "dxr3.encoder",				"dxr3.encoding.encoder" },
-  { "dxr3.fame_quality",			"dxr3.encoding.fame_quality" },
-  { "dxr3.keycolor",				"dxr3.output.keycolor" },
-  { "dxr3.lavc_bitrate",			"dxr3.encoding.lavc_bitrate" },
-  { "dxr3.lavc_qmax",				"dxr3.encoding.lavc_qmax" },
-  { "dxr3.lavc_qmin",				"dxr3.encoding.lavc_qmin" },
-  { "dxr3.lavc_quantizer",			"dxr3.encoding.lavc_quantizer" },
-  { "dxr3.preferred_tvmode",			"dxr3.output.tvmode" },
-  { "dxr3.rte_bitrate",				"dxr3.encoding.rte_bitrate" },
-  { "dxr3.shrink_overlay_area",			"dxr3.output.shrink_overlay_area" },
-  { "dxr3.sync_every_frame",			"dxr3.playback.sync_every_frame" },
-  { "dxr3.videoout_mode",			"dxr3.output.mode" },
-  { "input.cdda_cddb_cachedir",			"media.audio_cd.cddb_cachedir" },
-  { "input.cdda_cddb_port",			"media.audio_cd.cddb_port" },
-  { "input.cdda_cddb_server",			"media.audio_cd.cddb_server" },
-  { "input.cdda_device",			"media.audio_cd.device" },
-  { "input.cdda_use_cddb",			"media.audio_cd.use_cddb" },
-  { "input.css_cache_path",			"media.dvd.css_cache_path" },
-  { "input.css_decryption_method",		"media.dvd.css_decryption_method" },
-  { "input.drive_slowdown",			"media.audio_cd.drive_slowdown" },
-  { "input.dvb_last_channel_enable",		"media.dvb.remember_channel" },
-  { "input.dvb_last_channel_watched",		"media.dvb.last_channel" },
-  { "input.dvbdisplaychan",			"media.dvb.display_channel" },
-  { "input.dvbzoom",				"media.dvb.zoom" },
-  { "input.dvb_adapternum",			"media.dvb.adapter"},
-  { "input.dvd_device",				"media.dvd.device" },
-  { "input.dvd_language",			"media.dvd.language" },
-  { "input.dvd_raw_device",			"media.dvd.raw_device" },
-  { "input.dvd_region",				"media.dvd.region" },
-  { "input.dvd_seek_behaviour",			"media.dvd.seek_behaviour" },
-  { "input.dvd_skip_behaviour",			"media.dvd.skip_behaviour" },
-  { "input.dvd_use_readahead",			"media.dvd.readahead" },
-  { "input.file_hidden_files",			"media.files.show_hidden_files" },
-  { "input.file_origin_path",			"media.files.origin_path" },
-  { "input.http_no_proxy",			"media.network.http_no_proxy" },
-  { "input.http_proxy_host",			"media.network.http_proxy_host" },
-  { "input.http_proxy_password",		"media.network.http_proxy_password" },
-  { "input.http_proxy_port",			"media.network.http_proxy_port" },
-  { "input.http_proxy_user",			"media.network.http_proxy_user" },
-  { "input.mms_network_bandwidth",		"media.network.bandwidth" },
-  { "input.mms_protocol",			"media.network.mms_protocol" },
-  { "input.pvr_device",				"media.wintv_pvr.device" },
-  { "input.v4l_radio_device_path",		"media.video4linux.radio_device" },
-  { "input.v4l_video_device_path",		"media.video4linux.video_device" },
-  { "input.vcd_device",				"media.vcd.device" },
-  { "misc.cc_center",				"subtitles.closedcaption.center" },
-  { "misc.cc_enabled",				"subtitles.closedcaption.enabled" },
-  { "misc.cc_font",				"subtitles.closedcaption.font" },
-  { "misc.cc_font_size",			"subtitles.closedcaption.font_size" },
-  { "misc.cc_italic_font",			"subtitles.closedcaption.italic_font" },
-  { "misc.cc_scheme",				"subtitles.closedcaption.scheme" },
-  { "misc.demux_strategy",			"engine.demux.strategy" },
-  { "misc.memcpy_method",			"engine.performance.memcpy_method" },
-  { "misc.osd_text_palette",			"ui.osd.text_palette" },
-  { "misc.save_dir",				"media.capture.save_dir" },
-  { "misc.spu_font",				"subtitles.separate.font" },
-  { "misc.spu_src_encoding",			"subtitles.separate.src_encoding" },
-  { "misc.spu_subtitle_size",			"subtitles.separate.subtitle_size" },
-  { "misc.spu_use_unscaled_osd",		"subtitles.separate.use_unscaled_osd" },
-  { "misc.spu_vertical_offset",			"subtitles.separate.vertical_offset" },
-  { "misc.sub_timeout",				"subtitles.separate.timeout" },
-  { "post.goom_csc_method",			"effects.goom.csc_method" },
-  { "post.goom_fps",				"effects.goom.fps" },
-  { "post.goom_height",				"effects.goom.height" },
-  { "post.goom_width",				"effects.goom.width" },
-  { "vcd.autoadvance",				"media.vcd.autoadvance" },
-  { "vcd.autoplay",				"media.vcd.autoplay" },
-  { "vcd.comment_format",			"media.vcd.comment_format" },
-  { "vcd.debug",				"media.vcd.debug" },
-  { "vcd.default_device",			"media.vcd.device" },
-  { "vcd.length_reporting",			"media.vcd.length_reporting" },
-  { "vcd.show_rejected",			"media.vcd.show_rejected" },
-  { "vcd.title_format",				"media.vcd.title_format" },
-  { "video.XV_DOUBLE_BUFFER",			"video.device.xv_double_buffer" },
-  { "video.XV_FILTER",				"video.device.xv_filter" },
-  { "video.deinterlace_method",			"video.output.xv_deinterlace_method" },
-  { "video.disable_exact_osd_alpha_blending",	"video.output.disable_exact_alphablend" },
-  { "video.disable_scaling",			"video.output.disable_scaling" },
-  { "video.fb_device",				"video.device.fb_device" },
-  { "video.fb_gamma",				"video.output.fb_gamma" },
-  { "video.horizontal_position",		"video.output.horizontal_position" },
-  { "video.num_buffers",			"engine.buffers.video_num_buffers" },
-  { "video.opengl_double_buffer",		"video.device.opengl_double_buffer" },
-  { "video.opengl_gamma",			"video.output.opengl_gamma" },
-  { "video.opengl_min_fps",			"video.output.opengl_min_fps" },
-  { "video.opengl_renderer",			"video.output.opengl_renderer" },
-  { "video.pgx32_device",			"video.device.pgx32_device" },
-  { "video.pgx64_brightness",			"video.output.pgx64_brightness" },
-  { "video.pgx64_chromakey_en",			"video.device.pgx64_chromakey_en" },
-  { "video.pgx64_colour_key",			"video.device.pgx64_colour_key" },
-  { "video.pgx64_device",			"" },
-  { "video.pgx64_multibuf_en",			"video.device.pgx64_multibuf_en" },
-  { "video.pgx64_overlay_mode",			"" },
-  { "video.pgx64_saturation",			"video.output.pgx64_saturation" },
-  { "video.sdl_hw_accel",			"video.device.sdl_hw_accel" },
-  { "video.unichrome_cpu_save",			"video.device.unichrome_cpu_save" },
-  { "video.vertical_position",			"video.output.vertical_position" },
-  { "video.vidix_blue_intensity",		"video.output.vidix_blue_intensity" },
-  { "video.vidix_colour_key_blue",		"video.device.vidix_colour_key_blue" },
-  { "video.vidix_colour_key_green",		"video.device.vidix_colour_key_green" },
-  { "video.vidix_colour_key_red",		"video.device.vidix_colour_key_red" },
-  { "video.vidix_green_intensity",		"video.output.vidix_green_intensity" },
-  { "video.vidix_red_intensity",		"video.output.vidix_red_intensity" },
-  { "video.vidix_use_double_buffer",		"video.device.vidix_double_buffer" },
-  { "video.vidixfb_device",			"video.device.vidixfb_device" },
-  { "video.warn_discarded_threshold",		"engine.performance.warn_discarded_threshold" },
-  { "video.warn_skipped_threshold",		"engine.performance.warn_skipped_threshold" },
-  { "video.xshm_gamma",				"video.output.xshm_gamma" },
-  { "video.xv_autopaint_colorkey",		"video.device.xv_autopaint_colorkey" },
-  { "video.xv_colorkey",			"video.device.xv_colorkey" },
-  { "video.xv_pitch_alignment",			"video.device.xv_pitch_alignment" },
-  { "video.xvmc_more_frames",			"video.device.xvmc_more_frames" },
-  { "video.xvmc_nvidia_color_fix",		"video.device.xvmc_nvidia_color_fix" },
-  { NULL, NULL }
-};
+
+static const char *config_xlate_old (const char *s) {
+  static const char * const tab[] = {
+  /*"audio.a52_pass_through",			NULL,*/
+    "audio.alsa_a52_device",			"audio.device.alsa_passthrough_device",
+    "audio.alsa_default_device",		"audio.device.alsa_default_device",
+    "audio.alsa_front_device",			"audio.device.alsa_front_device",
+    "audio.alsa_mixer_name",			"audio.device.alsa_mixer_name",
+    "audio.alsa_mmap_enable",			"audio.device.alsa_mmap_enable",
+    "audio.alsa_surround40_device",		"audio.device.alsa_surround40_device",
+    "audio.alsa_surround51_device",		"audio.device.alsa_surround51_device",
+    "audio.av_sync_method",			"audio.synchronization.av_sync_method",
+  /*"audio.directx_device",			NULL,*/
+    "audio.esd_latency",			"audio.device.esd_latency",
+  /*"audio.five_channel",			NULL,*/
+  /*"audio.five_lfe_channel",			NULL,*/
+    "audio.force_rate",				"audio.synchronization.force_rate",
+  /*"audio.four_channel",			NULL,*/
+  /*"audio.four_lfe_channel",			NULL,*/
+    "audio.irixal_gap_tolerance",		"audio.device.irixal_gap_tolerance",
+  /*"audio.mixer_name",				NULL,*/
+    "audio.mixer_number",			"audio.device.oss_mixer_number",
+    "audio.mixer_volume",			"audio.volume.mixer_volume",
+    "audio.num_buffers",			"engine.buffers.audio_num_buffers",
+    "audio.oss_device_name",			"audio.device.oss_device_name",
+  /*"audio.oss_device_num",			NULL,*/
+    "audio.oss_device_number",			"audio.device.oss_device_number",
+  /*"audio.oss_pass_through_bug",		NULL,*/
+    "audio.passthrough_offset",			"audio.synchronization.passthrough_offset",
+    "audio.remember_volume",			"audio.volume.remember_volume",
+    "audio.resample_mode",			"audio.synchronization.resample_mode",
+    "audio.speaker_arrangement",		"audio.output.speaker_arrangement",
+    "audio.sun_audio_device",			"audio.device.sun_audio_device",
+    "codec.a52_dynrng",				"audio.a52.dynamic_range",
+    "codec.a52_level",				"audio.a52.level",
+    "codec.a52_surround_downmix",		"audio.a52.surround_downmix",
+    "codec.ffmpeg_pp_quality",			"video.processing.ffmpeg_pp_quality",
+    "codec.real_codecs_path",			"decoder.external.real_codecs_path",
+    "codec.win32_path",				"decoder.external.win32_codecs_path",
+    "dxr3.alt_play_mode",			"dxr3.playback.alt_play_mode",
+    "dxr3.color_interval",			"dxr3.output.keycolor_interval",
+    "dxr3.correct_durations",			"dxr3.playback.correct_durations",
+  /*"dxr3.devicename",				NULL,*/
+    "dxr3.enc_add_bars",			"dxr3.encoding.add_bars",
+    "dxr3.enc_alt_play_mode",			"dxr3.encoding.alt_play_mode",
+    "dxr3.enc_swap_fields",			"dxr3.encoding.swap_fields",
+    "dxr3.encoder",				"dxr3.encoding.encoder",
+    "dxr3.fame_quality",			"dxr3.encoding.fame_quality",
+    "dxr3.keycolor",				"dxr3.output.keycolor",
+    "dxr3.lavc_bitrate",			"dxr3.encoding.lavc_bitrate",
+    "dxr3.lavc_qmax",				"dxr3.encoding.lavc_qmax",
+    "dxr3.lavc_qmin",				"dxr3.encoding.lavc_qmin",
+    "dxr3.lavc_quantizer",			"dxr3.encoding.lavc_quantizer",
+    "dxr3.preferred_tvmode",			"dxr3.output.tvmode",
+    "dxr3.rte_bitrate",				"dxr3.encoding.rte_bitrate",
+    "dxr3.shrink_overlay_area",			"dxr3.output.shrink_overlay_area",
+    "dxr3.sync_every_frame",			"dxr3.playback.sync_every_frame",
+    "dxr3.videoout_mode",			"dxr3.output.mode",
+    "input.cdda_cddb_cachedir",			"media.audio_cd.cddb_cachedir",
+    "input.cdda_cddb_port",			"media.audio_cd.cddb_port",
+    "input.cdda_cddb_server",			"media.audio_cd.cddb_server",
+    "input.cdda_device",			"media.audio_cd.device",
+    "input.cdda_use_cddb",			"media.audio_cd.use_cddb",
+    "input.css_cache_path",			"media.dvd.css_cache_path",
+    "input.css_decryption_method",		"media.dvd.css_decryption_method",
+    "input.drive_slowdown",			"media.audio_cd.drive_slowdown",
+    "input.dvb_last_channel_enable",		"media.dvb.remember_channel",
+    "input.dvb_last_channel_watched",		"media.dvb.last_channel",
+    "input.dvbdisplaychan",			"media.dvb.display_channel",
+    "input.dvbzoom",				"media.dvb.zoom",
+    "input.dvb_adapternum",			"media.dvb.adapter",
+    "input.dvd_device",				"media.dvd.device",
+    "input.dvd_language",			"media.dvd.language",
+    "input.dvd_raw_device",			"media.dvd.raw_device",
+    "input.dvd_region",				"media.dvd.region",
+    "input.dvd_seek_behaviour",			"media.dvd.seek_behaviour",
+    "input.dvd_skip_behaviour",			"media.dvd.skip_behaviour",
+    "input.dvd_use_readahead",			"media.dvd.readahead",
+    "input.file_hidden_files",			"media.files.show_hidden_files",
+    "input.file_origin_path",			"media.files.origin_path",
+    "input.http_no_proxy",			"media.network.http_no_proxy",
+    "input.http_proxy_host",			"media.network.http_proxy_host",
+    "input.http_proxy_password",		"media.network.http_proxy_password",
+    "input.http_proxy_port",			"media.network.http_proxy_port",
+    "input.http_proxy_user",			"media.network.http_proxy_user",
+    "input.mms_network_bandwidth",		"media.network.bandwidth",
+    "input.mms_protocol",			"media.network.mms_protocol",
+    "input.pvr_device",				"media.wintv_pvr.device",
+    "input.v4l_radio_device_path",		"media.video4linux.radio_device",
+    "input.v4l_video_device_path",		"media.video4linux.video_device",
+    "input.vcd_device",				"media.vcd.device",
+    "misc.cc_center",				"subtitles.closedcaption.center",
+    "misc.cc_enabled",				"subtitles.closedcaption.enabled",
+    "misc.cc_font",				"subtitles.closedcaption.font",
+    "misc.cc_font_size",			"subtitles.closedcaption.font_size",
+    "misc.cc_italic_font",			"subtitles.closedcaption.italic_font",
+    "misc.cc_scheme",				"subtitles.closedcaption.scheme",
+    "misc.demux_strategy",			"engine.demux.strategy",
+    "misc.memcpy_method",			"engine.performance.memcpy_method",
+    "misc.osd_text_palette",			"ui.osd.text_palette",
+    "misc.save_dir",				"media.capture.save_dir",
+    "misc.spu_font",				"subtitles.separate.font",
+    "misc.spu_src_encoding",			"subtitles.separate.src_encoding",
+    "misc.spu_subtitle_size",			"subtitles.separate.subtitle_size",
+    "misc.spu_use_unscaled_osd",		"subtitles.separate.use_unscaled_osd",
+    "misc.spu_vertical_offset",			"subtitles.separate.vertical_offset",
+    "misc.sub_timeout",				"subtitles.separate.timeout",
+    "post.goom_csc_method",			"effects.goom.csc_method",
+    "post.goom_fps",				"effects.goom.fps",
+    "post.goom_height",				"effects.goom.height",
+    "post.goom_width",				"effects.goom.width",
+    "vcd.autoadvance",				"media.vcd.autoadvance",
+    "vcd.autoplay",				"media.vcd.autoplay",
+    "vcd.comment_format",			"media.vcd.comment_format",
+    "vcd.debug",				"media.vcd.debug",
+    "vcd.default_device",			"media.vcd.device",
+    "vcd.length_reporting",			"media.vcd.length_reporting",
+    "vcd.show_rejected",			"media.vcd.show_rejected",
+    "vcd.title_format",				"media.vcd.title_format",
+    "video.XV_DOUBLE_BUFFER",			"video.device.xv_double_buffer",
+    "video.XV_FILTER",				"video.device.xv_filter",
+    "video.deinterlace_method",			"video.output.xv_deinterlace_method",
+    "video.disable_exact_osd_alpha_blending",	"video.output.disable_exact_alphablend",
+    "video.disable_scaling",			"video.output.disable_scaling",
+    "video.fb_device",				"video.device.fb_device",
+    "video.fb_gamma",				"video.output.fb_gamma",
+    "video.horizontal_position",		"video.output.horizontal_position",
+    "video.num_buffers",			"engine.buffers.video_num_buffers",
+    "video.opengl_double_buffer",		"video.device.opengl_double_buffer",
+    "video.opengl_gamma",			"video.output.opengl_gamma",
+    "video.opengl_min_fps",			"video.output.opengl_min_fps",
+    "video.opengl_renderer",			"video.output.opengl_renderer",
+    "video.pgx32_device",			"video.device.pgx32_device",
+    "video.pgx64_brightness",			"video.output.pgx64_brightness",
+    "video.pgx64_chromakey_en",			"video.device.pgx64_chromakey_en",
+    "video.pgx64_colour_key",			"video.device.pgx64_colour_key",
+  /*"video.pgx64_device",			NULL,*/
+    "video.pgx64_multibuf_en",			"video.device.pgx64_multibuf_en",
+  /*"video.pgx64_overlay_mode",			NULL,*/
+    "video.pgx64_saturation",			"video.output.pgx64_saturation",
+    "video.sdl_hw_accel",			"video.device.sdl_hw_accel",
+    "video.unichrome_cpu_save",			"video.device.unichrome_cpu_save",
+    "video.vertical_position",			"video.output.vertical_position",
+    "video.vidix_blue_intensity",		"video.output.vidix_blue_intensity",
+    "video.vidix_colour_key_blue",		"video.device.vidix_colour_key_blue",
+    "video.vidix_colour_key_green",		"video.device.vidix_colour_key_green",
+    "video.vidix_colour_key_red",		"video.device.vidix_colour_key_red",
+    "video.vidix_green_intensity",		"video.output.vidix_green_intensity",
+    "video.vidix_red_intensity",		"video.output.vidix_red_intensity",
+    "video.vidix_use_double_buffer",		"video.device.vidix_double_buffer",
+    "video.vidixfb_device",			"video.device.vidixfb_device",
+    "video.warn_discarded_threshold",		"engine.performance.warn_discarded_threshold",
+    "video.warn_skipped_threshold",		"engine.performance.warn_skipped_threshold",
+    "video.xshm_gamma",				"video.output.xshm_gamma",
+    "video.xv_autopaint_colorkey",		"video.device.xv_autopaint_colorkey",
+    "video.xv_colorkey",			"video.device.xv_colorkey",
+    "video.xv_pitch_alignment",			"video.device.xv_pitch_alignment",
+    "video.xvmc_more_frames",			"video.device.xvmc_more_frames",
+    "video.xvmc_nvidia_color_fix",		"video.device.xvmc_nvidia_color_fix"
+  };
+  int b = 0, e = sizeof (tab) / sizeof (tab[0]) / 2, m = e >> 1;
+  do {
+    int d = strcmp (s, tab[m << 1]);
+    if (d == 0)
+      return tab[(m << 1) + 1];
+    if (d < 0)
+      e = m;
+    else
+      b = m + 1;
+    m = (b + e) >> 1;
+  } while (b != e);
+  return NULL;
+}
 
 
 static int config_section_enum(const char *sect) {
-  static const char *const known_section[] = {
-    "gui",
-    "ui",
-    "audio",
-    "video",
-    "dxr3",
-    "input",
-    "media",
-    "codec",
-    "decoder",
-    "subtitles",
-    "post",
-    "effects",
-    "engine",
-    "misc",
-    NULL
+  static const char * const known_section[] = {
+    "\x03""audio",
+    "\x08""codec",
+    "\x09""decoder",
+    "\x05""dxr3",
+    "\x0c""effects",
+    "\x0d""engine",
+    "\x01""gui",
+    "\x06""input",
+    "\x07""media",
+    "\x0e""misc",
+    "\x0b""post",
+    "\x0a""subtitles",
+    "\x02""ui",
+    "\x04""video"
   };
-  int i = 0;
-
-  while (known_section[i])
-    if (strcmp(sect, known_section[i++]) == 0)
-      return i;
-  return i + 1;
+  int b = 0, e = sizeof (known_section) / sizeof (known_section[0]), m = e >> 1;
+  do {
+    int d = strcmp (sect, known_section[m] + 1);
+    if (d == 0)
+      return known_section[m][0];
+    if (d < 0)
+      e = m;
+    else
+      b = m + 1;
+    m = (b + e) >> 1;
+  } while (b != e);
+  return 0;
 }
 
-static void config_key_split(const char *key, char **base, char **section, char **subsect, char **name) {
-  char *parse;
-
-  *base = strdup(key);
-  if ((parse = strchr(*base, '.'))) {
-    *section = *base;
-    *parse   = '\0';
-    parse++;
-    if ((*name = strchr(parse, '.'))) {
-      *subsect = parse;
-      **name   = '\0';
-      (*name)++;
-    } else {
-      *subsect = NULL;
-      *name    = parse;
-    }
-  } else {
-    *section = NULL;
-    *subsect = NULL;
-    *name    = parse;
+#define MAX_SORT_KEY 320
+static void config_make_sort_key (char *dest, const char *key, int exp_level) {
+  char *q = dest, *e = dest + MAX_SORT_KEY - 7;
+  const char *p;
+  int n;
+  p = key;
+  /* section name */
+  while (q < e) {
+    char z = *p;
+    if (z == 0) break;
+    p++;
+    if (z == '.') break;
+    *q++ = z;
   }
-}
-
-static void config_insert(config_values_t *this, cfg_entry_t *new_entry) {
-  cfg_entry_t *cur, *prev;
-  char *new_base, *new_section, *new_subsect, *new_name;
-  char *cur_base, *cur_section, *cur_subsect, *cur_name;
-
-  /* extract parts of the new key */
-  config_key_split(new_entry->key, &new_base, &new_section, &new_subsect, &new_name);
-
-  /* search right position */
-  cur_base = NULL;
-  for (cur = this->first, prev = NULL; cur; prev = cur, cur = cur->next) {
-    /* extract parts of the cur key */
-    _x_freep(&cur_base);
-    config_key_split(cur->key, &cur_base, &cur_section, &cur_subsect, &cur_name);
-
-    /* sort by section name */
-    if (!new_section &&  cur_section) break;
-    if ( new_section && !cur_section) continue;
-    if ( new_section &&  cur_section) {
-      int new_sec_num = config_section_enum(new_section);
-      int cur_sec_num = config_section_enum(cur_section);
-      int cmp         = strcmp(new_section, cur_section);
-      if (new_sec_num < cur_sec_num) break;
-      if (new_sec_num > cur_sec_num) continue;
-      if (cmp < 0) break;
-      if (cmp > 0) continue;
-    }
-    /* sort by subsection name */
-    if (!new_subsect &&  cur_subsect) break;
-    if ( new_subsect && !cur_subsect) continue;
-    if ( new_subsect &&  cur_subsect) {
-      int cmp = strcmp(new_subsect, cur_subsect);
-      if (cmp < 0) break;
-      if (cmp > 0) continue;
-    }
-    /* sort by experience level */
-    if (new_entry->exp_level < cur->exp_level) break;
-    if (new_entry->exp_level > cur->exp_level) continue;
-    /* sort by entry name */
-    if (!new_name &&  cur_name) break;
-    if ( new_name && !cur_name) continue;
-    if ( new_name &&  cur_name) {
-      int cmp = strcmp(new_name, cur_name);
-      if (cmp < 0) break;
-      if (cmp > 0) continue;
-    }
-
-    break;
+  *q = 0;
+  n = config_section_enum (dest);
+  if (n) {
+    q = dest;
+    *q++ = n;
   }
-  free(new_base);
-  free(cur_base);
-
-  new_entry->next = cur;
-  if (!cur)
-    this->last = new_entry;
-  if (prev)
-    prev->next = new_entry;
-  else
-    this->first = new_entry;
+  *q++ = 0x1f;
+  /* subsection name */
+  while (q < e) {
+    char z = *p;
+    if (z == 0) break;
+    p++;
+    if (z == '.') break;
+    *q++ = z;
+  }
+  *q++ = 0x1f;
+  /* TJ. original code did sort by section/subsection/exp/name.
+   * We can do that here as well but that means inefficient
+   * adding (2 passes) and finding (linear scanning).
+   * 2 entries with same key but different exp level never
+   * were supported anyway, and frontends group entries by
+   * section only. So lets leave level out, and benefit from
+   * binary searches instead.
+   */
+#if 0
+  /* experience level */
+  n = exp_level;
+  q[2] = (n % 10) + '0';
+  n /= 10;
+  q[1] = (n % 10) + '0';
+  n /= 10;
+  q[0] = (n % 10) + '0';
+  q += 3;
+  *q++ = 0x1f;
+#else
+  (void)exp_level;
+#endif
+  /* entry name */
+  while (q < e) {
+    char z = *p;
+    if (z == 0) break;
+    p++;
+    *q++ = z;
+  }
+  *q = 0;
 }
 
-static cfg_entry_t *XINE_MALLOC config_add (config_values_t *this, const char *key, int exp_level) {
+/* Ugly: rebuild index every time. Maybe we could cache it somewhere? */
+static cfg_entry_t **config_array (config_values_t *this, int *n) {
+  cfg_entry_t **tab, *e;
+  int m = 256, i;
+  tab = malloc (m * sizeof (*tab));
+  if (!tab) {
+    *n = 0;
+    return NULL;
+  }
+  for (i = 0, e = this->first; e; e = e->next) {
+    tab[i++] = e;
+    if (i >= m) {
+      cfg_entry_t **t2;
+      m += 256;
+      t2 = realloc (tab, m * sizeof (*tab));
+      if (!t2)
+        break;
+      tab = t2;
+    }
+  }
+  *n = i;
+  return tab;
+}
 
+#define FIND_ONLY 0x7fffffff
+static cfg_entry_t *config_insert (config_values_t *this, const char *key, int exp_level) {
+  char new_sortkey[MAX_SORT_KEY];
+  char cur_sortkey[MAX_SORT_KEY];
   cfg_entry_t *entry;
 
-  entry = calloc (1, sizeof (cfg_entry_t));
-  entry->config        = this;
-  entry->key           = strdup(key);
-  entry->type          = XINE_CONFIG_TYPE_UNKNOWN;
-  entry->unknown_value = NULL;
-  entry->str_value     = NULL;
-  entry->exp_level     = exp_level;
+  if (!this->first || !this->last) {
+    if (exp_level == FIND_ONLY)
+      return NULL;
+    entry = calloc (1, sizeof (cfg_entry_t));
+    if (!entry)
+      return NULL;
+    this->first          = entry;
+    this->last           = entry;
+    entry->next          = NULL;
+    entry->config        = this;
+    entry->key           = strdup(key);
+    entry->type          = XINE_CONFIG_TYPE_UNKNOWN;
+    entry->unknown_value = NULL;
+    entry->str_value     = NULL;
+    entry->exp_level     = exp_level;
+#ifdef DEBUG_CONFIG_FIND
+    printf ("config_insert (\"%s\", %d) = new (0).\n", key, exp_level);
+#endif
+    return entry;
+  }
 
-  config_insert(this, entry);
+  config_make_sort_key (new_sortkey, key, exp_level);
 
-  lprintf ("add entry key=%s\n", key);
+  /* Most frequent case is loading a config file entry.
+   * Unless edited by user, these come in already sorted.
+   * Thus try last pos first.
+   */
+  if (exp_level != FIND_ONLY) {
+    config_make_sort_key (cur_sortkey, this->last->key, this->last->exp_level);
+    if (strcmp (new_sortkey, cur_sortkey) > 0) {
+      entry = calloc (1, sizeof (cfg_entry_t));
+      if (!entry)
+        return NULL;
+      this->last->next     = entry;
+      this->last           = entry;
+      entry->next          = NULL;
+      entry->config        = this;
+      entry->key           = strdup(key);
+      entry->type          = XINE_CONFIG_TYPE_UNKNOWN;
+      entry->unknown_value = NULL;
+      entry->str_value     = NULL;
+      entry->exp_level     = exp_level;
+#ifdef DEBUG_CONFIG_FIND
+      printf ("config_insert (\"%s\", %d) = new (last).\n", key, exp_level);
+#endif
+      return entry;
+    }
+  }
 
-  return entry;
-}
+  {
+    cfg_entry_t **entries;
+    int n, b, m, e, d;
+    entries = config_array (this, &n);
+    if (!entries)
+      return NULL;
 
-static void config_remove(config_values_t *this, cfg_entry_t *entry, cfg_entry_t *prev) {
-  if (!entry->next)
-    this->last = prev;
-  if (!prev)
-    this->first = entry->next;
-  else
-    prev->next = entry->next;
+    b = 0; e = n; m = n >> 1;
+    do {
+      config_make_sort_key (cur_sortkey, entries[m]->key, entries[m]->exp_level);
+      d = strcmp (new_sortkey, cur_sortkey);
+      if (d == 0)
+        break;
+      if (d < 0)
+        e = m;
+      else
+        b = m + 1;
+      m = (b + e) >> 1;
+    } while (b != e);
+
+    if (d == 0) {
+      entry = entries[m];
+      free (entries);
+#ifdef DEBUG_CONFIG_FIND
+      printf ("config_insert (\"%s\", %d) = found (%d/%d).\n", key, exp_level, m, n);
+#endif
+      return entry;
+    }
+
+    if (exp_level == FIND_ONLY) {
+      free (entries);
+#ifdef DEBUG_CONFIG_FIND
+      printf ("config_insert (\"%s\", %d) = not found.\n", key, exp_level);
+#endif
+      return NULL;
+    }
+
+    entry = calloc (1, sizeof (cfg_entry_t));
+    if (!entry) {
+      free (entries);
+      return NULL;
+    }
+    if (m == 0) {
+      entry->next = this->first;
+      this->first = entry;
+    } else {
+      entries[m - 1]->next = entry;
+      if (m < n) {
+        entry->next = entries[m];
+      } else {
+        entry->next = NULL;
+        this->last = entry;
+      }
+    }
+    free (entries);
+    entry->config        = this;
+    entry->key           = strdup(key);
+    entry->type          = XINE_CONFIG_TYPE_UNKNOWN;
+    entry->unknown_value = NULL;
+    entry->str_value     = NULL;
+    entry->exp_level     = exp_level;
+#ifdef DEBUG_CONFIG_FIND
+    printf ("config_insert (\"%s\", %d) = new (%d/%d).\n", key, exp_level, m, n);
+#endif
+    return entry;
+  }
 }
 
 static const char *config_xlate_internal (const char *key, const xine_config_entry_translation_t *trans)
@@ -374,42 +491,31 @@ static const char *config_translate_key (const char *key, char **tmp) {
   }
 
   /* search the translation table... */
-  newkey = config_xlate_internal (key, config_entry_translation);
+  newkey = config_xlate_old (key);
   if (!newkey && config_entry_translation_user)
     newkey = config_xlate_internal (key, config_entry_translation_user);
 
   return newkey;
 }
 
-static void config_lookup_entry_int (config_values_t *this, const char *key,
-				       cfg_entry_t **entry, cfg_entry_t **prev) {
-
-  int trans;
+static cfg_entry_t *config_lookup_entry_int (config_values_t *this, const char *key) {
+  cfg_entry_t *entry;
   char *tmp = NULL;
 
   /* try twice at most (second time with translation from old key name) */
-  for (trans = 2; trans; --trans) {
-    *entry = this->first;
-    *prev  = NULL;
-
-    while (*entry && strcmp((*entry)->key, key)) {
-      *prev  = *entry;
-      *entry = (*entry)->next;
-    }
-
-    if (*entry) {
-      free(tmp);
-      return;
-    }
-
-    /* we did not find a match, maybe this is an old config entry name
-     * trying to translate */
-    key = config_translate_key(key, &tmp);
-    if (!key) {
-      free(tmp);
-      return;
-    }
+  entry = config_insert (this, key, FIND_ONLY);
+  if (entry)
+    return entry;
+  /* we did not find a match, maybe this is an old config entry name
+   * trying to translate */
+  key = config_translate_key (key, &tmp);
+  if (!key) {
+    free (tmp);
+    return NULL;
   }
+  entry = config_insert (this, key, FIND_ONLY);
+  free (tmp);
+  return entry;
 }
 
 
@@ -418,10 +524,10 @@ static void config_lookup_entry_int (config_values_t *this, const char *key,
  */
 
 static cfg_entry_t *config_lookup_entry(config_values_t *this, const char *key) {
-  cfg_entry_t *entry, *prev;
+  cfg_entry_t *entry;
 
   pthread_mutex_lock(&this->config_lock);
-  config_lookup_entry_int(this, key, &entry, &prev);
+  entry = config_lookup_entry_int (this, key);
   pthread_mutex_unlock(&this->config_lock);
 
   return entry;
@@ -454,24 +560,19 @@ static cfg_entry_t *config_register_key (config_values_t *this,
 					 int exp_level,
 					 xine_config_cb_t changed_cb,
 					 void *cb_data) {
-  cfg_entry_t *entry, *prev;
+  cfg_entry_t *entry;
 
   _x_assert(this);
   _x_assert(key);
 
   lprintf ("registering %s\n", key);
-  config_lookup_entry_int(this, key, &entry, &prev);
 
-  if (!entry) {
-    /* new entry */
-    entry = config_add (this, key, exp_level);
-  } else {
-    if (entry->exp_level != exp_level) {
-      config_remove(this, entry, prev);
-      entry->exp_level = exp_level;
-      config_insert(this, entry);
-    }
-  }
+  entry = config_insert (this, key, exp_level);
+  if (!entry)
+    return NULL;
+
+  /* new entry */
+  entry->exp_level = exp_level != FIND_ONLY ? exp_level : 0;
 
   /* override callback */
   if (changed_cb) {
@@ -511,6 +612,10 @@ static cfg_entry_t *config_register_string_internal (config_values_t *this,
   pthread_mutex_lock(&this->config_lock);
 
   entry = config_register_key(this, key, exp_level, changed_cb, cb_data);
+  if (!entry) {
+    pthread_mutex_unlock (&this->config_lock);
+    return NULL;
+  }
 
   if (entry->type != XINE_CONFIG_TYPE_UNKNOWN) {
     lprintf("config entry already registered: %s\n", key);
@@ -580,6 +685,10 @@ static int config_register_num (config_values_t *this,
   pthread_mutex_lock(&this->config_lock);
 
   entry = config_register_key(this, key, exp_level, changed_cb, cb_data);
+  if (!entry) {
+    pthread_mutex_unlock (&this->config_lock);
+    return 0;
+  }
 
   if (entry->type != XINE_CONFIG_TYPE_UNKNOWN) {
     lprintf("config entry already registered: %s\n", key);
@@ -621,6 +730,10 @@ static int config_register_bool (config_values_t *this,
   pthread_mutex_lock(&this->config_lock);
 
   entry = config_register_key(this, key, exp_level, changed_cb, cb_data);
+  if (!entry) {
+    pthread_mutex_unlock (&this->config_lock);
+    return 0;
+  }
 
   if (entry->type != XINE_CONFIG_TYPE_UNKNOWN) {
     lprintf("config entry already registered: %s\n", key);
@@ -663,6 +776,10 @@ static int config_register_range (config_values_t *this,
   pthread_mutex_lock(&this->config_lock);
 
   entry = config_register_key(this, key, exp_level, changed_cb, cb_data);
+  if (!entry) {
+    pthread_mutex_unlock (&this->config_lock);
+    return 0;
+  }
 
   if (entry->type != XINE_CONFIG_TYPE_UNKNOWN) {
     lprintf("config entry already registered: %s\n", key);
@@ -754,6 +871,10 @@ static int config_register_enum (config_values_t *this,
   pthread_mutex_lock(&this->config_lock);
 
   entry = config_register_key(this, key, exp_level, changed_cb, cb_data);
+  if (!entry) {
+    pthread_mutex_unlock (&this->config_lock);
+    return 0;
+  }
 
   if (entry->type != XINE_CONFIG_TYPE_UNKNOWN) {
     lprintf("config entry already registered: %s\n", key);
@@ -824,22 +945,10 @@ static void config_shallow_copy(xine_cfg_entry_t *dest, const cfg_entry_t *src)
   dest->callback_data = src->callback_data;
 }
 
-static void config_update_num (config_values_t *this,
-			       const char *key, int value) {
+static void config_update_num_e (config_values_t *this, cfg_entry_t *entry, int value) {
 
-  cfg_entry_t *entry;
-
-  entry = this->lookup_entry (this, key);
-
-  lprintf ("updating %s to %d\n", key, value);
-
-  if (!entry) {
-
-    lprintf ("WARNING! tried to update unknown key %s (to %d)\n", key, value);
-
+  if (!entry)
     return;
-
-  }
 
   if ((entry->type == XINE_CONFIG_TYPE_UNKNOWN)
       || (entry->type == XINE_CONFIG_TYPE_STRING)) {
@@ -877,29 +986,28 @@ static void config_update_num (config_values_t *this,
   pthread_mutex_unlock(&this->config_lock);
 }
 
-static void config_update_string (config_values_t *this,
-				  const char *key,
-				  const char *value) {
-
+static void config_update_num (config_values_t *this, const char *key, int value) {
   cfg_entry_t *entry;
+  lprintf ("updating %s to %d\n", key, value);
+  entry = this->lookup_entry (this, key);
+  if (!entry) {
+    lprintf ("WARNING! tried to update unknown key %s (to %d)\n", key, value);
+    return;
+  }
+  config_update_num_e (this, entry, value);
+}
+
+static void config_update_string_e (config_values_t *this, cfg_entry_t *entry, const char *value) {
+
   char *str_free = NULL;
 
-  lprintf ("updating %s to %s\n", key, value);
-
-  entry = this->lookup_entry (this, key);
-
-  if (!entry) {
-
-    printf ("configfile: error - tried to update unknown key %s (to %s)\n",
-	    key, value);
+  if (!entry)
     return;
-
-  }
 
   /* if an enum is updated with a string, we convert the string to
    * its index and use update number */
   if (entry->type == XINE_CONFIG_TYPE_ENUM) {
-    config_update_num(this, key, config_parse_enum(value, (const char **)entry->enum_values));
+    config_update_num_e (this, entry, config_parse_enum (value, (const char **)entry->enum_values));
     return;
   }
 
@@ -930,6 +1038,17 @@ static void config_update_string (config_values_t *this,
   pthread_mutex_unlock(&this->config_lock);
 }
 
+static void config_update_string (config_values_t *this, const char *key, const char *value) {
+  cfg_entry_t *entry;
+  lprintf ("updating %s to %s\n", key, value);
+  entry = this->lookup_entry (this, key);
+  if (!entry) {
+    printf ("configfile: error - tried to update unknown key %s (to %s)\n", key, value);
+    return;
+  }
+  config_update_string_e (this, entry, value);
+}
+
 /*
  * front end config translation handling
  */
@@ -954,6 +1073,11 @@ void xine_config_load (xine_t *xine, const char *filename) {
 
     char line[1024];
     char *value;
+    int version;
+
+    pthread_mutex_lock (&this->config_lock);
+    version = this->current_version;
+    pthread_mutex_unlock (&this->config_lock);
 
     while (fgets (line, 1023, f_config)) {
       line[strlen(line)-1]= (char) 0; /* eliminate lf */
@@ -963,11 +1087,14 @@ void xine_config_load (xine_t *xine, const char *filename) {
 
       if (line[0] == '.') {
 	if (strncmp(line, ".version:", 9) == 0) {
-	  sscanf(line + 9, "%d", &this->current_version);
-	  if (this->current_version > CONFIG_FILE_VERSION)
+          sscanf (line + 9, "%d", &version);
+          if (version > CONFIG_FILE_VERSION)
 	    xine_log(xine, XINE_LOG_MSG,
 		     _("The current config file has been modified by a newer version of xine."));
 	}
+        pthread_mutex_lock (&this->config_lock);
+        this->current_version = version;
+        pthread_mutex_unlock (&this->config_lock);
 	continue;
       }
 
@@ -978,30 +1105,39 @@ void xine_config_load (xine_t *xine, const char *filename) {
 	*value = (char) 0;
 	value++;
 
-	if (!(entry = config_lookup_entry(this, line))) {
-	  const char *key = line;
-	  char *tmp = NULL;
-	  pthread_mutex_lock(&this->config_lock);
-	  if (this->current_version < CONFIG_FILE_VERSION) {
-	    /* old config file -> let's see if we have to rename this one */
-	    key = config_translate_key(key, &tmp);
-	    if (!key)
-	      key = line; /* no translation? fall back on untranslated key */
-	  }
-	  entry = config_add (this, key, 50);
+        if (version < CONFIG_FILE_VERSION) {
+          /* old config file -> let's see if we have to rename this one */
+          pthread_mutex_lock (&this->config_lock);
+          entry = config_insert (this, line, FIND_ONLY);
+          if (!entry) {
+            char *tmp = NULL;
+            const char *key = config_translate_key (line, &tmp);
+            if (!key)
+              key = line; /* no translation? fall back on untranslated key */
+            entry = config_insert (this, key, 51);
+            free (tmp);
+          }
+          pthread_mutex_unlock (&this->config_lock);
+        } else {
+          pthread_mutex_lock (&this->config_lock);
+          entry = config_insert (this, line, 51);
+          pthread_mutex_unlock (&this->config_lock);
+        }
+
+        if (entry->exp_level == 51) {
+          /* new entry */
+          entry->exp_level = 50;
 	  entry->unknown_value = strdup(value);
-	  free(tmp);
-	  pthread_mutex_unlock(&this->config_lock);
 	} else {
           switch (entry->type) {
           case XINE_CONFIG_TYPE_RANGE:
           case XINE_CONFIG_TYPE_NUM:
           case XINE_CONFIG_TYPE_BOOL:
-            config_update_num (this, entry->key, atoi(value));
+            config_update_num_e (this, entry, atoi(value));
             break;
           case XINE_CONFIG_TYPE_ENUM:
           case XINE_CONFIG_TYPE_STRING:
-            config_update_string (this, entry->key, value);
+            config_update_string_e (this, entry, value);
             break;
           case XINE_CONFIG_TYPE_UNKNOWN:
 	    pthread_mutex_lock(&this->config_lock);
@@ -1277,12 +1413,17 @@ static void config_unset_new_entry_callback (config_values_t *this) {
 
 static int put_int(uint8_t *buffer, int pos, int value) {
   int32_t value_int32 = (int32_t)value;
-
+#if (defined(__GNUC__) && (__GNUC__ >= 4)) || defined(__clang__)
+#  ifdef WORDS_BIGENDIAN
+  value_int32 = __builtin_bswap32 (value_int32);
+#  endif
+  __builtin_memcpy (buffer + pos, &value_int32, 4);
+#else
   buffer[pos] = value_int32 & 0xFF;
   buffer[pos + 1] = (value_int32 >> 8) & 0xFF;
   buffer[pos + 2] = (value_int32 >> 16) & 0xFF;
   buffer[pos + 3] = (value_int32 >> 24) & 0xFF;
-
+#endif
   return 4;
 }
 
@@ -1294,13 +1435,17 @@ static int put_string(uint8_t *buffer, int pos, const char *value, int value_len
 }
 
 static char* config_get_serialized_entry (config_values_t *this, const char *key) {
-  char *output = NULL;
-  cfg_entry_t *entry, *prev;
+  cfg_entry_t *entry;
 
   pthread_mutex_lock(&this->config_lock);
-  config_lookup_entry_int(this, key, &entry, &prev);
+  entry = config_lookup_entry_int (this, key);
 
-  if (entry) {
+  if (!entry) {
+    pthread_mutex_unlock (&this->config_lock);
+    return NULL;
+  }
+
+  {
     /* now serialize this stuff
       fields to serialize :
           int              type;
@@ -1320,11 +1465,13 @@ static char* config_get_serialized_entry (config_values_t *this, const char *key
     int str_default_len = 0;
     int description_len = 0;
     int help_len = 0;
-    unsigned long total_len;
+    unsigned long total_len, buf_len;
     int value_count;
     int value_len[10];
     int pos = 0;
     int i;
+    char **cur_value;
+    uint8_t *buf1, *buf2;
 
     if (entry->key)
       key_len = strlen(entry->key);
@@ -1357,7 +1504,7 @@ static char* config_get_serialized_entry (config_values_t *this, const char *key
     value_count = 0;
     total_len += sizeof(int32_t);  /* value count */
 
-    char **cur_value = entry->enum_values;
+    cur_value = entry->enum_values;
     if (cur_value) {
       while (*cur_value && ((size_t)value_count < (sizeof(value_len) / sizeof(int) ))) {
         value_len[value_count] = strlen(*cur_value);
@@ -1368,48 +1515,45 @@ static char* config_get_serialized_entry (config_values_t *this, const char *key
     }
 
     /* Now we have the length needed to serialize the entry and the length of each string */
-    uint8_t *buffer = malloc (total_len + 4);
-    if (!buffer) {
+    buf_len = (total_len * 4 + 2) / 3 + 8;
+    buf2 = malloc (buf_len);
+    if (!buf2) {
       pthread_mutex_unlock(&this->config_lock);
       return NULL;
     }
+    buf1 = buf2 + (buf_len - total_len - 4);
 
     /* Let's go */
 
     /* the integers */
-    pos += put_int(buffer, pos, entry->type);
-    pos += put_int(buffer, pos, entry->range_min);
-    pos += put_int(buffer, pos, entry->range_max);
-    pos += put_int(buffer, pos, entry->exp_level);
-    pos += put_int(buffer, pos, entry->num_default);
-    pos += put_int(buffer, pos, entry->num_value);
+    pos += put_int (buf1, pos, entry->type);
+    pos += put_int (buf1, pos, entry->range_min);
+    pos += put_int (buf1, pos, entry->range_max);
+    pos += put_int (buf1, pos, entry->exp_level);
+    pos += put_int (buf1, pos, entry->num_default);
+    pos += put_int (buf1, pos, entry->num_value);
 
     /* the strings */
-    pos += put_string(buffer, pos, entry->key, key_len);
-    pos += put_string(buffer, pos, entry->str_default, str_default_len);
-    pos += put_string(buffer, pos, entry->description, description_len);
-    pos += put_string(buffer, pos, entry->help, help_len);
+    pos += put_string (buf1, pos, entry->key, key_len);
+    pos += put_string (buf1, pos, entry->str_default, str_default_len);
+    pos += put_string (buf1, pos, entry->description, description_len);
+    pos += put_string (buf1, pos, entry->help, help_len);
 
     /* the enum stuff */
-    pos += put_int(buffer, pos, value_count);
+    pos += put_int (buf1, pos, value_count);
     cur_value = entry->enum_values;
 
     for (i = 0; i < value_count; i++) {
-      pos += put_string(buffer, pos, *cur_value, value_len[i]);
+      pos += put_string (buf1, pos, *cur_value, value_len[i]);
       cur_value++;
     }
+    pthread_mutex_unlock (&this->config_lock);
 
     /* and now the output encoding */
     /* We're going to encode total_len bytes in base64 */
-    output = malloc((total_len * 4 + 2) / 3 + 4);
-    xine_base64_encode (buffer, output, total_len);
-
-    free(buffer);
+    xine_base64_encode (buf1, (char *)buf2, total_len);
+    return (char *)buf2;
   }
-  pthread_mutex_unlock(&this->config_lock);
-
-  return output;
-
 }
 
 static char* config_register_serialized_entry (config_values_t *this, const char *value) {
@@ -1427,6 +1571,7 @@ static char* config_register_serialized_entry (config_values_t *this, const char
           char            *help;
           char           **enum_values;
   */
+  char  *ev[32];
   int    type;
   int    range_min;
   int    range_max;
@@ -1437,7 +1582,7 @@ static char* config_register_serialized_entry (config_values_t *this, const char
   char  *str_default = NULL;
   char  *description = NULL;
   char  *help = NULL;
-  char **enum_values = NULL;
+  char **enum_values = ev;
 
   int    value_count = 0;
   int    i;
@@ -1503,9 +1648,11 @@ static char* config_register_serialized_entry (config_values_t *this, const char
   left -= value_count * 4;
   if (left < 0)
     goto exit;
-  enum_values = malloc ((value_count + 1) * sizeof (void *));
-  if (!enum_values)
-    goto exit;
+  if (value_count > 31) {
+    enum_values = malloc ((value_count + 1) * sizeof (void *));
+    if (!enum_values)
+      goto exit;
+  }
   for (i = 0; i < value_count; i++) {
     i32 = _X_LE_32 (p); p[0] = 0; p += 4;
     if ((i32 < 0) || (i32 > (64 << 10)))
@@ -1519,6 +1666,8 @@ static char* config_register_serialized_entry (config_values_t *this, const char
   p[0] = 0;
   enum_values[value_count] = NULL;
 
+  if (exp_level == FIND_ONLY)
+    exp_level = 0;
 #ifdef LOG
   printf("config entry deserialization:\n");
   printf("  key        : %s\n", key);
@@ -1571,7 +1720,8 @@ exit:
     key = strdup (key);
   /* cleanup */
   free(output);
-  free(enum_values);
+  if (enum_values != ev)
+    free (enum_values);
 
   return key;
 }
