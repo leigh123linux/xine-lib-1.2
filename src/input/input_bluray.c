@@ -2012,7 +2012,7 @@ static void *bd_init_plugin (xine_t *xine, const void *data)
 
 const plugin_info_t xine_plugin_info[] EXPORTED = {
   /* type, API, "name", version, special_info, init_function */
-  { PLUGIN_INPUT, INPUT_PLUGIN_IFACE_VERSION, "BLURAY", XINE_VERSION_CODE, NULL, bluray_init_plugin },
-  { PLUGIN_INPUT, INPUT_PLUGIN_IFACE_VERSION, "BD",     XINE_VERSION_CODE, NULL, bd_init_plugin },
+  { PLUGIN_INPUT, 18, "BLURAY", XINE_VERSION_CODE, NULL, bluray_init_plugin },
+  { PLUGIN_INPUT, 18, "BD",     XINE_VERSION_CODE, NULL, bd_init_plugin },
   { PLUGIN_NONE, 0, "", 0, NULL, NULL }
 };

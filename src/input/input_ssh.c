@@ -918,7 +918,7 @@ const input_info_t input_info_scp = {
 
 const plugin_info_t xine_plugin_info[] EXPORTED = {
   /* type, API, "name", version, special_info, init_function */
-  { PLUGIN_INPUT, INPUT_PLUGIN_IFACE_VERSION, "SFTP", XINE_VERSION_CODE, &input_info_sftp, sftp_init_class },
-  { PLUGIN_INPUT, INPUT_PLUGIN_IFACE_VERSION, "SCP",  XINE_VERSION_CODE, &input_info_scp,  scp_init_class },
+  { PLUGIN_INPUT, 18, "SFTP", XINE_VERSION_CODE, &input_info_sftp, sftp_init_class },
+  { PLUGIN_INPUT, 18, "SCP",  XINE_VERSION_CODE, &input_info_scp,  scp_init_class },
   { PLUGIN_NONE, 0, "", 0, NULL, NULL }
 };
