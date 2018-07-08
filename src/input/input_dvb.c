@@ -3226,7 +3226,7 @@ static void *init_class (xine_t *xine, const void *data) {
 		       _("Number of seconds until tuning times out."),
 		       _("Leave at 0 means try forever. "
 			 "Greater than 0 means wait that many seconds to get a lock. Minimum is 5 seconds."),
-		       0, NULL, (void *) this);
+                       0, NULL, NULL);
 
   /* set to 0 to turn off the GUI built into this input plugin */
   config->register_bool(config, "media.dvb.gui_enabled",
@@ -3241,7 +3241,7 @@ static void *init_class (xine_t *xine, const void *data) {
 		       _("Leave this at zero unless you "
 			 "really have more than 1 card "
 			 "in your system."),
-		       0, NULL, (void *) this);
+                       0, NULL, NULL);
 
 
   return this;
