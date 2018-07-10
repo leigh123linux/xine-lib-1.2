@@ -61,10 +61,6 @@
 #define MAX_AC5_FRAME 4096
 
 typedef struct {
-  audio_decoder_class_t   decoder_class;
-} dts_class_t;
-
-typedef struct {
   audio_decoder_t  audio_decoder;
 
   xine_stream_t    *stream;
@@ -94,9 +90,11 @@ typedef struct {
 } dts_decoder_t;
 
 static void dts_reset (audio_decoder_t *const this_gen) {
+  (void)this_gen;
 }
 
 static void dts_discontinuity (audio_decoder_t *const this_gen) {
+  (void)this_gen;
 }
 
 /**
@@ -562,18 +560,16 @@ static audio_decoder_t *open_plugin (audio_decoder_class_t *class_gen, xine_stre
 }
 
 static void *init_plugin (xine_t *xine, const void *data) {
-  dts_class_t *this ;
 
-  lprintf("init_plugin\n");
-
-  this = calloc(1, sizeof (dts_class_t));
-
-  this->decoder_class.open_plugin     = open_plugin;
-  this->decoder_class.identifier      = "DTS";
-  this->decoder_class.description     = N_("DTS passthru audio format decoder plugin");
-  this->decoder_class.dispose         = default_audio_decoder_class_dispose;
-
-  return this;
+  static const audio_decoder_class_t this = {
+    .open_plugin     = open_plugin,
+    .identifier      = "DTS",
+    .description     = N_("DTS passthru audio format decoder plugin"),
+    .dispose         = NULL
+  };
+  (void)xine;
+  (void)data;
+  return (void *)&this;
 }
 
 static const uint32_t audio_types[] = {
