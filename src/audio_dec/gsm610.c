@@ -66,10 +66,6 @@
 #define GSM610_SAMPLE_SIZE 16
 #define GSM610_BLOCK_SIZE 160
 
-typedef struct {
-  audio_decoder_class_t   decoder_class;
-} gsm610_class_t;
-
 typedef struct gsm610_decoder_s {
   audio_decoder_t   audio_decoder;
 
@@ -207,9 +203,11 @@ static void gsm610_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) {
 }
 
 static void gsm610_reset (audio_decoder_t *this_gen) {
+  (void)this_gen;
 }
 
 static void gsm610_discontinuity (audio_decoder_t *this_gen) {
+  (void)this_gen;
 }
 
 static void gsm610_dispose (audio_decoder_t *this_gen) {
@@ -233,34 +231,36 @@ static audio_decoder_t *open_plugin (audio_decoder_class_t *class_gen, xine_stre
 
   gsm610_decoder_t *this ;
 
+  (void)class_gen;
   this = (gsm610_decoder_t *) calloc(1, sizeof(gsm610_decoder_t));
-
+  if (!this)
+    return NULL;
+#ifndef HAVE_ZERO_SAFE_MEM
+  this->output_open = 0;
+  this->sample_rate = 0;
+  this->buf         = NULL;
+  this->size        = 0;
+#endif
+  this->stream = stream;
   this->audio_decoder.decode_data         = gsm610_decode_data;
   this->audio_decoder.reset               = gsm610_reset;
   this->audio_decoder.discontinuity       = gsm610_discontinuity;
   this->audio_decoder.dispose             = gsm610_dispose;
-
-  this->output_open = 0;
-  this->sample_rate = 0;
-  this->stream = stream;
-  this->buf = NULL;
-  this->size = 0;
 
   return &this->audio_decoder;
 }
 
 static void *init_plugin (xine_t *xine, const void *data) {
 
-  gsm610_class_t *this ;
-
-  this = (gsm610_class_t *) calloc(1, sizeof(gsm610_class_t));
-
-  this->decoder_class.open_plugin     = open_plugin;
-  this->decoder_class.identifier      = "GSM 6.10";
-  this->decoder_class.description     = N_("GSM 6.10 audio decoder plugin");
-  this->decoder_class.dispose         = default_audio_decoder_class_dispose;
-
-  return this;
+  static const audio_decoder_class_t this = {
+    .open_plugin     = open_plugin,
+    .identifier      = "GSM 6.10",
+    .description     = N_("GSM 6.10 audio decoder plugin"),
+    .dispose         = NULL
+  };
+  (void)xine;
+  (void)data;
+  return (void *)&this;
 }
 
 static const uint32_t audio_types[] = {
