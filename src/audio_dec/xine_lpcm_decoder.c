@@ -53,10 +53,6 @@
 /*#include <Winsock2.h>*/ /* htons */
 #endif
 
-typedef struct {
-  audio_decoder_class_t   decoder_class;
-} lpcm_class_t;
-
 typedef struct lpcm_decoder_s {
   audio_decoder_t  audio_decoder;
 
@@ -369,18 +365,22 @@ static audio_decoder_t *open_plugin (audio_decoder_class_t *class_gen, xine_stre
 
   lpcm_decoder_t *this ;
 
+  (void)class_gen;
   this = (lpcm_decoder_t *) calloc(1, sizeof(lpcm_decoder_t));
-
+  if (!this)
+    return NULL;
+#ifndef HAVE_ZERO_SAFE_MEM
+  this->output_open        = 0;
+  this->rate               = 0;
+  this->bits_per_sample    = 0;
+  this->number_of_channels = 0;
+  this->ao_cap_mode        = 0;
+#endif
   this->audio_decoder.decode_data         = lpcm_decode_data;
   this->audio_decoder.reset               = lpcm_reset;
   this->audio_decoder.discontinuity       = lpcm_discontinuity;
   this->audio_decoder.dispose             = lpcm_dispose;
 
-  this->output_open   = 0;
-  this->rate          = 0;
-  this->bits_per_sample=0;
-  this->number_of_channels=0;
-  this->ao_cap_mode=0;
   this->stream = stream;
 
   this->cpu_be        = ( htons(1) == 1 );
@@ -390,16 +390,15 @@ static audio_decoder_t *open_plugin (audio_decoder_class_t *class_gen, xine_stre
 
 static void *init_plugin (xine_t *xine, const void *data) {
 
-  lpcm_class_t *this ;
-
-  this = (lpcm_class_t *) calloc(1, sizeof(lpcm_class_t));
-
-  this->decoder_class.open_plugin     = open_plugin;
-  this->decoder_class.identifier      = "Linear PCM";
-  this->decoder_class.description     = N_("Linear PCM audio decoder plugin");
-  this->decoder_class.dispose         = default_audio_decoder_class_dispose;
-
-  return this;
+  static const audio_decoder_class_t this = {
+    .open_plugin     = open_plugin,
+    .identifier      = "Linear PCM",
+    .description     = N_("Linear PCM audio decoder plugin"),
+    .dispose         = NULL
+  };
+  (void)xine;
+  (void)data;
+  return (void *)&this;
 }
 
 static const uint32_t audio_types[] = {
