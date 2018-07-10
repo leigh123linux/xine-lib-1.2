@@ -61,10 +61,6 @@
 
 #define INIT_BUFSIZE (MPC_DECODER_MEMSIZE*2)
 
-typedef struct {
-  audio_decoder_class_t   decoder_class;
-} mpc_class_t;
-
 typedef struct mpc_decoder_s {
   audio_decoder_t  audio_decoder;
 
@@ -101,19 +97,24 @@ typedef struct mpc_decoder_s {
  * musepack specific functions
  *************************************************************************/
 
-/* Reads size bytes of data into buffer at ptr. */
 #ifndef HAVE_MPC_MPCDEC_H
-static int32_t mpc_reader_read(void *const data, void *const ptr, int size) {
-  mpc_decoder_t *const this = (mpc_decoder_t *) data;
+#  define MPC_THIS mpc_decoder_t * const this = (mpc_decoder_t *)data
 #else
-static int32_t mpc_reader_read(mpc_reader *data, void *ptr, int32_t size) {
-  mpc_decoder_t *const this = (mpc_decoder_t *) data->data;
+#  define MPC_THIS mpc_decoder_t * const this = (mpc_decoder_t *)data->data
 #endif
 
+/* Reads size bytes of data into buffer at ptr. */
+#ifndef HAVE_MPC_MPCDEC_H
+static int32_t mpc_reader_read (void *const data, void *const ptr, int size)
+#else
+static int32_t mpc_reader_read (mpc_reader *data, void *ptr, int32_t size)
+#endif
+{
+  MPC_THIS;
   lprintf("mpc_reader_read: size=%d\n", size);
 
   /* Don't try to read more data than we have */
-  if (size > (this->size - this->read))
+  if ((unsigned int)size > (this->size - this->read))
     size = this->size - this->read;
 
   /* Copy the data */
@@ -127,13 +128,12 @@ static int32_t mpc_reader_read(mpc_reader *data, void *ptr, int32_t size) {
 
 /* Seeks to byte position offset. */
 #ifndef HAVE_MPC_MPCDEC_H
-static mpc_bool_t mpc_reader_seek(void *const data, const int32_t offset) {
-  mpc_decoder_t *const this = (mpc_decoder_t *) data;
+static mpc_bool_t mpc_reader_seek (void *const data, const int32_t offset)
 #else
-static mpc_bool_t mpc_reader_seek(mpc_reader *data, int32_t offset) {
-  mpc_decoder_t *const this = (mpc_decoder_t *) data->data;
+static mpc_bool_t mpc_reader_seek(mpc_reader *data, int32_t offset)
 #endif
-
+{
+  MPC_THIS;
   lprintf("mpc_reader_seek: offset=%d\n", offset);
 
   /* seek is only called when reading the header so we can assume
@@ -149,10 +149,12 @@ static mpc_bool_t mpc_reader_seek(mpc_reader *data, int32_t offset) {
 
 /* Returns the current byte offset in the stream. */
 #ifndef HAVE_MPC_MPCDEC_H
-static int32_t mpc_reader_tell(void *const data) {
+static int32_t mpc_reader_tell (void *const data)
 #else
-static int32_t mpc_reader_tell(mpc_reader *const data) {
+static int32_t mpc_reader_tell (mpc_reader *const data)
 #endif
+{
+  (void)data;
   lprintf("mpc_reader_tell\n");
 
   /* Tell isn't used so just return 0 */
@@ -161,13 +163,12 @@ static int32_t mpc_reader_tell(mpc_reader *const data) {
 
 /* Returns the total length of the source stream, in bytes. */
 #ifndef HAVE_MPC_MPCDEC_H
-static int32_t mpc_reader_get_size(void *const data) {
-  mpc_decoder_t *const this = (mpc_decoder_t *) data;
+static int32_t mpc_reader_get_size (void *const data)
 #else
-static int32_t mpc_reader_get_size(mpc_reader *const data) {
-  mpc_decoder_t *const this = (mpc_decoder_t *) data->data;
+static int32_t mpc_reader_get_size (mpc_reader *const data)
 #endif
-
+{
+  MPC_THIS;
   lprintf("mpc_reader_get_size\n");
 
   return this->file_size;
@@ -176,16 +177,17 @@ static int32_t mpc_reader_get_size(mpc_reader *const data) {
 /* True if the stream is a seekable stream. */
 #ifndef HAVE_MPC_MPCDEC_H
 static mpc_bool_t mpc_reader_canseek(void *data) {
+  (void)data;
   lprintf("mpc_reader_canseek\n");
-
   return TRUE;
+}
 #else
 static mpc_bool_t mpc_reader_canseek(mpc_reader *data) {
-
+  (void)data;
   lprintf("mpc_reader_canseek\n");
   return MPC_TRUE;
-#endif
 }
+#endif
 
 /**
  * @brief Convert a array of floating point samples into 16-bit signed integer samples
@@ -385,10 +387,11 @@ static void mpc_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) {
   if (buf->decoder_flags & BUF_FLAG_FRAME_END)  {
     /* Increment frame count */
 #ifndef HAVE_MPC_MPCDEC_H
-    if (this->current_frame++ == this->streaminfo.frames) {
+    if (this->current_frame++ == this->streaminfo.frames)
 #else
-    if (this->current_frame++ == this->streaminfo.samples) {
+    if (this->current_frame++ == this->streaminfo.samples)
 #endif
+    {
       xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
               _("libmusepack: data after last frame ignored\n"));
       return;
@@ -400,10 +403,11 @@ static void mpc_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) {
         lprintf("initialise");
 
 #ifndef HAVE_MPC_MPCDEC_H
-        if (!mpc_decoder_initialize(&this->decoder, &this->streaminfo)) {
+        if (!mpc_decoder_initialize (&this->decoder, &this->streaminfo))
 #else
-        if (!this->decoder) {
+        if (!this->decoder)
 #endif
+        {
           xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
                   _("libmusepack: mpc_decoder_initialise failed\n"));
 
@@ -435,10 +439,11 @@ static void mpc_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) {
     /* If we are at the end of the stream we decode the remaining frames as we
      * know we'll have enough data */
 #ifndef HAVE_MPC_MPCDEC_H
-    if (this->current_frame == this->streaminfo.frames) {
+    if (this->current_frame == this->streaminfo.frames)
 #else
-    if (this->current_frame == this->streaminfo.samples) {
+    if (this->current_frame == this->streaminfo.samples)
 #endif
+    {
       lprintf("flushing buffers\n");
 
       do {
@@ -462,6 +467,7 @@ static void mpc_reset (audio_decoder_t *this_gen) {
 
 static void mpc_discontinuity (audio_decoder_t *this_gen) {
   /* mpc_decoder_t *this = (mpc_decoder_t *) this_gen; */
+  (void)this_gen;
 }
 
 static void mpc_dispose (audio_decoder_t *this_gen) {
@@ -487,7 +493,10 @@ static audio_decoder_t *open_plugin (audio_decoder_class_t *class_gen, xine_stre
 
   mpc_decoder_t *this ;
 
+  (void)class_gen;
   this = (mpc_decoder_t *) calloc(1, sizeof(mpc_decoder_t));
+  if (!this)
+    return NULL;
 
   /* connect the member functions */
   this->audio_decoder.decode_data         = mpc_decode_data;
@@ -515,16 +524,15 @@ static audio_decoder_t *open_plugin (audio_decoder_class_t *class_gen, xine_stre
 
 static void *init_plugin (xine_t *xine, const void *data) {
 
-  mpc_class_t *this ;
-
-  this = (mpc_class_t *) calloc(1, sizeof(mpc_class_t));
-
-  this->decoder_class.open_plugin     = open_plugin;
-  this->decoder_class.identifier      = "mpc";
-  this->decoder_class.description     = N_("mpc: musepack audio decoder plugin");
-  this->decoder_class.dispose         = default_audio_decoder_class_dispose;
-
-  return this;
+  static const audio_decoder_class_t this = {
+    .open_plugin     = open_plugin,
+    .identifier      = "mpc",
+    .description     = N_("mpc: musepack audio decoder plugin"),
+    .dispose         = NULL
+  };
+  (void)xine;
+  (void)data;
+  return (void *)&this;
 }
 
 static const uint32_t audio_types[] = {
@@ -542,4 +550,5 @@ const plugin_info_t xine_plugin_info[] EXPORTED = {
   { PLUGIN_AUDIO_DECODER, 16, "mpc", XINE_VERSION_CODE, &dec_info_audio, &init_plugin },
   { PLUGIN_NONE, 0, "", 0, NULL, NULL }
 };
+
 
