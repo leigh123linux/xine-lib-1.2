@@ -143,30 +143,28 @@ static void xdgFreeStringList(char** list)
 /** Free all data in the cache and set pointers to null. */
 static void xdgFreeData(xdgCachedData *cache)
 {
-	if (cache->dataHome)
-          ;
+     /* if (cache->dataHome) */
 	{
 		/* the first element of the directory lists is usually the home directory */
 		if (cache->searchableDataDirectories[0] != cache->dataHome)
 			free(cache->dataHome);
-		cache->dataHome = 0;
+		cache->dataHome = NULL;
 	}
-	if (cache->configHome)
-          ;
+     /* if (cache->configHome) */
 	{
 		if (cache->searchableConfigDirectories[0] != cache->configHome)
 			free(cache->configHome);
-		cache->configHome = 0;
+		cache->configHome = NULL;
 	}
 	if (cache->cacheHome)
 	{
 		free(cache->cacheHome);
-		cache->cacheHome = 0;
+		cache->cacheHome = NULL;
 	}
 	xdgFreeStringList(cache->searchableDataDirectories);
-	cache->searchableDataDirectories = 0;
+	cache->searchableDataDirectories = NULL;
 	xdgFreeStringList(cache->searchableConfigDirectories);
-	cache->searchableConfigDirectories = 0;
+	cache->searchableConfigDirectories = NULL;
 }
 
 void xdgWipeHandle(xdgHandle *handle)
@@ -189,12 +187,12 @@ static char* xdgGetEnv(const char* name, const char* defaultValue)
 	env = getenv(name);
 	if (env && env[0])
 	{
-		if (!(value = (char*)malloc(strlen(env)+1))) return 0;
+		if (!(value = (char*)malloc(strlen(env)+1))) return NULL;
 		strcpy(value, env);
 	}
 	else
 	{
-		if (!(value = (char*)malloc(strlen(defaultValue)+1))) return 0;
+		if (!(value = (char*)malloc(strlen(defaultValue)+1))) return NULL;
 		strcpy(value, defaultValue);
 	}
 	return value;
@@ -223,7 +221,7 @@ static char** xdgSplitPath(const char* string)
 		if (string[i] == PATH_SEPARATOR_CHAR) ++size;
 	}
 	
-	if (!(itemlist = (char**)malloc(sizeof(char*)*size))) return 0;
+	if (!(itemlist = (char**)malloc(sizeof(char*)*size))) return NULL;
 	xdgZeroMemory(itemlist, sizeof(char*)*size);
 
 	for (i = 0; *string; ++i)
@@ -235,7 +233,7 @@ static char** xdgSplitPath(const char* string)
 #endif
 			;
 	
-		if (!(itemlist[i] = (char*)malloc(j+1))) { xdgFreeStringList(itemlist); return 0; }
+		if (!(itemlist[i] = (char*)malloc(j+1))) { xdgFreeStringList(itemlist); return NULL; }
 
 		/* transfer string, unescaping any escaped seperators */
 		for (k = j = 0; string[j] && string[j] != PATH_SEPARATOR_CHAR; ++j, ++k)
@@ -424,7 +422,7 @@ static char * xdgFindExisting(const char * relativePath, const char * const * di
 		if (!(fullPath = (char*)malloc(strlen(*item)+strlen(relativePath)+2)))
 		{
 			if (returnString) free(returnString);
-			return 0;
+			return NULL;
 		}
 		strcpy(fullPath, *item);
 		if (fullPath[strlen(fullPath)-1] != DIR_SEPARATOR_CHAR)
@@ -437,7 +435,7 @@ static char * xdgFindExisting(const char * relativePath, const char * const * di
 			{
 				free(returnString);
 				free(fullPath);
-				return 0;
+				return NULL;
 			}
 			returnString = tmpString;
 			strcpy(&returnString[strLen], fullPath);
@@ -471,7 +469,7 @@ static FILE * xdgFileOpen(const char * relativePath, const char * mode, const ch
 	for (item = dirList; *item; item++)
 	{
 		if (!(fullPath = (char*)malloc(strlen(*item)+strlen(relativePath)+2)))
-			return 0;
+			return NULL;
 		strcpy(fullPath, *item);
 		if (fullPath[strlen(fullPath)-1] != DIR_SEPARATOR_CHAR)
 			strcat(fullPath, DIR_SEPARATOR_STR);
@@ -481,7 +479,7 @@ static FILE * xdgFileOpen(const char * relativePath, const char * mode, const ch
 		if (testFile)
 			return testFile;
 	}
-	return 0;
+	return NULL;
 }
 
 int xdgMakePath(const char * path, mode_t mode)
