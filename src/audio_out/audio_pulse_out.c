@@ -143,6 +143,8 @@ static void __xine_pa_stream_request_callback(pa_stream *s, size_t nbytes, void 
 {
   pulse_driver_t * this = (pulse_driver_t*) this_gen;
 
+  (void)s;
+  (void)nbytes;
   pa_threaded_mainloop_signal(this->mainloop, 0);
 }
 
@@ -156,6 +158,7 @@ static void __xine_pa_stream_notify_callback(pa_stream *s, void *this_gen)
 {
   pulse_driver_t * this = (pulse_driver_t*) this_gen;
 
+  (void)s;
   pa_threaded_mainloop_signal(this->mainloop, 0);
 }
 
@@ -170,6 +173,7 @@ static void __xine_pa_stream_success_callback(pa_stream *s, int success, void *t
 {
   pulse_driver_t * this = (pulse_driver_t*) this_gen;
 
+  (void)s;
   if (!success)
     xprintf (this->xine, XINE_VERBOSITY_DEBUG, "audio_pulse_out: stream operation failed: %s\n", pa_strerror(pa_context_errno(this->context)));
 
@@ -187,6 +191,7 @@ static void __xine_pa_context_success_callback(pa_context *c, int success, void 
 {
   pulse_driver_t *this = (pulse_driver_t*) this_gen;
 
+  (void)c;
   if (!success)
     xprintf (this->xine, XINE_VERBOSITY_DEBUG, "audio_pulse_out: context operation failed: %s\n", pa_strerror(pa_context_errno(this->context)));
 
@@ -210,6 +215,7 @@ static void __xine_pa_sink_info_callback(pa_context *c, const pa_sink_input_info
 
   pulse_driver_t *const this = (pulse_driver_t *) userdata;
 
+  (void)c;
   if (is_last < 0) {
     xprintf (this->xine, XINE_VERBOSITY_DEBUG, "audio_pulse_out: Failed to get sink input info: %s\n",
              pa_strerror(pa_context_errno(this->context)));
@@ -265,8 +271,9 @@ static void __xine_pa_context_subscribe_callback(pa_context *c,
     pa_subscription_event_type_t t, uint32_t idx, void *this_gen)
 {
   pulse_driver_t * this = (pulse_driver_t*) this_gen;
-  int index;
+  uint32_t index;
 
+  (void)c;
   if (this->stream == NULL)
     return;
 
@@ -627,6 +634,7 @@ static int ao_pulse_bytes_per_frame(ao_driver_t *this_gen)
 
 static int ao_pulse_get_gap_tolerance (ao_driver_t *this_gen)
 {
+  (void)this_gen;
   return GAP_TOLERANCE;
 }
 
@@ -943,6 +951,7 @@ static ao_driver_t *open_plugin (audio_driver_class_t *class_gen, const void *da
 
   lprintf ("audio_pulse_out: open_plugin called\n");
 
+  (void)data;
   this = calloc(1, sizeof (pulse_driver_t));
   if (!this)
     return NULL;
@@ -1073,6 +1082,7 @@ static void *init_class (xine_t *xine, const void *data) {
 
   lprintf ("audio_pulse_out: init class\n");
 
+  (void)data;
   this = calloc(1, sizeof (pulse_class_t));
   if (!this)
     return NULL;
@@ -1099,3 +1109,5 @@ const plugin_info_t xine_plugin_info[] EXPORTED = {
   { PLUGIN_AUDIO_OUT, 9, "pulseaudio", XINE_VERSION_CODE, &ao_info_pulse, init_class },
   { PLUGIN_NONE, 0, "", 0, NULL, NULL }
 };
+
+
