@@ -50,15 +50,21 @@
 #include <signal.h>
 #include <setjmp.h>
 
+/* TJ. x86 instructions are variable length byte strings.
+   To save space, there is no generic length marker.
+   A processor thus may throw an exception at _any_ byte of an unknown instruction.
+   We use longjmp () to get back on track, although it is not thread safe with
+   a static jmp_buf. */
 static jmp_buf sigill_return;
 
 static void sigill_handler (int n) {
+  (void)n;
   longjmp(sigill_return, 1);
 }
 
 static uint32_t arch_accel (void)
 {
-  uint32_t caps = 0;
+  volatile uint32_t caps = 0, is_AMD;
 
 #if defined(__x86_64__) || \
   ( defined(__SSE__) && defined(__SSE2__) && defined(__MMX__) )
@@ -137,7 +143,8 @@ static uint32_t arch_accel (void)
     return 0;
   }
 
-  int AMD = (ebx == 0x68747541) && (ecx == 0x444d4163) && (edx == 0x69746e65);
+  /* (little endian) "Auth"                 "enti"                 "cAMD" */
+  is_AMD = (ebx == 0x68747541) && (edx == 0x69746e65) && (ecx == 0x444d4163);
 
 #endif /* __x86_64__ */
 
@@ -203,7 +210,7 @@ static uint32_t arch_accel (void)
       caps |= MM_ACCEL_X86_3DNOW;
     }
 
-    if (AMD && (edx & 0x00400000)) {
+    if (is_AMD && (edx & 0x00400000)) {
       /* AMD MMX extensions */
       caps |= MM_ACCEL_X86_MMXEXT;
     }

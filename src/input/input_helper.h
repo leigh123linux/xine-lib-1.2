@@ -59,31 +59,39 @@ buf_element_t *_x_input_default_read_block (input_plugin_t *this_gen, fifo_buffe
 
 static inline uint32_t _x_input_get_capabilities_preview (input_plugin_t *this_gen)
 {
+  (void)this_gen;
   return INPUT_CAP_PREVIEW;
 }
 
 static inline uint32_t _x_input_get_capabilities_seekable (input_plugin_t *this_gen)
 {
+  (void)this_gen;
   return INPUT_CAP_SEEKABLE;
 }
 
 static inline uint32_t _x_input_get_capabilities_none (input_plugin_t *this_gen)
 {
+  (void)this_gen;
   return INPUT_CAP_NOCAP;
 }
 
 static inline uint32_t _x_input_default_get_blocksize (input_plugin_t *this_gen)
 {
+  (void)this_gen;
   return 0;
 }
 
 static inline off_t _x_input_default_get_length (input_plugin_t *this_gen)
 {
+  (void)this_gen;
   return 0;
 }
 
 static inline int _x_input_default_get_optional_data (input_plugin_t *this_gen, void *data, int data_type)
 {
+  (void)this_gen;
+  (void)data;
+  (void)data_type;
   return INPUT_OPTIONAL_UNSUPPORTED;
 }
 

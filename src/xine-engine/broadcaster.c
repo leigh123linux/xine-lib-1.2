@@ -299,6 +299,7 @@ static void send_buf (broadcaster_t *this, const char *from, buf_element_t *buf)
 static void video_put_cb (fifo_buffer_t *fifo, buf_element_t *buf, void *this_gen) {
   broadcaster_t *this = (broadcaster_t *) this_gen;
 
+  (void)fifo;
   pthread_mutex_lock( &this->lock );
   send_buf(this, "video", buf);
   pthread_mutex_unlock( &this->lock );
@@ -307,6 +308,7 @@ static void video_put_cb (fifo_buffer_t *fifo, buf_element_t *buf, void *this_ge
 static void audio_put_cb (fifo_buffer_t *fifo, buf_element_t *buf, void *this_gen) {
   broadcaster_t *this = (broadcaster_t *) this_gen;
 
+  (void)fifo;
   pthread_mutex_lock( &this->lock );
   send_buf(this, "audio", buf);
   pthread_mutex_unlock( &this->lock );

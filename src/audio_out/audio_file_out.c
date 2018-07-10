@@ -191,6 +191,7 @@ static int ao_file_bytes_per_frame(ao_driver_t *this_gen)
 
 static int ao_file_get_gap_tolerance (ao_driver_t *this_gen)
 {
+        (void)this_gen;
 	return AOF_GAP_TOLERANCE;
 }
 
@@ -313,17 +314,22 @@ static void ao_file_exit(ao_driver_t *this_gen)
 
 static int ao_file_get_property (ao_driver_t *this_gen, int property) {
 
+        (void)this_gen;
+        (void)property;
 	return 0;
 }
 
 static int ao_file_set_property (ao_driver_t *this_gen, int property, int value) {
 
+        (void)this_gen;
+        (void)property;
 	return ~value;
 }
 
 static int ao_file_ctrl(ao_driver_t *this_gen, int cmd, ...) {
 	/*file_driver_t *this = (file_driver_t *) this_gen;*/
 
+        (void)this_gen;
 	switch (cmd) {
 
 	case AO_CTRL_PLAY_PAUSE:
@@ -348,6 +354,7 @@ static ao_driver_t *ao_file_open_plugin (audio_driver_class_t *class_gen,
 
 	lprintf ("open_plugin called\n");
 
+        (void)data;
 	this = calloc(1, sizeof (ao_file_driver_t));
 	if (!this)
 		return NULL;
@@ -384,6 +391,7 @@ static void *ao_file_init_class (xine_t *xine, const void *data) {
 
 	lprintf ("init class\n");
 
+        (void)data;
 	this = calloc(1, sizeof (ao_file_class_t));
 	if (!this)
 		return NULL;

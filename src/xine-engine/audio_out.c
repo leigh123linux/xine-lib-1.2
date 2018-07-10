@@ -1258,7 +1258,7 @@ static void *ao_loop (void *this_gen) {
     /* Paranoia? */
     {
       int new_speed = this->clock->speed;
-      if (new_speed != this->current_speed)
+      if (new_speed != (int)(this->current_speed))
         ao_set_property (&this->ao, AO_PROP_CLOCK_SPEED, new_speed);
     }
 
@@ -2180,7 +2180,7 @@ static int ao_set_property (xine_audio_port_t *this_gen, int property, int value
 
   case AO_PROP_CLOCK_SPEED:
     /* something to do? */
-    if (value == this->current_speed)
+    if (value == (int)(this->current_speed))
       break;
     /* TJ. pthread mutex implementation on my multicore AMD box is somewhat buggy.
        When fed by a fast single threaded decoder like mad, audio out loop does

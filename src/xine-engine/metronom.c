@@ -88,6 +88,7 @@ typedef struct unixscr_s {
 } unixscr_t;
 
 static int unixscr_get_priority (scr_plugin_t *scr) {
+  (void)scr;
   return 5; /* low priority */
 }
 

@@ -549,6 +549,7 @@ static vo_frame_t *vo_free_queue_get (vos_t *this,
   uint32_t width, uint32_t height, double ratio, int format, int flags) {
   vo_frame_t *img, *prev;
 
+  (void)flags;
   pthread_mutex_lock (&this->free_img_buf_queue.mutex);
 
   do {
@@ -564,8 +565,8 @@ static vo_frame_t *vo_free_queue_get (vos_t *this,
          */
         int i = 0;
         while (img && 
-          ((img->format != format) || (img->width != width) ||
-           (img->height != height) || (img->ratio != ratio))) {
+          ((img->format != format) || (img->width != (int)width) ||
+           (img->height != (int)height) || (img->ratio != ratio))) {
           prev = img;
           img = img->next;
           i++;
@@ -2435,6 +2436,7 @@ void xine_free_video_frame (xine_video_port_t *port,
   vo_frame_t *img = (vo_frame_t *) frame->xine_frame;
   vos_t *this = (vos_t *)img->port;
 
+  (void)port;
   if (!vo_frame_dec2_lock_int (this, img))
     vo_queue_append (&this->free_img_buf_queue, img);
 }

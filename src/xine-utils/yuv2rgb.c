@@ -294,6 +294,7 @@ static void scale_line_15_16 (const uint8_t *restrict source,
 
   int p1, p2;
 
+  (void)step;
   xine_profiler_start_count(prof_scale_line);
 
   while ((width -= 16) >= 0) {
@@ -381,6 +382,7 @@ static void scale_line_45_53 (const uint8_t *restrict source,
 
   int p1, p2;
 
+  (void)step;
   xine_profiler_start_count(prof_scale_line);
 
   while ((width -= 53) >= 0) {
@@ -610,6 +612,7 @@ static void scale_line_45_64 (const uint8_t *restrict source,
 
   int p1, p2;
 
+  (void)step;
   xine_profiler_start_count(prof_scale_line);
 
   while ((width -= 64) >= 0) {
@@ -870,6 +873,7 @@ static void scale_line_9_16 (const uint8_t *restrict source,
 
   int p1, p2;
 
+  (void)step;
   xine_profiler_start_count(prof_scale_line);
 
   while ((width -= 16) >= 0) {
@@ -948,6 +952,7 @@ static void scale_line_11_12 (const uint8_t *restrict source,
 
   int p1, p2;
 
+  (void)step;
   xine_profiler_start_count(prof_scale_line);
 
   while ((width -= 12) >= 0) {
@@ -1018,6 +1023,7 @@ static void scale_line_11_24 (const uint8_t *restrict source,
 
   int p1, p2;
 
+  (void)step;
   xine_profiler_start_count(prof_scale_line);
 
   while ((width -= 24) >= 0) {
@@ -1123,6 +1129,7 @@ static void scale_line_5_8 (const uint8_t *restrict source,
 
   int p1, p2;
 
+  (void)step;
   xine_profiler_start_count(prof_scale_line);
 
   while ((width -= 8) >= 0) {
@@ -1174,6 +1181,7 @@ static void scale_line_3_4 (const uint8_t *restrict source,
 
   int p1, p2;
 
+  (void)step;
   xine_profiler_start_count(prof_scale_line);
 
   while ((width -= 4) >= 0) {
@@ -1208,6 +1216,7 @@ static void scale_line_1_2 (const uint8_t *restrict source,
                             int width, int step) {
   int p1, p2;
 
+  (void)step;
   xine_profiler_start_count(prof_scale_line);
 
   p1 = *source;
@@ -1240,6 +1249,7 @@ static void scale_line_5_4 (const uint8_t *restrict source,
                             int width, int step) {
   int p1, p2, p3, p4, p5;
 
+  (void)step;
   xine_profiler_start_count(prof_scale_line);
 
   while ((width -= 4) >= 0) {
@@ -1278,6 +1288,7 @@ static void scale_line_2_3 (const uint8_t *restrict source,
                             int width, int step) {
   int p1, p2, p3, p4, p5;
 
+  (void)step;
   xine_profiler_start_count(prof_scale_line);
 
   p4 = p1 = *source++;
@@ -1326,6 +1337,7 @@ static void scale_line_1_1 (const uint8_t *restrict source,
                             uint8_t       *restrict dest,
                             int width, int step) {
 
+  (void)step;
   xine_profiler_start_count(prof_scale_line);
   xine_fast_memcpy(dest, source, width);
   xine_profiler_stop_count(prof_scale_line);
@@ -2174,6 +2186,8 @@ static void yuv2rgb_c_gray (yuv2rgb_t *this_gen,
   int height, dst_height;
   int dy;
 
+  (void)_pu;
+  (void)_pv;
   if (this->do_scale) {
     scale_line_func_t scale_line = this->scale_line;
 
@@ -2655,6 +2669,9 @@ static uint32_t yuv2rgb_single_pixel_8 (yuv2rgb_t *this_gen, uint8_t y, uint8_t 
 
 static uint32_t yuv2rgb_single_pixel_gray (yuv2rgb_t *this_gen, uint8_t y, uint8_t u, uint8_t v)
 {
+  (void)this_gen;
+  (void)u;
+  (void)v;
   return y;
 }
 

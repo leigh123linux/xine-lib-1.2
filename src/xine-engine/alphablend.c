@@ -1124,7 +1124,7 @@ static uint8_t *(*blend_yuv_grow_extra_data(alphablend_t *extra_data, int osd_wi
   size_t alloc_width = (osd_width + 15) & (~15);
   size_t needed_buffer_size = 16 + header_size + alloc_width * sizeof (uint8_t[ 3 ][ 2 ]);
 
-  if (extra_data->buffer_size < needed_buffer_size) {
+  if (extra_data->buffer_size < (int)needed_buffer_size) {
 
     _x_freep(&extra_data->buffer);
     header = calloc(1, needed_buffer_size);
@@ -1574,7 +1574,7 @@ static uint8_t *(*blend_yuy2_grow_extra_data(alphablend_t *extra_data, int osd_w
   size_t alloc_width = (osd_width + 15) & (~15);
   size_t needed_buffer_size = 16 + header_size + alloc_width * sizeof (uint8_t[ 3 ]);
 
-  if (extra_data->buffer_size < needed_buffer_size) {
+  if (extra_data->buffer_size < (int)needed_buffer_size) {
 
     _x_freep(&extra_data->buffer);
     header = calloc(1, needed_buffer_size);
@@ -1935,6 +1935,7 @@ void _x_init_xx44_palette(xx44_palette_t *p, unsigned num_entries)
 
 void _x_dispose_xx44_palette(xx44_palette_t *p)
 {
+  (void)p;
 }
 
 static void colorToPalette(const uint32_t *icolor, unsigned char *palette_p,
@@ -1962,7 +1963,7 @@ void _x_xx44_to_xvmc_palette(const xx44_palette_t *p,unsigned char *xvmc_palette
   register const uint32_t *cluts = p->cluts + first_xx44_entry;
 
   for (i=0; i<num_xx44_entries; ++i) {
-    if ((cluts - p->cluts) < p->size) {
+    if ((cluts - p->cluts) < (int)(p->size)) {
       colorToPalette(cluts++, xvmc_palette, num_xvmc_components, xvmc_components);
       xvmc_palette += num_xvmc_components;
     }

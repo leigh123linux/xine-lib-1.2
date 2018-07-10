@@ -934,6 +934,7 @@ int main (int argc, char **argv)
 {
   xml_parser_t *parser;
   int i, ret = 0;
+  (void)argc;
   for (i = 1; argv[i]; ++i)
   {
     xml_node_t *tree;

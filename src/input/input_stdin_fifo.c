@@ -189,6 +189,7 @@ static off_t stdin_plugin_seek (input_plugin_t *this_gen, off_t offset, int orig
 
 static off_t stdin_plugin_get_length(input_plugin_t *this_gen) {
 
+  (void)this_gen;
   return 0;
 }
 
@@ -355,6 +356,8 @@ static input_plugin_t *stdin_class_get_instance (input_class_t *class_gen,
  */
 static void *stdin_plugin_init_class (xine_t *xine, const void *data) {
 
+  (void)xine;
+  (void)data;
   static const input_class_t input_stdin_class = {
     .get_instance       = stdin_class_get_instance,
     .identifier         = "stdin_fifo",

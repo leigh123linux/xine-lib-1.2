@@ -270,7 +270,7 @@ xine_list_iterator_t xine_list_prev(xine_list_t *list, xine_list_iterator_t ite)
 
 void *xine_list_get_value(xine_list_t *list, xine_list_iterator_t ite) {
   xine_list_elem_t *elem = (xine_list_elem_t*)ite;
-
+  (void)list;
   return elem->value;
 }
 

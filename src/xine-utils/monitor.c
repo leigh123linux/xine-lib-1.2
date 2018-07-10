@@ -155,11 +155,14 @@ void xine_profiler_init (void) {
   NO_PROFILER_MSG
 }
 int xine_profiler_allocate_slot (const char *label) {
+  (void)label;
   return -1;
 }
 void xine_profiler_start_count (int id) {
+  (void)id;
 }
 void xine_profiler_stop_count (int id) {
+  (void)id;
 }
 void xine_profiler_print_results (void) {
   NO_PROFILER_MSG

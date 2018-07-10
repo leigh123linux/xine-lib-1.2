@@ -643,7 +643,7 @@ static int test_plugin_open (input_plugin_t *this_gen ) {
 static input_plugin_t *test_class_get_instance (input_class_t *cls_gen,
   xine_stream_t *stream, const char *data) {
   test_input_plugin_t *this;
-  int i;
+  unsigned int i;
 
   for (i = 0; i < TEST_FILES; i++) {
     if (!strcasecmp (data, test_names[i])) break;
@@ -679,6 +679,7 @@ static input_plugin_t *test_class_get_instance (input_class_t *cls_gen,
  */
 
 static const char * const * test_get_autoplay_list (input_class_t *this_gen, int *num_files) {
+  (void)this_gen;
   if (num_files) *num_files = TEST_FILES - 1;
   return test_names + 1;
 }
@@ -686,9 +687,10 @@ static const char * const * test_get_autoplay_list (input_class_t *this_gen, int
 static xine_mrl_t **test_class_get_dir (input_class_t *this_gen, const char *filename,
   int *nFiles) {
   test_input_class_t *this = (test_input_class_t *) this_gen;
-  int i;
+  unsigned int i;
   xine_mrl_t *m;
 
+  (void)filename;
   if (!this->mrls[0]) {
     for (i = 0; i < TEST_FILES - 1; i++) {
       m = &this->m[i];
@@ -716,6 +718,7 @@ static void test_class_dispose (input_class_t *this_gen) {
 static void *test_init_plugin (xine_t *xine, const void *data) {
   test_input_class_t *this;
 
+  (void)data;
   this = (test_input_class_t *) calloc(1, sizeof (test_input_class_t));
   if (!this)
     return NULL;

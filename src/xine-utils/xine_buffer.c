@@ -216,6 +216,7 @@ void *_xine_buffer_copyin(void *buf, int index, const void *data, int len) {
  * user-malloced data chunk.
  */
 void xine_buffer_copyout(const void *buf, int index, void *data, int len) {
+  int hsize;
 
 #ifdef CHECKS
   if (!buf || !data) {
@@ -225,12 +226,13 @@ void xine_buffer_copyout(const void *buf, int index, void *data, int len) {
   CHECK_MAGIC(buf, );
 #endif
 
-  if (GET_HEADER_CONST(buf)->size < index+len)
+  hsize = GET_HEADER_CONST(buf)->size;
+  if (hsize < index + len)
   {
     lprintf("warning: attempt to read over boundary!\n");
-    if (GET_HEADER_CONST(buf)->size < index)
+    if (hsize < index)
       return;
-    len = GET_HEADER_CONST(buf)->size - index;
+    len = hsize - index;
   }
   xine_fast_memcpy(data, ((const uint8_t*)buf)+index, len);
 }
@@ -250,7 +252,7 @@ void *_xine_buffer_set(void *buf, int index, uint8_t b, int len) {
   CHECK_MAGIC(buf, NULL);
 #endif
 
-  GROW_TO(buf, index+len);
+  GROW_TO(buf, (size_t)(index + len));
 
   memset(((uint8_t*)buf)+index, b, len);
 
@@ -339,7 +341,7 @@ void *_xine_buffer_ensure_size(void *buf, int size) {
   CHECK_MAGIC(buf, 0);
 #endif
 
-  GROW_TO(buf, size);
+  GROW_TO(buf, (size_t)size);
 
   return buf;
 }

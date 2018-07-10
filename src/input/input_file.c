@@ -559,6 +559,7 @@ static uint32_t file_input_get_file_type (char *filepathname, char *origin, xine
   uint32_t     file_type = 0;
   char         buf[XINE_PATH_MAX + XINE_NAME_MAX + 1];
 
+  (void)xine;
   if((lstat(filepathname, &pstat)) < 0) {
     snprintf(buf, sizeof(buf), "%s/%s", origin, filepathname);
     if((lstat(buf, &pstat)) < 0) {
@@ -938,6 +939,7 @@ static void *file_input_init_plugin (xine_t *xine, const void *data) {
   file_input_class_t  *this;
   config_values_t     *config;
 
+  (void)data;
   this = (file_input_class_t *) calloc(1, sizeof (file_input_class_t));
   if (!this)
     return NULL;

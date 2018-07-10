@@ -110,6 +110,7 @@ static int ao_none_bytes_per_frame(ao_driver_t *this_gen)
 
 static int ao_none_get_gap_tolerance (ao_driver_t *this_gen)
 {
+  (void)this_gen;
   return AON_GAP_TOLERANCE;
 }
 
@@ -117,6 +118,7 @@ static int ao_none_write(ao_driver_t *this_gen, int16_t *data,
                          uint32_t num_frames)
 {
   ao_none_driver_t *this = (ao_none_driver_t *) this_gen;
+  (void)data;
 
   /* take some time to pretend we are doing something.
    * avoids burning cpu.
@@ -130,11 +132,13 @@ static int ao_none_write(ao_driver_t *this_gen, int16_t *data,
 
 static int ao_none_delay (ao_driver_t *this_gen)
 {
+  (void)this_gen;
   return 0;
 }
 
 static void ao_none_close(ao_driver_t *this_gen)
 {
+  (void)this_gen;
 }
 
 static uint32_t ao_none_get_capabilities (ao_driver_t *this_gen) {
@@ -153,17 +157,22 @@ static void ao_none_exit(ao_driver_t *this_gen)
 
 static int ao_none_get_property (ao_driver_t *this_gen, int property) {
 
+  (void)this_gen;
+  (void)property;
   return 0;
 }
 
 static int ao_none_set_property (ao_driver_t *this_gen, int property, int value) {
 
+  (void)this_gen;
+  (void)property;
   return ~value;
 }
 
 static int ao_none_ctrl(ao_driver_t *this_gen, int cmd, ...) {
   /*ao_none_driver_t *this = (ao_none_driver_t *) this_gen;*/
 
+  (void)this_gen;
   switch (cmd) {
 
   case AO_CTRL_PLAY_PAUSE:
@@ -188,6 +197,7 @@ static ao_driver_t *ao_none_open_plugin (audio_driver_class_t *class_gen,
 
   lprintf ("open_plugin called\n");
 
+  (void)data;
   this = calloc(1, sizeof (ao_none_driver_t));
   if (!this)
     return NULL;
@@ -222,6 +232,7 @@ static void *ao_none_init_class (xine_t *xine, const void *data) {
 
   lprintf ("init class\n");
 
+  (void)data;
   this = calloc(1, sizeof (ao_none_class_t));
   if (!this)
     return NULL;

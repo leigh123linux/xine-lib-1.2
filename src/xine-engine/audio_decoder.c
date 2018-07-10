@@ -313,7 +313,7 @@ static void *audio_decoder_loop (void *stream_gen) {
 
 	    if (stream->audio_channel_auto>=0) {
 
-	      if ((buf->type & 0xFF) == stream->audio_channel_auto) {
+	      if ((int)(buf->type & 0xFF) == stream->audio_channel_auto) {
 		audio_type = buf->type;
 	      } else
 		audio_type = -1;

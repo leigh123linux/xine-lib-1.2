@@ -270,6 +270,7 @@ static void map_decoders (xine_t *this) {
 /* Decoder priority callback */
 static void _decoder_priority_cb(void *data, xine_cfg_entry_t *cfg) {
   /* sort decoders by priority */
+  (void)cfg;
   map_decoders((xine_t *)data);
 }
 
@@ -308,6 +309,7 @@ static plugin_file_t *_insert_file (xine_t *this,
 				    void *lib) {
   plugin_file_t *entry;
 
+  (void)this;
   /* create the file entry */
   entry = malloc(sizeof(plugin_file_t));
   if (!entry)
@@ -2209,6 +2211,7 @@ void _x_free_video_driver (xine_t *xine, vo_driver_t **pdriver) {
 
 void xine_close_audio_driver (xine_t *this, xine_audio_port_t  *ao_port) {
 
+  (void)this;
   if( ao_port )
     ao_port->exit(ao_port);
 
@@ -2216,6 +2219,7 @@ void xine_close_audio_driver (xine_t *this, xine_audio_port_t  *ao_port) {
 
 void xine_close_video_driver (xine_t *this, xine_video_port_t  *vo_port) {
 
+  (void)this;
   if( vo_port )
     vo_port->exit(vo_port);
 
@@ -2829,6 +2833,7 @@ xine_post_t *xine_post_init(xine_t *xine, const char *name, int inputs,
 
 void xine_post_dispose(xine_t *xine, xine_post_t *post_gen) {
   post_plugin_t *post = (post_plugin_t *)post_gen;
+  (void)xine;
   post->dispose(post);
   /* we cannot decrement the reference counter, since post plugins can delay
    * their disposal if they are still in use => post.c handles the counting for us */

@@ -695,7 +695,7 @@ static void update_fast_memcpy (void *user_data, xine_cfg_entry_t *entry) {
   int     method = entry->num_value;
 
   /* check if function is configured and valid for this machine */
-  if ((method > 0) && (method < sizeof (memcpy_method) / sizeof (memcpy_method[0]) - 1) &&
+  if ((method > 0) && ((size_t)method < sizeof (memcpy_method) / sizeof (memcpy_method[0]) - 1) &&
      ((config_flags & memcpy_method[method].cpu_require) == memcpy_method[method].cpu_require)) {
     xprintf (xine, XINE_VERBOSITY_DEBUG, "xine_fast_memcpy (): using \"%s\"\n", memcpy_method[method].name);
     xine_fast_memcpy = memcpy_method[method].function;

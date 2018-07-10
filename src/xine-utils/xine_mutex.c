@@ -36,6 +36,8 @@ int xine_mutex_init (xine_mutex_t *mutex, const pthread_mutexattr_t *mutexattr,
 #ifdef DBG_MUTEX
   strncpy (mutex->id, id, sizeof (mutex->id));
   mutex->id[sizeof (mutex->id) - 1] = 0;
+#else
+  (void)id;
 #endif
 
   return pthread_mutex_init (&mutex->mutex, mutexattr);
@@ -45,6 +47,7 @@ int xine_mutex_lock (xine_mutex_t *mutex, const char *who) {
 
 #ifndef DBG_MUTEX
 
+  (void)who;
   return pthread_mutex_lock (&mutex->mutex);
 
 #else

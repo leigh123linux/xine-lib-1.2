@@ -76,11 +76,14 @@ static void vo_none_frame_dispose(vo_frame_t *vo_frame) {
 
 static void vo_none_frame_field(vo_frame_t *vo_frame, int which_field) {
   /* do nothing */
+  (void)vo_frame;
+  (void)which_field;
 }
 
 static uint32_t vo_none_get_capabilities(vo_driver_t *vo_driver) {
   /* No, we dont crop. Neither do we interpret color matrix or range. */
   /* But we also dont ask decoders to convert data just for the trash ;-) */
+  (void)vo_driver;
   return VO_CAP_YV12 | VO_CAP_YUY2 | VO_CAP_CROP | VO_CAP_COLOR_MATRIX | VO_CAP_FULLRANGE;
 }
 
@@ -113,7 +116,8 @@ static void vo_none_update_frame_format(vo_driver_t *vo_driver, vo_frame_t *vo_f
   vo_none_driver_t *this = (vo_none_driver_t *) vo_driver;
   vo_none_frame_t  *frame = (vo_none_frame_t *) vo_frame;
 
-  if((frame->width != width) || (frame->height != height) || (frame->format != format)) {
+  (void)flags;
+  if((frame->width != (int)width) || (frame->height != (int)height) || (frame->format != format)) {
 
     vo_none_free_framedata(frame);
 
@@ -176,6 +180,7 @@ static void vo_none_display_frame(vo_driver_t *vo_driver, vo_frame_t *vo_frame) 
   /* vo_none_driver_t  *driver = (vo_none_driver_t *)vo_driver; */
   vo_none_frame_t   *frame = (vo_none_frame_t *)vo_frame;
 
+  (void)vo_driver;
   frame->vo_frame.free(&frame->vo_frame);
 }
 
@@ -215,6 +220,8 @@ static int vo_none_set_property(vo_driver_t *vo_driver, int property, int value)
 
 static void vo_none_get_property_min_max(vo_driver_t *vo_driver,
 				      int property, int *min, int *max) {
+  (void)vo_driver;
+  (void)property;
   *min = 0;
   *max = 0;
 }
@@ -222,6 +229,8 @@ static void vo_none_get_property_min_max(vo_driver_t *vo_driver,
 static int vo_none_gui_data_exchange(vo_driver_t *vo_driver, int data_type, void *data) {
 /*   vo_none_driver_t     *this = (vo_none_driver_t *) vo_driver; */
 
+  (void)vo_driver;
+  (void)data;
   switch (data_type) {
   case XINE_GUI_SEND_COMPLETION_EVENT:
   case XINE_GUI_SEND_DRAWABLE_CHANGED:
@@ -241,6 +250,7 @@ static void vo_none_dispose(vo_driver_t *vo_driver) {
 }
 
 static int vo_none_redraw_needed(vo_driver_t *vo_driver) {
+  (void)vo_driver;
   return 0;
 }
 
@@ -248,7 +258,10 @@ static vo_driver_t *vo_none_open_plugin(video_driver_class_t *driver_class, cons
   vo_none_class_t    *class = (vo_none_class_t *) driver_class;
   vo_none_driver_t   *driver;
 
+  (void)visual;
   driver = calloc(1, sizeof(vo_none_driver_t));
+  if (!driver)
+    return NULL;
 
   driver->xine   = class->xine;
   driver->ratio  = XINE_VO_ASPECT_AUTO;
@@ -276,7 +289,10 @@ static vo_driver_t *vo_none_open_plugin(video_driver_class_t *driver_class, cons
 static void *vo_none_init_class (xine_t *xine, const void *visual) {
   vo_none_class_t        *this;
 
+  (void)visual;
   this = calloc(1, sizeof(vo_none_class_t));
+  if (!this)
+    return NULL;
 
   this->driver_class.open_plugin     = vo_none_open_plugin;
   this->driver_class.identifier      = "none";
@@ -302,4 +318,5 @@ const plugin_info_t xine_plugin_info[] EXPORTED = {
   { PLUGIN_NONE, 0, "", 0, NULL, NULL }
 };
 #endif
+
 

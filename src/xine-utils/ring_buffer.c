@@ -171,6 +171,8 @@ static void xine_ring_buffer_display_stat(const xine_ring_buffer_t *ring_buffer)
          ring_buffer->head - ring_buffer->buffer,
          ring_buffer->tail_release - ring_buffer->buffer,
          ring_buffer->tail - ring_buffer->buffer);
+#else
+  (void)ring_buffer;
 #endif
 }
 
