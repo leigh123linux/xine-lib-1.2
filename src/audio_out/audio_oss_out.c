@@ -173,7 +173,7 @@ static int ao_oss_open(ao_driver_t *this_gen,
 
   if (this->audio_fd > -1) {
 
-    if ( (mode == this->mode) && (rate == this->input_sample_rate) ) {
+    if ( (mode == this->mode) && (rate == (uint32_t)this->input_sample_rate) ) {
       return this->output_sample_rate;
     }
 
@@ -374,6 +374,7 @@ static int ao_oss_get_gap_tolerance (ao_driver_t *this_gen){
 
   /* oss_driver_t *this = (oss_driver_t *) this_gen; */
 
+  (void)this_gen;
   return GAP_TOLERANCE;
 }
 
@@ -387,7 +388,7 @@ static int ao_oss_delay(ao_driver_t *this_gen) {
 
   switch (this->sync_method) {
   case OSS_SYNC_PROBEBUFFER:
-    if( this->bytes_in_buffer < this->buffer_size )
+    if( (int)(this->bytes_in_buffer) < this->buffer_size )
       bytes_left = this->bytes_in_buffer;
     else
       bytes_left = this->buffer_size;
@@ -431,7 +432,7 @@ static int ao_oss_delay(ao_driver_t *this_gen) {
 
     lprintf ("%d bytes output\n", info.bytes);
 
-    if (this->bytes_in_buffer < info.bytes) {
+    if ((int)(this->bytes_in_buffer) < info.bytes) {
       this->bytes_in_buffer -= this->last_getoptr; /* GETOPTR wrapped */
     }
 
@@ -477,7 +478,7 @@ static int ao_oss_write(ao_driver_t *this_gen,
 
     simulated_bytes_in_buffer = frames * this->bytes_per_frame;
 
-    if (this->bytes_in_buffer < simulated_bytes_in_buffer)
+    if ((int)(this->bytes_in_buffer) < simulated_bytes_in_buffer)
       this->bytes_in_buffer = simulated_bytes_in_buffer;
   }
 
@@ -723,6 +724,7 @@ static ao_driver_t *open_plugin (audio_driver_class_t *class_gen, const void *da
   int speakers;
 
 
+  (void)data;
   this = calloc(1, sizeof (oss_driver_t));
   if (!this)
     return NULL;
@@ -1117,6 +1119,7 @@ static void *init_class (xine_t *xine, const void *data) {
 
   oss_class_t        *this;
 
+  (void)data;
   this = calloc(1, sizeof (oss_class_t));
   if (!this)
     return NULL;
