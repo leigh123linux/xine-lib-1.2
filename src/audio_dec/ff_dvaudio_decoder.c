@@ -46,10 +46,6 @@
 #define MAXFRAMESIZE 131072
 
 
-typedef struct {
-  audio_decoder_class_t   decoder_class;
-} dvaudio_class_t;
-
 typedef struct dvaudio_decoder_s {
   audio_decoder_t   audio_decoder;
 
@@ -321,6 +317,7 @@ static void dvaudio_reset (audio_decoder_t *this_gen) {
 }
 
 static void dvaudio_discontinuity (audio_decoder_t *this_gen) {
+  (void)this_gen;
 }
 
 static void dvaudio_dispose (audio_decoder_t *this_gen) {
@@ -341,7 +338,10 @@ static audio_decoder_t *dvaudio_open_plugin (audio_decoder_class_t *class_gen, x
 
   dvaudio_decoder_t *this ;
 
+  (void)class_gen;
   this = calloc(1, sizeof (dvaudio_decoder_t));
+  if (!this)
+    return NULL;
 
   this->audio_decoder.decode_data    = dvaudio_decode_data;
   this->audio_decoder.reset          = dvaudio_reset;
@@ -360,16 +360,15 @@ static audio_decoder_t *dvaudio_open_plugin (audio_decoder_class_t *class_gen, x
 
 static void *init_dvaudio_plugin (xine_t *xine, const void *data) {
 
-  dvaudio_class_t *this ;
-
-  this = calloc(1, sizeof (dvaudio_class_t));
-
-  this->decoder_class.open_plugin     = dvaudio_open_plugin;
-  this->decoder_class.identifier      = "dv audio";
-  this->decoder_class.description     = N_("dv audio decoder plugin");
-  this->decoder_class.dispose         = default_audio_decoder_class_dispose;
-
-  return this;
+  static const audio_decoder_class_t this = {
+    .open_plugin     = dvaudio_open_plugin,
+    .identifier      = "dv audio",
+    .description     = N_("dv audio decoder plugin"),
+    .dispose         = NULL
+  };
+  (void)xine;
+  (void)data;
+  return (void *)&this;
 }
 
 static uint32_t supported_audio_types[] = {
