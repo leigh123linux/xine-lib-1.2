@@ -292,6 +292,12 @@ static void error_callback(const char *file, int line,
     printf("%s: %s() %s.\n", file, function, buf);
     free(buf);
   }
+#else
+  (void)file;
+  (void)line;
+  (void)function;
+  (void)err;
+  (void)fmt;
 #endif
 }
 
@@ -664,6 +670,7 @@ static int ao_alsa_bytes_per_frame(ao_driver_t *this_gen) {
  * Return gap tolerance (in pts)
  */
 static int ao_alsa_get_gap_tolerance (ao_driver_t *this_gen) {
+  (void)this_gen;
   return GAP_TOLERANCE;
 }
 
@@ -1387,6 +1394,7 @@ static ao_driver_t *open_plugin (audio_driver_class_t *class_gen, const void *da
   AUDIO_DEVICE_SPEAKER_ARRANGEMENT_TYPES;
   int speakers;
 
+  (void)data;
   this = calloc(1, sizeof (alsa_driver_t));
   if (!this)
     return NULL;
@@ -1682,6 +1690,7 @@ static void *init_class (xine_t *xine, const void *data) {
 
   alsa_class_t        *this;
 
+  (void)data;
   this = calloc(1, sizeof (alsa_class_t));
   if (!this)
     return NULL;
