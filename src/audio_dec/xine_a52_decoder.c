@@ -832,7 +832,10 @@ static void *init_plugin (xine_t *xine, const void *data) {
   a52dec_class_t *this;
   config_values_t *cfg;
 
+  (void)data;
   this = calloc(1, sizeof (a52dec_class_t));
+  if (!this)
+    return NULL;
 
   this->decoder_class.open_plugin     = open_plugin;
   this->decoder_class.identifier      = "a/52dec";
