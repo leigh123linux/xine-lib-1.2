@@ -62,10 +62,6 @@
  */
 #define MAD_MIN_SIZE 2889
 
-typedef struct {
-  audio_decoder_class_t   decoder_class;
-} mad_class_t;
-
 typedef struct mad_decoder_s {
   audio_decoder_t   audio_decoder;
 
@@ -235,7 +231,7 @@ static void mad_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) {
 	int mode = (this->frame.header.mode == MAD_MODE_SINGLE_CHANNEL) ? AO_CAP_MODE_MONO : AO_CAP_MODE_STEREO;
 
 	if (!this->output_open
-	    || (this->output_sampling_rate != this->frame.header.samplerate)
+	    || ((unsigned int)(this->output_sampling_rate) != this->frame.header.samplerate)
 	    || (this->output_mode != mode)) {
 
 	  lprintf ("audio sample rate %d mode %08x\n", this->frame.header.samplerate, mode);
@@ -307,7 +303,7 @@ static void mad_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) {
 	  /* padding */
 	  if (this->start_padding || this->end_padding) {
 	    /* check padding validity */
-	    if (nsamples < (this->start_padding + this->end_padding)) {
+	    if (nsamples < (unsigned int)(this->start_padding + this->end_padding)) {
 	      lprintf("invalid padding data");
 	      this->start_padding = 0;
 	      this->end_padding = 0;
@@ -389,6 +385,7 @@ static audio_decoder_t *open_plugin (audio_decoder_class_t *class_gen, xine_stre
 
   mad_decoder_t *this ;
 
+  (void)class_gen;
   this = (mad_decoder_t *) calloc(1, sizeof(mad_decoder_t));
   if (!this)
     return NULL;
@@ -424,16 +421,15 @@ static audio_decoder_t *open_plugin (audio_decoder_class_t *class_gen, xine_stre
  */
 static void *init_plugin (xine_t *xine, const void *data) {
 
-  mad_class_t *this;
-
-  this = (mad_class_t *) calloc(1, sizeof(mad_class_t));
-
-  this->decoder_class.open_plugin     = open_plugin;
-  this->decoder_class.identifier      = "mad";
-  this->decoder_class.description     = N_("libmad based mpeg audio layer 1/2/3 decoder plugin");
-  this->decoder_class.dispose         = default_audio_decoder_class_dispose;
-
-  return this;
+  (void)xine;
+  (void)data;
+  static const audio_decoder_class_t this = {
+    .open_plugin     = open_plugin,
+    .identifier      = "mad",
+    .description     = N_("libmad based mpeg audio layer 1/2/3 decoder plugin"),
+    .dispose         = NULL
+  };
+  return (void *)&this;
 }
 
 static const uint32_t audio_types[] = {
