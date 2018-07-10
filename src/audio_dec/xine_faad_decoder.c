@@ -310,7 +310,7 @@ static int faad_apply_conf (faad_decoder_t *this, uint8_t *conf, int len) {
       break;
     memcpy (&bits, conf, 4);
     bits = bebf_ADJ32 (bits);
-    if ((bits & 0xf8787c00) != ((AOT_PS << (32 - 5)) | (1 << (32 - 5 - 4 - 4)) | (AOT_AAC_LC << (32 - 5 - 4 - 4 - 4 - 5))))
+    if ((bits & 0xf8787c00) != (uint32_t)((AOT_PS << (32 - 5)) | (1 << (32 - 5 - 4 - 4)) | (AOT_AAC_LC << (32 - 5 - 4 - 4 - 4 - 5))))
       break;
     if (double_samplerates[(bits >> (32 - 5 - 4)) & 15] != ((bits >> (32 - 5 - 4 - 4 - 4)) & 15))
       break;
@@ -961,6 +961,7 @@ static void faad_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) {
 }
 
 static void faad_discontinuity (audio_decoder_t *this_gen) {
+  (void)this_gen;
 }
 
 static void faad_dispose (audio_decoder_t *this_gen) {
@@ -1109,6 +1110,7 @@ static void *faad_init_plugin (xine_t *xine, const void *data, const char *id) {
   faad_class_t *this, *master;
   struct cfg_entry_s *entry;
 
+  (void)data;
   this = calloc(1, sizeof (faad_class_t));
   if (!this)
     return NULL;
