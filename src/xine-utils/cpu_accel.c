@@ -64,7 +64,10 @@ static void sigill_handler (int n) {
 
 static uint32_t arch_accel (void)
 {
-  volatile uint32_t caps = 0, is_AMD;
+  volatile uint32_t caps = 0;
+#ifndef __x86_64__
+  volatile uint32_t is_AMD;
+#endif
 
 #if defined(__x86_64__) || \
   ( defined(__SSE__) && defined(__SSE2__) && defined(__MMX__) )
