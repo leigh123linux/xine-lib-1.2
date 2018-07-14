@@ -90,7 +90,7 @@ typedef struct ff_audio_decoder_s {
   int               ff_channels;
   int               ff_bits;
   int               ff_sample_rate;
-  int64_t           ff_map;
+  uint64_t          ff_map;
 
   /* channel mixer settings */
   /* map[ao_channel] = ff_channel */
@@ -148,7 +148,7 @@ static int ff_aac_mode_parse (ff_audio_decoder_t *this, uint8_t *buf, int size, 
       /* also test the "layer" bits for 0 (mpeg layer 4 audio). */
       /* dont get fooled by 0xff padding bytes. */
       if ((v & 0xfff6) == 0xfff0) {
-        uint32_t s;
+        int s;
         /* test header size */
         if (size - i < 7 - 1)
           continue;
@@ -197,7 +197,7 @@ static int ff_aac_mode_parse (ff_audio_decoder_t *this, uint8_t *buf, int size, 
       v <<= 8;
       v |= buf[i];
       if ((v & 0xfff6) == 0xfff0) {
-        uint32_t s;
+        int s;
         /* test header size */
         if (size - i < 7 - 1)
           return -1;
@@ -513,7 +513,7 @@ static void ff_map_channels (ff_audio_decoder_t *this) {
     ff_map = ((uint64_t)1 << this->context->channels) - 1;
 
   if ((caps != this->ao_caps) || (ff_map != this->ff_map)) {
-    int i, j;
+    unsigned int i, j;
     /* ff: see names[] below; xine: L R RL RR C LFE */
     const int8_t base_map[] = {0, 1, 4, 5, 2, 3, -1, -1, -1, 2, 3};
     int8_t name_map[MAX_CHANNELS] = {0, 0, 0, 0, 0, 0};
@@ -522,7 +522,7 @@ static void ff_map_channels (ff_audio_decoder_t *this) {
       AO_CAP_MODE_4CHANNEL, AO_CAP_MODE_4_1CHANNEL,
       AO_CAP_MODE_5CHANNEL, AO_CAP_MODE_5_1CHANNEL
     };
-    const int num_modes = sizeof (modes) / sizeof (modes[0]);
+    const unsigned int num_modes = sizeof (modes) / sizeof (modes[0]);
     const int8_t mode_channels[]   = {1, 2, 4, 6, 6, 6};
     const int8_t wishlist[] = {
       0, 1, 2, 3, 4, 5, /* mono */
@@ -620,13 +620,13 @@ static void ff_map_channels (ff_audio_decoder_t *this) {
       int8_t *indx = this->left;
       for (i = 0; i < 2; i++) {
         buf[p++] = '[';
-        for (j = 0; j < this->front_mixes; j++)
-          p += sprintf (buf + p, "%s%s", names[name_map[indx[j]]], (j < this->front_mixes - 1) ? " + " : "");
+        for (j = 0; (int)j < this->front_mixes; j++)
+          p += sprintf (buf + p, "%s%s", names[name_map[indx[j]]], ((int)j < this->front_mixes - 1) ? " + " : "");
         buf[p++] = ']';
         buf[p++] = ' ';
         indx = this->right;
       }
-      for (i = 2; i < this->ao_channels; i++)
+      for (i = 2; i < (unsigned int)this->ao_channels; i++)
         p += sprintf (buf + p, "[%s] ",
           ((this->map[i] < 0) || (this->map[i] > 5)) ? (const int8_t *)"-" : names[name_map[this->map[i]]]);
       buf[p++] = '\n';
@@ -1317,6 +1317,8 @@ static void dispose_audio_class (audio_decoder_class_t *this_gen) {
 void *init_audio_plugin (xine_t *xine, const void *data) {
 
   ff_audio_class_t *this ;
+
+  (void)data;
 
   this = calloc(1, sizeof (ff_audio_class_t));
   if (!this) {

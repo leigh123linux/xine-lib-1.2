@@ -75,30 +75,43 @@ typedef struct {
 } avformat_input_plugin_t;
 
 static off_t input_avformat_read (input_plugin_t *this_gen, void *buf_gen, off_t len) {
+  (void)this_gen;
+  (void)buf_gen;
+  (void)len;
   return 0;
 }
 
 static buf_element_t *input_avformat_read_block (input_plugin_t *this_gen, fifo_buffer_t *fifo, off_t todo) {
+  (void)this_gen;
+  (void)fifo;
+  (void)todo;
   return NULL;
 }
 
 static off_t input_avformat_get_length (input_plugin_t *this_gen) {
+  (void)this_gen;
   return -1;
 }
 
 static uint32_t input_avformat_get_capabilities (input_plugin_t *this_gen) {
+  (void)this_gen;
   return INPUT_CAP_SEEKABLE;
 }
 
 static uint32_t input_avformat_get_blocksize (input_plugin_t *this_gen) {
+  (void)this_gen;
   return 0;
 }
 
 static off_t input_avformat_get_current_pos (input_plugin_t *this_gen) {
+  (void)this_gen;
   return 0;
 }
 
 static off_t input_avformat_seek (input_plugin_t *this_gen, off_t offset, int origin) {
+  (void)this_gen;
+  (void)offset;
+  (void)origin;
   return -1;
 }
 
@@ -132,6 +145,7 @@ static int input_avformat_get_optional_data (input_plugin_t *this_gen,
 }
 
 static int input_avformat_open (input_plugin_t *this_gen) {
+  (void)this_gen;
   return 1;
 }
 
@@ -234,6 +248,9 @@ static input_plugin_t *input_avformat_get_instance (input_class_t *cls_gen, xine
 void *init_avformat_input_plugin (xine_t *xine, const void *data) {
 
   input_class_t  *this;
+
+  (void)xine;
+  (void)data;
 
   this = calloc(1, sizeof(input_class_t));
   if (!this) {
@@ -352,7 +369,7 @@ static AVProgram *_find_program_from_stream(AVFormatContext *ic, AVProgram *last
     } else {
       if (!last)
         for (j = 0; j < ic->programs[i]->nb_stream_indexes; j++)
-          if (ic->programs[i]->stream_index[j] == s)
+          if (ic->programs[i]->stream_index[j] == (unsigned int)s)
             return ic->programs[i];
     }
   }
@@ -362,7 +379,8 @@ static AVProgram *_find_program_from_stream(AVFormatContext *ic, AVProgram *last
 static int find_avformat_streams(avformat_demux_plugin_t *this) {
 
   AVProgram *p = NULL;
-  int i, nb_streams;
+  int nb_streams;
+  unsigned int u;
 
   /* find avformat streams */
 
@@ -404,12 +422,12 @@ static int find_avformat_streams(avformat_demux_plugin_t *this) {
   }
   nb_streams = p ? p->nb_stream_indexes : this->fmt_ctx->nb_streams;
 
-  for (i = 0; i < nb_streams; i++) {
-    int stream_index = p ? p->stream_index[i] : i;
+  for (u = 0; (int)u < nb_streams; u++) {
+    unsigned int stream_index = p ? p->stream_index[u] : u;
     AVStream *st = this->fmt_ctx->streams[stream_index];
 
     if (stream_index >= this->num_streams) {
-      xprintf (this->stream->xine, XINE_VERBOSITY_LOG, LOG_MODULE": Too many streams, ignoring stream #%d\n", i);
+      xprintf (this->stream->xine, XINE_VERBOSITY_LOG, LOG_MODULE": Too many streams, ignoring stream #%d\n", u);
       continue;
     }
 
@@ -610,6 +628,7 @@ static int demux_avformat_get_stream_length (demux_plugin_t *this_gen) {
 }
 
 static uint32_t demux_avformat_get_capabilities(demux_plugin_t *this_gen) {
+  (void)this_gen;
   return DEMUX_CAP_AUDIOLANG;
 }
 
@@ -870,7 +889,12 @@ static demux_plugin_t *open_demux_avformat_plugin (demux_class_t *class_gen,
 void *init_avformat_demux_plugin (xine_t *xine, const void *data) {
   demux_class_t     *this;
 
+  (void)xine;
+  (void)data;
+
   this  = calloc(1, sizeof(demux_class_t));
+  if (!this)
+    return NULL;
 
   this->open_plugin     = open_demux_avformat_plugin;
   this->description     = N_("libavformat demux plugin");

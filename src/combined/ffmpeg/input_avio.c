@@ -94,6 +94,9 @@ static off_t input_avio_read (input_plugin_t *this_gen, void *buf_gen, off_t len
 }
 
 static buf_element_t *input_avio_read_block (input_plugin_t *this_gen, fifo_buffer_t *fifo, off_t todo) {
+  (void)this_gen;
+  (void)fifo;
+  (void)todo;
   return NULL;
 }
 
@@ -134,6 +137,7 @@ static off_t input_avio_seek_time (input_plugin_t *this_gen, int time_offset, in
 }
 
 static uint32_t input_avio_get_blocksize (input_plugin_t *this_gen) {
+  (void)this_gen;
   return 0;
 }
 
@@ -344,6 +348,8 @@ void *init_avio_input_plugin (xine_t *xine, const void *data) {
   input_class_t  *this;
   const char     *protocol;
   void           *iter;
+
+  (void)data;
 
   for (iter = NULL; NULL != (protocol = avio_enum_protocols(&iter, 0)); ) {
     xprintf (xine, XINE_VERBOSITY_DEBUG, LOG_MODULE": found avio protocol '%s'\n", protocol);

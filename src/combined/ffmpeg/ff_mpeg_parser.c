@@ -143,6 +143,7 @@ static int parse_chunk (mpeg_parser_t *parser, int code, uint8_t *buffer, int le
   int is_frame_done;
   int next_code = parser->code;
 
+  (void)len;
   /* wait for sequence_header_code */
   if (parser->is_sequence_needed) {
     if (code != 0xb3) {

@@ -386,6 +386,7 @@ static void ffsf_delete (ff_saved_frame_t *ffsf) {
 # ifdef XFF_AV_BUFFER
 static void release_frame (void *saved_frame, uint8_t *data) {
   ff_saved_frame_t *ffsf = saved_frame;
+  (void)data;
   /* At this point in time, AVFrame may already be reused. So take our saved values instead. */
   if (ffsf) {
     if (--(ffsf->refs))
@@ -925,13 +926,14 @@ static void init_video_codec (ff_video_decoder_t *this, unsigned int codec_type)
          This will be slightly faster. And it is also a workaround for buggy
          v54 who likes to ignore EMU_EDGE for wmv2 and xvid. */
       this->edge = XFF_EDGE_WIDTH ();
+    }
 #ifdef CODEC_FLAG_EMU_EDGE
-    } else {
+    else {
       /* Some codecs (eg rv10) copy flags in init so it's necessary to set
        * this flag here in case we are going to use direct rendering */
       this->context->flags |= CODEC_FLAG_EMU_EDGE;
-#endif
     }
+#endif
   }
 
   /* TJ. without this, it wont work at all on my machine */
@@ -1664,7 +1666,7 @@ static void ff_handle_header_buffer (ff_video_decoder_t *this, buf_element_t *bu
       /* init package containing bih */
       memcpy ( &this->bih, this->buf, sizeof(xine_bmiheader) );
 
-      if (this->bih.biSize > sizeof(xine_bmiheader)) {
+      if (this->bih.biSize > (int)sizeof(xine_bmiheader)) {
       this->context->extradata_size = this->bih.biSize - sizeof(xine_bmiheader);
         this->context->extradata = malloc(this->context->extradata_size +
                                           AV_INPUT_BUFFER_PADDING_SIZE);
@@ -2954,6 +2956,8 @@ void *init_video_plugin (xine_t *xine, const void *data) {
 
   ff_video_class_t *this;
   config_values_t  *config;
+
+  (void)data;
 
   this = calloc(1, sizeof (ff_video_class_t));
   if (!this) {
