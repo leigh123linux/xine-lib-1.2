@@ -153,6 +153,7 @@ typedef struct
 
 static uint32_t fb_get_capabilities(vo_driver_t *this_gen)
 {
+  (void)this_gen;
   return VO_CAP_YV12 | VO_CAP_YUY2 | VO_CAP_BRIGHTNESS | VO_CAP_CONTRAST | VO_CAP_SATURATION;
 }
 
@@ -265,11 +266,13 @@ static vo_frame_t *fb_alloc_frame(vo_driver_t *this_gen)
 
 static void fb_compute_ideal_size(fb_driver_t *this, fb_frame_t *frame)
 {
+  (void)this;
   _x_vo_scale_compute_ideal_size(&frame->sc);
 }
 
 static void fb_compute_rgb_size(fb_driver_t *this, fb_frame_t *frame)
 {
+  (void)this;
   _x_vo_scale_compute_output_size(&frame->sc);
 
   /* avoid problems in yuv2rgb */
@@ -374,11 +377,11 @@ static void fb_update_frame_format(vo_driver_t *this_gen,
   flags &= VO_BOTH_FIELDS;
 
   /* Find out if we need to adapt this frame. */
-  if (width != frame->sc.delivered_width    ||
-      height != frame->sc.delivered_height  ||
-      ratio != frame->sc.delivered_ratio    ||
-      flags != frame->flags                 ||
-      format != frame->format               ||
+  if ((int)width  != frame->sc.delivered_width  ||
+      (int)height != frame->sc.delivered_height ||
+      ratio       != frame->sc.delivered_ratio  ||
+      flags       != frame->flags               ||
+      format      != frame->format              ||
       this->sc.user_ratio != frame->sc.user_ratio)
   {
     lprintf("frame format (from decoder) has changed => adapt\n");
@@ -413,6 +416,7 @@ static void fb_overlay_clut_yuv2rgb(fb_driver_t *this,
   int i;
   uint32_t *rgb;
 
+  (void)this;
   if (!overlay->rgb_clut) {
     rgb = overlay->color;
     for (i = sizeof (overlay->color) / sizeof (overlay->color[0]); i > 0; i--) {
@@ -484,6 +488,7 @@ static void fb_overlay_blend (vo_driver_t *this_gen, vo_frame_t *frame_gen,
 
 static int fb_redraw_needed(vo_driver_t *this_gen)
 {
+  (void)this_gen;
   return 0;
 }
 
@@ -658,6 +663,7 @@ static void fb_get_property_min_max(vo_driver_t *this_gen,
 {
   /* fb_driver_t *this = (fb_driver_t *) this_gen;  */
 
+  (void)this_gen;
   switch (property) {
   case VO_PROP_BRIGHTNESS:
     *min = -128;
@@ -678,6 +684,9 @@ static void fb_get_property_min_max(vo_driver_t *this_gen,
 static int fb_gui_data_exchange(vo_driver_t *this_gen,
 				int data_type, void *data)
 {
+  (void)this_gen;
+  (void)data_type;
+  (void)data;
   return 0;
 }
 
@@ -848,6 +857,7 @@ static int mode_visual(fb_driver_t *this, config_values_t *config,
 		       struct fb_var_screeninfo *var,
 		       struct fb_fix_screeninfo *fix)
 {
+  (void)config;
   switch(fix->visual)
   {
     case FB_VISUAL_TRUECOLOR:
@@ -1072,6 +1082,7 @@ static void *fb_init_class(xine_t *xine, const void *visual_gen)
 {
   fb_class_t *this = calloc(1, sizeof(fb_class_t));
 
+  (void)visual_gen;
   this->driver_class.open_plugin     = fb_open_plugin;
   this->driver_class.identifier      = "fb";
   this->driver_class.description     = N_("Xine video output plugin using the Linux frame buffer device");
