@@ -316,6 +316,7 @@ static void parse_mpeg2_packet (demux_mpeg_t *this, int stream_id, int64_t scr) 
     itime = this->rate ? (int64_t)ipos * 20 / this->rate : 0;
   }
 
+  (void)scr;
   //printf( "parse_mpeg2_packet: stream_id=%X\n", stream_id);
 
   if (stream_id==0xbd) {
@@ -367,7 +368,7 @@ static void parse_mpeg2_packet (demux_mpeg_t *this, int stream_id, int64_t scr) 
           buf_element_t *buf;
           int part;
           buf = this->video_fifo->buffer_pool_size_alloc (this->video_fifo, len);
-          part = buf->max_size < len ? buf->max_size : len;
+          part = buf->max_size < (int)len ? buf->max_size : (int)len;
           buf->size = this->input->read (this->input, buf->content, part);
           if (buf->size != part) {
             buf->free_buffer (buf);
@@ -408,7 +409,7 @@ static void parse_mpeg2_packet (demux_mpeg_t *this, int stream_id, int64_t scr) 
           buf_element_t *buf;
           int part;
           buf = this->video_fifo->buffer_pool_size_alloc (this->video_fifo, len);
-          part = buf->max_size < len ? buf->max_size : len;
+          part = buf->max_size < (int)len ? buf->max_size : (int)len;
           buf->size = this->input->read (this->input, buf->content, part);
           if (buf->size != part) {
             buf->free_buffer (buf);
@@ -465,7 +466,7 @@ static void parse_mpeg2_packet (demux_mpeg_t *this, int stream_id, int64_t scr) 
           buf_element_t *buf;
           int part;
           buf = this->video_fifo->buffer_pool_size_alloc (this->video_fifo, len);
-          part = buf->max_size < len ? buf->max_size : len;
+          part = buf->max_size < (int)len ? buf->max_size : (int)len;
           buf->size = this->input->read (this->input, buf->content, part);
           if (buf->size != part) {
             buf->free_buffer (buf);
@@ -516,7 +517,7 @@ static void parse_mpeg2_packet (demux_mpeg_t *this, int stream_id, int64_t scr) 
           buf_element_t *buf;
           int part;
           buf = this->audio_fifo->buffer_pool_size_alloc (this->audio_fifo, len);
-          part = buf->max_size < len ? buf->max_size : len;
+          part = buf->max_size < (int)len ? buf->max_size : (int)len;
           buf->size = this->input->read (this->input, buf->content, part);
           if (buf->size != part) {
             buf->free_buffer (buf);
@@ -562,7 +563,7 @@ static void parse_mpeg2_packet (demux_mpeg_t *this, int stream_id, int64_t scr) 
           buf_element_t *buf;
           int part;
           buf = this->audio_fifo->buffer_pool_size_alloc (this->audio_fifo, len);
-          part = buf->max_size < len ? buf->max_size : len;
+          part = buf->max_size < (int)len ? buf->max_size : (int)len;
           buf->size = this->input->read (this->input, buf->content, part);
           if (buf->size != part) {
             buf->free_buffer (buf);
@@ -632,7 +633,7 @@ static void parse_mpeg2_packet (demux_mpeg_t *this, int stream_id, int64_t scr) 
         buf_element_t *buf;
         int part;
         buf = this->audio_fifo->buffer_pool_size_alloc (this->audio_fifo, len);
-        part = buf->max_size < len ? buf->max_size : len;
+        part = buf->max_size < (int)len ? buf->max_size : (int)len;
         buf->size = this->input->read (this->input, buf->content, part);
         if (buf->size != part) {
           buf->free_buffer (buf);
@@ -695,7 +696,7 @@ static void parse_mpeg2_packet (demux_mpeg_t *this, int stream_id, int64_t scr) 
         buf_element_t *buf;
         int part;
         buf = this->video_fifo->buffer_pool_size_alloc (this->video_fifo, len);
-        part = buf->max_size < len ? buf->max_size : len;
+        part = buf->max_size < (int)len ? buf->max_size : (int)len;
         buf->size = this->input->read (this->input, buf->content, part);
         if (buf->size != part) {
           buf->free_buffer (buf);
@@ -1211,6 +1212,7 @@ static int demux_mpeg_get_stream_length (demux_plugin_t *this_gen) {
 }
 
 static uint32_t demux_mpeg_get_capabilities(demux_plugin_t *this_gen) {
+  (void)this_gen;
   return DEMUX_CAP_AUDIOLANG | DEMUX_CAP_SPULANG;
 }
 
@@ -1399,6 +1401,9 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
 
 void *demux_mpeg_init_class (xine_t *xine, const void *data) {
 
+  (void)xine;
+  (void)data;
+
   static const demux_class_t demux_mpeg_class = {
     .open_plugin     = open_plugin,
     .description     = N_("MPEG program stream demux plugin"),
@@ -1412,4 +1417,3 @@ void *demux_mpeg_init_class (xine_t *xine, const void *data) {
 
   return (void *)&demux_mpeg_class;
 }
-

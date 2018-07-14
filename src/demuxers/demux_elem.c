@@ -66,7 +66,7 @@ static int demux_mpeg_elem_next (demux_mpeg_elem_t *this, int preview_mode) {
 
   lprintf ("next piece\n");
   buf = this->video_fifo->buffer_pool_alloc(this->video_fifo);
-  blocksize = (this->blocksize ? this->blocksize : buf->max_size);
+  blocksize = (this->blocksize ? this->blocksize : (uint32_t)buf->max_size);
   done = this->input->read(this->input, buf->mem, blocksize);
   lprintf ("read size = %"PRId64"\n", done);
 
@@ -142,6 +142,8 @@ static int demux_mpeg_elem_seek (demux_plugin_t *this_gen,
   start_pos = (off_t) ( (double) start_pos / 65535 *
               this->input->get_length (this->input) );
 
+  (void)start_time;
+
   this->status = DEMUX_OK;
 
   if (playing)
@@ -167,15 +169,20 @@ static int demux_mpeg_elem_seek (demux_plugin_t *this_gen,
 }
 
 static int demux_mpeg_elem_get_stream_length(demux_plugin_t *this_gen) {
+  (void)this_gen;
   return 0 ; /*FIXME: implement */
 }
 
 static uint32_t demux_mpeg_elem_get_capabilities(demux_plugin_t *this_gen) {
+  (void)this_gen;
   return DEMUX_CAP_NOCAP;
 }
 
 static int demux_mpeg_elem_get_optional_data(demux_plugin_t *this_gen,
 					void *data, int data_type) {
+  (void)this_gen;
+  (void)data;
+  (void)data_type;
   return DEMUX_OPTIONAL_UNSUPPORTED;
 }
 
@@ -247,6 +254,9 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
 }
 
 void *demux_elem_init_class (xine_t *xine, const void *data) {
+
+  (void)xine;
+  (void)data;
 
   static const demux_class_t demux_mpeg_elem_class = {
     .open_plugin     = open_plugin,

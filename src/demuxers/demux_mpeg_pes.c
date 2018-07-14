@@ -330,7 +330,7 @@ static void demux_mpeg_pes_parse_pack (demux_mpeg_pes_t *this, int preview_mode)
   this->packet_len = p[4] << 8 | p[5];
   lprintf("stream_id=0x%x, packet_len=%d\n",this->stream_id, this->packet_len);
 
-  if (this->packet_len <= (buf->max_size - 6)) {
+  if ((int)(this->packet_len) <= (buf->max_size - 6)) {
     i = read_data(this, buf->mem+6, (off_t) this->packet_len);
     if (i != this->packet_len) {
       buf->free_buffer (buf);
@@ -418,6 +418,8 @@ static int32_t parse_padding_stream(demux_mpeg_pes_t *this, uint8_t *p, buf_elem
   int todo = 6 + this->packet_len;
   int done = buf->size;
 
+  (void)p;
+
   while (done < todo)
   {
     /* Handle Jumbo frames from VDR. */
@@ -443,6 +445,7 @@ static int32_t parse_padding_stream(demux_mpeg_pes_t *this, uint8_t *p, buf_elem
 
 static int32_t parse_program_stream_map(demux_mpeg_pes_t *this, uint8_t *p, buf_element_t *buf) {
   /* FIXME: Implement */
+  (void)p;
   xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG,
           "xine-lib:demux_mpeg_pes: Unhandled stream_id 0x%02x.\n", this->stream_id);
   buf->free_buffer (buf);
@@ -450,6 +453,7 @@ static int32_t parse_program_stream_map(demux_mpeg_pes_t *this, uint8_t *p, buf_
 }
 static int32_t parse_ecm_stream(demux_mpeg_pes_t *this, uint8_t *p, buf_element_t *buf) {
   /* FIXME: Implement */
+  (void)p;
   xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG,
           "xine-lib:demux_mpeg_pes: Unhandled stream_id 0x%02x\n", this->stream_id);
   buf->free_buffer (buf);
@@ -457,6 +461,7 @@ static int32_t parse_ecm_stream(demux_mpeg_pes_t *this, uint8_t *p, buf_element_
 }
 static int32_t parse_emm_stream(demux_mpeg_pes_t *this, uint8_t *p, buf_element_t *buf) {
   /* FIXME: Implement */
+  (void)p;
   xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG,
           "xine-lib:demux_mpeg_pes: Unhandled stream_id 0x%02x\n", this->stream_id);
   buf->free_buffer (buf);
@@ -464,6 +469,7 @@ static int32_t parse_emm_stream(demux_mpeg_pes_t *this, uint8_t *p, buf_element_
 }
 static int32_t parse_dsmcc_stream(demux_mpeg_pes_t *this, uint8_t *p, buf_element_t *buf) {
   /* FIXME: Implement */
+  (void)p;
   xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG,
           "xine-lib:demux_mpeg_pes: Unhandled stream_id 0x%02x\n", this->stream_id);
   buf->free_buffer (buf);
@@ -471,6 +477,7 @@ static int32_t parse_dsmcc_stream(demux_mpeg_pes_t *this, uint8_t *p, buf_elemen
 }
 static int32_t parse_iec_13522_stream(demux_mpeg_pes_t *this, uint8_t *p, buf_element_t *buf) {
   /* FIXME: Implement */
+  (void)p;
   xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG,
           "xine-lib:demux_mpeg_pes: Unhandled stream_id 0x%02x\n", this->stream_id);
   buf->free_buffer (buf);
@@ -478,6 +485,7 @@ static int32_t parse_iec_13522_stream(demux_mpeg_pes_t *this, uint8_t *p, buf_el
 }
 static int32_t parse_h222_typeA_stream(demux_mpeg_pes_t *this, uint8_t *p, buf_element_t *buf) {
   /* FIXME: Implement */
+  (void)p;
   xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG,
           "xine-lib:demux_mpeg_pes: Unhandled stream_id 0x%02x\n", this->stream_id);
   buf->free_buffer (buf);
@@ -485,6 +493,7 @@ static int32_t parse_h222_typeA_stream(demux_mpeg_pes_t *this, uint8_t *p, buf_e
 }
 static int32_t parse_h222_typeB_stream(demux_mpeg_pes_t *this, uint8_t *p, buf_element_t *buf) {
   /* FIXME: Implement */
+  (void)p;
   xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG,
           "xine-lib:demux_mpeg_pes: Unhandled stream_id 0x%02x\n", this->stream_id);
   buf->free_buffer (buf);
@@ -492,6 +501,7 @@ static int32_t parse_h222_typeB_stream(demux_mpeg_pes_t *this, uint8_t *p, buf_e
 }
 static int32_t parse_h222_typeC_stream(demux_mpeg_pes_t *this, uint8_t *p, buf_element_t *buf) {
   /* FIXME: Implement */
+  (void)p;
   xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG,
           "xine-lib:demux_mpeg_pes: Unhandled stream_id 0x%02x\n", this->stream_id);
   buf->free_buffer (buf);
@@ -499,6 +509,7 @@ static int32_t parse_h222_typeC_stream(demux_mpeg_pes_t *this, uint8_t *p, buf_e
 }
 static int32_t parse_h222_typeD_stream(demux_mpeg_pes_t *this, uint8_t *p, buf_element_t *buf) {
   /* FIXME: Implement */
+  (void)p;
   xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG,
           "xine-lib:demux_mpeg_pes: Unhandled stream_id 0x%02x\n", this->stream_id);
   buf->free_buffer (buf);
@@ -506,6 +517,7 @@ static int32_t parse_h222_typeD_stream(demux_mpeg_pes_t *this, uint8_t *p, buf_e
 }
 static int32_t parse_h222_typeE_stream(demux_mpeg_pes_t *this, uint8_t *p, buf_element_t *buf) {
   /* FIXME: Implement */
+  (void)p;
   xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG,
           "xine-lib:demux_mpeg_pes: Unhandled stream_id 0x%02x\n", this->stream_id);
   buf->free_buffer (buf);
@@ -513,6 +525,7 @@ static int32_t parse_h222_typeE_stream(demux_mpeg_pes_t *this, uint8_t *p, buf_e
 }
 static int32_t parse_IEC14496_SL_packetized_stream(demux_mpeg_pes_t *this, uint8_t *p, buf_element_t *buf) {
   /* FIXME: Implement */
+  (void)p;
   xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG,
           "xine-lib:demux_mpeg_pes: Unhandled stream_id 0x%02x\n", this->stream_id);
   buf->free_buffer (buf);
@@ -520,6 +533,7 @@ static int32_t parse_IEC14496_SL_packetized_stream(demux_mpeg_pes_t *this, uint8
 }
 static int32_t parse_IEC14496_FlexMux_stream(demux_mpeg_pes_t *this, uint8_t *p, buf_element_t *buf) {
   /* FIXME: Implement */
+  (void)p;
   xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG,
           "xine-lib:demux_mpeg_pes: Unhandled stream_id 0x%02x\n", this->stream_id);
   buf->free_buffer (buf);
@@ -527,6 +541,7 @@ static int32_t parse_IEC14496_FlexMux_stream(demux_mpeg_pes_t *this, uint8_t *p,
 }
 static int32_t parse_program_stream_directory(demux_mpeg_pes_t *this, uint8_t *p, buf_element_t *buf) {
   /* FIXME: Implement */
+  (void)p;
   xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG,
           "xine-lib:demux_mpeg_pes: Unhandled stream_id 0x%02x\n", this->stream_id);
   buf->free_buffer (buf);
@@ -534,6 +549,7 @@ static int32_t parse_program_stream_directory(demux_mpeg_pes_t *this, uint8_t *p
 }
 static int32_t parse_ancillary_stream(demux_mpeg_pes_t *this, uint8_t *p, buf_element_t *buf) {
   /* FIXME: Implement */
+  (void)p;
   xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG,
           "xine-lib:demux_mpeg_pes: Unhandled stream_id 0x%02x\n", this->stream_id);
   buf->free_buffer (buf);
@@ -625,6 +641,7 @@ static int32_t parse_program_stream_pack_header(demux_mpeg_pes_t *this, uint8_t 
 static int32_t parse_program_stream_system_header(demux_mpeg_pes_t *this, uint8_t *p, buf_element_t *buf) {
   /* program stream system header */
   /* FIXME: Implement */
+  (void)p;
   buf->free_buffer (buf);
   return 6 + this->packet_len;
 }
@@ -1073,13 +1090,13 @@ static int32_t parse_private_stream_1(demux_mpeg_pes_t *this, uint8_t *p, buf_el
         return this->packet_len + result;
       }
 
-      if (size == this->packet_len) {
+      if (size == (int)(this->packet_len)) {
         return this->packet_len + result;
       }
 
       /* Handle Jumbo A52 frames from VDR. */
       offset = size;
-      while (offset < this->packet_len) {
+      while (offset < (int)(this->packet_len)) {
         int i;
         buf = this->audio_fifo->buffer_pool_alloc (this->audio_fifo);
         size = this->packet_len - offset;
@@ -1129,7 +1146,7 @@ static int32_t parse_video_stream(demux_mpeg_pes_t *this, uint8_t *p, buf_elemen
 
   buf->content = p;
   payload_size = buf->max_size - result;
-  if (payload_size > this->packet_len)
+  if (payload_size > (int)(this->packet_len))
     payload_size = this->packet_len;
 
   /* H.264 broadcasts via DVB-S use standard video PES packets,
@@ -1203,7 +1220,7 @@ static int32_t parse_video_stream(demux_mpeg_pes_t *this, uint8_t *p, buf_elemen
     }
   }
 
-  if (this->packet_len <= (buf->max_size - result)) {
+  if ((int)(this->packet_len) <= (buf->max_size - result)) {
     buf->size = this->packet_len;
     /* VDR ensures that H.264 still images end with an end of sequence NAL unit. We
        need to detect this to inform the decoder that the current frame is complete.
@@ -1226,7 +1243,7 @@ static int32_t parse_video_stream(demux_mpeg_pes_t *this, uint8_t *p, buf_elemen
   this->video_fifo->put (this->video_fifo, buf);
   while (todo_length > 0) {
     buf = this->video_fifo->buffer_pool_alloc (this->video_fifo);
-    if (todo_length < buf->max_size) {
+    if ((int)todo_length < buf->max_size) {
       chunk_length = todo_length;
     } else {
       chunk_length = buf->max_size;
@@ -1597,11 +1614,15 @@ static int demux_mpeg_pes_get_stream_length (demux_plugin_t *this_gen) {
 }
 
 static uint32_t demux_mpeg_pes_get_capabilities(demux_plugin_t *this_gen) {
+  (void)this_gen;
   return DEMUX_CAP_NOCAP;
 }
 
 static int demux_mpeg_pes_get_optional_data(demux_plugin_t *this_gen,
                                         void *data, int data_type) {
+  (void)this_gen;
+  (void)data;
+  (void)data_type;
   return DEMUX_OPTIONAL_UNSUPPORTED;
 }
 
@@ -1682,6 +1703,9 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
 }
 
 void *demux_pes_init_class (xine_t *xine, const void *data) {
+
+  (void)xine;
+  (void)data;
 
   static const demux_class_t demux_mpeg_pes_class = {
     .open_plugin     = open_plugin,

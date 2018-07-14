@@ -839,7 +839,7 @@ static void seek_flv_file (demux_flv_t *this, off_t seek_pos, int seek_pts) {
     uint32_t a = 0, b, c = this->num_indices;
     while (a + 1 < c) {
       b = (a + c) >> 1;
-      if (this->index[b].pts <= seek_pts) a = b; else c = b;
+      if (this->index[b].pts <= (unsigned int)seek_pts) a = b; else c = b;
     }
     x = &this->index[a];
     if ((x->offset >= this->start + 4) && (x->offset + 15 < size)) {
@@ -920,13 +920,13 @@ static void seek_flv_file (demux_flv_t *this, off_t seek_pos, int seek_pts) {
       if ((buf[4] == FLV_TAG_TYPE_VIDEO) && ((buf[15] >> 4) == 1)) {
         keypos = pos;
         /* Shortcut xine_keyframes users. */
-        if (now == seek_pts) break;
+        if (now == (unsigned int)seek_pts) break;
       }
       /* Non seekable file ?? */
       if (now == 0) break;
       /* Stop at reversal of direction, dont slow when tags are not sorted by pts properly. */
       /* Stop at latest tag at, or at first tag right after seek_pts to make step 3 work.   */
-      if (now > seek_pts) {
+      if (now > (unsigned int)seek_pts) {
         found = pos;
         if (i > 0) break;
         /* Traverse backwards. */
@@ -1042,7 +1042,7 @@ static int demux_flv_seek (demux_plugin_t *this_gen,
      It usually works at least due to xine input cache.
      Even if not, no problem there. */
   if ((!start_time && !start_pos) || INPUT_IS_SEEKABLE (this->input)) {
-    if (!this->length || start_time < this->length) {
+    if (!this->length || (unsigned int)start_time < this->length) {
       _x_demux_flush_engine(this->stream);
       seek_flv_file(this, start_pos, start_time);
     }
@@ -1072,6 +1072,7 @@ static int demux_flv_get_stream_length (demux_plugin_t *this_gen) {
 }
 
 static uint32_t demux_flv_get_capabilities(demux_plugin_t *this_gen) {
+  (void)this_gen;
   return DEMUX_CAP_AUDIOLANG;
 }
 
@@ -1104,10 +1105,9 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
                                     input_plugin_t *input) {
   demux_flv_t *this;
 
-  this = calloc (1, sizeof (demux_flv_t) + 32 + TEMPBUFSIZE);
+  this         = calloc (1, sizeof (demux_flv_t) + 32 + TEMPBUFSIZE);
   if (!this)
     return NULL;
-
   this->tempbuf = (uint8_t *)(((uintptr_t)this + sizeof (demux_flv_t) + 31) & ~(uintptr_t)31);
   this->xine   = stream->xine;
   this->stream = stream;
@@ -1144,6 +1144,9 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
 }
 
 void *demux_flv_init_class (xine_t *xine, const void *data) {
+
+  (void)xine;
+  (void)data;
 
   static const demux_class_t demux_flv_class = {
     .open_plugin     = open_plugin,

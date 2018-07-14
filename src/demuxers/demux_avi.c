@@ -341,6 +341,8 @@ static uint32_t odml_key (unsigned char *str)
 
 static void check_newpts (demux_avi_t *this, int64_t pts, int video) {
 
+  (void)video;
+
   if (this->send_newpts) {
 
     lprintf ("sending newpts %" PRId64 " (video = %d)\n", pts, video);
@@ -451,6 +453,7 @@ static int64_t get_video_pts (demux_avi_t *this, off_t pos) {
 
 /* Use this one to ensure the current video frame is in the index. */
 static int video_pos_stopper(demux_avi_t *this, void *data){
+  (void)data;
   if (this->avi->video_posf >= this->avi->video_idx.video_frames) {
     return -1;
   }
@@ -460,6 +463,8 @@ static int video_pos_stopper(demux_avi_t *this, void *data){
 /* Use this one to ensure the current audio chunk is in the index. */
 static int audio_pos_stopper(demux_avi_t *this, void *data) {
   avi_audio_t *AVI_A = (avi_audio_t *)data;
+
+  (void)this;
 
   if (AVI_A->audio_posc >= AVI_A->audio_idx.audio_chunks) {
     return -1;
@@ -754,7 +759,6 @@ static avi_t *XINE_MALLOC AVI_init(demux_avi_t *this) {
   int vids_strf_seen = 0;
   int num_stream = 0;
   uint8_t data[256];
-  int strf_size;
 
   /* Create avi_t structure */
   lprintf("start\n");
@@ -936,6 +940,7 @@ static avi_t *XINE_MALLOC AVI_init(demux_avi_t *this) {
       i += 8;
 
     } else if(strncasecmp(hdrl_data + i, "strf", 4) == 0) {
+      uint32_t strf_size;
       i += 4;
       strf_size = _X_LE_32(hdrl_data + i);
       i += 4;
@@ -973,7 +978,7 @@ static avi_t *XINE_MALLOC AVI_init(demux_avi_t *this) {
           lprintf ("number of colours exceeded 256 (%d)", AVI->palette_count);
           AVI->palette_count = 256;
         }
-        if ((strf_size - sizeof(xine_bmiheader)) >= (AVI->palette_count * 4)) {
+        if ((strf_size - sizeof (xine_bmiheader)) >= (uint32_t)(AVI->palette_count * 4)) {
           /* load the palette from the end of the strf chunk */
           for (j = 0; j < AVI->palette_count; j++) {
             AVI->palette[j].b = *(hdrl_data + i + sizeof(xine_bmiheader) + j * 4 + 0);
@@ -1009,7 +1014,7 @@ static avi_t *XINE_MALLOC AVI_init(demux_avi_t *this) {
 
     } else if(strncasecmp(hdrl_data + i, "indx",4) == 0) {
       uint8_t             *a;
-      int                  j;
+      unsigned int         j;
       avisuperindex_chunk *superindex;
 
       if (n < sizeof (avisuperindex_chunk)) {
@@ -1151,6 +1156,7 @@ static avi_t *XINE_MALLOC AVI_init(demux_avi_t *this) {
     if(AVI->idx) {
       off_t    pos;
       uint32_t len;
+      unsigned int i;
 
       /* Search the first videoframe in the idx1 and look where
          it is in the file */
@@ -1199,6 +1205,7 @@ static avi_t *XINE_MALLOC AVI_init(demux_avi_t *this) {
   lprintf("idx_type=%d, AVI->n_idx=%d\n", idx_type, AVI->n_idx);
 
   if (idx_type != 0 && !AVI->is_opendml) {
+    unsigned int i;
     /* Now generate the video index and audio index arrays from the
      * idx1 record. */
     this->has_index = 1;
@@ -1217,6 +1224,7 @@ static avi_t *XINE_MALLOC AVI_init(demux_avi_t *this) {
           ERR_EXIT(AVI_ERR_NO_MEM) ;
         }
       } else {
+        int n;
         for(n = 0; n < AVI->n_audio; n++) {
           avi_audio_t *audio = AVI->audio[n];
 
@@ -1262,6 +1270,7 @@ static avi_t *XINE_MALLOC AVI_init(demux_avi_t *this) {
 
       lprintf("video track\n");
       if (AVI->video_superindex != NULL) {
+        unsigned int j;
         for (j=0; j<AVI->video_superindex->nEntriesInUse; j++) {
 
           /* read from file */
@@ -1329,6 +1338,7 @@ static avi_t *XINE_MALLOC AVI_init(demux_avi_t *this) {
       lprintf("audio tracks\n");
       for(audtr=0; audtr<AVI->n_audio; ++audtr) {
         avi_audio_t *audio = AVI->audio[audtr];
+        unsigned int j;
 
         k = 0;
         if (!audio->audio_superindex) {
@@ -1401,11 +1411,12 @@ static avi_t *XINE_MALLOC AVI_init(demux_avi_t *this) {
   }
 
   if (this->has_index) {
+    int n;
     /* check index validity, there must be an index for each video/audio stream */
     if (AVI->video_idx.video_frames == 0) {
       reset_idx(this, AVI);
     }
-    for(n = 0; n < AVI->n_audio; n++) {
+    for (n = 0; n < AVI->n_audio; n++) {
       if (AVI->audio[n]->audio_idx.audio_chunks == 0) {
 	reset_idx(this, AVI);
       }
@@ -1457,7 +1468,7 @@ static int AVI_read_audio(demux_avi_t *this, avi_audio_t *AVI_A, char *audbuf,
 
   left = aie->len - AVI_A->audio_posb;
   while ((bytes > 0) && (left > 0)) {
-    if (bytes < left)
+    if ((int)bytes < left)
       todo = bytes;
     else
       todo = left;
@@ -1504,7 +1515,7 @@ static int AVI_read_video(demux_avi_t *this, avi_t *AVI, char *vidbuf,
   left = vie->len - AVI->video_posb;
 
   while ((bytes > 0) && (left > 0)) {
-    if (bytes < left)
+    if ((int)bytes < left)
       todo = bytes;
     else
       todo = left;
@@ -2039,7 +2050,7 @@ static void demux_avi_send_headers (demux_plugin_t *this_gen) {
 
         while (todo) {
           buf = this->audio_fifo->buffer_pool_alloc (this->audio_fifo);
-          if (todo > buf->max_size) {
+          if ((int)todo > buf->max_size) {
             buf->size = buf->max_size;
           } else {
             buf->size = todo;
@@ -2092,6 +2103,8 @@ static void demux_avi_send_headers (demux_plugin_t *this_gen) {
 static int demux_avi_seek (demux_plugin_t *this_gen,
                            off_t start_pos, int start_time, int playing) {
   demux_avi_t *this = (demux_avi_t *) this_gen;
+
+  (void)playing;
 
   if (!this->streaming) {
 
@@ -2274,11 +2287,15 @@ static int demux_avi_get_stream_length (demux_plugin_t *this_gen) {
 }
 
 static uint32_t demux_avi_get_capabilities(demux_plugin_t *this_gen) {
+  (void)this_gen;
   return DEMUX_CAP_NOCAP;
 }
 
 static int demux_avi_get_optional_data(demux_plugin_t *this_gen,
 					void *data, int data_type) {
+  (void)this_gen;
+  (void)data;
+  (void)data_type;
   return DEMUX_OPTIONAL_UNSUPPORTED;
 }
 
@@ -2356,6 +2373,9 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
  * demux avi class
  */
 void *demux_avi_init_class (xine_t *xine, const void *data) {
+
+  (void)xine;
+  (void)data;
 
   static const demux_class_t demux_avi_class = {
     .open_plugin     = open_plugin,

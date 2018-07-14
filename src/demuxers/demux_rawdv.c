@@ -303,6 +303,8 @@ static int demux_raw_dv_seek (demux_plugin_t *this_gen,
     return this->status;
   }
 
+  (void)playing;
+
   if( !start_pos && start_time ) {
     /* Upcast start_time in case sizeof(off_t) > sizeof(int) */
     start_pos = ((off_t) start_time * 90 / this->duration) * this->frame_size;
@@ -331,11 +333,15 @@ static int demux_raw_dv_get_stream_length(demux_plugin_t *this_gen) {
 }
 
 static uint32_t demux_raw_dv_get_capabilities(demux_plugin_t *this_gen) {
+  (void)this_gen;
   return DEMUX_CAP_NOCAP;
 }
 
 static int demux_raw_dv_get_optional_data(demux_plugin_t *this_gen,
 					void *data, int data_type) {
+  (void)this_gen;
+  (void)data;
+  (void)data_type;
   return DEMUX_OPTIONAL_UNSUPPORTED;
 }
 
@@ -392,6 +398,9 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
 }
 
 void *demux_rawdv_init_class (xine_t *xine, const void *data) {
+
+  (void)xine;
+  (void)data;
 
   static const demux_class_t demux_rawdv_class = {
     .open_plugin     = open_plugin,

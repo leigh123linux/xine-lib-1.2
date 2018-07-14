@@ -102,7 +102,7 @@ static int demux_vc1_es_next_smp( demux_vc1_es_t *this )
 
   while ( frame_size>0 ) {
     buf = this->video_fifo->buffer_pool_alloc(this->video_fifo);
-    off_t read = (frame_size>buf->max_size) ? buf->max_size : frame_size;
+    off_t read = ((int)frame_size > buf->max_size) ? buf->max_size : (int)frame_size;
     done = this->input->read( this->input, buf->mem, read );
     if ( done<=0 ) {
       buf->free_buffer( buf );
@@ -134,7 +134,7 @@ static int demux_vc1_es_next_ap( demux_vc1_es_t *this )
   off_t done;
 
   buf = this->video_fifo->buffer_pool_alloc(this->video_fifo);
-  blocksize = (this->blocksize ? this->blocksize : buf->max_size);
+  blocksize = (this->blocksize ? this->blocksize : (uint32_t)buf->max_size);
   done = this->input->read(this->input, buf->mem, blocksize);
 
   if (done <= 0) {
@@ -216,6 +216,8 @@ static int demux_vc1_es_seek( demux_plugin_t *this_gen, off_t start_pos, int sta
 {
   demux_vc1_es_t *this = (demux_vc1_es_t *) this_gen;
 
+  (void)start_time;
+
   if ( this->mode==MODE_SMP ) {
     this->status = DEMUX_OK;
     return this->status;
@@ -259,6 +261,7 @@ static void demux_vc1_es_dispose( demux_plugin_t *this )
 
 static int demux_vc1_es_get_stream_length( demux_plugin_t *this_gen )
 {
+  (void)this_gen;
   return 0 ; /*FIXME: implement */
 }
 
@@ -266,6 +269,7 @@ static int demux_vc1_es_get_stream_length( demux_plugin_t *this_gen )
 
 static uint32_t demux_vc1_es_get_capabilities( demux_plugin_t *this_gen )
 {
+  (void)this_gen;
   return DEMUX_CAP_NOCAP;
 }
 
@@ -273,6 +277,9 @@ static uint32_t demux_vc1_es_get_capabilities( demux_plugin_t *this_gen )
 
 static int demux_vc1_es_get_optional_data( demux_plugin_t *this_gen, void *data, int data_type )
 {
+  (void)this_gen;
+  (void)data;
+  (void)data_type;
   return DEMUX_OPTIONAL_UNSUPPORTED;
 }
 
@@ -366,6 +373,9 @@ static demux_plugin_t *open_plugin( demux_class_t *class_gen, xine_stream_t *str
 
 void *demux_vc1es_init_class ( xine_t *xine, const void *data )
 {
+  (void)xine;
+  (void)data;
+
   static const demux_class_t demux_vc1es_class = {
     .open_plugin     = open_plugin,
     .description     = N_("VC1 elementary stream demux plugin"),

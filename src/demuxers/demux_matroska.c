@@ -434,7 +434,7 @@ static void init_codec_video(demux_matroska_t *this, matroska_track_t *track) {
 
   buf = track->fifo->buffer_pool_alloc (track->fifo);
 
-  if (track->codec_private_len > buf->max_size) {
+  if (track->codec_private_len > (unsigned int)(buf->max_size)) {
     xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
             "demux_matroska: private decoder data length (%d) is greater than fifo buffer length (%" PRId32 ")\n",
              track->codec_private_len, buf->max_size);
@@ -473,7 +473,7 @@ static void init_codec_audio(demux_matroska_t *this, matroska_track_t *track) {
 
   buf = track->fifo->buffer_pool_alloc (track->fifo);
 
-  if (track->codec_private_len > buf->max_size) {
+  if (track->codec_private_len > (unsigned int)buf->max_size) {
     xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
             "demux_matroska: private decoder data length (%d) is greater than fifo buffer length (%" PRId32 ")\n",
              track->codec_private_len, buf->max_size);
@@ -516,7 +516,7 @@ static void init_codec_real(demux_matroska_t *this, matroska_track_t * track) {
 
   buf = track->fifo->buffer_pool_alloc (track->fifo);
 
-  if (track->codec_private_len > buf->max_size) {
+  if (track->codec_private_len > (unsigned int)buf->max_size) {
     xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
             "demux_matroska: private decoder data length (%d) is greater than fifo buffer length (%" PRId32 ")\n",
              track->codec_private_len, buf->max_size);
@@ -627,6 +627,8 @@ static void init_codec_aac(demux_matroska_t *this, matroska_track_t *track) {
   buf_element_t *buf;
   int profile;
   int sr_index;
+
+  (void)this;
 
   /* Create a DecoderSpecificInfo for initialising libfaad */
   sr_index = aac_get_sr_index(atrack->sampling_freq);
@@ -774,6 +776,8 @@ static void init_codec_vobsub(demux_matroska_t *this,
 
   lprintf("init_codec_vobsub for %d\n", track->track_num);
 
+  (void)this;
+
   if ((track->codec_private == NULL) || (track->codec_private_len == 0))
     return;
 
@@ -834,6 +838,8 @@ static void init_codec_vobsub(demux_matroska_t *this,
 static void init_codec_spu(demux_matroska_t *this, matroska_track_t *track) {
   buf_element_t *buf;
 
+  (void)this;
+
   buf = track->fifo->buffer_pool_alloc (track->fifo);
 
   buf->size = 0;
@@ -857,7 +863,7 @@ static void handle_realvideo (demux_plugin_t *this_gen, matroska_track_t *track,
   chunks = data[0];
   chunk_tab_size = (chunks + 1) * 8;
 
-  if (data_len - 1 < chunk_tab_size)
+  if ((int)data_len - 1 < chunk_tab_size)
     return;
 
   lprintf("chunks: %d, chunk_tab_size: %d\n", chunks, chunk_tab_size);
@@ -912,6 +918,8 @@ static void handle_sub_ssa (demux_plugin_t *this_gen, matroska_track_t *track,
   int skip = 0;
 
   lprintf ("pts: %" PRId64 ", duration: %d\n", data_pts, data_duration);
+  (void)this_gen;
+
   /* skip ',' */
   while (data_len && (commas < 8)) {
     if (*data == ',') commas++;
@@ -1034,6 +1042,7 @@ static int vp9_frametype (const uint8_t *h) {
 
 static void handle_vp9 (demux_plugin_t *this_gen, matroska_track_t *track, int decoder_flags,
   uint8_t *data, size_t data_len, int64_t data_pts, int data_duration, int input_normpos, int input_time) {
+  (void)this_gen;
   /* !@$%*#~ undocumented multiframe feature */
   do {
     uint8_t mfhead;
@@ -1184,6 +1193,8 @@ static void handle_vobsub (demux_plugin_t *this_gen, matroska_track_t *track,
   uint8_t *new_data = NULL;
   size_t new_data_len = 0;
 
+  (void)data_duration;
+
   if (track->compress_algo == MATROSKA_COMPRESS_ZLIB ||
       track->compress_algo == MATROSKA_COMPRESS_UNKNOWN) {
 
@@ -1246,6 +1257,8 @@ static void handle_hdmv_pgs (demux_plugin_t *this_gen, matroska_track_t *track,
   uint8_t *new_data = NULL;
   size_t new_data_len = 0;
 
+  (void)data_duration;
+
   if (track->compress_algo == MATROSKA_COMPRESS_ZLIB) {
     uncompress_zlib(this, data, data_len, &new_data, &new_data_len);
     if (!new_data)
@@ -1276,6 +1289,11 @@ static void handle_hdmv_textst (demux_plugin_t *this_gen, matroska_track_t *trac
   uint8_t *ptr;
   int palette_update_flag;
   int num_regions;
+
+  (void)this_gen;
+  (void)data_len;
+  (void)input_normpos;
+  (void)input_time;
 
   ptr = data;
   if (*ptr != 0x82) {
@@ -2068,7 +2086,7 @@ static int parse_ebml_sint(demux_matroska_t *this, uint8_t *data, int64_t *num) 
     return 0;
 
   /* formula taken from gstreamer demuxer */
-  if (unum == -1)
+  if (unum == (uint64_t)-1)
     *num = -1;
   else
     *num = unum - ((1 << ((7 * size) - 1)) - 1);
@@ -2126,7 +2144,8 @@ static int parse_block (demux_matroska_t *this, size_t block_size,
   uint64_t          track_num;
   uint8_t          *data;
   uint8_t           flags;
-  int               lacing, num_len;
+  int               lacing;
+  unsigned int      num_len;
   int16_t           timecode_diff;
   int64_t           pts, xduration;
   int               decoder_flags = 0;
@@ -2389,6 +2408,8 @@ static int parse_block_group(demux_matroska_t *this,
   int normpos             = 0;
   size_t block_len        = 0;
   int is_key              = 1;
+
+  (void)cluster_duration;
 
   while (next_level == 3) {
     ebml_elem_t elem;
@@ -3008,6 +3029,7 @@ static int binary_seek(matroska_index_t *index, off_t start_pos,
   int best_index;
   int left, middle, right;
   int found;
+  uint32_t stime = start_time < 0 ? 0 : start_time;
 
   /* perform a binary search on the trak, testing the offset
    * boundaries first; offset request has precedent over time request */
@@ -3026,7 +3048,7 @@ static int binary_seek(matroska_index_t *index, off_t start_pos,
         if ((start_pos >= index->pos[middle]) &&
             (start_pos < index->pos[middle + 1]))
           found = 1;
-        else if (start_pos < index->pos[middle])
+        else if ((uint32_t)start_pos < index->pos[middle])
           right = middle - 1;
         else
           left = middle;
@@ -3035,16 +3057,16 @@ static int binary_seek(matroska_index_t *index, off_t start_pos,
       best_index = middle;
     }
   } else {
-    if (start_time <= index->timecode[0])
+    if (stime <= index->timecode[0])
       best_index = 0;
-    else if (start_time >= index->timecode[index->num_entries - 1])
+    else if (stime >= index->timecode[index->num_entries - 1])
       best_index = index->num_entries - 1;
     else {
       left = 0;
       right = index->num_entries - 1;
       do {
         middle = (left + right + 1) / 2;
-        if (start_time < index->timecode[middle])
+        if (stime < index->timecode[middle])
           right = (middle - 1);
         else
           left = middle;
@@ -3066,8 +3088,10 @@ static int demux_matroska_seek (demux_plugin_t *this_gen,
   matroska_track_t *track;
   int i, entry;
 
+  (void)playing;
+
   start_pos = (off_t) ( (double) start_pos / 65535 *
-              this->input->get_length (this->input) );
+    this->input->get_length (this->input) );
 
   this->status = DEMUX_OK;
 
@@ -3210,7 +3234,7 @@ static int demux_matroska_get_optional_data (demux_plugin_t *this_gen,
         for (track_num = 0; track_num < this->num_tracks; track_num++) {
           matroska_track_t *track = this->tracks[track_num];
 
-          if ((track->buf_type & 0xFF00001F) == (BUF_SPU_BASE + channel)) {
+          if ((int)(track->buf_type & 0xFF00001F) == (BUF_SPU_BASE + channel)) {
             if (track->language) {
               strncpy (str, track->language, XINE_LANG_MAX);
               str[XINE_LANG_MAX - 1] = '\0';
@@ -3232,7 +3256,7 @@ static int demux_matroska_get_optional_data (demux_plugin_t *this_gen,
         for (track_num = 0; track_num < this->num_tracks; track_num++) {
           matroska_track_t *track = this->tracks[track_num];
 
-          if ((track->buf_type & 0xFF00001F) == (BUF_AUDIO_BASE + channel)) {
+          if ((int)(track->buf_type & 0xFF00001F) == (BUF_AUDIO_BASE + channel)) {
             if (track->language) {
               strncpy (str, track->language, XINE_LANG_MAX);
               str[XINE_LANG_MAX - 1] = '\0';
@@ -3340,6 +3364,9 @@ error:
  * demux matroska class
  */
 void *demux_matroska_init_class (xine_t *xine, const void *data) {
+
+  (void)xine;
+  (void)data;
 
   static const demux_class_t demux_matroska_class = {
     .open_plugin     = open_plugin,
