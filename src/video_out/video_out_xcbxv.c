@@ -172,6 +172,8 @@ static uint32_t xv_get_capabilities (vo_driver_t *this_gen) {
 
 static void xv_frame_field (vo_frame_t *vo_img, int which_field) {
   /* not needed for Xv */
+  (void)vo_img;
+  (void)which_field;
 }
 
 static void xv_rem_yuy2_emu (xv_frame_t *f);
@@ -453,10 +455,11 @@ static void xv_update_frame_format (vo_driver_t *this_gen,
   xv_frame_t   *frame = (xv_frame_t *) frame_gen;
   int resize;
 
+  (void)flags;
   if (this->use_pitch_alignment) {
     width = (width + 7) & ~0x7;
   }
-  resize = (frame->req_width != width) || (frame->req_height != height);
+  resize = (frame->req_width != (int)width) || (frame->req_height != (int)height);
 
   if (resize || (frame->format != format)) {
     int fmt = format;
@@ -613,6 +616,7 @@ static void xv_overlay_begin (vo_driver_t *this_gen,
 static void xv_overlay_end (vo_driver_t *this_gen, vo_frame_t *vo_img) {
   xv_driver_t  *this = (xv_driver_t *) this_gen;
 
+  (void)vo_img;
   if( this->ovl_changed && this->xoverlay ) {
     pthread_mutex_lock(&this->main_mutex);
     xcbosd_expose(this->xoverlay);
@@ -1334,8 +1338,8 @@ xv_find_adaptor_by_port (int port, xcb_xv_adaptor_info_iterator_t *adaptor_it)
 {
   for (; adaptor_it->rem; xcb_xv_adaptor_info_next(adaptor_it))
     if (adaptor_it->data->type & XCB_XV_TYPE_IMAGE_MASK)
-      if (port >= adaptor_it->data->base_id &&
-	  port < adaptor_it->data->base_id + adaptor_it->data->num_ports)
+      if (port >= (int)adaptor_it->data->base_id &&
+	  port < (int)(adaptor_it->data->base_id + adaptor_it->data->num_ports))
 	return adaptor_it;
   return NULL; /* shouldn't happen */
 }
@@ -1699,6 +1703,7 @@ static vo_driver_t *open_plugin(video_driver_class_t *class_gen, const void *vis
 static void *init_class (xine_t *xine, const void *visual_gen) {
   xv_class_t        *this = (xv_class_t *) calloc(1, sizeof(xv_class_t));
 
+  (void)visual_gen;
   this->driver_class.open_plugin     = open_plugin;
   this->driver_class.identifier      = "Xv";
   this->driver_class.description     = N_("xine video output plugin using the MIT X video extension");

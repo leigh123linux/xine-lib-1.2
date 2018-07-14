@@ -232,6 +232,8 @@ static int x11_error = False ;
 
 static int x11_error_handler(Display *dpy, XErrorEvent *error)
 {
+  (void)dpy;
+  (void)error;
   x11_error = True;
   return 0;
 }

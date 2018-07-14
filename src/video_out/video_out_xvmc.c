@@ -458,6 +458,8 @@ static uint32_t xvmc_get_capabilities (vo_driver_t *this_gen) {
 
 static void xvmc_frame_field (vo_frame_t *vo_img, int which_field) {
   lprintf ("xvmc_frame_field\n");
+  (void)vo_img;
+  (void)which_field;
 }
 
 static void xvmc_frame_dispose (vo_frame_t *vo_img) {
@@ -588,6 +590,7 @@ static cxid_t *xvmc_set_context (xvmc_driver_t *this,
 
   lprintf ("xvmc_set_context %dx%d %04x\n",width,height,format);
 
+  (void)ratio;
   /* initialize block & macro block pointers first time */
   if(macroblocks->blocks == NULL ||  macroblocks->macro_blocks == NULL) {
     macroblocks->blocks       = calloc(1, sizeof(XvMCBlockArray));
@@ -598,8 +601,8 @@ static cxid_t *xvmc_set_context (xvmc_driver_t *this,
   }
 
   if((this->context_id.xid != NULL)   &&
-     (width  == this->surface_width)  &&
-     (height == this->surface_height) &&
+     ((int)width  == this->surface_width)  &&
+     ((int)height == this->surface_height) &&
      (format == this->surface_format) &&
      (flags  == this->surface_flags)) {
 
@@ -768,8 +771,8 @@ static void xvmc_update_frame_format (vo_driver_t *this_gen,
 
   lprintf ("xvmc_update_frame_format\n");
 
-  if ((frame->width != width)
-      || (frame->height != height)
+  if ((frame->width != (int)width)
+      || (frame->height != (int)height)
       || (frame->format != format)) {
 
     lprintf ("updating frame to %d x %d (ratio=%f, format=%08x)\n",
@@ -1251,6 +1254,7 @@ static void xvmc_check_capability (xvmc_driver_t *this,
   cfg_entry_t *entry;
   const char  *str_prop = attr.name;
 
+  (void)base_id;
   /*
    * some Xv drivers (Gatos ATI) report some ~0 as max values, this is confusing.
    */

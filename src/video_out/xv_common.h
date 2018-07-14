@@ -123,7 +123,7 @@ static const xv_prop_list_t xv_props_list[] = {
 };
 
 static const xv_prop_list_t *xv_find_prop (const char *name) {
-  int i;
+  unsigned int i;
   for (i = 0; i < sizeof (xv_props_list) / sizeof (xv_prop_list_t); i++) {
     if (!strcmp (name, xv_props_list[i].name))
       return &xv_props_list[i];

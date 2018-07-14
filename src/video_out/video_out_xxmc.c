@@ -504,6 +504,8 @@ static uint32_t xxmc_get_capabilities (vo_driver_t *this_gen) {
 static void xxmc_frame_field (vo_frame_t *vo_img, int which_field)
 {
   lprintf ("xvmc_frame_field\n");
+  (void)vo_img;
+  (void)which_field;
 }
 
 static void xxmc_frame_dispose (vo_frame_t *vo_img) {
@@ -793,7 +795,7 @@ static void xxmc_dispose_context(xxmc_driver_t *driver)
 static int xxmc_find_context(xxmc_driver_t *driver, xine_xxmc_t *xxmc,
 			     unsigned width, unsigned height)
 {
-  int i,k,found;
+  unsigned int i,k,found;
   xvmc_capabilities_t *curCap;
   unsigned request_mpeg_flags, request_accel_flags;
 
@@ -1128,12 +1130,13 @@ static void xxmc_do_update_frame_xv(vo_driver_t *this_gen,
   xxmc_driver_t  *this  = (xxmc_driver_t *) this_gen;
   xxmc_frame_t   *frame = (xxmc_frame_t *) frame_gen;
 
+  (void)flags;
   if (this->use_pitch_alignment) {
     width = (width + 7) & ~0x7;
   }
 
-  if ((frame->width != width)
-      || (frame->height != height)
+  if ((frame->width != (int)width)
+      || (frame->height != (int)height)
       || (frame->last_sw_format != format)) {
 
     frame->last_sw_format = format;
@@ -1182,7 +1185,7 @@ static int xxmc_accel_update(xxmc_driver_t *driver,
 			     uint32_t last_request,
 			     uint32_t new_request)
 {
-  int k;
+  unsigned int k;
 
   /*
    * Same acceleration request. No need to change.
@@ -1264,7 +1267,7 @@ static void xxmc_do_update_frame(vo_driver_t *this_gen,
        * changes on the original vo_frame to all the intercepted frames */
       unsigned char *p0 = (unsigned char *)&orig_frame_content;
       unsigned char *p1 = (unsigned char *)&frame->vo_frame;
-      int i;
+      unsigned int i;
       for (i = 0; i < sizeof (vo_frame_t); i++) {
         if (*p0 != *p1) {
           /* propagate the change */
@@ -2141,6 +2144,7 @@ static void xxmc_check_capability (xxmc_driver_t *this,
   cfg_entry_t *entry;
   const char  *str_prop = attr.name;
 
+  (void)base_id;
   if (VO_PROP_COLORKEY && (attr.max_value == ~0))
     attr.max_value = 2147483615;
 
@@ -2281,8 +2285,8 @@ xxmc_find_adaptor_by_port (int port, unsigned int adaptors,
   unsigned int an;
   for (an = 0; an < adaptors; an++)
     if (adaptor_info[an].type & XvImageMask)
-      if (port >= adaptor_info[an].base_id &&
-	  port < adaptor_info[an].base_id + adaptor_info[an].num_ports)
+      if (port >= (int)adaptor_info[an].base_id &&
+	  port < (int)(adaptor_info[an].base_id + adaptor_info[an].num_ports))
 	return an;
   return 0; /* shouldn't happen */
 }
@@ -2851,6 +2855,7 @@ static vo_driver_t *open_plugin (video_driver_class_t *class_gen, const void *vi
 static void *init_class (xine_t *xine, const void *visual_gen) {
   xxmc_class_t        *this = calloc(1, sizeof (xxmc_class_t));
 
+  (void)visual_gen;
   this->driver_class.open_plugin     = open_plugin;
   this->driver_class.identifier      = "XxMC";
   this->driver_class.description     = N_("xine video output plugin using the MIT X video extension");

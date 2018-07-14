@@ -186,6 +186,8 @@ static uint32_t xv_get_capabilities (vo_driver_t *this_gen) {
 
 static void xv_frame_field (vo_frame_t *vo_img, int which_field) {
   /* not needed for Xv */
+  (void)vo_img;
+  (void)which_field;
 }
 
 static void xv_rem_yuy2_emu (xv_frame_t *f);
@@ -531,10 +533,11 @@ static void xv_update_frame_format (vo_driver_t *this_gen,
   xv_frame_t   *frame = (xv_frame_t *) frame_gen;
   int resize;
 
+  (void)flags;
   if (this->use_pitch_alignment) {
     width = (width + 7) & ~0x7;
   }
-  resize = (frame->req_width != width) || (frame->req_height != height);
+  resize = (frame->req_width != (int)width) || (frame->req_height != (int)height);
 
   if (resize || (frame->format != format)) {
     int fmt = format;
@@ -683,6 +686,7 @@ static void xv_overlay_begin (vo_driver_t *this_gen,
 static void xv_overlay_end (vo_driver_t *this_gen, vo_frame_t *vo_img) {
   xv_driver_t  *this = (xv_driver_t *) this_gen;
 
+  (void)vo_img;
   if( this->ovl_changed && this->xoverlay ) {
     LOCK_DISPLAY(this);
     x11osd_expose(this->xoverlay);
@@ -1373,8 +1377,8 @@ xv_find_adaptor_by_port (int port, unsigned int adaptors,
   unsigned int an;
   for (an = 0; an < adaptors; an++)
     if (adaptor_info[an].type & XvImageMask)
-      if (port >= adaptor_info[an].base_id &&
-	  port < adaptor_info[an].base_id + adaptor_info[an].num_ports)
+      if (port >= (int)adaptor_info[an].base_id &&
+	  port < (int)(adaptor_info[an].base_id + adaptor_info[an].num_ports))
 	return an;
   return 0; /* shouldn't happen */
 }
@@ -1700,7 +1704,7 @@ static vo_driver_t *open_plugin_2 (video_driver_class_t *class_gen, const void *
     LOCK_DISPLAY (this);
     XvQueryEncodings (this->display, xv_port, &nencode, &encodings);
     if (encodings) {
-      int n;
+      unsigned int n;
       for (n = 0; n < nencode; n++) {
         if (!strcmp (encodings[n].name, "XV_IMAGE")) {
           xprintf (this->xine, XINE_VERBOSITY_LOG,
@@ -1777,6 +1781,7 @@ static vo_driver_t *open_plugin_old (video_driver_class_t *class_gen, const void
 static void *init_class (xine_t *xine, const void *visual_gen) {
   xv_class_t        *this = (xv_class_t *) calloc(1, sizeof(xv_class_t));
 
+  (void)visual_gen;
   this->driver_class.open_plugin     = open_plugin_old;
   this->driver_class.identifier      = "Xv";
   this->driver_class.description     = N_("xine video output plugin using the MIT X video extension");

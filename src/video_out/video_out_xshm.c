@@ -343,10 +343,12 @@ static uint32_t xshm_get_capabilities (vo_driver_t *this_gen) {
 }
 
 static void xshm_compute_ideal_size (xshm_driver_t *this, xshm_frame_t *frame) {
+  (void)this;
   _x_vo_scale_compute_ideal_size( &frame->sc );
 }
 
 static void xshm_compute_rgb_size (xshm_driver_t *this, xshm_frame_t *frame) {
+  (void)this;
   _x_vo_scale_compute_output_size( &frame->sc );
 
   /* avoid problems in yuv2rgb */
@@ -631,11 +633,12 @@ static void xshm_update_frame_format (vo_driver_t *this_gen,
   xshm_frame_t   *frame = (xshm_frame_t *) frame_gen;
   int             j, y_pitch, uv_pitch;
 
+  (void)this_gen;
   flags &= VO_BOTH_FIELDS;
 
   /* (re)allocate yuv buffers */
-  if ((width != frame->sc.delivered_width)
-      || (height != frame->sc.delivered_height)
+  if (((int)width != frame->sc.delivered_width)
+      || ((int)height != frame->sc.delivered_height)
       || (format != frame->format)) {
 
     frame->sc.delivered_width    = width;
@@ -703,6 +706,7 @@ static void xshm_overlay_clut_yuv2rgb(xshm_driver_t  *this, vo_overlay_t *overla
   int i;
   uint32_t *rgb;
 
+  (void)this;
   if (!overlay->rgb_clut) {
     rgb = overlay->color;
     for (i = sizeof (overlay->color) / sizeof (overlay->color[0]); i > 0; i--) {
@@ -741,6 +745,7 @@ static void xshm_overlay_begin (vo_driver_t *this_gen,
 static void xshm_overlay_end (vo_driver_t *this_gen, vo_frame_t *vo_img) {
   xshm_driver_t  *this  = (xshm_driver_t *) this_gen;
 
+  (void)vo_img;
   if( this->ovl_changed && this->xoverlay ) {
     LOCK_DISPLAY(this);
     x11osd_expose(this->xoverlay);
@@ -1022,6 +1027,7 @@ static void xshm_get_property_min_max (vo_driver_t *this_gen,
 				     int property, int *min, int *max) {
   /* xshm_driver_t *this = (xshm_driver_t *) this_gen;  */
 
+  (void)this_gen;
   if (property == VO_PROP_BRIGHTNESS) {
     *min = -128;
     *max = +127;
@@ -1440,6 +1446,7 @@ static vo_driver_t *xshm_open_plugin_old (video_driver_class_t *class_gen, const
 static void *xshm_init_class (xine_t *xine, const void *visual_gen) {
   xshm_class_t	       *this = (xshm_class_t *) calloc(1, sizeof(xshm_class_t));
 
+  (void)visual_gen;
   this->driver_class.open_plugin     = xshm_open_plugin_old;
   this->driver_class.identifier      = "XShm";
   this->driver_class.description     = N_("xine video output plugin using the MIT X shared memory extension");

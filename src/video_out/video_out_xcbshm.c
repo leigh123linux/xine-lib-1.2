@@ -252,11 +252,13 @@ static uint32_t xshm_get_capabilities (vo_driver_t *this_gen) {
 }
 
 static void xshm_compute_ideal_size (xshm_driver_t *this, xshm_frame_t *frame) {
-  _x_vo_scale_compute_ideal_size( &frame->sc );
+  (void)this;
+  _x_vo_scale_compute_ideal_size (&frame->sc);
 }
 
 static void xshm_compute_rgb_size (xshm_driver_t *this, xshm_frame_t *frame) {
-  _x_vo_scale_compute_output_size( &frame->sc );
+  (void)this;
+  _x_vo_scale_compute_output_size (&frame->sc);
 
   /* avoid problems in yuv2rgb */
   if (frame->sc.output_height < 1)
@@ -537,11 +539,12 @@ static void xshm_update_frame_format (vo_driver_t *this_gen,
   xshm_frame_t   *frame = (xshm_frame_t *) frame_gen;
   int             j, y_pitch, uv_pitch;
 
+  (void)this_gen;
   flags &= VO_BOTH_FIELDS;
 
   /* (re)allocate yuv buffers */
-  if ((width != frame->sc.delivered_width)
-      || (height != frame->sc.delivered_height)
+  if (((int)width != frame->sc.delivered_width)
+      || ((int)height != frame->sc.delivered_height)
       || (format != frame->format)) {
 
     frame->sc.delivered_width   = width;
@@ -609,6 +612,7 @@ static void xshm_overlay_clut_yuv2rgb(xshm_driver_t  *this, vo_overlay_t *overla
   int i;
   uint32_t *rgb;
 
+  (void)this;
   if (!overlay->rgb_clut) {
     rgb = overlay->color;
     for (i = sizeof (overlay->color) / sizeof (overlay->color[0]); i > 0; i--) {
@@ -647,6 +651,7 @@ static void xshm_overlay_begin (vo_driver_t *this_gen,
 static void xshm_overlay_end (vo_driver_t *this_gen, vo_frame_t *vo_img) {
   xshm_driver_t  *this  = (xshm_driver_t *) this_gen;
 
+  (void)vo_img;
   if( this->ovl_changed && this->xoverlay ) {
     pthread_mutex_lock(&this->main_mutex);
     xcbosd_expose(this->xoverlay);
@@ -936,6 +941,7 @@ static void xshm_get_property_min_max (vo_driver_t *this_gen,
 				     int property, int *min, int *max) {
   /* xshm_driver_t *this = (xshm_driver_t *) this_gen;  */
 
+  (void)this_gen;
   if (property == VO_PROP_BRIGHTNESS) {
     *min = -128;
     *max = +127;
@@ -1100,24 +1106,36 @@ static int ImlibPaletteLUTGet(xshm_driver_t *this) {
   if (prop_reply == NULL)
     return 0;
 
-  if (prop_reply->format == 8) {
-    unsigned int i;
-    unsigned long j;
-    int num_ret = xcb_get_property_value_length(prop_reply);
-    char *retval = xcb_get_property_value(prop_reply);
+  do {
+    unsigned int i, j;
+    int num_ret;
+    uint8_t *retval;
+
+    if (prop_reply->format != 8)
+      break;
+
+    num_ret = xcb_get_property_value_length (prop_reply);
+    if (num_ret <= 0)
+        break;
+
+    retval = (uint8_t *)xcb_get_property_value (prop_reply);
+    if (!retval)
+      break;
 
     j = 1 + retval[0]*4;
     this->yuv2rgb_cmap = calloc(sizeof(uint8_t), 32 * 32 * 32);
-    if (!this->yuv2rgb_cmap) {
-      free(prop_reply);
-      return 0;
+    if (!this->yuv2rgb_cmap)
+      break;
+
+    for (i = 0; i < 32 * 32 * 32 && j < (unsigned int)num_ret; i++) {
+      unsigned int d = 1 + 4 * retval[j++] + 3;
+      if (d < (unsigned int)num_ret)
+        this->yuv2rgb_cmap[i] = retval[d];
     }
-    for (i = 0; i < 32 * 32 * 32 && j < num_ret; i++)
-      this->yuv2rgb_cmap[i] = retval[1+4*retval[j++]+3];
 
     free(prop_reply);
     return 1;
-  }
+  } while (0);
 
   free(prop_reply);
   return 0;
@@ -1394,6 +1412,7 @@ static vo_driver_t *xshm_open_plugin(video_driver_class_t *class_gen, const void
 static void *xshm_init_class (xine_t *xine, const void *visual_gen) {
   xshm_class_t *this;
 
+  (void)visual_gen;
   this = calloc(1, sizeof(xshm_class_t));
   if (!this)
     return NULL;
