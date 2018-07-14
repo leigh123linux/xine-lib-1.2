@@ -641,6 +641,7 @@ static void opengl2_upload_overlay(opengl2_driver_t *this, opengl2_overlay_t *o,
 static void opengl2_overlay_begin (vo_driver_t *this_gen, vo_frame_t *frame_gen, int changed)
 {
   //fprintf(stderr, "opengl2_overlay_begin\n");
+  (void)frame_gen;
   opengl2_driver_t  *this = (opengl2_driver_t *) this_gen;
 
   if ( changed ) {
@@ -657,6 +658,7 @@ static void opengl2_overlay_blend (vo_driver_t *this_gen, vo_frame_t *frame_gen,
 {
   opengl2_driver_t  *this = (opengl2_driver_t *) this_gen;
 
+  (void)frame_gen;
   if ( !this->ovl_changed || this->ovl_changed>XINE_VORAW_MAX_OVL )
     return;
 
@@ -696,6 +698,7 @@ static void opengl2_overlay_end (vo_driver_t *this_gen, vo_frame_t *vo_img)
   opengl2_driver_t  *this = (opengl2_driver_t *) this_gen;
   unsigned i;
 
+  (void)vo_img;
   if ( !this->ovl_changed )
     return;
 
@@ -717,6 +720,7 @@ static void opengl2_overlay_end (vo_driver_t *this_gen, vo_frame_t *vo_img)
 
 static void opengl2_frame_proc_slice( vo_frame_t *vo_img, uint8_t **src )
 {
+  (void)src;
   vo_img->proc_called = 1;
 }
 
@@ -724,6 +728,8 @@ static void opengl2_frame_proc_slice( vo_frame_t *vo_img, uint8_t **src )
 
 static void opengl2_frame_field( vo_frame_t *vo_img, int which_field )
 {
+  (void)vo_img;
+  (void)which_field;
 }
 
 
@@ -772,8 +778,9 @@ static void opengl2_update_frame_format( vo_driver_t *this_gen, vo_frame_t *fram
 {
   opengl2_frame_t *frame = (opengl2_frame_t *) frame_gen;
 
+  (void)this_gen;
   /* Check frame size and format and reallocate if necessary */
-  if ( (frame->width != width) || (frame->height != height) || (frame->format != format) ) {
+  if ( (frame->width != (int)width) || (frame->height != (int)height) || (frame->format != format) ) {
 
     /* (re-) allocate render space */
     xine_freep_aligned (&frame->vo_frame.base[0]);
@@ -1261,6 +1268,8 @@ static int opengl2_draw_video_cubic_y( opengl2_driver_t *that, int guiw, int gui
 static int opengl2_draw_video_simple( opengl2_driver_t *that, int guiw, int guih, GLfloat u, GLfloat v, GLfloat u1, GLfloat v1,
     GLfloat x, GLfloat y, GLfloat x1, GLfloat y1, GLuint video_texture )
 {
+  (void)that;
+
   glViewport( 0, 0, guiw, guih );
   glMatrixMode( GL_PROJECTION );
   glLoadIdentity();
@@ -1290,6 +1299,8 @@ static int opengl2_draw_video_simple( opengl2_driver_t *that, int guiw, int guih
 static void opengl2_draw_video_bilinear( opengl2_driver_t *that, int guiw, int guih, GLfloat u, GLfloat v, GLfloat u1, GLfloat v1,
     GLfloat x, GLfloat y, GLfloat x1, GLfloat y1, GLuint video_texture )
 {
+  (void)that;
+
   glViewport( 0, 0, guiw, guih );
   glMatrixMode( GL_PROJECTION );
   glLoadIdentity();
@@ -1575,6 +1586,7 @@ static int opengl2_set_property( vo_driver_t *this_gen, int property, int value 
 
 static void opengl2_get_property_min_max( vo_driver_t *this_gen, int property, int *min, int *max ) 
 {
+  (void)this_gen;
   switch ( property ) {
     case VO_PROP_HUE:
       *max = 127; *min = -128; break;

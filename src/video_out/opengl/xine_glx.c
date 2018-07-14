@@ -113,6 +113,8 @@ static void _glx_set_native_window(xine_gl_t *gl, void *drawable)
 static void _glx_resize(xine_gl_t *gl, int w, int h)
 {
   (void)gl;
+  (void)w;
+  (void)h;
 }
 
 static void _glx_dispose(xine_gl_t **pgl)

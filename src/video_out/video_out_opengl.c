@@ -551,6 +551,8 @@ static int render_help_image_tiledtex (opengl_driver_t *this,
 }
 
 static int render_image_nop (opengl_driver_t *this, opengl_frame_t *frame) {
+  (void)this;
+  (void)frame;
   return 1;
 }
 
@@ -810,6 +812,7 @@ static void render_help_check_exts (opengl_driver_t *this) {
 }
 
 static int render_help_setup_tex (opengl_driver_t *this) {
+  (void)this;
   CHECKERR ("pre-tex_setup");
   glEnable        (GL_TEXTURE_2D);
   glTexEnvi       (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE,   GL_REPLACE);
@@ -1301,6 +1304,7 @@ static uint32_t opengl_get_capabilities (vo_driver_t *this_gen) {
 /*   if (this->xoverlay) */
 /*     capabilities |= VO_CAP_UNSCALED_OVERLAY; */
 
+  (void)this_gen;
   return capabilities;
 }
 
@@ -1451,7 +1455,7 @@ static void opengl_update_frame_format (vo_driver_t *this_gen,
   }
 
   /* Check frame size and format and reallocate if necessary */
-  if ((frame->width != width) || (frame->height != height) || (frame->format != format)) {
+  if ((frame->width != (int)width) || (frame->height != (int)height) || (frame->format != format)) {
 /*     lprintf ("updating frame to %d x %d (ratio=%g, format=%08x)\n", width, height, ratio, format); */
 
     /* make sure we dont pull the rug from under the renderer */
@@ -1535,6 +1539,7 @@ static void opengl_overlay_clut_yuv2rgb(opengl_driver_t  *this, vo_overlay_t *ov
   int i;
   uint32_t *rgb;
 
+  (void)this;
   if (!overlay->rgb_clut) {
     rgb = overlay->color;
     for (i = sizeof (overlay->color) / sizeof (overlay->color[0]); i > 0; i--) {
@@ -1573,6 +1578,7 @@ static void opengl_overlay_begin (vo_driver_t *this_gen,
 static void opengl_overlay_end (vo_driver_t *this_gen, vo_frame_t *vo_img) {
   opengl_driver_t  *this  = (opengl_driver_t *) this_gen;
 
+  (void)vo_img;
   if (this->ovl_changed && this->xoverlay) {
     XLockDisplay (this->display);
     x11osd_expose(this->xoverlay);
@@ -1793,6 +1799,7 @@ static void opengl_get_property_min_max (vo_driver_t *this_gen,
 				     int property, int *min, int *max) {
   /* opengl_driver_t *this = (opengl_driver_t *) this_gen;  */
 
+  (void)this_gen;
   switch (property) {
   case VO_PROP_BRIGHTNESS:
     *min = -128;    *max = 127;     break;
@@ -1973,7 +1980,7 @@ static vo_driver_t *opengl_open_plugin (video_driver_class_t *class_gen, const v
   const x11_visual_t   *visual  = (const x11_visual_t *) visual_gen;
   opengl_driver_t      *this;
   const char          **render_fun_names;
-  int                   i;
+  unsigned int          i;
 
   this = (opengl_driver_t *) calloc(1, sizeof(opengl_driver_t));
 
