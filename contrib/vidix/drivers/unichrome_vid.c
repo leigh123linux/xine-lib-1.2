@@ -155,7 +155,7 @@ static int uc_ovl_map_vzoom(int sh, int dh, uint32_t* zoom, uint32_t* mini)
 		sh1 = sh;
 		for (d = 1; d < 5; d++) {
 			sh1 >>= 1;
-			if (sh1 <= dh) break;
+			if ((int)sh1 <= dh) break;
 		}
 		if (d == 5) { // Too small.
 			d = 4;
@@ -166,7 +166,7 @@ static int uc_ovl_map_vzoom(int sh, int dh, uint32_t* zoom, uint32_t* mini)
 
 		// Add scaling
 
-		if (sh1 < dh)  {
+		if ((int)sh1 < dh)  {
 			tmp = (sh1 * 0x400) / dh;
 			*zoom |= ((tmp & 0x3ff) | V1_Y_ZOOM_ENABLE);
 			*mini |= V1_Y_INTERPOLY | V1_YCBCR_INTERPOLY;
@@ -222,7 +222,7 @@ static int uc_ovl_map_hzoom(int sw, int dw,  uint32_t* zoom, uint32_t* mini,
 		sw1 = sw;
 		for (d = 1; d < 5; d++) {
 			sw1 >>= 1;
-			if (sw1 <= dw) break;
+			if ((int)sw1 <= dw) break;
 		}
 		if (d == 5) { // Too small.
 			d = 4;
@@ -236,7 +236,7 @@ static int uc_ovl_map_hzoom(int sw, int dw,  uint32_t* zoom, uint32_t* mini,
 
 		// Add scaling
 
-		if (sw1 < dw) {
+		if ((int)sw1 < dw) {
 			//CLE bug
 			//tmp = sw1*0x0800 / dw;
 			tmp = (sw1 - 2) * 0x0800 / dw;
@@ -408,6 +408,7 @@ int vixProbe(int verbose, int force)
 	pciinfo_t lst[MAX_PCI_DEVICES];
 	unsigned i,num_pci;
 	int err;
+        (void)force;
 	err = pci_scan(lst,&num_pci);
 	if(err)
 	{
@@ -445,6 +446,7 @@ int vixProbe(int verbose, int force)
 int vixInit(const char *args)
 {
 	long tmp;
+        (void)args;
 	uc_mem = map_phys_mem(pci_info.base0, 0x800000); 
 	enable_app_io();
 
@@ -577,6 +579,7 @@ int vixPlaybackGetEq( vidix_video_eq_t * eq)
 
 int vixPlaybackSetEq( const vidix_video_eq_t * eq)
 {
+        (void)eq;
 	return 0;
 }
 

@@ -104,6 +104,7 @@ int VIDIX_NAME(vixProbe)(int verbose, int force)
     unsigned i,num_pci;
     int err;
 
+    (void)force;
     err = pci_scan(lst,&num_pci);
     if(err)
     {

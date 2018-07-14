@@ -69,6 +69,11 @@ void *	bm_alloc_pci_shmem(pciinfo_t *pi, unsigned mem_bitness, unsigned long len
 	if(ioctl(libdha_fd,DHAHELPER_ALLOC_PA,&vmi) == 0)
 		return vmi.addr;
     }
+#else
+  (void)pi;
+  (void)mem_bitness;
+  (void)length;
+  (void)op;
 #endif
     return NULL;
 }
@@ -84,6 +89,8 @@ void	bm_free_pci_shmem(void * pci_shmem)
     {
 	ioctl(libdha_fd,DHAHELPER_FREE_PA,&vmi);
     }
+#else
+  (void)pci_shmem;
 #endif
 }
 

@@ -104,6 +104,7 @@ int VIDIX_NAME(vixProbe)(int verbose, int force)
     unsigned i,num_pci;
     int err;
 
+    (void)force;
     err = pci_scan(lst,&num_pci);
     if(err)
     {
@@ -142,6 +143,7 @@ int VIDIX_NAME(vixProbe)(int verbose, int force)
 int VIDIX_NAME(vixInit)(const char *args)
 {
     char *vm;
+    (void)args;
     pm2_reg_base = map_phys_mem(pci_info.base0, 0x10000);
     pm2_mem = map_phys_mem(pci_info.base1, 1 << 23);
     if((vm = getenv("PM2_VIDMEM"))){

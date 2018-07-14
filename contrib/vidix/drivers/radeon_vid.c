@@ -1201,6 +1201,7 @@ static void restore_regs( void )
 int VIDIX_NAME(vixInit)( const char *args )
 {
   int err;
+  (void)args;
   if(!probed) 
   {
     printf(RADEON_MSG" Driver was not probed but is being initializing\n");

@@ -858,6 +858,7 @@ vixInit (const char *args)
 
   unsigned char val;
 
+  (void)args;
   vgaIOBase = 0x3d0;
   vgaCRIndex = vgaIOBase + 4;
   vgaCRReg = vgaIOBase + 5;
@@ -991,7 +992,7 @@ vixInit (const char *args)
 		info->picture_offset = info->chip.fbsize - FRAMEBUFFER_SIZE;
 //			info->picture_offset = 1024*1024* 4 * 2;
 	}
-	if ( info->video_base < 0 ){
+	if ((intptr_t)info->video_base < 0) {
 		printf("errno = %s\n",  strerror(errno));
 		return -1; 
 	}
@@ -1180,6 +1181,7 @@ vixPlaybackGetEq (vidix_video_eq_t * eq)
 int
 vixPlaybackSetEq (const vidix_video_eq_t * eq)
 {
+  (void)eq;
   return 0;
 }
 

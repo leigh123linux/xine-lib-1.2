@@ -174,6 +174,7 @@ int vixProbe(int verbose, int force)
 	pciinfo_t lst[MAX_PCI_DEVICES];
 	unsigned i,num_pci;
 	int err;
+	(void)force;
 	err = pci_scan(lst,&num_pci);
 	if(err)
 	{
@@ -210,6 +211,7 @@ int vixProbe(int verbose, int force)
 
 int vixInit(const char *args)
 {
+	(void)args;
 	cyberblade_mem = map_phys_mem(pci_info.base0, 0x800000); 
 	enable_app_io();
 	save_colourkey[0]=SRINB(0x50);

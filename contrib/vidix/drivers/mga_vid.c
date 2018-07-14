@@ -1244,6 +1244,7 @@ int VIDIX_NAME(vixProbe)(int verbose,int force)
 
     if (verbose) printf(MGA_MSG" probe\n");
 
+    (void)force;
     mga_verbose = verbose;
 
     is_g400 = -1;
@@ -1310,6 +1311,7 @@ int VIDIX_NAME(vixInit)(const char *args)
     unsigned int card_option = 0;
     int err;
 
+    (void)args;
     /* reset Brightness & Constrast here */
     regs.beslumactl = (0x0 << 16) + 0x80;
 

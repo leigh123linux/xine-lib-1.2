@@ -350,6 +350,7 @@ int vixInit(const char *args)
     uint8_t sr_data, cr_data, cr_data2;
     char *env_overlay_crt;
 
+    (void)args;
     if (!sis_probed) {
 	printf("[SiS] driver was not probed but is being initialized\n");
 	return (EINTR);

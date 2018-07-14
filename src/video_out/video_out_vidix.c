@@ -344,6 +344,9 @@ static uint32_t vidix_get_capabilities (vo_driver_t *this_gen) {
 static void vidixfb_frame_output_cb(void *user_data, int video_width, int video_height, double video_pixel_aspect, int *dest_x, int *dest_y, int *dest_width, int *dest_height, double *dest_pixel_aspect, int *win_x, int *win_y) {
   vidix_driver_t *this = (vidix_driver_t *) user_data;
 
+  (void)video_width;
+  (void)video_height;
+  (void)video_pixel_aspect;
   *dest_x            = 0;
   *dest_y            = 0;
   *dest_width        = this->fb_width;
@@ -356,6 +359,8 @@ static void vidixfb_frame_output_cb(void *user_data, int video_width, int video_
 
 static void vidix_frame_field (vo_frame_t *vo_img, int which_field) {
   /* not needed for vidix */
+  (void)vo_img;
+  (void)which_field;
 }
 
 static void vidix_frame_dispose (vo_frame_t *vo_img) {
@@ -370,6 +375,7 @@ static vo_frame_t *vidix_alloc_frame (vo_driver_t *this_gen) {
   /* vidix_driver_t  *this = (vidix_driver_t *) this_gen; */
   vidix_frame_t   *frame ;
 
+  (void)this_gen;
   frame = (vidix_frame_t *) calloc(1, sizeof(vidix_frame_t));
   if (!frame)
     return NULL;
@@ -406,7 +412,8 @@ static void vidix_compute_ideal_size (vidix_driver_t *this) {
 static void vidix_config_playback (vidix_driver_t *this) {
 
   uint32_t apitch;
-  int err,i;
+  int err;
+  unsigned int i;
 
   _x_vo_scale_compute_output_size( &this->sc );
 
@@ -518,8 +525,9 @@ static void vidix_update_frame_format (vo_driver_t *this_gen,
   vidix_driver_t  *this = (vidix_driver_t *) this_gen;
   vidix_frame_t   *frame = (vidix_frame_t *) frame_gen;
 
-  if ((frame->width != width)
-      || (frame->height != height)
+  (void)flags;
+  if ((frame->width != (int)width)
+      || (frame->height != (int)height)
       || (frame->format != format)) {
 
     /*
@@ -586,6 +594,7 @@ static void vidix_overlay_end (vo_driver_t *this_gen, vo_frame_t *vo_img) {
 #ifdef HAVE_X11
   vidix_driver_t  *this = (vidix_driver_t *) this_gen;
 
+  (void)vo_img;
   if( this->ovl_changed && this->xoverlay ) {
     XLockDisplay (this->display);
     x11osd_expose(this->xoverlay);
@@ -1106,6 +1115,7 @@ static void *init_class (xine_t *xine, const void *visual_gen) {
   vidix_class_t        *this;
   int                   err;
 
+  (void)visual_gen;
   this = (vidix_class_t *) calloc(1, sizeof(vidix_class_t));
   if (!this)
     return NULL;
@@ -1149,6 +1159,7 @@ static vo_driver_t *vidix_open_plugin (video_driver_class_t *class_gen, const vo
   const x11_visual_t   *visual = (const x11_visual_t *) visual_gen;
   XWindowAttributes     window_attributes;
 
+  (void)visual_gen;
   this->visual_type       = XINE_VISUAL_TYPE_X11;
 
   this->display           = visual->display;
@@ -1242,6 +1253,7 @@ static vo_driver_t *vidixfb_open_plugin (video_driver_class_t *class_gen, const 
   int                       fd;
   struct fb_var_screeninfo  fb_var;
 
+  (void)visual_gen;
   this->visual_type = XINE_VISUAL_TYPE_FB;
 
   /* Register config option for fb device */

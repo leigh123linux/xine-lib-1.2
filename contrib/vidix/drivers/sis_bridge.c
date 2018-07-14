@@ -378,7 +378,7 @@ static void sis_detect_crt1()
     if (CR32 & 0x5F)
 	OtherDevices = 1;
 
-    if (sis_crt1_off == -1) {
+    if (sis_crt1_off == (unsigned int)-1) {
 	if (!CRT1Detected) {
 	    /* BIOS detected no CRT1. */
 	    /* If other devices exist, switch it off */

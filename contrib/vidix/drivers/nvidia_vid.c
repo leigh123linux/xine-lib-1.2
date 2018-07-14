@@ -789,6 +789,7 @@ static rivatv_info* info;
       
 int vixInit(const char *args){
 	int mtrr;
+  (void)args;
   info = (rivatv_info*)calloc(1,sizeof(rivatv_info));
   info->control_base = map_phys_mem(pci_info.base0, 0x00C00000 + 0x00008000);
   info->chip.arch =  nvidia_card_ids[find_chip(pci_info.device)].arch;  
