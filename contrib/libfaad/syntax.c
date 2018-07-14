@@ -428,8 +428,8 @@ void raw_data_block(NeAACDecStruct *hDecoder, NeAACDecFrameInfo *hInfo,
 
 #ifdef ERROR_RESILIENCE
     if (hDecoder->object_type < ER_OBJECT_START)
-    {
 #endif
+    {
         /* Table 4.4.3: raw_data_block() */
         while ((id_syn_ele = (uint8_t)faad_getbits(ld, LEN_SE_ID
             DEBUGVAR(1,4,"NeAACDecDecode(): id_syn_ele"))) != ID_END)
@@ -506,8 +506,9 @@ void raw_data_block(NeAACDecStruct *hDecoder, NeAACDecFrameInfo *hInfo,
                 break;
             }
         }
+    }
 #ifdef ERROR_RESILIENCE
-    } else {
+    else {
         /* Table 262: er_raw_data_block() */
         switch (hDecoder->channelConfiguration)
         {
@@ -593,7 +594,7 @@ static uint8_t single_lfe_channel_element(NeAACDecStruct *hDecoder, bitfile *ld,
                                           uint8_t channel, uint8_t *tag)
 {
     uint8_t retval = 0;
-    element sce = {0};
+    element sce = ELEMENT_INIT;
     ic_stream *ics = &(sce.ics1);
     ALIGN int16_t spec_data[1024] = {0};
 
@@ -641,7 +642,7 @@ static uint8_t channel_pair_element(NeAACDecStruct *hDecoder, bitfile *ld,
 {
     ALIGN int16_t spec_data1[1024] = {0};
     ALIGN int16_t spec_data2[1024] = {0};
-    element cpe = {0};
+    element cpe = ELEMENT_INIT;
     ic_stream *ics1 = &(cpe.ics1);
     ic_stream *ics2 = &(cpe.ics2);
     uint8_t result;
@@ -924,7 +925,7 @@ static uint8_t coupling_channel_element(NeAACDecStruct *hDecoder, bitfile *ld)
     uint8_t num_gain_element_lists = 0;
     uint8_t num_coupled_elements = 0;
 
-    element el_empty = {0};
+    element el_empty = ELEMENT_INIT;
     ic_stream ics_empty = {0};
     int16_t sh_data[1024];
 
@@ -1015,6 +1016,7 @@ static uint16_t data_stream_element(NeAACDecStruct *hDecoder, bitfile *ld)
     uint8_t byte_aligned;
     uint16_t i, count;
 
+    (void)hDecoder;
     /* element_instance_tag = */ faad_getbits(ld, LEN_TAG
         DEBUGVAR(1,60,"data_stream_element(): element_instance_tag"));
     byte_aligned = faad_get1bit(ld
@@ -1102,8 +1104,9 @@ static uint8_t fill_element(NeAACDecStruct *hDecoder, bitfile *ld, drc_info *drc
                 hDecoder->ps_used_global = 1;
             }
 #endif
-        } else {
+        } else
 #endif
+        {
 #ifndef DRM
             while (count > 0)
             {
@@ -1112,9 +1115,7 @@ static uint8_t fill_element(NeAACDecStruct *hDecoder, bitfile *ld, drc_info *drc
 #else
             return 30;
 #endif
-#ifdef SBR_DEC
         }
-#endif
     }
 
     return 0;
@@ -1225,7 +1226,7 @@ void DRM_aac_scalable_main_element(NeAACDecStruct *hDecoder, NeAACDecFrameInfo *
     uint8_t channels = hDecoder->fr_channels = 0;
     uint8_t ch;
     uint8_t this_layer_stereo = (hDecoder->channelConfiguration > 1) ? 1 : 0;
-    element cpe = {0};
+    element cpe = ELEMENT_INIT;
     ic_stream *ics1 = &(cpe.ics1);
     ic_stream *ics2 = &(cpe.ics2);
     int16_t *spec_data;
@@ -1622,16 +1623,15 @@ static uint8_t individual_channel_stream(NeAACDecStruct *hDecoder, element *ele,
         {
             return result;
         }
-    } else {
+    } else
 #endif
+    {
         /* decode the spectral data */
         if ((result = spectral_data(hDecoder, ics, ld, spec_data)) > 0)
         {
             return result;
         }
-#ifdef ERROR_RESILIENCE
     }
-#endif
 
     /* pulse coding reconstruction */
     if (ics->pulse_data_present)
@@ -1723,13 +1723,12 @@ static uint8_t section_data(NeAACDecStruct *hDecoder, ic_stream *ics, bitfile *l
             if (vcb11)
             {
                 sect_len_incr = 1;
-            } else {
+            } else
 #endif
+            {
                 sect_len_incr = (uint8_t)faad_getbits(ld, sect_bits
                     DEBUGVAR(1,72,"section_data(): sect_len_incr"));
-#ifdef ERROR_RESILIENCE
             }
-#endif
             while ((sect_len_incr == sect_esc_val) /* &&
                 (k+sect_len < ics->max_sfb)*/)
             {
@@ -1905,11 +1904,12 @@ static uint8_t scale_factor_data(NeAACDecStruct *hDecoder, ic_stream *ics, bitfi
 
 #ifdef ERROR_RESILIENCE
     if (!hDecoder->aacScalefactorDataResilienceFlag)
-    {
 #endif
+    {
         ret = decode_scale_factors(ics, ld);
+    }
 #ifdef ERROR_RESILIENCE
-    } else {
+    else {
         /* In ER AAC the parameters for RVLC are seperated from the actual
            data that holds the scale_factors.
            Strangely enough, 2 parameters for HCR are put inbetween them.
@@ -2021,13 +2021,12 @@ static uint8_t ltp_data(NeAACDecStruct *hDecoder, ic_stream *ics, ltp_info *ltp,
             ltp->lag = (uint16_t)faad_getbits(ld, 10
                 DEBUGVAR(1,81,"ltp_data(): lag"));
         }
-    } else {
+    } else
 #endif
+    {
         ltp->lag = (uint16_t)faad_getbits(ld, 11
             DEBUGVAR(1,81,"ltp_data(): lag"));
-#ifdef LD_DEC
     }
-#endif
 
     /* Check length of lag */
     if (ltp->lag > (hDecoder->frameLength << 1))

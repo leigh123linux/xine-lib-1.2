@@ -165,7 +165,7 @@ static void ps_data_decode(ps_info *ps);
 static hyb_info *hybrid_init(uint8_t numTimeSlotsRate);
 static void channel_filter2(hyb_info *hyb, uint8_t frame_len, const real_t *filter,
                             qmf_t *buffer, qmf_t **X_hybrid);
-static void INLINE DCT3_4_unscaled(real_t *y, real_t *x);
+static INLINE void DCT3_4_unscaled(real_t *y, real_t *x);
 static void channel_filter8(hyb_info *hyb, uint8_t frame_len, const real_t *filter,
                             qmf_t *buffer, qmf_t **X_hybrid);
 static void hybrid_analysis(hyb_info *hyb, qmf_t X[32][64], qmf_t X_hybrid[32][32],
@@ -263,6 +263,7 @@ static void channel_filter2(hyb_info *hyb, uint8_t frame_len, const real_t *filt
 {
     uint8_t i;
 
+    (void)hyb; /* why is this unused? */
     for (i = 0; i < frame_len; i++)
     {
         real_t r0 = MUL_F(filter[0],(QMF_RE(buffer[0+i]) + QMF_RE(buffer[12+i])));
@@ -297,6 +298,7 @@ static void channel_filter4(hyb_info *hyb, uint8_t frame_len, const real_t *filt
     uint8_t i;
     real_t input_re1[2], input_re2[2], input_im1[2], input_im2[2];
 
+    (void)hyb; /* why is this unused? */
     for (i = 0; i < frame_len; i++)
     {
         input_re1[0] = -MUL_F(filter[2], (QMF_RE(buffer[i+2]) + QMF_RE(buffer[i+10]))) +
@@ -345,7 +347,7 @@ static void channel_filter4(hyb_info *hyb, uint8_t frame_len, const real_t *filt
     }
 }
 
-static void INLINE DCT3_4_unscaled(real_t *y, real_t *x)
+static INLINE void DCT3_4_unscaled(real_t *y, real_t *x)
 {
     real_t f0, f1, f2, f3, f4, f5, f6, f7, f8;
 
@@ -372,6 +374,7 @@ static void channel_filter8(hyb_info *hyb, uint8_t frame_len, const real_t *filt
     real_t input_re1[4], input_re2[4], input_im1[4], input_im2[4];
     real_t x[4];
 
+    (void)hyb; /* why is this unused? */
     for (i = 0; i < frame_len; i++)
     {
         input_re1[0] =  MUL_F(filter[6],QMF_RE(buffer[6+i]));
@@ -436,7 +439,7 @@ static void channel_filter8(hyb_info *hyb, uint8_t frame_len, const real_t *filt
     }
 }
 
-static void INLINE DCT3_6_unscaled(real_t *y, real_t *x)
+static INLINE void DCT3_6_unscaled(real_t *y, real_t *x)
 {
     real_t f0, f1, f2, f3, f4, f5, f6, f7;
 
@@ -464,6 +467,7 @@ static void channel_filter12(hyb_info *hyb, uint8_t frame_len, const real_t *fil
     real_t input_re1[6], input_re2[6], input_im1[6], input_im2[6];
     real_t out_re1[6], out_re2[6], out_im1[6], out_im2[6];
 
+    (void)hyb; /* why is this unused? */
     for (i = 0; i < frame_len; i++)
     {
         for (n = 0; n < 6; n++)
@@ -586,6 +590,7 @@ static void hybrid_synthesis(hyb_info *hyb, qmf_t X[32][64], qmf_t X_hybrid[32][
     uint8_t qmf_bands = (use34) ? 5 : 3;
     uint8_t *resolution = (use34) ? hyb->resolution34 : hyb->resolution20;
 
+    (void)numTimeSlotsRate; /* why is this unused? */
     for(band = 0; band < qmf_bands; band++)
     {
         for (n = 0; n < hyb->frame_len; n++)
@@ -1901,6 +1906,7 @@ ps_info *ps_init(uint8_t sr_index, uint8_t numTimeSlotsRate)
             ps->num_sample_delay_ser[i] = delay_length_d[0][i];
         }
 #else
+        (void)sr_index;
         /* THESE ARE CONSTANTS NOW */
         ps->num_sample_delay_ser[i] = delay_length_d[i];
 #endif

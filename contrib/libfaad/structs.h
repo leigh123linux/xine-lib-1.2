@@ -312,6 +312,9 @@ typedef struct
     ic_stream ics2;
 } element; /* syntax element (SCE, CPE, LFE) */
 
+/* FIXME: do we need to 0 fill all of it (no glitches heared without so far)? */
+#define ELEMENT_INIT {.channel = 0}
+
 #define MAX_ASC_BYTES 64
 typedef struct {
     int inited;

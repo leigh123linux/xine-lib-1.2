@@ -87,6 +87,7 @@ void faad_initbits(bitfile *ld, const void *_buffer, const uint32_t buffer_size)
 void faad_endbits(bitfile *ld)
 {
     // void
+    (void)ld;
 }
 
 uint32_t faad_get_processed_bits(bitfile *ld)

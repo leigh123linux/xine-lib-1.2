@@ -96,6 +96,7 @@ static INLINE void gen_rand_vector(real_t *spec, int16_t scale_factor, uint16_t 
 
     real_t scale = (real_t)1.0/(real_t)size;
 
+    (void)sub;
     for (i = 0; i < size; i++)
     {
         real_t tmp = scale*(real_t)(int32_t)ne_rng(__r1, __r2);
@@ -179,6 +180,8 @@ void pns_decode(ic_stream *ics_left, ic_stream *ics_right,
         else
             sub = 10 /*10*/;
     }
+#else
+    (void)object_type;
 #endif
 
     for (g = 0; g < ics_left->num_window_groups; g++)

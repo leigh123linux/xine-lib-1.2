@@ -306,6 +306,7 @@ static uint8_t sbr_process_channel(sbr_info *sbr, real_t *channel_buf, qmf_t X[M
     ALIGN real_t deg[64];
 #endif
 
+    (void)downSampledSBR; /* why is this unused? */
 #ifdef DRM
     if (sbr->Is_DRM_SBR)
     {

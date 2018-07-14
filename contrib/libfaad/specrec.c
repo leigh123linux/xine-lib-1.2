@@ -320,15 +320,14 @@ uint8_t window_grouping_info(NeAACDecStruct *hDecoder, ic_stream *ics)
                 ics->num_swb = num_swb_512_window[sf_index];
             else /* if (hDecoder->frameLength == 480) */
                 ics->num_swb = num_swb_480_window[sf_index];
-        } else {
+        } else
 #endif
+        {
             if (hDecoder->frameLength == 1024)
                 ics->num_swb = num_swb_1024_window[sf_index];
             else /* if (hDecoder->frameLength == 960) */
                 ics->num_swb = num_swb_960_window[sf_index];
-#ifdef LD_DEC
         }
-#endif
 
         if (ics->max_sfb > ics->num_swb)
         {
@@ -357,8 +356,9 @@ uint8_t window_grouping_info(NeAACDecStruct *hDecoder, ic_stream *ics)
             ics->sect_sfb_offset[0][ics->num_swb] = hDecoder->frameLength;
             ics->swb_offset[ics->num_swb] = hDecoder->frameLength;
             ics->swb_offset_max = hDecoder->frameLength;
-        } else {
+        } else
 #endif
+        {
             for (i = 0; i < ics->num_swb; i++)
             {
                 ics->sect_sfb_offset[0][i] = swb_offset_1024_window[sf_index][i];
@@ -367,9 +367,7 @@ uint8_t window_grouping_info(NeAACDecStruct *hDecoder, ic_stream *ics)
             ics->sect_sfb_offset[0][ics->num_swb] = hDecoder->frameLength;
             ics->swb_offset[ics->num_swb] = hDecoder->frameLength;
             ics->swb_offset_max = hDecoder->frameLength;
-#ifdef LD_DEC
         }
-#endif
         return 0;
     case EIGHT_SHORT_SEQUENCE:
         ics->num_windows = 8;
@@ -566,6 +564,7 @@ static uint8_t quant_to_spec(NeAACDecStruct *hDecoder,
     real_t scf;
 #endif
 
+    (void)frame_len; /* FIXME: check */
     k = 0;
     gindex = 0;
 
@@ -606,6 +605,8 @@ static uint8_t quant_to_spec(NeAACDecStruct *hDecoder,
                 else
                     exp -= 7 /*10*/;
             }
+#else
+            (void)hDecoder;
 #endif
 
             wa = gindex + j;
@@ -1009,14 +1010,15 @@ uint8_t reconstruct_single_channel(NeAACDecStruct *hDecoder, ic_stream *ics,
     /* filter bank */
 #ifdef SSR_DEC
     if (hDecoder->object_type != SSR)
-    {
 #endif
+    {
         ifilter_bank(hDecoder->fb, ics->window_sequence, ics->window_shape,
             hDecoder->window_shape_prev[sce->channel], spec_coef,
             hDecoder->time_out[sce->channel], hDecoder->fb_intermed[sce->channel],
             hDecoder->object_type, hDecoder->frameLength);
+    }
 #ifdef SSR_DEC
-    } else {
+    else {
         ssr_decode(&(ics->ssr), hDecoder->fb, ics->window_sequence, ics->window_shape,
             hDecoder->window_shape_prev[sce->channel], spec_coef, hDecoder->time_out[sce->channel],
             hDecoder->ssr_overlap[sce->channel], hDecoder->ipqf_buffer[sce->channel], hDecoder->prev_fmd[sce->channel],
@@ -1062,12 +1064,13 @@ uint8_t reconstruct_single_channel(NeAACDecStruct *hDecoder, ic_stream *ics,
         /* check if any of the PS tools is used */
 #if (defined(PS_DEC) || defined(DRM_PS))
         if (hDecoder->ps_used[ele] == 0)
-        {
 #endif
+        {
             retval = sbrDecodeSingleFrame(hDecoder->sbr[ele], hDecoder->time_out[ch],
                 hDecoder->postSeekResetFlag, hDecoder->downSampledSBR);
+        }
 #if (defined(PS_DEC) || defined(DRM_PS))
-        } else {
+        else {
             retval = sbrDecodeSingleFramePS(hDecoder->sbr[ele], hDecoder->time_out[ch],
                 hDecoder->time_out[ch+1], hDecoder->postSeekResetFlag,
                 hDecoder->downSampledSBR);
@@ -1252,8 +1255,8 @@ uint8_t reconstruct_channel_pair(NeAACDecStruct *hDecoder, ic_stream *ics1, ic_s
     /* filter bank */
 #ifdef SSR_DEC
     if (hDecoder->object_type != SSR)
-    {
 #endif
+    {
         ifilter_bank(hDecoder->fb, ics1->window_sequence, ics1->window_shape,
             hDecoder->window_shape_prev[cpe->channel], spec_coef1,
             hDecoder->time_out[cpe->channel], hDecoder->fb_intermed[cpe->channel],
@@ -1262,8 +1265,9 @@ uint8_t reconstruct_channel_pair(NeAACDecStruct *hDecoder, ic_stream *ics1, ic_s
             hDecoder->window_shape_prev[cpe->paired_channel], spec_coef2,
             hDecoder->time_out[cpe->paired_channel], hDecoder->fb_intermed[cpe->paired_channel],
             hDecoder->object_type, hDecoder->frameLength);
+    }
 #ifdef SSR_DEC
-    } else {
+    else {
         ssr_decode(&(ics1->ssr), hDecoder->fb, ics1->window_sequence, ics1->window_shape,
             hDecoder->window_shape_prev[cpe->channel], spec_coef1, hDecoder->time_out[cpe->channel],
             hDecoder->ssr_overlap[cpe->channel], hDecoder->ipqf_buffer[cpe->channel],

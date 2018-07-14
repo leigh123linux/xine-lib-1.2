@@ -362,6 +362,7 @@ uint8_t master_frequency_table(sbr_info *sbr, uint8_t k0, uint8_t k2,
     real_t rk2, rk0;
 #endif
 
+    (void)bs_alter_scale;
     /* mft only defined for k2 > k0 */
     if (k2 <= k0)
     {

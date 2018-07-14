@@ -61,6 +61,7 @@ typedef struct _bitfile
     const void *buffer;
 } bitfile;
 
+#define BITFILE_INIT {0, 0, 0, 0, 0, 0, NULL, NULL, NULL}
 
 #if 0
 static uint32_t const bitmask[] = {

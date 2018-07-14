@@ -839,7 +839,7 @@ static void* aac_frame_decode(NeAACDecStruct *hDecoder,
     uint16_t i;
     uint8_t channels = 0;
     uint8_t output_channels = 0;
-    bitfile ld = {0};
+    bitfile ld = BITFILE_INIT;
     uint32_t bitsconsumed;
     uint16_t frame_len;
     void *sample_buffer;
@@ -1100,7 +1100,7 @@ static void* aac_frame_decode(NeAACDecStruct *hDecoder,
                 faad_free(hDecoder->sample_buffer);
             hDecoder->sample_buffer = NULL;
             hDecoder->sample_buffer = faad_malloc(frame_len*output_channels*stride);
-        } else if (sample_buffer_size < frame_len*output_channels*stride) {
+        } else if (sample_buffer_size < (unsigned int)(frame_len*output_channels*stride)) {
             /* provided sample buffer is not big enough */
             hInfo->error = 27;
             return NULL;

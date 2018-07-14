@@ -42,6 +42,7 @@ typedef struct
     real_t S_M_boost[MAX_L_E][MAX_M];
 } sbr_hfadj_info;
 
+#define SBR_HFADJ_INFO_INIT {{{0}}, {{0}}, {{0}}}
 
 uint8_t hf_adjustment(sbr_info *sbr, qmf_t Xsbr[MAX_NTSRHFG][64]
 #ifdef SBR_LOW_POWER
