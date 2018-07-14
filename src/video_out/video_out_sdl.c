@@ -121,6 +121,8 @@ static uint32_t sdl_get_capabilities (vo_driver_t *this_gen) {
 
 static void sdl_frame_field (vo_frame_t *vo_img, int which_field) {
   /* not needed for SDL */
+  (void)vo_img;
+  (void)which_field;
 }
 
 static void sdl_frame_dispose (vo_frame_t *vo_img) {
@@ -137,6 +139,7 @@ static vo_frame_t *sdl_alloc_frame (vo_driver_t *this_gen) {
   /* sdl_driver_t    *this = (sdl_driver_t *) this_gen; */
   sdl_frame_t     *frame ;
 
+  (void)this_gen;
   frame = (sdl_frame_t *) calloc(1, sizeof(sdl_frame_t));
 
   if (!frame)
@@ -179,8 +182,9 @@ static void sdl_update_frame_format (vo_driver_t *this_gen,
   sdl_driver_t  *this = (sdl_driver_t *) this_gen;
   sdl_frame_t   *frame = (sdl_frame_t *) frame_gen;
 
-  if ((frame->width != width)
-      || (frame->height != height)
+  (void)flags;
+  if ((frame->width != (int)width)
+      || (frame->height != (int)height)
       || (frame->format != format)) {
 
     /*
@@ -394,6 +398,10 @@ static void sdl_get_property_min_max (vo_driver_t *this_gen,
 				     int property, int *min, int *max) {
 
 /*  sdl_driver_t *this = (sdl_driver_t *) this_gen; */
+  (void)this_gen;
+  (void)property;
+  (void)min;
+  (void)max;
 }
 
 static int sdl_gui_data_exchange (vo_driver_t *this_gen,
@@ -583,6 +591,7 @@ static void *init_class (xine_t *xine, const void *visual_gen) {
   /* x11_visual_t     *visual = (x11_visual_t *) visual_gen; */
   sdl_class_t      *this;
 
+  (void)visual_gen;
   /* check if we have SDL */
   if ((SDL_Init (SDL_INIT_VIDEO)) < 0) {
     xprintf (xine, XINE_VERBOSITY_DEBUG,
