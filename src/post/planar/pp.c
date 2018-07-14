@@ -99,6 +99,9 @@ static int set_parameters (xine_post_t *this_gen, void *param_gen) {
   memcpy( &this->params, param, sizeof(pp_parameters_t) );
 
   pthread_mutex_unlock (&this->lock);
+#else
+  (void)this_gen;
+  (void)param_gen;
 #endif
   return 1;
 }
@@ -110,6 +113,9 @@ static int get_parameters (xine_post_t *this_gen, void *param_gen) {
 
 
   memcpy( param, &this->params, sizeof(pp_parameters_t) );
+#else
+  (void)this_gen;
+  (void)param_gen;
 #endif
   return 1;
 }
@@ -166,6 +172,9 @@ void *pp_init_plugin(xine_t *xine, const void *data)
   if (!class)
     return NULL;
 
+  (void)xine;
+  (void)data;
+
   class->open_plugin     = pp_open_plugin;
   class->identifier      = "pp";
   class->description     = N_("plugin for ffmpeg libpostprocess");
@@ -192,6 +201,10 @@ static post_plugin_t *pp_open_plugin(post_class_t *class_gen, int inputs,
     free(this);
     return NULL;
   }
+
+  (void)class_gen;
+  (void)inputs;
+  (void)audio_target;
 
   _x_post_init(&this->post, 0, 1);
 
@@ -255,6 +268,7 @@ static void pp_dispose(post_plugin_t *this_gen)
 
 static int pp_intercept_frame(post_video_port_t *port, vo_frame_t *frame)
 {
+  (void)port;
   return (frame->format == XINE_IMGFMT_YV12 || frame->format == XINE_IMGFMT_YUY2);
 }
 

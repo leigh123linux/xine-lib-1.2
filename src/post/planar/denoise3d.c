@@ -181,6 +181,9 @@ void *denoise3d_init_plugin(xine_t *xine, const void *data)
   if (!class)
     return NULL;
 
+  (void)xine;
+  (void)data;
+
   class->open_plugin     = denoise3d_open_plugin;
   class->identifier      = "denoise3d";
   class->description     = N_("3D Denoiser (variable lowpass filter)");
@@ -204,6 +207,10 @@ static post_plugin_t *denoise3d_open_plugin(post_class_t *class_gen, int inputs,
     free(this);
     return NULL;
   }
+
+  (void)class_gen;
+  (void)inputs;
+  (void)audio_target;
 
   _x_post_init(&this->post, 0, 1);
 
@@ -266,6 +273,7 @@ static void denoise3d_close(xine_video_port_t *port_gen, xine_stream_t *stream)
 
 static int denoise3d_intercept_frame(post_video_port_t *port, vo_frame_t *frame)
 {
+  (void)port;
   return (frame->format == XINE_IMGFMT_YV12 || frame->format == XINE_IMGFMT_YUY2);
 }
 

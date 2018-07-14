@@ -49,6 +49,9 @@ void *fill_init_plugin(xine_t *xine, const void *data)
   if (!class)
     return NULL;
 
+  (void)xine;
+  (void)data;
+
   class->open_plugin     = fill_open_plugin;
   class->identifier      = "fill";
   class->description     = N_("crops left and right of video to fill 4:3 aspect ratio");
@@ -71,6 +74,10 @@ static post_plugin_t *fill_open_plugin(post_class_t *class_gen, int inputs,
     free(this);
     return NULL;
   }
+
+  (void)class_gen;
+  (void)inputs;
+  (void)audio_target;
 
   _x_post_init(this, 0, 1);
 

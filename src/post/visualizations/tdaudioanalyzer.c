@@ -1024,6 +1024,8 @@ static post_plugin_t *tdaan_open_plugin (
     return NULL;
   }
 
+  (void)inputs;
+
   _x_post_init (&this->post, 1, 0);
 
   this->metronom = _x_metronom_init (1, 0, class->xine);
@@ -1057,6 +1059,8 @@ void *tdaan_init_plugin (xine_t *xine, const void *data) {
 
   if (!class)
     return NULL;
+
+  (void)data;
 
   class->post_class.open_plugin     = tdaan_open_plugin;
   class->post_class.identifier      = "tdaudioanalyzer";

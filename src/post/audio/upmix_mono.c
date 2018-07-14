@@ -310,6 +310,10 @@ static post_plugin_t *upmix_mono_open_plugin(post_class_t *class_gen, int inputs
     return NULL;
   }
 
+  (void)class_gen;
+  (void)inputs;
+  (void)video_target;
+
   _x_post_init(&this->post, 1, 0);
 
   init_params.channel = -1;
@@ -341,6 +345,8 @@ void *upmix_mono_init_plugin(xine_t *xine, const void *data)
 
   if (!class)
     return NULL;
+
+  (void)data;
 
   class->post_class.open_plugin     = upmix_mono_open_plugin;
   class->post_class.identifier      = "upmix_mono";

@@ -753,6 +753,7 @@ static void ifs_vfx_apply(VisualFX *_this, Pixel *src, Pixel *dest, PluginInfo *
 
 static void ifs_vfx_init(VisualFX *_this, PluginInfo *info) {
 
+	(void)info;
 	IfsData *data = (IfsData*)malloc(sizeof(IfsData));
 	data->Root = (FRACTAL*)NULL;
 	data->initalized = 0;
@@ -766,9 +767,10 @@ static void ifs_vfx_free(VisualFX *_this) {
 }
 
 VisualFX ifs_visualfx_create(void) {
-	VisualFX vfx = {0};
-	vfx.init = ifs_vfx_init;
-	vfx.free = ifs_vfx_free;
-	vfx.apply = ifs_vfx_apply;
+	VisualFX vfx = {
+		.init = ifs_vfx_init,
+		.free = ifs_vfx_free,
+		.apply = ifs_vfx_apply
+	};
 	return vfx;
 }

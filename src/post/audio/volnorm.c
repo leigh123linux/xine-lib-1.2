@@ -423,6 +423,10 @@ static post_plugin_t *volnorm_open_plugin(post_class_t *class_gen, int inputs,
         return NULL;
     }
 
+    (void)class_gen;
+    (void)inputs;
+    (void)video_target;
+
     _x_post_init(&this->post, 1, 0);
     pthread_mutex_init (&this->lock, NULL);
 
@@ -457,6 +461,8 @@ void *volnorm_init_plugin(xine_t *xine, const void *data)
 
     if (!class)
         return NULL;
+
+    (void)data;
 
     class->post_class.open_plugin     = volnorm_open_plugin;
     class->post_class.identifier      = "volnorm";

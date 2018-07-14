@@ -55,6 +55,8 @@ static void tentacle_fx_init(VisualFX *_this, PluginInfo *info) {
 	
 	TentacleFXData *data = (TentacleFXData*)malloc(sizeof(TentacleFXData));
 	
+	(void)info;
+
 	data->enabled_bp = secure_b_param("Enabled", 1);
 	data->params = plugin_parameters ("3D Tentacles", 1);
 	data->params.params[0] = &data->enabled_bp;
@@ -103,11 +105,12 @@ static void tentacle_fx_free(VisualFX *_this) {
 }
 
 VisualFX tentacle_fx_create(void) {
-	VisualFX fx = {0};
-	fx.init = tentacle_fx_init;
-	fx.apply = tentacle_fx_apply;
-	fx.free = tentacle_fx_free;
-	return fx;
+  VisualFX fx = {
+    .init = tentacle_fx_init,
+    .apply = tentacle_fx_apply,
+    .free = tentacle_fx_free
+  };
+  return fx;
 }
 
 /* ----- */

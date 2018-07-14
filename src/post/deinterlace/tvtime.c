@@ -373,6 +373,8 @@ int tvtime_build_copied_field( tvtime_t *tvtime, uint8_t *output,
     int scanline = 0;
     int i;
 
+    (void)tvtime;
+
     if( bottom_field ) {
         /* Advance frame pointers to the next input line. */
         curframe += instride;

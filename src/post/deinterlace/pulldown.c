@@ -304,6 +304,8 @@ int determine_pulldown_offset_history_new( int top_repeat, int bot_repeat, int t
     int min2botpos = -1;
     /*int predicted_pos = 0;*/
 
+    (void)tff;
+
     tophistory[ histpos ] = top_repeat;
     bothistory[ histpos ] = bot_repeat;
 
@@ -412,6 +414,8 @@ int determine_pulldown_offset_short_history_new( int top_repeat, int bot_repeat,
     int min2botpos = -1;
     /*int predicted_pos = 0;*/
 
+    (void)tff;
+
     tophistory[ histpos ] = top_repeat;
     bothistory[ histpos ] = bot_repeat;
 
@@ -518,6 +522,9 @@ int determine_pulldown_offset_dalias( pulldown_metrics_t *old_peak,
                                       pulldown_metrics_t *new_mean )
 {
     int laced = 0;
+
+    (void)old_mean;
+    (void)new_mean;
 
     if (old_peak->d > 360) {
         if (3*old_relative->e < old_relative->o) laced=1;

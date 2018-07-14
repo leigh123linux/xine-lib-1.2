@@ -141,6 +141,9 @@ void *boxblur_init_plugin(xine_t *xine, const void *data)
   if (!class)
     return NULL;
 
+  (void)xine;
+  (void)data;
+
   class->open_plugin     = boxblur_open_plugin;
   class->identifier      = "boxblur";
   class->description     = N_("box blur filter from mplayer");
@@ -164,6 +167,10 @@ static post_plugin_t *boxblur_open_plugin(post_class_t *class_gen, int inputs,
     free(this);
     return NULL;
   }
+
+  (void)class_gen;
+  (void)inputs;
+  (void)audio_target;
 
   _x_post_init(&this->post, 0, 1);
 
@@ -207,6 +214,8 @@ static void boxblur_dispose(post_plugin_t *this_gen)
 
 static int boxblur_intercept_frame(post_video_port_t *port, vo_frame_t *frame)
 {
+  (void)port;
+
   return (frame->format == XINE_IMGFMT_YV12 || frame->format == XINE_IMGFMT_YUY2);
 }
 

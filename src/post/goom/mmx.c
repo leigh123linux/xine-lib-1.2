@@ -50,7 +50,7 @@ void zoom_filter_mmx (int prevX, int prevY,
 		brutSmypos = brutS[myPos2];
 		py = brutSmypos + (((brutD[myPos2] - brutSmypos)*buffratio) >> BUFFPOINTNB);
 
-		if ((py>=ay) || (px>=ax)) {
+		if ((py>=(int)ay) || (px>=(int)ax)) {
 			pos=coeffs=0;
 		}
 		else {

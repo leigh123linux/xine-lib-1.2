@@ -431,7 +431,7 @@ static void c_zoom (Pixel *expix1, Pixel *expix2, unsigned int prevX, unsigned i
         brutSmypos = brutS[myPos2];
         py = brutSmypos + (((brutD[myPos2] - brutSmypos) * buffratio) >> BUFFPOINTNB);
         
-        if ((py >= ay) || (px >= ax)) {
+        if ((py >= (int)ay) || (px >= (int)ax)) {
             pos = coeffs = 0;
         } else {
             pos = ((px >> PERTEDEC) + prevX * (py >> PERTEDEC));
@@ -692,6 +692,7 @@ static void zoomFilterVisualFXWrapper_init (struct _VISUAL_FX *_this, PluginInfo
 {
     ZoomFilterFXWrapperData *data = (ZoomFilterFXWrapperData*)malloc(sizeof(ZoomFilterFXWrapperData));
     
+    (void)info;
     data->coeffs = 0;
     data->freecoeffs = 0;
     data->brutS = 0;
@@ -748,14 +749,19 @@ static void zoomFilterVisualFXWrapper_free (struct _VISUAL_FX *_this)
 
 static void zoomFilterVisualFXWrapper_apply (struct _VISUAL_FX *_this, Pixel *src, Pixel *dest, PluginInfo *info)
 {
+  (void)_this;
+  (void)src;
+  (void)dest;
+  (void)info;
 }
 
 VisualFX zoomFilterVisualFXWrapper_create(void)
 {
-    VisualFX fx = {0};
-    fx.init = zoomFilterVisualFXWrapper_init;
-    fx.free = zoomFilterVisualFXWrapper_free;
-    fx.apply = zoomFilterVisualFXWrapper_apply;
+    VisualFX fx = {
+        .init = zoomFilterVisualFXWrapper_init,
+        .free = zoomFilterVisualFXWrapper_free,
+        .apply = zoomFilterVisualFXWrapper_apply
+    };
     return fx;
 }
 
@@ -769,7 +775,7 @@ void pointFilter (PluginInfo *goomInfo, Pixel * pix1, Color c, float t1, float t
     Uint y = (Uint) ((int) (goomInfo->screen.height/2)
                      + (int) (t2 * sin ((float) cycle / t4)));
     
-    if ((x > 1) && (y > 1) && (x < goomInfo->screen.width - 2) && (y < goomInfo->screen.height - 2)) {
+    if ((x > 1) && (y > 1) && ((int)x < goomInfo->screen.width - 2) && ((int)y < goomInfo->screen.height - 2)) {
         setPixelRGB (goomInfo, pix1, x + 1, y, c);
         setPixelRGB (goomInfo, pix1, x, y + 1, c);
         setPixelRGB (goomInfo, pix1, x + 1, y + 1, WHITE);

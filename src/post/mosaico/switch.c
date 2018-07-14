@@ -93,6 +93,8 @@ static void *switch_init_plugin(xine_t *xine, const void *data)
   if (!this)
     return NULL;
 
+  (void)data;
+
   this->class.open_plugin     = switch_open_plugin;
   this->class.identifier      = "switch";
   this->class.description     = N_("Switch is a post plugin able to switch at any time between different streams");
@@ -121,6 +123,9 @@ static post_plugin_t *switch_open_plugin(post_class_t *class_gen, int inputs,
     free(this);
     return NULL;
   }
+
+  (void)class_gen;
+  (void)audio_target;
 
   _x_post_init(&this->post, 0, inputs);
 
@@ -207,7 +212,8 @@ static int switch_draw(vo_frame_t *frame, xine_stream_t *stream)
 {
   post_video_port_t *port = (post_video_port_t *)frame->port;
   post_switch_t *this = (post_switch_t *)port->post;
-  int source_num, skip;
+  unsigned int source_num;
+  int skip;
 
   for (source_num = 1; source_num <= this->source_count; source_num++)
     if (this->post.xine_post.video_input[source_num-1] == frame->port) break;

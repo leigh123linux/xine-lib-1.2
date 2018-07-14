@@ -299,6 +299,8 @@ static void *deinterlace_init_plugin(xine_t *xine, const void *data)
   if (!class)
     return NULL;
 
+  (void)data;
+
   class->class.open_plugin     = deinterlace_open_plugin;
   class->class.identifier      = "tvtime";
   class->class.description     = N_("advanced deinterlacer plugin with pulldown detection");
@@ -379,6 +381,9 @@ static post_plugin_t *deinterlace_open_plugin(post_class_t *class_gen, int input
     free(this);
     return NULL;
   }
+
+  (void)inputs;
+  (void)audio_target;
 
   _x_post_init(&this->post, 0, 1);
 

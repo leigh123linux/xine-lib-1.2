@@ -50,6 +50,9 @@ void *invert_init_plugin(xine_t *xine, const void *data)
   if (!class)
     return NULL;
 
+  (void)xine;
+  (void)data;
+
   class->open_plugin     = invert_open_plugin;
   class->identifier      = "invert";
   class->description     = N_("inverts the colours of every video frame");
@@ -72,6 +75,10 @@ static post_plugin_t *invert_open_plugin(post_class_t *class_gen, int inputs,
     free(this);
     return NULL;
   }
+
+  (void)class_gen;
+  (void)inputs;
+  (void)audio_target;
 
   _x_post_init(this, 0, 1);
 
@@ -96,6 +103,7 @@ static void invert_dispose(post_plugin_t *this)
 
 static int invert_intercept_frame(post_video_port_t *port, vo_frame_t *frame)
 {
+  (void)port;
   return (frame->format == XINE_IMGFMT_YV12 || frame->format == XINE_IMGFMT_YUY2);
 }
 

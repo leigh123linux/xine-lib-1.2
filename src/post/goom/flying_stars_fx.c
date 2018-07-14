@@ -88,6 +88,7 @@ static void fs_init(VisualFX *_this, PluginInfo *info) {
 	FSData *data;
 	data = (FSData*)malloc(sizeof(FSData));
 
+	(void)info;
 	data->fx_mode = FIREWORKS_FX;
 	data->maxStars = 4096;
 	data->stars = (Star*)malloc(data->maxStars * sizeof(Star));
@@ -257,6 +258,7 @@ static void fs_apply(VisualFX *_this, Pixel *src, Pixel *dest, PluginInfo *info)
 	int col;
 	FSData *data = (FSData*)_this->fx_data;
 
+	(void)src;
 	/* Get the new parameters values */
 	data->min_age = 1.0f - (float)IVAL(data->min_age_p)/100.0f;
 	data->max_age = 1.0f - (float)IVAL(data->max_age_p)/100.0f;

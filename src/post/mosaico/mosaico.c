@@ -119,6 +119,8 @@ static void *mosaico_init_plugin(xine_t *xine, const void *data)
   if (!this)
     return NULL;
 
+  (void)data;
+
   this->class.open_plugin     = mosaico_open_plugin;
   this->class.identifier      = "mosaico";
   this->class.description     = N_("Mosaico is a picture in picture (pip) post plugin");
@@ -142,6 +144,9 @@ static post_plugin_t *mosaico_open_plugin(post_class_t *class_gen, int inputs,
   int i;
 
   lprintf("mosaico open\n");
+
+  (void)class_gen;
+  (void)audio_target;
 
   if (inputs < 2 || !this || !video_target || !video_target[0]) {
     free(this);
@@ -198,7 +203,7 @@ static void mosaico_dispose(post_plugin_t *this_gen)
   post_mosaico_t *this = (post_mosaico_t *)this_gen;
 
   if (_x_post_dispose(this_gen)) {
-    int i;
+    unsigned int i;
     for (i = 0; i < this->pip_count; i++)
       free(this->pip[i].input_name);
     free(this->pip);
@@ -259,7 +264,9 @@ static void mosaico_close(xine_video_port_t *port_gen, xine_stream_t *stream)
   post_video_port_t *port = (post_video_port_t *)port_gen;
   post_mosaico_t *this = (post_mosaico_t *)port->post;
   vo_frame_t *free_frame;
-  int pip_num;
+  unsigned int pip_num;
+
+  (void)stream;
 
   for (pip_num = 0; pip_num < this->pip_count; pip_num++)
     if (this->post.xine_post.video_input[pip_num+1] == port_gen) break;
@@ -279,6 +286,8 @@ static void mosaico_close(xine_video_port_t *port_gen, xine_stream_t *stream)
 
 static int mosaico_intercept_frame(post_video_port_t *port, vo_frame_t *frame)
 {
+  (void)port;
+
   /* TODO: only YV12 supported */
   return (frame->format == XINE_IMGFMT_YV12);
 }
@@ -380,7 +389,8 @@ static int mosaico_draw_background(vo_frame_t *frame, xine_stream_t *stream)
   post_video_port_t *port = (post_video_port_t *)frame->port;
   post_mosaico_t *this = (post_mosaico_t *)port->post;
   vo_frame_t *background;
-  int pip_num, skip;
+  unsigned int pip_num;
+  int skip;
 
   pthread_mutex_lock(&this->mutex);
 
@@ -432,7 +442,8 @@ static int mosaico_draw(vo_frame_t *frame, xine_stream_t *stream)
   post_video_port_t *port = (post_video_port_t *)frame->port;
   post_mosaico_t *this = (post_mosaico_t *)port->post;
   vo_frame_t *free_frame;
-  int pip_num, skip;
+  unsigned int pip_num;
+  int skip;
 
   for (pip_num = 0; pip_num < this->pip_count; pip_num++)
     if (this->post.xine_post.video_input[pip_num+1] == frame->port) break;

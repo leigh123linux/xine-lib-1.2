@@ -45,7 +45,7 @@
   goom: csc_method 2 min 4199 us avg 4289 us
   Seems gcc 4.5 has a very nice 64bit math emulation :-)
 */
-//#define BENCHMARK 1
+#define BENCHMARK 1
 
 #include <xine/xine_internal.h>
 #include <xine/xineutils.h>
@@ -193,6 +193,8 @@ static void *goom_init_plugin(xine_t *xine, const void *data)
   if (!this)
     return NULL;
 
+  (void)data;
+
   this->class.open_plugin     = goom_open_plugin;
   this->class.identifier      = "goom";
   this->class.description     = N_("What a GOOM");
@@ -246,6 +248,8 @@ static post_plugin_t *goom_open_plugin(post_class_t *class_gen, int inputs,
     free(this);
     return NULL;
   }
+
+  (void)inputs;
 
   _x_post_init(&this->post, 1, 0);
 

@@ -389,6 +389,10 @@ static post_plugin_t *upmix_open_plugin(post_class_t *class_gen, int inputs,
   xine_post_in_t       *input_api;
   post_audio_port_t    *port;
 
+  (void)class_gen;
+  (void)inputs;
+  (void)video_target;
+
   if (!this || !audio_target || !audio_target[0] ) {
     free(this);
     return NULL;
@@ -427,6 +431,8 @@ void *upmix_init_plugin(xine_t *xine, const void *data)
 
   if (!class)
     return NULL;
+
+  (void)data;
 
   class->post_class.open_plugin     = upmix_open_plugin;
   class->post_class.identifier      = "upmix";

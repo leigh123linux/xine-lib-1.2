@@ -18,6 +18,7 @@
 /* TODO: Ajouter goom_ devant ces fonctions */
 
 static void empty_fct(PluginParam *dummy) {
+  (void)dummy;
 }
 
 PluginParam goom_secure_param() {

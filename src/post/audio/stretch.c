@@ -63,6 +63,7 @@ struct stretchscr_s {
 typedef struct stretchscr_s stretchscr_t;
 
 static int stretchscr_get_priority (scr_plugin_t *scr) {
+  (void)scr;
   return 10; /* high priority */
 }
 
@@ -626,6 +627,10 @@ static post_plugin_t *stretch_open_plugin(post_class_t *class_gen, int inputs,
   post_audio_port_t    *port;
   stretch_parameters_t  init_params;
 
+  (void)class_gen;
+  (void)inputs;
+  (void)video_target;
+
   if (!this || !audio_target || !audio_target[0] ) {
     free(this);
     return NULL;
@@ -666,6 +671,7 @@ void *stretch_init_plugin(xine_t *xine, const void *data)
   if (!class)
     return NULL;
 
+  (void)data;
   class->post_class.open_plugin     = stretch_open_plugin;
   class->post_class.identifier      = "stretch";
   class->post_class.description     = N_("Time stretch by a given factor, optionally preserving pitch");
