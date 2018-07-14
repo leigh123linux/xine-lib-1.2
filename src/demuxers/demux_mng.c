@@ -74,6 +74,7 @@ static mng_ptr mymng_alloc(mng_size_t size){
 }
 
 static void mymng_free(mng_ptr p, mng_size_t size){
+  (void)size;
   free(p);
 }
 
@@ -153,6 +154,11 @@ static mng_ptr mymng_get_canvas_line(mng_handle mngh, mng_uint32 line){
 }
 
 static mng_bool mymng_refresh(mng_handle mngh, mng_uint32 x, mng_uint32 y, mng_uint32 w, mng_uint32 h){
+  (void)mngh;
+  (void)x;
+  (void)y;
+  (void)w;
+  (void)h;
   return MNG_TRUE;
 }
 
@@ -242,6 +248,9 @@ static void demux_mng_send_headers(demux_plugin_t *this_gen){
 
 static int demux_mng_seek(demux_plugin_t *this_gen, off_t start_pos, int start_time, int playing){
   demux_mng_t *this = (demux_mng_t *)this_gen;
+  (void)start_pos;
+  (void)start_time;
+  (void)playing;
   return this->status;
 }
 
@@ -262,14 +271,19 @@ static int demux_mng_get_status(demux_plugin_t *this_gen){
 }
 
 static int demux_mng_get_stream_length(demux_plugin_t *this_gen){
+  (void)this_gen;
   return 0;
 }
 
 static uint32_t demux_mng_get_capabilities(demux_plugin_t *this_gen) {
+  (void)this_gen;
   return DEMUX_CAP_NOCAP;
 }
 
 static int demux_mng_get_optional_data(demux_plugin_t *this_gen, void *data, int data_type) {
+  (void)this_gen;
+  (void)data;
+  (void)data_type;
   return DEMUX_OPTIONAL_UNSUPPORTED;
 }
 
@@ -340,6 +354,9 @@ static demux_plugin_t* open_plugin(demux_class_t *class_gen, xine_stream_t *stre
 }
 
 static void *init_plugin(xine_t *xine, const void *data) {
+
+  (void)xine;
+  (void)data;
 
   static const demux_class_t demux_mng_class = {
     .open_plugin     = open_plugin,

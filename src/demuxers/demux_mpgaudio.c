@@ -444,6 +444,8 @@ static vbri_header_t *XINE_MALLOC parse_vbri_header(mpg_audio_frame_t *frame,
   uint8_t *ptr = buf;
   vbri_header_t *vbri;
 
+  (void)frame;
+
   ptr += (32 + 4);
 
   if ((ptr + 4) >= (buf + bufsize)) return 0;
@@ -542,7 +544,7 @@ static int parse_frame_payload(demux_mpgaudio_t *this,
 
   buf = this->audio_fifo->buffer_pool_alloc(this->audio_fifo);
 
-  if (this->cur_frame.size > buf->max_size) {
+  if ((int)(this->cur_frame.size) > buf->max_size) {
     xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
             LOG_MODULE ": frame size is greater than fifo buffer size\n");
     buf->free_buffer(buf);
@@ -685,7 +687,7 @@ static int sniff_buffer_looks_like_mp3 (uint8_t *buf, int buflen, int *version, 
         /* Since one frame is available, is there another frame
          * just to be sure this is more likely to be a real MP3
          * buffer? */
-        if (offset + size + 4 >= buflen) {
+        if (offset + (int)size + 4 >= buflen) {
           return 0;
         }
 
@@ -1096,7 +1098,7 @@ static int demux_mpgaudio_seek (demux_plugin_t *this_gen,
 
     if (start_time < 0)
       start_time = 0;
-    if (start_time > this->stream_length)
+    if ((unsigned int)start_time > this->stream_length)
       start_time = this->stream_length;
 
     if (this->stream_length > 0) {
@@ -1140,11 +1142,15 @@ static int demux_mpgaudio_get_stream_length (demux_plugin_t *this_gen) {
 }
 
 static uint32_t demux_mpgaudio_get_capabilities(demux_plugin_t *this_gen) {
+  (void)this_gen;
   return DEMUX_CAP_NOCAP;
 }
 
 static int demux_mpgaudio_get_optional_data(demux_plugin_t *this_gen,
 					void *data, int data_type) {
+  (void)this_gen;
+  (void)data;
+  (void)data_type;
   return DEMUX_OPTIONAL_UNSUPPORTED;
 }
 
@@ -1213,6 +1219,9 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
  * demux mpegaudio class
  */
 void *demux_mpgaudio_init_class (xine_t *xine, const void *data) {
+
+  (void)xine;
+  (void)data;
 
   static const demux_class_t demux_mpgaudio_class = {
     .open_plugin     = open_plugin,

@@ -170,7 +170,7 @@ static int demux_vqa_send_chunk(demux_plugin_t *this_gen) {
       buf->extra_info->input_time = audio_pts / 90;
       buf->pts = audio_pts;
 
-      if (chunk_size > buf->max_size)
+      if ((int)chunk_size > buf->max_size)
         buf->size = buf->max_size;
       else
         buf->size = chunk_size;
@@ -221,7 +221,7 @@ static int demux_vqa_send_chunk(demux_plugin_t *this_gen) {
       buf->extra_info->input_time = this->video_pts / 90;
       buf->pts = this->video_pts;
 
-      if (chunk_size > buf->max_size)
+      if ((int)chunk_size > buf->max_size)
         buf->size = buf->max_size;
       else
         buf->size = chunk_size;
@@ -306,6 +306,9 @@ static int demux_vqa_seek (demux_plugin_t *this_gen,
 
   demux_vqa_t *this = (demux_vqa_t *) this_gen;
 
+  (void)start_pos;
+  (void)start_time;
+
   /* if thread is not running, initialize demuxer */
   if( !playing ) {
     this->status = DEMUX_OK;
@@ -321,15 +324,20 @@ static int demux_vqa_get_status (demux_plugin_t *this_gen) {
 }
 
 static int demux_vqa_get_stream_length (demux_plugin_t *this_gen) {
+  (void)this_gen;
   return 0;
 }
 
 static uint32_t demux_vqa_get_capabilities(demux_plugin_t *this_gen) {
+  (void)this_gen;
   return DEMUX_CAP_NOCAP;
 }
 
 static int demux_vqa_get_optional_data(demux_plugin_t *this_gen,
 					void *data, int data_type) {
+  (void)this_gen;
+  (void)data;
+  (void)data_type;
   return DEMUX_OPTIONAL_UNSUPPORTED;
 }
 
@@ -377,6 +385,9 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
 }
 
 void *demux_vqa_init_plugin (xine_t *xine, const void *data) {
+
+  (void)xine;
+  (void)data;
 
   static const demux_class_t demux_vqa_class = {
     .open_plugin     = open_plugin,

@@ -161,7 +161,7 @@ static int open_fourxm_file(demux_fourxm_t *fourxm, uint32_t header_size) {
 
   /* take the lazy approach and search for any and all vtrk and strk chunks */
   int i;
-  for (i = 0; i < header_size - 8; i++) {
+  for (i = 0; i < (int)header_size - 8; i++) {
     const uint32_t fourcc_tag = _X_LE_32(&header[i]);
     const uint32_t size = _X_LE_32(&header[i + 4]);
 
@@ -277,7 +277,7 @@ static int demux_fourxm_send_chunk(demux_plugin_t *this_gen) {
       buf->extra_info->input_time = this->video_pts / 90;
       buf->pts = this->video_pts;
 
-      if (remaining_bytes > buf->max_size)
+      if ((int)remaining_bytes > buf->max_size)
         buf->size = buf->max_size;
       else
         buf->size = remaining_bytes;
@@ -327,7 +327,7 @@ static int demux_fourxm_send_chunk(demux_plugin_t *this_gen) {
       buf->extra_info->input_time = 0;
       buf->pts = 0;
 
-      if (remaining_bytes > buf->max_size)
+      if ((int)remaining_bytes > buf->max_size)
         buf->size = buf->max_size;
       else
         buf->size = remaining_bytes;
@@ -422,6 +422,9 @@ static int demux_fourxm_seek (demux_plugin_t *this_gen,
                             off_t start_pos, int start_time, int playing) {
   demux_fourxm_t *this = (demux_fourxm_t *) this_gen;
 
+  (void)start_pos;
+  (void)start_time;
+
   /* if thread is not running, initialize demuxer */
   if( !playing ) {
 
@@ -448,11 +451,15 @@ static int demux_fourxm_get_stream_length (demux_plugin_t *this_gen) {
 }
 
 static uint32_t demux_fourxm_get_capabilities(demux_plugin_t *this_gen) {
+  (void)this_gen;
   return DEMUX_CAP_NOCAP;
 }
 
 static int demux_fourxm_get_optional_data(demux_plugin_t *this_gen,
                                         void *data, int data_type) {
+  (void)this_gen;
+  (void)data;
+  (void)data_type;
   return DEMUX_OPTIONAL_UNSUPPORTED;
 }
 
@@ -510,6 +517,9 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
 }
 
 void *demux_fourxm_init_plugin (xine_t *xine, const void *data) {
+
+  (void)xine;
+  (void)data;
 
   static const demux_class_t demux_fourxm_class = {
     .open_plugin     = open_plugin,

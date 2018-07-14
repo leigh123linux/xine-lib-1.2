@@ -221,7 +221,7 @@ static int demux_roq_send_chunk(demux_plugin_t *this_gen) {
                                      65535 / this->input->get_length (this->input) );
         buf->pts = audio_pts;
 
-        if (chunk_size > buf->max_size)
+        if ((int)chunk_size > buf->max_size)
           buf->size = buf->max_size;
         else
           buf->size = chunk_size;
@@ -269,7 +269,7 @@ static int demux_roq_send_chunk(demux_plugin_t *this_gen) {
                                      65535 / this->input->get_length (this->input) );
       buf->pts = this->video_pts_counter;
 
-      if (chunk_size > buf->max_size)
+      if ((int)chunk_size > buf->max_size)
         buf->size = buf->max_size;
       else
         buf->size = chunk_size;
@@ -358,6 +358,9 @@ static int demux_roq_seek (demux_plugin_t *this_gen,
 
   demux_roq_t *this = (demux_roq_t *) this_gen;
 
+  (void)start_pos;
+  (void)start_time;
+
   /* if thread is not running, initialize demuxer */
   if( !playing ) {
 
@@ -382,15 +385,20 @@ static int demux_roq_get_status (demux_plugin_t *this_gen) {
 }
 
 static int demux_roq_get_stream_length (demux_plugin_t *this_gen) {
+  (void)this_gen;
   return 0;
 }
 
 static uint32_t demux_roq_get_capabilities(demux_plugin_t *this_gen) {
+  (void)this_gen;
   return DEMUX_CAP_NOCAP;
 }
 
 static int demux_roq_get_optional_data(demux_plugin_t *this_gen,
 					void *data, int data_type) {
+  (void)this_gen;
+  (void)data;
+  (void)data_type;
   return DEMUX_OPTIONAL_UNSUPPORTED;
 }
 
@@ -445,6 +453,9 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
 }
 
 void *demux_roq_init_plugin (xine_t *xine, const void *data) {
+
+  (void)xine;
+  (void)data;
 
   static const demux_class_t demux_roq_class = {
     .open_plugin     = open_plugin,

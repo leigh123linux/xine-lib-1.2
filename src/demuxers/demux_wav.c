@@ -209,7 +209,7 @@ static int demux_wav_send_chunk(demux_plugin_t *this_gen) {
     buf->extra_info->input_time = current_pts / 90;
     buf->pts = current_pts;
 
-    if (remaining_sample_bytes > buf->max_size)
+    if ((int)remaining_sample_bytes > buf->max_size)
       buf->size = buf->max_size;
     else
       buf->size = remaining_sample_bytes;
@@ -358,11 +358,15 @@ static int demux_wav_get_stream_length (demux_plugin_t *this_gen) {
 }
 
 static uint32_t demux_wav_get_capabilities(demux_plugin_t *this_gen) {
+  (void)this_gen;
   return DEMUX_CAP_NOCAP;
 }
 
 static int demux_wav_get_optional_data(demux_plugin_t *this_gen,
 					void *data, int data_type) {
+  (void)this_gen;
+  (void)data;
+  (void)data_type;
   return DEMUX_OPTIONAL_UNSUPPORTED;
 }
 
@@ -420,6 +424,9 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
 }
 
 void *demux_wav_init_plugin (xine_t *xine, const void *data) {
+
+  (void)xine;
+  (void)data;
 
   static const demux_class_t demux_wav_class = {
     .open_plugin     = open_plugin,

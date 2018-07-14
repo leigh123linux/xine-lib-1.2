@@ -210,7 +210,7 @@ static int demux_mve_send_chunk(demux_plugin_t *this_gen) {
           buf->extra_info->input_time = audio_pts / 90;
           buf->pts = audio_pts;
 
-          if (chunk_size > buf->max_size)
+          if ((int)chunk_size > buf->max_size)
             buf->size = buf->max_size;
           else
             buf->size = chunk_size;
@@ -242,7 +242,7 @@ static int demux_mve_send_chunk(demux_plugin_t *this_gen) {
         buf->extra_info->input_time = this->video_pts / 90;
         buf->pts = this->video_pts;
 
-        if (chunk_size > buf->max_size)
+        if ((int)chunk_size > buf->max_size)
           buf->size = buf->max_size;
         else
           buf->size = chunk_size;
@@ -400,7 +400,7 @@ static int open_mve_file(demux_mve_t *this) {
     return 0;
   }
 
-  for (i = 0; i < this->number_of_shots; i++) {
+  for (i = 0; i < (int)this->number_of_shots; i++) {
     /* make sure there was a valid palette chunk preamble */
     if (this->input->read(this->input, preamble, PREAMBLE_SIZE) !=
       PREAMBLE_SIZE) {
@@ -532,6 +532,8 @@ static int demux_mve_seek (demux_plugin_t *this_gen,
   unsigned int chunk_size;
   int new_shot = -1;
 
+  (void)playing;
+
   start_time /= 1000;
   start_pos = (off_t) ( (double) start_pos / 65535 *
               this->data_size );
@@ -574,7 +576,7 @@ static int demux_mve_seek (demux_plugin_t *this_gen,
 
   /* compensate for data at start of file */
   start_pos += this->data_start;
-  for (i = 0; i < this->number_of_shots - 1; i++) {
+  for (i = 0; i < (int)this->number_of_shots - 1; i++) {
 
     /* if the next shot offset has not been recorded, traverse through the
      * file until it is found */
@@ -650,15 +652,20 @@ static int demux_mve_get_status (demux_plugin_t *this_gen) {
 }
 
 static int demux_mve_get_stream_length (demux_plugin_t *this_gen) {
+  (void)this_gen;
   return 0;
 }
 
 static uint32_t demux_mve_get_capabilities(demux_plugin_t *this_gen) {
+  (void)this_gen;
   return DEMUX_CAP_NOCAP;
 }
 
 static int demux_mve_get_optional_data(demux_plugin_t *this_gen,
 					void *data, int data_type) {
+  (void)this_gen;
+  (void)data;
+  (void)data_type;
   return DEMUX_OPTIONAL_UNSUPPORTED;
 }
 
@@ -706,6 +713,9 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
 }
 
 void *demux_wc3movie_init_plugin (xine_t *xine, const void *data) {
+
+  (void)xine;
+  (void)data;
 
   static const demux_class_t demux_wc3movie_class = {
     .open_plugin     = open_plugin,

@@ -197,7 +197,7 @@ static int demux_mpc_send_chunk(demux_plugin_t *this_gen) {
   bytes_to_read = bits_to_read / 8;
 
   /* Check we'll be able to read directly into the buffer */
-  if (bytes_to_read > buf->max_size) {
+  if ((int)bytes_to_read > buf->max_size) {
     xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
             _("demux_mpc: frame too big for buffer"));
     this->status = DEMUX_FINISHED;
@@ -272,6 +272,9 @@ static int demux_mpc_seek (demux_plugin_t *this_gen,
                            off_t start_pos, int start_time, int playing) {
   demux_mpc_t *this = (demux_mpc_t *) this_gen;
 
+  (void)start_pos;
+  (void)start_time;
+
   /* If thread is not running, initialize demuxer */
   if( !playing ) {
 
@@ -293,15 +296,20 @@ static int demux_mpc_get_status (demux_plugin_t *this_gen) {
 static int demux_mpc_get_stream_length (demux_plugin_t *this_gen) {
 //  demux_mpc_t *this = (demux_mpc_t *) this_gen;
 
+  (void)this_gen;
   return 0;
 }
 
 static uint32_t demux_mpc_get_capabilities(demux_plugin_t *this_gen) {
+  (void)this_gen;
   return DEMUX_CAP_NOCAP;
 }
 
 static int demux_mpc_get_optional_data(demux_plugin_t *this_gen,
                                        void *data, int data_type) {
+  (void)this_gen;
+  (void)data;
+  (void)data_type;
   return DEMUX_OPTIONAL_UNSUPPORTED;
 }
 
@@ -350,6 +358,9 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
 }
 
 void *demux_mpc_init_plugin (xine_t *xine, const void *data) {
+
+  (void)xine;
+  (void)data;
 
   static const demux_class_t demux_mpc_class = {
     .open_plugin     = open_plugin,

@@ -155,7 +155,7 @@ static int open_ac3_file(demux_ac3_t *this) {
   } else {
     peak = alloca(peak_size = MAX_PREVIEW_SIZE);
 
-    if (_x_demux_read_header(this->input, peak, peak_size) != peak_size)
+    if (_x_demux_read_header (this->input, peak, peak_size) != (int)peak_size)
       return 0;
   }
 
@@ -186,7 +186,7 @@ static int open_ac3_file(demux_ac3_t *this) {
 
     /* Find the data chunk */
     offset = 20 + _X_LE_32(&peak[16]);
-    while (offset < peak_size-8) {
+    while (offset < (int)peak_size - 8) {
       unsigned int chunk_tag = _X_LE_32(&peak[offset]);
       unsigned int chunk_size = _X_LE_32(&peak[offset+4]);
 
@@ -200,7 +200,7 @@ static int open_ac3_file(demux_ac3_t *this) {
   }
 
   /* Look for a valid AC3 sync word */
-  for (i=offset; i<peak_size; i++) {
+  for (i = offset; i < (int)peak_size; i++) {
     if ((syncword & 0xffff) == 0x0b77) {
       data_start = i-2;
       lprintf("found AC3 syncword at offset %d\n", i-2);
@@ -217,7 +217,7 @@ static int open_ac3_file(demux_ac3_t *this) {
     syncword = (syncword << 8) | peak[i];
   }
 
-  if (i >= peak_size-2)
+  if (i >= (int)peak_size - 2)
     return 0;
 
   if (spdif_mode) {
@@ -371,6 +371,9 @@ static int demux_ac3_seek (demux_plugin_t *this_gen,
   start_pos = (off_t) ( (double) start_pos / 65535 *
               this->input->get_length (this->input) );
 
+  (void)start_time;
+  (void)playing;
+
   this->seek_flag = 1;
   this->status = DEMUX_OK;
   _x_demux_flush_engine (this->stream);
@@ -403,11 +406,15 @@ static int demux_ac3_get_stream_length (demux_plugin_t *this_gen) {
 }
 
 static uint32_t demux_ac3_get_capabilities(demux_plugin_t *this_gen) {
+  (void)this_gen;
   return DEMUX_CAP_NOCAP;
 }
 
 static int demux_ac3_get_optional_data(demux_plugin_t *this_gen,
                                        void *data, int data_type) {
+  (void)this_gen;
+  (void)data;
+  (void)data_type;
   return DEMUX_OPTIONAL_UNSUPPORTED;
 }
 
@@ -457,6 +464,9 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
 }
 
 void *demux_ac3_init_plugin (xine_t *xine, const void *data) {
+
+  (void)xine;
+  (void)data;
 
   static const demux_class_t demux_ac3_class = {
     .open_plugin     = open_plugin,

@@ -135,6 +135,7 @@ static int probe_film_file(input_plugin_t *input, int *film_header_size) {
 static int open_film_file(demux_film_t *film, int film_header_size) {
 
   unsigned char *film_header;
+  unsigned int hsize = film_header_size < 0 ? 0 : film_header_size;
   unsigned int chunk_type;
   unsigned int chunk_size;
   unsigned int i, j;
@@ -187,12 +188,12 @@ static int open_film_file(demux_film_t *film, int film_header_size) {
 
   /* traverse the FILM header */
   i = 0;
-  while (i + 7 < film_header_size) {
+  while (i + 7 < hsize) {
     chunk_type = _X_BE_32(&film_header[i]);
     chunk_size = _X_BE_32(&film_header[i + 4]);
 
     /* sanity check the chunk size */
-    if (i + chunk_size > film_header_size) {
+    if (i + chunk_size > hsize) {
       xine_log(film->stream->xine, XINE_LOG_MSG, _("invalid FILM chunk size\n"));
       free (film_header);
       return 0;
@@ -443,7 +444,7 @@ static int demux_film_send_chunk(demux_plugin_t *this_gen) {
       buf->decoder_flags |= BUF_FLAG_FRAMERATE;
       buf->decoder_info[0] = this->sample_table[i].duration;
 
-      if (remaining_sample_bytes > buf->max_size)
+      if ((int)remaining_sample_bytes > buf->max_size)
         buf->size = buf->max_size;
       else
         buf->size = remaining_sample_bytes;
@@ -510,7 +511,7 @@ static int demux_film_send_chunk(demux_plugin_t *this_gen) {
       buf->decoder_flags |= BUF_FLAG_FRAMERATE;
       buf->decoder_info[0] = this->sample_table[i].duration;
 
-      if (remaining_sample_bytes > buf->max_size)
+      if ((int)remaining_sample_bytes > buf->max_size)
         buf->size = buf->max_size;
       else
         buf->size = remaining_sample_bytes;
@@ -556,7 +557,7 @@ static int demux_film_send_chunk(demux_plugin_t *this_gen) {
         buf->pts = 0;
       buf->extra_info->input_time = buf->pts / 90;
 
-      if (remaining_sample_bytes > buf->max_size)
+      if ((int)remaining_sample_bytes > buf->max_size)
         buf->size = buf->max_size;
       else
         buf->size = remaining_sample_bytes;
@@ -569,14 +570,14 @@ static int demux_film_send_chunk(demux_plugin_t *this_gen) {
       if (this->video_type == BUF_VIDEO_SEGA) {
         /* if the file uses the SEGA video codec, assume this is
          * sign/magnitude audio */
-        for (j = 0; j < buf->size; j++)
+        for (j = 0; j < (unsigned int)(buf->size); j++)
           if (buf->content[j] < 0x80)
             buf->content[j] += 0x80;
           else
             buf->content[j] = -(buf->content[j] & 0x7F) + 0x80;
       } else if (this->audio_bits == 8) {
         /* convert 8-bit data from signed -> unsigned */
-        for (j = 0; j < buf->size; j++)
+        for (j = 0; j < (unsigned int)(buf->size); j++)
           buf->content[j] += 0x80;
       }
 
@@ -620,31 +621,31 @@ static int demux_film_send_chunk(demux_plugin_t *this_gen) {
         buf->pts = 0;
       buf->extra_info->input_time = buf->pts / 90;
 
-      if (remaining_sample_bytes > buf->max_size / 2)
+      if ((int)remaining_sample_bytes > buf->max_size / 2)
         buf->size = buf->max_size;
       else
         buf->size = remaining_sample_bytes * 2;
       remaining_sample_bytes -= buf->size / 2;
 
       if (this->audio_bits == 16) {
-        for (j = 0, k = interleave_index; j < buf->size; j += 4, k += 2) {
+        for (j = 0, k = interleave_index; j < (unsigned int)(buf->size); j += 4, k += 2) {
           buf->content[j] =     this->interleave_buffer[k];
           buf->content[j + 1] = this->interleave_buffer[k + 1];
         }
         for (j = 2,
              k = interleave_index + this->sample_table[i].sample_size / 2;
-             j < buf->size; j += 4, k += 2) {
+             j < (unsigned int)(buf->size); j += 4, k += 2) {
           buf->content[j] =     this->interleave_buffer[k];
           buf->content[j + 1] = this->interleave_buffer[k + 1];
         }
         interleave_index += buf->size / 2;
       } else {
-        for (j = 0, k = interleave_index; j < buf->size; j += 2, k += 1) {
+        for (j = 0, k = interleave_index; j < (unsigned int)(buf->size); j += 2, k += 1) {
           buf->content[j] = this->interleave_buffer[k] += 0x80;
         }
         for (j = 1,
              k = interleave_index + this->sample_table[i].sample_size / 2;
-             j < buf->size; j += 2, k += 1) {
+             j < (unsigned int)(buf->size); j += 2, k += 1) {
           buf->content[j] = this->interleave_buffer[k] += 0x80;
         }
         interleave_index += buf->size / 2;
@@ -672,7 +673,6 @@ static void demux_film_send_headers(demux_plugin_t *this_gen) {
   demux_film_t *this = (demux_film_t *) this_gen;
   buf_element_t *buf;
   int64_t initial_duration = 3000;
-  int i;
 
   this->video_fifo  = this->stream->video_fifo;
   this->audio_fifo  = this->stream->audio_fifo;
@@ -699,6 +699,7 @@ static void demux_film_send_headers(demux_plugin_t *this_gen) {
 
   /* send init info to decoders */
   if (this->video_type) {
+    unsigned int i;
     /* find the first video frame duration */
     for (i = 0; i < this->sample_count; i++)
       if (!this->sample_table[i].audio) {
@@ -852,11 +853,15 @@ static int demux_film_get_stream_length (demux_plugin_t *this_gen) {
 }
 
 static uint32_t demux_film_get_capabilities(demux_plugin_t *this_gen) {
+  (void)this_gen;
   return DEMUX_CAP_NOCAP;
 }
 
 static int demux_film_get_optional_data(demux_plugin_t *this_gen,
 					void *data, int data_type) {
+  (void)this_gen;
+  (void)data;
+  (void)data_type;
   return DEMUX_OPTIONAL_UNSUPPORTED;
 }
 
@@ -905,6 +910,9 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
 }
 
 void *demux_film_init_plugin (xine_t *xine, const void *data) {
+
+  (void)xine;
+  (void)data;
 
   static const demux_class_t demux_film_class = {
     .open_plugin     = open_plugin,

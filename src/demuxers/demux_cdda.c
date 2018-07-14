@@ -171,11 +171,15 @@ static int demux_cdda_get_stream_length (demux_plugin_t *this_gen) {
 }
 
 static uint32_t demux_cdda_get_capabilities(demux_plugin_t *this_gen){
+  (void)this_gen;
   return DEMUX_CAP_NOCAP;
 }
 
 static int demux_cdda_get_optional_data(demux_plugin_t *this_gen,
                                         void *data, int data_type){
+  (void)this_gen;
+  (void)data;
+  (void)data_type;
   return DEMUX_OPTIONAL_UNSUPPORTED;
 }
 
@@ -217,6 +221,9 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
 }
 
 void *demux_cdda_init_plugin (xine_t *xine, const void *data) {
+
+  (void)xine;
+  (void)data;
 
   static const demux_class_t demux_cdda_class = {
     .open_plugin     = open_plugin,

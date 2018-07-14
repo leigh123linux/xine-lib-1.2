@@ -106,7 +106,7 @@ static int open_dts_file(demux_dts_t *this) {
   } else {
     peak = alloca(peak_size = MAX_PREVIEW_SIZE);
 
-    if (_x_demux_read_header(this->input, peak, peak_size) != peak_size)
+    if (_x_demux_read_header (this->input, peak, peak_size) != (int)peak_size)
       return 0;
   }
 
@@ -131,7 +131,7 @@ static int open_dts_file(demux_dts_t *this) {
 
     /* Find the data chunk */
     offset = 20 + _X_LE_32(&peak[16]);
-    while (offset < peak_size-8) {
+    while (offset < (int)peak_size - 8) {
       unsigned int chunk_tag = _X_LE_32(&peak[offset]);
       unsigned int chunk_size = _X_LE_32(&peak[offset+4]);
 
@@ -154,7 +154,7 @@ static int open_dts_file(demux_dts_t *this) {
   int dts_version = -1;
 
   /* Look for a valid DTS syncword */
-  for (i=offset; i<peak_size-1; i++) {
+  for (i = offset; i < (int)peak_size - 1; i++) {
     /* 16 bits and big endian bitstream */
     if (syncword == 0x7ffe8001) {
 	dts_version = 0;
@@ -179,7 +179,7 @@ static int open_dts_file(demux_dts_t *this) {
   this->data_start = i-4;
   lprintf("found DTS syncword at offset %d\n", i-4);
 
-  if (i < peak_size-9) {
+  if (i < (int)peak_size - 9) {
     unsigned int nblks, fsize, sfreq;
     switch (dts_version)
     {
@@ -347,6 +347,8 @@ static int demux_dts_seek (demux_plugin_t *this_gen,
 
   demux_dts_t *this = (demux_dts_t *) this_gen;
 
+  (void)playing;
+
   this->seek_flag = 1;
   this->status = DEMUX_OK;
   _x_demux_flush_engine (this->stream);
@@ -384,11 +386,15 @@ static int demux_dts_get_status (demux_plugin_t *this_gen) {
 }
 
 static uint32_t demux_dts_get_capabilities(demux_plugin_t *this_gen) {
+  (void)this_gen;
   return DEMUX_CAP_NOCAP;
 }
 
 static int demux_dts_get_optional_data(demux_plugin_t *this_gen,
                                        void *data, int data_type) {
+  (void)this_gen;
+  (void)data;
+  (void)data_type;
   return DEMUX_OPTIONAL_UNSUPPORTED;
 }
 
@@ -436,6 +442,9 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
 }
 
 void *demux_dts_init_plugin (xine_t *xine, const void *data) {
+
+  (void)xine;
+  (void)data;
 
   static const demux_class_t demux_dts_class = {
     .open_plugin     = open_plugin,

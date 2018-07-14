@@ -127,7 +127,7 @@ static int id3v2_parse_genre(char* dest, const char *src, size_t len) {
 
   while (*src) {
     lprintf("state=%d\n", state);
-    if ((buf - dest) >= len)
+    if ((buf - dest) >= (int)len)
       return 0;
 
     switch (state) {
@@ -219,7 +219,7 @@ static int id3v2_parse_genre(char* dest, const char *src, size_t len) {
         break;
     }
   }
-  if ((buf - dest) >= len) {
+  if ((buf - dest) >= (int)len) {
     return 0;
   } else {
     *buf = '\0';
@@ -375,7 +375,7 @@ static int id3v22_parse_tag(input_plugin_t *input,
   }
 
   /* frame parsing */
-  while ((pos + ID3V22_FRAME_HEADER_SIZE) <= tag_header.size) {
+  while ((pos + ID3V22_FRAME_HEADER_SIZE) <= (int)tag_header.size) {
 
     if (!id3v22_parse_frame_header(input, &tag_frame_header)) {
       xprintf(stream->xine, XINE_VERBOSITY_DEBUG,
@@ -576,7 +576,7 @@ static int id3v23_parse_tag(input_plugin_t *input,
   }
 
   /* frame parsing */
-  while ((pos + ID3V23_FRAME_HEADER_SIZE) <= tag_header.size) {
+  while ((pos + ID3V23_FRAME_HEADER_SIZE) <= (int)tag_header.size) {
 
     if (!id3v23_parse_frame_header(input, &tag_frame_header)) {
       xprintf(stream->xine, XINE_VERBOSITY_DEBUG,
@@ -845,7 +845,7 @@ static int id3v24_parse_tag(input_plugin_t *input,
   }
 
   /* frame parsing */
-  while ((pos + ID3V24_FRAME_HEADER_SIZE) <= tag_header.size) {
+  while ((pos + ID3V24_FRAME_HEADER_SIZE) <= (int)tag_header.size) {
 
     if (!id3v24_parse_frame_header(input, &tag_frame_header)) {
       xprintf(stream->xine, XINE_VERBOSITY_DEBUG,

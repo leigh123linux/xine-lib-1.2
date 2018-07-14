@@ -132,6 +132,9 @@ static int demux_image_seek (demux_plugin_t *this_gen,
 
   demux_image_t *this = (demux_image_t *) this_gen;
 
+  (void)start_pos;
+  (void)start_time;
+  (void)playing;
   /* delay finished event for presentation mode.
    * -1 => wait forever
    * 0  => do not wait
@@ -145,15 +148,20 @@ static int demux_image_seek (demux_plugin_t *this_gen,
 static int demux_image_get_stream_length (demux_plugin_t *this_gen) {
   /* demux_image_t *this = (demux_image_t *) this_gen;  */
 
+  (void)this_gen;
   return 0;
 }
 
 static uint32_t demux_image_get_capabilities(demux_plugin_t *this_gen) {
+  (void)this_gen;
   return DEMUX_CAP_NOCAP;
 }
 
 static int demux_image_get_optional_data(demux_plugin_t *this_gen,
 					void *data, int data_type) {
+  (void)this_gen;
+  (void)data;
+  (void)data_type;
   return DEMUX_OPTIONAL_UNSUPPORTED;
 }
 
@@ -223,6 +231,9 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen,
  * image demuxer class
  */
 static void *init_class (xine_t *xine, const void *data) {
+
+  (void)xine;
+  (void)data;
 
   static const demux_class_t demux_image_class = {
     .open_plugin     = open_plugin,

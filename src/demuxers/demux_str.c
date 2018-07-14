@@ -498,6 +498,9 @@ static int demux_str_seek (demux_plugin_t *this_gen, off_t start_pos, int start_
   start_pos = (off_t) ( (double) start_pos / 65535 *
               this->data_size );
 
+  (void)start_time;
+  (void)playing;
+
   _x_demux_flush_engine (this->stream);
 
   /* round to ensure we start on a sector */
@@ -529,11 +532,15 @@ static int demux_str_get_stream_length (demux_plugin_t *this_gen) {
 }
 
 static uint32_t demux_str_get_capabilities(demux_plugin_t *this_gen) {
+  (void)this_gen;
   return DEMUX_CAP_NOCAP;
 }
 
 static int demux_str_get_optional_data(demux_plugin_t *this_gen,
                                            void *data, int data_type) {
+  (void)this_gen;
+  (void)data;
+  (void)data_type;
   return DEMUX_OPTIONAL_UNSUPPORTED;
 }
 
@@ -587,6 +594,9 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
 }
 
 void *demux_str_init_plugin (xine_t *xine, const void *data) {
+
+  (void)xine;
+  (void)data;
 
   static const demux_class_t demux_str_class = {
     .open_plugin     = open_plugin,

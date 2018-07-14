@@ -106,7 +106,7 @@ static int open_ra_file(demux_ra_t *this) {
   /* allocate for and read header data */
   this->header = malloc(this->header_size);
 
-  if (!this->header || _x_demux_read_header(this->input, this->header, this->header_size) != this->header_size) {
+  if (!this->header || _x_demux_read_header (this->input, this->header, this->header_size) != (int)this->header_size) {
     xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG, "demux_realaudio: unable to read header\n");
     free(this->header);
     return 0;
@@ -312,7 +312,7 @@ static void demux_ra_send_headers(demux_plugin_t *this_gen) {
     buf->type = this->audio_type;
     buf->decoder_flags = BUF_FLAG_HEADER|BUF_FLAG_FRAME_END;
 
-    buf->size = MIN(this->header_size, buf->max_size);
+    buf->size = MIN ((int)(this->header_size), buf->max_size);
 
     memcpy(buf->content, this->header, buf->size);
 
@@ -326,6 +326,9 @@ static int demux_ra_seek (demux_plugin_t *this_gen,
   demux_ra_t *this = (demux_ra_t *) this_gen;
   start_pos = (off_t) ( (double) start_pos / 65535 *
               this->data_size );
+
+  (void)start_time;
+  (void)playing;
 
   this->seek_flag = 1;
   this->status = DEMUX_OK;
@@ -375,15 +378,20 @@ static int demux_ra_get_status (demux_plugin_t *this_gen) {
 
 /* return the approximate length in miliseconds */
 static int demux_ra_get_stream_length (demux_plugin_t *this_gen) {
+  (void)this_gen;
   return 0;
 }
 
 static uint32_t demux_ra_get_capabilities(demux_plugin_t *this_gen) {
+  (void)this_gen;
   return DEMUX_CAP_NOCAP;
 }
 
 static int demux_ra_get_optional_data(demux_plugin_t *this_gen,
 					void *data, int data_type) {
+  (void)this_gen;
+  (void)data;
+  (void)data_type;
   return DEMUX_OPTIONAL_UNSUPPORTED;
 }
 
@@ -434,6 +442,9 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
 }
 
 void *demux_realaudio_init_plugin (xine_t *xine, const void *data) {
+
+  (void)xine;
+  (void)data;
 
   static const demux_class_t demux_realaudio_class = {
     .open_plugin     = open_plugin,

@@ -245,7 +245,7 @@ static void asf_send_audio_header (demux_asf_t *this, int stream) {
     return;
 
   buf = this->audio_fifo->buffer_pool_alloc (this->audio_fifo);
-  if (asf_stream->private_data_length > buf->max_size) {
+  if ((int)(asf_stream->private_data_length) > buf->max_size) {
     xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
             "demux_asf: private decoder data length (%d) is greater than fifo buffer length (%d)\n",
             asf_stream->private_data_length, buf->max_size);
@@ -286,7 +286,7 @@ static void asf_send_video_header (demux_asf_t *this, int stream) {
   _x_stream_info_set(this->stream, XINE_STREAM_INFO_VIDEO_FOURCC, bih->biCompression);
 
   buf = this->video_fifo->buffer_pool_alloc (this->video_fifo);
-  if ((asf_stream->private_data_length-11) > buf->max_size) {
+  if (((int)(asf_stream->private_data_length) - 11) > buf->max_size) {
     xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
             "demux_asf: private decoder data length (%d) is greater than fifo buffer length (%d)\n",
             asf_stream->private_data_length-10, buf->max_size);
@@ -349,7 +349,7 @@ static int asf_read_header (demux_asf_t *this) {
     asf_header_buffer = malloc (asf_header_len);
     if (!asf_header_buffer)
       return 0;
-    if (this->input->read (this->input, asf_header_buffer, asf_header_len) != asf_header_len) {
+    if (this->input->read (this->input, asf_header_buffer, asf_header_len) != (int)asf_header_len) {
       free (asf_header_buffer);
       xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG, "demux_asf: end of data\n");
       this->status = DEMUX_FINISHED;
@@ -514,7 +514,7 @@ static int asf_read_header (demux_asf_t *this) {
 	  lprintf ("number of colours exceeded 256 (%d)", demux_stream->palette_count);
 	  demux_stream->palette_count = 256;
 	}
-	if ((asf_stream->private_data_length - sizeof(xine_bmiheader) - 11) >= (demux_stream->palette_count * 4)) {
+	if (((int)(asf_stream->private_data_length) - (int)sizeof (xine_bmiheader) - 11) >= (demux_stream->palette_count * 4)) {
 	  int j;
 	  uint8_t *palette;
 
@@ -666,6 +666,8 @@ static void asf_reorder (demux_asf_t *this, uint8_t *src, int len) {
 
 static void check_newpts (demux_asf_t *this, int64_t pts, int video, int frame_end) {
   int64_t diff;
+
+  (void)frame_end; /* FIXME: use */
 
   diff = pts - this->last_pts[video];
 
@@ -1082,7 +1084,7 @@ static asf_error_t asf_parse_packet_payload_common (demux_asf_t *this,
   lprintf ("got raw_id=%d, stream_id=%d\n", raw_id, stream_id);
 
   {
-    int i;
+    unsigned int i;
     for (i = 0; i < sizeof (this->seen_streams); i++) {
       if (stream_id == this->seen_streams[i])
         break;
@@ -1127,7 +1129,7 @@ static asf_error_t asf_parse_packet_payload_common (demux_asf_t *this,
       next_seq = seq;
       (*stream)->first_seq = 0;
     }
-    if ((seq != (*stream)->seq) && (seq != next_seq)) {
+    if ((seq != (uint32_t)((*stream)->seq)) && (seq != next_seq)) {
       xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG,
         "demux_asf: bad seq: seq = %d, next_seq = %d, stream seq = %d!\n", seq, next_seq, (*stream)->seq);
       /* the stream is corrupted, reset the decoder and restart at a new keyframe */
@@ -1164,7 +1166,7 @@ static asf_error_t asf_parse_packet_payload_common (demux_asf_t *this,
     default: *rlen = 0;
   }
 
-  if (*rlen > this->packet_size_left)
+  if (*rlen > (uint32_t)this->packet_size_left)
     /* skip packet */
     return ASF_INVALID_RLEN;
 
@@ -1214,7 +1216,7 @@ static asf_error_t asf_parse_packet_compressed_payload (demux_asf_t *this,
     lprintf ("reading single payload, size = %d\n", data_length);
   }
 
-  if (data_length > this->packet_size_left)
+  if (data_length > (uint32_t)this->packet_size_left)
     /* skip packet */
     return ASF_INVALID_DATA_LENGTH;
 
@@ -1318,7 +1320,7 @@ static asf_error_t asf_parse_packet_payload (demux_asf_t *this,
     lprintf ("reading single payload, payload_size=%d, frag_len = %d\n", payload_size, frag_len);
   }
 
-  if (frag_len > this->packet_size_left)
+  if (frag_len > (uint32_t)this->packet_size_left)
     /* skip packet */
     return ASF_INVALID_FRAGMENT_LENGTH;
 
@@ -1546,8 +1548,8 @@ static int demux_asf_parse_asx_references( demux_asf_t *this) {
          */
         const char *href = NULL;
         const char *title = NULL;
-        uint32_t start_time = (uint32_t)-1;
-        uint32_t duration = (uint32_t)-1;
+        uint32_t start_time = ~0u;
+        uint32_t duration = ~0u;
 
         for (asx_ref = asx_entry->child; asx_ref; asx_ref = asx_ref->next)
         {
@@ -1581,13 +1583,13 @@ static int demux_asf_parse_asx_references( demux_asf_t *this) {
 
           else if (!strcasecmp (asx_ref->name, "STARTTIME"))
           {
-            if (start_time == (uint32_t)-1)
+            if (start_time == ~0u)
               start_time = asx_get_time_value (asx_ref);
           }
 
           else if (!strcasecmp (asx_ref->name, "DURATION"))
           {
-            if (duration == (uint32_t)-1)
+            if (duration == ~0u)
               duration = asx_get_time_value (asx_ref);
           }
 
@@ -1601,8 +1603,8 @@ static int demux_asf_parse_asx_references( demux_asf_t *this) {
         /* FIXME: prepend ref_base_href to href */
         if (href && *href)
           _x_demux_send_mrl_reference (this->stream, 0, href, title,
-                                       start_time == (uint32_t)-1 ? 0 : start_time,
-                                       duration == (uint32_t)-1 ? -1 : duration);
+                                       start_time == ~0u ? 0 : start_time,
+                                       duration == ~0u ? ~0u : duration);
       }
 
       else if (!strcasecmp (asx_entry->name, "ENTRYREF"))
@@ -2025,11 +2027,16 @@ static int demux_asf_get_stream_length (demux_plugin_t *this_gen) {
 }
 
 static uint32_t demux_asf_get_capabilities(demux_plugin_t *this_gen) {
+  (void)this_gen;
   return DEMUX_CAP_NOCAP;
 }
 
 static int demux_asf_get_optional_data(demux_plugin_t *this_gen,
 					void *data, int data_type) {
+  (void)this_gen;
+  (void)data;
+  (void)data_type;
+
   return DEMUX_OPTIONAL_UNSUPPORTED;
 }
 
@@ -2127,6 +2134,9 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen,
 }
 
 static void *init_class (xine_t *xine, const void *data) {
+
+  (void)xine;
+  (void)data;
 
   static const demux_class_t demux_asf_class = {
     .open_plugin     = open_plugin,
