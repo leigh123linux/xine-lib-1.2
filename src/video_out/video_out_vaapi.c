@@ -198,7 +198,7 @@ struct vaapi_driver_s {
   int ovl_changed;
   vo_overlay_t       *overlays[XINE_VORAW_MAX_OVL];
   uint32_t           *overlay_bitmap;
-  int                 overlay_bitmap_size;
+  uint32_t            overlay_bitmap_size;
   uint32_t            overlay_bitmap_width;
   uint32_t            overlay_bitmap_height;
   vaapi_rect_t        overlay_bitmap_src;
@@ -630,6 +630,7 @@ static int (*vaapi_x11_old_error_handler)(Display *, XErrorEvent *);
 
 static int vaapi_x11_error_handler(Display *dpy, XErrorEvent *error)
 {
+    (void)dpy;
     vaapi_x11_error_code = error->error_code;
     return 0;
 }
@@ -717,6 +718,7 @@ static void vaapi_get_functions(vo_driver_t *this_gen, void *(*getProcAddress)(c
   char *allexts;
   size_t ext;
 
+  (void)this_gen;
   if (!getProcAddress)
     getProcAddress = (void *)vaapi_getdladdr;
 
@@ -847,6 +849,10 @@ static void vaapi_glx_render_frame(vo_frame_t *frame_gen, int left, int top, int
   int             x1, x2, y1, y2;
   float           tx, ty;
 
+  (void)left;
+  (void)top;
+  (void)right;
+  (void)bottom;
   if (vaapi_glx_bind_texture(frame_gen->driver) < 0)
     return;
 
@@ -1907,7 +1913,7 @@ static void vaapi_check_capability (vaapi_driver_t *this,
 }
 
 static void vaapi_show_display_props(vo_driver_t *this_gen) {
-  /*
+#if 0
   vaapi_driver_t      *this = (vaapi_driver_t *) this_gen;
 
   if(this->capabilities & VO_CAP_BRIGHTNESS)
@@ -1918,7 +1924,9 @@ static void vaapi_show_display_props(vo_driver_t *this_gen) {
     xprintf(this->xine, XINE_VERBOSITY_LOG, LOG_MODULE " vaapi_init : hue            : %d\n", this->props[VO_PROP_HUE].value);
   if(this->capabilities & VO_CAP_SATURATION)
     xprintf(this->xine, XINE_VERBOSITY_LOG, LOG_MODULE " vaapi_init : saturation     : %d\n", this->props[VO_PROP_SATURATION].value); 
-  */
+#else
+  (void)this_gen;
+#endif
 }
 
 /* VAAPI display attributes. */
@@ -2168,7 +2176,7 @@ static VAStatus vaapi_init_internal(vo_driver_t *this_gen, int va_profile, int w
     
   this->query_va_status = 1;
   const char *p = vendor;
-  for(i = 0; i < strlen(vendor); i++, p++) {
+  for (i = strlen (vendor); i > 0; i--, p++) {
     if(strncmp(p, "VDPAU", strlen("VDPAU")) == 0) {
       xprintf(this->xine, XINE_VERBOSITY_LOG, LOG_MODULE " vaapi_open: Enable Splitted-Desktop Systems VDPAU-VIDEO workarounds.\n");
       this->query_va_status = 0;
@@ -2323,11 +2331,14 @@ static VAStatus vaapi_init(vo_frame_t *frame_gen, int va_profile, int width, int
 
 static void vaapi_frame_proc_slice (vo_frame_t *vo_img, uint8_t **src)
 {
+  (void)src;
   vo_img->proc_called = 1;
 }
 
 static void vaapi_frame_field (vo_frame_t *vo_img, int which_field)
 {
+  (void)vo_img;
+  (void)which_field;
 }
 
 static void vaapi_frame_dispose (vo_frame_t *vo_img) {
@@ -2432,7 +2443,7 @@ static int vaapi_ovl_associate(vo_driver_t *this_gen, int format, int bShow) {
     void *p_base = NULL;
 
     VAStatus vaStatus;
-    int i;
+    uint32_t i;
 
     vaapi_destroy_subpicture(this_gen);
     vaStatus = vaapi_create_subpicture(this_gen, this->overlay_bitmap_width, this->overlay_bitmap_height);
@@ -2513,6 +2524,7 @@ static void vaapi_overlay_blend (vo_driver_t *this_gen,
 
   int i = this->ovl_changed;
 
+  (void)frame_gen;
   if (!i)
     return;
 
@@ -2566,11 +2578,11 @@ static void vaapi_overlay_end (vo_driver_t *this_gen, vo_frame_t *frame_gen) {
   }
   --novls;
 
-  uint32_t output_width = frame->width;
-  uint32_t output_height = frame->height;
+  uint32_t output_width = frame->width, output_height = frame->height;
   uint32_t unscaled_width = 0, unscaled_height = 0;
   vo_overlay_t *first_scaled = NULL, *first_unscaled = NULL;
-  vaapi_rect_t dirty_rect, unscaled_dirty_rect;
+  /* calm down compiler */
+  vaapi_rect_t dirty_rect, unscaled_dirty_rect = {0, 0, 0, 0};
   int has_rle = 0;
 
   int i;
@@ -2604,9 +2616,9 @@ static void vaapi_overlay_end (vo_driver_t *this_gen, vo_frame_t *frame_gen) {
         dirty_rect.y2 = ovl->y + ovl->height;
       }
 
-      if (dirty_rect.x2 > output_width)
+      if (dirty_rect.x2 > (int)output_width)
         output_width = dirty_rect.x2;
-      if (dirty_rect.y2 > output_height)
+      if (dirty_rect.y2 > (int)output_height)
         output_height = dirty_rect.y2;
 
     }
@@ -2653,29 +2665,30 @@ static void vaapi_overlay_end (vo_driver_t *this_gen, vo_frame_t *frame_gen) {
       this->overlay_bitmap_width = output_width;
       this->overlay_bitmap_height = output_height;
     }
+#define UMAX(a,b) ((a) > (uint32_t)(b) ? (a) : (uint32_t)(b))
     if (need_unscaled_init) {
 
       if(this->vdr_osd_width) 
-        this->overlay_bitmap_width =  (this->vdr_osd_width >  this->sc.gui_width) ? this->vdr_osd_width : this->sc.gui_width;
+        this->overlay_bitmap_width =  UMAX (this->vdr_osd_width, this->sc.gui_width);
       else
-        this->overlay_bitmap_width =  (unscaled_width >  this->sc.gui_width) ? unscaled_width : this->sc.gui_width;
+        this->overlay_bitmap_width =  UMAX (unscaled_width, this->sc.gui_width);
 
       if(this->vdr_osd_height) 
-        this->overlay_bitmap_height = (this->vdr_osd_height > this->sc.gui_height) ? this->vdr_osd_height : this->sc.gui_height;
+        this->overlay_bitmap_height = UMAX (this->vdr_osd_height, this->sc.gui_height);
       else
-        this->overlay_bitmap_height = (unscaled_height > this->sc.gui_height) ? unscaled_height : this->sc.gui_height;
+        this->overlay_bitmap_height = UMAX (unscaled_height, this->sc.gui_height);
 
     } else if (need_init) {
 
       if(this->vdr_osd_width) 
-        this->overlay_bitmap_width =  (this->vdr_osd_width >  this->sc.gui_width) ? this->vdr_osd_width : this->sc.gui_width;
+        this->overlay_bitmap_width =  UMAX (this->vdr_osd_width, this->sc.gui_width);
       else
-        this->overlay_bitmap_width =  (output_width >  this->sc.gui_width) ? output_width : this->sc.gui_width;
+        this->overlay_bitmap_width =  UMAX (output_width, this->sc.gui_width);
 
       if(this->vdr_osd_height) 
-        this->overlay_bitmap_height = (this->vdr_osd_height > this->sc.gui_height) ? this->vdr_osd_height : this->sc.gui_height;
+        this->overlay_bitmap_height = UMAX (this->vdr_osd_height, this->sc.gui_height);
       else
-        this->overlay_bitmap_height = (output_height > this->sc.gui_height) ? output_height : this->sc.gui_height;
+        this->overlay_bitmap_height = UMAX (output_height, this->sc.gui_height);
 
     }
   }
@@ -2722,7 +2735,7 @@ static void vaapi_overlay_end (vo_driver_t *this_gen, vo_frame_t *frame_gen) {
     lprintf("overlay_bitmap_width %d overlay_bitmap_height %d  ovl->x %d ovl->y %d ovl->width %d ovl->height %d width %d height %d\n",
       this->overlay_bitmap_width, this->overlay_bitmap_height, ovl->x, ovl->y, ovl->width, ovl->height, this->overlay_bitmap_width, this->overlay_bitmap_height);
 
-    for(height = 0; height < ovl->height; height++) {
+    for(height = 0; (int)height < ovl->height; height++) {
       if((height + ovl->y) >= this->overlay_bitmap_height)
         break;
 
@@ -3088,8 +3101,8 @@ static void vaapi_update_frame_format (vo_driver_t *this_gen,
   frame->vo_frame.width = width;
   frame->vo_frame.height = height;
 
-  if ((frame->width != width)
-      || (frame->height != height)
+  if ((frame->width != (int)width)
+      || (frame->height != (int)height)
       || (frame->format != format)) {
 
     // (re-) allocate render space
@@ -3962,14 +3975,14 @@ static void vaapi_vdr_osd_width_flag( void *this_gen, xine_cfg_entry_t *entry )
 {
   vaapi_driver_t  *this  = (vaapi_driver_t *) this_gen;
 
-  this->vdr_osd_width = entry->num_value;
+  this->vdr_osd_width = entry->num_value < 0 ? 0 : entry->num_value;
 }
 
 static void vaapi_vdr_osd_height_flag( void *this_gen, xine_cfg_entry_t *entry )
 {
   vaapi_driver_t  *this  = (vaapi_driver_t *) this_gen;
 
-  this->vdr_osd_height = entry->num_value;
+  this->vdr_osd_height = entry->num_value < 0 ? 0 : entry->num_value;
 }
 
 static void vaapi_deinterlace_flag( void *this_gen, xine_cfg_entry_t *entry )
@@ -4184,15 +4197,17 @@ static vo_driver_t *vaapi_open_plugin (video_driver_class_t *class_gen, const vo
   this->vdr_osd_width                  = 0;
   this->vdr_osd_height                 = 0;
 
-  this->vdr_osd_width = config->register_num( config, "video.output.vaapi_vdr_osd_width", 0,
+  i = config->register_num( config, "video.output.vaapi_vdr_osd_width", 0,
         _("vaapi: VDR osd width workaround."),
         _("vaapi: VDR osd width workaround."),
         10, vaapi_vdr_osd_width_flag, this );
+  this->vdr_osd_width = i < 0 ? 0 : i;
 
-  this->vdr_osd_height = config->register_num( config, "video.output.vaapi_vdr_osd_height", 0,
+  i = config->register_num( config, "video.output.vaapi_vdr_osd_height", 0,
         _("vaapi: VDR osd height workaround."),
         _("vaapi: VDR osd height workaround."),
         10, vaapi_vdr_osd_height_flag, this );
+  this->vdr_osd_height = i < 0 ? 0 : i;
 
   this->deinterlace = config->register_num( config, "video.output.vaapi_deinterlace", 0,
         _("vaapi: set deinterlace to 0 ( none ), 1 ( top field ), 2 ( bob )."),
@@ -4276,6 +4291,7 @@ static vo_driver_t *vaapi_open_plugin (video_driver_class_t *class_gen, const vo
 static void *vaapi_init_class (xine_t *xine, const void *visual_gen) {
   vaapi_class_t        *this = (vaapi_class_t *) calloc(1, sizeof(vaapi_class_t));
 
+  (void)visual_gen;
   this->driver_class.open_plugin     = vaapi_open_plugin;
   this->driver_class.identifier      = "vaapi";
   this->driver_class.description     = N_("xine video output plugin using VAAPI");
