@@ -907,6 +907,8 @@ static video_decoder_t *open_plugin (video_decoder_class_t *class_gen, xine_stre
 
   vdpau_h264_decoder_t  *this ;
 
+  (void)class_gen;
+
   /* the videoout must be vdpau-capable to support this decoder */
   if ( !(stream->video_driver->get_capabilities(stream->video_driver) & VO_CAP_VDPAU_H264) )
 	  return NULL;
@@ -958,6 +960,9 @@ static video_decoder_t *open_plugin (video_decoder_class_t *class_gen, xine_stre
  * the class's member functions.
  */
 void *h264_init_plugin (xine_t *xine, const void *data) {
+
+  (void)xine;
+  (void)data;
 
   static const video_decoder_class_t decode_video_vdpau_h264_class = {
     .open_plugin     = open_plugin,

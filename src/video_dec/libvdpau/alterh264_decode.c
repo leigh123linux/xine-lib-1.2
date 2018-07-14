@@ -138,7 +138,7 @@ dpb_print (sequence_t * sequence)
     vdpau_accel_t *accel;
     if (vo)
       accel = (vdpau_accel_t *) vo->accel_data;
-    sf = (vo) ? accel->surface : -1;
+    sf = (vo) ? accel->surface : (uint32_t)-1;
     fprintf (stderr,
 	     "{ i:%d u:%d c:%d pn:%d-%d ir:%d-%d tpoc:%d bpoc:%d sf:%u }\n",
 	     i, frame->used, frame->completed, frame->PicNum[0],
@@ -526,6 +526,7 @@ parse_scaling_list (bits_reader_t * br, uint8_t * scaling_list, int len,
   int32_t delta_scale;
   uint8_t use_default_scaling_matrix_flag = 0;
   int i;
+  uint32_t u;
 
   const uint8_t *zigzag = (len == 64) ? zigzag_8x8 : zigzag_4x4;
 
@@ -553,28 +554,28 @@ parse_scaling_list (bits_reader_t * br, uint8_t * scaling_list, int len,
     case 1:
     case 2:
       {
-	for (i = 0; i < sizeof (default_4x4_intra); i++)
-	  scaling_list[zigzag_4x4[i]] = default_4x4_intra[i];
+	for (u = 0; u < sizeof (default_4x4_intra); u++)
+	  scaling_list[zigzag_4x4[u]] = default_4x4_intra[u];
 	break;
       }
     case 3:
     case 4:
     case 5:
       {
-	for (i = 0; i < sizeof (default_4x4_inter); i++)
-	  scaling_list[zigzag_4x4[i]] = default_4x4_inter[i];
+	for (u = 0; u < sizeof (default_4x4_inter); u++)
+	  scaling_list[zigzag_4x4[u]] = default_4x4_inter[u];
 	break;
       }
     case 6:
       {
-	for (i = 0; i < sizeof (default_8x8_intra); i++)
-	  scaling_list[zigzag_8x8[i]] = default_8x8_intra[i];
+	for (u = 0; u < sizeof (default_8x8_intra); u++)
+	  scaling_list[zigzag_8x8[u]] = default_8x8_intra[u];
 	break;
       }
     case 7:
       {
-	for (i = 0; i < sizeof (default_8x8_inter); i++)
-	  scaling_list[zigzag_8x8[i]] = default_8x8_inter[i];
+	for (u = 0; u < sizeof (default_8x8_inter); u++)
+	  scaling_list[zigzag_8x8[u]] = default_8x8_inter[u];
 	break;
       }
     }
@@ -587,7 +588,7 @@ static void
 scaling_list_fallback_A (uint8_t * scaling_lists_4x4,
 			 uint8_t * scaling_lists_8x8, int i)
 {
-  int j;
+  uint32_t j;
   switch (i)
   {
   case 0:
@@ -1438,11 +1439,11 @@ decode_poc (vdpau_h264_alter_decoder_t * this_gen)
 
     if ((sl->pic_order_cnt_lsb < prevPicOrderCntLsb)
 	&& ((prevPicOrderCntLsb - sl->pic_order_cnt_lsb) >=
-	    (MaxPicOrderCntLsb / 2)))
+	    (int32_t)(MaxPicOrderCntLsb / 2)))
       seq->cur_pic.PicOrderCntMsb = prevPicOrderCntMsb + MaxPicOrderCntLsb;
     else if ((sl->pic_order_cnt_lsb > prevPicOrderCntLsb)
 	     && ((sl->pic_order_cnt_lsb - prevPicOrderCntLsb) >
-		 (MaxPicOrderCntLsb / 2)))
+		 (int32_t)(MaxPicOrderCntLsb / 2)))
       seq->cur_pic.PicOrderCntMsb = prevPicOrderCntMsb - MaxPicOrderCntLsb;
     else
       seq->cur_pic.PicOrderCntMsb = prevPicOrderCntMsb;
@@ -2098,7 +2099,7 @@ parse_codec_private (vdpau_h264_alter_decoder_t * this_gen, const uint8_t * buf,
 static void
 flush_buffer (sequence_t * seq)
 {
-  if ((seq->bufpos - seq->bufseek) >= seq->bufseek)
+  if (((int)seq->bufpos - seq->bufseek) >= seq->bufseek)
   {
     seq->bufsize = (seq->bufpos - seq->bufseek) + MIN_BUFFER_SIZE;
     lprintf ("buffer too short, have to allocate a new one.\n");
@@ -2179,7 +2180,7 @@ vdpau_h264_alter_decode_data (video_decoder_t * this_gen, buf_element_t * buf)
     return;
 
   int size = seq->bufpos + buf->size;
-  if (seq->bufsize < size)
+  if ((int)seq->bufsize < size)
   {
     if (seq->bufsize > MAX_BUFFER_SIZE)
     {
@@ -2209,7 +2210,7 @@ vdpau_h264_alter_decode_data (video_decoder_t * this_gen, buf_element_t * buf)
       if (buf->pts)
 	seq->pic_pts = buf->pts;
       lprintf ("frame_end && seq->mode_frame\n");
-      int fhs;
+      uint32_t fhs;
       uint8_t tb;
       uint32_t j = 0;
       while (j < seq->bufpos)
@@ -2236,7 +2237,7 @@ vdpau_h264_alter_decode_data (video_decoder_t * this_gen, buf_element_t * buf)
     return;
   }
 
-  while (seq->bufseek <= seq->bufpos - 4)
+  while (seq->bufseek <= (int)seq->bufpos - 4)
   {
     uint8_t *buffer = seq->buf + seq->bufseek;
     if (buffer[0] == 0 && buffer[1] == 0 && buffer[2] == 1)
@@ -2371,6 +2372,8 @@ open_plugin (video_decoder_class_t * class_gen, xine_stream_t * stream)
 
   vdpau_h264_alter_decoder_t *this;
 
+  (void)class_gen;
+
   /* the videoout must be vdpau-capable to support this decoder */
   if (!
       (stream->video_driver->
@@ -2455,6 +2458,9 @@ open_plugin (video_decoder_class_t * class_gen, xine_stream_t * stream)
 void *
 h264_alter_init_plugin (xine_t * xine, const void *data)
 {
+  (void)xine;
+  (void)data;
+
   static const video_decoder_class_t decode_video_vdpau_h264_alter_class = {
     .open_plugin = open_plugin,
     .identifier  = "vdpau_h264_alter",

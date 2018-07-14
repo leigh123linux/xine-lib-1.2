@@ -722,6 +722,7 @@ static int search_field( vdpau_vc1_decoder_t *vd, uint8_t *buf, int len )
 {
   int i;
   lprintf("search_fields, len=%d\n", len);
+  (void)vd;
   for ( i=0; i<len-4; ++i ) {
     if ( buf[i]==0 && buf[i+1]==0 && buf[i+2]==1 && buf[i+3]==field_start_code ) {
       lprintf("found field_start_code at %d\n", i);
@@ -949,7 +950,7 @@ static void vdpau_vc1_decode_data (video_decoder_t *this_gen, buf_element_t *buf
   }
 
   int size = seq->bufpos+buf->size;
-  if ( seq->bufsize < size ) {
+  if ( seq->bufsize < (unsigned int)size ) {
     seq->bufsize = size+10000;
     seq->buf = realloc( seq->buf, seq->bufsize );
     lprintf("sequence buffer realloced = %d\n", seq->bufsize );
@@ -978,7 +979,7 @@ static void vdpau_vc1_decode_data (video_decoder_t *this_gen, buf_element_t *buf
   }
 
   int res;
-  while ( seq->bufseek <= seq->bufpos-4 ) {
+  while ( seq->bufseek <= (int)(seq->bufpos)-4 ) {
     uint8_t *buffer = seq->buf+seq->bufseek;
     if ( buffer[0]==0 && buffer[1]==0 && buffer[2]==1 ) {
       seq->current_code = buffer[3];
@@ -1020,6 +1021,7 @@ static void vdpau_vc1_decode_data (video_decoder_t *this_gen, buf_element_t *buf
 static void vdpau_vc1_flush (video_decoder_t *this_gen) {
 
   lprintf( "vdpau_vc1_flush\n" );
+  (void)this_gen;
 }
 
 /*
@@ -1038,6 +1040,7 @@ static void vdpau_vc1_reset (video_decoder_t *this_gen) {
 static void vdpau_vc1_discontinuity (video_decoder_t *this_gen) {
 
   lprintf( "vdpau_vc1_discontinuity\n" );
+  (void)this_gen;
 }
 
 /*
@@ -1071,6 +1074,8 @@ static video_decoder_t *open_plugin (video_decoder_class_t *class_gen, xine_stre
   vdpau_vc1_decoder_t  *this ;
 
   lprintf( "open_plugin\n" );
+
+  (void)class_gen;
 
   /* the videoout must be vdpau-capable to support this decoder */
   if ( !(stream->video_driver->get_capabilities(stream->video_driver) & VO_CAP_VDPAU_VC1) )
@@ -1132,6 +1137,9 @@ static video_decoder_t *open_plugin (video_decoder_class_t *class_gen, xine_stre
  * the class's member functions.
  */
 void *vc1_init_plugin (xine_t *xine, const void *data) {
+
+  (void)xine;
+  (void)data;
 
   static const video_decoder_class_t decode_video_vdpau_vc1_class = {
     .open_plugin     = open_plugin,

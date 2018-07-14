@@ -291,7 +291,7 @@ static struct nal_unit* parse_nal_header(struct buf_reader *buf,
   if (buf->len < 1)
     return NULL;
 
-
+  (void)pic;
   struct nal_unit *nal = create_nal_unit();
 
   nal->nal_ref_idc = (buf->buf[0] >> 5) & 0x03;
@@ -376,11 +376,11 @@ static void calculate_pic_order(struct h264_parser *parser, struct coded_picture
     uint32_t pic_order_cnt_msb = 0;
 
     if (slc->pic_order_cnt_lsb < parser->prev_pic_order_cnt_lsb
-        && parser->prev_pic_order_cnt_lsb - slc->pic_order_cnt_lsb
+        && (int)(parser->prev_pic_order_cnt_lsb - slc->pic_order_cnt_lsb)
             >= max_poc_lsb / 2)
       pic_order_cnt_msb = parser->prev_pic_order_cnt_msb + max_poc_lsb;
     else if (slc->pic_order_cnt_lsb > parser->prev_pic_order_cnt_lsb
-        && parser->prev_pic_order_cnt_lsb - slc->pic_order_cnt_lsb
+        && (int)(parser->prev_pic_order_cnt_lsb - slc->pic_order_cnt_lsb)
             < -max_poc_lsb / 2)
       pic_order_cnt_msb = parser->prev_pic_order_cnt_msb - max_poc_lsb;
     else
@@ -455,6 +455,7 @@ static void parse_scaling_list(struct buf_reader *buf, uint8_t *scaling_list,
   int32_t delta_scale;
   uint8_t use_default_scaling_matrix_flag = 0;
   int i;
+  unsigned int u;
 
   const uint8_t *zigzag = (length==64) ? zigzag_8x8 : zigzag_4x4;
 
@@ -475,8 +476,8 @@ static void parse_scaling_list(struct buf_reader *buf, uint8_t *scaling_list,
       case 0:
       case 1:
       case 2: {
-        for(i = 0; i < sizeof(default_4x4_intra); i++) {
-          scaling_list[zigzag_4x4[i]] = default_4x4_intra[i];
+        for(u = 0; u < sizeof(default_4x4_intra); u++) {
+          scaling_list[zigzag_4x4[u]] = default_4x4_intra[u];
         }
         //memcpy(scaling_list, default_4x4_intra, sizeof(default_4x4_intra));
         break;
@@ -484,22 +485,22 @@ static void parse_scaling_list(struct buf_reader *buf, uint8_t *scaling_list,
       case 3:
       case 4:
       case 5: {
-        for(i = 0; i < sizeof(default_4x4_inter); i++) {
-          scaling_list[zigzag_4x4[i]] = default_4x4_inter[i];
+        for(u = 0; u < sizeof(default_4x4_inter); u++) {
+          scaling_list[zigzag_4x4[u]] = default_4x4_inter[u];
         }
         //memcpy(scaling_list, default_4x4_inter, sizeof(default_4x4_inter));
         break;
       }
       case 6: {
-        for(i = 0; i < sizeof(default_8x8_intra); i++) {
-          scaling_list[zigzag_8x8[i]] = default_8x8_intra[i];
+        for(u = 0; u < sizeof(default_8x8_intra); u++) {
+          scaling_list[zigzag_8x8[u]] = default_8x8_intra[u];
         }
         //memcpy(scaling_list, default_8x8_intra, sizeof(default_8x8_intra));
         break;
       }
       case 7: {
-        for(i = 0; i < sizeof(default_8x8_inter); i++) {
-          scaling_list[zigzag_8x8[i]] = default_8x8_inter[i];
+        for(u = 0; u < sizeof(default_8x8_inter); u++) {
+          scaling_list[zigzag_8x8[u]] = default_8x8_inter[u];
         }
         //memcpy(scaling_list, default_8x8_inter, sizeof(default_8x8_inter));
         break;
@@ -510,7 +511,7 @@ static void parse_scaling_list(struct buf_reader *buf, uint8_t *scaling_list,
 
 static void sps_scaling_list_fallback(struct seq_parameter_set_rbsp *sps, int i)
 {
-  int j;
+  unsigned int j;
   switch (i) {
     case 0:
       for(j = 0; j < sizeof(default_4x4_intra); j++) {
@@ -915,7 +916,7 @@ static void parse_hrd_parameters(struct buf_reader *buf, struct hrd_parameters *
   hrd->bit_rate_scale = read_bits(buf, 4);
   hrd->cpb_size_scale = read_bits(buf, 4);
 
-  int i;
+  unsigned int i;
   for (i = 0; i <= hrd->cpb_cnt_minus1; i++) {
     hrd->bit_rate_value_minus1[i] = read_exp_golomb(buf);
     hrd->cpb_size_value_minus1[i] = read_exp_golomb(buf);
@@ -939,7 +940,7 @@ static uint8_t parse_pps(struct buf_reader *buf, struct pic_parameter_set_rbsp *
   if (pps->num_slice_groups_minus1 > 0) {
     pps->slice_group_map_type = read_exp_golomb(buf);
     if (pps->slice_group_map_type == 0) {
-      int i_group;
+      unsigned int i_group;
       for (i_group = 0; i_group <= pps->num_slice_groups_minus1; i_group++) {
         if (i_group < 64)
           pps->run_length_minus1[i_group] = read_exp_golomb(buf);
@@ -956,7 +957,7 @@ static uint8_t parse_pps(struct buf_reader *buf, struct pic_parameter_set_rbsp *
     }
     else if (pps->slice_group_map_type == 6) {
       pps->pic_size_in_map_units_minus1 = read_exp_golomb(buf);
-      int i_group;
+      unsigned int i_group;
       for (i_group = 0; i_group <= pps->num_slice_groups_minus1; i_group++) {
         pps->slice_group_id[i_group] = read_bits(buf, ceil(log(
             pps->num_slice_groups_minus1 + 1)));
@@ -1233,6 +1234,7 @@ static void parse_ref_pic_list_reordering(struct buf_reader *buf, struct slice_h
 static void parse_pred_weight_table(struct buf_reader *buf, struct slice_header *slc,
     struct h264_parser *parser)
 {
+  unsigned int i;
   /* retrieve sps and pps from the buffers */
   struct pic_parameter_set_rbsp *pps =
       &nal_buffer_get_by_pps_id(parser->pps_buffer, slc->pic_parameter_set_id)
@@ -1251,7 +1253,6 @@ static void parse_pred_weight_table(struct buf_reader *buf, struct slice_header 
   if (ChromaArrayType != 0)
     slc->pred_weight_table.chroma_log2_weight_denom = read_exp_golomb(buf);
 
-  int i;
   for (i = 0; i <= slc->num_ref_idx_l0_active_minus1; i++) {
     uint8_t luma_weight_l0_flag = read_bits(buf, 1);
 
@@ -1461,12 +1462,12 @@ static void execute_ref_pic_marking(struct coded_picture *cpic,
         pic->coded_pic[0]->long_term_pic_num = pic->coded_pic[0]->long_term_frame_idx;
       }
       else {
-        if(pic->coded_pic[0]->pic_num == pic_num_x) {
+        if(pic->coded_pic[0]->pic_num == (int32_t)pic_num_x) {
           pic->coded_pic[0]->long_term_frame_idx
               = slc->dec_ref_pic_marking[marking_nr].long_term_frame_idx;
           pic->coded_pic[0]->long_term_pic_num = pic->coded_pic[0]->long_term_frame_idx * 2 + 1;
         } else if(pic->coded_pic[1] != NULL &&
-            pic->coded_pic[1]->pic_num == pic_num_x) {
+            pic->coded_pic[1]->pic_num == (int32_t)pic_num_x) {
           pic->coded_pic[1]->long_term_frame_idx
               = slc->dec_ref_pic_marking[marking_nr].long_term_frame_idx;
           pic->coded_pic[1]->long_term_pic_num = pic->coded_pic[1]->long_term_frame_idx * 2 + 1;
@@ -1693,7 +1694,7 @@ static void process_mmc_operations(struct h264_parser *parser, struct coded_pict
           = picture->slc_nal->slc.pic_order_cnt_lsb;
   }
 
-  int i;
+  uint32_t i;
   for(i = 0; i < picture->slc_nal->slc.
       dec_ref_pic_marking_count; i++) {
     execute_ref_pic_marking(
@@ -2044,7 +2045,7 @@ static int seek_for_nal(uint8_t *buf, int buf_len, struct h264_parser *parser)
       next_nal = read_bits(&bufr, parser->nal_size_length*8)+parser->nal_size_length;
     }
 
-    if(next_nal > buf_len) {
+    if(next_nal > (uint32_t)buf_len) {
       parser->next_nal_position = next_nal;
       return -1;
     } else

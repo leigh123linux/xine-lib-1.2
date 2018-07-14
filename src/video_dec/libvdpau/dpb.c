@@ -218,7 +218,7 @@ static struct decoded_picture* dpb_get_next_out_picture(struct dpb *dpb, int do_
   struct decoded_picture *outpic = NULL;
 
   if(!do_flush &&
-      xine_list_size(dpb->output_list) < dpb->max_reorder_frames &&
+      (int)xine_list_size(dpb->output_list) < dpb->max_reorder_frames &&
       dpb_total_frames(dpb) < dpb->max_dpb_frames) {
     return NULL;
   }
@@ -262,9 +262,9 @@ static struct decoded_picture* dpb_get_picture(struct dpb *dpb, uint32_t picnum)
   while (ite) {
     pic = xine_list_get_value(dpb->reference_list, ite);
 
-    if ((pic->coded_pic[0]->pic_num == picnum ||
+    if ((pic->coded_pic[0]->pic_num == (int32_t)picnum ||
         (pic->coded_pic[1] != NULL &&
-            pic->coded_pic[1]->pic_num == picnum))) {
+            pic->coded_pic[1]->pic_num == (int32_t)picnum))) {
       return pic;
     }
 
@@ -398,13 +398,13 @@ static int dpb_set_unused_ref_picture_lidx_gt(struct dpb *dpb, int32_t longterm_
 
     uint8_t found = 0;
 
-    if (pic->coded_pic[0]->long_term_frame_idx >= longterm_idx) {
+    if ((int32_t)(pic->coded_pic[0]->long_term_frame_idx) >= longterm_idx) {
       pic->coded_pic[0]->used_for_long_term_ref = 0;
       found = 1;
     }
 
     if ((pic->coded_pic[1] != NULL &&
-          pic->coded_pic[1]->long_term_frame_idx >= longterm_idx)) {
+          (int32_t)(pic->coded_pic[1]->long_term_frame_idx) >= longterm_idx)) {
       pic->coded_pic[1]->used_for_long_term_ref = 0;
       found = 1;
     }

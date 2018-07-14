@@ -920,14 +920,14 @@ static void vdpau_mpeg12_decode_data (video_decoder_t *this_gen, buf_element_t *
     seq->cur_pts = buf->pts;
 
   int size = seq->bufpos+buf->size;
-  if ( seq->bufsize < size ) {
+  if ( seq->bufsize < (unsigned int)size ) {
     seq->bufsize = size+1024;
     seq->buf = realloc( seq->buf, seq->bufsize );
   }
   xine_fast_memcpy( seq->buf+seq->bufpos, buf->content, buf->size );
   seq->bufpos += buf->size;
 
-  while ( seq->bufseek <= seq->bufpos-4 ) {
+  while ( seq->bufseek <= (int)(seq->bufpos)-4 ) {
     uint8_t *buffer = seq->buf+seq->bufseek;
     if ( buffer[0]==0 && buffer[1]==0 && buffer[2]==1 ) {
       if ( seq->start<0 ) {
@@ -961,6 +961,7 @@ static void vdpau_mpeg12_decode_data (video_decoder_t *this_gen, buf_element_t *
 static void vdpau_mpeg12_flush (video_decoder_t *this_gen) {
 
   lprintf( "vdpau_mpeg12_flush\n" );
+  (void)this_gen;
 }
 
 /*
@@ -1015,6 +1016,8 @@ static video_decoder_t *open_plugin (video_decoder_class_t *class_gen, xine_stre
   vdpau_mpeg12_decoder_t  *this ;
 
   lprintf( "open_plugin\n" );
+
+  (void)class_gen;
 
   /* the videoout must be vdpau-capable to support this decoder */
   if ( !(stream->video_driver->get_capabilities(stream->video_driver) & VO_CAP_VDPAU_MPEG12) )
@@ -1077,6 +1080,9 @@ static video_decoder_t *open_plugin (video_decoder_class_t *class_gen, xine_stre
  * the class's member functions.
  */
 void *mpeg12_init_plugin (xine_t *xine, const void *data) {
+
+  (void)xine;
+  (void)data;
 
   static const video_decoder_class_t decode_video_vdpau_mpeg12_class = {
     .open_plugin     = open_plugin,
