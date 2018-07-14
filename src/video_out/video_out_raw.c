@@ -120,6 +120,7 @@ static void raw_overlay_begin (vo_driver_t *this_gen, vo_frame_t *frame_gen, int
 {
   raw_driver_t  *this = (raw_driver_t *) this_gen;
 
+  (void)frame_gen;
   if ( !changed )
 	return;
 
@@ -131,6 +132,7 @@ static void raw_overlay_blend (vo_driver_t *this_gen, vo_frame_t *frame_gen, vo_
 {
   raw_driver_t  *this = (raw_driver_t *) this_gen;
 
+  (void)frame_gen;
   if ( !this->ovl_changed || this->ovl_changed>XINE_VORAW_MAX_OVL )
     return;
 
@@ -147,6 +149,7 @@ static void raw_overlay_end (vo_driver_t *this_gen, vo_frame_t *vo_img)
 {
   raw_driver_t  *this = (raw_driver_t *) this_gen;
 
+  (void)vo_img;
   if ( !this->ovl_changed )
     return;
 
@@ -268,9 +271,10 @@ static void raw_update_frame_format (vo_driver_t *this_gen, vo_frame_t *frame_ge
 {
   raw_frame_t   *frame = (raw_frame_t *) frame_gen;
 
+  (void)this_gen;
   /* Check frame size and format and reallocate if necessary */
-  if ((frame->width != width)
-      || (frame->height != height)
+  if ((frame->width != (int)width)
+      || (frame->height != (int)height)
       || (frame->format != format)
       || (frame->flags  != flags)) {
 /*     lprintf ("updating frame to %d x %d (ratio=%g, format=%08x)\n", width, height, ratio, format); */
@@ -336,6 +340,7 @@ static void raw_update_frame_format (vo_driver_t *this_gen, vo_frame_t *frame_ge
 
 static int raw_redraw_needed (vo_driver_t *this_gen)
 {
+  (void)this_gen;
   return 0;
 }
 
@@ -370,6 +375,7 @@ static void raw_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen)
 
 static int raw_get_property (vo_driver_t *this_gen, int property)
 {
+  (void)this_gen;
   switch (property) {
   case VO_PROP_ASPECT_RATIO:
     return XINE_VO_ASPECT_AUTO;
@@ -417,6 +423,8 @@ static int raw_set_property (vo_driver_t *this_gen, int property, int value)
 
 static void raw_get_property_min_max (vo_driver_t *this_gen, int property, int *min, int *max)
 {
+  (void)this_gen;
+  (void)property;
   *min = 0;
   *max = 0;
 }
@@ -425,6 +433,9 @@ static void raw_get_property_min_max (vo_driver_t *this_gen, int property, int *
 
 static int raw_gui_data_exchange (vo_driver_t *this_gen, int data_type, void *data)
 {
+  (void)this_gen;
+  (void)data_type;
+  (void)data;
   return 0;
 }
 
@@ -433,6 +444,7 @@ static int raw_gui_data_exchange (vo_driver_t *this_gen, int data_type, void *da
 static uint32_t raw_get_capabilities (vo_driver_t *this_gen)
 {
   uint32_t capabilities = VO_CAP_YV12 | VO_CAP_YUY2 | VO_CAP_CROP;
+  (void)this_gen;
   return capabilities;
 }
 
@@ -518,6 +530,7 @@ static void *raw_init_class (xine_t *xine, const void *visual_gen)
 {
   raw_class_t *this = (raw_class_t *) calloc(1, sizeof(raw_class_t));
 
+  (void)visual_gen;
   this->driver_class.open_plugin     = raw_open_plugin;
   this->driver_class.identifier      = "raw";
   this->driver_class.description     = _("xine video output plugin passing raw data to supplied callback");
