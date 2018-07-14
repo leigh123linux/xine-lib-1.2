@@ -539,6 +539,7 @@ static void vdpau_overlay_begin (vo_driver_t *this_gen, vo_frame_t *frame_gen, i
 {
   vdpau_driver_t  *this = (vdpau_driver_t *) this_gen;
 
+  (void)frame_gen;
   this->ovl_changed = changed;
   if ( changed ) {
     this->old_num_ovls = this->num_ovls;
@@ -552,6 +553,7 @@ static void vdpau_overlay_blend (vo_driver_t *this_gen, vo_frame_t *frame_gen, v
 {
   vdpau_driver_t  *this = (vdpau_driver_t *) this_gen;
 
+  (void)frame_gen;
   if (!this->ovl_changed)
     return;
 
@@ -613,6 +615,7 @@ static void vdpau_overlay_end (vo_driver_t *this_gen, vo_frame_t *frame_gen)
 {
   vdpau_driver_t  *this = (vdpau_driver_t *) this_gen;
 
+  (void)frame_gen;
   if (!this->ovl_changed)
     return;
 
@@ -939,7 +942,7 @@ static void vdpau_process_overlays (vdpau_driver_t *this)
                   this->ovl_dest_rect.y1 != ovl_rects[first_visible].y1) {
     lprintf("overlay clear main render output surface %dx%d\n", this->ovl_src_rect.x1, this->ovl_src_rect.y1);
 
-    if (this->ovl_src_rect.x1 > this->ovl_pixmap_size) {
+    if (this->ovl_src_rect.x1 > (unsigned int)this->ovl_pixmap_size) {
       this->ovl_pixmap_size = this->ovl_src_rect.x1;
       free(this->ovl_pixmap);
       this->ovl_pixmap = calloc(this->ovl_pixmap_size, sizeof(uint32_t));
@@ -984,6 +987,7 @@ static void vdpau_frame_proc_slice (vo_frame_t *vo_img, uint8_t **src)
 {
   /*vdpau_frame_t  *frame = (vdpau_frame_t *) vo_img;*/
 
+  (void)src;
   vo_img->proc_called = 1;
 }
 
@@ -991,6 +995,8 @@ static void vdpau_frame_proc_slice (vo_frame_t *vo_img, uint8_t **src)
 
 static void vdpau_frame_field (vo_frame_t *vo_img, int which_field)
 {
+  (void)vo_img;
+  (void)which_field;
 }
 
 
@@ -1183,8 +1189,11 @@ static void vdpau_update_frame_format (vo_driver_t *this_gen, vo_frame_t *frame_
   frame->vo_frame.crop_bottom += height - requested_height;
 
   /* Check frame size and format and reallocate if necessary */
-  if ( (frame->width != width) || (frame->height != height) || (frame->format != format) || (frame->format==XINE_IMGFMT_VDPAU && frame->vdpau_accel_data.chroma!=chroma) ||
-        (frame->vdpau_accel_data.vdp_runtime_nr != this->vdp_runtime_nr)) {
+  if   ((frame->width  != (int)width)
+    ||  (frame->height != (int)height)
+    ||  (frame->format != format)
+    || ((frame->format == XINE_IMGFMT_VDPAU) && (frame->vdpau_accel_data.chroma != chroma))
+    ||  (frame->vdpau_accel_data.vdp_runtime_nr != this->vdp_runtime_nr)) {
 
     /* (re-) allocate render space */
     xine_freep_aligned (&frame->vo_frame.base[0]);
@@ -1233,7 +1242,10 @@ static void vdpau_update_frame_format (vo_driver_t *this_gen, vo_frame_t *frame_
     }
 
     if ( frame->vdpau_accel_data.surface != VDP_INVALID_HANDLE  ) {
-      if ( (frame->width != width) || (frame->height != height) || (format != XINE_IMGFMT_VDPAU) || frame->vdpau_accel_data.chroma != chroma ) {
+      if  ((frame->width  != (int)width)
+        || (frame->height != (int)height)
+        || (format != XINE_IMGFMT_VDPAU)
+        || (frame->vdpau_accel_data.chroma != chroma)) {
         lprintf("vo_vdpau: update_frame - destroy surface\n");
         vdp_video_surface_destroy( frame->vdpau_accel_data.surface );
         frame->vdpau_accel_data.surface = VDP_INVALID_HANDLE;
@@ -1263,7 +1275,7 @@ static void vdpau_update_frame_format (vo_driver_t *this_gen, vo_frame_t *frame_
           st = vdp_video_surface_get_parameters(frame->vdpau_accel_data.surface, &ct, &w, &h);
           if (st != VDP_STATUS_OK)
             fprintf(stderr, "vo_vdpau: failed to get parameters !! %s\n", vdp_get_error_string(st));
-          else if (w != width || h != height) {
+          else if ((w != (int)width) || (h != (int)height)) {
    
             fprintf(stderr, "vo_vdpau: video surface doesn't match size contraints (%d x %d) -> (%d x %d) != (%d x %d). Segfaults ahead!\n"
               , requested_width, requested_height, width, height, w, h);
@@ -1752,7 +1764,8 @@ static void vdpau_check_output_size( vo_driver_t *this_gen )
 {
   vdpau_driver_t  *this  = (vdpau_driver_t *) this_gen;
 
-  if ( (this->sc.gui_width > this->output_surface_width[this->current_output_surface]) || (this->sc.gui_height > this->output_surface_height[this->current_output_surface]) ) {
+  if  ((this->sc.gui_width > (int)this->output_surface_width[this->current_output_surface])
+    || (this->sc.gui_height > (int)this->output_surface_height[this->current_output_surface])) {
     /* recreate output surface to match window size */
     lprintf( "vo_vdpau: output_surface size update\n" );
     this->output_surface_width[this->current_output_surface] = this->sc.gui_width;
@@ -1899,7 +1912,9 @@ static void vdpau_display_frame (vo_driver_t *this_gen, vo_frame_t *frame_gen)
 
   if ( (frame->format == XINE_IMGFMT_YV12) || (frame->format == XINE_IMGFMT_YUY2) ) {
     chroma = ( frame->format==XINE_IMGFMT_YV12 )? VDP_CHROMA_TYPE_420 : VDP_CHROMA_TYPE_422;
-    if ( (frame->width != this->soft_surface_width) || (frame->height != this->soft_surface_height) || (frame->format != this->soft_surface_format) ) {
+    if  ((frame->width != (int)this->soft_surface_width)
+      || (frame->height != (int)this->soft_surface_height)
+      || (frame->format != this->soft_surface_format)) {
       lprintf( "vo_vdpau: soft_surface size update\n" );
       /* recreate surface to match frame changes */
       this->soft_surface_width = frame->width;
@@ -2223,6 +2238,7 @@ static int vdpau_set_property (vo_driver_t *this_gen, int property, int value)
 
 static void vdpau_get_property_min_max (vo_driver_t *this_gen, int property, int *min, int *max)
 {
+  (void)this_gen;
   switch ( property ) {
     case VO_PROP_HUE:
       *max = 127; *min = -128; break;
@@ -2625,6 +2641,7 @@ static void vdpau_reinit( vo_driver_t *this_gen )
 static void vdp_preemption_callback(VdpDevice device, void *context)
 {
   fprintf(stderr,"vo_vdpau: VDPAU preemption callback\n");
+  (void)device;
   vdpau_driver_t *this = (vdpau_driver_t *)context;
   this->reinit_needed = 1;
 }
@@ -3264,6 +3281,7 @@ static void *vdpau_init_class (xine_t *xine, const void *visual_gen)
 {
   vdpau_class_t *this = (vdpau_class_t *) calloc(1, sizeof(vdpau_class_t));
 
+  (void)visual_gen;
   this->driver_class.open_plugin     = vdpau_open_plugin;
   this->driver_class.identifier      = "vdpau";
   this->driver_class.description     = N_("xine video output plugin using VDPAU hardware acceleration");
