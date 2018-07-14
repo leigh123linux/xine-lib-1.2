@@ -67,6 +67,7 @@ typedef struct jpeg_decoder_s {
 METHODDEF(void)
 mem_init_source (j_decompress_ptr cinfo)
 {
+  (void)cinfo;
 }
 
 METHODDEF(boolean)
@@ -83,7 +84,7 @@ mem_fill_input_buffer (j_decompress_ptr cinfo)
 METHODDEF(void)
 mem_skip_input_data (j_decompress_ptr cinfo, long num_bytes)
 {
-  if (num_bytes <= cinfo->src->bytes_in_buffer) {
+  if (num_bytes <= (int)cinfo->src->bytes_in_buffer) {
       cinfo->src->bytes_in_buffer -= num_bytes;
       cinfo->src->next_input_byte += num_bytes;
   } else {
@@ -94,6 +95,7 @@ mem_skip_input_data (j_decompress_ptr cinfo, long num_bytes)
 METHODDEF(void)
 mem_term_source (j_decompress_ptr cinfo)
 {
+  (void)cinfo;
 }
 
 static void jpeg_memory_src (j_decompress_ptr cinfo, const JOCTET *data, size_t size)
@@ -172,8 +174,8 @@ static void jpeg_decode_data (video_decoder_t *this_gen, buf_element_t *buf) {
       cinfo.output_height = cinfo.image_height;
       cinfo.scale_num   = 1;
       cinfo.scale_denom = 1;
-      while ((max_width  > 0 && cinfo.output_width  > max_width) ||
-             (max_height > 0 && cinfo.output_height > max_height)) {
+      while ((max_width  > 0 && (int)cinfo.output_width  > max_width) ||
+             (max_height > 0 && (int)cinfo.output_height > max_height)) {
         cinfo.scale_denom   <<= 1;
         cinfo.output_width  >>= 1;
         cinfo.output_height >>= 1;
@@ -193,9 +195,9 @@ static void jpeg_decode_data (video_decoder_t *this_gen, buf_element_t *buf) {
     height = cinfo.output_height;
 
     /* crop when image is too large for vo */
-    if (max_width > 0 && cinfo.output_width > max_width)
+    if (max_width > 0 && (int)cinfo.output_width > max_width)
       width = max_width;
-    if (max_height > 0 && cinfo.output_height > max_height)
+    if (max_height > 0 && (int)cinfo.output_height > max_height)
       height = max_height;
 
     /* TJ. As far as I know JPEG always uses fullrange ITU-R 601 YUV.
@@ -238,7 +240,7 @@ static void jpeg_decode_data (video_decoder_t *this_gen, buf_element_t *buf) {
     }
 
     /* cut to frame width */
-    if (cinfo.output_width > img->width) {
+    if ((int)cinfo.output_width > img->width) {
       lprintf("cut right border %d pixels\n", cinfo.output_width - img->width);
       linesize = img->width * 3;
     }
@@ -250,7 +252,7 @@ static void jpeg_decode_data (video_decoder_t *this_gen, buf_element_t *buf) {
       jpeg_read_scanlines(&cinfo, buffer, 1);
 
       /* cut to frame height */
-      if (cinfo.output_scanline > img->height) {
+      if ((int)cinfo.output_scanline > img->height) {
         lprintf("cut bottom scanline %d\n", cinfo.output_scanline - 1);
         continue;
       }
@@ -353,6 +355,7 @@ static void jpeg_decode_data (video_decoder_t *this_gen, buf_element_t *buf) {
 
 
 static void jpeg_flush (video_decoder_t *this_gen) {
+  (void)this_gen;
   /*
    * flush out any frames that are still stored in the decoder
    */
@@ -372,6 +375,7 @@ static void jpeg_reset (video_decoder_t *this_gen) {
 
 
 static void jpeg_discontinuity (video_decoder_t *this_gen) {
+  (void)this_gen;
   /*
    * a time reference discontinuity has happened.
    * that is, it must forget any currently held pts value
@@ -403,6 +407,8 @@ static video_decoder_t *open_plugin (video_decoder_class_t *class_gen,
 
   lprintf("opened\n");
 
+  (void)class_gen;
+
   this = calloc(1, sizeof(jpeg_decoder_t));
   if (!this)
     return NULL;
@@ -432,6 +438,8 @@ static video_decoder_t *open_plugin (video_decoder_class_t *class_gen,
  * jpeg plugin class
  */
 static void *init_class (xine_t *xine, const void *data) {
+
+  (void)data;
 
   static video_decoder_class_t decode_video_libjpeg_class = {
     .open_plugin     = open_plugin,

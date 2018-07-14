@@ -199,6 +199,7 @@ static void image_decode_data (video_decoder_t *this_gen, buf_element_t *buf) {
 static void image_flush (video_decoder_t *this_gen) {
   /* image_decoder_t *this = (image_decoder_t *) this_gen; */
 
+  (void)this_gen;
   /*
    * flush out any frames that are still stored in the decoder
    */
@@ -224,6 +225,7 @@ static void image_reset (video_decoder_t *this_gen) {
 static void image_discontinuity (video_decoder_t *this_gen) {
   /* image_decoder_t *this = (image_decoder_t *) this_gen; */
 
+  (void)this_gen;
   /*
    * a time reference discontinuity has happened.
    * that is, it must forget any currently held pts value
@@ -258,6 +260,8 @@ static video_decoder_t *open_plugin (video_decoder_class_t *class_gen,
 
   lprintf("opened\n");
 
+  (void)class_gen;
+
 #if (GLIB_MAJOR_VERSION < 2 || (GLIB_MAJOR_VERSION == 2 && GLIB_MINOR_VERSION <= 35))
   g_type_init ();
 #endif
@@ -283,6 +287,9 @@ static video_decoder_t *open_plugin (video_decoder_class_t *class_gen,
  */
 
 static void *init_class (xine_t *xine, const void *data) {
+
+  (void)xine;
+  (void)data;
 
   static const video_decoder_class_t decode_video_gdkpixbuf_class = {
     .open_plugin     = open_plugin,

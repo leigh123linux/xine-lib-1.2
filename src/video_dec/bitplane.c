@@ -371,6 +371,8 @@ static void bitplane_decode_ham (uint8_t *ham_buffer,
   int maskbits                          = 8 - hambits;
   int mask                              = ( 1 << hambits ) - 1;
 
+  (void)bytes_per_pixel;
+
   for(; ham_buffer_work < ham_buffer_end; j = *ham_buffer_work++) {
     i                                   = (j & mask);
     switch ( j >> hambits ) {
@@ -425,7 +427,7 @@ static void bitplane_sdelta_opt_3 (bitplane_decoder_t *this) {
   uint32_t yuv_index                    = 0;
 
   /* Repeat for each plane */
-  for(palette_index = 0; palette_index < this->num_bitplanes; palette_index++) {
+  for (palette_index = 0; (int32_t)palette_index < this->num_bitplanes; palette_index++) {
 
     planeptr                            = (uint16_t *)(&this->buf_uk[(palette_index * rowsize * 2)]);
     /* data starts at beginn of delta-Buffer + offset of the first */
@@ -545,7 +547,7 @@ static void bitplane_set_dlta_short (bitplane_decoder_t *this) {
   uint32_t yuv_index                    = 0;
 
   /* Repeat for each plane */
-  for(palette_index = 0; palette_index < this->num_bitplanes; palette_index++) {
+  for (palette_index = 0; (int32_t)palette_index < this->num_bitplanes; palette_index++) {
 
     planeptr                            = (uint16_t *)(&this->buf_uk[(palette_index * rowsize * 2)]);
     /* data starts at beginn of delta-Buffer + offset of the first */
@@ -630,7 +632,7 @@ static void bitplane_dlta_5 (bitplane_decoder_t *this) {
   uint8_t  count                        = 0;
 
   /* Repeat for each plane */
-  for(palette_index = 0; palette_index < this->num_bitplanes; palette_index++) {
+  for (palette_index = 0; (int32_t)palette_index < this->num_bitplanes; palette_index++) {
 
     planeptr                            = &this->buf_uk[(palette_index * rowsize)];
     /* data starts at beginn of delta-Buffer + offset of the first */
@@ -725,7 +727,7 @@ static void bitplane_dlta_7_short (bitplane_decoder_t *this) {
   uint8_t  count                        = 0;
 
   /* Repeat for each plane */
-  for(palette_index = 0; palette_index < this->num_bitplanes; palette_index++) {
+  for (palette_index = 0; (int32_t)palette_index < this->num_bitplanes; palette_index++) {
 
     planeptr                            = &this->buf_uk[(palette_index * rowsize * 2)];
     /* find opcode and data offset (up to 8 pointers, one for every bitplane */
@@ -820,7 +822,7 @@ static void bitplane_dlta_7_long  (bitplane_decoder_t *this) {
   uint8_t  count                        = 0;
 
   /* Repeat for each plane */
-  for(palette_index = 0; palette_index < this->num_bitplanes; palette_index++) {
+  for (palette_index = 0; (int32_t)palette_index < this->num_bitplanes; palette_index++) {
     planeptr                            = &this->buf_uk[(palette_index * rowsize * 4)];
     /* find opcode and data offset (up to 8 pointers, one for every bitplane */
     opcode_offset                       = _X_BE_32(&deltadata[palette_index]);
@@ -912,7 +914,7 @@ static void bitplane_dlta_8_short (bitplane_decoder_t *this) {
   uint16_t count                        = 0;
 
   /* Repeat for each plane */
-  for(palette_index = 0; palette_index < this->num_bitplanes; palette_index++) {
+  for (palette_index = 0; (int32_t)palette_index < this->num_bitplanes; palette_index++) {
 
     planeptr                            = (uint16_t *)(&this->buf_uk[(palette_index * rowsize * 2)]);
     /* data starts at beginn of delta-Buffer + offset of the first */
@@ -1009,7 +1011,7 @@ static void bitplane_dlta_8_long (bitplane_decoder_t *this) {
   uint32_t count                        = 0;
 
   /* Repeat for each plane */
-  for(palette_index = 0; palette_index < this->num_bitplanes; palette_index++) {
+  for (palette_index = 0; (int32_t)palette_index < this->num_bitplanes; palette_index++) {
 
     planeptr                            = (uint32_t *)(&this->buf_uk[(palette_index * rowsize * 4)]);
     /* data starts at beginn of delta-Buffer + offset of the first */
@@ -1106,18 +1108,19 @@ static void bitplane_decode_data (video_decoder_t *this_gen,
 
   if ((buf->decoder_flags & BUF_FLAG_SPECIAL) &&
       (buf->decoder_info[1] == BUF_SPECIAL_PALETTE)) {
+    unsigned int u;
     palette                             = (palette_entry_t *)buf->decoder_info_ptr[2];
 
-    for (i = 0; i < buf->decoder_info[2]; i++) {
-      this->yuv_palette[i * 4 + 0]      =
-        COMPUTE_Y(palette[i].r, palette[i].g, palette[i].b);
-      this->yuv_palette[i * 4 + 1]      =
-        COMPUTE_U(palette[i].r, palette[i].g, palette[i].b);
-      this->yuv_palette[i * 4 + 2]      =
-        COMPUTE_V(palette[i].r, palette[i].g, palette[i].b);
-      this->rgb_palette[i * 4 + 0]      = palette[i].r;
-      this->rgb_palette[i * 4 + 1]      = palette[i].g;
-      this->rgb_palette[i * 4 + 2]      = palette[i].b;
+    for (u = 0; u < buf->decoder_info[2]; u++) {
+      this->yuv_palette[u * 4 + 0]      =
+        COMPUTE_Y(palette[u].r, palette[u].g, palette[u].b);
+      this->yuv_palette[u * 4 + 1]      =
+        COMPUTE_U(palette[u].r, palette[u].g, palette[u].b);
+      this->yuv_palette[u * 4 + 2]      =
+        COMPUTE_V(palette[u].r, palette[u].g, palette[u].b);
+      this->rgb_palette[u * 4 + 0]      = palette[u].r;
+      this->rgb_palette[u * 4 + 1]      = palette[u].g;
+      this->rgb_palette[u * 4 + 2]      = palette[u].b;
     }
 
     /* EHB Pictures not allways contain all 64 colors, sometimes only    */
@@ -1458,6 +1461,7 @@ static void bitplane_decode_data (video_decoder_t *this_gen,
  * sure when or if this is used or even if it needs to do anything.
  */
 static void bitplane_flush (video_decoder_t *this_gen) {
+  (void)this_gen;
 }
 
 /*
@@ -1470,6 +1474,7 @@ static void bitplane_reset (video_decoder_t *this_gen) {
 }
 
 static void bitplane_discontinuity (video_decoder_t *this_gen) {
+  (void)this_gen;
 }
 
 /*
@@ -1494,7 +1499,13 @@ static void bitplane_dispose (video_decoder_t *this_gen) {
 
 static video_decoder_t *open_plugin (video_decoder_class_t *class_gen, xine_stream_t *stream) {
 
-  bitplane_decoder_t  *this             = (bitplane_decoder_t *) calloc(1, sizeof(bitplane_decoder_t));
+  bitplane_decoder_t *this;
+
+  (void)class_gen;
+
+  this = (bitplane_decoder_t *) calloc(1, sizeof(bitplane_decoder_t));
+  if (!this)
+    return NULL;
 
   this->video_decoder.decode_data       = bitplane_decode_data;
   this->video_decoder.flush             = bitplane_flush;
@@ -1515,6 +1526,9 @@ static video_decoder_t *open_plugin (video_decoder_class_t *class_gen, xine_stre
 }
 
 void *decode_bitplane_init_class (xine_t *xine, const void *data) {
+
+  (void)xine;
+  (void)data;
 
   static const video_decoder_class_t decode_video_bitplane_class = {
     .open_plugin       = open_plugin,

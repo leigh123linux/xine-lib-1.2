@@ -296,6 +296,7 @@ static void yuv_decode_data (video_decoder_t *this_gen,
  * sure when or if this is used or even if it needs to do anything.
  */
 static void yuv_flush (video_decoder_t *this_gen) {
+  (void)this_gen;
 }
 
 /*
@@ -308,6 +309,7 @@ static void yuv_reset (video_decoder_t *this_gen) {
 }
 
 static void yuv_discontinuity (video_decoder_t *this_gen) {
+  (void)this_gen;
 }
 
 /*
@@ -330,7 +332,11 @@ static video_decoder_t *open_plugin (video_decoder_class_t *class_gen, xine_stre
 
   yuv_decoder_t  *this ;
 
+  (void)class_gen;
+
   this = (yuv_decoder_t *) calloc(1, sizeof(yuv_decoder_t));
+  if (!this)
+    return NULL;
 
   this->video_decoder.decode_data         = yuv_decode_data;
   this->video_decoder.flush               = yuv_flush;
@@ -348,6 +354,9 @@ static video_decoder_t *open_plugin (video_decoder_class_t *class_gen, xine_stre
 }
 
 void *decode_yuv_init_class (xine_t *xine, const void *data) {
+
+  (void)xine;
+  (void)data;
 
   static const video_decoder_class_t decode_video_yuv_class = {
     .open_plugin     = open_plugin,

@@ -213,6 +213,7 @@ static void vpx_decode_data (video_decoder_t *this_gen, buf_element_t *buf)
 
 static void vpx_flush (video_decoder_t *this_gen)
 {
+  (void)this_gen;
 }
 
 static void vpx_reset (video_decoder_t *this_gen)
@@ -235,6 +236,7 @@ static void vpx_reset (video_decoder_t *this_gen)
 
 static void vpx_discontinuity (video_decoder_t *this_gen)
 {
+  (void)this_gen;
 }
 
 /*
@@ -270,7 +272,11 @@ static video_decoder_t *open_plugin (video_decoder_class_t *class_gen, xine_stre
   vpx_decoder_t  *this;
 
   const struct vpx_codec_iface *iface;
-  struct vpx_codec_dec_cfg deccfg = { 0 };
+  struct vpx_codec_dec_cfg deccfg = {
+/*  .threads = 0, FIXME: user config? */
+    .w = 0,
+    .h = 0
+  };
   int vp_version;
 
   uint32_t video_type = BUF_VIDEO_BASE | (_x_get_video_streamtype(stream) << 16);
@@ -289,6 +295,7 @@ static video_decoder_t *open_plugin (video_decoder_class_t *class_gen, xine_stre
       return NULL;
   }
 
+  (void)class_gen;
 
   this = (vpx_decoder_t *) calloc(1, sizeof(vpx_decoder_t));
   if (!this)
@@ -316,6 +323,7 @@ static video_decoder_t *open_plugin (video_decoder_class_t *class_gen, xine_stre
           LOG_MODULE "VP%d: using libvpx version %s\n",
           vp_version, vpx_codec_version_str());
 
+  /* FIXME: ver should be VPX_DECODER_ABI_VERSION not 0. */
   if (vpx_codec_dec_init(&this->ctx, iface, &deccfg, 0) != VPX_CODEC_OK) {
     const char *err = vpx_codec_error(&this->ctx);
     xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
@@ -330,6 +338,9 @@ static video_decoder_t *open_plugin (video_decoder_class_t *class_gen, xine_stre
 
 static void *init_plugin_vpx (xine_t *xine, const void *data)
 {
+  (void)xine;
+  (void)data;
+
   static const video_decoder_class_t decode_video_vpx_class = {
     .open_plugin     = open_plugin,
     .identifier      = "libvpx",

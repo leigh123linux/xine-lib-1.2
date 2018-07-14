@@ -227,6 +227,7 @@ static void rgb_decode_data (video_decoder_t *this_gen,
  * sure when or if this is used or even if it needs to do anything.
  */
 static void rgb_flush (video_decoder_t *this_gen) {
+  (void)this_gen;
 }
 
 /*
@@ -239,6 +240,7 @@ static void rgb_reset (video_decoder_t *this_gen) {
 }
 
 static void rgb_discontinuity (video_decoder_t *this_gen) {
+  (void)this_gen;
 }
 
 /*
@@ -262,7 +264,11 @@ static video_decoder_t *open_plugin (video_decoder_class_t *class_gen, xine_stre
 
   rgb_decoder_t  *this ;
 
+  (void)class_gen;
+
   this = (rgb_decoder_t *) calloc(1, sizeof(rgb_decoder_t));
+  if (!this)
+    return NULL;
 
   this->video_decoder.decode_data         = rgb_decode_data;
   this->video_decoder.flush               = rgb_flush;
@@ -280,6 +286,9 @@ static video_decoder_t *open_plugin (video_decoder_class_t *class_gen, xine_stre
 }
 
 void *decode_rgb_init_class (xine_t *xine, const void *data) {
+
+  (void)xine;
+  (void)data;
 
   static const video_decoder_class_t decode_video_rgb_class = {
     .open_plugin     = open_plugin,
