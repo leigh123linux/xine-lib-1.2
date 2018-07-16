@@ -835,6 +835,32 @@ static void init_codec_vobsub(demux_matroska_t *this,
   }
 }
 
+static void init_codec_dvbsub(demux_matroska_t *this, matroska_track_t *track) {
+  buf_element_t *buf;
+  spu_dvb_descriptor_t *desc;
+
+  if (!track->codec_private || track->codec_private_len < 4)
+    return;
+
+  buf = track->fifo->buffer_pool_alloc (track->fifo);
+
+  desc = (spu_dvb_descriptor_t *)buf->mem;
+  memset(desc, 0, sizeof(*desc));
+  desc->comp_page_id = _X_BE_16(track->codec_private);
+  desc->aux_page_id  = _X_BE_16(track->codec_private + 2);
+
+  buf->size = 0;
+  buf->type = track->buf_type;
+  buf->content = buf->mem;
+  buf->decoder_flags = BUF_FLAG_SPECIAL;
+  buf->decoder_info[1] = BUF_SPECIAL_SPU_DVB_DESCRIPTOR;
+  buf->decoder_info[2] = sizeof(*desc);
+  buf->decoder_info_ptr[2] = desc;
+
+  track->fifo->put (track->fifo, buf);
+}
+
+
 static void init_codec_spu(demux_matroska_t *this, matroska_track_t *track) {
   buf_element_t *buf;
 
@@ -1244,6 +1270,41 @@ static void handle_vobsub (demux_plugin_t *this_gen, matroska_track_t *track,
             "demux_matroska: VobSub: data length is greater than fifo buffer length\n");
     buf->free_buffer(buf);
   }
+
+  free(new_data);
+}
+
+static void handle_dvbsub (demux_plugin_t *this_gen, matroska_track_t *track,
+                             int decoder_flags,
+                             uint8_t *data, size_t data_len,
+                             int64_t data_pts, int data_duration,
+                             int input_normpos, int input_time) {
+  demux_matroska_t *this = (demux_matroska_t *) this_gen;
+  uint8_t *new_data = NULL;
+  size_t new_data_len = 0;
+
+  if (track->compress_algo == MATROSKA_COMPRESS_ZLIB) {
+    uncompress_zlib(this, data, data_len, &new_data, &new_data_len);
+    if (!new_data)
+      return;
+    data = new_data;
+    data_len = new_data_len;
+  }
+
+  /* hmm ... */
+  buf_element_t *buf = track->fifo->buffer_pool_alloc(track->fifo);
+  buf->decoder_info[2] = data_len + 2;
+  buf->size = 2;
+  buf->pts = data_pts;
+  buf->content[0] = 0x20;
+  buf->content[1] = 0x00;
+  buf->type = track->buf_type;
+  track->fifo->put(track->fifo, buf);
+
+  _x_demux_send_data(track->fifo, data, data_len,
+                     data_pts, track->buf_type, decoder_flags,
+                     input_normpos, input_time,
+                     0, 0);
 
   free(new_data);
 }
@@ -1748,6 +1809,11 @@ static int parse_track_entry(demux_matroska_t *this, matroska_track_t *track) {
       lprintf("MATROSKA_CODEC_ID_S_TEXT_USF\n");
       track->buf_type = BUF_SPU_OGM;
       track->handle_content = handle_sub_utf8;
+    } else if (!strcmp(track->codec_id, MATROSKA_CODEC_ID_S_DVBSUB)) {
+      lprintf("MATROSKA_CODEC_ID_S_DVBSUB\n");
+      track->buf_type = BUF_SPU_DVB;
+      track->handle_content = handle_dvbsub;
+      init_codec = init_codec_dvbsub;
     } else if (!strcmp(track->codec_id, MATROSKA_CODEC_ID_S_VOBSUB)) {
       lprintf("MATROSKA_CODEC_ID_S_VOBSUB\n");
       track->buf_type = BUF_SPU_DVD;

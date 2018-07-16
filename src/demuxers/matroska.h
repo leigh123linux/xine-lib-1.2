@@ -348,6 +348,7 @@ struct matroska_track_s {
 #define MATROSKA_CODEC_ID_S_UTF8         "S_UTF8"        /* deprecated */
 #define MATROSKA_CODEC_ID_S_SSA          "S_SSA"         /* deprecated */
 #define MATROSKA_CODEC_ID_S_ASS          "S_ASS"         /* deprecated */
+#define MATROSKA_CODEC_ID_S_DVBSUB       "S_DVBSUB"
 #define MATROSKA_CODEC_ID_S_VOBSUB       "S_VOBSUB"
 #define MATROSKA_CODEC_ID_S_HDMV_PGS     "S_HDMV/PGS"
 #define MATROSKA_CODEC_ID_S_HDMV_TEXTST  "S_HDMV/TEXTST"
