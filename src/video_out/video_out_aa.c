@@ -321,8 +321,8 @@ static void *init_class (xine_t *xine, const void *visual_gen) {
 }
 
 static const vo_info_t vo_info_aa = {
-  6,
-  XINE_VISUAL_TYPE_AA
+  .priority    = 6,
+  .visual_type = XINE_VISUAL_TYPE_AA,
 };
 
 const plugin_info_t xine_plugin_info[] EXPORTED = {

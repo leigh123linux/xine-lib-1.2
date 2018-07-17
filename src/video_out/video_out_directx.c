@@ -1365,8 +1365,8 @@ static void *init_class (xine_t *xine, const void *visual_gen) {
 }
 
 static const vo_info_t vo_info_win32 = {
-  7,                        /* priority    */
-  XINE_VISUAL_TYPE_DIRECTX  /* visual type */
+  .priority    = 7,
+  .visual_type = XINE_VISUAL_TYPE_DIRECTX,
 };
 
 /*

@@ -1333,8 +1333,8 @@ static void pgx64_config_changed(void *user_data, xine_cfg_entry_t *entry)
  * XINE VIDEO DRIVER CLASS FUNCTIONS
  */
 static const vo_info_t vo_info_pgx64 = {
-  10,
-  XINE_VISUAL_TYPE_X11
+  .priority    = 10,
+  .visual_type = XINE_VISUAL_TYPE_X11,
 };
 
 static vo_driver_t *pgx64_init_driver(video_driver_class_t *class_gen, const void *visual_gen)

@@ -785,8 +785,8 @@ static void pgx32_dispose(vo_driver_t *this_gen)
  */
 
 static const vo_info_t vo_info_pgx32 = {
-  10,
-  XINE_VISUAL_TYPE_X11
+  .priority    = 10,
+  .visual_type = XINE_VISUAL_TYPE_X11,
 };
 
 static vo_driver_t *pgx32_init_driver(video_driver_class_t *class_gen, const void *visual_gen)

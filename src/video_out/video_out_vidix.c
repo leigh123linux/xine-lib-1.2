@@ -1240,8 +1240,8 @@ static void *vidix_init_class (xine_t *xine, const void *visual_gen) {
 }
 
 static const vo_info_t vo_info_vidix = {
-  2,                    /* priority    */
-  XINE_VISUAL_TYPE_X11  /* visual type */
+  .priority    = 2,
+  .visual_type = XINE_VISUAL_TYPE_X11,
 };
 #endif
 
@@ -1315,8 +1315,8 @@ static void *vidixfb_init_class (xine_t *xine, const void *visual_gen) {
 }
 
 static const vo_info_t vo_info_vidixfb = {
-  2,                    /* priority    */
-  XINE_VISUAL_TYPE_FB   /* visual type */
+  .priority    = 2,
+  .visual_type = XINE_VISUAL_TYPE_FB,
 };
 #endif
 

@@ -1948,8 +1948,8 @@ static void *init_class_fb (xine_t *xine, const void *visual_gen) {
 }
 
 static const vo_info_t vo_info_directfb_fb = {
-  8,                   /* priority    */
-  XINE_VISUAL_TYPE_FB  /* visual type */
+  .priority    = 8,
+  .visual_type = XINE_VISUAL_TYPE_FB,
 };
 
 /*** XDirectFB plugin functions ****/
@@ -2166,13 +2166,13 @@ static void *init_class_x11_2 (xine_t *xine, const void *visual_gen) {
 }
 
 static const vo_info_t vo_info_directfb_x11 = {
-  8,                    /* priority    */
-  XINE_VISUAL_TYPE_X11  /* visual type */
+  .priority    = 8,
+  .visual_type = XINE_VISUAL_TYPE_X11,
 };
 
 static const vo_info_t vo_info_directfb_x11_2 = {
-  8,                      /* priority    */
-  XINE_VISUAL_TYPE_X11_2  /* visual type */
+  .priority    = 8,
+  .visual_type = XINE_VISUAL_TYPE_X11_2,
 };
 #endif /* HAVE_X11 */
 

@@ -4303,8 +4303,8 @@ static void *vaapi_init_class (xine_t *xine, const void *visual_gen) {
 }
 
 static const vo_info_t vo_info_vaapi = {
-  9,                      /* priority    */
-  XINE_VISUAL_TYPE_X11    /* visual type */
+  .priority    = 9,
+  .visual_type = XINE_VISUAL_TYPE_X11,
 };
 
 /*

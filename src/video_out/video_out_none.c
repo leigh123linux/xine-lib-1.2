@@ -305,8 +305,8 @@ static void *vo_none_init_class (xine_t *xine, const void *visual) {
 }
 
 static const vo_info_t vo_info_none = {
-  5,                        /* Priority    */
-  XINE_VISUAL_TYPE_NONE     /* Visual type */
+  .priority    = 5,
+  .visual_type = XINE_VISUAL_TYPE_NONE,
 };
 
 #define VO_NONE_CATALOG { PLUGIN_VIDEO_OUT, 22, "none", XINE_VERSION_CODE, &vo_info_none, vo_none_init_class }

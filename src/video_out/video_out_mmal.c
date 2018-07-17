@@ -909,8 +909,8 @@ static void *init_class (xine_t *xine, const void *visual_gen) {
 }
 
 static const vo_info_t vo_info_mmal = {
-  10,                  /* priority */
-  XINE_VISUAL_TYPE_FB, /* visual type supported by this plugin */
+  .priority    = 10,
+  .visual_type = XINE_VISUAL_TYPE_FB,
 };
 
 const plugin_info_t xine_plugin_info[] EXPORTED = {

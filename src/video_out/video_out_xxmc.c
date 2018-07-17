@@ -2871,8 +2871,8 @@ static const vo_info_t vo_info_xxmc = {
   /* keep priority lower than Xv for now. we may increase this
    * when the xxmc driver is more mature/tested.
    */
-  5,                    /* priority    */
-  XINE_VISUAL_TYPE_X11  /* visual type */
+  .priority    = 5,
+  .visual_type = XINE_VISUAL_TYPE_X11,
 };
 
 /*

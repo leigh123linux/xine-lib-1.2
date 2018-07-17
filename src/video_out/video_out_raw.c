@@ -543,8 +543,8 @@ static void *raw_init_class (xine_t *xine, const void *visual_gen)
 
 
 static const vo_info_t vo_info_raw = {
-  7,                    /* priority    */
-  XINE_VISUAL_TYPE_RAW  /* visual type */
+  .priority    = 7,
+  .visual_type = XINE_VISUAL_TYPE_RAW,
 };
 
 

@@ -626,13 +626,13 @@ static void *init_class_fb (xine_t *xine, const void *visual_gen) {
 }
 
 static const vo_info_t vo_info_sdl = {
-  4,                    /* priority */
-  XINE_VISUAL_TYPE_X11, /* visual type supported by this plugin */
+  .priority    = 4,
+  .visual_type = XINE_VISUAL_TYPE_X11,
 };
 
 static const vo_info_t vo_info_sdl_fb = {
-  4,                    /* priority */
-  XINE_VISUAL_TYPE_FB,  /* visual type supported by this plugin */
+  .priority    = 4,
+  .visual_type = XINE_VISUAL_TYPE_FB,
 };
 
 const plugin_info_t xine_plugin_info[] EXPORTED = {

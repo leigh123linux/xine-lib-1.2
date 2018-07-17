@@ -1466,14 +1466,14 @@ static void *xshm_init_class_2 (xine_t *xine, const void *visual_gen) {
 
 
 static const vo_info_t vo_info_xshm = {
-  6,                      /* priority    */
-  XINE_VISUAL_TYPE_X11    /* visual type */
+  .priority    = 6,
+  .visual_type = XINE_VISUAL_TYPE_X11,
 };
 
 /* visual type with configurable X11 locking */
 static const vo_info_t vo_info_xshm_2 = {
-  6,                      /* priority    */
-  XINE_VISUAL_TYPE_X11_2  /* visual type */
+  .priority    = 6,
+  .visual_type = XINE_VISUAL_TYPE_X11_2,
 };
 
 

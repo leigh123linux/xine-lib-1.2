@@ -1093,10 +1093,9 @@ static void *fb_init_class(xine_t *xine, const void *visual_gen)
   return this;
 }
 
-static const vo_info_t vo_info_fb =
-{
-  1,                    /* priority    */
-  XINE_VISUAL_TYPE_FB   /* visual type */
+static const vo_info_t vo_info_fb = {
+  .priority    = 1,
+  .visual_type = XINE_VISUAL_TYPE_FB,
 };
 
 /* exported plugin catalog entry */
