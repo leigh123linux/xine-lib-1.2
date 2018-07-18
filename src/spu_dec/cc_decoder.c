@@ -835,6 +835,7 @@ static void ccmem_init(cc_memory_t *this)
 static void ccmem_exit(cc_memory_t *this)
 {
 /*FIXME: anything to deallocate?*/
+  (void)this;
 }
 
 
@@ -1187,6 +1188,8 @@ static void cc_decode_PAC(cc_decoder_t *this, int channel,
 static void cc_decode_ext_attribute(cc_decoder_t *this, int channel,
 				    uint8_t c1, uint8_t c2)
 {
+  (void)c1;
+  (void)c2;
   cc_set_channel(this, channel);
 }
 
@@ -1196,6 +1199,7 @@ static void cc_decode_special_char(cc_decoder_t *this, int channel,
 {
   cc_buffer_t *buf;
 
+  (void)c1;
   cc_set_channel(this, channel);
   buf = active_ccbuffer(this);
 #ifdef LOG_DEBUG
@@ -1211,6 +1215,7 @@ static void cc_decode_midrow_attr(cc_decoder_t *this, int channel,
   cc_buffer_t *buf;
   cc_attribute_t attr;
 
+  (void)c1;
   cc_set_channel(this, channel);
   buf = active_ccbuffer(this);
   if (c2 < 0x2e) {
@@ -1240,6 +1245,7 @@ static void cc_decode_misc_control_code(cc_decoder_t *this, int channel,
   printf("cc_decoder: decode_misc: decoding %x %x\n", c1, c2);
 #endif
 
+  (void)c1;
   cc_set_channel(this, channel);
 
   switch (c2) {          /* 0x20 <= c2 <= 0x2f */
@@ -1301,6 +1307,7 @@ static void cc_decode_tab(cc_decoder_t *this, int channel,
 {
   cc_buffer_t *buf;
 
+  (void)c1;
   cc_set_channel(this, channel);
   buf = active_ccbuffer(this);
   ccbuf_tab(buf, c2 & 0x3);

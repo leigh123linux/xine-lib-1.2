@@ -315,6 +315,7 @@ static spu_decoder_t *open_plugin (spu_decoder_class_t *class_gen, xine_stream_t
 
   spudec_decoder_t *this ;
 
+  (void)class_gen;
   this = (spudec_decoder_t *) calloc(1, sizeof (spudec_decoder_t));
   if (!this)
     return NULL;
@@ -361,6 +362,8 @@ static void *init_plugin (xine_t *xine, const void *data) {
 
   spu_decoder_class_t *this;
 
+  (void)xine;
+  (void)data;
   this = calloc(1, sizeof (spu_decoder_class_t));
   if (!this)
     return NULL;

@@ -395,6 +395,7 @@ static void video_frame_format_change_callback (void *user_data, const xine_even
    *
    * for a description of the problem. */
 
+  (void)user_data;
   switch (event->type) {
     case XINE_EVENT_FRAME_FORMAT_CHANGE:
       lprintf("video_frame_format_change_callback called!\n");
@@ -413,6 +414,7 @@ static void spudec_reset (spu_decoder_t *this_gen) {
 
 static void spudec_discontinuity (spu_decoder_t *this_gen) {
   /* do nothing */
+  (void)this_gen;
 }
 
 static void spudec_dispose (spu_decoder_t *this_gen) {
@@ -516,6 +518,7 @@ static void spu_decoder_class_dispose(spu_decoder_class_t *this_gen)
 static void *init_spu_decoder_plugin (xine_t *xine, const void *data) {
   spucmml_class_t *this;
 
+  (void)data;
   this = (spucmml_class_t *) calloc(1, sizeof(spucmml_class_t));
   if (!this)
     return NULL;

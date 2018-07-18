@@ -1342,6 +1342,10 @@ static int demux_sputext_seek (demux_plugin_t *this_gen,
 
   lprintf("seek() called\n");
 
+  (void)start_pos;
+  (void)start_time;
+  (void)playing;
+
   /* simple seeking approach: just go back to start.
    * decoder will discard subtitles until the desired position.
    */
@@ -1375,12 +1379,15 @@ static void demux_sputext_send_headers(demux_plugin_t *this_gen) {
 }
 
 static uint32_t demux_sputext_get_capabilities(demux_plugin_t *this_gen) {
+  (void)this_gen;
   return DEMUX_CAP_NOCAP;
 }
 
 static int demux_sputext_get_optional_data(demux_plugin_t *this_gen,
 					   void *data, int data_type) {
   int channel = *((int *)data);
+
+  (void)this_gen;
 
   switch (data_type) {
   case DEMUX_OPTIONAL_DATA_SPULANG:
@@ -1491,6 +1498,9 @@ void *init_sputext_demux_class (xine_t *xine, const void *data) {
   demux_sputext_class_t *this ;
 
   lprintf("initializing\n");
+
+  (void)xine;
+  (void)data;
 
   this = calloc(1, sizeof (demux_sputext_class_t));
   if (!this)

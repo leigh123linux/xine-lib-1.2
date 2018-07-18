@@ -545,7 +545,7 @@ static int is_cjk_encoding(const char *enc) {
     "SHIFT_JISX0213",
   };
 
-  int pstr;
+  unsigned int pstr;
 
   /* return 1 if encoding string is one of the CJK(Chinese,Jananese,Korean)
    * character set strings. */
@@ -1013,7 +1013,7 @@ static void spudec_reset (spu_decoder_t *this_gen) {
 
 static void spudec_discontinuity (spu_decoder_t *this_gen) {
   /* sputext_decoder_t *this = (sputext_decoder_t *) this_gen; */
-
+  (void)this_gen;
 }
 
 static void spudec_dispose (spu_decoder_t *this_gen) {
@@ -1130,6 +1130,8 @@ static void *init_spu_decoder_plugin (xine_t *xine, const void *data) {
   sputext_class_t *this ;
 
   lprintf("init class\n");
+
+  (void)data;
 
   this = calloc(1, sizeof(sputext_class_t));
   if (!this)

@@ -286,7 +286,7 @@ void spudec_update_nav(spudec_decoder_t *this)
 {
   metronom_clock_t *clock = this->stream->xine->clock;
 
-  if (this->pci_cur.next && this->pci_cur.next->vpts <= clock->get_current_time(clock)) {
+  if (this->pci_cur.next && (int64_t)this->pci_cur.next->vpts <= clock->get_current_time(clock)) {
     pci_node_t *node = this->pci_cur.next;
     xine_fast_memcpy(&this->pci_cur, this->pci_cur.next, sizeof(pci_node_t));
     spudec_process_nav(this);
@@ -882,6 +882,8 @@ static void spudec_discover_clut(xine_t *xine, spudec_state_t *state, vo_overlay
   CLUT_Y_CR_CB_INIT(0x00, 0x90, 0x00),
   CLUT_Y_CR_CB_INIT(0xff, 0x90, 0x00)
   };
+
+  (void)xine;
 
   rle = ovl->rle;
 

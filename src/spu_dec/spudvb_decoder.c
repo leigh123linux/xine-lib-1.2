@@ -440,6 +440,9 @@ static void decode_2bit_pixel_code_string (dvb_spu_decoder_t * this, int r, int 
   int j;
   const uint8_t *lut = lookup_lut (dvbsub, r);
 
+  (void)object_id;
+  (void)ofs;
+
   if (dvbsub->in_scanline == 0)
     dvbsub->in_scanline = 1;
 
@@ -505,6 +508,9 @@ static void decode_4bit_pixel_code_string (dvb_spu_decoder_t * this, int r, int 
   dvbsub_func_t *dvbsub = this->dvbsub;
   int j;
   const uint8_t *lut = lookup_lut (dvbsub, r);
+
+  (void)object_id;
+  (void)ofs;
 
   if (dvbsub->in_scanline == 0)
     dvbsub->in_scanline = 1;
@@ -575,6 +581,9 @@ static void decode_8bit_pixel_code_string (dvb_spu_decoder_t * this, int r, int 
 {
   dvbsub_func_t *dvbsub = this->dvbsub;
   int j;
+
+  (void)object_id;
+  (void)ofs;
 
   if (dvbsub->in_scanline == 0)
     dvbsub->in_scanline = 1;
@@ -938,6 +947,7 @@ static void process_object_data_segment (dvb_spu_decoder_t * this)
 static void process_display_definition_segment(dvb_spu_decoder_t *this)
 {
   /* FIXME: not implemented. */
+  (void)this;
 }
 
 static void unlock_mutex_cancellation_func(void *mutex_gen)
@@ -1229,6 +1239,7 @@ static void spudec_reset (spu_decoder_t * this_gen)
 static void spudec_discontinuity (spu_decoder_t * this_gen)
 {
   /* do nothing */
+  (void)this_gen;
 }
 
 static void spudec_dispose_internal (dvb_spu_decoder_t * this, int thread_running)
@@ -1371,6 +1382,8 @@ static void *init_spu_decoder_plugin (xine_t * xine, const void *data)
 {
 
   dvb_spu_class_t *this;
+
+  (void)data;
   this = calloc(1, sizeof (dvb_spu_class_t));
   if (!this)
     return NULL;

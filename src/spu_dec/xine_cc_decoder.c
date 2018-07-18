@@ -293,9 +293,11 @@ static void spudec_decode_data (spu_decoder_t *this_gen, buf_element_t *buf) {
 }
 
 static void spudec_reset (spu_decoder_t *this_gen) {
+  (void)this_gen;
 }
 
 static void spudec_discontinuity (spu_decoder_t *this_gen) {
+  (void)this_gen;
 }
 
 static void spudec_dispose (spu_decoder_t *this_gen) {
@@ -335,6 +337,7 @@ static void *init_spu_decoder_plugin (xine_t *xine, const void *data) {
 
   spucc_class_t *this ;
 
+  (void)data;
   this = (spucc_class_t *) calloc(1, sizeof(spucc_class_t));
   if (!this)
     return NULL;

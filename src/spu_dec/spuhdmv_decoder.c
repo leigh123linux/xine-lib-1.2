@@ -672,6 +672,7 @@ static presentation_segment_t *segbuf_decode_presentation_segment(segment_buffer
 static rle_elem_t *copy_crop_rle(subtitle_object_t *obj, composition_object_t *cobj)
 {
   /* TODO: cropping (w,h sized image from pos x,y) */
+  (void)cobj;
 
   rle_elem_t *rle = calloc (obj->num_rle, sizeof(rle_elem_t));
   if (rle) {
@@ -774,8 +775,8 @@ static int show_overlay(spuhdmv_decoder_t *this, composition_object_t *cobj, uns
 {
   video_overlay_manager_t *ovl_manager = this->stream->video_out->get_overlay_manager(this->stream->video_out);
   metronom_t              *metronom    = this->stream->metronom;
-  video_overlay_event_t    event       = {0};
-  vo_overlay_t             overlay     = {0};
+  video_overlay_event_t    event       = {.vpts = 0};
+  vo_overlay_t             overlay     = {.x = 0};
 
   /* find palette */
   subtitle_clut_t *clut = this->cluts;
@@ -871,7 +872,7 @@ static int show_overlay(spuhdmv_decoder_t *this, composition_object_t *cobj, uns
 
 static void hide_overlays(spuhdmv_decoder_t *this, int64_t pts)
 {
-  video_overlay_event_t event = {0};
+  video_overlay_event_t event = {.vpts = 0};
   int i = 0;
 
   while (this->overlay_handles[i] >= 0) {
@@ -1046,6 +1047,8 @@ static spu_decoder_t *open_plugin (spu_decoder_class_t *class_gen, xine_stream_t
 {
   spuhdmv_decoder_t *this;
 
+  (void)class_gen;
+
   this = (spuhdmv_decoder_t *) calloc(1, sizeof (spuhdmv_decoder_t));
   if (!this)
     return NULL;
@@ -1072,6 +1075,9 @@ static spu_decoder_t *open_plugin (spu_decoder_class_t *class_gen, xine_stream_t
 static void *init_plugin (xine_t *xine, const void *data)
 {
   spu_decoder_class_t *this;
+
+  (void)xine;
+  (void)data;
 
   this = calloc(1, sizeof (spu_decoder_class_t));
   if (!this)
