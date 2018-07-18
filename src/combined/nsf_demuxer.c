@@ -219,6 +219,7 @@ static int demux_nsf_seek (demux_plugin_t *this_gen,
   start_pos = (off_t) ( (double) start_pos / 65535 *
               this->total_songs );
 
+  (void)start_time;
   /* if thread is not running, initialize demuxer */
   if( !playing ) {
 
@@ -260,15 +261,20 @@ static int demux_nsf_get_status (demux_plugin_t *this_gen) {
 
 /* return the approximate length in miliseconds */
 static int demux_nsf_get_stream_length (demux_plugin_t *this_gen) {
+  (void)this_gen;
   return 0;
 }
 
 static uint32_t demux_nsf_get_capabilities(demux_plugin_t *this_gen) {
+  (void)this_gen;
   return DEMUX_CAP_NOCAP;
 }
 
 static int demux_nsf_get_optional_data(demux_plugin_t *this_gen,
                                        void *data, int data_type) {
+  (void)this_gen;
+  (void)data;
+  (void)data_type;
   return DEMUX_OPTIONAL_UNSUPPORTED;
 }
 
@@ -321,6 +327,8 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
 void *demux_nsf_init_plugin (xine_t *xine, const void *data) {
   demux_class_t *this;
 
+  (void)xine;
+  (void)data;
   this = calloc(1, sizeof(*this));
   if (!this)
     return NULL;

@@ -106,6 +106,8 @@ static uint8 invalid_read(uint32 address)
 {
 #ifdef NOFRENDO_DEBUG
    log_printf("filthy NSF read from $%04X\n", address);
+#else
+  (void)address;
 #endif /* NOFRENDO_DEBUG */
 
    return 0xFF;
@@ -115,6 +117,9 @@ static void invalid_write(uint32 address, uint8 value)
 {
 #ifdef NOFRENDO_DEBUG
    log_printf("filthy NSF tried to write $%02X to $%04X\n", value, address);
+#else
+  (void)address;
+  (void)value;
 #endif /* NOFRENDO_DEBUG */
 }
 
@@ -665,8 +670,7 @@ static const char * nfs_fname_mem(struct nsf_loader_t *loader)
 }
 */
 static struct nsf_mem_loader_t nsf_mem_loader = {
-  { nfs_open_mem, nfs_close_mem, nfs_read_mem, nfs_length_mem, nfs_skip_mem },
-  0,0,0
+  .loader = { nfs_open_mem, nfs_close_mem, nfs_read_mem, nfs_length_mem, nfs_skip_mem, 0 }
 };
 
 nsf_t * nsf_load_extended(struct nsf_loader_t * loader)
@@ -809,7 +813,7 @@ nsf_t * nsf_load_extended(struct nsf_loader_t * loader)
       + (nsf_file_ext.size[2] << 16)
       + (nsf_file_ext.size[3] << 24);
 
-    if (size < sizeof(nsf_file_ext)) {
+    if (size < (int)sizeof(nsf_file_ext)) {
       log_printf("nsf : [%s] corrupt extension size (%d)\n",
 		 loader->fname(loader), size);
       /* Not a fatal error here. Just skip extension loading. */

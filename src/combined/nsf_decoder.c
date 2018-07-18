@@ -211,7 +211,10 @@ static audio_decoder_t *open_plugin (audio_decoder_class_t *class_gen, xine_stre
 
   nsf_decoder_t *this ;
 
+  (void)class_gen;
   this = (nsf_decoder_t *) calloc(1, sizeof(nsf_decoder_t));
+  if (!this)
+    return NULL;
 
   /* connect the member functions */
   this->audio_decoder.decode_data         = nsf_decode_data;
@@ -240,7 +243,11 @@ void *decoder_nsf_init_plugin (xine_t *xine, const void *data) {
 
   nsf_class_t *this ;
 
+  (void)xine;
+  (void)data;
   this = (nsf_class_t *) calloc(1, sizeof(nsf_class_t));
+  if (!this)
+    return NULL;
 
   this->decoder_class.open_plugin     = open_plugin;
   this->decoder_class.identifier      = "NSF";

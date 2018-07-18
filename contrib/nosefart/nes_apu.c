@@ -64,7 +64,7 @@ static int8 noise_short_lut[APU_NOISE_93];
 
 /* $$$ ben : last error */
 #define SET_APU_ERROR(APU,X) \
-if (APU) (APU)->errstr = "apu: " X; else
+do {if (APU) (APU)->errstr = "apu: " X;} while (0)
 
 #define APU_MIX_ENABLE(BIT) (apu->mix_enable&(1<<(BIT)))
 
@@ -1132,6 +1132,7 @@ apu_t *apu_create(int sample_rate, int refresh_rate, int sample_bits, boolean st
    apu_t *temp_apu;
 /*    int channel; */
 
+   (void)stereo;
    temp_apu = malloc(sizeof(apu_t));
    if (NULL == temp_apu)
       return NULL;

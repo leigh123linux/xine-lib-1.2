@@ -84,6 +84,8 @@ void log_print(const char *string)
 #endif /* OSD_LOG */
    /* Log it to disk, as well */
    fputs(string, errorlog);
+#else
+   (void)string;
 #endif /* NOFRENDO_DEBUG */
 }
 
@@ -103,6 +105,8 @@ void log_printf(const char *format, ... )
 #endif /* OSD_LOG */
    vfprintf(errorlog, format, arg);
    va_end(arg);
+#else
+   (void)format;
 #endif /* NOFRENDO_DEBUG */
 }
 
