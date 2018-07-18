@@ -478,6 +478,7 @@ static audio_decoder_t *open_plugin (audio_decoder_class_t *class_gen,
 
   realdec_decoder_t *this ;
 
+  (void)class_gen;
   this = (realdec_decoder_t *) calloc(1, sizeof(realdec_decoder_t));
   if (!this) {
     return NULL;
@@ -501,6 +502,7 @@ void *init_realadec (xine_t *xine, const void *data) {
 
   audio_decoder_class_t       *this;
 
+  (void)data;
   this = calloc(1, sizeof(audio_decoder_class_t));
   if (!this) {
     return NULL;

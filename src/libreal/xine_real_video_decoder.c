@@ -456,6 +456,7 @@ static void realdec_decode_data (video_decoder_t *this_gen, buf_element_t *buf) 
 static void realdec_flush (video_decoder_t *this_gen) {
   /* realdec_decoder_t *this = (realdec_decoder_t *) this_gen; */
 
+  (void)this_gen;
   lprintf ("flush\n");
 }
 
@@ -499,6 +500,7 @@ static video_decoder_t *open_plugin (video_decoder_class_t *class_gen,
 
   realdec_decoder_t *this ;
 
+  (void)class_gen;
   this = (realdec_decoder_t *) calloc(1, sizeof(realdec_decoder_t));
   if (!this) {
     return NULL;
@@ -526,6 +528,7 @@ void *init_realvdec (xine_t *xine, const void *data) {
 
   video_decoder_class_t       *this;
 
+  (void)data;
   this = calloc(1, sizeof(video_decoder_class_t));
   if (!this) {
     return NULL;

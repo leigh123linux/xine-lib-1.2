@@ -103,14 +103,14 @@ void _x_real_codecs_init(xine_t *const xine) {
     { OL | OL64 | UL | UL64,	"RealPlayer10/codecs" },
     { OL | OL64 | UL | UL64,	"RealPlayer9/users/Real/Codecs" },
     { O | OL | UL,		"RealPlayer8/Codecs" },
-    {}
+    { 0,			NULL}
   };
 
   int i;
   for (i = 0; paths[i].prefix; ++i)
   {
     int p;
-    for (p = 0; p < sizeof (prefix) / sizeof (prefix[0]); ++p)
+    for (p = 0; p < (int)sizeof (prefix) / (int)sizeof (prefix[0]); ++p)
     {
       if (paths[i].prefix & (1 << p))
       {
