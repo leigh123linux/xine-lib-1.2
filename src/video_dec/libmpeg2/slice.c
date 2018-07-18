@@ -1159,6 +1159,8 @@ static void motion_fr_dmv (picture_t * picture, motion_t * motion,
     int motion_x, motion_y, dmv_x, dmv_y, m, other_x, other_y;
     unsigned int pos_x, pos_y, xy_half, offset;
 
+    (void)table;
+
     NEEDBITS (bit_buf, bits, bit_ptr);
     motion_x = motion->pmv[0][0] + get_motion_delta (picture,
 						     motion->f_code[0]);
@@ -1372,6 +1374,8 @@ static void motion_fi_dmv (picture_t * picture, motion_t * motion,
 #define bit_ptr (picture->bitstream_ptr)
     int motion_x, motion_y, other_x, other_y;
     unsigned int pos_x, pos_y, xy_half;
+
+    (void)table;
 
     NEEDBITS (bit_buf, bits, bit_ptr);
     motion_x = motion->pmv[0][0] + get_motion_delta (picture,

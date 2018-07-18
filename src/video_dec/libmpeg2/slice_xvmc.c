@@ -1071,6 +1071,9 @@ static inline void slice_xvmc_intra_DCT (picture_t * picture, int cc,
 #define bit_buf (picture->bitstream_buf)
 #define bits (picture->bitstream_bits)  
 #define bit_ptr (picture->bitstream_ptr)
+    (void)dest;
+    (void)stride;
+
     NEEDBITS (bit_buf, bits, bit_ptr);
     /* Get the intra DC coefficient and inverse quantize it */
 
@@ -1108,6 +1111,9 @@ static inline void slice_xvmc_intra_DCT (picture_t * picture, int cc,
 static inline void slice_xvmc_non_intra_DCT (picture_t * picture, uint8_t * dest,
 					int stride)
 {
+    (void)dest;
+    (void)stride;
+
   mpeg2_zero_block(picture->mc->blockptr);
 
     if (picture->mpeg1)
@@ -1129,6 +1135,8 @@ static void motion_mp1 (picture_t * picture, motion_t * motion,
 #define bits (picture->bitstream_bits)
 #define bit_ptr (picture->bitstream_ptr)
     int motion_x, motion_y;
+
+    (void)table;
 
     NEEDBITS (bit_buf, bits, bit_ptr);
     motion_x = (motion->pmv[0][0] +
@@ -1159,6 +1167,8 @@ static void motion_fr_frame (picture_t * picture, motion_t * motion,
 #define bit_ptr (picture->bitstream_ptr)
     int motion_x, motion_y;
 
+    (void)table;
+
     NEEDBITS (bit_buf, bits, bit_ptr);
     motion_x = motion->pmv[0][0] + get_xvmc_motion_delta (picture,
 						     motion->f_code[0]);
@@ -1185,6 +1195,8 @@ static void motion_fr_field (picture_t * picture, motion_t * motion,
 #define bit_ptr (picture->bitstream_ptr)
     int motion_x, motion_y, field;
     //    unsigned int pos_x, pos_y, xy_half;
+
+    (void)table;
 
     NEEDBITS (bit_buf, bits, bit_ptr);
     field = UBITS (bit_buf, 1);
@@ -1231,6 +1243,8 @@ static void motion_fr_dmv (picture_t * picture, motion_t * motion,
 #define bits (picture->bitstream_bits)
 #define bit_ptr (picture->bitstream_ptr)
     int motion_x, motion_y;
+
+    (void)table;
 
     // TODO field select ?? possible need to be 0
     picture->XvMC_mv_field_sel[0][0] = picture->XvMC_mv_field_sel[1][0] = 0;
@@ -1299,6 +1313,8 @@ static void motion_fi_field (picture_t * picture, motion_t * motion,
     int motion_x, motion_y;
     /*uint8_t ** ref_field;*/
 
+    (void)table;
+
     NEEDBITS (bit_buf, bits, bit_ptr);
     /*ref_field = motion->ref2[UBITS (bit_buf, 1)];*/
 
@@ -1331,6 +1347,8 @@ static void motion_fi_16x8 (picture_t * picture, motion_t * motion,
 #define bit_ptr (picture->bitstream_ptr)
     int motion_x, motion_y;
     /*uint8_t ** ref_field;*/
+
+    (void)table;
 
     NEEDBITS (bit_buf, bits, bit_ptr);
     /*ref_field = motion->ref2[UBITS (bit_buf, 1)];*/
@@ -1383,6 +1401,8 @@ static void motion_fi_dmv (picture_t * picture, motion_t * motion,
 #define bits (picture->bitstream_bits)
 #define bit_ptr (picture->bitstream_ptr)
     int motion_x, motion_y;
+
+    (void)table;
 
     NEEDBITS (bit_buf, bits, bit_ptr);
     motion_x = motion->pmv[0][0] + get_xvmc_motion_delta (picture,

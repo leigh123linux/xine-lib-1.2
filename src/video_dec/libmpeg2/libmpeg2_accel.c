@@ -30,6 +30,9 @@
 void 
 libmpeg2_accel_scan( mpeg2dec_accel_t *accel, uint8_t *scan_norm, uint8_t *scan_alt)
 {
+  (void)accel;
+  (void)scan_norm;
+  (void)scan_alt;
   xvmc_setup_scan_ptable();
 }
 
@@ -59,6 +62,7 @@ libmpeg2_accel_discontinuity(mpeg2dec_accel_t *accel, uint32_t frame_format, pic
 int 
 libmpeg2_accel_new_sequence(mpeg2dec_accel_t *accel, uint32_t frame_format, picture_t *picture)
 {
+  (void)accel;
   switch(frame_format) {
   case XINE_IMGFMT_XXMC:
   case XINE_IMGFMT_XVMC: {
@@ -77,6 +81,7 @@ int
 libmpeg2_accel_new_frame(mpeg2dec_accel_t *accel, uint32_t frame_format, 
 			 picture_t *picture, double ratio, uint32_t flags)
 {  
+  (void)accel;
   if (picture->current_frame) {
     if (XINE_IMGFMT_XXMC == frame_format) {
       xine_xxmc_t *xxmc = (xine_xxmc_t *) 

@@ -76,6 +76,7 @@ static void stats_picture (uint8_t * buffer)
 
 static void stats_user_data (uint8_t * buffer)
 {
+    (void)buffer;
     fprintf (stderr, " (user_data)\n");
 }
 
@@ -137,11 +138,13 @@ static void stats_sequence (uint8_t * buffer)
 
 static void stats_sequence_error (uint8_t * buffer)
 {
+    (void)buffer;
     fprintf (stderr, " (sequence_error)\n");
 }
 
 static void stats_sequence_end (uint8_t * buffer)
 {
+    (void)buffer;
     fprintf (stderr, " (sequence_end)\n");
 }
 
@@ -155,6 +158,8 @@ static void stats_group (uint8_t * buffer)
 static void stats_slice (int code, uint8_t * buffer)
 {
     /* fprintf (stderr, " (slice %d)\n", code); */
+    (void)code;
+    (void)buffer;
 }
 
 static void stats_sequence_extension (uint8_t * buffer)
@@ -178,27 +183,32 @@ static void stats_sequence_extension (uint8_t * buffer)
 
 static void stats_sequence_display_extension (uint8_t * buffer)
 {
+    (void)buffer;
     fprintf (stderr, " (sequence_display_extension)\n");
 }
 
 static void stats_quant_matrix_extension (uint8_t * buffer)
 {
+    (void)buffer;
     fprintf (stderr, " (quant_matrix_extension)\n");
 }
 
 static void stats_copyright_extension (uint8_t * buffer)
 {
+    (void)buffer;
     fprintf (stderr, " (copyright_extension)\n");
 }
 
 
 static void stats_sequence_scalable_extension (uint8_t * buffer)
 {
+    (void)buffer;
     fprintf (stderr, " (sequence_scalable_extension)\n");
 }
 
 static void stats_picture_display_extension (uint8_t * buffer)
 {
+    (void)buffer;
     fprintf (stderr, " (picture_display_extension)\n");
 }
 

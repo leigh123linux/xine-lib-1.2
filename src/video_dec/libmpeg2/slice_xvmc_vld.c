@@ -67,6 +67,8 @@ void mpeg2_xxmc_slice( mpeg2dec_accel_t *accel, picture_t *picture,
   float
     ms_per_slice;
 
+  (void)buffer;
+
   if (1 == code && accel->xvmc_last_slice_code != 1) {
     frame->bad_frame = 1;
     accel->slices_per_row = 1;
@@ -207,7 +209,7 @@ void mpeg2_xxmc_vld_frame_complete(mpeg2dec_accel_t *accel, picture_t *picture, 
   }
 
   if ((code != 0xff) || ((accel->xvmc_last_slice_code == 
-			  accel->xxmc_mb_pic_height) && 
+			  (int)accel->xxmc_mb_pic_height) && 
 			 accel->slices_per_row == accel->row_slice_count)) {
 
     xxmc->proc_xxmc_flush( frame );
