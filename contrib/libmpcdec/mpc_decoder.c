@@ -125,7 +125,7 @@ static void mpc_decoder_bitstream_jump(mpc_decoder *d, const mpc_uint32_t bits)
     }
 }
 
-void mpc_decoder_update_buffer(mpc_decoder *d, mpc_uint32_t RING)
+static void mpc_decoder_update_buffer(mpc_decoder *d, mpc_uint32_t RING)
 {
     if ((RING ^ d->Zaehler) & MEMSIZE2 ) {
         // update buffer

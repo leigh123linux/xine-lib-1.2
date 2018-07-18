@@ -120,13 +120,16 @@ streaminfo_read_header_sv7(mpc_streaminfo * si, mpc_uint32_t HeaderData[8])
             break;
         }
     }
+#if 0
+    if ( si->peak_title == 0 ) // there is no correct peak_title contained within header
+      si->peak_title = (mpc_uint16_t)(Estimatedpeak_title * 1.18);
+    if ( si->peak_album == 0 )
+      si->peak_album = si->peak_title; // no correct peak_album, use peak_title
 
-    //    if ( si->peak_title == 0 )                                      // there is no correct peak_title contained within header
-    //        si->peak_title = (mpc_uint16_t)(Estimatedpeak_title * 1.18);
-    //    if ( si->peak_album == 0 )
-    //        si->peak_album = si->peak_title;                          // no correct peak_album, use peak_title
-
-    //si->sample_freq    = 44100;                                     // AB: used by all files up to SV7
+    si->sample_freq    = 44100; // AB: used by all files up to SV7
+#else
+    (void)Estimatedpeak_title;
+#endif
     si->channels = 2;
 
     return ERROR_CODE_OK;

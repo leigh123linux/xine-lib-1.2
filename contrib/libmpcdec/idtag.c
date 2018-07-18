@@ -42,9 +42,11 @@
 mpc_int32_t
 JumpID3v2 (mpc_reader* r) {
     unsigned char  tmp [10];
+#if 0
     mpc_uint32_t   Unsynchronisation;   // ID3v2.4-flag
     mpc_uint32_t   ExtHeaderPresent;    // ID3v2.4-flag
     mpc_uint32_t   ExperimentalFlag;    // ID3v2.4-flag
+#endif
     mpc_uint32_t   FooterPresent;       // ID3v2.4-flag
     mpc_int32_t    ret;
 
@@ -60,9 +62,11 @@ JumpID3v2 (mpc_reader* r) {
         return 0;
 
     // read flags
+#if 0
     Unsynchronisation = tmp[5] & 0x80;
     ExtHeaderPresent  = tmp[5] & 0x40;
     ExperimentalFlag  = tmp[5] & 0x20;
+#endif
     FooterPresent     = tmp[5] & 0x10;
 
     if ( tmp[5] & 0x0F )
