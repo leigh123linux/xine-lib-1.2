@@ -1896,6 +1896,8 @@ vcd_init (xine_t *xine, const void *data)
 
   xprintf (xine, XINE_VERBOSITY_DEBUG, "input_vcd: init class\n");
 
+  (void)data;
+
   class = calloc (1, sizeof (vcd_input_class_t));
   if (!class)
     return NULL;

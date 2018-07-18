@@ -282,6 +282,7 @@ static void
 _vcdplayer_update_entry(vcdinfo_obj_t *p_vcdinfo, uint16_t ofs,
                         uint16_t *entry, const char *label)
 {
+  (void)label;
   if ( ofs == VCDINFO_INVALID_OFFSET ) {
     *entry = VCDINFO_INVALID_ENTRY;
   } else {
@@ -901,6 +902,8 @@ vcdplayer_read (vcdplayer_t *p_vcdplayer, uint8_t *p_buf,
                 const off_t i_len)
 {
 
+  (void)i_len;
+
   if ( p_vcdplayer->i_lsn >= p_vcdplayer->end_lsn ) {
     vcdplayer_read_status_t read_status;
 
@@ -976,6 +979,8 @@ void
 vcdplayer_send_button_update(vcdplayer_t *p_vcdplayer, const int mode)
 {
   /* dbg_print (p_vcdplayer, INPUT_DBG_CALL, "Called\n"); */
+  (void)p_vcdplayer;
+  (void)mode;
   return;
 }
 

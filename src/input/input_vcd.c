@@ -797,11 +797,13 @@ static off_t vcd_plugin_get_current_pos (input_plugin_t *this_gen){
 
 static uint32_t vcd_plugin_get_capabilities (input_plugin_t *this_gen) {
 
+  (void)this_gen;
   return INPUT_CAP_SEEKABLE | INPUT_CAP_BLOCK ;
 }
 
 static uint32_t vcd_plugin_get_blocksize (input_plugin_t *this_gen) {
 
+  (void)this_gen;
   return VCDSECTORSIZE;
 }
 
@@ -825,6 +827,9 @@ static const char* vcd_plugin_get_mrl (input_plugin_t *this_gen) {
 static int vcd_plugin_get_optional_data (input_plugin_t *this_gen,
 					 void *data, int data_type) {
 
+  (void)this_gen;
+  (void)data;
+  (void)data_type;
   return INPUT_OPTIONAL_UNSUPPORTED;
 }
 
@@ -1076,7 +1081,10 @@ static void *init_class (xine_t *xine, const void *data) {
   vcd_input_class_t  *this;
   config_values_t    *config = xine->config;
 
+  (void)data;
   this = calloc(1, sizeof (vcd_input_class_t));
+  if (!this)
+    return NULL;
 
   this->xine   = xine;
 

@@ -1108,6 +1108,7 @@ static void handle_events(bluray_input_plugin_t *this)
 
 static uint32_t bluray_plugin_get_capabilities (input_plugin_t *this_gen)
 {
+  (void)this_gen;
   return INPUT_CAP_SEEKABLE  |
          INPUT_CAP_BLOCK     |
          INPUT_CAP_AUDIOLANG |
@@ -1294,6 +1295,7 @@ static off_t bluray_plugin_get_length (input_plugin_t *this_gen)
 
 static uint32_t bluray_plugin_get_blocksize (input_plugin_t *this_gen)
 {
+  (void)this_gen;
   return ALIGNED_UNIT_SIZE;
 }
 
@@ -1836,6 +1838,7 @@ static const char * const *bluray_class_get_autoplay_list (input_class_t *this_g
 {
   static const char * const autoplay_list[] = { "bluray:/", NULL };
 
+  (void)this_gen;
   *num_files = 1;
 
   return autoplay_list;
@@ -1913,7 +1916,10 @@ static void *bluray_init_plugin (xine_t *xine, const void *data)
 
   config_values_t      *config = xine->config;
   bluray_input_class_t *this   = (bluray_input_class_t *) calloc(1, sizeof (bluray_input_class_t));
+  if (!this)
+    return NULL;
 
+  (void)data;
   this->xine = xine;
 
   this->input_class.get_instance       = bluray_class_get_instance;
@@ -1973,7 +1979,7 @@ static void *bluray_init_plugin (xine_t *xine, const void *data)
 
   /* */
   config->register_enum(config, "media.bluray.skip_behaviour", 0,
-                        skip_modes,
+                        (char **)skip_modes,
                         _("unit for the skip action"),
                         _("You can configure the behaviour when issuing a skip command (using the skip "
                           "buttons for example)."),
@@ -1986,6 +1992,7 @@ static const char * const *bd_class_get_autoplay_list (input_class_t *this_gen, 
 {
   static const char * const autoplay_list[] = { "bd:/", NULL };
 
+  (void)this_gen;
   *num_files = 1;
 
   return autoplay_list;

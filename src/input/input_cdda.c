@@ -2030,6 +2030,7 @@ static void _cdda_free_cddb_info(cdda_input_plugin_t *this) {
 
 static int cdda_open(cdda_input_plugin_t *this_gen,
 					 const char *cdda_device, cdrom_toc *toc, int *fdd) {
+  (void)toc;
 #ifndef WIN32
   int fd = -1;
 
@@ -2243,6 +2244,7 @@ static int cdda_close(cdda_input_plugin_t *this_gen) {
 
 static uint32_t cdda_plugin_get_capabilities (input_plugin_t *this_gen) {
 
+  (void)this_gen;
   return INPUT_CAP_SEEKABLE;
 }
 
@@ -2345,6 +2347,7 @@ static off_t cdda_plugin_get_length (input_plugin_t *this_gen) {
 
 static uint32_t cdda_plugin_get_blocksize (input_plugin_t *this_gen) {
 
+  (void)this_gen;
   return 0;
 }
 
@@ -2356,6 +2359,9 @@ static const char* cdda_plugin_get_mrl (input_plugin_t *this_gen) {
 
 static int cdda_plugin_get_optional_data (input_plugin_t *this_gen,
                                           void *data, int data_type) {
+  (void)this_gen;
+  (void)data;
+  (void)data_type;
   return 0;
 }
 
@@ -2762,6 +2768,7 @@ static void *init_plugin (xine_t *xine, const void *data) {
   cdda_input_class_t  *this;
   config_values_t     *config;
 
+  (void)data;
   this = calloc(1, sizeof (cdda_input_class_t));
   if (!this)
     return NULL;
