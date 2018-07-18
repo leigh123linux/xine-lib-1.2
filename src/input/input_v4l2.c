@@ -169,7 +169,7 @@ static int v4l2_input_setup_video_streaming(v4l2_input_plugin_t *this) {
 
     this->video->buffers = calloc(this->video->bufcount, sizeof(buffer_data));
     _x_assert(this->video->buffers);
-    for (i = 0;i < this->video->bufcount;i++) {
+    for (i = 0; (int)i < this->video->bufcount; i++) {
         struct v4l2_buffer buffer;
         memset(&buffer, 0, sizeof(buffer));
         buffer.type = reqbuf.type;
@@ -188,7 +188,7 @@ static int v4l2_input_setup_video_streaming(v4l2_input_plugin_t *this) {
                                             this->fd, buffer.m.offset);
         if (MAP_FAILED == this->video->buffers[i].start) {
             lprintf("Couldn't mmap buffer %i\n", i);
-            int j;
+            unsigned int j;
             for(j = 0;j<i;j++) {
                 v4l2_munmap(this->video->buffers[i].start, this->video->buffers[i].length);
             }
@@ -226,6 +226,7 @@ static int v4l2_input_setup_video_streaming(v4l2_input_plugin_t *this) {
 static buf_element_t* v4l2_input_read_block(input_plugin_t *this_gen, fifo_buffer_t *fifo, off_t len) {
     lprintf("Reading block\n");
     v4l2_input_plugin_t *this = (v4l2_input_plugin_t*)this_gen;
+    (void)len;
     buf_element_t *buf = fifo->buffer_pool_alloc(fifo);
     if (!this->video->headerSent) {
         struct timeval tv;
@@ -261,7 +262,6 @@ static buf_element_t* v4l2_input_read_block(input_plugin_t *this_gen, fifo_buffe
 
 static uint32_t v4l2_input_blocksize(input_plugin_t *this_gen) {
     /* HACK */
-    return 0;
 #if 0
     v4l2_input_plugin_t *this = (v4l2_input_plugin_t*)this_gen;
     if (this->video->headerSent) {
@@ -271,6 +271,9 @@ static uint32_t v4l2_input_blocksize(input_plugin_t *this_gen) {
         lprintf("Returning block size of %zu\n",sizeof(xine_bmiheader));
         return sizeof(xine_bmiheader);
     }
+#else
+    (void)this_gen;
+    return 0;
 #endif
 }
 
@@ -301,7 +304,7 @@ static int v4l2_input_dequeue_video_buffer(v4l2_input_plugin_t *this, buf_elemen
     xine_fast_memcpy (output->content, (char *)this->video->buffers[this->video->inbuf.index].start + this->video->index, output->size);
 
     this->video->index += output->size;
-    if (this->video->index == this->video->buffers[this->video->inbuf.index].length)
+    if (this->video->index == (off_t)this->video->buffers[this->video->inbuf.index].length)
     {
 	output->decoder_flags |= BUF_FLAG_FRAME_END;
 	ret = v4l2_input_enqueue_video_buffer(this, this->video->inbuf.index);
@@ -345,15 +348,20 @@ static void v4l2_input_dispose(input_plugin_t *this_gen) {
 
 static off_t v4l2_input_read(input_plugin_t *this_gen, void *buf, off_t nlen) {
     /* Only block reads are supported. */
+    (void)this_gen;
+    (void)buf;
+    (void)nlen;
     return 0;
 }
 
 static uint32_t v4l2_input_get_capabilities(input_plugin_t* this_gen) {
+    (void)this_gen;
     return INPUT_CAP_BLOCK;
 }
 
 static const char* v4l2_input_get_mrl(input_plugin_t* this_gen) {
     /*v4l2_input_plugin_t* this = (v4l2_input_plugin_t*)this_gen;*/
+    (void)this_gen;
     /* HACK HACK HACK HACK */
     /* So far, the only way to get the yuv_frames demuxer to work with this */
     return "v4l:/";
@@ -361,20 +369,28 @@ static const char* v4l2_input_get_mrl(input_plugin_t* this_gen) {
 }
 
 static int v4l2_input_get_optional_data(input_plugin_t *this_gen, void *data, int data_type) {
+    (void)this_gen;
+    (void)data;
+    (void)data_type;
     return INPUT_OPTIONAL_UNSUPPORTED;
 }
 
 /* Seeking not supported. */
 static off_t v4l2_input_seek(input_plugin_t *this_gen, off_t offset, int origin) {
+    (void)this_gen;
+    (void)offset;
+    (void)origin;
     return -1;
 }
 
 static off_t v4l2_input_pos(input_plugin_t *this_gen) {
     /* TODO */
+    (void)this_gen;
     return 0;
 }
 
 static off_t v4l2_input_length(input_plugin_t *this_gen) {
+    (void)this_gen;
     return -1;
 }
 
@@ -423,6 +439,8 @@ static input_plugin_t *v4l2_class_get_instance(input_class_t *gen_cls, xine_stre
 }
 
 static void *v4l2_init_class(xine_t *xine, const void *data) {
+    (void)xine;
+    (void)data;
     static const input_class_t v4l2_input_class = {
         .get_instance      = v4l2_class_get_instance,
         .description       = N_("v4l2 input plugin"),

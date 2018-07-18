@@ -256,6 +256,7 @@ struct pvrscr_s {
 
 static int pvrscr_get_priority(scr_plugin_t *scr)
 {
+  (void)scr;
   return 10; /* high priority */
 }
 
@@ -1243,6 +1244,9 @@ static int v4l_adjust_realtime_speed(v4l_input_plugin_t *this, fifo_buffer_t *fi
  */
 static off_t v4l_plugin_read (input_plugin_t *this_gen, void *buf, off_t len) {
   lprintf("Read not supported\n");
+  (void)this_gen;
+  (void)buf;
+  (void)len;
   return 0;
 }
 
@@ -1271,6 +1275,9 @@ static buf_element_t *v4l_plugin_read_block (input_plugin_t *this_gen, fifo_buff
   static char           video = 0;
   int                   speed = _x_get_speed(this->stream);
 
+#ifndef LOG
+  (void)todo;
+#endif
   v4l_event_handler(this);
 
 #ifdef HAVE_ALSA
@@ -1448,6 +1455,11 @@ static buf_element_t *v4l_plugin_read_block (input_plugin_t *this_gen, fifo_buff
 static off_t v4l_plugin_seek (input_plugin_t *this_gen, off_t offset, int origin) {
   v4l_input_plugin_t *this = (v4l_input_plugin_t *) this_gen;
 
+  (void)this_gen;
+#ifndef LOG
+  (void)offset;
+  (void)origin;
+#endif
   lprintf("seek %lld bytes, origin %d\n", offset, origin);
   return this->curpos;
 }
@@ -1462,6 +1474,7 @@ static off_t v4l_plugin_get_length (input_plugin_t *this_gen) {
     off_t                 length;
   */
 
+  (void)this_gen;
   return -1;
 }
 
@@ -1485,6 +1498,7 @@ static uint32_t v4l_plugin_get_capabilities (input_plugin_t *this_gen)
  */
 static uint32_t v4l_plugin_get_blocksize (input_plugin_t *this_gen)
 {
+  (void)this_gen;
   return 0;
 }
 
@@ -1653,6 +1667,9 @@ static int v4l_plugin_get_optional_data (input_plugin_t *this_gen,
                                          void *data, int data_type) {
   /* v4l_input_plugin_t *this = (v4l_input_plugin_t *) this_gen; */
 
+  (void)this_gen;
+  (void)data;
+  (void)data_type;
   return INPUT_OPTIONAL_UNSUPPORTED;
 }
 
@@ -1922,6 +1939,7 @@ static void *init_video_class (xine_t *xine, const void *data)
                         _("Selects the TV standard of the input signals. "
                         "Either: AUTO, PAL, NTSC or SECAM. "), 20, NULL, NULL);
 
+  (void)data;
   return (void *)&v4l_video_input_class;
 }
 
@@ -1945,6 +1963,7 @@ static void *init_radio_class (xine_t *xine, const void *data)
 			   _("The path to your Video4Linux radio device."),
 			   10, NULL, NULL);
 
+  (void)data;
   return (void *)&v4l_radio_input_class;
 }
 

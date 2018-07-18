@@ -265,6 +265,7 @@ struct pvrscr_s {
 };
 
 static int pvrscr_get_priority (scr_plugin_t *scr) {
+  (void)scr;
   return 10; /* high priority */
 }
 
@@ -411,6 +412,7 @@ static uint32_t pvr_plugin_get_capabilities (input_plugin_t *this_gen) {
 
   /* pvr_input_plugin_t *this = (pvr_input_plugin_t *) this_gen; */
 
+  (void)this_gen;
   return INPUT_CAP_BLOCK | INPUT_CAP_SEEKABLE;
 }
 
@@ -419,6 +421,7 @@ static off_t pvr_plugin_read (input_plugin_t *this_gen, void *buf_gen, off_t len
   /*pvr_input_plugin_t *this = (pvr_input_plugin_t *) this_gen;*/
   uint8_t *buf = buf_gen;
 
+  (void)this_gen;
   if (len < 4)
     return -1;
 
@@ -971,8 +974,8 @@ static void pvr_event_handler (pvr_input_plugin_t *this) {
       /* make sure we are not paused */
       _x_set_speed(this->stream, XINE_SPEED_NORMAL);
 
-      if ( v4l2_data->session_id != -1) {
-        if( v4l2_data->session_id != this->session ) {
+      if (v4l2_data->session_id != -1) {
+        if (v4l2_data->session_id != (int)this->session) {
           /* if session changes -> closes the old one */
           pthread_mutex_lock(&this->lock);
           pvr_finish_recording(this);
@@ -1025,7 +1028,7 @@ static void pvr_event_handler (pvr_input_plugin_t *this) {
       }
 
       /* change frequency */
-      if (v4l2_data->frequency != -1 && v4l2_data->frequency != this->frequency) {
+      if (v4l2_data->frequency != (uint32_t)-1 && v4l2_data->frequency != this->frequency) {
         double freq = (double)v4l2_data->frequency / 1000.0;
         struct v4l2_frequency vf;
         struct v4l2_tuner vt;
@@ -1061,7 +1064,7 @@ static void pvr_event_handler (pvr_input_plugin_t *this) {
 
 
     case XINE_EVENT_PVR_SAVE:
-      if( this->session != -1 ) {
+      if (this->session != (uint32_t)-1) {
         switch( save_data->mode ) {
           case 0:
             lprintf("saving from this point\n");
@@ -1330,6 +1333,7 @@ static off_t pvr_plugin_get_length (input_plugin_t *this_gen) {
 }
 
 static uint32_t pvr_plugin_get_blocksize (input_plugin_t *this_gen) {
+  (void)this_gen;
   return PVR_BLOCK_SIZE;
 }
 
@@ -1342,6 +1346,9 @@ static const char* pvr_plugin_get_mrl (input_plugin_t *this_gen) {
 static int pvr_plugin_get_optional_data (input_plugin_t *this_gen,
 					  void *data, int data_type) {
 
+  (void)this_gen;
+  (void)data;
+  (void)data_type;
   return INPUT_OPTIONAL_UNSUPPORTED;
 }
 
@@ -1566,6 +1573,7 @@ static void *init_plugin (xine_t *xine, const void *data) {
     .eject_media        = NULL,
   };
 
+  (void)data;
   xine->config->register_filename(xine->config,
                                   "media.wintv_pvr.device",
                                   PVR_DEVICE, XINE_CONFIG_STRING_IS_DEVICE_NAME,

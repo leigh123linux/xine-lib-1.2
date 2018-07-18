@@ -664,6 +664,7 @@ static int dvb_set_sectfilter(dvb_input_plugin_t * this, int filter, ushort pid,
 {
     tuner_t *tuner = this->tuner;
 
+    (void)pidtype;
     if(this->channels[this->channel].pid [filter] !=DVB_NOPID) {
       ioctl(tuner->fd_pidfilter[filter], DMX_STOP);
     }
@@ -896,7 +897,7 @@ static channel_t *load_channels(xine_t *xine, xine_stream_t *stream, int *num_ch
    */
 
   while ( fgets (str, BUFSIZE, f)) {
-    channel_t channel = {0};
+    channel_t channel = {.name = NULL};
 
     /* lose trailing spaces & control characters */
     size_t i = strlen (str);
@@ -3105,6 +3106,7 @@ static void dvb_class_dispose(input_class_t * this_gen)
 }
 
 static int dvb_class_eject_media (input_class_t *this_gen) {
+  (void)this_gen;
   return 1;
 }
 
@@ -3116,7 +3118,7 @@ static const char * const *dvb_class_get_autoplay_list(input_class_t * this_gen,
     channel_t *channels=NULL;
     int ch, apch, num_channels = 0;
     int default_channel = -1;
-    xine_cfg_entry_t lastchannel_enable = {0};
+    xine_cfg_entry_t lastchannel_enable = {.num_value = 0};
     xine_cfg_entry_t lastchannel;
 
     /* need to probe card here to get fe_type to read in channels.conf */
@@ -3190,6 +3192,7 @@ static void *init_class (xine_t *xine, const void *data) {
   dvb_input_class_t  *this;
   config_values_t *config = xine->config;
 
+  (void)data;
   this = calloc(1, sizeof (dvb_input_class_t));
   if (!this)
     return NULL;
