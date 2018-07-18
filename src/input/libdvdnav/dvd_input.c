@@ -279,6 +279,7 @@ static dvd_input_t file_open(const char *target)
 static char *file_error(dvd_input_t dev)
 {
   /* use strerror(errno)? */
+  (void)dev;
   return (char *)"unknown error";
 }
 
@@ -302,6 +303,9 @@ static int file_seek(dvd_input_t dev, int blocks)
  */
 static int file_title(dvd_input_t dev, int block)
 {
+  /* FIXME: implement */
+  (void)dev;
+  (void)block;
   return -1;
 }
 
@@ -313,7 +317,9 @@ static int file_read(dvd_input_t dev, void *buffer, int blocks, int flags)
   size_t len;
   ssize_t ret;
   char *q = buffer;
-  
+
+  (void)flags;
+
   len = (size_t)blocks * DVD_VIDEO_LB_LEN;
   
   while(len > 0) {
@@ -363,6 +369,8 @@ static int file_close(dvd_input_t dev)
 
 static int file_is_encrypted (dvd_input_t dev)
 {
+  /* FIXME: ?? */
+  (void)dev;
   return 0;
 }
 

@@ -235,6 +235,8 @@ static int32_t dvdnav_decode_packet(dvdnav_t *this, uint8_t *p, dsi_t *nav_dsi, 
   uint32_t       nPacketLen;
   uint32_t       nStreamID;
 
+  (void)this;
+
   if (p[3] == 0xBA) { /* program stream pack header */
     int32_t nStuffingBytes;
 

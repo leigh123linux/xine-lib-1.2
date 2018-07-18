@@ -1140,7 +1140,7 @@ int DVDDiscID( dvd_reader_t *dvd, unsigned char *discid )
 		return -1;
 	    }
 	    bytes_read = DVDReadBytes( dvd_file, buffer, file_size );
-	    if( bytes_read != file_size ) {
+	    if( (size_t)bytes_read != file_size ) {
 		fprintf( stderr, "libdvdread: DVDDiscId read returned %zd bytes"
 			 ", wanted %zd\n", bytes_read, file_size );
 		DVDCloseFile( dvd_file );

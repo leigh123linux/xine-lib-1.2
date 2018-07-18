@@ -849,7 +849,7 @@ int ifoRead_TT_SRPT(ifo_handle_t *ifofile) {
   CHECK_ZERO(tt_srpt->zero_1);
   CHECK_VALUE(tt_srpt->nr_of_srpts != 0);
   CHECK_VALUE(tt_srpt->nr_of_srpts < 100); /* ?? */
-  CHECK_VALUE((int)tt_srpt->nr_of_srpts * sizeof(title_info_t) <= info_length);
+  CHECK_VALUE((int)tt_srpt->nr_of_srpts * (int)sizeof(title_info_t) <= info_length);
   
   for(i = 0; i < tt_srpt->nr_of_srpts; i++) {
     CHECK_VALUE(tt_srpt->title[i].pb_ty.zero_1 == 0);
@@ -1101,7 +1101,7 @@ int ifoRead_PTL_MAIT(ifo_handle_t *ifofile) {
     CHECK_ZERO(ptl_mait->countries[i].zero_1);
     CHECK_ZERO(ptl_mait->countries[i].zero_2);    
     CHECK_VALUE(ptl_mait->countries[i].pf_ptl_mai_start_byte
-		+ 8*2 * (ptl_mait->nr_of_vtss + 1) <= ptl_mait->last_byte + 1);
+		+ 8*2 * (ptl_mait->nr_of_vtss + 1) <= (int)ptl_mait->last_byte + 1);
   }
 
   for(i = 0; i < ptl_mait->nr_of_countries; i++) {
@@ -1135,7 +1135,7 @@ int ifoRead_PTL_MAIT(ifo_handle_t *ifofile) {
        free(ptl_mait);
        return 0;
     }
-    for (j = 0; j < ((ptl_mait->nr_of_vtss + 1) * 8); j++) {
+    for (j = 0; (int)j < ((ptl_mait->nr_of_vtss + 1) * 8); j++) {
         B2N_16(pf_temp[j]);
     }
     ptl_mait->countries[i].pf_ptl_mai = (pf_level_t *)malloc(info_length);
@@ -1410,7 +1410,7 @@ static int ifoRead_C_ADT_internal(ifo_handle_t *ifofile,
     return 0;
   }
 
-  for(i = 0; i < info_length/sizeof(cell_adr_t); i++) {
+  for(i = 0; i < info_length / (int)sizeof(cell_adr_t); i++) {
     B2N_16(c_adt->cell_adr_table[i].vob_id);
     B2N_32(c_adt->cell_adr_table[i].start_sector);
     B2N_32(c_adt->cell_adr_table[i].last_sector);

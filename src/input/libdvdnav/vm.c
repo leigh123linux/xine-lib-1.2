@@ -1782,7 +1782,9 @@ static int get_PGCN(vm_t *vm) {
 
 static pgcit_t* get_MENU_PGCIT(vm_t *vm, ifo_handle_t *h, uint16_t lang) {
   int i;
-  
+
+  (void)vm;
+
   if(h == NULL || h->pgci_ut == NULL) {
     fprintf(MSG_OUT, "libdvdnav: *** pgci_ut handle is NULL ***\n");
     return NULL; /*  error? */
