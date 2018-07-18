@@ -905,6 +905,8 @@ void Gsm_Long_Term_Predictor P7((S,d,dp,e,dpp,Nc,bc), 	/* 4x for 160 samples */
 #endif /* LTP_CUT */
 			Fast_Calculation_of_the_LTP_parameters(d, dp, bc, Nc );
 	else 
+#else
+	(void)S;
 #endif /* FAST & USE_FLOAT_MUL */
 #ifdef LTP_CUT
 		if (S->ltp_cut)

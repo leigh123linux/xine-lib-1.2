@@ -346,6 +346,8 @@ void Gsm_LPC_Analysis P3((S, s,LARc),
 #if defined(USE_FLOAT_MUL) && defined(FAST)
 	if (S->fast) Fast_Autocorrelation (s,	  L_ACF );
 	else
+#else
+	(void)S;
 #endif
 	Autocorrelation			  (s,	  L_ACF	);
 	Reflection_coefficients		  (L_ACF, LARc	);
