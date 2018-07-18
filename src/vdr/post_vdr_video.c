@@ -96,6 +96,9 @@ void *vdr_video_init_plugin(xine_t *xine, const void *data)
 {
   post_class_t *class = calloc(1, sizeof (post_class_t));
 
+  (void)xine;
+  (void)data;
+
   if (!class)
     return NULL;
 
@@ -121,6 +124,10 @@ static post_plugin_t *vdr_video_open_plugin(post_class_t *class_gen, int inputs,
     free(this);
     return NULL;
   }
+
+  (void)class_gen;
+  (void)inputs;
+  (void)audio_target;
 
   _x_post_init(&this->post_plugin, 0, 1);
   this->post_plugin.dispose = vdr_video_dispose;

@@ -632,7 +632,7 @@ break;
 
       READ_DATA_OR_FAIL(set_color, lprintf("got SETCOLOR\n"));
 
-      if (((data->num + 1) * sizeof (uint32_t)) != this->cur_size)
+      if (((data->num + 1) * sizeof (uint32_t)) != (unsigned int)this->cur_size)
         return -1;
 
       n = vdr_read_abort (this->stream, this->fh_control, (char *)&vdr_color[ data->index ], this->cur_size);
@@ -692,7 +692,7 @@ break;
       if (0 != file_name_len)
       {
         if (file_name_len <= 1
-            || file_name_len > sizeof (file_name))
+            || file_name_len > (int)sizeof (file_name))
         {
           return -1;
         }
@@ -1669,35 +1669,24 @@ static off_t vdr_plugin_seek(input_plugin_t *this_gen, off_t offset, int origin)
   lprintf("seek %" PRId64 " offset, %d origin...\n",
           (int64_t)offset, origin);
 
-  if ((origin == SEEK_CUR) && (offset >= 0))
-  {
-    for ( ; ((int)offset) - BUF_SIZE > 0; offset -= BUF_SIZE)
-    {
-      if (!this_gen->read(this_gen, this->seek_buf, BUF_SIZE))
-        return this->curpos;
+  if (origin == SEEK_SET) {
+    if (offset < this->curpos) {
+      lprintf ("cannot seek back! (%" PRId64 " > %" PRId64 ")\n",
+        (int64_t)this->curpos, (int64_t)offset);
+      return this->curpos;
     }
-
-    this_gen->read (this_gen, this->seek_buf, offset);
+    offset -= this->curpos;
+    origin = SEEK_CUR;
   }
 
-  if (origin == SEEK_SET)
-  {
-    if (offset < this->curpos)
-    {
-        lprintf("cannot seek back! (%" PRId64 " > %" PRId64 ")\n",
-                (int64_t)this->curpos, (int64_t)offset);
-    }
-    else
-    {
-      offset -= this->curpos;
-
-      for ( ; ((int)offset) - BUF_SIZE > 0; offset -= BUF_SIZE)
-      {
-        if (!this_gen->read(this_gen, this->seek_buf, BUF_SIZE))
-          return this->curpos;
-      }
-
-      this_gen->read(this_gen, this->seek_buf, offset);
+  if (origin == SEEK_CUR) {
+    while (offset > 0) {
+      int part = offset > BUF_SIZE ? BUF_SIZE : offset;
+      part = this_gen->read (this_gen, this->seek_buf, part);
+      if (part <= 0)
+        break;
+      this->curpos += part;
+      offset -= part;
     }
   }
 
@@ -1706,16 +1695,19 @@ static off_t vdr_plugin_seek(input_plugin_t *this_gen, off_t offset, int origin)
 
 static off_t vdr_plugin_get_length(input_plugin_t *this_gen)
 {
+  (void)this_gen;
   return 0;
 }
 
 static uint32_t vdr_plugin_get_capabilities(input_plugin_t *this_gen)
 {
+  (void)this_gen;
   return INPUT_CAP_PREVIEW;
 }
 
 static uint32_t vdr_plugin_get_blocksize(input_plugin_t *this_gen)
 {
+  (void)this_gen;
   return 0;
 }
 
@@ -2344,6 +2336,7 @@ static void event_handler(void *user_data, const xine_event_t *event)
 
 static int64_t vdr_vpts_offset_queue_change_begin(vdr_input_plugin_t *this, int type)
 {
+  (void)type;
   pthread_mutex_lock(&this->vpts_offset_queue_lock);
   this->vpts_offset_queue_changes++;
   pthread_mutex_unlock(&this->vpts_offset_queue_lock);
@@ -2604,6 +2597,7 @@ static void vdr_metronom_set_master(metronom_t *self, metronom_t *master)
 
 static void vdr_metronom_exit(metronom_t *self)
 {
+  (void)self;
   _x_abort();
 }
 
@@ -2740,6 +2734,7 @@ static const char * const *vdr_class_get_autoplay_list(input_class_t *this_gen,
 {
   static const char * const mrls[] = {"vdr:/" VDR_ABS_FIFO_DIR "/stream#demux:mpeg_pes", NULL};
 
+  (void)this_gen;
   *num_files = 1;
   return mrls;
 }
@@ -2750,6 +2745,8 @@ void *vdr_input_init_plugin(xine_t *xine, const void *data)
 
   lprintf("init_class\n");
 
+  (void)xine;
+  (void)data;
   this = calloc(1, sizeof (input_class_t));
   if (!this) {
     return NULL;
