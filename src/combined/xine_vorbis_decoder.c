@@ -345,7 +345,10 @@ static audio_decoder_t *open_plugin (audio_decoder_class_t *class_gen,
 
   vorbis_decoder_t *this ;
 
+  (void)class_gen;
   this = (vorbis_decoder_t *) calloc(1, sizeof(vorbis_decoder_t));
+  if (!this)
+    return NULL;
 
   this->audio_decoder.decode_data         = vorbis_decode_data;
   this->audio_decoder.reset               = vorbis_reset;
@@ -376,7 +379,11 @@ void *vorbis_init_plugin (xine_t *xine, const void *data) {
 
   vorbis_class_t *this;
 
+  (void)xine;
+  (void)data;
   this = (vorbis_class_t *) calloc(1, sizeof(vorbis_class_t));
+  if (!this)
+    return NULL;
 
   this->decoder_class.open_plugin     = open_plugin;
   this->decoder_class.identifier      = "vorbis";

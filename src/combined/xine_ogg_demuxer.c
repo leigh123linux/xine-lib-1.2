@@ -470,7 +470,7 @@ static int read_comments (demux_ogg_t *this, const char *comment)
 {
   int i;
 
-  for (i = 0; i < sizeof (metadata) / sizeof (struct ogg_meta); ++i) {
+  for (i = 0; i < (int)sizeof (metadata) / (int)sizeof (struct ogg_meta); ++i) {
     size_t ml = strlen (metadata[i].tag);
     if (!strncasecmp (metadata[i].tag, comment, ml) && comment[ml]) {
       if (metadata[i].append && this->meta[metadata[i].meta]) {
@@ -717,8 +717,9 @@ static void send_ogg_buf (demux_ogg_t *this,
 		       normpos,
 		       pts / 90, this->time_length, 0);
 
+  }
 #ifdef HAVE_THEORA
-  } else if ((this->si[stream_num]->buf_types & 0xFFFF0000) == BUF_VIDEO_THEORA) {
+  else if ((this->si[stream_num]->buf_types & 0xFFFF0000) == BUF_VIDEO_THEORA) {
 
     int64_t pts;
     theora_info t_info;
@@ -750,9 +751,10 @@ static void send_ogg_buf (demux_ogg_t *this,
 
     theora_comment_clear (&t_comment);
     theora_info_clear (&t_info);
+  }
 #endif
 
-  } else if ((this->si[stream_num]->buf_types & 0xFF000000) == BUF_VIDEO_BASE) {
+  else if ((this->si[stream_num]->buf_types & 0xFF000000) == BUF_VIDEO_BASE) {
 
     uint8_t *data;
     int size;
@@ -933,6 +935,7 @@ static void decode_speex_header (demux_ogg_t *this, const int stream_num, ogg_pa
     this->si[stream_num]->headers += header->extra_headers;
   }
 #else
+  (void)op;
   xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG, "Speex stream detected, unable to play\n");
 
   this->si[stream_num]->buf_types = BUF_CONTROL_NOP;
@@ -1229,6 +1232,7 @@ static void decode_text_header (demux_ogg_t *this, const int stream_num, ogg_pac
   uint32_t *val;
   buf_element_t *buf;
 
+  (void)op;
   lprintf ("textstream detected.\n");
   this->si[stream_num]->headers = 2;
   channel = this->num_spu_streams++;
@@ -1295,6 +1299,7 @@ static void decode_theora_header (demux_ogg_t *this, const int stream_num, ogg_p
     this->si[stream_num]->headers = 0; /* FIXME: don't know */
   }
 #else
+  (void)op;
   this->si[stream_num]->buf_types = BUF_VIDEO_THEORA;
   this->num_video_streams++;
   this->unhandled_video_streams++;
@@ -1304,7 +1309,7 @@ static void decode_theora_header (demux_ogg_t *this, const int stream_num, ogg_p
 
 static void decode_flac_header (demux_ogg_t *this, const int stream_num, ogg_packet *op) {
   xine_flac_metadata_header header;
-  xine_flac_streaminfo_block streaminfo = {};
+  xine_flac_streaminfo_block streaminfo = {.samplerate = 0};
   buf_element_t *buf;
   xine_waveformatex wave;
 
@@ -2042,6 +2047,7 @@ static int demux_ogg_get_optional_data(demux_plugin_t *this_gen,
 static int detect_ogg_content (int detection_method, demux_class_t *class_gen,
                                input_plugin_t *input) {
 
+  (void)class_gen;
   switch (detection_method) {
 
     case METHOD_BY_CONTENT: {
@@ -2191,7 +2197,11 @@ static demux_plugin_t *ogg_open_plugin (demux_class_t *class_gen,
 static void *anx_init_class (xine_t *xine, const void *data) {
   demux_anx_class_t     *this;
 
+  (void)xine;
+  (void)data;
   this = calloc(1, sizeof(demux_anx_class_t));
+  if (!this)
+    return NULL;
 
   this->demux_class.open_plugin     = anx_open_plugin;
   this->demux_class.description     = N_("Annodex demux plugin");
@@ -2215,7 +2225,11 @@ static void *anx_init_class (xine_t *xine, const void *data) {
 static void *ogg_init_class (xine_t *xine, const void *data) {
   demux_ogg_class_t     *this;
 
+  (void)xine;
+  (void)data;
   this = calloc(1, sizeof(demux_ogg_class_t));
+  if (!this)
+    return NULL;
 
   this->demux_class.open_plugin     = ogg_open_plugin;
   this->demux_class.description     = N_("OGG demux plugin");
