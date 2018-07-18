@@ -578,9 +578,13 @@ static int demux_playlist_send_chunk (demux_plugin_t *this_gen) {
 
   length = this->input->get_length (this->input);
   if (length > 0) {
-    data = calloc(1, length+1);
-    if (data)
-      this->input->read (this->input, data, length);
+    data = malloc (length + 1);
+    if (data) {
+      length = this->input->read (this->input, data, length);
+      if (length < 0)
+        length = 0;
+    }
+    data[length] = '\0';
   }
   else {
     char buf[1024];

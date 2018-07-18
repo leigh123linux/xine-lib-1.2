@@ -192,7 +192,7 @@ static off_t nsv_seek(demux_nsv_t *this, off_t offset, int origin) {
       uint8_t buffer[1024];
 
       while (offset) {
-	if (offset > sizeof(buffer)) {
+	if (offset > (off_t)sizeof(buffer)) {
 	  if (nsv_read(this, buffer, sizeof(buffer)) != sizeof(buffer))
 	    return -1;
 	  offset = 0;

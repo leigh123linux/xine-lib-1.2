@@ -105,7 +105,7 @@ static int open_tta_file(demux_tta_t *this) {
     return 0;
 
   if (this->input->read(this->input, (uint8_t*)this->seektable, sizeof(uint32_t)*this->totalframes)
-      != sizeof(uint32_t)*this->totalframes)
+      != (int)sizeof(uint32_t)*this->totalframes)
     return 0;
 
   /* Skip the CRC32 */

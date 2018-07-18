@@ -362,7 +362,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
     return NULL;
   }
 
-  if (input->read(input, scratch, slave_id_str_len) != slave_id_str_len)
+  if (input->read (input, scratch, slave_id_str_len) != (int)slave_id_str_len)
     return NULL;
 
   this = calloc(1, sizeof(demux_slave_t));

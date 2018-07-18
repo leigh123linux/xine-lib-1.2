@@ -2118,7 +2118,7 @@ static int read_block_data (demux_matroska_t *this, size_t len, size_t offset) {
             "demux_matroska: memory allocation error\n");
     return 0;
   }
-  if (this->input->read(this->input, this->block_data + offset, len) != len) {
+  if (this->input->read (this->input, this->block_data + offset, len) != (int)len) {
     off_t pos = this->input->get_current_pos(this->input);
     xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
             "demux_matroska: read error at position %" PRIdMAX "\n",

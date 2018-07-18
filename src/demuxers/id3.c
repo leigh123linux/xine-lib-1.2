@@ -281,7 +281,7 @@ static int id3v22_interp_frame(input_plugin_t *input,
   if (!buf)
     return 0;
 
-  if (input->read (input, buf, frame_header->size) != frame_header->size) {
+  if (input->read (input, buf, frame_header->size) != (int)frame_header->size) {
     lprintf("read error\n");
     free(buf);
     return 0;
@@ -478,7 +478,7 @@ static int id3v23_interp_frame(input_plugin_t *input,
   if (!buf)
     return 0;
 
-  if (input->read (input, buf, frame_header->size) != frame_header->size) {
+  if (input->read (input, buf, frame_header->size) != (int)frame_header->size) {
     lprintf("read error\n");
     free(buf);
     return 0;
@@ -744,7 +744,7 @@ static int id3v24_interp_frame(input_plugin_t *input,
   if (!buf)
     return 0;
 
-  if (input->read (input, buf, frame_header->size) != frame_header->size) {
+  if (input->read (input, buf, frame_header->size) != (int)frame_header->size) {
     lprintf("read error\n");
     free(buf);
     return 0;

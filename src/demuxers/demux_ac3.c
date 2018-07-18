@@ -74,205 +74,178 @@ typedef struct {
 
 } demux_ac3_t;
 
-/* borrow some knowledge from the AC3 decoder */
-struct frmsize_s {
-  uint16_t bit_rate;
-  uint16_t frm_size[3];
-};
-
-static const struct frmsize_s frmsizecod_tbl[64] =
-{
-  { 32  ,{64   ,69   ,96   } },
-  { 32  ,{64   ,70   ,96   } },
-  { 40  ,{80   ,87   ,120  } },
-  { 40  ,{80   ,88   ,120  } },
-  { 48  ,{96   ,104  ,144  } },
-  { 48  ,{96   ,105  ,144  } },
-  { 56  ,{112  ,121  ,168  } },
-  { 56  ,{112  ,122  ,168  } },
-  { 64  ,{128  ,139  ,192  } },
-  { 64  ,{128  ,140  ,192  } },
-  { 80  ,{160  ,174  ,240  } },
-  { 80  ,{160  ,175  ,240  } },
-  { 96  ,{192  ,208  ,288  } },
-  { 96  ,{192  ,209  ,288  } },
-  { 112 ,{224  ,243  ,336  } },
-  { 112 ,{224  ,244  ,336  } },
-  { 128 ,{256  ,278  ,384  } },
-  { 128 ,{256  ,279  ,384  } },
-  { 160 ,{320  ,348  ,480  } },
-  { 160 ,{320  ,349  ,480  } },
-  { 192 ,{384  ,417  ,576  } },
-  { 192 ,{384  ,418  ,576  } },
-  { 224 ,{448  ,487  ,672  } },
-  { 224 ,{448  ,488  ,672  } },
-  { 256 ,{512  ,557  ,768  } },
-  { 256 ,{512  ,558  ,768  } },
-  { 320 ,{640  ,696  ,960  } },
-  { 320 ,{640  ,697  ,960  } },
-  { 384 ,{768  ,835  ,1152 } },
-  { 384 ,{768  ,836  ,1152 } },
-  { 448 ,{896  ,975  ,1344 } },
-  { 448 ,{896  ,976  ,1344 } },
-  { 512 ,{1024 ,1114 ,1536 } },
-  { 512 ,{1024 ,1115 ,1536 } },
-  { 576 ,{1152 ,1253 ,1728 } },
-  { 576 ,{1152 ,1254 ,1728 } },
-  { 640 ,{1280 ,1393 ,1920 } },
-  { 640 ,{1280 ,1394 ,1920 } }
-};
-
 /* returns 1 if the AC3 file was opened successfully, 0 otherwise */
 static int open_ac3_file(demux_ac3_t *this) {
-  int i;
-  int offset = 0;
-  size_t peak_size = 0;
-  int spdif_mode = 0;
-  uint32_t syncword = 0;
-  uint32_t blocksize;
-  uint8_t *peak;
-  off_t data_start = 0;
+  buf_element_t *buf = NULL;
+  uint32_t offset = 0;
+  int ret = 0;
 
-  blocksize = this->input->get_blocksize(this->input);
-  if (blocksize && INPUT_IS_SEEKABLE(this->input)) {
-    if (this->input->seek(this->input, 0, SEEK_SET) != 0)
-      return 0;
-    buf_element_t *buf = this->input->read_block(this->input,
-						 this->stream->audio_fifo,
-						 blocksize);
+  do {
+    uint32_t bsize = 0;
+    int spdif_mode = 0;
+    uint8_t hb[MAX_PREVIEW_SIZE];
+    const uint8_t *b;
 
-    if (!buf)
-      return 0;
-
-    peak = alloca(peak_size = buf->size);
-    xine_fast_memcpy(peak, buf->content, peak_size);
-
-    buf->free_buffer(buf);
-
-    if (this->input->seek(this->input, 0, SEEK_SET) != 0)
-      return 0;
-
-  } else {
-    peak = alloca(peak_size = MAX_PREVIEW_SIZE);
-
-    if (_x_demux_read_header (this->input, peak, peak_size) != (int)peak_size)
-      return 0;
-  }
-
-  lprintf("peak size: %zu\n", peak_size);
-
-  if (peak_size < 16)
-    return 0;
-
-  /* Check for wav header, as we'll handle AC3 with a wav header shoved
-  * on the front for CD burning */
-  /* FIXME: This is risky. Real LPCM may contain anything, even sync words. */
-  if ( memcmp(peak, "RIFF", 4) == 0 || memcmp(&peak[8], "WAVEfmt ", 8) == 0 ) {
-    /* Check this looks like a cd audio wav */
-    unsigned int audio_type;
-    xine_waveformatex *wave = (xine_waveformatex *) &peak[20];
-
-    if (peak_size < 20 + sizeof(xine_waveformatex))
-      return 0;
-
-    _x_waveformatex_le2me(wave);
-    audio_type = _x_formattag_to_buf_audio(wave->wFormatTag);
-
-    if ((audio_type != BUF_AUDIO_LPCM_LE) || (wave->nChannels != 2) ||
-         (wave->nSamplesPerSec != 44100) || (wave->wBitsPerSample != 16))
-      return 0;
-
-    lprintf("looks like a cd audio wav file\n");
-
-    /* Find the data chunk */
-    offset = 20 + _X_LE_32(&peak[16]);
-    while (offset < (int)peak_size - 8) {
-      unsigned int chunk_tag = _X_LE_32(&peak[offset]);
-      unsigned int chunk_size = _X_LE_32(&peak[offset+4]);
-
-      if (chunk_tag == DATA_TAG) {
-        offset += 8;
-        lprintf("found the start of the data at offset %d\n", offset);
+    do {
+      if (!INPUT_IS_SEEKABLE (this->input))
         break;
-      } else
-        offset += 8 + chunk_size;
+      bsize = this->input->get_blocksize (this->input);
+      if (!bsize)
+        break;
+      if (this->input->seek (this->input, 0, SEEK_SET) != 0)
+        break;
+      buf = this->input->read_block (this->input, this->stream->audio_fifo, bsize);
+      if (!buf)
+        break;
+      if (this->input->seek (this->input, 0, SEEK_SET) != 0) { /* should not happen */
+        buf->free_buffer (buf);
+        buf = NULL;
+        break;
+      }
+      b = buf->content;
+      bsize = buf->size;
+    } while (0);
+    if (!buf) {
+      int s;
+      s = _x_demux_read_header (this->input, hb, MAX_PREVIEW_SIZE);
+      if (s <= 0)
+        break;
+      bsize = s;
+      b = hb;
     }
-  }
+    lprintf ("peek size: %u\n", (unsigned int)bsize);
+    if (bsize < 16)
+      break;
 
-  /* Look for a valid AC3 sync word */
-  for (i = offset; i < (int)peak_size; i++) {
-    if ((syncword & 0xffff) == 0x0b77) {
-      data_start = i-2;
-      lprintf("found AC3 syncword at offset %d\n", i-2);
+    do {
+      /* Check for wav header, as we'll handle AC3 with a wav header shoved
+       * on the front for CD burning.
+       * FIXME: This is risky. Real LPCM may contain anything, even sync words. */
+      unsigned int audio_type;
+      xine_waveformatex *wave;
+      uint32_t o;
+
+      /* Check this looks like a cd audio wav */
+      if (bsize < 20 + sizeof (xine_waveformatex))
+        break;
+      if (memcmp (b, "RIFF", 4) && memcmp (b + 8, "WAVEfmt ", 8))
+        break;
+      wave = (xine_waveformatex *)(b + 20);
+      _x_waveformatex_le2me (wave);
+      audio_type = _x_formattag_to_buf_audio (wave->wFormatTag);
+      if ((audio_type != BUF_AUDIO_LPCM_LE) || (wave->nChannels != 2) ||
+          (wave->nSamplesPerSec != 44100) || (wave->wBitsPerSample != 16))
+        break;
+      lprintf ("looks like a cd audio wav file\n");
+
+      /* Find the data chunk */
+      o = _X_LE_32 (b + 16);
+      if (o > bsize - 20 - 8)
+        break;
+      o += 20;
+      do {
+        uint32_t chunk_tag = _X_LE_32 (b + o);
+        uint32_t chunk_size = _X_LE_32 (b + o + 4);
+        o += 8;
+        if (chunk_tag == DATA_TAG) {
+          offset = o;
+          lprintf ("found the start of the data at offset %d\n", offset);
+          break;
+        }
+        if (o >= bsize)
+          break;
+        if (chunk_size > bsize - o)
+          break;
+        o += chunk_size;
+      } while (o <= bsize - 8);
+    } while (0);
+
+    /* Look for a valid AC3 sync word */
+    {
+      uint32_t syncword = 0;
+      while (offset < bsize) {
+        if ((syncword & 0xffff) == 0x0b77) {
+          offset -= 2;
+          lprintf ("found AC3 syncword at offset %u\n", (unsigned int)offset);
+          break;
+        }
+        if ((syncword == 0x72f81f4e) && (b[offset] == 0x01)) {
+          spdif_mode = 1;
+          lprintf ("found AC3 SPDIF header at offset %u\n", (unsigned int)offset - 4);
+          offset += 4;
+          break;
+        }
+        syncword = (syncword << 8) | b[offset];
+        offset++;
+      }
+    }
+    if (offset >= bsize - 2)
+      break;
+
+    if (spdif_mode) {
+      this->sample_rate = 44100;
+      this->frame_size = 256 * 6 * 4;
+      this->buf_type = BUF_AUDIO_DNET;
+      ret = 1;
       break;
     }
 
-    if ((syncword == 0x72f81f4e) && (peak[i] == 0x01)) {
-      spdif_mode = 1;
-      data_start = i+4;
-      lprintf("found AC3 SPDIF header at offset %d\n", i-4);
-      break;
-    }
-
-    syncword = (syncword << 8) | peak[i];
-  }
-
-  if (i >= (int)peak_size - 2)
-    return 0;
-
-  if (spdif_mode) {
-    this->sample_rate = 44100;
-    this->frame_size = 256*6*4;
-    this->buf_type = BUF_AUDIO_DNET;
-  } else {
-    int fscod, frmsizecod;
-
-    if (data_start + 4 >= peak_size)
-      return 0;
-
-    fscod = peak[data_start+4] >> 6;
-    frmsizecod = peak[data_start+4] & 0x3F;
-
-    if ((fscod > 2) || (frmsizecod > 37))
-      return 0;
-
-    this->frame_size = frmsizecod_tbl[frmsizecod].frm_size[fscod] * 2;
-
-    /* convert the sample rate to a more useful number */
-    switch (fscod) {
-      case 0:
-        this->sample_rate = 48000;
+    {
+      static const uint8_t byterates[19] = {
+         4,   5,   6,   7,   8,  10,  12,  14,
+        16,  20,  24,  28,  32,  40,  48,  56,
+        64,  72,  80
+      };
+      uint32_t idx, rate;
+      if (offset >= bsize - 4)
         break;
-      case 1:
-        this->sample_rate = 44100;
+      idx = b[offset + 4];
+      if ((idx & 0x3f) > 37)
         break;
-      default:
-        this->sample_rate = 32000;
-        break;
+      rate = (uint32_t)byterates[(idx >> 1) & 0x1f];
+      if (idx & 0x80) {
+        if (idx & 0x40) {
+          break;
+        } else {
+          this->frame_size = rate * 24 * 2;
+          this->sample_rate = 32000;
+        }
+      } else {
+        if (idx & 0x40) {
+          this->frame_size = ((rate * 16 * 48000 / 44100) + (idx & 0x01)) * 2;
+          this->sample_rate = 44100;
+        } else {
+          this->frame_size = rate * 16 * 2;
+          this->sample_rate = 48000;
+        }
+      }
     }
 
     /* Look for a second sync word */
-    if ((data_start+this->frame_size+1 >= peak_size) ||
-        (peak[data_start+this->frame_size] != 0x0b) ||
-        (peak[data_start+this->frame_size + 1] != 0x77)) {
-      return 0;
+    if ((offset + this->frame_size + 1 >= bsize) ||
+        (b[offset + this->frame_size] != 0x0b) ||
+        (b[offset + this->frame_size + 1] != 0x77)) {
+      break;
     }
-
-    lprintf("found second AC3 sync word\n");
-
+    lprintf ("found second AC3 sync word\n");
     this->buf_type = BUF_AUDIO_A52;
+    ret = 1;
+  } while (0);
+
+  if (buf)
+    buf->free_buffer (buf);
+
+  if (ret) {
+    this->running_time = this->input->get_length (this->input) - offset;
+    this->running_time /= this->frame_size;
+    this->running_time *= (90000 / 1000) * (256 * 6);
+    this->running_time /= this->sample_rate;
+
+    lprintf ("sample rate: %d\n", this->sample_rate);
+    lprintf ("frame size: %d\n", this->frame_size);
+    lprintf("running time: %d\n", this->running_time);
   }
-
-  this->running_time = this->input->get_length(this->input) - data_start;
-  this->running_time /= this->frame_size;
-  this->running_time *= (90000 / 1000) * (256 * 6);
-  this->running_time /= this->sample_rate;
-
-  lprintf("sample rate: %d\n", this->sample_rate);
-  lprintf("frame size: %d\n", this->frame_size);
-  lprintf("running time: %d\n", this->running_time);
-
-  return 1;
+  return ret;
 }
 
 static int demux_ac3_send_chunk (demux_plugin_t *this_gen) {
