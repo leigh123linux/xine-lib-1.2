@@ -119,6 +119,8 @@ int mad_decoder_finish(struct mad_decoder *decoder)
 
     return (!WIFEXITED(status) || WEXITSTATUS(status)) ? -1 : 0;
   }
+#else
+  (void)decoder;
 # endif
 
   return 0;
@@ -577,6 +579,9 @@ int mad_decoder_message(struct mad_decoder *decoder,
 
   return 0;
 # else
+  (void)decoder;
+  (void)message;
+  (void)len;
   return -1;
 # endif
 }

@@ -894,7 +894,7 @@ mad_fixed_t III_requantize(unsigned int value, signed int exp)
   exp += power->exponent;
 
   if (exp < 0) {
-    if (-exp >= sizeof(mad_fixed_t) * CHAR_BIT) {
+    if (-exp >= (int)sizeof(mad_fixed_t) * CHAR_BIT) {
       /* underflow */
       requantized = 0;
     }
@@ -1053,7 +1053,7 @@ enum mad_error III_huffdecode(struct mad_bitptr *ptr, mad_fixed_t xr[576],
 	  break;
 
 	case 15:
-	  if (cachesz < linbits + 2) {
+	  if (cachesz < (int)linbits + 2) {
 	    bitcache   = (bitcache << 16) | mad_bit_read(&peek, 16);
 	    cachesz   += 16;
 	    bits_left -= 16;
@@ -1088,7 +1088,7 @@ enum mad_error III_huffdecode(struct mad_bitptr *ptr, mad_fixed_t xr[576],
 	  break;
 
 	case 15:
-	  if (cachesz < linbits + 1) {
+	  if (cachesz < (int)linbits + 1) {
 	    bitcache   = (bitcache << 16) | mad_bit_read(&peek, 16);
 	    cachesz   += 16;
 	    bits_left -= 16;
@@ -1554,8 +1554,9 @@ void III_aliasreduce(mad_fixed_t xr[576], int lines)
       b = xr[     i];
 
 # if defined(ASO_ZEROCHECK)
-      if (a | b) {
+      if (a | b)
 # endif
+      {
 	MAD_F_ML0(hi, lo,  a, cs[i]);
 	MAD_F_MLA(hi, lo, -b, ca[i]);
 
@@ -1565,9 +1566,7 @@ void III_aliasreduce(mad_fixed_t xr[576], int lines)
 	MAD_F_MLA(hi, lo,  a, ca[i]);
 
 	xr[     i] = MAD_F_MLZ(hi, lo);
-# if defined(ASO_ZEROCHECK)
       }
-# endif
     }
   }
 }
