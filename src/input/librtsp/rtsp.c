@@ -115,21 +115,25 @@ static char *rtsp_get(rtsp_t *s) {
  * rtsp_put puts a line on stream
  */
 
-static void rtsp_put(rtsp_t *s, const char *string) {
+static int rtsp_put(rtsp_t *s, const char *string) {
 
+  int ret;
   size_t len=strlen(string);
   char *buf = malloc(sizeof(char)*len+2);
 
   lprintf(">> '%s'", string);
 
+  if (!buf)
+    return -1;
   memcpy(buf,string,len);
   buf[len]=0x0d;
   buf[len+1]=0x0a;
 
-  _x_io_tcp_write(s->stream, s->s, buf, len+2);
+  ret = _x_io_tcp_write (s->stream, s->s, buf, len + 2);
 
   free(buf);
   lprintf("done.\n");
+  return ret;
 }
 
 /*
@@ -170,18 +174,19 @@ static void rtsp_send_request(rtsp_t *s, const char *type, const char *what) {
   char *buf;
 
   buf = _x_asprintf("%s %s %s",type, what, rtsp_protocol_version);
-  rtsp_put(s,buf);
-  free(buf);
-
-  if (s->auth) {
-    rtsp_put(s, s->auth);
+  if (buf) {
+    rtsp_put (s, buf);
+    free (buf);
+    if (s->auth)
+      rtsp_put (s, s->auth);
+    if (payload) {
+      while (*payload) {
+        rtsp_put (s, *payload);
+        payload++;
+      }
+    }
   }
 
-  if (payload)
-    while (*payload) {
-      rtsp_put(s,*payload);
-      payload++;
-    }
   rtsp_put(s,"");
   rtsp_unschedule_all(s);
 }

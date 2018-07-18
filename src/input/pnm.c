@@ -366,6 +366,7 @@ static int pnm_send_request(pnm_t *p, uint32_t bandwidth) {
   int c=PNM_HEADER_SIZE;
   char fixme[]={0,1};
 
+  (void)bandwidth;
   memcpy(p->buffer,pnm_header,PNM_HEADER_SIZE);
   c+=pnm_write_chunk(PNA_CLIENT_CHALLANGE,strlen(pnm_challenge),
           pnm_challenge,&p->buffer[c]);
@@ -434,7 +435,7 @@ static int pnm_send_response(pnm_t *p, const char *response) {
 
   memcpy(&p->buffer[3], response, size);
 
-  if (_x_io_tcp_write(p->stream, p->s, p->buffer, size+3) != size+3)
+  if ((size_t)_x_io_tcp_write (p->stream, p->s, p->buffer, size + 3) != size + 3)
     return 0;
   return 1;
 }

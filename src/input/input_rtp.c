@@ -174,7 +174,7 @@ static int host_connect_attempt(struct in_addr ia, int port,
   union {
     struct sockaddr_in in;
     struct sockaddr sa;
-  } saddr;
+  } saddr, saddr2;
   int optval;
   int multicast = 0;  /* boolean, assume unicast */
 
@@ -249,9 +249,8 @@ static int host_connect_attempt(struct in_addr ia, int port,
       mreq.imr_interface.s_addr = htonl(INADDR_ANY);
     }
     else {
-      memcpy(&mreq.imr_interface,
-	     &((struct sockaddr_in *) &ifreq.ifr_addr)->sin_addr,
-	     sizeof(struct in_addr));
+      saddr2.sa = ifreq.ifr_addr;
+      mreq.imr_interface.s_addr = saddr2.in.sin_addr.s_addr;
     }
 
     if (setsockopt(s, IPPROTO_IP, IP_ADD_MEMBERSHIP, &mreq, sizeof(mreq))) {
@@ -545,6 +544,7 @@ static off_t rtp_plugin_seek (input_plugin_t *this_gen,
  */
 
 static off_t rtp_plugin_get_length (input_plugin_t *this_gen) {
+  (void)this_gen;
   return -1;
 }
 
@@ -758,6 +758,8 @@ static void *init_class (xine_t *xine, const void *data) {
     .eject_media       = NULL,
   };
 
+  (void)xine;
+  (void)data;
   return (void *)&input_rtp_class;
 }
 

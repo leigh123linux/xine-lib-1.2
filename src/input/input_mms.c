@@ -386,7 +386,10 @@ static void *init_class (xine_t *xine, const void *data) {
 
   mms_input_class_t  *this;
 
+  (void)data;
   this = calloc(1, sizeof (mms_input_class_t));
+  if (!this)
+    return NULL;
 
   this->xine   = xine;
   this->ip                             = NULL;

@@ -117,7 +117,9 @@ static int rmff_dump_mdpr(rmff_mdpr_t *mdpr, uint8_t *buffer, int bufsize) {
 
   if (!mdpr) return 0;
 
-  if (bufsize < RMFF_MDPRHEADER_SIZE + mdpr->type_specific_len + mdpr->stream_name_size + mdpr->mime_type_size)
+  if (mdpr->type_specific_len > 0x3fffffff)
+    return -1;
+  if (bufsize < RMFF_MDPRHEADER_SIZE + (int)mdpr->type_specific_len + mdpr->stream_name_size + mdpr->mime_type_size)
     return -1;
 
   mdpr->object_id=_X_BE_32(&mdpr->object_id);
@@ -357,14 +359,14 @@ static rmff_mdpr_t *rmff_scan_mdpr(const char *data)
   mdpr->duration=_X_BE_32(&data[36]);
 
   mdpr->stream_name_size=data[40];
-  if (mdpr->size < 46 + mdpr->stream_name_size)
+  if (mdpr->size < 46 + (uint32_t)mdpr->stream_name_size)
     goto fail;
   mdpr->stream_name = xine_memdup0(&data[41], mdpr->stream_name_size);
   if (!mdpr->stream_name)
     goto fail;
 
   mdpr->mime_type_size=data[41+mdpr->stream_name_size];
-  if (mdpr->size < 46 + mdpr->stream_name_size + mdpr->mime_type_size)
+  if (mdpr->size < 46 + (uint32_t)mdpr->stream_name_size + (uint32_t)mdpr->mime_type_size)
     goto fail;
   mdpr->mime_type = xine_memdup0(&data[42+mdpr->stream_name_size], mdpr->mime_type_size);
   if (!mdpr->mime_type)

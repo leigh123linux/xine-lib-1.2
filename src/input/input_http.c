@@ -793,7 +793,7 @@ static int http_plugin_open (input_plugin_t *this_gen ) {
            VERSION);
   buflen = strlen(buf);
 
-  if (_x_tls_write(this->tls, buf, buflen) != buflen) {
+  if ((size_t)_x_tls_write(this->tls, buf, buflen) != buflen) {
     _x_message(this->stream, XINE_MSG_CONNECTION_REFUSED, "couldn't send request", NULL);
     xprintf(this->xine, XINE_VERBOSITY_DEBUG, LOG_MODULE ": couldn't send request\n");
     return -4;
@@ -1149,7 +1149,10 @@ void *input_http_init_class (xine_t *xine, const void *data) {
   char                *proxyhost_env = NULL;
   int                  proxyport_env = DEFAULT_HTTP_PORT;
 
+  (void)data;
   this = calloc(1, sizeof (http_input_class_t));
+  if (!this)
+    return NULL;
 
   this->xine   = xine;
   config       = xine->config;

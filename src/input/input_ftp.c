@@ -108,7 +108,7 @@ static int _write_command(ftp_input_plugin_t *this, const char *cmd)
 
   len = strlen(cmd);
   rc = _x_io_tcp_write(this->stream, this->fd, cmd, len);
-  if (rc != len) {
+  if ((size_t)rc != len) {
     xprintf(this->xine, XINE_VERBOSITY_LOG, LOG_MODULE ": "
             "send failed\n");
     return -1;
@@ -591,7 +591,7 @@ static int _fill_preview(ftp_input_plugin_t *this)
   off_t got;
 
   got = _ftp_read (&this->input_plugin, this->preview, sizeof(this->preview));
-  if (got < 1 || got > sizeof(this->preview)) {
+  if (got < 1 || got > (off_t)sizeof (this->preview)) {
     xprintf(this->xine, XINE_VERBOSITY_LOG, LOG_MODULE ": "
             "Unable to read preview data\n");
     return -1;
@@ -828,6 +828,7 @@ void *input_ftp_init_class(xine_t *xine, const void *data)
 {
   ftp_input_class_t *this;
 
+  (void)data;
   this = calloc(1, sizeof(*this));
   if (!this)
     return NULL;

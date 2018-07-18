@@ -59,6 +59,7 @@ typedef struct {
 static uint32_t
 smb_plugin_get_capabilities (input_plugin_t *this_gen)
 {
+	(void)this_gen;
 	return INPUT_CAP_SEEKABLE; // | INPUT_CAP_SPULANG;
 }
 
@@ -157,6 +158,7 @@ smb_plugin_get_mrl (input_plugin_t *this_gen)
 }
 
 static uint32_t smb_plugin_get_blocksize (input_plugin_t *this_gen) {
+  (void)this_gen;
   return 0;
 }
 
@@ -404,6 +406,9 @@ static int
 smb_plugin_get_optional_data (input_plugin_t *this_gen,
 		void *data, int data_type)
 {
+	(void)this_gen;
+	(void)data;
+	(void)data_type;
 	return INPUT_OPTIONAL_UNSUPPORTED;
 }
 
@@ -485,6 +490,14 @@ smb_class_get_instance (input_class_t *class_gen, xine_stream_t *stream,
 static void smb_auth(const char *srv, const char *shr, char *wg, int wglen, char *un, int unlen, char *pw, int pwlen)
 {
   //wglen = unlen = pwlen = 0;
+  (void)srv;
+  (void)shr;
+  (void)wg;
+  (void)wglen;
+  (void)un;
+  (void)unlen;
+  (void)pw;
+  (void)pwlen;
 }
 
 static void
@@ -495,20 +508,23 @@ static void
 #ifdef HAVE_SETLOCALE
 	char *lcl = strdup(setlocale(LC_MESSAGES, NULL));
 #endif
+	(void)data;
 
 	if (smbc_init(smb_auth,(xine->verbosity >= XINE_VERBOSITY_DEBUG)))
 	  goto _exit_error;
 
 	this = calloc(1, sizeof(smb_input_class_t));
-	this->xine = xine;
+	if (this) {
+		this->xine = xine;
 
-	this->input_class.get_instance       = smb_class_get_instance;
-	this->input_class.identifier         = "smb";
-	this->input_class.description        = N_("CIFS/SMB input plugin based on libsmbclient");
-	this->input_class.get_dir            = smb_class_get_dir;
-	this->input_class.get_autoplay_list  = NULL;
-	this->input_class.dispose            = smb_class_dispose;
-	this->input_class.eject_media        = NULL;
+		this->input_class.get_instance       = smb_class_get_instance;
+		this->input_class.identifier         = "smb";
+		this->input_class.description        = N_("CIFS/SMB input plugin based on libsmbclient");
+		this->input_class.get_dir            = smb_class_get_dir;
+		this->input_class.get_autoplay_list  = NULL;
+		this->input_class.dispose            = smb_class_dispose;
+		this->input_class.eject_media        = NULL;
+	}
 
  _exit_error:
 

@@ -126,6 +126,7 @@ static off_t net_plugin_read (input_plugin_t *this_gen,
 
 static uint32_t net_plugin_get_blocksize (input_plugin_t *this_gen) {
 
+  (void)this_gen;
   return NET_BS_LEN;
 
 }
@@ -307,6 +308,8 @@ void *input_net_init_class (xine_t *xine, const void *data) {
     .eject_media       = NULL,
   };
 
+  (void)xine;
+  (void)data;
   return (void *)&input_net_class;
 }
 
@@ -323,6 +326,7 @@ void *input_tls_init_class (xine_t *xine, const void *data) {
     .eject_media       = NULL,
   };
 
+  (void)data;
   _x_tls_register_config_keys(xine->config);
 
   return (void *)&input_tls_class;

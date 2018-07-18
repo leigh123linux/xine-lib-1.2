@@ -178,7 +178,7 @@ static int send_command (mmsh_t *this, char *cmd)  {
   lprintf ("send_command:\n%s\n", cmd);
 
   const size_t length = strlen(cmd);
-  if (_x_io_tcp_write(this->stream, this->s, cmd, length) != length) {
+  if ((size_t)_x_io_tcp_write (this->stream, this->s, cmd, length) != length) {
     xprintf (this->stream->xine, XINE_LOG_MSG, _("libmmsh: send error\n"));
     return 0;
   }
@@ -556,6 +556,7 @@ static int mmsh_connect_int2(mmsh_t *this, int bandwidth) {
   /* second request */
   lprintf("second http request\n");
 
+  (void)bandwidth;
   /* stream selection string */
   /* The same selection is done with mmst */
   /* 0 means selected */

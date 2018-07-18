@@ -177,6 +177,8 @@ void _x_tls_shutdown(xine_tls_t *t)
   t->enabled = 0;
 
   gnutls_global_deinit();
+#else
+  (void)t;
 #endif /* HAVE_GNUTLS */
 }
 
@@ -233,6 +235,8 @@ xine_tls_t *_x_tls_connect(xine_t *xine, xine_stream_t *stream, const char *host
 int _x_tls_handshake(xine_tls_t *t, const char *host, int verify)
 {
 #ifndef HAVE_GNUTLS
+  (void)host;
+  (void)verify;
   xprintf(t->xine, XINE_VERBOSITY_LOG, LOG_MODULE ": "
           "No TLS support (gnutls disabled in configure)\n");
   return -1;

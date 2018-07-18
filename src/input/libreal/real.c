@@ -357,7 +357,7 @@ void real_calc_response_and_checksum (char *response, char *chksum, char *challe
 
   /* calculate checksum */
   resp_len = strlen (response);
-  for (i=0; i<resp_len/4; i++)
+  for (i=0; i<(int)(resp_len/4); i++)
     chksum[i] = response[i*4];
 }
 

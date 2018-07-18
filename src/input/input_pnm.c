@@ -109,11 +109,12 @@ static off_t pnm_plugin_get_length (input_plugin_t *this_gen) {
   pnm_input_plugin_t   *this = (pnm_input_plugin_t *) this_gen;
   off_t                 length;
   */
-
+  (void)this_gen;
   return -1;
 }
 
 static uint32_t pnm_plugin_get_capabilities (input_plugin_t *this_gen) {
+  (void)this_gen;
   return INPUT_CAP_PREVIEW | INPUT_CAP_RIP_FORBIDDEN;
 }
 
@@ -235,6 +236,8 @@ void *input_pnm_init_class (xine_t *xine, const void *data) {
     .eject_media        = NULL,
   };
 
+  (void)xine;
+  (void)data;
   return (void *)&input_pnm_class;
 }
 

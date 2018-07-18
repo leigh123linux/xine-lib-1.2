@@ -120,10 +120,12 @@ static off_t rtsp_plugin_get_length (input_plugin_t *this_gen) {
   off_t                 length;
   */
 
+  (void)this_gen;
   return -1;
 }
 
 static uint32_t rtsp_plugin_get_capabilities (input_plugin_t *this_gen) {
+  (void)this_gen;
   return INPUT_CAP_PREVIEW | INPUT_CAP_RIP_FORBIDDEN;
 }
 
@@ -252,6 +254,8 @@ void *input_rtsp_init_class (xine_t *xine, const void *data) {
     .dispose            = NULL,
     .eject_media        = NULL,
   };
+  (void)xine;
+  (void)data;
   return (void *)&input_rtsp_class;
 }
 
