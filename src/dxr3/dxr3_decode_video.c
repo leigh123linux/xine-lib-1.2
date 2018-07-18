@@ -178,6 +178,8 @@ static void *dxr3_init_plugin(xine_t *xine, const void *data)
 {
   dxr3_decoder_class_t *this;
 
+  (void)data;
+
   this = calloc(1, sizeof (dxr3_decoder_class_t));
   if (!this) return NULL;
 
@@ -601,6 +603,7 @@ static void dxr3_reset(video_decoder_t *this_gen)
 
 static void dxr3_discontinuity(video_decoder_t *this_gen)
 {
+  (void)this_gen;
 }
 
 static void dxr3_flush(video_decoder_t *this_gen)

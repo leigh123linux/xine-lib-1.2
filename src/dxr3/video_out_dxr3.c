@@ -176,6 +176,7 @@ static dxr3_driver_class_t *dxr3_vo_init_plugin(xine_t *xine, const void *visual
 {
   dxr3_driver_class_t *this;
 
+  (void)visual_gen;
   this = calloc(1, sizeof(dxr3_driver_class_t));
   if (!this) return NULL;
 
@@ -524,6 +525,7 @@ static vo_driver_t *dxr3_vo_open_plugin(video_driver_class_t *class_gen, const v
 
 static uint32_t dxr3_get_capabilities(vo_driver_t *this_gen)
 {
+  (void)this_gen;
   return VO_CAP_YV12 | VO_CAP_YUY2;
 }
 
@@ -577,6 +579,8 @@ static void dxr3_frame_proc_slice(vo_frame_t *frame_gen, uint8_t **src)
 static void dxr3_frame_field(vo_frame_t *vo_img, int which_field)
 {
   /* dummy function */
+  (void)vo_img;
+  (void)which_field;
 }
 
 static void dxr3_frame_dispose(vo_frame_t *frame_gen)
@@ -708,7 +712,7 @@ static void dxr3_update_frame_format(vo_driver_t *this_gen, vo_frame_t *frame_ge
   }
 
   /* if dimensions changed, we need to re-allocate frame memory */
-  if ((frame->vo_frame.width != width) || (frame->vo_frame.height != height) ||
+  if ((frame->vo_frame.width != (int)width) || (frame->vo_frame.height != (int)height) ||
       (frame->oheight != oheight) || (frame->vo_frame.format != format)) {
     av_freep(&frame->mem);
 
@@ -943,7 +947,7 @@ static void dxr3_display_frame(vo_driver_t *this_gen, vo_frame_t *frame_gen)
   if (this->overlay_enabled) {
     if (this->scale.force_redraw                         ||
 	this->scale.delivered_width  != frame_gen->width ||
-	this->scale.delivered_height != frame->oheight   ||
+	this->scale.delivered_height != (int)frame->oheight ||
 	this->scale.delivered_ratio  != frame_gen->ratio ||
 	this->scale.user_ratio       != (this->widescreen_enabled ? frame->aspect : XINE_VO_ASPECT_4_3)) {
 
@@ -1151,6 +1155,7 @@ static int dxr3_set_property(vo_driver_t *this_gen, int property, int value)
 static void dxr3_get_property_min_max(vo_driver_t *this_gen, int property,
   int *min, int *max)
 {
+  (void)this_gen;
   switch (property) {
   case VO_PROP_SATURATION:
   case VO_PROP_CONTRAST:

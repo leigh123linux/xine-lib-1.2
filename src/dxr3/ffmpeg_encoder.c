@@ -84,13 +84,15 @@ static int dxr3_lavc_close(dxr3_driver_t *drv) {
 int dxr3_lavc_init(dxr3_driver_t *drv, plugin_node_t *plugin)
 {
   lavc_data_t* this;
-  XFF_AVCODEC_INIT();
-
-  XFF_AVCODEC_REGISTER_ALL();
-
   lprintf("lavc init , version %x\n", avcodec_version());
   this = calloc(1, sizeof(lavc_data_t));
   if (!this) return 0;
+
+  (void)plugin;
+
+  XFF_AVCODEC_INIT();
+
+  XFF_AVCODEC_REGISTER_ALL();
 
   this->encoder_data.type             = ENC_LAVC;
   this->encoder_data.on_update_format = lavc_on_update_format;
@@ -248,7 +250,7 @@ static int lavc_on_display_frame(dxr3_driver_t *drv, dxr3_frame_t *frame)
 #if XFF_ENCVIDEO == 1
   int size;
 #else /* 2 */
-  AVPacket pkt = { 0 };
+  AVPacket pkt = {.data = NULL};
   int ret, got_output;
 #endif
   lavc_data_t* this = (lavc_data_t *)drv->enc;
@@ -256,7 +258,7 @@ static int lavc_on_display_frame(dxr3_driver_t *drv, dxr3_frame_t *frame)
 
   if (frame->vo_frame.bad_frame) return 1;
     /* ignore old frames */
-  if ((frame->vo_frame.pitches[0] != this->context->width) || (frame->oheight != this->context->height)) {
+  if ((frame->vo_frame.pitches[0] != this->context->width) || ((int)frame->oheight != this->context->height)) {
 	frame->vo_frame.free(&frame->vo_frame);
     lprintf("LAVC ignoring frame !!!\n");
     return 1;

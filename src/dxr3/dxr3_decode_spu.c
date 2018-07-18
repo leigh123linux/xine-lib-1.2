@@ -169,7 +169,7 @@ static inline void dxr3_spudec_update_nav(dxr3_spudec_t *this)
 {
   metronom_clock_t *clock = this->stream->xine->clock;
 
-  if (this->pci_cur.next && this->pci_cur.next->vpts <= clock->get_current_time(clock)) {
+  if (this->pci_cur.next && (int64_t)this->pci_cur.next->vpts <= clock->get_current_time(clock)) {
     pci_node_t *node = this->pci_cur.next;
     xine_fast_memcpy(&this->pci_cur, this->pci_cur.next, sizeof(pci_node_t));
     dxr3_spudec_process_nav(this);
@@ -188,6 +188,9 @@ static inline void dxr3_swab_clut(int *clut)
 static void *dxr3_spudec_init_plugin(xine_t *xine, const void* data)
 {
   dxr3_spudec_class_t *this;
+
+  (void)xine;
+  (void)data;
 
   this = calloc(1, sizeof(dxr3_spudec_class_t));
   if (!this) return NULL;
