@@ -426,6 +426,8 @@ void a52_imdct_init (uint32_t mm_accel)
 	ifft128 = (void (*) (complex_t *)) fftc4_un128;
 	ifft64 = (void (*) (complex_t *)) fftc4_un64;
     } else
+#else
+    (void)mm_accel;
 #endif
     {
 	ifft128 = ifft128_c;

@@ -450,6 +450,9 @@ static void zero (sample_t * samples)
 void a52_downmix (sample_t * samples, int acmod, int output, sample_t bias,
 		  sample_t clev, sample_t slev)
 {
+    /* ?? */
+    (void)clev;
+
     switch (CONVERT (acmod, output & A52_CHANNEL_MASK)) {
 
     case CONVERT (A52_CHANNEL, A52_CHANNEL2):
