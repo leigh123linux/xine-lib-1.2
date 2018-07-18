@@ -132,7 +132,7 @@ static off_t cache_plugin_read(input_plugin_t *this_gen, void *buf_gen, off_t le
     this->buf_pos = 0;
 
     /* read the rest */
-    if (len < this->buf_size) {
+    if (len < (off_t)this->buf_size) {
       /* readahead bytes */
       do {
         int main_read;
