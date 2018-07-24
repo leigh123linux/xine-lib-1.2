@@ -43,10 +43,6 @@
 
 #include "nsf_combined.h"
 
-typedef struct {
-  audio_decoder_class_t   decoder_class;
-} nsf_class_t;
-
 typedef struct nsf_decoder_s {
   audio_decoder_t  audio_decoder;
 
@@ -240,19 +236,13 @@ static audio_decoder_t *open_plugin (audio_decoder_class_t *class_gen, xine_stre
 /* This function allocates a private audio decoder class and initializes
  * the class's member functions. */
 void *decoder_nsf_init_plugin (xine_t *xine, const void *data) {
-
-  nsf_class_t *this ;
-
+  static const audio_decoder_class_t this = {
+    .open_plugin     = open_plugin,
+    .identifier      = "NSF",
+    .description     = N_("NES Music audio decoder plugin"),
+    .dispose         = NULL
+  };
   (void)xine;
   (void)data;
-  this = (nsf_class_t *) calloc(1, sizeof(nsf_class_t));
-  if (!this)
-    return NULL;
-
-  this->decoder_class.open_plugin     = open_plugin;
-  this->decoder_class.identifier      = "NSF";
-  this->decoder_class.description     = N_("NES Music audio decoder plugin");
-  this->decoder_class.dispose         = default_audio_decoder_class_dispose;
-
-  return this;
+  return (audio_decoder_class_t *)&this;
 }
