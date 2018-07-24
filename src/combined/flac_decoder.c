@@ -50,10 +50,6 @@
 
 #include "flac_demuxer.h"
 
-typedef struct {
-  audio_decoder_class_t   decoder_class;
-} flac_class_t;
-
 typedef struct flac_decoder_s {
   audio_decoder_t   audio_decoder;
 
@@ -197,6 +193,10 @@ flac_metadata_callback (const FLAC__StreamDecoder *decoder,
     /* does not work well:
        this->min_size = 2 * metadata->data.stream_info.max_blocksize; */
   }
+#else
+  (void)decoder;
+  (void)metadata;
+  (void)client_data;
 #endif
 
   return;
@@ -220,6 +220,10 @@ flac_error_callback (const FLAC__StreamDecoder *decoder,
     printf("libflac: Frame's data did not match the CRC in the footer.\n");
   else
     printf("libflac: unknown error.\n");
+#else
+  (void)decoder;
+  (void)status;
+  (void)client_data;
 #endif
 
     return;
@@ -400,19 +404,16 @@ open_plugin (audio_decoder_class_t *class_gen, xine_stream_t *stream) {
 /*
  * flac plugin class
  */
-static void *
-init_plugin (xine_t *xine, const void *data) {
-    flac_class_t *this;
-
-    this = calloc(1, sizeof (flac_class_t));
-
-    this->decoder_class.open_plugin     = open_plugin;
-    this->decoder_class.identifier      = "flacdec";
-    this->decoder_class.description     = N_("flac audio decoder plugin");
-    this->decoder_class.dispose         = default_audio_decoder_class_dispose;
-
-
-    return this;
+static void *init_plugin (xine_t *xine, const void *data) {
+  static const audio_decoder_class_t this = {
+    .open_plugin     = open_plugin,
+    .identifier      = "flacdec",
+    .description     = N_("flac audio decoder plugin"),
+    .dispose         = NULL
+  };
+  (void)xine;
+  (void)data;
+  return (audio_decoder_class_t *)&this;
 }
 
 static const uint32_t audio_types[] = {
