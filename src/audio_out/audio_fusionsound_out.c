@@ -498,7 +498,7 @@ static void* init_class(xine_t *xine, const void *data) {
 }
 
 static const ao_info_t ao_info_fusionsound = {
-  4
+  .priority = 4,
 };
 
 /*

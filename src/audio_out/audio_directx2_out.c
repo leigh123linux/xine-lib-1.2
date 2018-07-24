@@ -963,7 +963,7 @@ static void *init_class(xine_t *xine, const void *data) {
 
 
 static const ao_info_t ao_info_directx2 = {
-  10
+  .priority = 10,
 };
 
 const plugin_info_t xine_plugin_info[] EXPORTED = {

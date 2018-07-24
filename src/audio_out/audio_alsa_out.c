@@ -1706,7 +1706,7 @@ static void *init_class (xine_t *xine, const void *data) {
  }
 
 static ao_info_t ao_info_alsa = {
-  10
+  .priority = 10,
 };
 
 /*

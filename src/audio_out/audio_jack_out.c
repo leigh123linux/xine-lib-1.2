@@ -899,7 +899,9 @@ static void *init_class (xine_t *xine, const void *data) {
     return this;
 }
 
-static ao_info_t ao_info_jack = { 6 };
+static ao_info_t ao_info_jack = {
+  .priority = 6,
+};
 
 /*
  * exported plugin catalog entry

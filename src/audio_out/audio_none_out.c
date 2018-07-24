@@ -249,7 +249,7 @@ static void *ao_none_init_class (xine_t *xine, const void *data) {
 }
 
 static const ao_info_t ao_info_none = {
-  -1 /* do not auto probe this one */
+  .priority = -1, /* do not auto probe this one */
 };
 
 /*

@@ -1136,7 +1136,7 @@ static void *init_class (xine_t *xine, const void *data) {
 }
 
 static const ao_info_t ao_info_oss = {
-  9 /* less than alsa so xine will use alsa's native interface by default */
+  .priority = 9, /* less than alsa so xine will use alsa's native interface by default */
 };
 
 /*

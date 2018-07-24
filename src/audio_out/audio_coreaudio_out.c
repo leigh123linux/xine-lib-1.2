@@ -583,7 +583,7 @@ static void *init_class (xine_t *xine, const void *data) {
 }
 
 static const ao_info_t ao_info_coreaudio = {
-  1
+  .priority = 1,
 };
 
 /*

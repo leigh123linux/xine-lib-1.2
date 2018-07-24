@@ -406,8 +406,7 @@ static void *init_audio_out_plugin (config_values_t *config)
 }
 
 static const ao_info_t ao_info_irixal = {
-  "xine audio output plugin using IRIX libaudio",
-  10
+  .priority = 10,
 };
 
 ao_info_t *get_audio_out_plugin_info()

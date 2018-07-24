@@ -408,7 +408,7 @@ static void *ao_file_init_class (xine_t *xine, const void *data) {
 }
 
 static const ao_info_t ao_info_file = {
-	-1 /* do not auto probe this one */
+  .priority = -1, /* do not auto probe this one */
 };
 
 /*

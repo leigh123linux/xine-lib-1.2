@@ -1030,7 +1030,7 @@ static void *ao_sun_init_class (xine_t *xine, const void *data) {
 
 
 static const ao_info_t ao_info_sun = {
-  10
+  .priority = 10,
 };
 
 /*
