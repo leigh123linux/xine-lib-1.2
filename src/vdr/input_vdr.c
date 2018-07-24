@@ -2741,24 +2741,17 @@ static const char * const *vdr_class_get_autoplay_list(input_class_t *this_gen,
 
 void *vdr_input_init_plugin(xine_t *xine, const void *data)
 {
-  input_class_t *this;
-
   lprintf("init_class\n");
-
+  static const input_class_t this = {
+    .get_instance      = vdr_class_get_instance,
+    .identifier        = "VDR",
+    .description       = N_("VDR display device plugin"),
+    .get_dir           = NULL,
+    .get_autoplay_list = vdr_class_get_autoplay_list,
+    .dispose           = NULL,
+    .eject_media       = NULL
+  };
   (void)xine;
   (void)data;
-  this = calloc(1, sizeof (input_class_t));
-  if (!this) {
-    return NULL;
-  }
-
-  this->get_instance      = vdr_class_get_instance;
-  this->identifier        = "VDR";
-  this->description       = N_("VDR display device plugin");
-  this->get_dir           = NULL;
-  this->get_autoplay_list = vdr_class_get_autoplay_list;
-  this->dispose           = default_input_class_dispose;
-  this->eject_media       = NULL;
-
-  return this;
+  return (input_class_t *)&this;
 }
