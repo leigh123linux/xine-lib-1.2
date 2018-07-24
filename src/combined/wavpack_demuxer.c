@@ -52,9 +52,6 @@ typedef struct {
   uint16_t channels:4;
 } demux_wv_t;
 
-typedef struct {
-  demux_class_t demux_class;
-} demux_wv_class_t;
 
 static int32_t xine_input_read_bytes(void *const this_gen, void *const data,
 				     const int32_t bcount) {
@@ -363,14 +360,15 @@ static demux_plugin_t *open_plugin (demux_class_t *const class_gen,
 }
 
 void *demux_wv_init_plugin (xine_t *xine, const void *data) {
-  demux_wv_class_t *const this = calloc(1, sizeof (demux_wv_class_t));
-
-  this->demux_class.open_plugin     = open_plugin;
-  this->demux_class.description     = N_("Wavpack demux plugin");
-  this->demux_class.identifier      = "Wavpack";
-  this->demux_class.mimetypes       = "audio/x-wavpack: wv,wvp: WavPack audio;";
-  this->demux_class.extensions      = "wv wvp";
-  this->demux_class.dispose         = default_demux_class_dispose;
-
-  return this;
+  static const demux_class_t this = {
+    .open_plugin     = open_plugin,
+    .description     = N_("Wavpack demux plugin"),
+    .identifier      = "Wavpack",
+    .mimetypes       = "audio/x-wavpack: wv,wvp: WavPack audio;",
+    .extensions      = "wv wvp",
+    .dispose         = NULL
+  };
+  (void)xine;
+  (void)data;
+  return (demux_class_t *)&this;
 }

@@ -35,10 +35,6 @@
 #include "wavpack_combined.h"
 
 typedef struct {
-  audio_decoder_class_t   decoder_class;
-} wavpack_class_t;
-
-typedef struct {
   audio_decoder_t   audio_decoder;
 
   xine_stream_t    *stream;
@@ -298,6 +294,8 @@ static void wavpack_dispose (audio_decoder_t *this_gen) {
 static audio_decoder_t *open_plugin (audio_decoder_class_t *class_gen, xine_stream_t *stream) {
   wavpack_decoder_t * const this = calloc(1, sizeof (wavpack_decoder_t));
 
+    if (!this)
+      return NULL;
     this->audio_decoder.decode_data         = wavpack_decode_data;
     this->audio_decoder.reset               = wavpack_reset;
     this->audio_decoder.discontinuity       = wavpack_discontinuity;
@@ -315,14 +313,13 @@ static audio_decoder_t *open_plugin (audio_decoder_class_t *class_gen, xine_stre
  */
 
 void *decoder_wavpack_init_plugin (xine_t *xine, const void *data) {
-    wavpack_class_t *this;
-
-    this = calloc(1, sizeof (wavpack_class_t));
-
-    this->decoder_class.open_plugin     = open_plugin;
-    this->decoder_class.identifier      = "wavpackdec";
-    this->decoder_class.description     = N_("wavpack audio decoder plugin");
-    this->decoder_class.dispose         = default_audio_decoder_class_dispose;
-
-    return this;
+  static const audio_decoder_class_t this = {
+    .open_plugin     = open_plugin,
+    .identifier      = "wavpackdec",
+    .description     = N_("wavpack audio decoder plugin"),
+    .dispose         = NULL
+  };
+  (void)xine;
+  (void)data;
+  return (audio_decoder_class_t *)&this;
 }
