@@ -345,32 +345,24 @@ static input_plugin_t *input_avio_get_instance (input_class_t *cls_gen, xine_str
 }
 
 void *init_avio_input_plugin (xine_t *xine, const void *data) {
-  input_class_t  *this;
   const char     *protocol;
   void           *iter;
+  static const input_class_t this = {
+    .get_instance      = input_avio_get_instance,
+    .description       = N_("libavio input plugin"),
+    .identifier        = INPUT_AVIO_ID,
+    .get_dir           = NULL,
+    .get_autoplay_list = NULL,
+    .dispose           = NULL,
+    .eject_media       = NULL
+  };
 
   (void)data;
-
   for (iter = NULL; NULL != (protocol = avio_enum_protocols(&iter, 0)); ) {
     xprintf (xine, XINE_VERBOSITY_DEBUG, LOG_MODULE": found avio protocol '%s'\n", protocol);
   }
-
-  this = calloc(1, sizeof(input_class_t));
-  if (!this) {
-    return NULL;
-  }
-
   pthread_once( &once_control, init_once_routine );
-
-  this->get_instance      = input_avio_get_instance;
-  this->description       = N_("libavio input plugin");
-  this->identifier        = INPUT_AVIO_ID;
-  this->get_dir           = NULL;
-  this->get_autoplay_list = NULL;
-  this->dispose           = default_input_class_dispose;
-  this->eject_media       = NULL;
-
-  return this;
+  return (input_class_t *)&this;
 }
 
 const input_info_t input_info_avio = {

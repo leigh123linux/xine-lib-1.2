@@ -433,12 +433,12 @@ static int find_avformat_streams(avformat_demux_plugin_t *this) {
 
 #ifdef XFF_CODECPAR
     if (st->codecpar && st->codecpar->codec_type == AVMEDIA_TYPE_AUDIO &&
-        st->codecpar->sample_rate != 0 && st->codecpar->channels != 0) {
+        st->codecpar->sample_rate != 0 && st->codecpar->channels != 0)
 #else
     if (st->codec && st->codec->codec_type == AVMEDIA_TYPE_AUDIO &&
-        st->codec->sample_rate != 0 && st->codec->channels != 0) {
+        st->codec->sample_rate != 0 && st->codec->channels != 0)
 #endif
-
+    {
       uint32_t xine_audio_type = audio_codec_lookup(this, CODEC_ID(st));
       if (!xine_audio_type) {
         xprintf (this->stream->xine, XINE_VERBOSITY_LOG,
@@ -887,23 +887,17 @@ static demux_plugin_t *open_demux_avformat_plugin (demux_class_t *class_gen,
 }
 
 void *init_avformat_demux_plugin (xine_t *xine, const void *data) {
-  demux_class_t     *this;
-
+  static const demux_class_t this = {
+    .open_plugin     = open_demux_avformat_plugin,
+    .description     = N_("libavformat demux plugin"),
+    .identifier      = DEMUX_AVFORMAT_ID,
+    .mimetypes       = NULL,
+    .extensions      = "",
+    .dispose         = NULL
+  };
   (void)xine;
   (void)data;
-
-  this  = calloc(1, sizeof(demux_class_t));
-  if (!this)
-    return NULL;
-
-  this->open_plugin     = open_demux_avformat_plugin;
-  this->description     = N_("libavformat demux plugin");
-  this->identifier      = DEMUX_AVFORMAT_ID;
-  this->mimetypes       = NULL;
-  this->extensions      = "";
-  this->dispose         = default_demux_class_dispose;
-
-  return this;
+  return (demux_class_t *)&this;
 }
 
 const demuxer_info_t demux_info_avformat = {
