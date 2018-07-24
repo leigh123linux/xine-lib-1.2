@@ -359,22 +359,16 @@ static spu_decoder_t *open_plugin (spu_decoder_class_t *class_gen, xine_stream_t
 }
 
 static void *init_plugin (xine_t *xine, const void *data) {
-
-  spu_decoder_class_t *this;
-
+  static const spu_decoder_class_t this = {
+    .open_plugin     = open_plugin,
+    .identifier      = "spudec",
+    .description     = N_("DVD/VOB SPU decoder plugin"),
+    .dispose         = NULL
+  };
+  lprintf ("libspudec:init_plugin called\n");
   (void)xine;
   (void)data;
-  this = calloc(1, sizeof (spu_decoder_class_t));
-  if (!this)
-    return NULL;
-
-  this->open_plugin     = open_plugin;
-  this->identifier      = "spudec";
-  this->description     = N_("DVD/VOB SPU decoder plugin");
-  this->dispose         = default_spu_decoder_class_dispose;
-
-  lprintf ("libspudec:init_plugin called\n");
-  return this;
+  return (spu_decoder_class_t *)&this;
 }
 
 /* plugin catalog information */
