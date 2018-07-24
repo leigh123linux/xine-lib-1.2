@@ -134,10 +134,6 @@ typedef int (__cdecl* LPFUNC8)(SoundConverter sc,
 typedef int (__cdecl* LPFUNC9)(SoundConverter sc) ;
 
 
-typedef struct {
-  audio_decoder_class_t   decoder_class;
-} qta_class_t;
-
 typedef struct qta_decoder_s {
   audio_decoder_t     audio_decoder;
 
@@ -230,7 +226,7 @@ static void qta_init_driver (qta_decoder_t *this, buf_element_t *buf) {
 
   this->qtml_dll = LoadLibraryA("qtmlClient.dll");
 
-  if (this->qtml_dll == NULL ) {
+  if (this->qtml_dll == (HINSTANCE)NULL) {
     xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG, "qt_audio: failed to load dll\n" );
     pthread_mutex_unlock(&win32_codec_mutex);
     _x_message(this->stream, XINE_MSG_LIBRARY_LOAD_ERROR,
@@ -425,7 +421,7 @@ static void qta_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) {
 
   if (buf->decoder_flags & BUF_FLAG_STDHEADER) {
 
-    if (buf->size >= sizeof(xine_waveformatex))
+    if (buf->size >= (int)sizeof(xine_waveformatex))
       memcpy (&this->wave, buf->content, sizeof (xine_waveformatex));
 
     this->wave.nChannels      = buf->decoder_info[3];
@@ -518,6 +514,7 @@ static void qta_reset (audio_decoder_t *this_gen) {
 
 
 static void qta_discontinuity (audio_decoder_t *this_gen) {
+  (void)this_gen;
 }
 
 static void qta_dispose (audio_decoder_t *this_gen) {
@@ -551,42 +548,37 @@ static void qta_dispose (audio_decoder_t *this_gen) {
 static audio_decoder_t *qta_open_plugin (audio_decoder_class_t *class_gen,
 					 xine_stream_t *stream) {
 
-  qta_decoder_t *this ;
+  qta_decoder_t *this = calloc (1, sizeof (*this));
+  if (!this)
+    return NULL;
 
-  this = (qta_decoder_t *) calloc(1, sizeof(qta_decoder_t));
-
-  this->audio_decoder.decode_data         = qta_decode_data;
-  this->audio_decoder.reset               = qta_reset;
-  this->audio_decoder.discontinuity       = qta_discontinuity;
-  this->audio_decoder.dispose             = qta_dispose;
-  this->stream                            = stream;
-
-  this->output_open     = 0;
-
-  return (audio_decoder_t *) this;
+  this->audio_decoder.decode_data   = qta_decode_data;
+  this->audio_decoder.reset         = qta_reset;
+  this->audio_decoder.discontinuity = qta_discontinuity;
+  this->audio_decoder.dispose       = qta_dispose;
+  this->stream                      = stream;
+#ifndef HAVE_ZERO_SAFE_MEM
+  this->output_open = 0;
+#endif
+  (void)class_gen;
+  return &this->audio_decoder;
 }
 
 /*
  * qta plugin class
  */
-static void *qta_init_class (xine_t *xine, void *data) {
-
-  qta_class_t     *this;
-  config_values_t *cfg;
-
-  cfg = xine->config;
-  if ((win32_def_path = get_win32_codecs_path(cfg)) == NULL) return NULL;
-
+static void *qta_init_class (xine_t *xine, const void *data) {
+  static const audio_decoder_class_t this = {
+    .open_plugin     = qta_open_plugin,
+    .identifier      = "qta",
+    .description     = N_("quicktime audio decoder plugin"),
+    .dispose         = NULL
+  };
+  (void)data;
+  if ((win32_def_path = get_win32_codecs_path (xine->config)) == NULL)
+    return NULL;
   pthread_once (&once_control, init_routine);
-
-  this = (qta_class_t *) calloc(1, sizeof(qta_class_t));
-
-  this->decoder_class.open_plugin     = qta_open_plugin;
-  this->decoder_class.identifier      = "qta";
-  this->decoder_class.description     = N_("quicktime audio decoder plugin");
-  this->decoder_class.dispose         = default_audio_decoder_class_dispose;
-
-  return this;
+  return (audio_decoder_class_t *)&this;
 }
 
 static const uint32_t audio_types[] = {
@@ -608,18 +600,9 @@ static const decoder_info_t qta_dec_info = {
  *
  */
 
-typedef struct {
-  video_decoder_class_t   decoder_class;
-
-  char                   *qt_codec_path;
-
-} qtv_class_t;
-
 
 typedef struct qtv_decoder_s {
   video_decoder_t  video_decoder;
-
-  qtv_class_t     *cls;
 
   xine_stream_t   *stream;
 
@@ -749,7 +732,7 @@ static void qtv_init_driver (qtv_decoder_t *this, buf_element_t *buf) {
 
   this->qtml_dll = LoadLibraryA("qtmlClient.dll");
 
-  if (this->qtml_dll == NULL ) {
+  if (this->qtml_dll == (HINSTANCE)NULL) {
     xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG, "qt_video: failed to load dll\n" );
     pthread_mutex_unlock(&win32_codec_mutex);
     _x_message(this->stream, XINE_MSG_LIBRARY_LOAD_ERROR,
@@ -1013,7 +996,7 @@ static void qtv_decode_data (video_decoder_t *this_gen, buf_element_t *buf) {
 
 static void qtv_flush (video_decoder_t *this_gen) {
   /* qtv_decoder_t *this = (qtv_decoder_t *) this_gen; */
-
+  (void)this_gen;
   lprintf ("video: flush\n");
 }
 
@@ -1025,7 +1008,7 @@ static void qtv_reset (video_decoder_t *this_gen) {
 
 static void qtv_discontinuity (video_decoder_t *this_gen) {
   /* qtv_decoder_t *this = (qtv_decoder_t *) this_gen; */
-
+  (void)this_gen;
 }
 
 static void qtv_dispose (video_decoder_t *this_gen) {
@@ -1047,19 +1030,17 @@ static void qtv_dispose (video_decoder_t *this_gen) {
 static video_decoder_t *qtv_open_plugin (video_decoder_class_t *class_gen,
 					 xine_stream_t *stream) {
 
-  qtv_class_t   *cls = (qtv_class_t *) class_gen;
-  qtv_decoder_t *this ;
+  qtv_decoder_t *this = calloc (1, sizeof (*this));
+  if (!this)
+    return NULL;
 
-  this = (qtv_decoder_t *) calloc(1, sizeof(qtv_decoder_t));
-
-  this->video_decoder.decode_data         = qtv_decode_data;
-  this->video_decoder.flush               = qtv_flush;
-  this->video_decoder.reset               = qtv_reset;
-  this->video_decoder.discontinuity       = qtv_discontinuity;
-  this->video_decoder.dispose             = qtv_dispose;
-  this->stream                            = stream;
-  this->cls                               = cls;
-
+  this->video_decoder.decode_data   = qtv_decode_data;
+  this->video_decoder.flush         = qtv_flush;
+  this->video_decoder.reset         = qtv_reset;
+  this->video_decoder.discontinuity = qtv_discontinuity;
+  this->video_decoder.dispose       = qtv_dispose;
+  this->stream                      = stream;
+  (void)class_gen;
   return &this->video_decoder;
 }
 
@@ -1080,25 +1061,19 @@ static void codec_path_cb (void *data, xine_cfg_entry_t *cfg) {
 }
 #endif
 
-static void *qtv_init_class (xine_t *xine, void *data) {
-
-  qtv_class_t        *this;
-  config_values_t    *cfg = xine->config;
-
-  if ((win32_def_path = get_win32_codecs_path(cfg)) == NULL) return NULL;
-
+static void *qtv_init_class (xine_t *xine, const void *data) {
+  static const video_decoder_class_t this = {
+    .open_plugin     = qtv_open_plugin,
+    .identifier      = "qtvdec",
+    .description     = N_("quicktime binary-only codec based video decoder plugin"),
+    .dispose         = NULL
+  };
   lprintf ("%s...\n", __XINE_FUNCTION__);
-
+  (void)data;
+  if ((win32_def_path = get_win32_codecs_path (xine->config)) == NULL)
+    return NULL;
   pthread_once (&once_control, init_routine);
-
-  this = (qtv_class_t *) calloc(1, sizeof(qtv_class_t));
-
-  this->decoder_class.open_plugin     = qtv_open_plugin;
-  this->decoder_class.identifier      = "qtvdec";
-  this->decoder_class.description     = N_("quicktime binary-only codec based video decoder plugin");
-  this->decoder_class.dispose         = default_video_decoder_class_dispose;
-
-  return this;
+  return (video_decoder_class_t *)&this;
 }
 
 /*
