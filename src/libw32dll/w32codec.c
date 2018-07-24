@@ -175,10 +175,6 @@ typedef struct w32v_decoder_s {
   ldt_fs_t *ldt_fs;
 } w32v_decoder_t;
 
-typedef struct {
-  video_decoder_class_t   decoder_class;
-} w32v_class_t;
-
 typedef struct w32a_decoder_s {
   audio_decoder_t   audio_decoder;
 
@@ -211,11 +207,6 @@ typedef struct w32a_decoder_s {
 
   ldt_fs_t *ldt_fs;
 } w32a_decoder_t;
-
-typedef struct {
-  audio_decoder_class_t   decoder_class;
-} w32a_class_t;
-
 
 /*
  * RGB->YUY2 conversion, we need is for xine video-codec ->
@@ -309,6 +300,7 @@ static void w32v_init_rgb_ycc(void)
 
 static int get_vids_codec_n_name(w32v_decoder_t *this, int buf_type)
 {
+  (void)this;
   buf_type &= 0xffff0000;
 
   switch (buf_type) {
@@ -567,6 +559,8 @@ static void w32v_init_codec (w32v_decoder_t *this, int buf_type) {
   int outfmt;
 
   lprintf ("init codec...\n");
+
+  (void)buf_type;
 
   memset(&this->o_bih, 0, sizeof(BITMAPINFOHEADER));
   this->o_bih.biSize = sizeof(BITMAPINFOHEADER);
@@ -835,11 +829,10 @@ static void w32v_decode_data (video_decoder_t *this_gen, buf_element_t *buf) {
     if( (int) buf->size <= 0 )
         return;
 
-    if( this->stream_id < 0 )
-       this->stream_id = buf->type & 0xff;
-
-    if( this->stream_id != (buf->type & 0xff) )
-       return;
+    if (this->stream_id < 0)
+      this->stream_id = buf->type & 0xff;
+    else if ((unsigned int)this->stream_id != (buf->type & 0xff))
+      return;
 
     if( this->size + buf->size > this->bufsize ) {
       this->bufsize = this->size + 2 * buf->size;
@@ -995,6 +988,7 @@ static void w32v_decode_data (video_decoder_t *this_gen, buf_element_t *buf) {
 }
 
 static void w32v_flush (video_decoder_t *this_gen) {
+  (void)this_gen;
 }
 
 static void w32v_reset (video_decoder_t *this_gen) {
@@ -1020,6 +1014,7 @@ static void w32v_reset (video_decoder_t *this_gen) {
 }
 
 static void w32v_discontinuity (video_decoder_t *this_gen) {
+  (void)this_gen;
 }
 
 
@@ -1172,6 +1167,12 @@ static int w32a_init_audio (w32a_decoder_t *this,
   audio_buffer_t *audio_buffer;
   int audio_buffer_mem_size;
 
+  if (bufsize < (int)sizeof (WAVEFORMATEX)) {
+    xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG,
+      "w32codec: invalid codec init info.\n");
+    return 0;
+  }
+
   in_fmt = (WAVEFORMATEX *)buf;
   in_size=in_fmt->nBlockAlign;
 
@@ -1229,7 +1230,7 @@ static int w32a_init_audio (w32a_decoder_t *this,
 
     acmStreamSize(this->srcstream, in_size, &out_size, ACM_STREAMSIZEF_SOURCE);
     out_size*=2;
-    if(out_size < audio_buffer_mem_size)
+    if((int)out_size < audio_buffer_mem_size)
       out_size=audio_buffer_mem_size;
 
     xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG,
@@ -1325,6 +1326,8 @@ static void w32a_decode_audio (w32a_decoder_t *this,
   int size_read, size_written;
   int delay;
   /* DWORD srcsize=0; */
+
+  (void)frame_end;
 
   /* This code needs more testing */
   /* bitrate computing (byterate: byte per pts) */
@@ -1443,7 +1446,7 @@ static void w32a_decode_audio (w32a_decoder_t *this,
 	p += bufsize;
       }
     }
-    if(ash.cbSrcLengthUsed>=this->size){
+    if(ash.cbSrcLengthUsed>=(unsigned int)this->size){
       this->size=0;
     } else {
       this->size-=ash.cbSrcLengthUsed;
@@ -1554,7 +1557,11 @@ static video_decoder_t *open_video_decoder_plugin (video_decoder_class_t *class_
 
   w32v_decoder_t *this ;
 
+  (void)class_gen;
+
   this = (w32v_decoder_t *) calloc(1, sizeof(w32v_decoder_t));
+  if (!this)
+    return NULL;
 
   this->video_decoder.decode_data         = w32v_decode_data;
   this->video_decoder.flush               = w32v_flush;
@@ -1577,24 +1584,20 @@ static void init_routine(void) {
   w32v_init_rgb_ycc();
 }
 
-static void *init_video_decoder_class (xine_t *xine, void *data) {
-
-  w32v_class_t   *this;
+static void *init_video_decoder_class (xine_t *xine, const void *data) {
   config_values_t *cfg;
-
+  static const video_decoder_class_t this = {
+    .open_plugin     = open_video_decoder_plugin,
+    .identifier      = "w32v",
+    .description     = N_("win32 binary video codec plugin"),
+    .dispose         = NULL
+  };
+  (void)data;
   cfg = xine->config;
-  if ((win32_def_path = get_win32_codecs_path(cfg)) == NULL) return NULL;
-
-  this = (w32v_class_t *) calloc(1, sizeof(w32v_class_t));
-
-  this->decoder_class.open_plugin     = open_video_decoder_plugin;
-  this->decoder_class.identifier      = "w32v";
-  this->decoder_class.description     = N_("win32 binary video codec plugin");
-  this->decoder_class.dispose         = default_video_decoder_class_dispose;
-
+  if ((win32_def_path = get_win32_codecs_path(cfg)) == NULL)
+    return NULL;
   pthread_once (&once_control, init_routine);
-
-  return this;
+  return (video_decoder_class_t *)&this;
 }
 
 /********************************************************
@@ -1606,7 +1609,11 @@ static audio_decoder_t *open_audio_decoder_plugin (audio_decoder_class_t *class_
 
   w32a_decoder_t *this ;
 
+  (void)class_gen;
+
   this = (w32a_decoder_t *) calloc(1, sizeof(w32a_decoder_t));
+  if (!this)
+    return NULL;
 
   this->audio_decoder.decode_data         = w32a_decode_data;
   this->audio_decoder.reset               = w32a_reset;
@@ -1626,24 +1633,20 @@ static audio_decoder_t *open_audio_decoder_plugin (audio_decoder_class_t *class_
 /*
  * audio decoder plugin class
  */
-static void *init_audio_decoder_class (xine_t *xine, void *data) {
-
-  w32a_class_t    *this;
+static void *init_audio_decoder_class (xine_t *xine, const void *data) {
   config_values_t *cfg;
-
+  static const audio_decoder_class_t this = {
+    .open_plugin     = open_audio_decoder_plugin,
+    .identifier      = "win32 audio",
+    .description     = N_("win32 binary audio codec plugin"),
+    .dispose         = NULL
+  };
+  (void)data;
   cfg = xine->config;
-  if ((win32_def_path = get_win32_codecs_path(cfg)) == NULL) return NULL;
-
-  this = (w32a_class_t *) calloc(1, sizeof(w32a_class_t));
-
-  this->decoder_class.open_plugin     = open_audio_decoder_plugin;
-  this->decoder_class.identifier      = "win32 audio";
-  this->decoder_class.description     = N_("win32 binary audio codec plugin");
-  this->decoder_class.dispose         = default_audio_decoder_class_dispose;
-
+  if ((win32_def_path = get_win32_codecs_path(cfg)) == NULL)
+    return NULL;
   pthread_once (&once_control, init_routine);
-
-  return this;
+  return (audio_decoder_class_t *)&this;
 }
 
 
