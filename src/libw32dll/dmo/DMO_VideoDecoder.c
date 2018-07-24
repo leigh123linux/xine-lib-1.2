@@ -87,7 +87,7 @@ static ct check[] = {
     {     24, 24, &MEDIASUBTYPE_RGB24, CAP_NONE },
     {     32, 32, &MEDIASUBTYPE_RGB32, CAP_NONE },
 
-    {0},
+    { 0, 0, NULL, 0 }
 };
 
 DMO_VideoDecoder * DMO_VideoDecoder_Open(const char* dllname, GUID* guid, BITMAPINFOHEADER * format, int flip, int maxauto)
@@ -114,7 +114,7 @@ DMO_VideoDecoder * DMO_VideoDecoder_Open(const char* dllname, GUID* guid, BITMAP
         unsigned int bihs;
 
 	bihs = (format->biSize < (int) sizeof(BITMAPINFOHEADER)) ?
-	    sizeof(BITMAPINFOHEADER) : format->biSize;
+	    (int)sizeof(BITMAPINFOHEADER) : format->biSize;
 
         this->iv.m_bh = (BITMAPINFOHEADER*)malloc(bihs);
         memcpy(this->iv.m_bh, format, bihs);
@@ -298,8 +298,12 @@ void DMO_VideoDecoder_StartInternal(DMO_VideoDecoder *this)
 
 void DMO_VideoDecoder_StopInternal(DMO_VideoDecoder *this)
 {
-    // this->m_pDMO_Filter->Stop(this->m_pDMO_Filter);
+#if 0
+    this->m_pDMO_Filter->Stop(this->m_pDMO_Filter);
     //??? why was this here ??? m_pOurOutput->SetFramePointer(0);
+#else
+    (void)this;
+#endif
 }
 
 int DMO_VideoDecoder_DecodeInternal(DMO_VideoDecoder *this, const void* src, int size, int is_keyframe, char* imdata)

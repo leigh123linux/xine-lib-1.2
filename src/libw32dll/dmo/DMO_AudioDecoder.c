@@ -173,6 +173,7 @@ int DMO_AudioDecoder_Convert(DMO_AudioDecoder *this, const void* in_data, unsign
 
 int DMO_AudioDecoder_GetSrcSize(DMO_AudioDecoder *this, int dest_size)
 {
+    (void)dest_size;
 //    unsigned long inputs, outputs;
 //    Setup_FS_Segment();
 //    this->m_pDMO_Filter->m_pMedia->vt->GetOutputSizeInfo(this->m_pDMO_Filter->m_pMedia, 0, &inputs, &outputs);
