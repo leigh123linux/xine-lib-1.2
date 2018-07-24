@@ -216,6 +216,9 @@ static HRESULT STDCALL MemAllocator_GetBuffer(IMemAllocator * This,
 {
     MemAllocator* me = (MemAllocator*)This;
     CMediaSample* sample;
+    (void)pStartTime;
+    (void)pEndTime;
+    (void)dwFlags;
     Debug printf("MemAllocator_ReleaseBuffer(%p) called   %d  %d\n", This,
 		 avm_list_size(me->used_list), avm_list_size(me->free_list));
 

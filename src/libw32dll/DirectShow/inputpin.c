@@ -71,6 +71,7 @@ static long STDCALL CEnumPins_Next(IEnumPins* This,
 static long STDCALL CEnumPins_Skip(IEnumPins* This,
 				   /* [in] */ unsigned long cMediaTypes)
 {
+    (void)cMediaTypes;
     Debug unimplemented("CEnumPins_Skip", This);
     return E_NOTIMPL;
 }
@@ -85,6 +86,7 @@ static long STDCALL CEnumPins_Reset(IEnumPins* This)
 static long STDCALL CEnumPins_Clone(IEnumPins* This,
 				    /* [out] */ IEnumPins** ppEnum)
 {
+    (void)ppEnum;
     Debug unimplemented("CEnumPins_Clone", This);
     return E_NOTIMPL;
 }
@@ -139,6 +141,8 @@ static long STDCALL CInputPin_Connect(IPin* This,
 				      /* [in] */ IPin* pReceivePin,
 				      /* [in] */ AM_MEDIA_TYPE* pmt)
 {
+    (void)pReceivePin;
+    (void)pmt;
     Debug unimplemented("CInputPin_Connect", This);
     return E_NOTIMPL;
 }
@@ -147,6 +151,8 @@ static long STDCALL CInputPin_ReceiveConnection(IPin* This,
 						/* [in] */ IPin* pConnector,
 						/* [in] */ const AM_MEDIA_TYPE *pmt)
 {
+    (void)pConnector;
+    (void)pmt;
     Debug unimplemented("CInputPin_ReceiveConnection", This);
     return E_NOTIMPL;
 }
@@ -160,6 +166,7 @@ static long STDCALL CInputPin_Disconnect(IPin* This)
 static long STDCALL CInputPin_ConnectedTo(IPin* This,
 					  /* [out] */ IPin** pPin)
 {
+    (void)pPin;
     Debug unimplemented("CInputPin_ConnectedTo", This);
     return E_NOTIMPL;
 }
@@ -202,6 +209,7 @@ static long STDCALL CInputPin_QueryDirection(IPin* This,
 static long STDCALL CInputPin_QueryId(IPin* This,
 				       /* [out] */ unsigned short* *Id)
 {
+    (void)Id;
     Debug unimplemented("CInputPin_QueryId", This);
     return E_NOTIMPL;
 }
@@ -209,6 +217,7 @@ static long STDCALL CInputPin_QueryId(IPin* This,
 static long STDCALL CInputPin_QueryAccept(IPin* This,
 					  /* [in] */ const AM_MEDIA_TYPE* pmt)
 {
+    (void)pmt;
     Debug unimplemented("CInputPin_QueryAccept", This);
     return E_NOTIMPL;
 }
@@ -216,6 +225,7 @@ static long STDCALL CInputPin_QueryAccept(IPin* This,
 static long STDCALL CInputPin_EnumMediaTypes(IPin* This,
 					     /* [out] */ IEnumMediaTypes** ppEnum)
 {
+    (void)ppEnum;
     Debug unimplemented("CInputPin_EnumMediaTypes", This);
     return E_NOTIMPL;
 }
@@ -224,6 +234,8 @@ static long STDCALL CInputPin_QueryInternalConnections(IPin* This,
 						       /* [out] */ IPin** apPin,
 						       /* [out][in] */ unsigned long *nPin)
 {
+    (void)apPin;
+    (void)nPin;
     Debug unimplemented("CInputPin_QueryInternalConnections", This);
     return E_NOTIMPL;
 }
@@ -253,6 +265,9 @@ static long STDCALL CInputPin_NewSegment(IPin* This,
 					  /* [in] */ REFERENCE_TIME tStop,
 					  /* [in] */ double dRate)
 {
+    (void)tStart;
+    (void)tStop;
+    (void)dRate;
     Debug unimplemented("CInputPin_NewSegment", This);
     return E_NOTIMPL;
 }
@@ -316,6 +331,7 @@ CInputPin* CInputPinCreate(CBaseFilter* p, const AM_MEDIA_TYPE* amt)
 static long STDCALL CBaseFilter_GetClassID(IBaseFilter * This,
 					   /* [out] */ CLSID *pClassID)
 {
+    (void)pClassID;
     Debug unimplemented("CBaseFilter_GetClassID", This);
     return E_NOTIMPL;
 }
@@ -334,6 +350,7 @@ static long STDCALL CBaseFilter_Pause(IBaseFilter* This)
 
 static long STDCALL CBaseFilter_Run(IBaseFilter* This, REFERENCE_TIME tStart)
 {
+    (void)tStart;
     Debug unimplemented("CBaseFilter_Run", This);
     return E_NOTIMPL;
 }
@@ -343,6 +360,8 @@ static long STDCALL CBaseFilter_GetState(IBaseFilter* This,
 					 // /* [out] */ FILTER_STATE *State)
 					 void* State)
 {
+    (void)dwMilliSecsTimeout;
+    (void)State;
     Debug unimplemented("CBaseFilter_GetState", This);
     return E_NOTIMPL;
 }
@@ -350,6 +369,7 @@ static long STDCALL CBaseFilter_GetState(IBaseFilter* This,
 static long STDCALL CBaseFilter_SetSyncSource(IBaseFilter* This,
 					      /* [in] */ IReferenceClock *pClock)
 {
+    (void)pClock;
     Debug unimplemented("CBaseFilter_SetSyncSource", This);
     return E_NOTIMPL;
 }
@@ -357,6 +377,7 @@ static long STDCALL CBaseFilter_SetSyncSource(IBaseFilter* This,
 static long STDCALL CBaseFilter_GetSyncSource(IBaseFilter* This,
 					      /* [out] */ IReferenceClock **pClock)
 {
+    (void)pClock;
     Debug unimplemented("CBaseFilter_GetSyncSource", This);
     return E_NOTIMPL;
 }
@@ -374,6 +395,8 @@ static long STDCALL CBaseFilter_FindPin(IBaseFilter* This,
 					/* [string][in] */ const unsigned short* Id,
 					/* [out] */ IPin **ppPin)
 {
+    (void)Id;
+    (void)ppPin;
     Debug unimplemented("CBaseFilter_FindPin\n", This);
     return E_NOTIMPL;
 }
@@ -382,6 +405,7 @@ static long STDCALL CBaseFilter_QueryFilterInfo(IBaseFilter* This,
 						// /* [out] */ FILTER_INFO *pInfo)
 						void* pInfo)
 {
+    (void)pInfo;
     Debug unimplemented("CBaseFilter_QueryFilterInfo", This);
     return E_NOTIMPL;
 }
@@ -390,6 +414,8 @@ static long STDCALL CBaseFilter_JoinFilterGraph(IBaseFilter* This,
 						/* [in] */ IFilterGraph* pGraph,
 						/* [string][in] */ const unsigned short* pName)
 {
+    (void)pGraph;
+    (void)pName;
     Debug unimplemented("CBaseFilter_JoinFilterGraph", This);
     return E_NOTIMPL;
 }
@@ -397,6 +423,7 @@ static long STDCALL CBaseFilter_JoinFilterGraph(IBaseFilter* This,
 static long STDCALL CBaseFilter_QueryVendorInfo(IBaseFilter* This,
 						/* [string][out] */ unsigned short** pVendorInfo)
 {
+    (void)pVendorInfo;
     Debug unimplemented("CBaseFilter_QueryVendorInfo", This);
     return E_NOTIMPL;
 }
@@ -476,6 +503,7 @@ CBaseFilter* CBaseFilterCreate(const AM_MEDIA_TYPE* type, CBaseFilter2* parent)
 static long STDCALL CBaseFilter2_GetClassID(IBaseFilter* This,
 					     /* [out] */ CLSID* pClassID)
 {
+    (void)pClassID;
     Debug unimplemented("CBaseFilter2_GetClassID", This);
     return E_NOTIMPL;
 }
@@ -494,6 +522,7 @@ static long STDCALL CBaseFilter2_Pause(IBaseFilter* This)
 
 static long STDCALL CBaseFilter2_Run(IBaseFilter* This, REFERENCE_TIME tStart)
 {
+    (void)tStart;
     Debug unimplemented("CBaseFilter2_Run", This);
     return E_NOTIMPL;
 }
@@ -504,6 +533,8 @@ static long STDCALL CBaseFilter2_GetState(IBaseFilter* This,
 					  // /* [out] */ FILTER_STATE *State)
 					  void* State)
 {
+    (void)dwMilliSecsTimeout;
+    (void)State;
     Debug unimplemented("CBaseFilter2_GetState", This);
     return E_NOTIMPL;
 }
@@ -511,6 +542,7 @@ static long STDCALL CBaseFilter2_GetState(IBaseFilter* This,
 static long STDCALL CBaseFilter2_SetSyncSource(IBaseFilter* This,
 					       /* [in] */ IReferenceClock* pClock)
 {
+    (void)pClock;
     Debug unimplemented("CBaseFilter2_SetSyncSource", This);
     return E_NOTIMPL;
 }
@@ -518,6 +550,7 @@ static long STDCALL CBaseFilter2_SetSyncSource(IBaseFilter* This,
 static long STDCALL CBaseFilter2_GetSyncSource(IBaseFilter* This,
 					       /* [out] */ IReferenceClock** pClock)
 {
+    (void)pClock;
     Debug unimplemented("CBaseFilter2_GetSyncSource", This);
     return E_NOTIMPL;
 }
@@ -534,6 +567,8 @@ static long STDCALL CBaseFilter2_FindPin(IBaseFilter* This,
 					 /* [string][in] */ const unsigned short* Id,
 					 /* [out] */ IPin** ppPin)
 {
+    (void)Id;
+    (void)ppPin;
     Debug unimplemented("CBaseFilter2_FindPin", This);
     return E_NOTIMPL;
 }
@@ -542,6 +577,7 @@ static long STDCALL CBaseFilter2_QueryFilterInfo(IBaseFilter* This,
 						 // /* [out] */ FILTER_INFO *pInfo)
 						 void* pInfo)
 {
+    (void)pInfo;
     Debug unimplemented("CBaseFilter2_QueryFilterInfo", This);
     return E_NOTIMPL;
 }
@@ -551,6 +587,8 @@ static long STDCALL CBaseFilter2_JoinFilterGraph(IBaseFilter* This,
 						 /* [string][in] */
 						  const unsigned short* pName)
 {
+    (void)pGraph;
+    (void)pName;
     Debug unimplemented("CBaseFilter2_JoinFilterGraph", This);
     return E_NOTIMPL;
 }
@@ -559,6 +597,7 @@ static long STDCALL CBaseFilter2_QueryVendorInfo(IBaseFilter* This,
 						 /* [string][out] */
 						 unsigned short** pVendorInfo)
 {
+    (void)pVendorInfo;
     Debug unimplemented("CBaseFilter2_QueryVendorInfo", This);
     return E_NOTIMPL;
 }
@@ -661,6 +700,7 @@ static long STDCALL CRemotePin_QueryDirection(IPin* This,
 
 static long STDCALL CRemotePin_ConnectionMediaType(IPin* This, /* [out] */ AM_MEDIA_TYPE* pmt)
 {
+    (void)pmt;
     Debug unimplemented("CRemotePin_ConnectionMediaType", This);
     return E_NOTIMPL;
 }

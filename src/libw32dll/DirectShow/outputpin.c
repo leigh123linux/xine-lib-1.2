@@ -68,6 +68,7 @@ static HRESULT STDCALL CEnumMediaTypes_Next(IEnumMediaTypes * This,
 static HRESULT STDCALL CEnumMediaTypes_Skip(IEnumMediaTypes * This,
 					    /* [in] */ ULONG cMediaTypes)
 {
+    (void)cMediaTypes;
     return output_unimplemented("CEnumMediaTypes::Skip", This);
 }
 
@@ -80,6 +81,7 @@ static HRESULT STDCALL CEnumMediaTypes_Reset(IEnumMediaTypes * This)
 static HRESULT STDCALL CEnumMediaTypes_Clone(IEnumMediaTypes * This,
 				      /* [out] */ IEnumMediaTypes **ppEnum)
 {
+    (void)ppEnum;
     Debug printf("CEnumMediaTypes::Clone(%p) called\n", This);
     return E_NOTIMPL;
 }
@@ -167,14 +169,18 @@ static HRESULT STDCALL COutputPin_Connect(IPin * This,
 				    /* [in] */ /* const */ AM_MEDIA_TYPE *pmt)
 {
     Debug printf("COutputPin_Connect() called\n");
-/*
+    (void)pReceivePin;
+#if 0
     *pmt=((COutputPin*)This)->type;
     if(pmt->cbFormat>0)
     {
 	pmt->pbFormat=CoTaskMemAlloc(pmt->cbFormat);
 	memcpy(pmt->pbFormat, ((COutputPin*)This)->type.pbFormat, pmt->cbFormat);
     }
-*/
+#else
+    (void)This;
+    (void)pmt;
+#endif
     //return E_NOTIMPL;
     return 0;// XXXXXXXXXXXXX CHECKME XXXXXXXXXXXXXXX
     // if I put return 0; here, it crashes
@@ -184,6 +190,7 @@ static HRESULT STDCALL COutputPin_ReceiveConnection(IPin * This,
 						    /* [in] */ IPin *pConnector,
 						    /* [in] */ const AM_MEDIA_TYPE *pmt)
 {
+    (void)pmt;
     Debug printf("COutputPin_ReceiveConnection(%p) called\n", This);
     ((COutputPin*)This)->remote = pConnector;
     return 0;
@@ -223,6 +230,7 @@ static HRESULT STDCALL COutputPin_ConnectionMediaType(IPin * This,
 static HRESULT STDCALL COutputPin_QueryPinInfo(IPin * This,
 					       /* [out] */ PIN_INFO *pInfo)
 {
+    (void)pInfo;
     return output_unimplemented("COutputPin_QueryPinInfo", This);
 }
 
@@ -239,12 +247,14 @@ static HRESULT STDCALL COutputPin_QueryDirection(IPin * This,
 static HRESULT STDCALL COutputPin_QueryId(IPin * This,
 					  /* [out] */ LPWSTR *Id)
 {
+    (void)Id;
     return output_unimplemented("COutputPin_QueryId", This);
 }
 
 static HRESULT STDCALL COutputPin_QueryAccept(IPin * This,
 					      /* [in] */ const AM_MEDIA_TYPE *pmt)
 {
+    (void)pmt;
     return output_unimplemented("COutputPin_QueryAccept", This);
 }
 
@@ -262,6 +272,8 @@ static HRESULT STDCALL COutputPin_QueryInternalConnections(IPin * This,
 						     /* [out] */ IPin **apPin,
 						     /* [out][in] */ ULONG *nPin)
 {
+    (void)apPin;
+    (void)nPin;
     return output_unimplemented("COutputPin_QueryInternalConnections", This);
 }
 
@@ -285,6 +297,7 @@ static HRESULT STDCALL COutputPin_NewSegment(IPin * This,
 				       /* [in] */ REFERENCE_TIME tStop,
 				       /* [in] */ double dRate)
 {
+    (void)This;
     Debug printf("COutputPin_NewSegment(%Ld,%Ld,%f) called\n",
 		 tStart, tStop, dRate);
     return 0;
@@ -345,6 +358,7 @@ static HRESULT STDCALL COutputPin_NotifyAllocator(IMemInputPin* This,
 						  /* [in] */ IMemAllocator* pAllocator,
 						  /* [in] */ int bReadOnly)
 {
+    (void)bReadOnly;
     Debug printf("COutputPin_NotifyAllocator(%p, %p) called\n", This, pAllocator);
     ((COutputMemPin*)This)->pAllocator = (MemAllocator*) pAllocator;
     return 0;
@@ -353,6 +367,7 @@ static HRESULT STDCALL COutputPin_NotifyAllocator(IMemInputPin* This,
 static HRESULT STDCALL COutputPin_GetAllocatorRequirements(IMemInputPin* This,
 							   /* [out] */ ALLOCATOR_PROPERTIES* pProps)
 {
+    (void)pProps;
     return output_unimplemented("COutputPin_GetAllocatorRequirements", This);
 }
 
@@ -396,6 +411,9 @@ static HRESULT STDCALL COutputPin_ReceiveMultiple(IMemInputPin * This,
 					    /* [in] */ long nSamples,
 					    /* [out] */ long *nSamplesProcessed)
 {
+    (void)pSamples;
+    (void)nSamples;
+    (void)nSamplesProcessed;
     return output_unimplemented("COutputPin_ReceiveMultiple", This);
 }
 

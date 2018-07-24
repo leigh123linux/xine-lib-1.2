@@ -85,6 +85,8 @@ static HRESULT STDCALL CMediaSample_GetTime(IMediaSample * This,
 					    /* [out] */ REFERENCE_TIME *pTimeStart,
 					    /* [out] */ REFERENCE_TIME *pTimeEnd)
 {
+    (void)pTimeStart;
+    (void)pTimeEnd;
     Debug printf("CMediaSample_GetTime(%p) called (UNIMPLEMENTED)\n", This);
     return E_NOTIMPL;
 }
@@ -93,6 +95,8 @@ static HRESULT STDCALL CMediaSample_SetTime(IMediaSample * This,
 					    /* [in] */ REFERENCE_TIME *pTimeStart,
 					    /* [in] */ REFERENCE_TIME *pTimeEnd)
 {
+    (void)pTimeStart;
+    (void)pTimeEnd;
     Debug printf("CMediaSample_SetTime(%p) called (UNIMPLEMENTED)\n", This);
     return E_NOTIMPL;
 }

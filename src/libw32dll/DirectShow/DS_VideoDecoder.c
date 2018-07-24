@@ -78,7 +78,7 @@ static ct check[] = {
 		{16, fccYVYU, &MEDIASUBTYPE_YVYU, CAP_YVYU},
 		{12, fccI420, &MEDIASUBTYPE_I420, CAP_I420},
 		{9,  fccYVU9, &MEDIASUBTYPE_YVU9, CAP_YVU9},
-		{0},
+		{0, 0, NULL, 0}
 	    };
 
 
@@ -106,7 +106,7 @@ DS_VideoDecoder * DS_VideoDecoder_Open(const char* dllname, GUID* guid, BITMAPIN
         unsigned int bihs;
 
 	bihs = (format->biSize < (int) sizeof(BITMAPINFOHEADER)) ?
-	    sizeof(BITMAPINFOHEADER) : format->biSize;
+	    (int)sizeof(BITMAPINFOHEADER) : format->biSize;
 
         this->iv.m_bh = (BITMAPINFOHEADER*)malloc(bihs);
         memcpy(this->iv.m_bh, format, bihs);
@@ -640,7 +640,7 @@ int DS_VideoDecoder_SetDirection(DS_VideoDecoder *this, int d)
 
 int DS_VideoDecoder_GetValue(DS_VideoDecoder *this, const char* name, int* value)
 {
-/*
+#if 0
     if (m_bIsDivX4)
     {
 	IDivxFilterInterface* pIDivx;
@@ -743,7 +743,11 @@ int DS_VideoDecoder_GetValue(DS_VideoDecoder *this, const char* name, int* value
 
 	hidden->vt->Release((IUnknown*)hidden);
     }
-*/
+#else
+    (void)this;
+    (void)name;
+    (void)value;
+#endif
     return 0;
 }
 
