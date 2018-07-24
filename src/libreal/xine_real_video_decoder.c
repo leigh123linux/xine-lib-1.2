@@ -525,23 +525,15 @@ static video_decoder_t *open_plugin (video_decoder_class_t *class_gen,
  * real plugin class
  */
 void *init_realvdec (xine_t *xine, const void *data) {
-
-  video_decoder_class_t       *this;
-
+  static const video_decoder_class_t this = {
+    .open_plugin     = open_plugin,
+    .identifier      = "realvdec",
+    .description     = N_("real binary-only codec based video decoder plugin"),
+    .dispose         = NULL
+  };
   (void)data;
-  this = calloc(1, sizeof(video_decoder_class_t));
-  if (!this) {
-    return NULL;
-  }
-
-  this->open_plugin     = open_plugin;
-  this->identifier      = "realvdec";
-  this->description     = N_("real binary-only codec based video decoder plugin");
-  this->dispose         = default_video_decoder_class_dispose;
-
   _x_real_codecs_init(xine);
-
-  return this;
+  return (video_decoder_class_t *)&this;
 }
 
 /*

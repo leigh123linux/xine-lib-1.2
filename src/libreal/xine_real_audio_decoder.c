@@ -499,23 +499,15 @@ static audio_decoder_t *open_plugin (audio_decoder_class_t *class_gen,
  * real plugin class
  */
 void *init_realadec (xine_t *xine, const void *data) {
-
-  audio_decoder_class_t       *this;
-
+  static const audio_decoder_class_t this = {
+    .open_plugin     = open_plugin,
+    .identifier      = "realadec",
+    .description     = N_("real binary-only codec based audio decoder plugin"),
+    .dispose         = NULL
+  };
   (void)data;
-  this = calloc(1, sizeof(audio_decoder_class_t));
-  if (!this) {
-    return NULL;
-  }
-
-  this->open_plugin     = open_plugin;
-  this->identifier      = "realadec";
-  this->description     = N_("real binary-only codec based audio decoder plugin");
-  this->dispose         = default_audio_decoder_class_dispose;
-
   _x_real_codecs_init(xine);
-
-  return this;
+  return (audio_decoder_class_t *)&this;
 }
 
 /*
