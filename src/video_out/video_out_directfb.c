@@ -1934,6 +1934,9 @@ static void *init_class_fb (xine_t *xine, const void *visual_gen) {
   }
 
   this = (directfb_class_t *) calloc(1, sizeof(directfb_class_t));
+  if (!this)
+    return NULL;
+
   this->driver_class.open_plugin     = open_plugin_fb;
   this->driver_class.identifier      = "DirectFB";
   this->driver_class.description     = N_("xine video output plugin using DirectFB.");
@@ -2139,6 +2142,8 @@ static void *init_class_x11 (xine_t *xine, const void *visual_gen) {
     return NULL;
 
   this = (directfb_class_t *) calloc(1, sizeof(directfb_class_t));
+  if (!this)
+    return NULL;
   this->driver_class.open_plugin     = open_plugin_x11;
   this->driver_class.identifier      = "XDirectFB";
   this->driver_class.description     = N_("xine video output plugin using DirectFB under XDirectFB.");
