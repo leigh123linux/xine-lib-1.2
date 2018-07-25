@@ -331,6 +331,7 @@ static uint32_t ao_esd_get_capabilities (ao_driver_t *this_gen) {
 
 static int ao_esd_get_gap_tolerance (ao_driver_t *this_gen) {
   /* esd_driver_t *this = (esd_driver_t *) this_gen; */
+  (void)this_gen;
   return GAP_TOLERANCE;
 }
 
@@ -448,8 +449,9 @@ static int ao_esd_set_property (ao_driver_t *this_gen, int property, int value) 
 
 static int ao_esd_ctrl(ao_driver_t *this_gen, int cmd, ...) {
   /* esd_driver_t *this = (esd_driver_t *) this_gen; */
-
-
+  (void)this_gen;
+  (void)cmd;
+#if 0
   switch (cmd) {
 
   case AO_CTRL_PLAY_PAUSE:
@@ -461,7 +463,7 @@ static int ao_esd_ctrl(ao_driver_t *this_gen, int cmd, ...) {
   case AO_CTRL_FLUSH_BUFFERS:
     break;
   }
-
+#endif
   return 0;
 }
 
@@ -476,6 +478,8 @@ static ao_driver_t *open_plugin (audio_driver_class_t *class_gen,
   esd_server_info_t *esd_svinfo;
   int		     server_sample_rate;
   sigset_t           vo_mask, vo_mask_orig;
+
+  (void)data;
 
   /*
    * open stream to ESD server
@@ -566,6 +570,8 @@ static ao_driver_t *open_plugin (audio_driver_class_t *class_gen,
 static void *init_class (xine_t *xine, const void *data) {
 
   esd_class_t        *this;
+
+  (void)data;
 
   this = calloc(1, sizeof (esd_class_t));
   if (!this)
