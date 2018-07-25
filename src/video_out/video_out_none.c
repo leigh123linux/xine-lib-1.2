@@ -40,8 +40,8 @@
 
 typedef struct {
   vo_frame_t           vo_frame;
-  int                  width;
-  int                  height;
+  unsigned int         width;
+  unsigned int         height;
   double               ratio;
   int                  format;
 } vo_none_frame_t;
@@ -117,7 +117,7 @@ static void vo_none_update_frame_format(vo_driver_t *vo_driver, vo_frame_t *vo_f
   vo_none_frame_t  *frame = (vo_none_frame_t *) vo_frame;
 
   (void)flags;
-  if((frame->width != (int)width) || (frame->height != (int)height) || (frame->format != format)) {
+  if((frame->width != width) || (frame->height != height) || (frame->format != format)) {
 
     vo_none_free_framedata(frame);
 
