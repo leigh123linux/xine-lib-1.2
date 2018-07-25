@@ -689,6 +689,9 @@ static void *scp_init_class(xine_t *xine, const void *data)
     .dispose           = NULL,
   };
 
+  (void)xine;
+  (void)data;
+
   return (void *)&input_scp_class;
 }
 
@@ -885,6 +888,8 @@ static void _dispose_class_sftp(input_class_t *this_gen)
 static void *sftp_init_class(xine_t *xine, const void *data)
 {
   sftp_input_class_t *this;
+
+  (void)data;
 
   this = calloc(1, sizeof(*this));
   if (!this)
