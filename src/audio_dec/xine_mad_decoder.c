@@ -73,15 +73,15 @@ typedef struct mad_decoder_s {
   struct mad_stream stream;
   struct mad_frame  frame;
 
-  int               output_sampling_rate;
+  unsigned int      output_sampling_rate;
   int               output_open;
   int               output_mode;
 
   uint8_t           buffer[INPUT_BUF_SIZE];
   int               bytes_in_buffer;
   int               preview_mode;
-  int               start_padding;
-  int               end_padding;
+  unsigned int      start_padding;
+  unsigned int      end_padding;
   int               needs_more_data;
 
 } mad_decoder_t;
@@ -231,7 +231,7 @@ static void mad_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) {
 	int mode = (this->frame.header.mode == MAD_MODE_SINGLE_CHANNEL) ? AO_CAP_MODE_MONO : AO_CAP_MODE_STEREO;
 
 	if (!this->output_open
-	    || ((unsigned int)(this->output_sampling_rate) != this->frame.header.samplerate)
+            || (this->output_sampling_rate != this->frame.header.samplerate)
 	    || (this->output_mode != mode)) {
 
 	  lprintf ("audio sample rate %d mode %08x\n", this->frame.header.samplerate, mode);
@@ -303,12 +303,12 @@ static void mad_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) {
 	  /* padding */
 	  if (this->start_padding || this->end_padding) {
 	    /* check padding validity */
-	    if (nsamples < (unsigned int)(this->start_padding + this->end_padding)) {
+            if (nsamples < this->start_padding + this->end_padding) {
 	      lprintf("invalid padding data");
 	      this->start_padding = 0;
 	      this->end_padding = 0;
 	    }
-	    lprintf("nsamples=%d, start_padding=%d, end_padding=%d\n",
+            lprintf("nsamples=%u, start_padding=%u, end_padding=%u\n",
 	            nsamples, this->start_padding, this->end_padding);
 	    nsamples -= this->start_padding + this->end_padding;
 	    left_ch  += this->start_padding;
