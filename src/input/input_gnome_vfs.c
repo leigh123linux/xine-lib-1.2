@@ -295,7 +295,7 @@ gnomevfs_klass_get_instance (input_class_t *klass_gen, xine_stream_t *stream,
 {
 	gnomevfs_input_t *this;
 	GnomeVFSURI *uri;
-	int i;
+        unsigned i;
 
 	if (mrl == NULL)
 		return NULL;
