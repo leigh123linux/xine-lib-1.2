@@ -81,6 +81,8 @@ typedef struct {
  * our video driver
  */
 static uint32_t aa_get_capabilities (vo_driver_t *this) {
+  (void)this;
+
   return VO_CAP_YV12 | VO_CAP_YUY2;
 }
 
@@ -96,6 +98,8 @@ static void aa_dispose_frame (vo_frame_t *vo_img) {
 
 static void aa_frame_field (vo_frame_t *vo_img, int which_field) {
   /* nothing to be done here */
+  (void)vo_img;
+  (void)which_field;
 }
 
 
@@ -123,6 +127,8 @@ static void aa_update_frame_format (vo_driver_t *this_gen, vo_frame_t *img,
 				    double ratio, int format, int flags) {
   aa_driver_t *this = (aa_driver_t*) this_gen;
   aa_frame_t  *frame = (aa_frame_t *) img;
+
+  (void)flags;
 
   /* printf ("aa_update_format...\n"); */
 
@@ -248,14 +254,20 @@ static int aa_set_property (vo_driver_t *this_gen,
 
 static void aa_get_property_min_max (vo_driver_t *this_gen,
 				     int property, int *min, int *max) {
+  (void)this_gen;
+  (void)property;
+
   *min = 0;
   *max = 0;
 }
 
 static void aa_dispose (vo_driver_t *this_gen) {
+  (void)this_gen;
 }
 
 static int aa_redraw_needed (vo_driver_t *this_gen) {
+  (void)this_gen;
+
   return 0;
 }
 
@@ -289,6 +301,8 @@ static vo_driver_t *open_plugin (video_driver_class_t *class_gen, const void *vi
 static void *init_class (xine_t *xine, const void *visual_gen) {
   /* aa_context    *context = (aa_context*) visual_gen; */
   aa_class_t    *this;
+
+  (void)visual_gen;
 
   this = calloc(1, sizeof(aa_class_t));
 
