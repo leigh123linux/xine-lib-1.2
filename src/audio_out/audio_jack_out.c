@@ -883,6 +883,8 @@ static void *init_class (xine_t *xine, const void *data) {
     (void)data;
 
     this = calloc(1, sizeof (jack_class_t));
+    if (!this)
+      return NULL;
 
     this->driver_class.open_plugin     = open_jack_plugin;
     this->driver_class.identifier      = "jack";
