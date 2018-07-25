@@ -278,6 +278,8 @@ static vo_driver_t *open_plugin (video_driver_class_t *class_gen, const void *vi
   caca_driver_t        *this;
 
   this = calloc(1, sizeof (caca_driver_t));
+  if (!this)
+    return NULL;
 
   this->xine   = class->xine;
 
@@ -321,6 +323,8 @@ static void *init_class (xine_t *xine, const void *visual_gen) {
   (void)visual_gen;
 
   this = calloc(1, sizeof(caca_class_t));
+  if (!this)
+    return NULL;
 
   this->driver_class.open_plugin     = open_plugin;
   this->driver_class.identifier      = "CACA";
