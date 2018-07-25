@@ -710,7 +710,7 @@ typedef struct {
 } sftp_input_class_t;
 
 static ssh_input_plugin_t *_open_input(sftp_input_class_t *this,
-                                       xine_url_t *url, const char *mrl, int *nFiles)
+                                       xine_url_t *url, const char *mrl)
 {
   ssh_input_plugin_t *input;
 
@@ -862,7 +862,7 @@ static xine_mrl_t **_get_dir (input_class_t *this_gen, const char *filename, int
     return NULL;
   }
 
-  input = _open_input(this, &url, filename, nFiles);
+  input = _open_input(this, &url, filename);
   if (!input)
     goto out;
 
