@@ -550,6 +550,8 @@ static void *nfs_init_class(xine_t *xine, const void *data)
 {
   nfs_input_class_t *this;
 
+  (void)data;
+
   this = calloc(1, sizeof(*this));
   if (!this)
     return NULL;
