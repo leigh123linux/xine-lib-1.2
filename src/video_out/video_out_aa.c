@@ -276,6 +276,8 @@ static vo_driver_t *open_plugin (video_driver_class_t *class_gen, const void *vi
   aa_driver_t          *this;
 
   this = (aa_driver_t*) calloc(1, sizeof(aa_driver_t));
+  if (!this)
+    return NULL;
 
   this->context = (aa_context*) visual_gen;
 
@@ -305,6 +307,8 @@ static void *init_class (xine_t *xine, const void *visual_gen) {
   (void)visual_gen;
 
   this = calloc(1, sizeof(aa_class_t));
+  if (!this)
+    return NULL;
 
   this->driver_class.open_plugin     = open_plugin;
   this->driver_class.identifier      = "AA";
