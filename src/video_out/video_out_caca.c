@@ -90,6 +90,8 @@ typedef struct {
  * video driver
  */
 static uint32_t caca_get_capabilities (vo_driver_t *this) {
+  (void)this;
+
   return VO_CAP_YV12 | VO_CAP_YUY2;
 }
 
@@ -111,6 +113,8 @@ static void caca_dispose_frame (vo_frame_t *vo_img) {
 
 static void caca_frame_field (vo_frame_t *vo_img, int which_field) {
   /* nothing to be done here */
+  (void)vo_img;
+  (void)which_field;
 }
 
 
@@ -145,6 +149,9 @@ static void caca_update_frame_format (vo_driver_t *this_gen, vo_frame_t *img,
                                       double ratio, int format, int flags) {
   caca_driver_t *this = (caca_driver_t*) this_gen;
   caca_frame_t  *frame = (caca_frame_t *) img;
+
+  (void)flags;
+  (void)ratio;
 
   if ((frame->width != width) || (frame->height != height)
       || (frame->format != format)) {
@@ -244,6 +251,9 @@ static int caca_set_property (vo_driver_t *this_gen,
 
 static void caca_get_property_min_max (vo_driver_t *this_gen,
                                        int property, int *min, int *max) {
+  (void)this_gen;
+  (void)property;
+
   *min = 0;
   *max = 0;
 }
@@ -258,6 +268,7 @@ static void caca_dispose_driver (vo_driver_t *this_gen) {
 }
 
 static int caca_redraw_needed (vo_driver_t *this_gen) {
+  (void)this_gen;
   return 0;
 }
 
@@ -306,6 +317,8 @@ static vo_driver_t *open_plugin (video_driver_class_t *class_gen, const void *vi
 
 static void *init_class (xine_t *xine, const void *visual_gen) {
   caca_class_t    *this;
+
+  (void)visual_gen;
 
   this = calloc(1, sizeof(caca_class_t));
 
