@@ -58,6 +58,7 @@ static off_t gnomevfs_plugin_get_current_pos (input_plugin_t *this_gen);
 static uint32_t
 gnomevfs_plugin_get_capabilities (input_plugin_t *this_gen)
 {
+        (void)this_gen;
 	return INPUT_CAP_SEEKABLE | INPUT_CAP_SPULANG;
 }
 
@@ -198,6 +199,7 @@ gnomevfs_plugin_get_length (input_plugin_t *this_gen)
 static uint32_t
 gnomevfs_plugin_get_blocksize (input_plugin_t *this_gen)
 {
+        (void)this_gen;
 	return 8 * 1024;
 }
 
@@ -214,6 +216,10 @@ gnomevfs_plugin_get_optional_data (input_plugin_t *this_gen,
 		void *data, int data_type)
 {
 	D ("input_gnomevfs: get optional data, type %08x\n", data_type);
+
+        (void)this_gen;
+        (void)data;
+        (void)data_type;
 
 	return INPUT_OPTIONAL_UNSUPPORTED;
 }
@@ -348,6 +354,8 @@ static void
     .get_autoplay_list  = NULL,
     .dispose            = NULL,
   };
+
+  (void)data;
 
   xprintf (xine, XINE_VERBOSITY_DEBUG, "gnome_vfs init_input_class\n");
 
