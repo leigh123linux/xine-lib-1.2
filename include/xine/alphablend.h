@@ -29,7 +29,7 @@
 
 typedef struct {
   void *buffer;
-  int buffer_size;
+  unsigned int buffer_size;
 
   int disable_exact_blending;
 
