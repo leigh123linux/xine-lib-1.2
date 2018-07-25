@@ -104,7 +104,7 @@ ssize_t _x_tls_read_line(xine_tls_t *t, char *buf, size_t buf_size)
 {
 #ifdef HAVE_GNUTLS
   if (t->enabled) {
-    int i = 0;
+    unsigned int i = 0;
     ssize_t r;
     char c;
 
@@ -126,7 +126,7 @@ ssize_t _x_tls_read_line(xine_tls_t *t, char *buf, size_t buf_size)
 
     buf[i] = '\0';
 
-    return (r != -1) ? i : (int)r;
+    return (r >= 0) ? (ssize_t)i : r;
   }
 #endif /* HAVE_GNUTLS */
 
