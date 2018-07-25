@@ -539,6 +539,8 @@ static int ao_jack_bytes_per_frame (ao_driver_t *this_gen)
 
 static int ao_jack_get_gap_tolerance (ao_driver_t *this_gen)
 {
+  (void)this_gen;
+
   return GAP_TOLERANCE;
 }
 
@@ -709,6 +711,8 @@ static ao_driver_t *open_jack_plugin (audio_driver_class_t *class_gen,
   char *jack_device;
   const char **matching_ports = NULL;
 
+  (void)data;
+
   AUDIO_DEVICE_SPEAKER_ARRANGEMENT_TYPES;
   int speakers;
 
@@ -875,6 +879,8 @@ static void jack_speaker_arrangement_cb (void *user_data,
 static void *init_class (xine_t *xine, const void *data) {
 
     jack_class_t        *this;
+
+    (void)data;
 
     this = calloc(1, sizeof (jack_class_t));
 
