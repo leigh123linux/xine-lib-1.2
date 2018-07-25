@@ -53,7 +53,7 @@ typedef struct aa_frame_s {
 
   vo_frame_t    vo_frame;
 
-  int           width, height;
+  unsigned int  width, height;
 
   double        ratio;
 
