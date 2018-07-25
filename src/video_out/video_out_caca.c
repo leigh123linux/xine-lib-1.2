@@ -58,7 +58,7 @@ typedef struct caca_frame_s {
 
   cucul_dither_t *pixmap_s;  /* pixmap info structure */
   uint8_t            *pixmap_d;  /* pixmap data */
-  int                width, height;
+  unsigned int       width, height;
 
   int                format;  /* XINE_IMGFMT_* flags */
 
