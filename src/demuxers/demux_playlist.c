@@ -592,10 +592,10 @@ static int demux_playlist_send_chunk (demux_plugin_t *this_gen) {
 
     length = 0;
     while ((len = this->input->read (this->input, buf, sizeof(buf))) > 0) {
-      data = realloc (data, length+len+1);
-      if (!data)
+      void *tmp = realloc (data, length+len+1);
+      if (!tmp)
         break;
-
+      data = tmp;
       memcpy (data+length, buf, len);
       length += len;
       data[length] = '\0';
