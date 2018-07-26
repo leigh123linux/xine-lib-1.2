@@ -375,24 +375,23 @@ static plugin_node_t *_get_cached_node (xine_t *this,
 static plugin_file_t *_insert_file (xine_list_t *list,
                                     const char *filename,
                                     const struct stat *statbuffer,
-				    void *lib) {
+                                    void *lib) {
+  size_t name_len = strlen(filename);
   plugin_file_t *entry;
+  char *p;
 
   /* create the file entry */
-  entry = malloc(sizeof(plugin_file_t));
-  if (!entry)
+  p = malloc(sizeof(*entry) + name_len + 1);
+  if (!p)
     return NULL;
-  entry->filename  = strdup(filename);
+  entry = (plugin_file_t *)p;
+  entry->filename  = p + sizeof(*entry);
   entry->filesize  = statbuffer->st_size;
   entry->filemtime = statbuffer->st_mtime;
   entry->lib_handle = lib;
   entry->ref = 0;
   entry->no_unload = 0;
-
-  if (!entry->filename) {
-    free(entry);
-    return NULL;
-  }
+  memcpy(entry->filename, filename, name_len + 1);
 
   xine_list_push_back (list, entry);
   return entry;
@@ -3058,8 +3057,12 @@ static void dispose_plugin_file_list (xine_list_t *list) {
   ite = xine_list_front (list);
   while (ite) {
     file = xine_list_get_value (list, ite);
-    _x_freep (&file->filename);
+
+    if ((char *)file + sizeof (*file) != file->filename) {
+      _x_freep (&file->filename);
+    }
     free (file);
+
     ite = xine_list_next (list, ite);
   }
   xine_list_delete (list);
