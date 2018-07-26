@@ -174,6 +174,7 @@ static void hevc_reset (video_decoder_t *this_gen)
 
 static void hevc_discontinuity (video_decoder_t *this_gen)
 {
+  (void)this_gen;
   //this->size = 0;
 }
 
@@ -194,6 +195,8 @@ static void hevc_dispose (video_decoder_t *this_gen)
 static video_decoder_t *open_plugin (video_decoder_class_t *class_gen, xine_stream_t *stream)
 {
   hevc_decoder_t  *this;
+
+  (void)class_gen;
 
   this = (hevc_decoder_t *) calloc(1, sizeof(hevc_decoder_t));
   if (!this) {
@@ -230,6 +233,10 @@ static void *init_plugin (xine_t *xine, const void *data)
     .description     = N_("HEVC video decoder plugin"),
     .dispose         = NULL,
   };
+
+  (void)xine;
+  (void)data;
+
   return (void *)&decode_video_openhevc_class;
 }
 
