@@ -372,14 +372,12 @@ static plugin_node_t *_get_cached_node (xine_t *this,
 }
 
 
-static plugin_file_t *_insert_file (xine_t *this,
-				    xine_list_t *list,
+static plugin_file_t *_insert_file (xine_list_t *list,
                                     const char *filename,
                                     const struct stat *statbuffer,
 				    void *lib) {
   plugin_file_t *entry;
 
-  (void)this;
   /* create the file entry */
   entry = malloc(sizeof(plugin_file_t));
   if (!entry)
@@ -826,7 +824,7 @@ static void collect_plugins(xine_t *this, const char *path){
 	    if (info || (info = dlsym(lib, "xine_plugin_info"))) {
 	      plugin_file_t *file;
 
-	      file = _insert_file(this, this->plugin_catalog->file_list, str, &statbuffer, lib);
+              file = _insert_file(this->plugin_catalog->file_list, str, &statbuffer, lib);
               if (file) {
                 _register_plugins_internal(this, file, node, info);
               } else {
