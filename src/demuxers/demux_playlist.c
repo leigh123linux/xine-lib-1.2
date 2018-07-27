@@ -45,6 +45,8 @@
 #include "bswap.h"
 #include <xine/demux.h>
 
+#define MAX_PLAYLIST_SIZE (10*1024*1024)
+
 typedef enum {
   XINE_PLT_NONE = 0,
   XINE_PLT_REF  = ME_FOURCC('R','E','F',0),
@@ -574,10 +576,17 @@ static void demux_playlist_send_headers (demux_plugin_t *this_gen) {
 static int demux_playlist_send_chunk (demux_plugin_t *this_gen) {
   demux_playlist_t *this = (demux_playlist_t *) this_gen;
   char             *data = NULL;
-  int               length;
+  size_t            length;
+  off_t             file_length;
 
-  length = this->input->get_length (this->input);
-  if (length > 0) {
+  file_length = this->input->get_length (this->input);
+  if (file_length > 0) {
+    if (file_length > MAX_PLAYLIST_SIZE) {
+      xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
+              "demux_playlist: truncating too large playlist\n");
+      file_length = MAX_PLAYLIST_SIZE;
+    }
+    length = file_length;
     data = malloc (length + 1);
     if (data) {
       length = this->input->read (this->input, data, length);
@@ -599,10 +608,15 @@ static int demux_playlist_send_chunk (demux_plugin_t *this_gen) {
       memcpy (data+length, buf, len);
       length += len;
       data[length] = '\0';
+      if (length > MAX_PLAYLIST_SIZE) {
+        xprintf(this->stream->xine, XINE_VERBOSITY_LOG,
+                "demux_playlist: truncating too large playlist\n");
+        break;
+      }
     }
   }
 
-  lprintf ("data:%p length:%d\n", data, length);
+  lprintf ("data:%p length:%d\n", data, (int)length);
 
   if (data) {
     switch (this->playlist) {
@@ -685,6 +699,10 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen,
   demux_playlist_t *this;
   playlist_t playlist;
 
+  // TODO : directory demux
+  //  - send playlist items from all files in a directory
+  //  - file:// ftp:// ... ???
+  //
   switch (stream->content_detection_method) {
     case METHOD_BY_MRL:
       lprintf ("detect by extension\n");
@@ -762,7 +780,12 @@ static const demuxer_info_t demux_info_playlist = {
   10                       /* priority */
 };
 
-const plugin_info_t xine_plugin_info[] EXPORTED = {
+#ifdef XINE_STATIC_PLUGINS
+const plugin_info_t xine_demux_playlist_plugin_info[] =
+#else
+const plugin_info_t xine_plugin_info[] EXPORTED =
+#endif
+{
   /* type, API, "name", version, special_info, init_function */
   { PLUGIN_DEMUX, 27, "playlist", XINE_VERSION_CODE, &demux_info_playlist, init_plugin },
   { PLUGIN_NONE, 0, "", 0, NULL, NULL }
