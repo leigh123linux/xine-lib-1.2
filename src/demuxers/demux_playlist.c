@@ -583,8 +583,8 @@ static int demux_playlist_send_chunk (demux_plugin_t *this_gen) {
       length = this->input->read (this->input, data, length);
       if (length < 0)
         length = 0;
+      data[length] = '\0';
     }
-    data[length] = '\0';
   }
   else {
     char buf[1024];
