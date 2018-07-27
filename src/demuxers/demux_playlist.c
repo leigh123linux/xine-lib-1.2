@@ -683,6 +683,26 @@ static int demux_playlist_get_optional_data (demux_plugin_t *this_gen,
 static demux_plugin_t *open_plugin (demux_class_t *class_gen,
                                     xine_stream_t *stream, input_plugin_t *input) {
   demux_playlist_t *this;
+  playlist_t playlist;
+
+  switch (stream->content_detection_method) {
+    case METHOD_BY_MRL:
+      lprintf ("detect by extension\n");
+      playlist = detect_by_extension (input);
+      break;
+
+    case METHOD_BY_CONTENT:
+    case METHOD_EXPLICIT:
+      lprintf ("detect by content\n");
+      playlist = detect_by_content (input);
+      break;
+
+    default:
+      return NULL;
+  }
+
+  if (playlist == XINE_PLT_NONE)
+    return NULL;
 
   this = calloc (1, sizeof (demux_playlist_t));
   if (!this)
@@ -691,6 +711,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen,
   this->xine   = stream->xine;
   this->stream = stream;
   this->input  = input;
+  this->playlist = playlist;
 
   this->demux_plugin.send_headers      = demux_playlist_send_headers;
   this->demux_plugin.send_chunk        = demux_playlist_send_chunk;
@@ -701,31 +722,6 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen,
   this->demux_plugin.get_capabilities  = demux_playlist_get_capabilities;
   this->demux_plugin.get_optional_data = demux_playlist_get_optional_data;
   this->demux_plugin.demux_class       = class_gen;
-
-  switch (stream->content_detection_method) {
-    case METHOD_BY_MRL:
-      lprintf ("detect by extension\n");
-      this->playlist = detect_by_extension (input);
-      if (!this->playlist) {
-        free (this);
-        return NULL;
-      }
-      break;
-
-    case METHOD_BY_CONTENT:
-    case METHOD_EXPLICIT:
-      lprintf ("detect by content\n");
-      this->playlist = detect_by_content (input);
-      if (!this->playlist) {
-        free (this);
-        return NULL;
-      }
-      break;
-
-    default:
-      free (this);
-      return NULL;
-  }
 
   lprintf ("playlist:0x%08x (%s)\n", this->playlist, (char*)&this->playlist);
 
