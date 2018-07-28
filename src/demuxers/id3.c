@@ -354,7 +354,7 @@ static int id3v22_parse_tag(input_plugin_t *input,
     /* invalid flags */
     xprintf(stream->xine, XINE_VERBOSITY_DEBUG,
             LOG_MODULE ": invalid header flags (%02x)\n", tag_header.flags);
-    input->seek (input, tag_header.size - pos, SEEK_CUR);
+    input->seek (input, tag_header.size, SEEK_CUR);
     return 0;
   }
 
@@ -362,7 +362,7 @@ static int id3v22_parse_tag(input_plugin_t *input,
     /* compressed tag: not supported */
     xprintf(stream->xine, XINE_VERBOSITY_DEBUG,
             LOG_MODULE ": compressed tags are not supported\n");
-    input->seek (input, tag_header.size - pos, SEEK_CUR);
+    input->seek (input, tag_header.size, SEEK_CUR);
     return 0;
   }
 
@@ -370,7 +370,7 @@ static int id3v22_parse_tag(input_plugin_t *input,
     /* unsynchronized tag: not supported */
     xprintf(stream->xine, XINE_VERBOSITY_DEBUG,
             LOG_MODULE ": unsynchronized tags are not supported\n");
-    input->seek (input, tag_header.size - pos, SEEK_CUR);
+    input->seek (input, tag_header.size, SEEK_CUR);
     return 0;
   }
 
@@ -555,7 +555,7 @@ static int id3v23_parse_tag(input_plugin_t *input,
     /* invalid flags */
     xprintf(stream->xine, XINE_VERBOSITY_DEBUG,
             LOG_MODULE ": invalid header flags (%02x)\n", tag_header.flags);
-    input->seek (input, tag_header.size - pos, SEEK_CUR);
+    input->seek (input, tag_header.size, SEEK_CUR);
     return 0;
   }
 
@@ -563,7 +563,7 @@ static int id3v23_parse_tag(input_plugin_t *input,
     /* unsynchronized tag: not supported */
     xprintf(stream->xine, XINE_VERBOSITY_DEBUG,
             LOG_MODULE ": unsynchronized tags are not supported\n");
-    input->seek (input, tag_header.size - pos, SEEK_CUR);
+    input->seek (input, tag_header.size, SEEK_CUR);
     return 0;
   }
 
@@ -824,7 +824,7 @@ static int id3v24_parse_tag(input_plugin_t *input,
     /* invalid flags */
     xprintf(stream->xine, XINE_VERBOSITY_DEBUG,
             LOG_MODULE ": invalid header flags (%02x)\n", tag_header.flags);
-    input->seek (input, tag_header.size - pos, SEEK_CUR);
+    input->seek (input, tag_header.size, SEEK_CUR);
     return 0;
   }
 
