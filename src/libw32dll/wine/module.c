@@ -275,6 +275,7 @@ static WIN_BOOL MODULE_DllProcessAttach( WINE_MODREF *wm, LPVOID lpReserved )
  */
 static void MODULE_DllProcessDetach( WINE_MODREF* wm, WIN_BOOL bForceDetach, LPVOID lpReserved )
 {
+    (void)bForceDetach;
     //    WINE_MODREF *wm=local_wm;
     /* modref_list* l = local_wm; -- not used */
     wm->flags &= ~WINE_MODREF_PROCESS_ATTACHED;
@@ -305,6 +306,8 @@ static WINE_MODREF *MODULE_LoadLibraryExA( LPCSTR libname, HFILE hfile, DWORD fl
 	WINE_MODREF *pwm;
 	/* int i; -- not used */
 //	module_loadorder_t *plo;
+
+        (void)hfile;
 
         SetLastError( ERROR_FILE_NOT_FOUND );
 	TRACE("Trying native dll '%s'\n", libname);
@@ -344,8 +347,10 @@ static WIN_BOOL MODULE_FreeLibrary( WINE_MODREF *wm )
 {
     TRACE("(%s) - START\n", wm->modname );
 
+#ifdef USE_MODULE_DecRefCount
     /* Recursively decrement reference counts */
-    //MODULE_DecRefCount( wm );
+    MODULE_DecRefCount( wm );
+#endif
 
     /* Call process detach notifications */
     MODULE_DllProcessDetach( wm, FALSE, NULL );
@@ -561,6 +566,7 @@ WIN_BOOL WINAPI FreeLibrary(HINSTANCE hLibModule)
     return retv;
 }
 
+#ifdef USE_MODULE_DecRefCount
 /***********************************************************************
  *           MODULE_DecRefCount
  *
@@ -590,6 +596,7 @@ static void MODULE_DecRefCount( WINE_MODREF *wm )
         wm->flags &= ~WINE_MODREF_MARKER;
     }
 }
+#endif
 
 /***********************************************************************
  *           GetProcAddress   		(KERNEL32.257)
@@ -755,7 +762,9 @@ int report_func(void *stack_base, int stack_size, reg386_t *reg, u_int32_t *flag
   }
   printf(")\n");
   fflush(stdout);
-
+#else
+  (void)reg;
+  (void)stack_base;
 #endif
   
 #if 1
@@ -857,6 +866,9 @@ int report_func(void *stack_base, int stack_size, reg386_t *reg, u_int32_t *flag
 	 reg->eax, reg->edx, reg->ebx, reg->ecx,
 	 reg->esp, reg->ebp, reg->esi, reg->edi,
 	 *flags);
+#else
+  (void)stack_size;
+  (void)flags;
 #endif
 
   // save ret addr:
@@ -893,13 +905,15 @@ int report_func_ret(void *stack_base, int stack_size, reg386_t *reg, u_int32_t *
 
 #ifdef DEBUG_QTX_API
 
-#if 1
+#  if 1
+  (void)stack_size;
+  (void)flags;
   printf("%*sLEAVE(%d): 0x%X",ret_i*2,"",ret_i, reg->eax);
   err=reg->eax;
   if(err && (reg->eax>>16)==0) printf(" = %d",err);
   printf("\n");
   fflush(stdout);
-#else
+#  else
   // print stack/reg information 
   printf("LEAVE(%d) stack = %d bytes @ %p\n"
 	 "eax = 0x%08x edx = 0x%08x ebx = 0x%08x ecx = 0x%08x\n"
@@ -909,17 +923,21 @@ int report_func_ret(void *stack_base, int stack_size, reg386_t *reg, u_int32_t *
 	 reg->eax, reg->edx, reg->ebx, reg->ecx,
 	 reg->esp, reg->ebp, reg->esi, reg->edi,
 	 *flags);
-#endif
+#  endif
 
-#if 0
+#  if 0
   // print first 7 longs in the stack (return address, arg[1], arg[2] ... ) 
   printf("stack[] = { ");
   for (i=0;i<7;i++) {
     printf("%08x ", ((u_int32_t *)stack_base)[i]);
   }
   printf("}\n\n");
-#endif
+#  endif
 
+#else
+  (void)stack_size;
+  (void)reg;
+  (void)flags;
 #endif
   
 //  // mess with function parameters 

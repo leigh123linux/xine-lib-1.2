@@ -48,6 +48,7 @@ ICInfo(
 	long fccHandler,	/* [in] <n>th compressor */
 	ICINFO *lpicinfo	/* [out] information about compressor */
 ) {
+	(void)fccHandler;
 	/* does OpenDriver/CloseDriver */
 	lpicinfo->dwSize = sizeof(ICINFO);
 	lpicinfo->fccType = fccType;

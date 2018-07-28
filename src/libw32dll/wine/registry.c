@@ -223,7 +223,7 @@ static reg_handle_t* find_handle(int handle)
 }
 static int generate_handle()
 {
-	static int zz=249;
+	static unsigned int zz=249;
 	zz++;
 	while((zz==HKEY_LOCAL_MACHINE) || (zz==HKEY_CURRENT_USER))
 		zz++;
@@ -355,6 +355,8 @@ long RegOpenKeyExA(long key, const char* subkey, long reserved, long access, int
     reg_handle_t* t;
     struct reg_value* v;
     TRACE("Opening key %s\n", subkey);
+    (void)reserved;
+    (void)access;
 
     if(!regs)
         init_registry()
@@ -382,9 +384,9 @@ long RegOpenKeyExA(long key, const char* subkey, long reserved, long access, int
 long RegCloseKey(long key)
 {
         reg_handle_t *handle;
-    if(key==HKEY_LOCAL_MACHINE)
+    if (key == (long)HKEY_LOCAL_MACHINE)
 	return 0;
-    if(key==HKEY_CURRENT_USER)
+    if (key == (long)HKEY_CURRENT_USER)
 	return 0;
     handle=find_handle(key);
     if(handle==0)
@@ -406,6 +408,7 @@ long RegQueryValueExA(long key, const char* value, int* reserved, int* type, int
     struct reg_value* t;
     char* c;
     TRACE("Querying value %s\n", value);
+    (void)reserved;
     if(!regs)
 	init_registry();
 
@@ -442,6 +445,11 @@ long RegCreateKeyExA(long key, const char* name, long reserved,
     char* fullname;
     struct reg_value* v;
     //        TRACE("Creating/Opening key %s\n", name);
+    (void)reserved;
+    (void)classs;
+    (void)options;
+    (void)security;
+    (void)sec_attr;
     if(!regs)
 	init_registry();
 
@@ -484,14 +492,18 @@ long RegEnumValueA(HKEY hkey, DWORD index, LPSTR value, LPDWORD val_count,
     //printf("Reg Enum 0x%x %d  %s %d   data: %p %d  %d >%s<\n", hkey, index,
     //       value, *val_count, data, *count, reg_size, data);
     reg_handle_t* t = find_handle(hkey);
+    (void)value;
+    (void)val_count;
+    (void)reserved;
     if (t && index < 10)
     {
 	struct reg_value* v=find_value_by_name(t->name);
 	if (v)
 	{
-	    memcpy(data, v->value, (v->len < *count) ? v->len : *count);
-	    if(*count < v->len)
-		*count = v->len;
+	    DWORD vlen = v->len < 0 ? 0 : v->len;
+	    memcpy (data, v->value, (vlen < *count) ? vlen : *count);
+	    if (*count < vlen)
+		*count = vlen;
 	    if (type)
 		*type = v->type;
 	    //printf("Found handle  %s\n", v->name);
@@ -506,6 +518,7 @@ long RegSetValueExA(long key, const char* name, long v1, long v2, const void* da
     /* struct reg_value* t; -- unused */
     char* c;
     TRACE("Request to set value %s\n", name);
+    (void)v1;
     if(!regs)
 	init_registry();
 
@@ -521,5 +534,14 @@ long RegEnumKeyExA(HKEY hKey, DWORD dwIndex, LPSTR lpName, LPDWORD lpcbName,
 		   LPDWORD lpReserved, LPSTR lpClass, LPDWORD lpcbClass,
 		   LPFILETIME lpftLastWriteTime)
 {
+    (void)hKey;
+    (void)dwIndex;
+    (void)lpName;
+    (void)lpcbName;
+    (void)lpReserved;
+    (void)lpClass;
+    (void)lpcbClass;
+    (void)lpftLastWriteTime;
     return ERROR_NO_MORE_ITEMS;
 }
+

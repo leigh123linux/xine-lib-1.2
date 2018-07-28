@@ -81,6 +81,8 @@ MMRESULT WINAPI acmDriverAddA(PHACMDRIVERID phadid, HINSTANCE hinstModule,
     *phadid = (HACMDRIVERID) MSACM_RegisterDriver(NULL, NULL, hinstModule);
     
     /* FIXME: lParam, dwPriority and fdwAdd ignored */
+    (void)lParam;
+    (void)dwPriority;
     
     return MMSYSERR_NOERROR;
 }

@@ -160,6 +160,7 @@ HANDLE PE_LoadResource( WINE_MODREF *wm, HANDLE hRsrc )
 DWORD PE_SizeofResource( HINSTANCE hModule, HANDLE hRsrc )
 {
     /* we don't need hModule */
+    (void)hModule;
     if (!hRsrc)
    	 return 0;
     return ((PIMAGE_RESOURCE_DATA_ENTRY)hRsrc)->Size;

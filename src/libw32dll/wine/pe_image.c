@@ -70,7 +70,7 @@ extern void* LookupExternalByName(const char* library, const char* name);
 static void dump_exports( HMODULE hModule )
 { 
   char		*Module;
-  int		i, j;
+  unsigned int   i;
   u_short	*ordinal;
   u_long	*function,*functions;
   u_char	**name;
@@ -97,6 +97,7 @@ static void dump_exports( HMODULE hModule )
       if (!*function) continue;  
       if (TRACE_ON(win32))
       {
+        unsigned int j;
 	DPRINTF( "%4ld %08lx %p", i + pe_exports->Base, *function, RVA(*function) );
 	
 	for (j = 0; j < pe_exports->NumberOfNames; j++)
@@ -128,7 +129,7 @@ FARPROC PE_FindExportedFunction(
 	u_short				* ordinals;
 	u_long				* function;
 	u_char				** name, *ename = NULL;
-	int				i, ordinal;
+	unsigned int			ordinal;
 	PE_MODREF			*pem = &(wm->binfmt.pe);
 	IMAGE_EXPORT_DIRECTORY 		*exports = pem->pe_export;
 	unsigned int			load_addr = wm->module;
@@ -160,6 +161,7 @@ FARPROC PE_FindExportedFunction(
         {
             
             int min = 0, max = exports->NumberOfNames - 1;
+            unsigned int i;
             while (min <= max)
             {
                 int res, pos = (min + max) / 2;
@@ -190,6 +192,7 @@ FARPROC PE_FindExportedFunction(
             ordinal = LOWORD(funcName) - exports->Base;
             if (snoop && name)  
             {
+                unsigned int i;
                 for (i = 0; i < exports->NumberOfNames; i++)
                     if (ordinals[i] == ordinal)
                     {
@@ -227,7 +230,7 @@ FARPROC PE_FindExportedFunction(
 		char *end = strchr(forward, '.');
 
 		if (!end) return NULL;
-                if (end - forward >= sizeof(module)) return NULL;
+                if (end - forward >= (int)sizeof(module)) return NULL;
                 memcpy( module, forward, end - forward );
 		module[end-forward] = 0;
                 if (!(wm = MODULE_FindModule( module )))
@@ -341,7 +344,8 @@ static DWORD fixup_imports( WINE_MODREF *wm )
 
 static int calc_vma_size( HMODULE hModule )
 {
-    int i,vma_size = 0;
+    int i;
+    DWORD vma_size = 0;
     IMAGE_SECTION_HEADER *pe_seg = PE_SECTIONS(hModule);
 
     TRACE("Dump of segment table\n");
@@ -439,8 +443,8 @@ HMODULE PE_LoadImage( int handle, LPCSTR filename, WORD *version )
     IMAGE_SECTION_HEADER *pe_sec;
     IMAGE_DATA_DIRECTORY *dir;
     /* BY_HANDLE_FILE_INFORMATION bhfi; -- unused */
-    int	i, rawsize, lowest_va, vma_size, file_size = 0;
-    DWORD load_addr = 0, aoep, reloc = 0;
+    int	i, vma_size, file_size = 0;
+    DWORD rawsize, lowest_va, load_addr = 0, aoep, reloc = 0;
 //    struct get_read_fd_request *req = get_req_buffer();
     int unix_handle = handle;
     int page_size = getpagesize();
@@ -515,11 +519,11 @@ HMODULE PE_LoadImage( int handle, LPCSTR filename, WORD *version )
     }
  
     
-    if ( file_size && file_size < rawsize )
+    if ((file_size > 0) && ((DWORD)file_size < rawsize))
     {
-        ERR("PE module is too small (header: %d, filesize: %d), "
+        ERR("PE module is too small (header: %u, filesize: %d), "
                     "probably truncated download?\n", 
-                    rawsize, file_size );
+                    (unsigned int)rawsize, file_size );
         goto error;
     }
 
@@ -529,7 +533,7 @@ HMODULE PE_LoadImage( int handle, LPCSTR filename, WORD *version )
         FIXME("VIRUS WARNING: '%s' has an invalid entrypoint (0x%08lx) "
                       "below the first virtual address (0x%08x) "
                       "(possibly infected by Tchernobyl/SpaceFiller virus)!\n",
-                       filename, aoep, lowest_va );
+                       filename, aoep, (unsigned int)lowest_va );
 
 
     /* FIXME:  Hack!  While we don't really support shared sections yet,

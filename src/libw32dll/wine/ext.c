@@ -38,22 +38,32 @@ static void* mymalloc(unsigned int size)
 
 int dbg_header_err( const char *dbg_channel, const char *func )
 {
+    (void)dbg_channel;
+    (void)func;
     return 0;
 }
 int dbg_header_warn( const char *dbg_channel, const char *func )
 {
+    (void)dbg_channel;
+    (void)func;
     return 0;
 }
 int dbg_header_fixme( const char *dbg_channel, const char *func )
 {
+    (void)dbg_channel;
+    (void)func;
     return 0;
 }
 int dbg_header_trace( const char *dbg_channel, const char *func )
 {
+    (void)dbg_channel;
+    (void)func;
     return 0;
 }
 int dbg_vprintf( const char *format, va_list args )
 {
+    (void)format;
+    (void)args;
     return 0;
 }
 int __vprintf( const char *format, ... )
@@ -63,6 +73,8 @@ int __vprintf( const char *format, ... )
     va_start(va, format);
     vprintf(format, va);
     va_end(va);
+#else
+    (void)format;
 #endif
     return 0;
 }
@@ -79,11 +91,14 @@ LPVOID WINAPI HeapAlloc(HANDLE heap, DWORD flags, DWORD size)
     //printf("HeapAlloc %p  %d  (%d)\n", m, size, flags);
     //if (--i == 0)
     //    abort();
+    (void)heap;
     return m;
 }
 
 WIN_BOOL WINAPI HeapFree(HANDLE heap, DWORD flags, LPVOID mem)
 {
+    (void)heap;
+    (void)flags;
     if (mem) free(mem);
     //printf("HeapFree  %p\n", mem);
     //if (!mem)
@@ -105,6 +120,7 @@ VOID WINAPI SetLastError(DWORD error)
 
 WIN_BOOL WINAPI ReadFile(HANDLE handle, LPVOID mem, DWORD size, LPDWORD result, LPOVERLAPPED flags)
 {
+    (void)flags;
     *result=read(handle, mem, size);
     return *result;
 }
@@ -188,7 +204,12 @@ WIN_BOOL WINAPI IsBadReadPtr(LPCVOID data, UINT size)
 LPSTR HEAP_strdupA(HANDLE heap, DWORD flags, LPCSTR string)
 {
 //    return strdup(string);
-    char* answ=malloc(strlen(string)+1);
+    char* answ;
+    (void)heap;
+    (void)flags;
+    answ=malloc(strlen(string)+1);
+    if(answ==NULL)
+	return NULL;
     strcpy(answ, string);
     return answ;
 }
@@ -196,10 +217,14 @@ LPWSTR HEAP_strdupAtoW(HANDLE heap, DWORD flags, LPCSTR string)
 {
     int size, i;
     short* answer;
+    (void)heap;
+    (void)flags;
     if(string==0)
-	return 0;
+	return NULL;
     size=strlen(string);
     answer=malloc(2 * (size + 1));
+    if(answer==NULL)
+	return NULL;
     for(i=0; i<=size; i++)
 	answer[i]=(short)string[i];
     return answer;
@@ -208,12 +233,16 @@ LPSTR HEAP_strdupWtoA(HANDLE heap, DWORD flags, LPCWSTR string)
 {
     int size, i;
     char* answer;
+    (void)heap;
+    (void)flags;
     if(string==0)
-	return 0;
+	return NULL;
     size=0;
     while(string[size])
        size++;
     answer=malloc(size+2);
+    if(answer==NULL)
+	return NULL;
     for(i=0; i<=size; i++)
 	answer[i]=(char)string[i];
     return answer;
@@ -362,6 +391,8 @@ HANDLE WINAPI CreateFileMappingA(HANDLE handle, LPSECURITY_ATTRIBUTES lpAttr,
     LPVOID answer;
     int anon=0;
     int mmap_access=0;
+    (void)lpAttr;
+    (void)dwMaxHigh;
     if(hFile<0)
     {
 	anon=1;
@@ -459,6 +490,8 @@ LPVOID WINAPI VirtualAlloc(LPVOID address, DWORD size, DWORD type,  DWORD protec
     int fd;
     long pgsz;
 
+    (void)protection;
+
     if ((type&(MEM_RESERVE|MEM_COMMIT)) == 0) return NULL;
 
     fd=open("/dev/zero", O_RDWR);
@@ -472,9 +505,12 @@ LPVOID WINAPI VirtualAlloc(LPVOID address, DWORD size, DWORD type,  DWORD protec
        address = (LPVOID)((unsigned long)address & ~0xffff);
     }
     pgsz = sysconf(_SC_PAGESIZE);
-    if (type&MEM_COMMIT && (void*)((unsigned long)address%pgsz)) {
-       size += (unsigned long)address%pgsz;
-       address -= (unsigned long)address%pgsz;
+    if (pgsz > 0) {
+        unsigned long align = (unsigned long)address % (unsigned long)pgsz;
+        if ((type & MEM_COMMIT) && align) {
+            size += align;
+            address = (LPVOID)((unsigned char *)address - align);
+        }
     }
 
     if (type&MEM_RESERVE && size<0x10000) size = 0x10000;
@@ -553,6 +589,8 @@ WIN_BOOL WINAPI VirtualFree(LPVOID  address, SIZE_T dwSize, DWORD dwFreeType)//n
 {
     virt_alloc* str=vm;
     int answer;
+    (void)dwSize;
+    (void)dwFreeType;
     while(str)
     {
 	if(address!=str->address)
@@ -575,6 +613,9 @@ INT WINAPI WideCharToMultiByte(UINT codepage, DWORD flags, LPCWSTR src,
      INT srclen,LPSTR dest, INT destlen, LPCSTR defch, WIN_BOOL* used_defch)
 {
     int i;
+    (void)codepage;
+    (void)flags;
+    (void)defch;
     if(src==0)
 	return 0;
     if ((srclen==-1)&&(dest==0)) return 0;
@@ -607,11 +648,19 @@ INT WINAPI WideCharToMultiByte(UINT codepage, DWORD flags, LPCWSTR src,
 INT WINAPI MultiByteToWideChar(UINT codepage,DWORD flags, LPCSTR src, INT srclen,
     LPWSTR dest, INT destlen)
 {
+    (void)codepage;
+    (void)flags;
+    (void)src;
+    (void)srclen;
+    (void)dest;
+    (void)destlen;
     return 0;
 }
 HANDLE WINAPI OpenFileMappingA(DWORD access, WIN_BOOL prot, LPCSTR name)
 {
     file_mapping* p;
+    (void)access;
+    (void)prot;
     if(fm==0)
 	return (HANDLE)0;
     if(name==0)

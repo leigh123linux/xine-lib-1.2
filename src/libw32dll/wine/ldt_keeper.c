@@ -35,6 +35,13 @@
  * TEBs for the audio and video codecs.
  */
  
+#ifdef  __cplusplus
+#  define EXTERN_C_START extern "C" {
+#  define EXTERN_C_STOP  }
+#else
+#  define EXTERN_C_START
+#  define EXTERN_C_STOP
+#endif
  
 /**
  * OLD AVIFILE COMMENT:
@@ -70,13 +77,9 @@
 #define modify_ldt_ldt_s user_desc
 #endif
 /* prototype it here, so we won't depend on kernel headers */
-#ifdef  __cplusplus
-extern "C" {
-#endif
+EXTERN_C_START
 int modify_ldt(int func, void *ptr, unsigned long bytecount);
-#ifdef  __cplusplus
-}
-#endif
+EXTERN_C_STOP
 #else
 #if defined(__NetBSD__) || defined(__FreeBSD_kernel__) || defined(__OpenBSD__)
 #include <machine/segments.h>
@@ -89,13 +92,9 @@ int modify_ldt(int func, void *ptr, unsigned long bytecount);
 
 /* solaris x86: add missing prototype for sysi86() */
 #ifndef HAVE_SYSI86
-#ifdef  __cplusplus
-extern "C" {
-#endif
+EXTERN_C_START
 int sysi86(int, void*);
-#ifdef  __cplusplus
-}
-#endif
+EXTERN_C_STOP
 #endif
 
 #ifndef NUMSYSLDTS             /* SunOS 2.5.1 does not define NUMSYSLDTS */
@@ -141,9 +140,7 @@ struct modify_ldt_ldt_s {
 static ldt_fs_t global_ldt_fs;
 static int      global_usage_count = 0;
 
-#ifdef __cplusplus
-extern "C"
-#endif
+EXTERN_C_START
 void Setup_FS_Segment(ldt_fs_t *ldt_fs)
 {
     __asm__ __volatile__(
@@ -274,7 +271,7 @@ ldt_fs_t* Setup_LDT_Keeper(void)
                 ((*(unsigned int *) (&ldt[TEB_SEL_IDX*8+4])) & 0xf0000);
         
         if( limit ) {
-            if( limit == getpagesize()-1 ) {
+            if (limit == (unsigned int)(getpagesize () - 1)) {
                 ldt_already_set = 1;
             } else {
 #ifdef LOG
@@ -370,3 +367,4 @@ void Restore_LDT_Keeper(ldt_fs_t* ldt_fs)
     }
     free(ldt_fs);
 }
+EXTERN_C_STOP

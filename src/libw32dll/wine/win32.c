@@ -203,6 +203,8 @@ static inline void XINE_FORMAT_PRINTF(1, 2) dbgprintf(const char* fmt, ...)
 	}
 	va_end(va);
     }
+#else
+    (void)fmt;
 #endif
 #undef MPLAYER
 #ifdef MPLAYER
@@ -1218,6 +1220,8 @@ static void* WINAPI expHeapReAlloc(HANDLE heap,int flags,void *lpMem,int size)
 {
     long orgsize = my_size(lpMem);
     dbgprintf("HeapReAlloc() Size %ld org %d\n",orgsize,size);
+    (void)heap;
+    (void)flags;
     return my_realloc(lpMem, size);
 }
 static long WINAPI expGetProcessHeap(void)
@@ -1498,7 +1502,7 @@ static void* WINAPI expTlsGetValue(DWORD index)
       return NULL;
       
     /* qt passes -1 here. probably a side effect of some bad patching */
-    if( index < 0 ) {
+    if (index & 0x80000000) {
       return tls_minus_one;
     }
 
@@ -1663,7 +1667,7 @@ static int WINAPI expGlobalSize(void* amem)
     pthread_mutex_lock(&memmut);
     while (header)
     {
-	if (header->deadbeef != 0xdeadbeef)
+	if ((DWORD)header->deadbeef != 0xdeadbeef)
 	{
 	    printf("FATAL found corrupted memory! %p  0x%lx  (%d)\n", header, header->deadbeef, alccnt);
 	    break;
@@ -2682,6 +2686,10 @@ static int WINAPI expDrawTextA(int hDC, char* lpString, int nCount,
 			       LPRECT lpRect, unsigned int uFormat)
 {
     dbgprintf("expDrawTextA(%d,...) => 8\n", hDC);
+    (void)lpString;
+    (void)nCount;
+    (void)lpRect;
+    (void)uFormat;
     return 8;
 }
 
@@ -2751,8 +2759,10 @@ static int WINAPI expGetPrivateProfileStringA(const char* appname,
     free(fullname);
     if(result)
     {
+        int dsize = strlen (def_val);
+        if (size < 0) size = 0;
 	strncpy(dest, def_val, size);
-	if (strlen(def_val)< size) size = strlen(def_val);
+	if (dsize < size) size = dsize;
     }
     dbgprintf(" => %d ( '%s' )\n", size, dest);
     return size;
@@ -2970,6 +2980,8 @@ static int WINAPI expGetOEMCP(void)
 static int WINAPI expGetCPInfo(int cp,void *info)
 {
     dbgprintf("GetCPInfo()\n");
+    (void)cp;
+    (void)info;
     return 0;
 }
 #ifdef QTX
@@ -3133,7 +3145,7 @@ static int WINAPI expGetEnvironmentVariableA(const char* name, char* field, int 
      p = getenv(name);
      if (p) strncpy(field,p,size);
      */
-    if (!field || size < sizeof("__GLOBAL_HEAP_SELECTED,1"))
+    if (!field || size < (int)sizeof ("__GLOBAL_HEAP_SELECTED,1"))
       return 0;
     if (strcmp(name,"__MSVCRT_HEAP_SELECT")==0)
 	strcpy(field,"__GLOBAL_HEAP_SELECTED,1");
@@ -3239,6 +3251,8 @@ static long WINAPI expCoCreateInstance(GUID* rclsid, struct IUnknown* pUnkOuter,
 {
     int i;
     struct COM_OBJECT_INFO* ci=0;
+    (void)pUnkOuter;
+    (void)dwClsContext;
     for(i=0; i<com_object_size; i++)
 	if(!memcmp(rclsid, &com_object_table[i].clsid, sizeof(GUID)))
 	    ci=&com_object_table[i];
@@ -3616,6 +3630,7 @@ static WIN_BOOL WINAPI expReadFile(HANDLE h,LPVOID pv,DWORD size,LPDWORD rd,LPOV
 {
     int result;
     dbgprintf("ReadFile(%d, %p, %ld -> %p)\n", h, pv, size, rd);
+    (void)unused;
     result=read(h, pv, size);
     if(rd)*rd=result;
     if(!result)return 0;
@@ -3626,6 +3641,7 @@ static WIN_BOOL WINAPI expWriteFile(HANDLE h,LPCVOID pv,DWORD size,LPDWORD wr,LP
 {
     int result;
     dbgprintf("WriteFile(%d, %p, %ld -> %p)\n", h, pv, size, wr);
+    (void)unused;
     if(h==1234)h=1;
     result=write(h, pv, size);
     if(wr)*wr=result;
@@ -3716,7 +3732,7 @@ static LONG WINAPI explstrcpyA(char* str1, const char* str2)
 static LONG WINAPI explstrcpynA(char* str1, const char* str2,int len)
 {
     int result;
-    if (strlen(str2)>len)
+    if ((int)strlen (str2) > len)
 	result = (int) strncpy(str1, str2,len);
     else
 	result = (int) strcpy(str1,str2);
@@ -3751,6 +3767,18 @@ static HWND WINAPI expCreateUpDownControl (DWORD style, INT x, INT y, INT cx, IN
               HWND buddy, INT maxVal, INT minVal, INT curVal)
 {
     dbgprintf("CreateUpDownControl(...)\n");
+    (void)style;
+    (void)x;
+    (void)y;
+    (void)cx;
+    (void)cy;
+    (void)parent;
+    (void)id;
+    (void)inst;
+    (void)buddy;
+    (void)maxVal;
+    (void)minVal;
+    (void)curVal;
     return 0;
 }
 #endif
@@ -3790,6 +3818,7 @@ static HRESULT WINAPI expCoInitialize(
     /*
      * Just delegate to the newer method.
      */
+    (void)lpReserved;
     return 0; //CoInitializeEx(lpReserved, COINIT_APARTMENTTHREADED);
 }
 
@@ -3798,6 +3827,8 @@ static DWORD WINAPI expSetThreadAffinityMask
         HANDLE hThread,
         DWORD dwThreadAffinityMask
 ){
+    (void)hThread;
+    (void)dwThreadAffinityMask;
     return 0;
 };
 
@@ -4288,8 +4319,11 @@ static int exp_stricmp(const char* s1, const char* s2)
  * undocumented in any M$ doc */
 static int exp_setjmp3(void* jmpbuf, int x)
 {
-    //dbgprintf("!!!!UNIMPLEMENTED: setjmp3(%p, %d) => 0\n", jmpbuf, x);
-    //return 0;
+#if 0
+    dbgprintf("!!!!UNIMPLEMENTED: setjmp3(%p, %d) => 0\n", jmpbuf, x);
+    return 0;
+#else
+    (void)x;
     __asm__ __volatile__
 	(
 	 //"mov 4(%%esp), %%edx	\n\t"
@@ -4311,7 +4345,7 @@ static int exp_setjmp3(void* jmpbuf, int x)
 	 : "d"(jmpbuf) // input
 	 : "eax"
 	);
-#if 1
+#  if 1
     __asm__ __volatile__
 	(
 	 "mov %%fs:0, %%eax	\n\t" // unsure
@@ -4324,6 +4358,7 @@ static int exp_setjmp3(void* jmpbuf, int x)
 	 :
 	 : "eax"
 	);
+#  endif
 #endif
 
 	return 0;
@@ -4476,6 +4511,7 @@ static void WINAPI expExitProcess( DWORD status )
 
 static INT WINAPI expMessageBoxA(HWND hWnd, LPCSTR text, LPCSTR title, UINT type){
     printf("MSGBOX '%s' '%s' (%d)\n",text,title,type);
+    (void)hWnd;
 #ifdef QTX
     if (type == MB_ICONHAND && !strlen(text) && !strlen(title))
 	return IDIGNORE;
@@ -4503,6 +4539,7 @@ static WINAPI inline unsigned long int expntohl(unsigned long int netlong)
 static void WINAPI expVariantInit(void* p)
 {
     printf("InitCommonControls called!\n");
+    (void)p;
     return;
 }
 
@@ -5149,8 +5186,8 @@ static void* add_stub(void)
     *((long*) (answ + 24)) = (long)called_unk;
 
     /* xine: don't overflow the stub tables */    
-    if( (pos+1) < sizeof(extcode) / 0x30 &&
-        (pos+1) < sizeof(export_names) / sizeof(export_names[0]) ) {
+    if ((pos < (int)(sizeof (extcode) / 0x30) - 1) &&
+        (pos < (int)(sizeof (export_names) / sizeof (export_names[0])) - 1)) {
       pos++;
     } else {
       strcpy(export_names[pos], "too many unresolved exports");
@@ -5171,7 +5208,7 @@ void* LookupExternal(const char* library, int ordinal)
 
     printf("External func %s:%d\n", library, ordinal);
 
-    for(i=0; i<sizeof(libraries)/sizeof(struct libs); i++)
+    for (i = 0; i < (int)(sizeof (libraries) / sizeof (struct libs)); i++)
     {
 	if(strcasecmp(library, libraries[i].name))
 	    continue;
@@ -5238,7 +5275,7 @@ void* LookupExternalByName(const char* library, const char* name)
 	return (void*)ext_unknown;
     }
     dbgprintf("External func %s:%s\n", library, name);
-    for(i=0; i<sizeof(libraries)/sizeof(struct libs); i++)
+    for (i = 0; i < (int)(sizeof (libraries) / sizeof (struct libs)); i++)
     {
 	if(strcasecmp(library, libraries[i].name))
 	    continue;
