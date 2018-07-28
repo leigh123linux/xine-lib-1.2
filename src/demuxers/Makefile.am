@@ -5,26 +5,12 @@ AM_CFLAGS  = $(DEFAULT_OCFLAGS) $(VISIBILITY_FLAG)
 AM_LDFLAGS = $(xineplug_ldflags)
 
 noinst_LTLIBRARIES = libasfheader.la
-libasfheader_la_SOURCES = asfheader.c
+libasfheader_la_SOURCES = asfheader.c asfheader.h
 
 ##
 # IMPORTANT:
 # ---------
 # All of xine demuxer plugins should be named like the scheme "xineplug_dmx_"
-
-noinst_HEADERS = \
-	asfheader.h \
-	demux_matroska.h \
-	ebml.h \
-	flacutils.h \
-	group_audio.h \
-	group_games.h \
-	group_video.h \
-	id3.h \
-	iff.h \
-	matroska.h \
-	qtpalette.h \
-	real_common.h
 
 if ENABLE_ASF
 asf_module = xineplug_dmx_asf.la
@@ -58,10 +44,13 @@ xineplug_LTLIBRARIES = \
 
 xineplug_dmx_video_la_SOURCES = \
 	group_video.c \
+	group_video.h \
 	demux_avi.c \
 	demux_elem.c \
+	iff.h \
 	demux_iff.c \
 	demux_matroska.c \
+	demux_matroska.h \
 	demux_matroska-chapters.c \
 	demux_mpeg.c \
 	demux_mpeg_block.c \
@@ -69,12 +58,16 @@ xineplug_dmx_video_la_SOURCES = \
 	demux_qt.c \
 	demux_rawdv.c \
 	demux_real.c \
+	real_common.h \
 	demux_ts.c \
 	demux_vc1es.c \
 	demux_flv.c \
 	demux_yuv_frames.c \
 	demux_yuv4mpeg2.c \
-	ebml.c
+	ebml.c \
+	ebml.h \
+	matroska.h \
+	qtpalette.h
 xineplug_dmx_video_la_CFLAGS = $(AM_CFLAGS)
 xineplug_dmx_video_la_CPPFLAGS = $(AM_CPPFLAGS) $(ZLIB_CPPFLAGS)
 xineplug_dmx_video_la_LIBADD = $(XINE_LIB) $(LTLIBINTL) $(ZLIB_LIBS)
@@ -94,6 +87,7 @@ xineplug_dmx_pva_la_LIBADD = $(XINE_LIB)
 
 xineplug_dmx_games_la_SOURCES = \
 	group_games.c \
+	group_games.h \
 	demux_4xm.c \
 	demux_eawve.c \
 	demux_film.c \
@@ -109,6 +103,7 @@ xineplug_dmx_games_la_LIBADD = $(XINE_LIB) $(LTLIBINTL)
 
 xineplug_dmx_audio_la_SOURCES = \
 	group_audio.c \
+	group_audio.h \
 	demux_aac.c \
 	demux_ac3.c \
 	demux_aiff.c \
@@ -119,13 +114,16 @@ xineplug_dmx_audio_la_SOURCES = \
 	demux_mpc.c \
 	demux_mpgaudio.c \
 	demux_realaudio.c \
+	real_common.h \
 	demux_shn.c \
 	demux_snd.c \
 	demux_tta.c \
 	demux_voc.c \
 	demux_vox.c \
 	demux_wav.c \
-	id3.c
+	flacutils.h \
+	id3.c \
+	id3.h
 xineplug_dmx_audio_la_LIBADD = $(XINE_LIB) $(LTLIBINTL)
 
 xineplug_dmx_modplug_la_SOURCES = demux_mod.c
