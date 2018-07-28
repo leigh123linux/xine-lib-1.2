@@ -343,7 +343,7 @@ static int id3v22_parse_tag(input_plugin_t *input,
                             uint32_t id3_signature) {
   id3v2_header_t tag_header;
   id3v22_frame_header_t tag_frame_header;
-  int pos = 0;
+  unsigned int pos = 0;
 
   if (!id3v2_parse_header(input, id3_signature, &tag_header)) {
     xprintf(stream->xine, XINE_VERBOSITY_DEBUG, LOG_MODULE ": id3v2_parse_header problem\n");
@@ -375,7 +375,7 @@ static int id3v22_parse_tag(input_plugin_t *input,
   }
 
   /* frame parsing */
-  while ((pos + ID3V22_FRAME_HEADER_SIZE) <= (int)tag_header.size) {
+  while ((pos + ID3V22_FRAME_HEADER_SIZE) <= tag_header.size) {
 
     if (!id3v22_parse_frame_header(input, &tag_frame_header)) {
       xprintf(stream->xine, XINE_VERBOSITY_DEBUG,
@@ -544,7 +544,7 @@ static int id3v23_parse_tag(input_plugin_t *input,
   id3v2_header_t tag_header;
   id3v23_frame_header_t tag_frame_header;
   id3v23_frame_ext_header_t tag_frame_ext_header;
-  int pos = 0;
+  unsigned int pos = 0;
 
   if (!id3v2_parse_header(input, id3_signature, &tag_header)) {
     xprintf(stream->xine, XINE_VERBOSITY_DEBUG, LOG_MODULE ": id3v2_parse_header problem\n");
@@ -576,7 +576,7 @@ static int id3v23_parse_tag(input_plugin_t *input,
   }
 
   /* frame parsing */
-  while ((pos + ID3V23_FRAME_HEADER_SIZE) <= (int)tag_header.size) {
+  while ((pos + ID3V23_FRAME_HEADER_SIZE) <= tag_header.size) {
 
     if (!id3v23_parse_frame_header(input, &tag_frame_header)) {
       xprintf(stream->xine, XINE_VERBOSITY_DEBUG,
@@ -813,7 +813,7 @@ static int id3v24_parse_tag(input_plugin_t *input,
   id3v2_header_t tag_header;
   id3v24_frame_header_t tag_frame_header;
   id3v24_frame_ext_header_t tag_frame_ext_header;
-  int pos = 0;
+  unsigned int pos = 0;
 
   if (!id3v2_parse_header(input, id3_signature, &tag_header)) {
     xprintf(stream->xine, XINE_VERBOSITY_DEBUG, LOG_MODULE ": id3v2_parse_header problem\n");
@@ -845,7 +845,7 @@ static int id3v24_parse_tag(input_plugin_t *input,
   }
 
   /* frame parsing */
-  while ((pos + ID3V24_FRAME_HEADER_SIZE) <= (int)tag_header.size) {
+  while ((pos + ID3V24_FRAME_HEADER_SIZE) <= tag_header.size) {
 
     if (!id3v24_parse_frame_header(input, &tag_frame_header)) {
       xprintf(stream->xine, XINE_VERBOSITY_DEBUG,
