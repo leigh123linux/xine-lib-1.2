@@ -58,7 +58,7 @@ xineplug_dmx_video_la_SOURCES = \
 	demux_qt.c \
 	demux_rawdv.c \
 	demux_real.c \
-	real_common.h \
+	demux_real_common.h \
 	demux_ts.c \
 	demux_vc1es.c \
 	demux_flv.c \
@@ -114,7 +114,7 @@ xineplug_dmx_audio_la_SOURCES = \
 	demux_mpc.c \
 	demux_mpgaudio.c \
 	demux_realaudio.c \
-	real_common.h \
+	demux_real_common.h \
 	demux_shn.c \
 	demux_snd.c \
 	demux_tta.c \

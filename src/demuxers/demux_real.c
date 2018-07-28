@@ -62,7 +62,7 @@
 #include <xine/demux.h>
 #include "bswap.h"
 
-#include "real_common.h"
+#include "demux_real_common.h"
 
 #define FOURCC_TAG BE_FOURCC
 #define PROP_TAG  FOURCC_TAG('P', 'R', 'O', 'P')

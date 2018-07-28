@@ -41,7 +41,7 @@
 #include "bswap.h"
 #include "group_audio.h"
 
-#include "real_common.h"
+#include "demux_real_common.h"
 
 #define RA_FILE_HEADER_PREV_SIZE 22
 
