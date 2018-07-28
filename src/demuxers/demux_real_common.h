@@ -42,13 +42,13 @@ static inline void demux_real_sipro_swap (char buffer[], int bs)
       int x = (i & 1) ? (buffer[i >> 1] >> 4) : (buffer[i >> 1] & 0x0F);
       int y = (o & 1) ? (buffer[o >> 1] >> 4) : (buffer[o >> 1] & 0x0F);
       if (o & 1)
-	buffer[o >> 1] = (buffer[o >> 1] & 0x0F) | (x << 4);
+        buffer[o >> 1] = (buffer[o >> 1] & 0x0F) | (x << 4);
       else
-	buffer[o >> 1] = (buffer[o >> 1] & 0xF0) | x;
+        buffer[o >> 1] = (buffer[o >> 1] & 0xF0) | x;
       if (i & 1)
-	buffer[i >> 1] = (buffer[i >> 1] & 0x0F) | (y << 4);
+        buffer[i >> 1] = (buffer[i >> 1] & 0x0F) | (y << 4);
       else
-	buffer[i >> 1] = (buffer[i >> 1] & 0xF0) | y;
+        buffer[i >> 1] = (buffer[i >> 1] & 0xF0) | y;
       ++i;
       ++o;
     }
