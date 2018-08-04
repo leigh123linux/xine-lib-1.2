@@ -379,7 +379,7 @@ static AVProgram *_find_program_from_stream(AVFormatContext *ic, AVProgram *last
 static int find_avformat_streams(avformat_demux_plugin_t *this) {
 
   AVProgram *p = NULL;
-  int nb_streams;
+  unsigned int nb_streams;
   unsigned int u;
 
   /* find avformat streams */
@@ -422,12 +422,12 @@ static int find_avformat_streams(avformat_demux_plugin_t *this) {
   }
   nb_streams = p ? p->nb_stream_indexes : this->fmt_ctx->nb_streams;
 
-  for (u = 0; (int)u < nb_streams; u++) {
+  for (u = 0; u < nb_streams; u++) {
     unsigned int stream_index = p ? p->stream_index[u] : u;
     AVStream *st = this->fmt_ctx->streams[stream_index];
 
     if (stream_index >= this->num_streams) {
-      xprintf (this->stream->xine, XINE_VERBOSITY_LOG, LOG_MODULE": Too many streams, ignoring stream #%d\n", u);
+      xprintf (this->stream->xine, XINE_VERBOSITY_LOG, LOG_MODULE": Too many streams, ignoring stream #%u\n", u);
       continue;
     }
 
