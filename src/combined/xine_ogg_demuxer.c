@@ -468,9 +468,9 @@ static void prepare_read_comments (demux_ogg_t *this)
 
 static int read_comments (demux_ogg_t *this, const char *comment)
 {
-  int i;
+  unsigned i;
 
-  for (i = 0; i < (int)sizeof (metadata) / (int)sizeof (struct ogg_meta); ++i) {
+  for (i = 0; i < sizeof (metadata) / sizeof (metadata[0]); ++i) {
     size_t ml = strlen (metadata[i].tag);
     if (!strncasecmp (metadata[i].tag, comment, ml) && comment[ml]) {
       if (metadata[i].append && this->meta[metadata[i].meta]) {
