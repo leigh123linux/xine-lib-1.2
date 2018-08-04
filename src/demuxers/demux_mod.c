@@ -62,15 +62,12 @@ typedef struct {
   demux_plugin_t       demux_plugin;
 
   xine_stream_t       *stream;
-  fifo_buffer_t       *video_fifo;
   fifo_buffer_t       *audio_fifo;
-  input_plugin_t      *input;
   int                  status;
 
   char                *title;
   char                *artist;
   char                *copyright;
-  size_t               filesize;
 
   char                *buffer;
 
@@ -130,31 +127,30 @@ static int probe_mod_file(input_plugin_t *input) {
 }
 
 /* returns 1 if the MOD file was opened successfully, 0 otherwise */
-static int open_mod_file(demux_mod_t *this) {
-  int total_read;
+static int open_mod_file(demux_mod_t *this, input_plugin_t *input) {
+  off_t total_read;
   off_t input_length;
 
   /* Get size and create buffer */
-  input_length = this->input->get_length(this->input);
+  input_length = input->get_length(input);
   /* Avoid potential issues with signed variables and e.g. read() returning -1 */
   if (input_length > 0x7FFFFFFF || input_length < 0) {
     xine_log(this->stream->xine, XINE_LOG_PLUGIN, "modplug - size overflow\n");
     return 0;
   }
-  this->filesize = input_length;
-  this->buffer = (char *)malloc(this->filesize);
+  this->buffer = malloc(input_length);
   if(!this->buffer) {
     xine_log(this->stream->xine, XINE_LOG_PLUGIN, "modplug - allocation failure\n");
     return 0;
   }
 
   /* Seek to beginning */
-  this->input->seek(this->input, 0, SEEK_SET);
+  input->seek(input, 0, SEEK_SET);
 
   /* Read data */
-  total_read = this->input->read(this->input, this->buffer, this->filesize);
+  total_read = input->read(input, this->buffer, input_length);
 
-  if(total_read != this->filesize) {
+  if (total_read != input_length) {
     xine_log(this->stream->xine, XINE_LOG_PLUGIN, "modplug - filesize error\n");
     return 0;
   }
@@ -167,7 +163,7 @@ static int open_mod_file(demux_mod_t *this) {
   this->settings.mFrequency = MOD_SAMPLERATE;
   ModPlug_SetSettings(&this->settings);
 
-  this->mpfile = ModPlug_Load(this->buffer, this->filesize);
+  this->mpfile = ModPlug_Load(this->buffer, input_length);
   if (this->mpfile==NULL) {
     xine_log(this->stream->xine, XINE_LOG_PLUGIN, "modplug - load error\n");
     return 0;
@@ -223,7 +219,6 @@ static void demux_mod_send_headers(demux_plugin_t *this_gen) {
   buf_element_t *buf;
   char copyright[100];
 
-  this->video_fifo = this->stream->video_fifo;
   this->audio_fifo = this->stream->audio_fifo;
 
   this->status = DEMUX_OK;
@@ -342,7 +337,6 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
     return NULL;
 
   this->stream = stream;
-  this->input  = input;
 
   this->demux_plugin.send_headers      = demux_mod_send_headers;
   this->demux_plugin.send_chunk        = demux_mod_send_chunk;
@@ -358,7 +352,7 @@ static demux_plugin_t *open_plugin (demux_class_t *class_gen, xine_stream_t *str
 
   xprintf(stream->xine, XINE_VERBOSITY_DEBUG, "TEST mod decode\n");
 
-  if (!open_mod_file(this)) {
+  if (!open_mod_file(this, input)) {
     demux_mod_dispose(&this->demux_plugin);
     return NULL;
   }
