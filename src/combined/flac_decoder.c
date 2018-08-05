@@ -356,6 +356,8 @@ open_plugin (audio_decoder_class_t *class_gen, xine_stream_t *stream) {
     (void)class_gen;
 
     this = calloc(1, sizeof (flac_decoder_t));
+    if (!this)
+      return NULL;
 
     this->audio_decoder.decode_data         = flac_decode_data;
     this->audio_decoder.reset               = flac_reset;
