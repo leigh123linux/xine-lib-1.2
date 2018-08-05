@@ -418,11 +418,11 @@ static void *init_plugin (xine_t *xine, const void *data) {
 
 static const uint32_t audio_types[] = {
   BUF_AUDIO_FLAC, 0
- };
+};
 
 static const decoder_info_t dec_info_audio = {
-  audio_types,         /* supported types */
-  8                    /* priority        */
+  .supported_types = audio_types,
+  .priority        = 8,
 };
 
 const plugin_info_t xine_plugin_info[] EXPORTED = {
