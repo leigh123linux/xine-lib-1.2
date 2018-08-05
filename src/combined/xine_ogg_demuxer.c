@@ -308,7 +308,7 @@ static void send_ogg_packet (demux_ogg_t *this,
 
   buf_element_t *buf;
 
-  int done=0,todo=op->bytes;
+  size_t done = 0, todo = op->bytes;
   const size_t op_size = sizeof(ogg_packet);
 
   while (done<todo) {
