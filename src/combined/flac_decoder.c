@@ -89,6 +89,8 @@ flac_read_callback (const FLAC__StreamDecoder *decoder,
     flac_decoder_t *this = (flac_decoder_t *)client_data;
     size_t number_of_bytes_to_copy;
 
+    (void)decoder;
+
     lprintf("flac_read_callback: %zd\n", (size_t)*bytes);
 
     if (this->buf_pos > *bytes)
@@ -125,6 +127,8 @@ flac_write_callback (const FLAC__StreamDecoder *decoder,
     int8_t *data8;
     int16_t *data16;
     int i,j;
+
+    (void)decoder;
 
     lprintf("flac_write_callback\n");
 
@@ -348,6 +352,8 @@ flac_dispose (audio_decoder_t *this_gen) {
 static audio_decoder_t *
 open_plugin (audio_decoder_class_t *class_gen, xine_stream_t *stream) {
     flac_decoder_t *this ;
+
+    (void)class_gen;
 
     this = calloc(1, sizeof (flac_decoder_t));
 
