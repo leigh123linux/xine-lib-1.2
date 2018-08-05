@@ -715,7 +715,6 @@ static audio_decoder_t *open_plugin (audio_decoder_class_t *class_gen, xine_stre
 	 The actual question would be: why don't they check for
 	 capabilities themselves?
       */
-#warning "Enabling all external liba52 capabilities."
       a52_init (0xFFFFFFFF)
 #else
       a52_init (xine_mm_accel())
