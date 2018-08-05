@@ -170,14 +170,14 @@ void read_metadata (speex_decoder_t *this, char * comments, int length)
       size_t keylen = strlen(speex_comment_keys[i].key);
 
       if ( !strncasecmp (speex_comment_keys[i].key, c,
-			 keylen) ) {
-	char meta_info[(len - keylen) + 1];
+                         keylen) ) {
+        char meta_info[(len - keylen) + 1];
 
         lprintf ("known metadata %u %d\n",
                  i, speex_comment_keys[i].xine_metainfo_index);
 
-	strncpy(meta_info, &c[keylen], len-keylen);
-	_x_meta_info_set_utf8(this->stream, speex_comment_keys[i].xine_metainfo_index, meta_info);
+        strncpy(meta_info, &c[keylen], len-keylen);
+        _x_meta_info_set_utf8(this->stream, speex_comment_keys[i].xine_metainfo_index, meta_info);
       }
     }
 
@@ -191,7 +191,7 @@ static void speex_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) {
   char *const buf_content = (char*)buf->content;
 
   llprintf (LOG_BUFFERS, "decode buf=%8p content=%8p flags=%08x\n",
-	    buf, buf->content, buf->decoder_flags);
+            buf, buf->content, buf->decoder_flags);
 
   if ( (buf->decoder_flags & BUF_FLAG_HEADER) &&
        !(buf->decoder_flags & BUF_FLAG_STDHEADER) ) {
@@ -201,68 +201,68 @@ static void speex_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) {
 
       if (!this->st) {
         const SpeexMode * spx_mode;
-	SpeexHeader * spx_header;
-	unsigned int modeID;
-	int bitrate;
+        SpeexHeader * spx_header;
+        unsigned int modeID;
+        int bitrate;
 
-	speex_bits_init (&this->bits);
+        speex_bits_init (&this->bits);
 
-	spx_header = speex_packet_to_header (buf_content, buf->size);
+        spx_header = speex_packet_to_header (buf_content, buf->size);
 
-	if (!spx_header) {
-	  xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG, "libspeex: could not read Speex header\n");
-	  return;
-	}
+        if (!spx_header) {
+          xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG, "libspeex: could not read Speex header\n");
+          return;
+        }
 
-	modeID = (unsigned int)spx_header->mode;
-	if (modeID >= SPEEX_NB_MODES) {
-	  xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG, LOG_MODULE ": invalid mode ID %u\n", modeID);
-	  return;
-	}
+        modeID = (unsigned int)spx_header->mode;
+        if (modeID >= SPEEX_NB_MODES) {
+          xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG, LOG_MODULE ": invalid mode ID %u\n", modeID);
+          return;
+        }
 
         spx_mode = speex_mode_list[modeID];
 
-	if (spx_mode->bitstream_version != spx_header->mode_bitstream_version) {
-	  xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG, "libspeex: incompatible Speex mode bitstream version\n");
-	  return;
-	}
+        if (spx_mode->bitstream_version != spx_header->mode_bitstream_version) {
+          xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG, "libspeex: incompatible Speex mode bitstream version\n");
+          return;
+        }
 
-	this->st = speex_decoder_init (spx_mode);
-	if (!this->st) {
-	  xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG, "libspeex: decoder initialization failed\n");
-	  return;
-	}
+        this->st = speex_decoder_init (spx_mode);
+        if (!this->st) {
+          xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG, "libspeex: decoder initialization failed\n");
+          return;
+        }
 
-	this->rate = spx_header->rate;
-	speex_decoder_ctl (this->st, SPEEX_SET_SAMPLING_RATE, &this->rate);
-	_x_stream_info_set(this->stream, XINE_STREAM_INFO_AUDIO_SAMPLERATE,
-	  this->rate);
+        this->rate = spx_header->rate;
+        speex_decoder_ctl (this->st, SPEEX_SET_SAMPLING_RATE, &this->rate);
+        _x_stream_info_set(this->stream, XINE_STREAM_INFO_AUDIO_SAMPLERATE,
+          this->rate);
 
-	this->channels = spx_header->nb_channels;
-	if (this->channels == 2) {
-	  SpeexCallback callback;
+        this->channels = spx_header->nb_channels;
+        if (this->channels == 2) {
+          SpeexCallback callback;
 
-	  callback.callback_id = SPEEX_INBAND_STEREO;
-	  callback.func = speex_std_stereo_request_handler;
-	  callback.data = &this->stereo;
-	  speex_decoder_ctl (this->st, SPEEX_SET_HANDLER, &callback);
-	}
+          callback.callback_id = SPEEX_INBAND_STEREO;
+          callback.func = speex_std_stereo_request_handler;
+          callback.data = &this->stereo;
+          speex_decoder_ctl (this->st, SPEEX_SET_HANDLER, &callback);
+        }
 
-	this->nframes = spx_header->frames_per_packet;
-	if (!this->nframes) this->nframes = 1;
+        this->nframes = spx_header->frames_per_packet;
+        if (!this->nframes) this->nframes = 1;
 
-	speex_decoder_ctl (this->st, SPEEX_GET_FRAME_SIZE, &this->frame_size);
+        speex_decoder_ctl (this->st, SPEEX_GET_FRAME_SIZE, &this->frame_size);
 
-	speex_decoder_ctl (this->st, SPEEX_GET_BITRATE, &bitrate);
-	if (bitrate <= 1) bitrate = 16000; /* assume 16 kbit */
-	_x_stream_info_set(this->stream, XINE_STREAM_INFO_AUDIO_BITRATE, bitrate);
+        speex_decoder_ctl (this->st, SPEEX_GET_BITRATE, &bitrate);
+        if (bitrate <= 1) bitrate = 16000; /* assume 16 kbit */
+        _x_stream_info_set(this->stream, XINE_STREAM_INFO_AUDIO_BITRATE, bitrate);
 
-	this->header_count += spx_header->extra_headers;
-	this->expect_metadata = 1;
+        this->header_count += spx_header->extra_headers;
+        this->expect_metadata = 1;
 
-	free (spx_header);
+        free (spx_header);
       } else if (this->expect_metadata) {
-	read_metadata (this, buf_content, buf->size);
+        read_metadata (this, buf_content, buf->size);
       }
 
       this->header_count--;
@@ -270,15 +270,15 @@ static void speex_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) {
       if (!this->header_count) {
         int mode = _x_ao_channels2mode(this->channels);
 
-	if (!this->output_open) {
-	  this->output_open =
-	    (this->stream->audio_out->open) (this->stream->audio_out,
-					  this->stream,
-					  16,
-					  this->rate,
-					  mode);
+        if (!this->output_open) {
+          this->output_open =
+            (this->stream->audio_out->open) (this->stream->audio_out,
+                                          this->stream,
+                                          16,
+                                          this->rate,
+                                          mode);
             lprintf ("this->output_open after attempt is %d\n", this->output_open);
-	}
+        }
       }
     }
 
@@ -299,18 +299,18 @@ static void speex_decode_data (audio_decoder_t *this_gen, buf_element_t *buf) {
       ret = speex_decode_int (this->st, &this->bits, audio_buffer->mem);
 
       if (ret==-1)
-	break;
+        break;
       if (ret==-2) {
-	xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG, "libspeex: Decoding error, corrupted stream?\n");
-	break;
+        xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG, "libspeex: Decoding error, corrupted stream?\n");
+        break;
       }
       if (speex_bits_remaining(&this->bits)<0) {
-	xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG, "libspeex: Decoding overflow, corrupted stream?\n");
-	break;
+        xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG, "libspeex: Decoding overflow, corrupted stream?\n");
+        break;
       }
 
       if (this->channels == 2) {
-	speex_decode_stereo_int (audio_buffer->mem, this->frame_size, &this->stereo);
+        speex_decode_stereo_int (audio_buffer->mem, this->frame_size, &this->stereo);
       }
 
       speex_decoder_ctl (this->st, SPEEX_GET_BITRATE, &bitrate);
@@ -348,7 +348,7 @@ static void speex_dispose (audio_decoder_t *this_gen) {
 }
 
 static audio_decoder_t *open_plugin (audio_decoder_class_t *class_gen,
-				     xine_stream_t *stream) {
+                                     xine_stream_t *stream) {
 
   speex_decoder_t *this ;
   static SpeexStereoState init_stereo = SPEEX_STEREO_STATE_INIT;
