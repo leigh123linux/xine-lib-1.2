@@ -110,6 +110,8 @@ flac_read_callback (const FLAC__SeekableStreamDecoder *decoder,
     input_plugin_t *input = this->input;
     off_t offset = *bytes;
 
+    (void)decoder;
+
     lprintf("flac_read_callback\n");
 
     /* This should only be called when flac is reading the metadata
@@ -159,6 +161,8 @@ flac_seek_callback (const FLAC__SeekableStreamDecoder *decoder,
     input_plugin_t *input = ((demux_flac_t *)client_data)->input;
     off_t offset;
 
+    (void)decoder;
+
     lprintf("flac_seek_callback\n");
 
     offset = input->seek (input, absolute_byte_offset, SEEK_SET);
@@ -190,6 +194,8 @@ flac_tell_callback (const FLAC__SeekableStreamDecoder *decoder,
     input_plugin_t *input = ((demux_flac_t *)client_data)->input;
     off_t offset;
 
+    (void)decoder;
+
     lprintf("flac_tell_callback\n");
 
     offset = input->get_current_pos (input);
@@ -216,6 +222,8 @@ flac_length_callback (const FLAC__SeekableStreamDecoder *decoder,
     input_plugin_t *input = ((demux_flac_t *)client_data)->input;
     off_t offset;
 
+    (void)decoder;
+
     lprintf("flac_length_callback\n");
 
     offset = input->get_length (input);
@@ -237,6 +245,8 @@ flac_eof_callback (const FLAC__SeekableStreamDecoder *decoder,
                     void *client_data)
 {
     demux_flac_t *this = (demux_flac_t *)client_data;
+
+    (void)decoder;
 
     lprintf("flac_eof_callback\n");
 
@@ -264,6 +274,11 @@ flac_write_callback (const FLAC__SeekableStreamDecoder *decoder,
      * is seeking. We do the decoding in the decoder
      */
 
+  (void)decoder;
+  (void)frame;
+  (void)buffer;
+  (void)client_data;
+
   lprintf("Error: Write callback was called!\n");
 
   return FLAC__STREAM_DECODER_WRITE_STATUS_ABORT;
@@ -275,6 +290,8 @@ flac_metadata_callback (const FLAC__SeekableStreamDecoder *decoder,
                         void *client_data)
 {
     demux_flac_t *this = (demux_flac_t *)client_data;
+
+    (void)decoder;
 
     lprintf("IN: Metadata callback\n");
 
@@ -304,6 +321,8 @@ flac_error_callback (const FLAC__SeekableStreamDecoder *decoder,
     /* This will be called if there is an error when flac is seeking
      * in the stream.
      */
+
+    (void)decoder;
 
     xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG, "demux_flac: flac_error_callback\n");
 
@@ -465,6 +484,8 @@ static int
 demux_flac_seek (demux_plugin_t *this_gen, off_t start_pos, int start_time, int playing) {
     demux_flac_t *this = (demux_flac_t *) this_gen;
 
+    (void)playing;
+
     lprintf("demux_flac_seek\n");
 
     start_pos = (off_t) ( (double) start_pos / 65535 *
@@ -534,12 +555,18 @@ static uint32_t
 demux_flac_get_capabilities (demux_plugin_t *this_gen) {
   lprintf("demux_flac_get_capabilities\n");
 
+  (void)this_gen;
+
   return DEMUX_CAP_NOCAP;
 }
 
 static int
 demux_flac_get_optional_data (demux_plugin_t *this_gen, void *data, int dtype) {
   lprintf("demux_flac_get_optional_data\n");
+
+  (void)this_gen;
+  (void)data;
+  (void)dtype;
 
   return DEMUX_OPTIONAL_UNSUPPORTED;
 }
@@ -583,6 +610,9 @@ open_plugin (demux_class_t *class_gen,
     */
 
     this         = calloc(1, sizeof (demux_flac_t));
+    if (!this)
+      return NULL;
+
     this->stream = stream;
     this->input  = input;
 
