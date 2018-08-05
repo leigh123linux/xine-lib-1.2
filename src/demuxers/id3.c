@@ -127,7 +127,7 @@ static int id3v2_parse_genre(char* dest, const char *src, size_t len) {
 
   while (*src) {
     lprintf("state=%d\n", state);
-    if ((buf - dest) >= (int)len)
+    if ((buf - dest) >= (ptrdiff_t)len)
       return 0;
 
     switch (state) {
@@ -219,7 +219,7 @@ static int id3v2_parse_genre(char* dest, const char *src, size_t len) {
         break;
     }
   }
-  if ((buf - dest) >= (int)len) {
+  if ((buf - dest) >= (ptrdiff_t)len) {
     return 0;
   } else {
     *buf = '\0';
