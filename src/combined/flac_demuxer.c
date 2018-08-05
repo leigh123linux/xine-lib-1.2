@@ -350,7 +350,7 @@ demux_flac_send_chunk (demux_plugin_t *this_gen) {
     buf_element_t *buf = NULL;
     off_t current_file_pos, file_size = 0;
     int64_t current_pts;
-    unsigned int remaining_sample_bytes = 0;
+    /*unsigned*/ int remaining_sample_bytes;
 
     remaining_sample_bytes = 2048;
 
