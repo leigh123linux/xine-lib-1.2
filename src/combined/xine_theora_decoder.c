@@ -46,13 +46,8 @@
 
 #include "ogg_combined.h"
 
-typedef struct theora_class_s {
-  video_decoder_class_t   decoder_class;
-} theora_class_t;
-
 typedef struct theora_decoder_s {
   video_decoder_t    theora_decoder;
-  theora_class_t     *class;
   theora_info        t_info;
   theora_comment     t_comment;
   theora_state       t_state;
@@ -377,6 +372,8 @@ static video_decoder_t *theora_open_plugin (video_decoder_class_t *class_gen, xi
 
   theora_decoder_t  *this ;
 
+  (void)class_gen;
+
   this = (theora_decoder_t *) calloc(1, sizeof(theora_decoder_t));
 
   this->theora_decoder.decode_data   = theora_decode_data;
@@ -386,7 +383,6 @@ static video_decoder_t *theora_open_plugin (video_decoder_class_t *class_gen, xi
   this->theora_decoder.dispose       = theora_dispose;
 
   this->stream                       = stream;
-  this->class                        = (theora_class_t *) class_gen;
 
   this->op_max_size                  = 4096;
   this->packet                       = malloc(this->op_max_size);
@@ -410,16 +406,18 @@ static video_decoder_t *theora_open_plugin (video_decoder_class_t *class_gen, xi
  */
 void *theora_init_plugin (xine_t *xine, const void *data) {
   /*initialize our plugin*/
-  theora_class_t *this;
 
-  this = (theora_class_t *) calloc(1, sizeof(theora_class_t));
+  static const video_decoder_class_t  decode_theora_class = {
+    .open_plugin     = theora_open_plugin,
+    .identifier      = "theora video",
+    .description     = N_("theora video decoder plugin"),
+    .dispose         = NULL,
+  };
 
-  this->decoder_class.open_plugin     = theora_open_plugin;
-  this->decoder_class.identifier      = "theora video";
-  this->decoder_class.description     = N_("theora video decoder plugin");
-  this->decoder_class.dispose         = default_video_decoder_class_dispose;
+  (void)xine;
+  (void)data;
 
-  return this;
+  return (void *)&decode_theora_class;
 }
 
 /*
@@ -429,6 +427,6 @@ void *theora_init_plugin (xine_t *xine, const void *data) {
 static const uint32_t supported_types[] = { BUF_VIDEO_THEORA, 0 };
 
 const decoder_info_t dec_info_theora = {
-  supported_types,   /* supported types */
-  5                        /* priority        */
+  .supported_types = supported_types,
+  .priority = 5,
 };
