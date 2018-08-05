@@ -176,7 +176,7 @@ static int collect_data (theora_decoder_t *this, buf_element_t *buf ) {
   } else {
     if (this->done==0 || this->reject) {
       /*we are starting to collect an packet without the beginnig
-	reject the rest*/
+        reject the rest*/
       printf ("libtheora: rejecting packet\n");
       this->reject=1;
       return 0;
@@ -215,47 +215,47 @@ static void theora_decode_data (video_decoder_t *this_gen, buf_element_t *buf) {
     if (this->hp_read==0) {
       /*decode first hp*/
       if (theora_decode_header(&this->t_info, &this->t_comment, &this->op)>=0) {
-	this->hp_read++;
-	return;
+        this->hp_read++;
+        return;
       }
     }
 
     if (this->hp_read==1) {
       /*decode three header packets*/
       if (theora_decode_header(&this->t_info, &this->t_comment,&this->op)) {
-	printf ("libtheora: Was unable to decode header #%d, corrupt stream?\n",this->hp_read);
+        printf ("libtheora: Was unable to decode header #%d, corrupt stream?\n",this->hp_read);
       } else {
-	this->hp_read++;
-	return;
+        this->hp_read++;
+        return;
       }
     }
 
     if (this->hp_read==2) {
       if (theora_decode_header(&this->t_info, &this->t_comment,&this->op)) {
-	printf ("libtheora: Was unable to decode header #%d, corrupt stream?\n",this->hp_read);
+        printf ("libtheora: Was unable to decode header #%d, corrupt stream?\n",this->hp_read);
       }
       /*headers are now decoded. initialize the decoder*/
       theora_decode_init (&this->t_state, &this->t_info);
 
       lprintf("theora stream is Theora %dx%d %.02f fps video.\n"
-	      "           frame content is %dx%d with offset (%d,%d).\n"
-	      "           pixel aspect is %d:%d.\n",
-	      this->t_info.width,this->t_info.height,
-	      (double)this->t_info.fps_numerator/this->t_info.fps_denominator,
-	      this->t_info.frame_width, this->t_info.frame_height,
-	      this->t_info.offset_x, this->t_info.offset_y,
-	      this->t_info.aspect_numerator, this->t_info.aspect_denominator);
+              "           frame content is %dx%d with offset (%d,%d).\n"
+              "           pixel aspect is %d:%d.\n",
+              this->t_info.width,this->t_info.height,
+              (double)this->t_info.fps_numerator/this->t_info.fps_denominator,
+              this->t_info.frame_width, this->t_info.frame_height,
+              this->t_info.offset_x, this->t_info.offset_y,
+              this->t_info.aspect_numerator, this->t_info.aspect_denominator);
 
       this->frame_duration=((int64_t)90000*this->t_info.fps_denominator)/this->t_info.fps_numerator;
       this->width=this->t_info.frame_width;
       this->height=this->t_info.frame_height;
       if (this->t_info.aspect_numerator==0 || this->t_info.aspect_denominator==0)
-	/* 0-values are undefined, so don't do any scaling.  */
-	this->ratio=(double)this->width/(double)this->height;
+        /* 0-values are undefined, so don't do any scaling.  */
+        this->ratio=(double)this->width/(double)this->height;
       else
-	/* Yes, this video needs to be scaled.  */
-	this->ratio=(double)(this->width*this->t_info.aspect_numerator) /
-	  (double)(this->height*this->t_info.aspect_denominator);
+        /* Yes, this video needs to be scaled.  */
+        this->ratio=(double)(this->width*this->t_info.aspect_numerator) /
+          (double)(this->height*this->t_info.aspect_denominator);
       this->offset_x=this->t_info.offset_x;
       this->offset_y=this->t_info.offset_y;
       this->initialized=1;
@@ -304,10 +304,10 @@ static void theora_decode_data (video_decoder_t *this_gen, buf_element_t *buf) {
 
       /*fixme - aspectratio from theora is not considered*/
       frame = this->stream->video_out->get_frame( this->stream->video_out,
-						  this->width, this->height,
-						  this->ratio,
-						  format,
-						  VO_BOTH_FIELDS);
+                                                  this->width, this->height,
+                                                  this->ratio,
+                                                  format,
+                                                  VO_BOTH_FIELDS);
       yuv2frame(&yuv, frame, this->offset_x, this->offset_y, this->t_state.i->pixelformat);
 
       frame->pts = buf->pts;
