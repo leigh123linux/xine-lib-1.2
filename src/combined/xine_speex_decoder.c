@@ -49,10 +49,6 @@
 
 #define MAX_FRAME_SIZE 2000
 
-typedef struct {
-  audio_decoder_class_t   decoder_class;
-} speex_class_t;
-
 typedef struct speex_decoder_s {
   audio_decoder_t   audio_decoder;
 
@@ -357,7 +353,11 @@ static audio_decoder_t *open_plugin (audio_decoder_class_t *class_gen,
   speex_decoder_t *this ;
   static SpeexStereoState init_stereo = SPEEX_STEREO_STATE_INIT;
 
+  (void)class_gen;
+
   this = (speex_decoder_t *) calloc(1, sizeof(speex_decoder_t));
+  if (!this)
+    return NULL;
 
   this->audio_decoder.decode_data         = speex_decode_data;
   this->audio_decoder.reset               = speex_reset;
@@ -384,23 +384,24 @@ static audio_decoder_t *open_plugin (audio_decoder_class_t *class_gen,
 
 void *speex_init_plugin (xine_t *xine, const void *data) {
 
-  speex_class_t *this;
+  static const audio_decoder_class_t decode_speex_class = {
+    .open_plugin     = open_plugin,
+    .identifier      = "speex",
+    .description     = N_("Speex audio decoder plugin"),
+    .dispose         = NULL,
+  };
 
-  this = (speex_class_t *) calloc(1, sizeof(speex_class_t));
+  (void)xine;
+  (void)data;
 
-  this->decoder_class.open_plugin     = open_plugin;
-  this->decoder_class.identifier      = "speex";
-  this->decoder_class.description     = N_("Speex audio decoder plugin");
-  this->decoder_class.dispose         = default_audio_decoder_class_dispose;
-
-  return this;
+  return (void*)&decode_speex_class;
 }
 
 static const uint32_t audio_types[] = {
   BUF_AUDIO_SPEEX, 0
- };
+};
 
 const decoder_info_t dec_info_speex = {
-  audio_types,         /* supported types */
-  5                    /* priority        */
+  .supported_types = audio_types,
+  .priority = 5,
 };
