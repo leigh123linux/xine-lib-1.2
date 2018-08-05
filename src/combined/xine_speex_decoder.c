@@ -115,7 +115,7 @@ static
 void read_metadata (speex_decoder_t *this, char * comments, int length)
 {
   char * c = comments;
-  int len, i, nb_fields;
+  unsigned len, i, nb_fields;
   char * end;
 
   _x_meta_info_set_utf8(this->stream, XINE_META_INFO_AUDIOCODEC, "speex");
@@ -177,8 +177,8 @@ void read_metadata (speex_decoder_t *this, char * comments, int length)
 			 keylen) ) {
 	char meta_info[(len - keylen) + 1];
 
-	lprintf ("known metadata %d %d\n",
-		 i, speex_comment_keys[i].xine_metainfo_index);
+        lprintf ("known metadata %u %d\n",
+                 i, speex_comment_keys[i].xine_metainfo_index);
 
 	strncpy(meta_info, &c[keylen], len-keylen);
 	_x_meta_info_set_utf8(this->stream, speex_comment_keys[i].xine_metainfo_index, meta_info);
