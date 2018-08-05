@@ -41,14 +41,10 @@
 #define MAX_SHIFT 1024
 #define MAX_RES (MAX_NOISE-MAX_SHIFT)
 
-static inline void lineNoise_C(uint8_t *dst, const uint8_t *src, const int8_t *noise, int len, int shift);
-static inline void lineNoiseAvg_C(uint8_t *dst, const uint8_t *src, int len, int8_t **shift);
-
-static void (*lineNoise)(uint8_t *dst, const uint8_t *src, const int8_t *noise, int len, int shift) = lineNoise_C;
-static void (*lineNoiseAvg)(uint8_t *dst, const uint8_t *src, int len, int8_t **shift) = lineNoiseAvg_C;
-
-
 typedef struct noise_param_t {
+    void (*lineNoise)(uint8_t *dst, const uint8_t *src, const int8_t *noise, int len, int shift);
+    void (*lineNoiseAvg)(uint8_t *dst, const uint8_t *src, int len, int8_t **shift);
+
     int strength,
         uniform,
         temporal,
@@ -194,10 +190,10 @@ static void noise(uint8_t *dst, const uint8_t *src, int dstStride, int srcStride
 
         if(fp->quality==0) shift&= ~7;
         if (fp->averaged) {
-            lineNoiseAvg(dst, src, width, fp->prev_shift[y]);
+            fp->lineNoiseAvg(dst, src, width, fp->prev_shift[y]);
             fp->prev_shift[y][fp->shiftptr] = noise + shift;
         } else {
-            lineNoise(dst, src, noise, width, shift);
+            fp->lineNoise(dst, src, noise, width, shift);
         }
         dst+= dstStride;
         src+= srcStride;
@@ -383,6 +379,22 @@ static post_plugin_t *noise_open_plugin(post_class_t *class_gen, int inputs,
 
     set_parameters ((xine_post_t *)this, &params);
 
+    /* */
+
+    this->params[0].lineNoise = lineNoise_C;
+    this->params[0].lineNoiseAvg = lineNoiseAvg_C;
+#ifdef ARCH_X86
+    if (xine_mm_accel() & MM_ACCEL_X86_MMX) {
+        this->params[0].lineNoise = lineNoise_MMX;
+        this->params[0].lineNoiseAvg = lineNoiseAvg_MMX;
+    }
+    if (xine_mm_accel() & MM_ACCEL_X86_MMXEXT) {
+        this->params[0].lineNoise = lineNoise_MMX2;
+    }
+#endif
+    this->params[1].lineNoise    = this->params[0].lineNoise;
+    this->params[1].lineNoiseAvg = this->params[0].lineNoiseAvg;
+
     return &this->post;
 }
 
@@ -473,16 +485,6 @@ void *noise_init_plugin(xine_t *xine, const void *data)
 
     (void)xine;
     (void)data;
-
-#ifdef ARCH_X86
-    if (xine_mm_accel() & MM_ACCEL_X86_MMX) {
-        lineNoise = lineNoise_MMX;
-        lineNoiseAvg = lineNoiseAvg_MMX;
-    }
-    if (xine_mm_accel() & MM_ACCEL_X86_MMXEXT) {
-        lineNoise = lineNoise_MMX2;
-    }
-#endif
 
     return (void *)&post_noise_class;
 }
