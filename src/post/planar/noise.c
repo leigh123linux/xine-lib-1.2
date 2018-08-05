@@ -324,11 +324,6 @@ static xine_post_api_t post_api = {
 };
 
 
-/* plugin class functions */
-static post_plugin_t *noise_open_plugin(post_class_t *class_gen, int inputs,
-                     xine_audio_port_t **audio_target,
-                     xine_video_port_t **video_target);
-
 /* plugin instance functions */
 static void           noise_dispose(post_plugin_t *this_gen);
 
@@ -337,34 +332,6 @@ static int            noise_intercept_frame(post_video_port_t *port, vo_frame_t 
 
 /* replaced vo_frame functions */
 static int            noise_draw(vo_frame_t *frame, xine_stream_t *stream);
-
-
-void *noise_init_plugin(xine_t *xine, const void *data)
-{
-    post_class_t *class = calloc(1, sizeof(post_class_t));
-
-    if (!class)
-        return NULL;
-
-    (void)xine;
-    (void)data;
-
-    class->open_plugin     = noise_open_plugin;
-    class->identifier      = "noise";
-    class->description     = N_("Adds noise");
-    class->dispose         = default_post_class_dispose;
-
-#ifdef ARCH_X86
-    if (xine_mm_accel() & MM_ACCEL_X86_MMX) {
-        lineNoise = lineNoise_MMX;
-        lineNoiseAvg = lineNoiseAvg_MMX;
-    }
-    if (xine_mm_accel() & MM_ACCEL_X86_MMXEXT) {
-        lineNoise = lineNoise_MMX2;
-    }
-#endif
-    return class;
-}
 
 
 static post_plugin_t *noise_open_plugin(post_class_t *class_gen, int inputs,
@@ -493,4 +460,29 @@ static int noise_draw(vo_frame_t *frame, xine_stream_t *stream)
     out_frame->free(out_frame);
     frame->free(frame);
     return skip;
+}
+
+void *noise_init_plugin(xine_t *xine, const void *data)
+{
+    static const post_class_t post_noise_class = {
+        .open_plugin     = noise_open_plugin,
+        .identifier      = "noise",
+        .description     = N_("Adds noise"),
+        .dispose         = NULL,
+    };
+
+    (void)xine;
+    (void)data;
+
+#ifdef ARCH_X86
+    if (xine_mm_accel() & MM_ACCEL_X86_MMX) {
+        lineNoise = lineNoise_MMX;
+        lineNoiseAvg = lineNoiseAvg_MMX;
+    }
+    if (xine_mm_accel() & MM_ACCEL_X86_MMXEXT) {
+        lineNoise = lineNoise_MMX2;
+    }
+#endif
+
+    return (void *)&post_noise_class;
 }

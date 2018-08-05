@@ -150,11 +150,6 @@ static xine_post_api_t post_api = {
 };
 
 
-/* plugin class functions */
-static post_plugin_t *pp_open_plugin(post_class_t *class_gen, int inputs,
-					 xine_audio_port_t **audio_target,
-					 xine_video_port_t **video_target);
-
 /* plugin instance functions */
 static void           pp_dispose(post_plugin_t *this_gen);
 
@@ -163,25 +158,6 @@ static int            pp_intercept_frame(post_video_port_t *port, vo_frame_t *fr
 
 /* replaced vo_frame functions */
 static int            pp_draw(vo_frame_t *frame, xine_stream_t *stream);
-
-
-void *pp_init_plugin(xine_t *xine, const void *data)
-{
-  post_class_t *class = calloc(1, sizeof(post_class_t));
-
-  if (!class)
-    return NULL;
-
-  (void)xine;
-  (void)data;
-
-  class->open_plugin     = pp_open_plugin;
-  class->identifier      = "pp";
-  class->description     = N_("plugin for ffmpeg libpostprocess");
-  class->dispose         = default_post_class_dispose;
-
-  return class;
-}
 
 
 static post_plugin_t *pp_open_plugin(post_class_t *class_gen, int inputs,
@@ -362,4 +338,19 @@ static int pp_draw(vo_frame_t *frame, xine_stream_t *stream)
   }
 
   return skip;
+}
+
+void *pp_init_plugin(xine_t *xine, const void *data)
+{
+  static const post_class_t post_pp_class = {
+    .open_plugin     = pp_open_plugin,
+    .identifier      = "pp",
+    .description     = N_("plugin for ffmpeg libpostprocess"),
+    .dispose         = NULL,
+  };
+
+  (void)xine;
+  (void)data;
+
+  return (void *)&post_pp_class;
 }

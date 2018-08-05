@@ -27,11 +27,6 @@
 #include <xine/xine_internal.h>
 #include <xine/post.h>
 
-/* plugin class functions */
-static post_plugin_t *fill_open_plugin(post_class_t *class_gen, int inputs,
-                                       xine_audio_port_t **audio_target,
-                                       xine_video_port_t **video_target);
-
 /* plugin instance functions */
 static void           fill_dispose(post_plugin_t *this_gen);
 
@@ -40,25 +35,6 @@ static vo_frame_t    *fill_get_frame(xine_video_port_t *port_gen, uint32_t width
                                      uint32_t height, double ratio,
                                      int format, int flags);
 static int            fill_draw(vo_frame_t *frame, xine_stream_t *stream);
-
-
-void *fill_init_plugin(xine_t *xine, const void *data)
-{
-  post_class_t *class = calloc(1, sizeof(post_class_t));
-
-  if (!class)
-    return NULL;
-
-  (void)xine;
-  (void)data;
-
-  class->open_plugin     = fill_open_plugin;
-  class->identifier      = "fill";
-  class->description     = N_("crops left and right of video to fill 4:3 aspect ratio");
-  class->dispose         = default_post_class_dispose;
-
-  return class;
-}
 
 
 static post_plugin_t *fill_open_plugin(post_class_t *class_gen, int inputs,
@@ -147,4 +123,19 @@ static int fill_draw(vo_frame_t *frame, xine_stream_t *stream)
   skip = frame->next->draw(frame->next, stream);
   _x_post_frame_copy_up(frame, frame->next);
   return skip;
+}
+
+void *fill_init_plugin(xine_t *xine, const void *data)
+{
+  static const post_class_t post_fill_class = {
+    .open_plugin     = fill_open_plugin,
+    .identifier      = "fill",
+    .description     = N_("crops left and right of video to fill 4:3 aspect ratio"),
+    .dispose         = NULL,
+  };
+
+  (void)xine;
+  (void)data;
+
+  return (void *)&post_fill_class;
 }

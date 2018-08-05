@@ -95,11 +95,6 @@ typedef struct post_expand_s {
   int                      cropping_active;
 } post_expand_t;
 
-/* plugin class functions */
-static post_plugin_t *expand_open_plugin(post_class_t *class_gen, int inputs,
-					 xine_audio_port_t **audio_target,
-					 xine_video_port_t **video_target);
-
 /* plugin instance functions */
 static void           expand_dispose(post_plugin_t *this_gen);
 
@@ -122,25 +117,6 @@ static int            expand_intercept_ovl(post_video_port_t *port);
 
 /* replaced overlay manager functions */
 static int32_t        expand_overlay_add_event(video_overlay_manager_t *this_gen, void *event);
-
-
-void *expand_init_plugin(xine_t *xine, const void *data)
-{
-  post_class_t *class = calloc(1, sizeof(post_class_t));
-
-  if (!class)
-    return NULL;
-
-  (void)xine;
-  (void)data;
-
-  class->open_plugin     = expand_open_plugin;
-  class->identifier      = "expand";
-  class->description     = N_("add black borders to top and bottom of video to expand it to 4:3 aspect ratio");
-  class->dispose         = default_post_class_dispose;
-
-  return class;
-}
 
 
 static post_plugin_t *expand_open_plugin(post_class_t *class_gen, int inputs,
@@ -439,4 +415,19 @@ static int32_t expand_overlay_add_event(video_overlay_manager_t *this_gen, void 
   }
 
   return port->original_manager->add_event(port->original_manager, event_gen);
+}
+
+void *expand_init_plugin(xine_t *xine, const void *data)
+{
+  static const post_class_t post_expand_class = {
+    .open_plugin     = expand_open_plugin,
+    .identifier      = "expand",
+    .description     = N_("add black borders to top and bottom of video to expand it to 4:3 aspect ratio"),
+    .dispose         = NULL,
+  };
+
+  (void)xine;
+  (void)data;
+
+  return (void *)&post_expand_class;
 }

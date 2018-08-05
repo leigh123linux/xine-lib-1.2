@@ -156,11 +156,6 @@ static xine_post_api_t post_api = {
 };
 
 
-/* plugin class functions */
-static post_plugin_t *denoise3d_open_plugin(post_class_t *class_gen, int inputs,
-					 xine_audio_port_t **audio_target,
-					 xine_video_port_t **video_target);
-
 /* plugin instance functions */
 static void           denoise3d_dispose(post_plugin_t *this_gen);
 
@@ -172,25 +167,6 @@ static int            denoise3d_intercept_frame(post_video_port_t *port, vo_fram
 
 /* replaced vo_frame functions */
 static int            denoise3d_draw(vo_frame_t *frame, xine_stream_t *stream);
-
-
-void *denoise3d_init_plugin(xine_t *xine, const void *data)
-{
-  post_class_t *class = calloc(1, sizeof(post_class_t));
-
-  if (!class)
-    return NULL;
-
-  (void)xine;
-  (void)data;
-
-  class->open_plugin     = denoise3d_open_plugin;
-  class->identifier      = "denoise3d";
-  class->description     = N_("3D Denoiser (variable lowpass filter)");
-  class->dispose         = default_post_class_dispose;
-
-  return class;
-}
 
 
 static post_plugin_t *denoise3d_open_plugin(post_class_t *class_gen, int inputs,
@@ -410,4 +386,19 @@ static int denoise3d_draw(vo_frame_t *frame, xine_stream_t *stream)
   }
 
   return skip;
+}
+
+void *denoise3d_init_plugin(xine_t *xine, const void *data)
+{
+  static const post_class_t post_denoise3d_class = {
+    .open_plugin     = denoise3d_open_plugin,
+    .identifier      = "denoise3d",
+    .description     = N_("3D Denoiser (variable lowpass filter)"),
+    .dispose         = NULL,
+  };
+
+  (void)xine;
+  (void)data;
+
+  return (void *)&post_denoise3d_class;
 }
