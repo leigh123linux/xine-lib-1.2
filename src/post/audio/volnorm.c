@@ -74,15 +74,6 @@
 
 typedef struct post_plugin_volnorm_s post_plugin_volnorm_t;
 
-typedef struct post_class_volnorm_s post_class_volnorm_t;
-
-struct post_class_volnorm_s {
-    post_class_t        post_class;
-
-    xine_t             *xine;
-};
-
-
 typedef struct volnorm_parameters_s {
     int method;
 } volnorm_parameters_t;
@@ -457,19 +448,15 @@ static post_plugin_t *volnorm_open_plugin(post_class_t *class_gen, int inputs,
 /* plugin class initialization function */
 void *volnorm_init_plugin(xine_t *xine, const void *data)
 {
-  post_class_volnorm_t *class = calloc(1, sizeof(post_class_volnorm_t));
+    static const post_class_t post_volnorm_class = {
+        .open_plugin     = volnorm_open_plugin,
+        .identifier      = "volnorm",
+        .description     = N_("Normalize volume"),
+        .dispose         = NULL,
+    };
 
-    if (!class)
-        return NULL;
-
+    (void)xine;
     (void)data;
 
-    class->post_class.open_plugin     = volnorm_open_plugin;
-    class->post_class.identifier      = "volnorm";
-    class->post_class.description     = N_("Normalize volume");
-    class->post_class.dispose         = default_post_class_dispose;
-
-    class->xine                       = xine;
-
-    return class;
+    return (void *)&post_volnorm_class;
 }

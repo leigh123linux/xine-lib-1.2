@@ -41,14 +41,6 @@
 
 typedef struct post_plugin_upmix_s post_plugin_upmix_t;
 
-typedef struct post_class_upmix_s post_class_upmix_t;
-
-struct post_class_upmix_s {
-  post_class_t        post_class;
-
-  xine_t             *xine;
-};
-
 /* Q value for low-pass filter */
 #define Q 1.0
 
@@ -427,19 +419,15 @@ static post_plugin_t *upmix_open_plugin(post_class_t *class_gen, int inputs,
 /* plugin class initialization function */
 void *upmix_init_plugin(xine_t *xine, const void *data)
 {
-  post_class_upmix_t *class = calloc(1, sizeof(post_class_upmix_t));
+  static const post_class_t post_upmix_class = {
+    .open_plugin     = upmix_open_plugin,
+    .identifier      = "upmix",
+    .description     = N_("upmix"),
+    .dispose         = NULL,
+  };
 
-  if (!class)
-    return NULL;
-
+  (void)xine;
   (void)data;
 
-  class->post_class.open_plugin     = upmix_open_plugin;
-  class->post_class.identifier      = "upmix";
-  class->post_class.description     = N_("upmix");
-  class->post_class.dispose         = default_post_class_dispose;
-
-  class->xine                       = xine;
-
-  return class;
+  return (void *)&post_upmix_class;
 }

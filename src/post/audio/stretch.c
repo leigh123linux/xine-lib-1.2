@@ -187,15 +187,6 @@ static stretchscr_t *XINE_MALLOC stretchscr_init (double *stretch_factor) {
 
 typedef struct post_plugin_stretch_s post_plugin_stretch_t;
 
-typedef struct post_class_stretch_s post_class_stretch_t;
-
-struct post_class_stretch_s {
-  post_class_t        post_class;
-
-  xine_t             *xine;
-};
-
-
 typedef struct stretch_parameters_s {
   int preserve_pitch;
   double factor;
@@ -666,18 +657,15 @@ static post_plugin_t *stretch_open_plugin(post_class_t *class_gen, int inputs,
 /* plugin class initialization function */
 void *stretch_init_plugin(xine_t *xine, const void *data)
 {
-  post_class_stretch_t *class = calloc(1, sizeof(post_class_stretch_t));
+  static const post_class_t post_scretch_class = {
+    .open_plugin     = stretch_open_plugin,
+    .identifier      = "stretch",
+    .description     = N_("Time stretch by a given factor, optionally preserving pitch"),
+    .dispose         = NULL,
+  };
 
-  if (!class)
-    return NULL;
-
+  (void)xine;
   (void)data;
-  class->post_class.open_plugin     = stretch_open_plugin;
-  class->post_class.identifier      = "stretch";
-  class->post_class.description     = N_("Time stretch by a given factor, optionally preserving pitch");
-  class->post_class.dispose         = default_post_class_dispose;
 
-  class->xine                       = xine;
-
-  return class;
+  return (void *)&post_scretch_class;
 }

@@ -56,14 +56,6 @@ END_PARAM_DESCR( param_descr )
 
 typedef struct post_plugin_upmix_mono_s post_plugin_upmix_mono_t;
 
-typedef struct post_class_upmix_mono_s post_class_upmix_mono_t;
-
-struct post_class_upmix_mono_s {
-  post_class_t        post_class;
-
-  xine_t             *xine;
-};
-
 struct post_plugin_upmix_mono_s {
   post_plugin_t  post;
 
@@ -341,20 +333,16 @@ static post_plugin_t *upmix_mono_open_plugin(post_class_t *class_gen, int inputs
 /* plugin class initialization function */
 void *upmix_mono_init_plugin(xine_t *xine, const void *data)
 {
-  post_class_upmix_mono_t *class = calloc(1, sizeof(post_class_upmix_mono_t));
+  static const post_class_t post_upmix_mono_class = {
+    .open_plugin     = upmix_mono_open_plugin,
+    .identifier      = "upmix_mono",
+    .description     = N_("converts Mono into Stereo"),
+    .dispose         = NULL,
+  };
 
-  if (!class)
-    return NULL;
-
+  (void)xine;
   (void)data;
 
-  class->post_class.open_plugin     = upmix_mono_open_plugin;
-  class->post_class.identifier      = "upmix_mono";
-  class->post_class.description     = N_("converts Mono into Stereo");
-  class->post_class.dispose         = default_post_class_dispose;
-
-  class->xine                       = xine;
-
-  return class;
+  return (void *)&post_upmix_mono_class;
 }
 
