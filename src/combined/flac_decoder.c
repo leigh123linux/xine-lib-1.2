@@ -121,12 +121,12 @@ flac_write_callback (const FLAC__StreamDecoder *decoder,
 {
     flac_decoder_t *this = (flac_decoder_t *)client_data;
     audio_buffer_t *audio_buffer = NULL;
-    int samples_left = frame->header.blocksize;
-    int bytes_per_sample = (frame->header.bits_per_sample <= 8) ? 1 : 2;
-    int buf_samples;
+    unsigned int samples_left = frame->header.blocksize;
+    unsigned int bytes_per_sample = (frame->header.bits_per_sample <= 8) ? 1 : 2;
+    unsigned int buf_samples;
     int8_t *data8;
     int16_t *data16;
-    int i,j;
+    unsigned int i,j;
 
     (void)decoder;
 
@@ -136,7 +136,7 @@ flac_write_callback (const FLAC__StreamDecoder *decoder,
 
       audio_buffer = this->stream->audio_out->get_buffer(this->stream->audio_out);
 
-      if( audio_buffer->mem_size < samples_left * frame->header.channels * bytes_per_sample )
+      if( (unsigned)audio_buffer->mem_size < samples_left * frame->header.channels * bytes_per_sample )
         buf_samples = audio_buffer->mem_size / (frame->header.channels * bytes_per_sample);
       else
         buf_samples = samples_left;
