@@ -375,6 +375,8 @@ static video_decoder_t *theora_open_plugin (video_decoder_class_t *class_gen, xi
   (void)class_gen;
 
   this = (theora_decoder_t *) calloc(1, sizeof(theora_decoder_t));
+  if (!this)
+    return NULL;
 
   this->theora_decoder.decode_data   = theora_decode_data;
   this->theora_decoder.flush         = theora_flush;
