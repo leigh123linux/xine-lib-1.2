@@ -46,13 +46,7 @@ PARAM_ITEM(POST_PARAM_TYPE_INT, select, NULL, 1, INT_MAX, 1,
   "the input source which will be passed through to the output")
 END_PARAM_DESCR(switch_param_descr)
 
-typedef struct post_class_switch_s post_class_switch_t;
 typedef struct post_switch_s post_switch_t;
-
-struct post_class_switch_s {
-  post_class_t  class;
-  xine_t       *xine;
-};
 
 /* plugin structure */
 struct post_switch_s {
@@ -68,11 +62,6 @@ struct post_switch_s {
   unsigned int     selected_source;
 };
 
-/* plugin class functions */
-static post_plugin_t *switch_open_plugin(post_class_t *class_gen, int inputs,
-					 xine_audio_port_t **audio_target,
-					 xine_video_port_t **video_target);
-
 /* plugin instance functions */
 static void           switch_dispose(post_plugin_t *this_gen);
 
@@ -85,24 +74,6 @@ static char          *switch_get_help(void);
 /* replaced vo_frame functions */
 static int            switch_draw(vo_frame_t *frame, xine_stream_t *stream);
 
-
-static void *switch_init_plugin(xine_t *xine, const void *data)
-{
-  post_class_switch_t *this = calloc(1, sizeof(post_class_switch_t));
-
-  if (!this)
-    return NULL;
-
-  (void)data;
-
-  this->class.open_plugin     = switch_open_plugin;
-  this->class.identifier      = "switch";
-  this->class.description     = N_("Switch is a post plugin able to switch at any time between different streams");
-  this->class.dispose         = default_post_class_dispose;
-  this->xine                  = xine;
-
-  return &this->class;
-}
 
 static post_plugin_t *switch_open_plugin(post_class_t *class_gen, int inputs,
 					 xine_audio_port_t **audio_target,
@@ -247,6 +218,21 @@ static int switch_draw(vo_frame_t *frame, xine_stream_t *stream)
   }
 
   return skip;
+}
+
+static void *switch_init_plugin(xine_t *xine, const void *data)
+{
+  static const post_class_t post_switch_class = {
+    .open_plugin     = switch_open_plugin,
+    .identifier      = "switch",
+    .description     = N_("Switch is a post plugin able to switch at any time between different streams"),
+    .dispose         = NULL,
+  };
+
+  (void)xine;
+  (void)data;
+
+  return (void *)&post_switch_class;
 }
 
 /* plugin catalog information */

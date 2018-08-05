@@ -58,13 +58,7 @@ PARAM_ITEM(POST_PARAM_TYPE_INT, h, NULL, 0, INT_MAX, 150,
   "height of the pasted picture")
 END_PARAM_DESCR(mosaico_param_descr)
 
-typedef struct post_class_mosaico_s post_class_mosaico_t;
 typedef struct post_mosaico_s post_mosaico_t;
-
-struct post_class_mosaico_s {
-  post_class_t    class;
-  xine_t         *xine;
-};
 
 /* plugin structures */
 typedef struct mosaico_pip_s mosaico_pip_t;
@@ -87,11 +81,6 @@ struct post_mosaico_s {
   unsigned int     pip_count;
 };
 
-/* plugin class functions */
-static post_plugin_t *mosaico_open_plugin(post_class_t *class_gen, int inputs,
-					 xine_audio_port_t **audio_target,
-					 xine_video_port_t **video_target);
-
 /* plugin instance functions */
 static void           mosaico_dispose(post_plugin_t *this_gen);
 
@@ -111,24 +100,6 @@ static int            mosaico_intercept_frame(post_video_port_t *port, vo_frame_
 static int            mosaico_draw_background(vo_frame_t *frame, xine_stream_t *stream);
 static int            mosaico_draw(vo_frame_t *frame, xine_stream_t *stream);
 
-
-static void *mosaico_init_plugin(xine_t *xine, const void *data)
-{
-  post_class_mosaico_t *this = calloc(1, sizeof(post_class_mosaico_t));
-
-  if (!this)
-    return NULL;
-
-  (void)data;
-
-  this->class.open_plugin     = mosaico_open_plugin;
-  this->class.identifier      = "mosaico";
-  this->class.description     = N_("Mosaico is a picture in picture (pip) post plugin");
-  this->class.dispose         = default_post_class_dispose;
-  this->xine                  = xine;
-
-  return &this->class;
-}
 
 static post_plugin_t *mosaico_open_plugin(post_class_t *class_gen, int inputs,
 					 xine_audio_port_t **audio_target,
@@ -477,6 +448,21 @@ static int mosaico_draw(vo_frame_t *frame, xine_stream_t *stream)
     frame->free(frame);
 
   return skip;
+}
+
+static void *mosaico_init_plugin(xine_t *xine, const void *data)
+{
+  static const post_class_t post_mosaico_class = {
+    .open_plugin     = mosaico_open_plugin,
+    .identifier      = "mosaico",
+    .description     = N_("Mosaico is a picture in picture (pip) post plugin"),
+    .dispose         = NULL,
+  };
+
+  (void)xine;
+  (void)data;
+
+  return (void *)&post_mosaico_class;
 }
 
 /* plugin catalog information */
