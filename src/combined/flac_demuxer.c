@@ -90,15 +90,6 @@ typedef struct demux_flac_s {
 } demux_flac_t ;
 
 
-/* FLAC Demuxer class */
-typedef struct demux_flac_class_s {
-  demux_class_t     demux_class;
-
-  xine_t           *xine;
-  config_values_t  *config;
-
-} demux_flac_class_t;
-
 /* FLAC Callbacks */
 static
 #ifdef LEGACY_FLAC
@@ -701,21 +692,20 @@ open_plugin (demux_class_t *class_gen,
 void *
 demux_flac_init_class (xine_t *xine, const void *data) {
 
-    demux_flac_class_t     *this;
+    static const demux_class_t demux_flac_class = {
+        .open_plugin     = open_plugin,
+        .description     = N_("FLAC demux plugin"),
+        .identifier      = "FLAC",
+        .mimetypes       = "application/x-flac: flac: FLAC Audio;"
+                           "application/flac: flac: FLAC Audio;",
+        .extensions      = "flac",
+        .dispose         = NULL,
+    };
+
+    (void)xine;
+    (void)data;
 
     lprintf("demux_flac_init_class\n");
 
-    this         = calloc(1, sizeof (demux_flac_class_t));
-    this->config = xine->config;
-    this->xine   = xine;
-
-    this->demux_class.open_plugin     = open_plugin;
-    this->demux_class.description     = N_("FLAC demux plugin");
-    this->demux_class.identifier      = "FLAC";
-    this->demux_class.mimetypes       = "application/x-flac: flac: FLAC Audio;"
-                                        "application/flac: flac: FLAC Audio;";
-    this->demux_class.extensions      = "flac";
-    this->demux_class.dispose         = default_demux_class_dispose;
-
-    return this;
+    return (void *)&demux_flac_class;
 }
