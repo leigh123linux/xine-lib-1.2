@@ -55,8 +55,14 @@
 #endif
 
 #ifdef __cplusplus
-extern "C" {
+# define EXTERN_C_START extern "C" {
+# define EXTERN_C_STOP  }
+#else
+# define EXTERN_C_START
+# define EXTERN_C_STOP
 #endif
+
+EXTERN_C_START
 
 /**
  * @defgroup load_plugins Plugins loading
@@ -164,10 +170,149 @@ static inline int xine_gettime (struct timespec *ts) {
 }
 #endif
 
-
-#ifdef __cplusplus
+static inline int32_t xine_str2int32 (const char **s) {
+  const uint8_t *p = (const uint8_t *)*s;
+  uint8_t z;
+  int32_t v;
+  do {
+    z = *p;
+    if (!z) {
+      *s = (const char *)p;
+      return 0;
+    }
+    p++;
+    z ^= '0';
+  } while ((z > 9) && (z != ('-' ^ '0')));
+  if (z == ('-' ^ '0')) {
+    v = 0;
+    while (1) {
+      z = *p++ ^ '0';
+      if (z > 9)
+        break;
+      v = 10 * v - z;
+    }
+  } else {
+    v = 0;
+    do {
+      v = 10 * v + z;
+      z = *p++ ^ '0';
+    } while (z <= 9);
+  }
+  *s = (const char *)(p - 1);
+  return v;
 }
+
+static inline uint32_t xine_str2uint32 (const char **s) {
+  const uint8_t *p = (const uint8_t *)*s;
+  uint8_t z;
+  uint32_t v;
+  do {
+    z = *p;
+    if (!z) {
+      *s = (const char *)p;
+      return 0;
+    }
+    p++;
+    z ^= '0';
+  } while (z > 9);
+  v = 0;
+  do {
+    v = 10u * v + z;
+    z = *p++ ^ '0';
+  } while (z <= 9);
+  *s = (const char *)(p - 1);
+  return v;
+}
+
+static inline uint64_t xine_str2uint64 (const char **s) {
+  const uint8_t *p = (const uint8_t *)*s;
+  uint8_t z;
+  uint64_t v;
+#if defined(__WORDSIZE) && (__WORDSIZE == 32)
+  uint32_t u;
 #endif
+  do {
+    z = *p;
+    if (!z) {
+      *s = (const char *)p;
+      return 0;
+    }
+    p++;
+    z ^= '0';
+  } while (z > 9);
+#if defined(__WORDSIZE) && (__WORDSIZE == 32)
+  u = 0;
+  do {
+    u = 10u * u + z;
+    z = *p++ ^ '0';
+    if (z > 9) {
+      *s = (const char *)(p - 1);
+      return u;
+    }
+  } while (!(u & 0xf0000000));
+  v = u;
+#else
+  v = 0;
+#endif
+  do {
+    v = (v << 3) + (v << 1) + z;
+    z = *p++ ^ '0';
+  } while (z <= 9);
+  *s = (const char *)(p - 1);
+  return v;
+}
+
+#define XINE_MAX_INT32_STR 13
+static inline void xine_int32_2str (char **s, int32_t v) {
+  uint8_t b[24], *t = b + 11, *q = (uint8_t *)*s;
+  uint32_t u;
+  if (v < 0) {
+    *q++ = '-';
+    u = -v;
+  } else {
+    u = v;
+  }
+  *t = 0;
+  do {
+    *--t = u % 10u + '0';
+    u /= 10u;
+  } while (u);
+  memcpy (q, t, 12);
+  *s = (char *)(q + (b + 11 - t));
+}
+
+static inline void xine_uint32_2str (char **s, uint32_t v) {
+  uint8_t b[24], *t = b + 11, *q = (uint8_t *)*s;
+  *t = 0;
+  do {
+    *--t = v % 10u + '0';
+    v /= 10u;
+  } while (v);
+  memcpy (q, t, 12);
+  *s = (char *)(q + (b + 11 - t));
+}
+
+#define XINE_MAX_INT64_STR 21
+static inline void xine_uint64_2str (char **s, uint64_t v) {
+  uint8_t b[44], *t = b + 21, *q = (uint8_t *)*s;
+  *t = 0;
+  do {
+    *--t = v % 10u + '0';
+    v /= 10u;
+  } while (v);
+  memcpy (q, t, 21);
+  *s = (char *)(q + (b + 21 - t));
+}
+
+/* A little helper for integers whose size is not obvious, like off_t and time_t. */
+#define xine_uint2str(s,v) do { \
+  if (sizeof (v) == 64) \
+    xine_uint64_2str (s, v); \
+  else \
+    xine_uint32_2str (s, v); \
+} while (0)
+
+EXTERN_C_STOP
 
 #endif
 
