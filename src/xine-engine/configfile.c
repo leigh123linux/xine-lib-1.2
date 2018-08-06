@@ -46,6 +46,7 @@
 
 #include <xine/xineutils.h>
 #include <xine/xine_internal.h>
+#include "xine_private.h"
 
 /* FIXME: static data, no expiry ?! */
 static const xine_config_entry_translation_t *config_entry_translation_user = NULL;
@@ -354,12 +355,17 @@ static cfg_entry_t *config_insert (config_values_t *this, const char *key, int e
       return NULL;
     this->first          = entry;
     this->last           = entry;
+#ifndef HAVE_ZERO_SAFE_MEM
     entry->next          = NULL;
+    entry->unknown_value = NULL;
+    entry->str_value     = NULL;
+    entry->str_default   = NULL;
+    entry->help          = NULL;
+    entry->description   = NULL;
+#endif
     entry->config        = this;
     entry->key           = strdup(key);
     entry->type          = XINE_CONFIG_TYPE_UNKNOWN;
-    entry->unknown_value = NULL;
-    entry->str_value     = NULL;
     entry->exp_level     = exp_level;
 #ifdef DEBUG_CONFIG_FIND
     printf ("config_insert (\"%s\", %d) = new (0).\n", key, exp_level);
@@ -381,12 +387,17 @@ static cfg_entry_t *config_insert (config_values_t *this, const char *key, int e
         return NULL;
       this->last->next     = entry;
       this->last           = entry;
+#ifndef HAVE_ZERO_SAFE_MEM
       entry->next          = NULL;
+      entry->unknown_value = NULL;
+      entry->str_value     = NULL;
+      entry->str_default   = NULL;
+      entry->help          = NULL;
+      entry->description   = NULL;
+#endif
       entry->config        = this;
       entry->key           = strdup(key);
       entry->type          = XINE_CONFIG_TYPE_UNKNOWN;
-      entry->unknown_value = NULL;
-      entry->str_value     = NULL;
       entry->exp_level     = exp_level;
 #ifdef DEBUG_CONFIG_FIND
       printf ("config_insert (\"%s\", %d) = new (last).\n", key, exp_level);
@@ -453,8 +464,13 @@ static cfg_entry_t *config_insert (config_values_t *this, const char *key, int e
     entry->config        = this;
     entry->key           = strdup(key);
     entry->type          = XINE_CONFIG_TYPE_UNKNOWN;
+#ifndef HAVE_ZERO_SAFE_MEM
     entry->unknown_value = NULL;
     entry->str_value     = NULL;
+    entry->str_default   = NULL;
+    entry->help          = NULL;
+    entry->description   = NULL;
+#endif
     entry->exp_level     = exp_level;
 #ifdef DEBUG_CONFIG_FIND
     printf ("config_insert (\"%s\", %d) = new (%d/%d).\n", key, exp_level, m, n);
@@ -533,6 +549,14 @@ static cfg_entry_t *config_lookup_entry(config_values_t *this, const char *key) 
   return entry;
 }
 
+/* 1 private */
+static cfg_entry_t *config_lookup_entry_safe (config_values_t *this, const char *key) {
+  pthread_mutex_lock (&this->config_lock);
+  if (this->lookup_entry == config_lookup_entry)
+    return config_lookup_entry_int (this, key);
+  return this->lookup_entry (this, key);
+}
+
 static void config_reset_value(cfg_entry_t *entry) {
 
   _x_freep (&entry->str_value);
@@ -586,9 +610,12 @@ static cfg_entry_t *config_register_key (config_values_t *this,
   /* we created a new entry, call the callback */
   if (this->new_entry_cb) {
     xine_cfg_entry_t cb_entry;
-
+    /* thread safe extension, private to _x_scan_plugins ()
+     * (.cur is otherwise unused). */
+    this->cur = entry;
     config_shallow_copy(&cb_entry, entry);
     this->new_entry_cb(this->new_entry_cbdata, &cb_entry);
+    this->cur = NULL;
   }
 
   return entry;
@@ -628,10 +655,12 @@ static cfg_entry_t *config_register_string_internal (config_values_t *this,
   /* set string */
   entry->type = XINE_CONFIG_TYPE_STRING;
 
-  if (entry->unknown_value)
-    entry->str_value = strdup(entry->unknown_value);
-  else
+  if (entry->unknown_value) {
+    entry->str_value = entry->unknown_value;
+    entry->unknown_value = NULL;
+  } else {
     entry->str_value = strdup(def_value);
+  }
 
   entry->num_value = num_value;
 
@@ -699,10 +728,10 @@ static int config_register_num (config_values_t *this,
   config_reset_value(entry);
   entry->type = XINE_CONFIG_TYPE_NUM;
 
-  if (entry->unknown_value)
-    sscanf (entry->unknown_value, "%d", &entry->num_value);
-  else
-    entry->num_value = def_value;
+  {
+    const char *val = entry->unknown_value;
+    entry->num_value = val ? xine_str2int32 (&val) : def_value;
+  }
 
   /* fill out rest of struct */
   entry->num_default    = def_value;
@@ -744,10 +773,10 @@ static int config_register_bool (config_values_t *this,
   config_reset_value(entry);
   entry->type = XINE_CONFIG_TYPE_BOOL;
 
-  if (entry->unknown_value)
-    sscanf (entry->unknown_value, "%d", &entry->num_value);
-  else
-    entry->num_value = def_value;
+  {
+    const char *val = entry->unknown_value;
+    entry->num_value = val ? xine_str2int32 (&val) : def_value;
+  }
 
   /* fill out rest of struct */
   entry->num_default    = def_value;
@@ -790,10 +819,10 @@ static int config_register_range (config_values_t *this,
   config_reset_value(entry);
   entry->type = XINE_CONFIG_TYPE_RANGE;
 
-  if (entry->unknown_value)
-    sscanf (entry->unknown_value, "%d", &entry->num_value);
-  else
-    entry->num_value = def_value;
+  {
+    const char *val = entry->unknown_value;
+    entry->num_value = val ? xine_str2int32 (&val) : def_value;
+  }
 
   /* validate value (config files can be edited ...) */
   /* Allow default to be out of range. xine-ui uses this for brightness etc. */
@@ -945,108 +974,148 @@ static void config_shallow_copy(xine_cfg_entry_t *dest, const cfg_entry_t *src)
   dest->callback_data = src->callback_data;
 }
 
-static void config_update_num_e (config_values_t *this, cfg_entry_t *entry, int value) {
+static void config_update_num_e (cfg_entry_t *entry, int value) {
 
-  if (!entry)
-    return;
-
-  if ((entry->type == XINE_CONFIG_TYPE_UNKNOWN)
-      || (entry->type == XINE_CONFIG_TYPE_STRING)) {
-    printf ("configfile: error - tried to update non-num type %d (key %s, value %d)\n",
-	    entry->type, entry->key, value);
-    return;
+  switch (entry->type) {
+    case XINE_CONFIG_TYPE_RANGE:
+      if (value != entry->num_default) {
+        if (value < entry->range_min)
+          value = entry->range_min;
+        else if (value > entry->range_max)
+          value = entry->range_max;
+      }
+      entry->num_value = value;
+      break;
+    case XINE_CONFIG_TYPE_BOOL:
+      entry->num_value = value ? 1 : 0;
+      break;
+    case XINE_CONFIG_TYPE_ENUM:
+      if (value != entry->num_default) {
+        if (value < 0)
+          value = 0;
+        else if (value >= entry->range_max)
+          value = entry->range_max - 1;
+      }
+      /* fall through */
+    case XINE_CONFIG_TYPE_NUM:
+      entry->num_value = value;
+      break;
+    default: ;
   }
-
-  pthread_mutex_lock(&this->config_lock);
-
-  if (entry->type == XINE_CONFIG_TYPE_ENUM) {
-    if (value >= entry->range_max) {
-      printf("configfile: error - tried to update enum value to %d (max %d)\n", value, entry->range_max);
-      value = entry->range_max - 1;
-    }
-    if (value < 0) {
-      printf("configfile: error - tried to update enum value to %d\n", value);
-      value = 0;
-    }
-  }
-
-  entry->num_value = value;
 
   if (entry->callback) {
     xine_cfg_entry_t cb_entry;
-
-    config_shallow_copy(&cb_entry, entry);
-
+    config_shallow_copy (&cb_entry, entry);
     /* it is safe to enter the callback from within a locked context
      * because we use a recursive mutex.
      */
     entry->callback (entry->callback_data, &cb_entry);
   }
-
-  pthread_mutex_unlock(&this->config_lock);
 }
 
 static void config_update_num (config_values_t *this, const char *key, int value) {
   cfg_entry_t *entry;
   lprintf ("updating %s to %d\n", key, value);
-  entry = this->lookup_entry (this, key);
+  entry = config_lookup_entry_safe (this, key);
   if (!entry) {
     lprintf ("WARNING! tried to update unknown key %s (to %d)\n", key, value);
+    pthread_mutex_unlock (&this->config_lock);
     return;
   }
-  config_update_num_e (this, entry, value);
+  if ((entry->type == XINE_CONFIG_TYPE_UNKNOWN)
+      || (entry->type == XINE_CONFIG_TYPE_STRING)) {
+    printf ("configfile: error - tried to update non-num type %d (key %s, value %d)\n",
+	    entry->type, entry->key, value);
+    pthread_mutex_unlock (&this->config_lock);
+    return;
+  }
+  config_update_num_e (entry, value);
+  pthread_mutex_unlock (&this->config_lock);
 }
 
-static void config_update_string_e (config_values_t *this, cfg_entry_t *entry, const char *value) {
-
+/* Anything can be updated with a string. Config file load uses this. */
+static void config_update_string_e (cfg_entry_t *entry, const char *value) {
   char *str_free = NULL;
+  int min, max;
 
-  if (!entry)
-    return;
-
-  /* if an enum is updated with a string, we convert the string to
-   * its index and use update number */
-  if (entry->type == XINE_CONFIG_TYPE_ENUM) {
-    config_update_num_e (this, entry, config_parse_enum (value, (const char **)entry->enum_values));
-    return;
-  }
-
-  if (entry->type != XINE_CONFIG_TYPE_STRING) {
-    printf ("configfile: error - tried to update non-string type %d (key %s, value %s)\n",
-	    entry->type, entry->key, value);
-    return;
-  }
-
-  pthread_mutex_lock(&this->config_lock);
-  if (value != entry->str_value) {
-    str_free = entry->str_value;
-    entry->str_value = strdup(value);
+  switch (entry->type) {
+    case XINE_CONFIG_TYPE_RANGE:
+      min = entry->range_min;
+      max = entry->range_max;
+      goto set_snum;
+    case XINE_CONFIG_TYPE_NUM:
+      min = -2147483647 - 1;
+      max = 2147483647;
+      goto set_snum;
+    case XINE_CONFIG_TYPE_BOOL:
+      min = 0;
+      max = 1;
+    set_snum: {
+      const char *val = value;
+      int v = xine_str2int32 (&val);
+      if (v != entry->num_default) {
+        if (v < min)
+          v = min;
+        else if (v > max)
+          v = max;
+      }
+      entry->num_value = v;
+      break;
+    }
+    case XINE_CONFIG_TYPE_ENUM:
+      entry->num_value = config_parse_enum (value, (const char **)entry->enum_values);
+      break;
+    case XINE_CONFIG_TYPE_STRING:
+      /* Client may be using the string directly, not a private duplicate of it.
+       * Idea #1: Let both the old and new strings be valid during the change callback
+       * as sort of a safe switch protocol there. However, to be really safe, client
+       * needs to lock the config object during any use of the string as well.
+       * Even worse: no callback...
+       * Idea #2: keep a full backlog of outdated strings.
+       * Might be misused for flooding the heap.
+       * Idea #3: with callback, park previous string at entry.unknown_value.
+       * without, park initial string there. */
+      if (value != entry->str_value) {
+        if (entry->str_value) {
+          if (entry->callback || !entry->unknown_value) {
+            str_free = entry->unknown_value;
+            entry->unknown_value = entry->str_value;
+          } else {
+            str_free = entry->str_value;
+          }
+        }
+        entry->str_value = strdup (value);
+      }
+      break;
+    default:
+      if (value != entry->unknown_value) {
+        str_free = entry->unknown_value;
+        entry->unknown_value = strdup (value);
+      }
   }
 
   if (entry->callback) {
     xine_cfg_entry_t cb_entry;
-
-    config_shallow_copy(&cb_entry, entry);
-
+    config_shallow_copy (&cb_entry, entry);
     /* it is safe to enter the callback from within a locked context
      * because we use a recursive mutex.
      */
     entry->callback (entry->callback_data, &cb_entry);
   }
-
-  free(str_free);
-  pthread_mutex_unlock(&this->config_lock);
+  free (str_free);
 }
 
 static void config_update_string (config_values_t *this, const char *key, const char *value) {
   cfg_entry_t *entry;
   lprintf ("updating %s to %s\n", key, value);
-  entry = this->lookup_entry (this, key);
+  entry = config_lookup_entry_safe (this, key);
   if (!entry) {
     printf ("configfile: error - tried to update unknown key %s (to %s)\n", key, value);
+    pthread_mutex_unlock (&this->config_lock);
     return;
   }
-  config_update_string_e (this, entry, value);
+  config_update_string_e (entry, value);
+  pthread_mutex_unlock (&this->config_lock);
 }
 
 /*
@@ -1063,104 +1132,112 @@ void xine_config_set_translation_user (const xine_config_entry_translation_t *xl
 void xine_config_load (xine_t *xine, const char *filename) {
 
   config_values_t *this = xine->config;
-  FILE *f_config;
 
   lprintf ("reading from file '%s'\n", filename);
 
-  f_config = fopen (filename, "r");
-
-  if (f_config) {
-
-    char line[1024];
-    char *value;
+  do {
+    FILE *f_config;
     int version;
+    char *buf, *line, *nextline;
+
+    f_config = fopen (filename, "rb");
+    if (!f_config)
+      break;
+    {
+      long int flen;
+      fseek (f_config, 0, SEEK_END);
+      flen = ftell (f_config);
+      if (flen < 0) {
+        fclose (f_config);
+        break;
+      }
+      /* TJ. I got far less than 32k, so > 2M is probably insane. */
+      if (flen > (2 << 20))
+        flen = 2 << 20;
+      buf = malloc (flen + 2);
+      if (!buf) {
+        fclose (f_config);
+        break;
+      }
+      fseek (f_config, 0, SEEK_SET);
+      flen = fread (buf, 1, flen, f_config);
+      buf[flen] = '\n';
+      buf[flen + 1] = 0;
+    }
+    fclose (f_config);
 
     pthread_mutex_lock (&this->config_lock);
     version = this->current_version;
     pthread_mutex_unlock (&this->config_lock);
 
-    while (fgets (line, 1023, f_config)) {
-      line[strlen(line)-1]= (char) 0; /* eliminate lf */
+    for (line = buf; line[0]; line = nextline) {
+      char *value;
+      /* make string from line */
+      char *lend = strchr (line, '\n');
+      if (!lend) /* should not happen */
+        break;
+      nextline = lend + 1;
+      if ((lend > line) && (lend[-1] == '\r'))
+        lend--;
+      lend[0] = 0;
 
+      /* skip comments */
       if (line[0] == '#')
-	continue;
+        continue;
 
       if (line[0] == '.') {
-	if (strncmp(line, ".version:", 9) == 0) {
-          sscanf (line + 9, "%d", &version);
-          if (version > CONFIG_FILE_VERSION)
-	    xine_log(xine, XINE_LOG_MSG,
-		     _("The current config file has been modified by a newer version of xine."));
-	}
-        pthread_mutex_lock (&this->config_lock);
-        this->current_version = version;
-        pthread_mutex_unlock (&this->config_lock);
-	continue;
+        if (!strncmp (line, ".version:", 9)) {
+          const char *val = line + 9;
+          version = xine_str2int32 (&val);
+          if (version > CONFIG_FILE_VERSION) {
+            xine_log (xine, XINE_LOG_MSG,
+              _("The current config file has been modified by a newer version of xine."));
+          }
+          pthread_mutex_lock (&this->config_lock);
+          this->current_version = version;
+          pthread_mutex_unlock (&this->config_lock);
+          continue;
+        }
       }
+      
+      value = strchr (line, ':');
+      if (value) {
+        cfg_entry_t *entry;
 
-      if ((value = strchr (line, ':'))) {
+        *value++ = 0;
 
-	cfg_entry_t *entry;
-
-	*value = (char) 0;
-	value++;
+        pthread_mutex_lock (&this->config_lock);
 
         if (version < CONFIG_FILE_VERSION) {
           /* old config file -> let's see if we have to rename this one */
-          pthread_mutex_lock (&this->config_lock);
           entry = config_insert (this, line, FIND_ONLY);
           if (!entry) {
             char *tmp = NULL;
             const char *key = config_translate_key (line, &tmp);
             if (!key)
               key = line; /* no translation? fall back on untranslated key */
-            entry = config_insert (this, key, 51);
+            entry = config_insert (this, key, 50);
             free (tmp);
           }
-          pthread_mutex_unlock (&this->config_lock);
         } else {
-          pthread_mutex_lock (&this->config_lock);
-          entry = config_insert (this, line, 51);
-          pthread_mutex_unlock (&this->config_lock);
+          entry = config_insert (this, line, 50);
         }
 
-        if (entry->exp_level == 51) {
-          /* new entry */
-          entry->exp_level = 50;
-	  entry->unknown_value = strdup(value);
-	} else {
-          switch (entry->type) {
-          case XINE_CONFIG_TYPE_RANGE:
-          case XINE_CONFIG_TYPE_NUM:
-          case XINE_CONFIG_TYPE_BOOL:
-            config_update_num_e (this, entry, atoi(value));
-            break;
-          case XINE_CONFIG_TYPE_ENUM:
-          case XINE_CONFIG_TYPE_STRING:
-            config_update_string_e (this, entry, value);
-            break;
-          case XINE_CONFIG_TYPE_UNKNOWN:
-	    pthread_mutex_lock(&this->config_lock);
-	    free(entry->unknown_value);
-	    entry->unknown_value = strdup(value);
-	    pthread_mutex_unlock(&this->config_lock);
-	    break;
-          default:
-            printf ("xine_interface: error, unknown config entry type %d\n", entry->type);
-            _x_abort();
-          }
-	}
+        if (entry)
+          config_update_string_e (entry, value);
+
+        pthread_mutex_unlock (&this->config_lock);
       }
     }
+    free (buf);
+    xine_log (xine, XINE_LOG_MSG,
+      _("Loaded configuration from file '%s'\n"), filename);
+    return;
+  } while (0);
 
-    fclose (f_config);
-    xine_log(xine, XINE_LOG_MSG,
-	     _("Loaded configuration from file '%s'\n"), filename);
-
-  }
-  else if (errno != ENOENT)
-    xine_log(xine, XINE_LOG_MSG,
-	     _("Failed to load configuration from file '%s': %s\n"), filename, strerror (errno));
+  if (errno != ENOENT)
+    xine_log (xine, XINE_LOG_MSG,
+      _("Failed to load configuration from file '%s': %s\n"), filename, strerror (errno));
 }
 
 void xine_config_save (xine_t *xine, const char *filename) {
@@ -1223,98 +1300,157 @@ void xine_config_save (xine_t *xine, const char *filename) {
 
   lprintf ("writing config file to %s\n", filename);
 
-  f_config = fopen(filename, "w");
+  f_config = fopen (filename, "wb");
 
   if (f_config) {
 
+#define XCS_BUF_SIZE 4096
+    char buf[XCS_BUF_SIZE], *q;
     cfg_entry_t *entry;
 
-    fprintf (f_config, "#\n# xine config file\n#\n");
-    fprintf (f_config, ".version:%d\n\n", CONFIG_FILE_VERSION);
-    fprintf (f_config, "# Entries which are still set to their default values are commented out.\n");
-    fprintf (f_config, "# Remove the \'#\' at the beginning of the line, if you want to change them.\n\n");
+    q = buf;
+    memcpy (q, "#\n# xine config file\n#\n.version:", 32); q += 32;
+    xine_uint32_2str (&q, CONFIG_FILE_VERSION);
+    memcpy (q,
+      "\n"
+      "\n"
+      "# Entries which are still set to their default values are commented out.\n"
+      "# Remove the \'#\' at the beginning of the line, if you want to change them.\n"
+      "\n",
+      151); q += 151;
+    fwrite (buf, 1, q - buf, f_config);
 
     pthread_mutex_lock(&this->config_lock);
-    entry = this->first;
 
-    while (entry) {
+    for (entry = this->first; entry; entry = entry->next) {
+      char *e;
+      size_t klen;
 
-      if (!entry->key[0])
-        /* deleted key */
-        goto next;
+      if (!entry->key[0]) /* deleted key */
+        continue;
 
       lprintf ("saving key '%s'\n", entry->key);
 
-      if (entry->description)
-	fprintf (f_config, "# %s\n", entry->description);
+      klen = strlen (entry->key);
+      /* paranoia... */
+      e = buf + XCS_BUF_SIZE - 28 - 4 * XINE_MAX_INT32_STR;
+      if (klen > (size_t)(e - q))
+        klen = e - q;
+      e -= klen;
+
+      q = buf;
+      if (entry->description) {
+        size_t len = strlen (entry->description);
+        if (len > (size_t)(e - q))
+          len = e - q;
+        memcpy (q, "# ", 2); q += 2;
+        memcpy (q, entry->description, len); q += len;
+        *q++ = '\n';
+      }
 
       switch (entry->type) {
-      case XINE_CONFIG_TYPE_UNKNOWN:
 
-/*#if 0*/
-	/* discard unclaimed values */
-	fprintf (f_config, "%s:%s\n",
-		 entry->key, entry->unknown_value);
-	fprintf (f_config, "\n");
-/*#endif*/
-
+      case XINE_CONFIG_TYPE_UNKNOWN: {
+#if 0
+        /* discard unclaimed values.
+         * better dont do that because
+         * a) multiple frontends may share the same config file, and
+         * b) we dont always load all plugins for performance. */
+#else
+        size_t len = strlen (entry->unknown_value);
+        memcpy (q, entry->key, klen); q += klen;
+        *q++ = ':';
+        if (len > (size_t)(e - q))
+          len = e - q;
+        memcpy (q, entry->unknown_value, len); q += len;
+        memcpy (q, "\n\n", 2); q += 2;
+#endif
 	break;
+      }
+
       case XINE_CONFIG_TYPE_RANGE:
-	fprintf (f_config, "# [%d..%d], default: %d\n",
-		 entry->range_min, entry->range_max, entry->num_default);
-	if (entry->num_value == entry->num_default) fprintf (f_config, "#");
-	fprintf (f_config, "%s:%d\n", entry->key, entry->num_value);
-	fprintf (f_config, "\n");
+        memcpy (q, "# [ ", 4); q += 3;
+        xine_int32_2str (&q, entry->range_min);
+        memcpy (q, "..", 2); q += 2;
+        xine_int32_2str (&q, entry->range_max);
+        *q++ = ']';
+      tail_num:
+        memcpy (q, ", default:  ", 12); q += 11;
+        xine_int32_2str (&q, entry->num_default);
+        *q++ = '\n';
+        if (entry->num_value == entry->num_default)
+          *q++ = '#';
+        memcpy (q, entry->key, klen); q += klen;
+        *q++ = ':';
+        xine_int32_2str (&q, entry->num_value);
+        memcpy (q, "\n\n", 2); q += 2;
 	break;
-      case XINE_CONFIG_TYPE_STRING:
-	fprintf (f_config, "# string, default: %s\n",
-		 entry->str_default);
-	if (strcmp(entry->str_value, entry->str_default) == 0) fprintf (f_config, "#");
-	fprintf (f_config, "%s:%s\n", entry->key, entry->str_value);
-	fprintf (f_config, "\n");
-	break;
-      case XINE_CONFIG_TYPE_ENUM: {
-	char **value;
 
-	fprintf (f_config, "# {");
-	value = entry->enum_values;
-	while (*value) {
-	  fprintf (f_config, " %s ", *value);
-	  value++;
-	}
-
-	fprintf (f_config, "}, default: %d\n",
-		 entry->num_default);
-
-        if (entry->num_value >= 0 &&
-            entry->num_value < entry->range_max &&
-            entry->enum_values[entry->num_value] != NULL) {
-	  if (entry->num_value == entry->num_default) fprintf (f_config, "#");
-	  fprintf (f_config, "%s:", entry->key);
-	  fprintf (f_config, "%s\n", entry->enum_values[entry->num_value]);
-	}
-
-	fprintf (f_config, "\n");
+      case XINE_CONFIG_TYPE_STRING: {
+        size_t len;
+        memcpy (q, "# string, default:  ", 20); q += 19;
+        len = strlen (entry->str_default);
+        if (len > (size_t)(e - q))
+          len = e - q;
+        memcpy (q, entry->str_default, len); q += len;
+        *q++ = '\n';
+        if (!strcmp (entry->str_value, entry->str_default))
+          *q++ = '#';
+        memcpy (q, entry->key, klen); q += klen;
+        *q++ = ':';
+        len = strlen (entry->str_value);
+        if (len > (size_t)(e - q))
+          len = e - q;
+        memcpy (q, entry->str_value, len); q += len;
+        memcpy (q, "\n\n", 2); q += 2;
 	break;
       }
+
+      case XINE_CONFIG_TYPE_ENUM:
+        do {
+          char **value;
+          memcpy (q, "# { ", 4); q += 3;
+          value = entry->enum_values;
+          while (*value) {
+            size_t len = strlen (*value);
+            if (len + 2 > (size_t)(e - q))
+              break;
+            *q++ = ' ';
+            memcpy (q, *value, len); q += len;
+            *q++ = ' ';
+            value++;
+          }
+          memcpy (q, "}, default: ", 12); q += 12;
+          xine_uint32_2str (&q, entry->num_default);
+          *q++ = '\n';
+          if ((entry->num_value >= 0) &&
+              (entry->num_value < entry->range_max) &&
+              entry->enum_values[entry->num_value]) {
+            size_t len;
+            if (entry->num_value == entry->num_default)
+              *q++ = '#';
+            memcpy (q, entry->key, klen); q += klen;
+            *q++ = ':';
+            len = strlen (entry->enum_values[entry->num_value]);
+            if (len > (size_t)(e - q))
+              break;
+            memcpy (q, entry->enum_values[entry->num_value], len); q += len;
+            *q++ = '\n';
+          }
+        } while (0);
+        *q++ = '\n';
+	break;
+
       case XINE_CONFIG_TYPE_NUM:
-	fprintf (f_config, "# numeric, default: %d\n",
-		 entry->num_default);
-	if (entry->num_value == entry->num_default) fprintf (f_config, "#");
-	fprintf (f_config, "%s:%d\n", entry->key, entry->num_value);
-	fprintf (f_config, "\n");
-	break;
-      case XINE_CONFIG_TYPE_BOOL:
-	fprintf (f_config, "# bool, default: %d\n",
-		 entry->num_default);
-	if (entry->num_value == entry->num_default) fprintf (f_config, "#");
-	fprintf (f_config, "%s:%d\n", entry->key, entry->num_value);
-	fprintf (f_config, "\n");
-	break;
-      }
+        memcpy (q, "# numeric", 9); q += 9;
+        goto tail_num;
 
-      next:
-      entry = entry->next;
+      case XINE_CONFIG_TYPE_BOOL:
+        memcpy (q, "# bool", 6); q += 6;
+        goto tail_num;
+      }
+      fwrite (buf, 1, q - buf, f_config);
+
     }
     pthread_mutex_unlock(&this->config_lock);
 
@@ -1334,10 +1470,9 @@ void xine_config_save (xine_t *xine, const char *filename) {
 }
 
 static void config_dispose (config_values_t *this) {
-
   cfg_entry_t *entry, *last;
 
-  pthread_mutex_lock(&this->config_lock);
+  pthread_mutex_lock (&this->config_lock);
   entry = this->first;
 
   lprintf ("dispose\n");
@@ -1353,9 +1488,10 @@ static void config_dispose (config_values_t *this) {
 
     free (last);
   }
-  pthread_mutex_unlock(&this->config_lock);
 
-  pthread_mutex_destroy(&this->config_lock);
+  pthread_mutex_unlock (&this->config_lock);
+
+  pthread_mutex_destroy (&this->config_lock);
   free (this);
 }
 
@@ -1367,13 +1503,12 @@ static void config_unregister_cb (config_values_t *this, const char *key) {
   _x_assert(key);
   _x_assert(this);
 
-  entry = config_lookup_entry (this, key);
+  entry = config_lookup_entry_safe (this, key);
   if (entry) {
-    pthread_mutex_lock(&this->config_lock);
     entry->callback = NULL;
     entry->callback_data = NULL;
-    pthread_mutex_unlock(&this->config_lock);
   }
+  pthread_mutex_unlock (&this->config_lock);
 }
 
 void _x_config_unregister_cb_class_d (config_values_t *this, void *callback_data) {
@@ -1437,9 +1572,17 @@ static int put_string(uint8_t *buffer, int pos, const char *value, int value_len
 static char* config_get_serialized_entry (config_values_t *this, const char *key) {
   cfg_entry_t *entry;
 
-  pthread_mutex_lock(&this->config_lock);
-  entry = config_lookup_entry_int (this, key);
-
+  /* thread safe extension, private to _x_scan_plugins ()
+   * (.cur is otherwise unused). */
+  pthread_mutex_lock (&this->config_lock);
+  if (!key && this->cur) {
+    entry = this->cur;
+    this->cur = NULL;
+  } else if (this->lookup_entry == config_lookup_entry) {
+    entry = config_lookup_entry_int (this, key);
+  } else {
+    entry = this->lookup_entry (this, key);
+  }
   if (!entry) {
     pthread_mutex_unlock (&this->config_lock);
     return NULL;
@@ -1571,7 +1714,7 @@ static char* config_register_serialized_entry (config_values_t *this, const char
           char            *help;
           char           **enum_values;
   */
-  char  *ev[32];
+  char  *enum_values[257];
   int    type;
   int    range_min;
   int    range_max;
@@ -1582,7 +1725,6 @@ static char* config_register_serialized_entry (config_values_t *this, const char
   char  *str_default = NULL;
   char  *description = NULL;
   char  *help = NULL;
-  char **enum_values = ev;
 
   int    value_count = 0;
   int    i;
@@ -1648,11 +1790,6 @@ static char* config_register_serialized_entry (config_values_t *this, const char
   left -= value_count * 4;
   if (left < 0)
     goto exit;
-  if (value_count > 31) {
-    enum_values = malloc ((value_count + 1) * sizeof (void *));
-    if (!enum_values)
-      goto exit;
-  }
   for (i = 0; i < value_count; i++) {
     i32 = _X_LE_32 (p); p[0] = 0; p += 4;
     if ((i32 < 0) || (i32 > (64 << 10)))
@@ -1720,8 +1857,6 @@ exit:
     key = strdup (key);
   /* cleanup */
   free(output);
-  if (enum_values != ev)
-    free (enum_values);
 
   return key;
 }
@@ -1734,15 +1869,17 @@ config_values_t *_x_config_init (void) {
   config_values_t *this;
   pthread_mutexattr_t attr;
 
-  if (!(this = calloc(1, sizeof(config_values_t)))) {
-
+  this = calloc (1, sizeof (*this));
+  if (!this) {
     fprintf (stderr, "configfile: could not allocate config object\n");
     return NULL;
   }
 
-  this->first = NULL;
-  this->last  = NULL;
+#ifndef HAVE_ZERO_SAFE_MEM
+  this->first           = NULL;
+  this->last            = NULL;
   this->current_version = 0;
+#endif
 
   /* warning: config_lock is a recursive mutex. it must NOT be
    * used with neither pthread_cond_wait() or pthread_cond_timedwait()
@@ -1803,39 +1940,27 @@ int _x_config_change_opt(config_values_t *config, const char *opt) {
 
   *value++ = '\0';
 
-  entry = config->lookup_entry(config, key);
-  if ( ! entry ) {
-    free(key);
-    return -1;
+  handled = -1;
+  entry = config_lookup_entry_safe (config, key);
+  if (entry) {
+    if (entry->exp_level >= XINE_CONFIG_SECURITY) {
+      printf (_("configfile: entry '%s' mustn't be modified from MRL\n"), key);
+    } else {
+      switch (entry->type) {
+        case XINE_CONFIG_TYPE_STRING:
+        case XINE_CONFIG_TYPE_RANGE:
+        case XINE_CONFIG_TYPE_ENUM:
+        case XINE_CONFIG_TYPE_NUM:
+        case XINE_CONFIG_TYPE_BOOL:
+        case XINE_CONFIG_TYPE_UNKNOWN:
+          config_update_string_e (entry, value);
+          handled = 1;
+          break;
+        default: ;
+      }
+    }
   }
-
-  if(entry->exp_level >= XINE_CONFIG_SECURITY) {
-    printf(_("configfile: entry '%s' mustn't be modified from MRL\n"), key);
-    free(key);
-    return -1;
-  }
-
-  switch(entry->type) {
-  case XINE_CONFIG_TYPE_STRING:
-    config->update_string(config, key, value);
-    handled = 1;
-    break;
-
-  case XINE_CONFIG_TYPE_RANGE:
-  case XINE_CONFIG_TYPE_ENUM:
-  case XINE_CONFIG_TYPE_NUM:
-  case XINE_CONFIG_TYPE_BOOL:
-    config->update_num(config, key, (atoi(value)));
-    handled = 1;
-    break;
-
-  case XINE_CONFIG_TYPE_UNKNOWN:
-    entry->unknown_value = strdup(value);
-    handled = 1;
-    break;
-  }
-
+  pthread_mutex_unlock (&config->config_lock);
   free(key);
   return handled;
 }
-
