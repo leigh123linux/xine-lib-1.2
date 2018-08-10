@@ -29,6 +29,47 @@
 size_t
 xine_private_strlcpy(char *dst, const char *src, size_t siz)
 {
+
+#if defined(ARCH_X86) && (defined(__GNUC__) || defined(__clang__))
+
+  size_t a;
+
+  __asm__ __volatile__ (
+    "cld"
+    "\n\ttestl\t%%ecx, %%ecx"
+    "\n\tmov\t%0, %3"
+    "\n\tje\t3f"
+    "\n1:"
+    "\n\ttestb\t$255, (%0)"
+    "\n\tmovsb"
+    "\n\tje\t4f"
+    "\n\tsubl\t$1, %%ecx"
+    "\n\tje\t2f"
+    "\n\ttestb\t$255, (%0)"
+    "\n\tmovsb"
+    "\n\tje\t4f"
+    "\n\tsubl\t$1, %%ecx"
+    "\n\tjne\t1b"
+    "\n2:"
+    "\n\tmovb\t$0, -1(%1)"
+    "\n3:"
+    "\n\ttestb\t$255, (%0)"
+    "\n\tlea\t1(%0), %0"
+    "\n\tje\t4f"
+    "\n\ttestb\t$255, (%0)"
+    "\n\tlea\t1(%0), %0"
+    "\n\tjne\t3b"
+    "\n4:"
+    "\n\tneg\t%3"
+    "\n\tlea\t-1(%0,%3), %3"
+    : "=S" (src), "=D" (dst), "=c" (siz), "=a" (a)
+    : "0"  (src), "1"  (dst), "2"  (siz)
+    : "cc", "memory"
+  );
+  return a;
+
+#else
+
   char *d = dst;
   const char *s = src;
   size_t n = siz;
@@ -50,4 +91,26 @@ xine_private_strlcpy(char *dst, const char *src, size_t siz)
   }
 
   return(s - src - 1);    /* count does not include NUL */
+
+#endif
 }
+
+#ifdef TEST_THIS_FILE
+#include <stdio.h>
+int main (void) {
+  char b[128];
+  unsigned int u;
+  u = xine_private_strlcpy (b, "wrong wrung wrang", 128);
+  printf ("xine_private_strlcpy (b, \"wrong wrung wrang\", 128) = (\"%s\", %u)\n", b, u);
+  u = xine_private_strlcpy (b, "wrong wrung wrang", 0);
+  printf ("xine_private_strlcpy (b, \"wrong wrung wrang\", 0) = (\"%s\", %u)\n", b, u);
+  u = xine_private_strlcpy (b, "wrong wrung wrang", 17);
+  printf ("xine_private_strlcpy (b, \"wrong wrung wrang\", 17) = (\"%s\", %u)\n", b, u);
+  u = xine_private_strlcpy (b, "wrong wrung wrang", 10);
+  printf ("xine_private_strlcpy (b, \"wrong wrung wrang\", 10) = (\"%s\", %u)\n", b, u);
+  u = xine_private_strlcpy (b, "wrong wrung wrang", 1);
+  printf ("xine_private_strlcpy (b, \"wrong wrung wrang\", 1) = (\"%s\", %u)\n", b, u);
+  return 0;
+}
+#endif
+
