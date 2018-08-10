@@ -237,6 +237,7 @@ config_values_t *_x_config_init (void);
 int _x_config_change_opt(config_values_t *config, const char *opt);
 
 void _x_config_unregister_cb_class_d (config_values_t *config, void *callback_data) XINE_PROTECTED;
+void _x_config_unregister_cb_class_p (config_values_t *config, xine_config_cb_t callback) XINE_PROTECTED;
 
 #ifdef __cplusplus
 }
