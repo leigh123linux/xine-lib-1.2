@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2000-2017 the xine project
+ * Copyright (C) 2000-2018 the xine project
  *
  * This file is part of xine, a free video player.
  *
@@ -57,8 +57,6 @@
 #include <stddef.h> /* size_t */
 #include <xine/attributes.h>
 
-#include "array.h"
-
 /* Array type */
 typedef struct xine_sarray_s xine_sarray_t;
 
@@ -70,6 +68,19 @@ xine_sarray_t *xine_sarray_new(size_t initial_size, xine_sarray_comparator_t com
 
 /* Destructor */
 void xine_sarray_delete(xine_sarray_t *sarray) XINE_PROTECTED;
+
+/* Set mode */
+/* For both add() and binary_search(): if there are multiple matching indices,
+ * select 1 of them randomly. That is, the order of matches does not matter, just be fast. */
+#define XINE_SARRAY_MODE_DEFAULT 0x00000000
+/* select the first match. */
+#define XINE_SARRAY_MODE_FIRST   0x80000000
+/* select the last match (+ 1 if found). */
+#define XINE_SARRAY_MODE_LAST    0x40000000
+/* For add(): if there is a match already, dont add another copy,
+ * and return ~(found_index) instead. */
+#define XINE_SARRAY_MODE_UNIQUE  0x20000000
+void xine_sarray_set_mode (xine_sarray_t *sarray, unsigned int mode) XINE_PROTECTED;
 
 /* Returns the number of element stored in the array */
 size_t xine_sarray_size(const xine_sarray_t *sarray) XINE_PROTECTED;
