@@ -803,6 +803,9 @@ static int tdaan_port_open (
   post_audio_port_t *port = (post_audio_port_t *)port_gen;
   post_plugin_tdaan_t *this = (post_plugin_tdaan_t *)port->post;
 
+  if (!this->metronom)
+    this->metronom = _x_metronom_init (1, 0, stream->xine);
+
   _x_post_rewire (&this->post);
   _x_post_inc_usage (port);
 
@@ -1002,17 +1005,18 @@ static void tdaan_port_put_buffer (
 static void tdaan_dispose (post_plugin_t *this_gen) {
   post_plugin_tdaan_t *this = (post_plugin_tdaan_t *)this_gen;
 
-  if (_x_post_dispose (this_gen)) {
+  if (!_x_post_dispose (this_gen))
+    return;
+
+  if (this->metronom)
     this->metronom->exit (this->metronom);
-    free (this);
-  }
+  free (this);
 }
 
 /* plugin class functions */
 static post_plugin_t *tdaan_open_plugin (
   post_class_t *class_gen, int inputs, xine_audio_port_t **audio_target, xine_video_port_t **video_target) {
 
-  post_class_tdaan_t   *class = (post_class_tdaan_t *)class_gen;
   post_plugin_tdaan_t  *this  = calloc (1, sizeof (post_plugin_tdaan_t));
   post_in_t          *input;
   post_out_t         *output;
@@ -1024,11 +1028,10 @@ static post_plugin_t *tdaan_open_plugin (
     return NULL;
   }
 
+  (void)class_gen;
   (void)inputs;
 
   _x_post_init (&this->post, 1, 0);
-
-  this->metronom = _x_metronom_init (1, 0, class->xine);
 
   this->vo_port = video_target[0];
 

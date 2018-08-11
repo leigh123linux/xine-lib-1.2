@@ -221,6 +221,9 @@ static int fftgraph_port_open(xine_audio_port_t *port_gen, xine_stream_t *stream
 
   /* printf("fftgraph_port_open, port_gen=%p, stream=%p, this=%p\n", port_gen, stream, this); */
 
+  if (!this->metronom)
+    this->metronom = _x_metronom_init (1, 0, stream->xine);
+
   _x_post_rewire(&this->post);
   _x_post_inc_usage(port);
 
@@ -402,13 +405,14 @@ static void fftgraph_dispose(post_plugin_t *this_gen)
 {
   post_plugin_fftgraph_t *this = (post_plugin_fftgraph_t *)this_gen;
 
-  if (_x_post_dispose(this_gen)) {
+  if (!_x_post_dispose(this_gen))
+    return;
 
+  if (this->metronom)
     this->metronom->exit(this->metronom);
 
-    _x_freep(&this->buf.mem);
-    free(this);
-  }
+  _x_freep(&this->buf.mem);
+  free(this);
 }
 
 /* plugin class functions */
@@ -416,7 +420,6 @@ static post_plugin_t *fftgraph_open_plugin(post_class_t *class_gen, int inputs,
 					 xine_audio_port_t **audio_target,
 					 xine_video_port_t **video_target)
 {
-  post_class_fftgraph_t  *class = (post_class_fftgraph_t *)class_gen;
   post_plugin_fftgraph_t *this  = calloc(1, sizeof(post_plugin_fftgraph_t));
   post_in_t              *input;
   post_out_t             *output;
@@ -428,11 +431,10 @@ static post_plugin_t *fftgraph_open_plugin(post_class_t *class_gen, int inputs,
     return NULL;
   }
 
+  (void)class_gen;
   (void)inputs;
 
   _x_post_init(&this->post, 1, 0);
-
-  this->metronom = _x_metronom_init(1, 0, class->xine);
 
   this->vo_port = video_target[0];
 
