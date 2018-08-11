@@ -44,5 +44,5 @@ const plugin_info_t xine_plugin_info[] EXPORTED = {
   { PLUGIN_POST, 10, "fftscope",        XINE_VERSION_CODE, &gen_special_info, &fftscope_init_plugin },
   { PLUGIN_POST, 10, "fftgraph",        XINE_VERSION_CODE, &gen_special_info, &fftgraph_init_plugin },
   { PLUGIN_POST, 10, "tdaudioanalyzer", XINE_VERSION_CODE, &gen_special_info, &tdaan_init_plugin },
-  { PLUGIN_NONE, 0, "", 0, NULL, NULL }
+  { PLUGIN_NONE, 0, NULL, 0, NULL, NULL }
 };

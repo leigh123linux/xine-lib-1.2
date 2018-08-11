@@ -47,5 +47,5 @@ const plugin_info_t xine_plugin_info[] EXPORTED = {
   { PLUGIN_POST, 10, "pp",        XINE_VERSION_CODE, &gen_special_info, &pp_init_plugin },
 #endif
   { PLUGIN_POST, 10, "unsharp",   XINE_VERSION_CODE, &gen_special_info, &unsharp_init_plugin },
-  { PLUGIN_NONE, 0, "", 0, NULL, NULL }
+  { PLUGIN_NONE, 0, NULL, 0, NULL, NULL }
 };

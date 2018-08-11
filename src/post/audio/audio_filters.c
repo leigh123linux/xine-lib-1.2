@@ -42,5 +42,5 @@ const plugin_info_t xine_plugin_info[] EXPORTED = {
   { PLUGIN_POST, 10, "upmix_mono", XINE_VERSION_CODE, &gen_special_info,        &upmix_mono_init_plugin },
   { PLUGIN_POST, 10, "stretch",    XINE_VERSION_CODE, &gen_special_info,        &stretch_init_plugin },
   { PLUGIN_POST, 10, "volnorm",    XINE_VERSION_CODE, &gen_special_info,        &volnorm_init_plugin },
-  { PLUGIN_NONE, 0,  "",           0,                 NULL,                     NULL }
+  { PLUGIN_NONE, 0,  NULL,         0,                 NULL,                     NULL }
 };

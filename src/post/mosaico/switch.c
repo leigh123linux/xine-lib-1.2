@@ -243,5 +243,5 @@ static const post_info_t switch_special_info = {
 const plugin_info_t xine_plugin_info[] EXPORTED = {
   /* type, API, "name", version, special_info, init_function */
   { PLUGIN_POST, 10, "switch", XINE_VERSION_CODE, &switch_special_info, &switch_init_plugin },
-  { PLUGIN_NONE, 0, "", 0, NULL, NULL }
+  { PLUGIN_NONE, 0, NULL, 0, NULL, NULL }
 };
