@@ -100,7 +100,6 @@ END_PARAM_DESCR( param_descr )
 
 typedef struct post_class_deinterlace_s {
   post_class_t class;
-  deinterlace_parameters_t init_param;
 
   deinterlace_methods_t    methods;
 } post_class_deinterlace_t;
@@ -148,9 +147,7 @@ static void _flush_frames(post_plugin_deinterlace_t *this)
   this->tvtime_changed++;
 }
 
-static int set_parameters (xine_post_t *this_gen, void *param_gen) {
-  post_plugin_deinterlace_t *this = (post_plugin_deinterlace_t *)this_gen;
-  deinterlace_parameters_t *param = (deinterlace_parameters_t *)param_gen;
+static int _set_parameters (post_plugin_deinterlace_t *this, const deinterlace_parameters_t *param) {
 
   pthread_mutex_lock (&this->lock);
 
@@ -175,6 +172,13 @@ static int set_parameters (xine_post_t *this_gen, void *param_gen) {
   pthread_mutex_unlock (&this->lock);
 
   return 1;
+}
+
+static int set_parameters (xine_post_t *this_gen, void *param_gen) {
+  post_plugin_deinterlace_t *this = (post_plugin_deinterlace_t *)this_gen;
+  const deinterlace_parameters_t *param = (const deinterlace_parameters_t *)param_gen;
+
+  return _set_parameters(this, param);
 }
 
 static int get_parameters (xine_post_t *this_gen, void *param_gen) {
@@ -350,18 +354,6 @@ static void *deinterlace_init_plugin(xine_t *xine, const void *data)
   }
   enum_methods[i+1] = NULL;
 
-
-  /* Some default values */
-  class->init_param.method                     = 1; /* First (plugin) method available */
-  class->init_param.enabled                    = 1;
-  class->init_param.pulldown                   = 1; /* vektor */
-  class->init_param.pulldown_error_wait        = 60; /* about one second */
-  class->init_param.framerate_mode             = 0; /* full */
-  class->init_param.judder_correction          = 1;
-  class->init_param.use_progressive_frame_flag = 1;
-  class->init_param.chroma_filter              = 0;
-  class->init_param.cheap_mode                 = 0;
-
   return &class->class;
 }
 
@@ -374,14 +366,27 @@ static post_plugin_t *deinterlace_open_plugin(post_class_t *class_gen, int input
   post_in_t                 *input;
   xine_post_in_t            *input_api;
   post_out_t                *output;
-  post_class_deinterlace_t  *class = (post_class_deinterlace_t *)class_gen;
   post_video_port_t *port;
+
+  /* Some default values */
+  static const deinterlace_parameters_t init_param = {
+    .method                     = 1, /* First (plugin) method available */
+    .enabled                    = 1,
+    .pulldown                   = 1, /* vektor */
+    .pulldown_error_wait        = 60, /* about one second */
+    .framerate_mode             = 0, /* full */
+    .judder_correction          = 1,
+    .use_progressive_frame_flag = 1,
+    .chroma_filter              = 0,
+    .cheap_mode                 = 0,
+  };
 
   if (!this || !video_target || !video_target[0]) {
     free(this);
     return NULL;
   }
 
+  (void)class_gen;
   (void)inputs;
   (void)audio_target;
 
@@ -394,7 +399,7 @@ static post_plugin_t *deinterlace_open_plugin(post_class_t *class_gen, int input
 
   pthread_mutex_init (&this->lock, NULL);
 
-  set_parameters (&this->post.xine_post, &class->init_param);
+  _set_parameters (this, &init_param);
 
   port = _x_post_intercept_video_port(&this->post, video_target[0], &input, &output);
   /* replace with our own get_frame function */
