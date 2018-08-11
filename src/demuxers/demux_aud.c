@@ -233,11 +233,6 @@ static int demux_aud_seek (demux_plugin_t *this_gen,
   this->status = DEMUX_OK;
   _x_demux_flush_engine (this->stream);
 
-  /* if input is non-seekable, do not proceed with the rest of this
-   * seek function */
-  if (!INPUT_IS_SEEKABLE(this->input))
-    return this->status;
-
   /* no seeking yet */
   return this->status;
 }
