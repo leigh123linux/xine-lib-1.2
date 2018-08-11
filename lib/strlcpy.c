@@ -14,6 +14,8 @@
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ *
+ * x86 asm version by Torsten Jager <t.jager@gmx.de>
  */
 
 #include "config.h"
@@ -34,34 +36,45 @@ xine_private_strlcpy(char *dst, const char *src, size_t siz)
 
   size_t a;
 
+#if defined(ARCH_X86_32)
+#  define DO_P(what) what"l"
+#  define REG_P(reg) "%"reg
+#elif defined(ARCH_X86_X32)
+#  define DO_P(what) what"q"
+#  define REG_P(reg) "%q"reg
+#else /* ARCH_X86_64 */
+#  define DO_P(what) what"q"
+#  define REG_P(reg) "%"reg
+#endif
+
   __asm__ __volatile__ (
     "cld"
     "\n\ttestl\t%%ecx, %%ecx"
-    "\n\tmov\t%0, %3"
+    "\n\t"DO_P("mov")"\t"REG_P("0")", "REG_P("3")
     "\n\tje\t3f"
     "\n1:"
-    "\n\ttestb\t$255, (%0)"
+    "\n\ttestb\t$255, ("REG_P("0")")"
     "\n\tmovsb"
     "\n\tje\t4f"
     "\n\tsubl\t$1, %%ecx"
     "\n\tje\t2f"
-    "\n\ttestb\t$255, (%0)"
+    "\n\ttestb\t$255, ("REG_P("0")")"
     "\n\tmovsb"
     "\n\tje\t4f"
     "\n\tsubl\t$1, %%ecx"
     "\n\tjne\t1b"
     "\n2:"
-    "\n\tmovb\t$0, -1(%1)"
+    "\n\tmovb\t$0, -1("REG_P("1")")"
     "\n3:"
-    "\n\ttestb\t$255, (%0)"
-    "\n\tlea\t1(%0), %0"
+    "\n\ttestb\t$255, ("REG_P("0")")"
+    "\n\t"DO_P("lea")"\t1("REG_P("0")"), "REG_P("0")
     "\n\tje\t4f"
-    "\n\ttestb\t$255, (%0)"
-    "\n\tlea\t1(%0), %0"
+    "\n\ttestb\t$255, ("REG_P("0")")"
+    "\n\t"DO_P("lea")"\t1("REG_P("0")"), "REG_P("0")
     "\n\tjne\t3b"
     "\n4:"
-    "\n\tneg\t%3"
-    "\n\tlea\t-1(%0,%3), %3"
+    "\n\t"DO_P("neg")"\t"REG_P("3")
+    "\n\t"DO_P("lea")"\t-1("REG_P("0")","REG_P("3")"), "REG_P("3")
     : "=S" (src), "=D" (dst), "=c" (siz), "=a" (a)
     : "0"  (src), "1"  (dst), "2"  (siz)
     : "cc", "memory"
