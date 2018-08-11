@@ -662,7 +662,7 @@ static void goom_port_put_buffer (xine_audio_port_t *port_gen,
 
 /* plugin catalog information */
 static const post_info_t goom_special_info = {
-  XINE_POST_TYPE_AUDIO_VISUALIZATION
+  .type = XINE_POST_TYPE_AUDIO_VISUALIZATION,
 };
 
 const plugin_info_t xine_plugin_info[] EXPORTED = {

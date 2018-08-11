@@ -31,7 +31,9 @@
 #include "audio_filters.h"
 
 
-static const post_info_t gen_special_info = { XINE_POST_TYPE_AUDIO_FILTER };
+static const post_info_t gen_special_info = {
+  .type = XINE_POST_TYPE_AUDIO_FILTER,
+};
 
 
 const plugin_info_t xine_plugin_info[] EXPORTED = {

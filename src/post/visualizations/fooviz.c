@@ -307,7 +307,9 @@ static void *fooviz_init_plugin(xine_t *xine, const void *data)
 }
 
 /* plugin catalog information */
-static const post_info_t fooviz_special_info = { XINE_POST_TYPE_AUDIO_VISUALIZATION };
+static const post_info_t fooviz_special_info = {
+  .type = XINE_POST_TYPE_AUDIO_VISUALIZATION,
+};
 
 const plugin_info_t xine_plugin_info[] EXPORTED = {
   /* type, API, "name", version, special_info, init_function */

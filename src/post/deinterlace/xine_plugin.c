@@ -931,7 +931,9 @@ static int deinterlace_draw(vo_frame_t *frame, xine_stream_t *stream)
 }
 
 /* plugin catalog information */
-static const post_info_t deinterlace_special_info = { XINE_POST_TYPE_VIDEO_FILTER };
+static const post_info_t deinterlace_special_info = {
+  .type = XINE_POST_TYPE_VIDEO_FILTER,
+};
 
 const plugin_info_t xine_plugin_info[] EXPORTED = {
   /* type, API, "name", version, special_info, init_function */

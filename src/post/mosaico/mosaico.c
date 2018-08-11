@@ -466,7 +466,9 @@ static void *mosaico_init_plugin(xine_t *xine, const void *data)
 }
 
 /* plugin catalog information */
-static const post_info_t mosaico_special_info = { XINE_POST_TYPE_VIDEO_COMPOSE };
+static const post_info_t mosaico_special_info = {
+  .type = XINE_POST_TYPE_VIDEO_COMPOSE,
+};
 
 const plugin_info_t xine_plugin_info[] EXPORTED = {
   /* type, API, "name", version, special_info, init_function */
