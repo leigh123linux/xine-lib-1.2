@@ -759,7 +759,7 @@ static void *init_plugin (xine_t *xine, const void *data) {
  * exported plugin catalog entry
  */
 static const demuxer_info_t demux_info_playlist = {
-  10                       /* priority */
+  .priority = 10,
 };
 
 const plugin_info_t xine_plugin_info[] EXPORTED = {

@@ -34,67 +34,67 @@
  */
 
 static const demuxer_info_t demux_info_aac = {
-  -1                      /* priority */
+  .priority = -1,
 };
 
 static const demuxer_info_t demux_info_ac3 = {
-  8                       /* priority */
+  .priority = 8,
 };
 
 static const demuxer_info_t demux_info_aud = {
-  -2                      /* priority */
+  .priority = -2,
 };
 
 static const demuxer_info_t demux_info_aiff = {
-  10                       /* priority */
+  .priority = 10,
 };
 
 static const demuxer_info_t demux_info_cdda = {
-  6                        /* priority */
+  .priority = 6,
 };
 
 static const demuxer_info_t demux_info_dts = {
-  8                        /* priority */
+  .priority = 8,
 };
 
 static const demuxer_info_t demux_info_flac = {
-  10                       /* priority */
+  .priority = 10,
 };
 
 static const demuxer_info_t demux_info_mpgaudio = {
-  0                       /* priority */
+  .priority = 0,
 };
 
 static const demuxer_info_t demux_info_mpc = {
-  1                        /* priority */
+  .priority = 1,
 };
 
 static const demuxer_info_t demux_info_realaudio = {
-  10                       /* priority */
+  .priority = 10,
 };
 
 static const demuxer_info_t demux_info_shn = {
-  0                        /* priority */
+  .priority = 0,
 };
 
 static const demuxer_info_t demux_info_snd = {
-  10                       /* priority */
+  .priority = 10,
 };
 
 static const demuxer_info_t demux_info_tta = {
-  10                       /* priority */
+  .priority = 10,
 };
 
 static const demuxer_info_t demux_info_voc = {
-  10                       /* priority */
+  .priority = 10,
 };
 
 static const demuxer_info_t demux_info_vox = {
-  10                       /* priority */
+  .priority = 10,
 };
 
 static const demuxer_info_t demux_info_wav = {
-  6                        /* priority */
+  .priority = 6,
 };
 
 const plugin_info_t xine_plugin_info[] EXPORTED = {

@@ -251,7 +251,7 @@ static void *init_class (xine_t *xine, const void *data) {
  * exported plugin catalog entry
  */
 static const demuxer_info_t demux_info_image = {
-  11                       /* priority */
+  .priority = 11,
 };
 
 const plugin_info_t xine_plugin_info[] EXPORTED = {

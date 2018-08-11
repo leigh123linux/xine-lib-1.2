@@ -34,47 +34,47 @@
  */
 
 static const demuxer_info_t demux_info_eawve = {
-  10                       /* priority */
+  .priority = 10,
 };
 
 static const demuxer_info_t demux_info_idcin = {
-  10                       /* priority */
+  .priority = 10,
 };
 
 static const demuxer_info_t demux_info_ipmovie = {
-  10                       /* priority */
+  .priority = 10,
 };
 
 static const demuxer_info_t demux_info_vqa = {
-  10                       /* priority */
+  .priority = 10,
 };
 
 static const demuxer_info_t demux_info_wc3movie = {
-  10                       /* priority */
+  .priority = 10,
 };
 
 static const demuxer_info_t demux_info_roq = {
-  10                       /* priority */
+  .priority = 10,
 };
 
 static const demuxer_info_t demux_info_str = {
-  10                       /* priority */
+  .priority = 10,
 };
 
 static const demuxer_info_t demux_info_film = {
-  10                       /* priority */
+  .priority = 10,
 };
 
 static const demuxer_info_t demux_info_smjpeg = {
-  10                       /* priority */
+  .priority = 10,
 };
 
 static const demuxer_info_t demux_info_fourxm = {
-  10                       /* priority */
+  .priority = 10,
 };
 
 static const demuxer_info_t demux_info_vmd = {
-  10                       /* priority */
+  .priority = 10,
 };
 
 const plugin_info_t xine_plugin_info[] EXPORTED = {

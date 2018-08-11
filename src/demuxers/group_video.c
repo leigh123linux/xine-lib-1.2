@@ -32,21 +32,21 @@
 /*
  * exported plugin catalog entries
  */
-static const demuxer_info_t demux_info_avi        = { 10 /* priority */ };
-static const demuxer_info_t demux_info_elem       = { 0 /* priority */ };
-static const demuxer_info_t demux_info_flv        = { 10 /* priority */ };
-static const demuxer_info_t demux_info_iff        = { 10 /* priority */ };
-static const demuxer_info_t demux_info_mpeg       = { 9 /* priority */ };
-static const demuxer_info_t demux_info_mpeg_block = { 10 /* priority */ };
-static const demuxer_info_t demux_info_mpeg_pes   = { 10 /* priority */ };
-static const demuxer_info_t demux_info_matroska   = { 10 /* priority */ };
-static const demuxer_info_t demux_info_qt         = { 10 /* priority */ };
-static const demuxer_info_t demux_info_raw_dv     = { 1 /* priority */ };
-static const demuxer_info_t demux_info_real       = { 10 /* priority */ };
-static const demuxer_info_t demux_info_ts         = { 10 /* priority */ };
-static const demuxer_info_t demux_info_vc1es      = { 0 /* priority */ };
-static const demuxer_info_t demux_info_yuv_frames = { 0 /* priority */ };
-static const demuxer_info_t demux_info_yuv4mpeg2  = { 10 /* priority */ };
+static const demuxer_info_t demux_info_avi        = { .priority = 10 };
+static const demuxer_info_t demux_info_elem       = { .priority = 0  };
+static const demuxer_info_t demux_info_flv        = { .priority = 10 };
+static const demuxer_info_t demux_info_iff        = { .priority = 10 };
+static const demuxer_info_t demux_info_mpeg       = { .priority = 9  };
+static const demuxer_info_t demux_info_mpeg_block = { .priority = 10 };
+static const demuxer_info_t demux_info_mpeg_pes   = { .priority = 10 };
+static const demuxer_info_t demux_info_matroska   = { .priority = 10 };
+static const demuxer_info_t demux_info_qt         = { .priority = 10 };
+static const demuxer_info_t demux_info_raw_dv     = { .priority = 1  };
+static const demuxer_info_t demux_info_real       = { .priority = 10 };
+static const demuxer_info_t demux_info_ts         = { .priority = 10 };
+static const demuxer_info_t demux_info_vc1es      = { .priority = 0  };
+static const demuxer_info_t demux_info_yuv_frames = { .priority = 0  };
+static const demuxer_info_t demux_info_yuv4mpeg2  = { .priority = 10 };
 
 
 const plugin_info_t xine_plugin_info[] EXPORTED = {

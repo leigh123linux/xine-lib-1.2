@@ -391,7 +391,7 @@ static void *demux_mod_init_plugin (xine_t *xine, const void *data) {
 }
 
 static const demuxer_info_t demux_info_mod = {
-  10                       /* priority */
+  .priority = 10,
 };
 
 const plugin_info_t xine_plugin_info[] EXPORTED = {
