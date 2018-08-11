@@ -33,11 +33,6 @@
 #include "visualizations.h"
 
 typedef struct {
-  post_class_t  post_class;
-  xine_t       *xine;
-} post_class_tdaan_t;
-
-typedef struct {
   int x, y, width, height;
   /* these are in dB (0..-64) */
   int rms;
@@ -1058,21 +1053,17 @@ static post_plugin_t *tdaan_open_plugin (
 /* plugin class initialization function */
 void *tdaan_init_plugin (xine_t *xine, const void *data) {
 
-  post_class_tdaan_t *class = calloc (1, sizeof (post_class_tdaan_t));
+  static const post_class_t post_tdaan_class = {
+    .open_plugin     = tdaan_open_plugin,
+    .identifier      = "tdaudioanalyzer",
+    .description     = N_("Time Domain Audio Analyzer Visualisation"),
+    .dispose         = NULL,
+  };
 
-  if (!class)
-    return NULL;
-
+  (void)xine;
   (void)data;
 
-  class->post_class.open_plugin     = tdaan_open_plugin;
-  class->post_class.identifier      = "tdaudioanalyzer";
-  class->post_class.description     = N_("Time Domain Audio Analyzer Visualisation");
-  class->post_class.dispose         = default_post_class_dispose;
-
-  class->xine                       = xine;
-
-  return class;
+  return (void *)&post_tdaan_class;
 }
 
 

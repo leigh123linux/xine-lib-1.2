@@ -42,14 +42,6 @@
 
 typedef struct post_plugin_oscope_s post_plugin_oscope_t;
 
-typedef struct post_class_oscope_s post_class_oscope_t;
-
-struct post_class_oscope_s {
-  post_class_t        post_class;
-
-  xine_t             *xine;
-};
-
 struct post_plugin_oscope_s {
   post_plugin_t post;
 
@@ -365,19 +357,15 @@ static post_plugin_t *oscope_open_plugin(post_class_t *class_gen, int inputs,
 /* plugin class initialization function */
 void *oscope_init_plugin(xine_t *xine, const void *data)
 {
-  post_class_oscope_t *class = calloc(1, sizeof(post_class_oscope_t));
+  static const post_class_t post_oscope_class = {
+    .open_plugin     = oscope_open_plugin,
+    .identifier      = "Oscilloscope",
+    .description     = N_("Oscilloscope"),
+    .dispose         = NULL,
+  };
 
-  if (!class)
-    return NULL;
-
+  (void)xine;
   (void)data;
 
-  class->post_class.open_plugin     = oscope_open_plugin;
-  class->post_class.identifier      = "Oscilloscope";
-  class->post_class.description     = N_("Oscilloscope");
-  class->post_class.dispose         = default_post_class_dispose;
-
-  class->xine                       = xine;
-
-  return &class->post_class;
+  return (void*)&post_oscope_class;
 }

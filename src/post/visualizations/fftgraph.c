@@ -49,14 +49,6 @@
 
 typedef struct post_plugin_fftgraph_s post_plugin_fftgraph_t;
 
-typedef struct post_class_fftgraph_s post_class_fftgraph_t;
-
-struct post_class_fftgraph_s {
-  post_class_t        post_class;
-
-  xine_t             *xine;
-};
-
 struct post_plugin_fftgraph_s {
   post_plugin_t post;
 
@@ -461,19 +453,15 @@ static post_plugin_t *fftgraph_open_plugin(post_class_t *class_gen, int inputs,
 /* plugin class initialization function */
 void *fftgraph_init_plugin(xine_t *xine, const void *data)
 {
-  post_class_fftgraph_t *class = calloc(1, sizeof(post_class_fftgraph_t));
+  static const post_class_t post_fftgraph_class = {
+    .open_plugin     = fftgraph_open_plugin,
+    .identifier      = "fftgraph",
+    .description     = N_("fftgraph Visualization Post Plugin"),
+    .dispose         = NULL,
+  };
 
-  if (!class)
-    return NULL;
-
+  (void)xine;
   (void)data;
 
-  class->post_class.open_plugin     = fftgraph_open_plugin;
-  class->post_class.identifier      = "fftgraph";
-  class->post_class.description     = N_("fftgraph Visualization Post Plugin");
-  class->post_class.dispose         = default_post_class_dispose;
-
-  class->xine                       = xine;
-
-  return class;
+  return (void *)&post_fftgraph_class;
 }
