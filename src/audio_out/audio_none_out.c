@@ -259,6 +259,6 @@ static const ao_info_t ao_info_none = {
 const plugin_info_t xine_plugin_info[] EXPORTED = {
   /* type, API, "name", version, special_info, init_function */
   AO_NONE_CATALOG,
-  { PLUGIN_NONE, 0, "", 0, NULL, NULL }
+  { PLUGIN_NONE, 0, NULL, 0, NULL, NULL }
 };
 #endif

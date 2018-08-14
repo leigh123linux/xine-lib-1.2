@@ -509,6 +509,6 @@ const plugin_info_t xine_plugin_info[] EXPORTED = {
   /* type, API, "name", version, special_info, init_function */
   { PLUGIN_AUDIO_OUT, AO_OUT_FS_IFACE_VERSION, "FusionSound",
     XINE_VERSION_CODE, &ao_info_fusionsound, init_class },
-  { PLUGIN_NONE, 0, "", 0, NULL, NULL }
+  { PLUGIN_NONE, 0, NULL, 0, NULL, NULL }
 };
 
