@@ -83,8 +83,6 @@ struct sdl_driver_s {
 
   vo_driver_t        vo_driver;
 
-  config_values_t   *config;
-
   int                hw_accel;
 
   SDL_Surface       *surface;
@@ -471,7 +469,7 @@ static void sdl_dispose (vo_driver_t * this_gen) {
 static vo_driver_t *open_plugin (video_driver_class_t *class_gen, const void *visual_gen) {
 
   sdl_class_t          *class = (sdl_class_t*) class_gen;
-  config_values_t      *config = class->config;
+  config_values_t      *config = class->xine->config;
   sdl_driver_t         *this;
 
   const SDL_VideoInfo  *vidInfo;
@@ -504,7 +502,7 @@ static vo_driver_t *open_plugin (video_driver_class_t *class_gen, const void *vi
 
   this->sdlflags = SDL_HWSURFACE | SDL_RESIZABLE;
 
-  this->hw_accel = class->config->register_bool(class->config,
+  this->hw_accel = config->register_bool(config,
     "video.device.sdl_hw_accel", 1,
     _("use hardware acceleration if available"),
     _("When your system supports it, hardware acceleration provided by your "
@@ -546,7 +544,6 @@ static vo_driver_t *open_plugin (video_driver_class_t *class_gen, const void *vi
     this->bpp = 16;
   }
 
-  this->config            = class->config;
   pthread_mutex_init (&this->mutex, NULL);
 
   this->capabilities      = VO_CAP_YUY2 | VO_CAP_YV12;
@@ -607,7 +604,6 @@ static void *init_class (xine_t *xine, const void *visual_gen) {
   this->driver_class.description      = N_("xine video output plugin using the Simple Direct Media Layer");
   this->driver_class.dispose          = default_video_driver_class_dispose;
 
-  this->config                        = xine->config;
   this->xine                          = xine;
 
   this->visual_type                   = XINE_VISUAL_TYPE_X11;

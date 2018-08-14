@@ -147,8 +147,6 @@ struct vidix_driver_s {
 typedef struct vidix_class_s {
   video_driver_class_t driver_class;
 
-  config_values_t     *config;
-
   VDL_HANDLE          vidix_handler;
   vidix_capability_t  vidix_cap;
 
@@ -965,7 +963,7 @@ static void vidix_exit (vo_driver_t *this_gen) {
 
 static vidix_driver_t *open_plugin (video_driver_class_t *class_gen) {
   vidix_class_t        *class = (vidix_class_t *) class_gen;
-  config_values_t      *config = class->config;
+  config_values_t      *config = class->xine->config;
   vidix_driver_t       *this;
   int                   err;
 
@@ -1147,7 +1145,6 @@ static void *init_class (xine_t *xine, const void *visual_gen) {
 	  _("video_out_vidix: using driver: %s by %s\n"), this->vidix_cap.name, this->vidix_cap.author);
 
   this->xine              = xine;
-  this->config            = xine->config;
 
   return this;
 }

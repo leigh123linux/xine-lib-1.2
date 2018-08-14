@@ -279,7 +279,6 @@ struct xxmc_driver_s {
 typedef struct {
   video_driver_class_t driver_class;
 
-  config_values_t     *config;
   xine_t              *xine;
 } xxmc_class_t;
 

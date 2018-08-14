@@ -82,7 +82,6 @@ typedef struct stk_driver_s {
     vo_driver_t        vo_driver;
 
     /* stk private data */
-    config_values_t*   config;
     surface_t*         surface;
     xine_panel_t*      xine_panel;
     uint8_t            bpp;              /* do we need this ? */
@@ -97,7 +96,6 @@ typedef struct stk_driver_s {
 
 typedef struct {
     video_driver_class_t  driver_class;
-    config_values_t*      config;
     xine_t               *xine;
 } stk_class_t;
 
@@ -378,7 +376,7 @@ static void stk_dispose (vo_driver_t * this_gen) {
      * since we didn't create the surface */
 
     _x_alphablend_free(&this->alphablend_extra_data);
-    _x_vo_scale_cleanup (&this->sc, this->config);
+    _x_vo_scale_cleanup (&this->sc, this->xine->config);
 
     free(this);
 }
@@ -397,7 +395,6 @@ static vo_driver_t *open_plugin(video_driver_class_t *class_gen, const void *vis
     _x_alphablend_init(&this->alphablend_extra_data, class->xine);
 
     /* populate the video output driver members */
-    this->config     = class->config;
     this->xine       = class->xine;
     this->xine_panel = (xine_panel_t*)visual_gen;
     this->surface    = stk_xine_panel_surface(this->xine_panel);
@@ -409,7 +406,7 @@ static vo_driver_t *open_plugin(video_driver_class_t *class_gen, const void *vis
     /* this->capabilities = stk_surface_formats(this->surface); */
     this->capabilities = VO_CAP_YUY2 | VO_CAP_YV12;
     /* FIXME: what does this do ? */
-    _x_vo_scale_init( &this->sc, 0, 0, this->config );
+    _x_vo_scale_init( &this->sc, 0, 0, this->xine->config );
     this->sc.gui_x      = stk_xine_panel_x(this->xine_panel);
     this->sc.gui_y      = stk_xine_panel_y(this->xine_panel);
     this->sc.gui_width  = stk_xine_panel_width(this->xine_panel);
@@ -455,7 +452,6 @@ static void *init_class (xine_t *xine, const void *visual_gen) {
     this->driver_class.description      = N_("xine video output plugin using the Libstk Surface Set-top Toolkit");
     this->driver_class.dispose          = default_video_driver_class_dispose;
 
-    this->config                        = xine->config;
     this->xine                          = xine;
 
     return this;

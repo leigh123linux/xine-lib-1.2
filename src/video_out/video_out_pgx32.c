@@ -138,7 +138,6 @@ typedef struct {
   video_driver_class_t vo_driver_class;
 
   xine_t *xine;
-  config_values_t *config;
 } pgx32_driver_class_t;
 
 typedef struct {
@@ -815,7 +814,7 @@ static vo_driver_t *pgx32_init_driver(video_driver_class_t *class_gen, const voi
   this->vo_driver.redraw_needed        = pgx32_redraw_needed;
   this->vo_driver.dispose              = pgx32_dispose;
 
-  _x_vo_scale_init(&this->vo_scale, 0, 0, class->config);
+  _x_vo_scale_init(&this->vo_scale, 0, 0, class->xine->config);
   this->vo_scale.user_ratio      = XINE_VO_ASPECT_AUTO;
   this->vo_scale.user_data       = ((x11_visual_t *)visual_gen)->user_data;
   this->vo_scale.frame_output_cb = ((x11_visual_t *)visual_gen)->frame_output_cb;
@@ -867,7 +866,6 @@ static void *pgx32_init_class(xine_t *xine, const void *visual_gen)
   class->vo_driver_class.dispose         = default_video_driver_class_dispose;
 
   class->xine   = xine;
-  class->config = xine->config;
 
   return class;
 }

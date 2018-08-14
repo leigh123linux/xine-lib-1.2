@@ -333,8 +333,6 @@ typedef struct {
   uint32_t           display_width;
   uint32_t           display_height;
 
-  config_values_t   *config;
-
   int                 ovl_changed;
   int                 num_ovls;
   int                 old_num_ovls;
@@ -2695,7 +2693,6 @@ static vo_driver_t *vdpau_open_plugin (video_driver_class_t *class_gen, const vo
   this->zoom_y              = 100;
 
   this->xine                    = class->xine;
-  this->config                  = config;
 
   this->vo_driver.get_capabilities     = vdpau_get_capabilities;
   this->vo_driver.alloc_frame          = vdpau_alloc_frame;

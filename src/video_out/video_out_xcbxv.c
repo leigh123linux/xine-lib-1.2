@@ -111,8 +111,6 @@ struct xv_driver_s {
 
   vo_driver_t        vo_driver;
 
-  config_values_t   *config;
-
   /* xcb / xv related stuff */
   xcb_connection_t  *connection;
   xcb_screen_t      *screen;
@@ -152,7 +150,6 @@ struct xv_driver_s {
 typedef struct {
   video_driver_class_t driver_class;
 
-  config_values_t     *config;
   xine_t              *xine;
 } xv_class_t;
 
@@ -1223,22 +1220,23 @@ static void xv_prop_update (void *prop_gen, xine_cfg_entry_t *entry) {
 
 static void xv_prop_conf (xv_driver_t *this, int property,
   const char *config_name, const char *config_desc, const char *config_help) {
+  config_values_t *config = this->xine->config;
   xv_property_t *prop = &this->props[property];
   cfg_entry_t *entry;
 
   /* is this a boolean property ? */
   if ((prop->min == 0) && (prop->max == 1))
-    this->config->register_bool (this->config, config_name, prop->value,
+    config->register_bool (config, config_name, prop->value,
       config_desc, config_help, 20, xv_prop_update, prop);
   else
-    this->config->register_range (this->config, config_name, prop->value,
+    config->register_range (config, config_name, prop->value,
       prop->min, prop->max, config_desc, config_help, 20, xv_prop_update, prop);
 
-  entry = this->config->lookup_entry (this->config, config_name);
+  entry = config->lookup_entry (config, config_name);
 
   if ((entry->num_value < prop->min) || (entry->num_value > prop->max)) {
-    this->config->update_num (this->config, config_name, ((prop->min + prop->max) >> 1));
-    entry = this->config->lookup_entry (this->config, config_name);
+    config->update_num (config, config_name, ((prop->min + prop->max) >> 1));
+    entry = config->lookup_entry (config, config_name);
   }
 
   prop->entry = entry;
@@ -1376,7 +1374,7 @@ static xcb_xv_port_t xv_autodetect_port(xv_driver_t *this,
 
 static vo_driver_t *open_plugin(video_driver_class_t *class_gen, const void *visual_gen) {
   xv_class_t           *class = (xv_class_t *) class_gen;
-  config_values_t      *config = class->config;
+  config_values_t      *config = class->xine->config;
   xv_driver_t          *this;
   int                   i;
   const xcb_visual_t   *visual = (const xcb_visual_t *) visual_gen;
@@ -1413,7 +1411,6 @@ static vo_driver_t *open_plugin(video_driver_class_t *class_gen, const void *vis
   this->connection   = visual->connection;
   this->screen       = visual->screen;
   this->window       = visual->window;
-  this->config       = config;
 
   /*
    * check for Xvideo support
@@ -1643,8 +1640,8 @@ static vo_driver_t *open_plugin(video_driver_class_t *class_gen, const void *vis
   if ((this->props[VO_PROP_BRIGHTNESS].atom != XCB_NONE) &&
     (this->props[VO_PROP_CONTRAST].atom != XCB_NONE)) {
     static const char * const xv_fullrange_conf_labels[] = {"Off", "Normal", NULL};
-    this->fullrange_mode = this->xine->config->register_enum (
-      this->xine->config,
+    this->fullrange_mode = config->register_enum (
+      config,
       "video.output.xv_fullrange",
       0,
       (char **)xv_fullrange_conf_labels,
@@ -1663,8 +1660,8 @@ static vo_driver_t *open_plugin(video_driver_class_t *class_gen, const void *vis
   }
 
 #ifdef DEBUG_EMU
-  this->emu_yuy2 = this->xine->config->register_bool (
-    this->xine->config,
+  this->emu_yuy2 = config->register_bool (
+    config,
     "video.output.xv_debug_emu",
     0,
     _("Force emulating yuy2"),
@@ -1709,7 +1706,6 @@ static void *init_class (xine_t *xine, const void *visual_gen) {
   this->driver_class.description     = N_("xine video output plugin using the MIT X video extension");
   this->driver_class.dispose         = default_video_driver_class_dispose;
 
-  this->config                       = xine->config;
   this->xine                         = xine;
 
   return this;

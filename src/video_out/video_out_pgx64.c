@@ -201,7 +201,6 @@ typedef struct {
   video_driver_class_t vo_driver_class;
 
   xine_t *xine;
-  config_values_t *config;
 } pgx64_driver_class_t;
 
 typedef struct {
@@ -1340,6 +1339,7 @@ static const vo_info_t vo_info_pgx64 = {
 static vo_driver_t *pgx64_init_driver(video_driver_class_t *class_gen, const void *visual_gen)
 {
   pgx64_driver_class_t *class = (pgx64_driver_class_t *)(void *)class_gen;
+  config_values_t *config = class->xine->config;
   pgx64_driver_t *this;
   struct fbgattr attr;
   long page_size;
@@ -1365,7 +1365,7 @@ static vo_driver_t *pgx64_init_driver(video_driver_class_t *class_gen, const voi
   this->vo_driver.redraw_needed        = pgx64_redraw_needed;
   this->vo_driver.dispose              = pgx64_dispose;
 
-  _x_vo_scale_init(&this->vo_scale, 0, 0, class->config);
+  _x_vo_scale_init(&this->vo_scale, 0, 0, config);
   this->vo_scale.user_ratio      = XINE_VO_ASPECT_AUTO;
   this->vo_scale.user_data       = ((x11_visual_t *)visual_gen)->user_data;
   this->vo_scale.frame_output_cb = ((x11_visual_t *)visual_gen)->frame_output_cb;
@@ -1378,13 +1378,13 @@ static vo_driver_t *pgx64_init_driver(video_driver_class_t *class_gen, const voi
   this->drawable = ((x11_visual_t *)visual_gen)->d;
 
   if (!setup_dga(this)) {
-    _x_vo_scale_cleanup (&this->vo_scale, class->xine->config);
+    _x_vo_scale_cleanup (&this->vo_scale, config);
     free(this);
     return NULL;
   }
 
   if (ioctl(this->devfd, FBIOGATTR, &attr) < 0) {
-    xprintf(this->class->xine, XINE_VERBOSITY_LOG, _("video_out_pgx64: Error: ioctl failed (FBIOGATTR)\n"));
+    xprintf(class->xine, XINE_VERBOSITY_LOG, _("video_out_pgx64: Error: ioctl failed (FBIOGATTR)\n"));
     cleanup_dga(this);
     close(this->devfd);
     free(this);
@@ -1396,7 +1396,7 @@ static vo_driver_t *pgx64_init_driver(video_driver_class_t *class_gen, const voi
   switch (this->fb_type) {
     case FB_TYPE_M64:
       if ((this->vbase = mmap(NULL, (((M64_VRAM_MMAPLEN + page_size - 1) / page_size) * page_size), PROT_READ | PROT_WRITE, MAP_SHARED, this->devfd, 0)) == MAP_FAILED) {
-        xprintf(this->class->xine, XINE_VERBOSITY_DEBUG, "video_out_pgx64: Error: unable to memory map framebuffer\n");
+        xprintf(class->xine, XINE_VERBOSITY_DEBUG, "video_out_pgx64: Error: unable to memory map framebuffer\n");
         cleanup_dga(this);
         close(this->devfd);
         free(this);
@@ -1450,7 +1450,7 @@ static vo_driver_t *pgx64_init_driver(video_driver_class_t *class_gen, const voi
       break;
   }
 
-  this->colour_key  = class->config->register_num(this->class->config, "video.device.pgx64_colour_key", 1,
+  this->colour_key  = config->register_num(config, "video.device.pgx64_colour_key", 1,
     _("video overlay colour key"),
     _("The colour key is used to tell the graphics card where it can overlay the video image. "
       "Try using different values if you see the video showing through other windows."),
@@ -1458,11 +1458,11 @@ static vo_driver_t *pgx64_init_driver(video_driver_class_t *class_gen, const voi
   update_colour_key_rgb(this);
   this->brightness  = 0;
   this->saturation  = 16;
-  this->chromakey_en = class->config->register_bool(this->class->config, "video.device.pgx64_chromakey_en", 0,
+  this->chromakey_en = config->register_bool(config, "video.device.pgx64_chromakey_en", 0,
     _("enable chroma keying"),
     _("Draw OSD graphics on top of the overlay colour key rather than blend them into each frame."),
     20, pgx64_config_changed, this);
-  this->multibuf_en = class->config->register_bool(this->class->config, "video.device.pgx64_multibuf_en", 1,
+  this->multibuf_en = config->register_bool(config, "video.device.pgx64_multibuf_en", 1,
     _("enable multi-buffering"),
     _("Multi buffering increases performance at the expense of using more graphics memory."),
     20, pgx64_config_changed, this);
@@ -1489,7 +1489,6 @@ static void *pgx64_init_class(xine_t *xine, const void *visual_gen)
   class->vo_driver_class.dispose         = default_video_driver_class_dispose;
 
   class->xine   = xine;
-  class->config = xine->config;
 
   return class;
 }

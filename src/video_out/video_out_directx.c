@@ -149,7 +149,6 @@ typedef struct {
 
 typedef struct {
   video_driver_class_t     driver_class;
-  config_values_t         *config;
   xine_t                  *xine;
 } directx_class_t;
 
@@ -1276,6 +1275,7 @@ static vo_driver_t *open_plugin (video_driver_class_t *class_gen, const void *vi
   const win32_visual_t *win32_visual = visual;
   directx_class_t      *class = (directx_class_t *)class_gen;
   win32_driver_t       *win32_driver;
+  config_values_t      *config = class->xine->config;
 
   win32_driver = calloc(1, sizeof(win32_driver_t));
   if (!win32_driver || !visual)
@@ -1307,7 +1307,7 @@ static vo_driver_t *open_plugin (video_driver_class_t *class_gen, const void *vi
   win32_driver->vo_driver.dispose               = win32_exit;
   win32_driver->vo_driver.redraw_needed         = win32_redraw_needed;
 
-  win32_driver->hwaccel = class->config->register_enum(class->config,
+  win32_driver->hwaccel = config->register_enum(config,
     "video.directx.hwaccel", 0, (char**)config_hwaccel_values,
     _("HW acceleration level"),
     _("Possible values (default full):\n\n"
@@ -1359,7 +1359,6 @@ static void *init_class (xine_t *xine, const void *visual_gen) {
   directx->driver_class.dispose         = default_video_driver_class_dispose;
 
   directx->xine                         = xine;
-  directx->config                       = xine->config;
 
   return directx;
 }

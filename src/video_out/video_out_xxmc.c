@@ -2467,7 +2467,7 @@ static void checkXvMCCap( xxmc_driver_t *this, XvPortID xv_port)
 
 static vo_driver_t *open_plugin (video_driver_class_t *class_gen, const void *visual_gen) {
   xxmc_class_t           *class = (xxmc_class_t *) class_gen;
-  config_values_t      *config = class->config;
+  config_values_t      *config = class->xine->config;
   xxmc_driver_t          *this;
   int                   i, formats;
   XvAttribute          *attr;
@@ -2861,7 +2861,6 @@ static void *init_class (xine_t *xine, const void *visual_gen) {
   this->driver_class.description     = N_("xine video output plugin using the MIT X video extension");
   this->driver_class.dispose         = default_video_driver_class_dispose;
 
-  this->config                       = xine->config;
   this->xine                         = xine;
 
   return this;

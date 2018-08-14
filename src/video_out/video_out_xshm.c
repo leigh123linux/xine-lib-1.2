@@ -143,7 +143,6 @@ typedef struct {
 typedef struct {
   video_driver_class_t driver_class;
 
-  config_values_t     *config;
   xine_t              *xine;
 } xshm_class_t;
 
@@ -1219,7 +1218,7 @@ static const char *visual_class_name(Visual *visual) {
 /* expects XINE_VISUAL_TYPE_X11_2 with configurable locking */
 static vo_driver_t *xshm_open_plugin_2 (video_driver_class_t *class_gen, const void *visual_gen) {
   xshm_class_t         *class   = (xshm_class_t *) class_gen;
-  config_values_t      *config  = class->config;
+  config_values_t      *config  = class->xine->config;
   const x11_visual_t   *visual  = (const x11_visual_t *) visual_gen;
   xshm_driver_t        *this;
   XWindowAttributes     attribs;
@@ -1451,7 +1450,6 @@ static void *xshm_init_class (xine_t *xine, const void *visual_gen) {
   this->driver_class.identifier      = "XShm";
   this->driver_class.description     = N_("xine video output plugin using the MIT X shared memory extension");
   this->driver_class.dispose         = default_video_driver_class_dispose;
-  this->config                       = xine->config;
   this->xine                         = xine;
 
   return this;

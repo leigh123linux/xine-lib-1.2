@@ -217,7 +217,6 @@ typedef struct {
   video_driver_class_t driver_class;
 
   Display             *display;
-  config_values_t     *config;
   XvPortID             xv_port;
   XvAdaptorInfo       *adaptor_info;
   unsigned int         adaptor_num;
@@ -1318,7 +1317,7 @@ static void xvmc_update_XV_DOUBLE_BUFFER(void *this_gen, xine_cfg_entry_t *entry
 
 static vo_driver_t *open_plugin (video_driver_class_t *class_gen, const void *visual_gen) {
   xvmc_class_t         *class   = (xvmc_class_t *) class_gen;
-  config_values_t      *config  = class->config;
+  config_values_t      *config  = class->xine->config;
   xvmc_driver_t        *this    = NULL;
   unsigned int          i, formats;
   XvPortID              xv_port = class->xv_port;
@@ -1713,7 +1712,6 @@ static void *init_class (xine_t *xine, const void *visual_gen) {
   this->driver_class.dispose         = dispose_class;
 
   this->display                      = display;
-  this->config                       = xine->config;
   this->xv_port                      = xv_port;
   this->adaptor_info                 = adaptor_info;
   this->adaptor_num                  = adaptor_num;

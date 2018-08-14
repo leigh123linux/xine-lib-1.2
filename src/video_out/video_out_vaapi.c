@@ -184,8 +184,6 @@ struct vaapi_driver_s {
 
   vo_driver_t        vo_driver;
 
-  config_values_t   *config;
-
   /* X11 related stuff */
   Display            *display;
   int                 screen;
@@ -548,7 +546,6 @@ fail:
 typedef struct {
   video_driver_class_t driver_class;
 
-  config_values_t     *config;
   xine_t              *xine;
 } vaapi_class_t;
 
@@ -1871,6 +1868,7 @@ static void vaapi_check_capability (vaapi_driver_t *this,
          const char *config_name,
          const char *config_desc,
          const char *config_help) {
+  config_values_t *config = this->xine->config;
   int int_default = 0;
   cfg_entry_t *entry;
 
@@ -1883,25 +1881,25 @@ static void vaapi_check_capability (vaapi_driver_t *this,
   if (config_name) {
     /* is this a boolean property ? */
     if ((attr.min_value == 0) && (attr.max_value == 1)) {
-      this->config->register_bool (this->config, config_name, int_default,
+      config->register_bool (config, config_name, int_default,
            config_desc,
            config_help, 20, vaapi_property_callback, &this->props[property]);
 
     } else {
-      this->config->register_range (this->config, config_name, int_default,
+      config->register_range (config, config_name, int_default,
             this->props[property].min, this->props[property].max,
             config_desc,
             config_help, 20, vaapi_property_callback, &this->props[property]);
     }
 
-    entry = this->config->lookup_entry (this->config, config_name);
+    entry = config->lookup_entry (config, config_name);
     if((entry->num_value < this->props[property].min) ||
        (entry->num_value > this->props[property].max)) {
 
-      this->config->update_num(this->config, config_name,
+      config->update_num(config, config_name,
              ((this->props[property].min + this->props[property].max) >> 1));
 
-      entry = this->config->lookup_entry (this->config, config_name);
+      entry = config->lookup_entry (config, config_name);
     }
 
     this->props[property].entry = entry;
@@ -4041,7 +4039,7 @@ static vo_driver_t *vaapi_open_plugin (video_driver_class_t *class_gen, const vo
   vaapi_class_t           *class  = (vaapi_class_t *) class_gen;
   const x11_visual_t      *visual = (const x11_visual_t *) visual_gen;
   vaapi_driver_t          *this;
-  config_values_t         *config = class->config;
+  config_values_t         *config = class->xine->config;
   XSetWindowAttributes    xswa;
   unsigned long           xswa_mask;
   XWindowAttributes       wattr;
@@ -4060,7 +4058,6 @@ static vo_driver_t *vaapi_open_plugin (video_driver_class_t *class_gen, const vo
   pthread_mutex_init(&this->vaapi_lock, NULL);
   pthread_mutex_lock(&this->vaapi_lock);
 
-  this->config                  = config;
   this->xine                    = class->xine;
 
   this->display                 = visual->display;
@@ -4296,7 +4293,6 @@ static void *vaapi_init_class (xine_t *xine, const void *visual_gen) {
   this->driver_class.identifier      = "vaapi";
   this->driver_class.description     = N_("xine video output plugin using VAAPI");
   this->driver_class.dispose         = default_video_driver_class_dispose;
-  this->config                       = xine->config;
   this->xine                         = xine;
 
   return this;
