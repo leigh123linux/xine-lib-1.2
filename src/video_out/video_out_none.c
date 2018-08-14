@@ -178,10 +178,9 @@ static void vo_none_update_frame_format(vo_driver_t *vo_driver, vo_frame_t *vo_f
 
 static void vo_none_display_frame(vo_driver_t *vo_driver, vo_frame_t *vo_frame) {
   /* vo_none_driver_t  *driver = (vo_none_driver_t *)vo_driver; */
-  vo_none_frame_t   *frame = (vo_none_frame_t *)vo_frame;
 
   (void)vo_driver;
-  frame->vo_frame.free(&frame->vo_frame);
+  vo_frame->free(vo_frame);
 }
 
 static int vo_none_get_property(vo_driver_t *vo_driver, int property) {
