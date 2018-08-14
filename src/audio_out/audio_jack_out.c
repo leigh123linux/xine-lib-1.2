@@ -84,7 +84,6 @@ typedef struct jack_driver_s
 typedef struct
 {
   audio_driver_class_t	driver_class;
-  config_values_t	*config;
   xine_t		*xine;
 } jack_class_t;
 
@@ -703,7 +702,7 @@ static ao_driver_t *open_jack_plugin (audio_driver_class_t *class_gen,
 				      const void *data)
 {
   jack_class_t *class = (jack_class_t *) class_gen;
-  config_values_t *config = class->config;
+  config_values_t *config = class->xine->config;
   jack_driver_t *this;
 
   jack_client_t *client;
@@ -891,7 +890,6 @@ static void *init_class (xine_t *xine, const void *data) {
     this->driver_class.description     = N_("xine output plugin for JACK Audio Connection Kit");
     this->driver_class.dispose         = default_audio_driver_class_dispose;
 
-    this->config = xine->config;
     this->xine   = xine;
 
     fprintf(stderr, "jack init_class returning %p\n", (void *)this);

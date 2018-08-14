@@ -96,7 +96,6 @@ typedef struct coreaudio_driver_s {
 typedef struct {
   audio_driver_class_t  driver_class;
 
-  config_values_t      *config;
   xine_t               *xine;
 } coreaudio_class_t;
 
@@ -526,7 +525,6 @@ static ao_driver_t *open_plugin (audio_driver_class_t *class_gen,
                                  const void *data) {
 
   coreaudio_class_t     *class = (coreaudio_class_t *) class_gen;
-  /* config_values_t *config = class->config; */
   coreaudio_driver_t    *this;
 
   lprintf ("open_plugin called\n");
@@ -576,7 +574,6 @@ static void *init_class (xine_t *xine, const void *data) {
   this->driver_class.description     = N_("xine output plugin for Coreaudio/Mac OS X");
   this->driver_class.dispose         = default_audio_driver_class_dispose;
 
-  this->config = xine->config;
   this->xine   = xine;
 
   return this;

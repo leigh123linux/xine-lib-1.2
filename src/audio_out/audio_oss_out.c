@@ -120,8 +120,6 @@ typedef struct oss_driver_s {
   int              capabilities;
   int              mode;
 
-  config_values_t *config;
-
   int32_t          output_sample_rate, input_sample_rate;
   int32_t          output_sample_k_rate;
   uint32_t         num_channels;
@@ -150,7 +148,6 @@ typedef struct oss_driver_s {
 typedef struct {
   audio_driver_class_t  driver_class;
 
-  config_values_t      *config;
   xine_t               *xine;
 } oss_class_t;
 
@@ -711,7 +708,7 @@ static void oss_speaker_arrangement_cb (void *user_data,
 static ao_driver_t *open_plugin (audio_driver_class_t *class_gen, const void *data) {
 
   oss_class_t     *class = (oss_class_t *) class_gen;
-  config_values_t *config = class->config;
+  config_values_t *config = class->xine->config;
   oss_driver_t    *this;
   int              caps;
   int              audio_fd;
@@ -1061,7 +1058,6 @@ static ao_driver_t *open_plugin (audio_driver_class_t *class_gen, const void *da
   this->audio_fd              = -1;
   this->xine                  = class->xine;
 
-  this->config                        = config;
   this->ao_driver.get_capabilities    = ao_oss_get_capabilities;
   this->ao_driver.get_property        = ao_oss_get_property;
   this->ao_driver.set_property        = ao_oss_set_property;
@@ -1129,7 +1125,6 @@ static void *init_class (xine_t *xine, const void *data) {
   this->driver_class.description     = N_("xine audio output plugin using oss-compliant audio devices/drivers");
   this->driver_class.dispose         = default_audio_driver_class_dispose;
 
-  this->config = xine->config;
   this->xine   = xine;
 
   return this;

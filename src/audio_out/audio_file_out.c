@@ -96,7 +96,6 @@ typedef struct ao_file_driver_s {
 typedef struct {
 	audio_driver_class_t  driver_class;
 
-	config_values_t      *config;
 	xine_t               *xine;
 } ao_file_class_t;
 
@@ -349,7 +348,6 @@ static ao_driver_t *ao_file_open_plugin (audio_driver_class_t *class_gen,
 				 const void *data) {
 
 	ao_file_class_t     *class = (ao_file_class_t *) class_gen;
-	/* config_values_t *config = class->config; */
 	ao_file_driver_t    *this;
 
 	lprintf ("open_plugin called\n");
@@ -401,7 +399,6 @@ static void *ao_file_init_class (xine_t *xine, const void *data) {
 	this->driver_class.description     = N_("xine file audio output plugin");
 	this->driver_class.dispose         = default_audio_driver_class_dispose;
 
-	this->config = xine->config;
 	this->xine   = xine;
 
 	return this;

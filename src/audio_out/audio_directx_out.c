@@ -110,7 +110,6 @@ typedef struct {
 
 typedef struct {
   audio_driver_class_t  driver_class;
-  config_values_t      *config;
   xine_t               *xine;
 } audiox_class_t;
 
@@ -835,7 +834,6 @@ static void *init_class (xine_t *xine, const void *data) {
   audiox->driver_class.dispose         = default_audio_driver_class_dispose;
 
   audiox->xine                         = xine;
-  audiox->config                       = xine->config;
 
   lprintf("init_class() Exit! Returning audiox=%p\n", (void *)audiox);
 
