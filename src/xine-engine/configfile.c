@@ -1305,7 +1305,7 @@ void xine_config_save (xine_t *xine, const char *filename) {
   if (f_config) {
 
 #define XCS_BUF_SIZE 4096
-    char buf[XCS_BUF_SIZE], *q;
+    char buf[XCS_BUF_SIZE], *q, *e = buf + XCS_BUF_SIZE - 28 - 4 * XINE_MAX_INT32_STR;
     cfg_entry_t *entry;
 
     q = buf;
@@ -1323,28 +1323,18 @@ void xine_config_save (xine_t *xine, const char *filename) {
     pthread_mutex_lock(&this->config_lock);
 
     for (entry = this->first; entry; entry = entry->next) {
-      char *e;
-      size_t klen;
 
       if (!entry->key[0]) /* deleted key */
         continue;
 
       lprintf ("saving key '%s'\n", entry->key);
 
-      klen = strlen (entry->key);
-      /* paranoia... */
-      e = buf + XCS_BUF_SIZE - 28 - 4 * XINE_MAX_INT32_STR;
-      if (klen > (size_t)(e - q))
-        klen = e - q;
-      e -= klen;
-
       q = buf;
       if (entry->description) {
-        size_t len = strlen (entry->description);
-        if (len > (size_t)(e - q))
-          len = e - q;
         memcpy (q, "# ", 2); q += 2;
-        memcpy (q, entry->description, len); q += len;
+        q += strlcpy (q, entry->description, e - q);
+        if (q >= e)
+          q = e - 1;
         *q++ = '\n';
       }
 
@@ -1357,12 +1347,13 @@ void xine_config_save (xine_t *xine, const char *filename) {
          * a) multiple frontends may share the same config file, and
          * b) we dont always load all plugins for performance. */
 #else
-        size_t len = strlen (entry->unknown_value);
-        memcpy (q, entry->key, klen); q += klen;
+        q += strlcpy (q, entry->key, e - q);
+        if (q >= e)
+          q = e - 1;
         *q++ = ':';
-        if (len > (size_t)(e - q))
-          len = e - q;
-        memcpy (q, entry->unknown_value, len); q += len;
+        q += strlcpy (q, entry->unknown_value, e - q);
+        if (q >= e)
+          q = e - 1;
         memcpy (q, "\n\n", 2); q += 2;
 #endif
 	break;
@@ -1380,31 +1371,31 @@ void xine_config_save (xine_t *xine, const char *filename) {
         *q++ = '\n';
         if (entry->num_value == entry->num_default)
           *q++ = '#';
-        memcpy (q, entry->key, klen); q += klen;
+        q += strlcpy (q, entry->key, e - q);
+        if (q >= e)
+          q = e - 1;
         *q++ = ':';
         xine_int32_2str (&q, entry->num_value);
         memcpy (q, "\n\n", 2); q += 2;
 	break;
 
-      case XINE_CONFIG_TYPE_STRING: {
-        size_t len;
+      case XINE_CONFIG_TYPE_STRING:
         memcpy (q, "# string, default:  ", 20); q += 19;
-        len = strlen (entry->str_default);
-        if (len > (size_t)(e - q))
-          len = e - q;
-        memcpy (q, entry->str_default, len); q += len;
+        q += strlcpy (q, entry->str_default, e - q);
+        if (q >= e)
+          q = e - 1;
         *q++ = '\n';
         if (!strcmp (entry->str_value, entry->str_default))
           *q++ = '#';
-        memcpy (q, entry->key, klen); q += klen;
+        q += strlcpy (q, entry->key, e - q);
+        if (q >= e)
+          q = e - 1;
         *q++ = ':';
-        len = strlen (entry->str_value);
-        if (len > (size_t)(e - q))
-          len = e - q;
-        memcpy (q, entry->str_value, len); q += len;
+        q += strlcpy (q, entry->str_value, e - q);
+        if (q >= e)
+          q = e - 1;
         memcpy (q, "\n\n", 2); q += 2;
 	break;
-      }
 
       case XINE_CONFIG_TYPE_ENUM:
         do {
@@ -1412,11 +1403,12 @@ void xine_config_save (xine_t *xine, const char *filename) {
           memcpy (q, "# { ", 4); q += 3;
           value = entry->enum_values;
           while (*value) {
-            size_t len = strlen (*value);
-            if (len + 2 > (size_t)(e - q))
-              break;
             *q++ = ' ';
-            memcpy (q, *value, len); q += len;
+            q += strlcpy (q, *value, e - q);
+            if (q >= e) {
+              q = e - 1;
+              break;
+            }
             *q++ = ' ';
             value++;
           }
@@ -1426,15 +1418,15 @@ void xine_config_save (xine_t *xine, const char *filename) {
           if ((entry->num_value >= 0) &&
               (entry->num_value < entry->range_max) &&
               entry->enum_values[entry->num_value]) {
-            size_t len;
             if (entry->num_value == entry->num_default)
               *q++ = '#';
-            memcpy (q, entry->key, klen); q += klen;
+            q += strlcpy (q, entry->key, e - q);
+            if (q >= e)
+              q = e - 1;
             *q++ = ':';
-            len = strlen (entry->enum_values[entry->num_value]);
-            if (len > (size_t)(e - q))
-              break;
-            memcpy (q, entry->enum_values[entry->num_value], len); q += len;
+            q += strlcpy (q, entry->enum_values[entry->num_value], e - q);
+            if (q >= e)
+              q = e - 1;
             *q++ = '\n';
           }
         } while (0);
