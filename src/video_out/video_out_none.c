@@ -168,8 +168,9 @@ static void vo_none_update_frame_format(vo_driver_t *vo_driver, vo_frame_t *vo_f
 
     default:
       xprintf (this->xine, XINE_VERBOSITY_DEBUG, "video_out_none: unknown frame format %04x)\n", format);
+      frame->width = 0;
+      frame->vo_frame.width = 0;
       break;
-
     }
   }
 
