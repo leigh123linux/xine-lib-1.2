@@ -485,10 +485,15 @@ static mmal_overlay_t *overlay_new(mmal_driver_t *this,
                                    int x, int y, int width, int height, int layer,
 				   uint32_t *argb) {
 
-  mmal_overlay_t      *ovl = calloc(1, sizeof(mmal_overlay_t));
+  mmal_overlay_t      *ovl;
   uint32_t             image_handle;
   static VC_DISPMANX_ALPHA_T  alpha;
   VC_RECT_T            src_rect;
+
+  ovl = calloc(1, sizeof(*ovl));
+  if (!ovl)
+    return NULL;
+
   //src_width &= 31;
   //dst_width &= 15;
   ovl->src_pitch = src_pitch;
@@ -897,6 +902,8 @@ static void *init_class (xine_t *xine, const void *visual_gen) {
   mmal_class_t      *this;
 
   this = (mmal_class_t*) calloc(1, sizeof(mmal_class_t));
+  if (!this)
+    return NULL;
 
   this->driver_class.open_plugin      = open_plugin;
   this->driver_class.identifier       = "MMAL";

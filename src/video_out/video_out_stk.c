@@ -446,6 +446,8 @@ static void *init_class (xine_t *xine, const void *visual_gen) {
     //printf("video_out_stk: init_class()\n");
 
     this = calloc(1, sizeof(stk_class_t));
+    if (!this)
+      return NULL;
 
     this->driver_class.open_plugin      = open_plugin;
     this->driver_class.identifier       = "stk";

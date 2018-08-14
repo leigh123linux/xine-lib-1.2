@@ -4286,9 +4286,14 @@ static vo_driver_t *vaapi_open_plugin (video_driver_class_t *class_gen, const vo
  * class functions
  */
 static void *vaapi_init_class (xine_t *xine, const void *visual_gen) {
-  vaapi_class_t        *this = (vaapi_class_t *) calloc(1, sizeof(vaapi_class_t));
+  vaapi_class_t *this;
 
   (void)visual_gen;
+
+  this = calloc(1, sizeof(*this));
+  if (!this)
+    return NULL;
+
   this->driver_class.open_plugin     = vaapi_open_plugin;
   this->driver_class.identifier      = "vaapi";
   this->driver_class.description     = N_("xine video output plugin using VAAPI");

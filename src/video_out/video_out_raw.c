@@ -528,9 +528,14 @@ static vo_driver_t *raw_open_plugin (video_driver_class_t *class_gen, const void
 
 static void *raw_init_class (xine_t *xine, const void *visual_gen)
 {
-  raw_class_t *this = (raw_class_t *) calloc(1, sizeof(raw_class_t));
+  raw_class_t *this;
 
   (void)visual_gen;
+
+  this = calloc(1, sizeof(*this));
+  if (!this)
+    return NULL;
+
   this->driver_class.open_plugin     = raw_open_plugin;
   this->driver_class.identifier      = "raw";
   this->driver_class.description     = _("xine video output plugin passing raw data to supplied callback");

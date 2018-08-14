@@ -3276,9 +3276,14 @@ static vo_driver_t *vdpau_open_plugin (video_driver_class_t *class_gen, const vo
 
 static void *vdpau_init_class (xine_t *xine, const void *visual_gen)
 {
-  vdpau_class_t *this = (vdpau_class_t *) calloc(1, sizeof(vdpau_class_t));
+  vdpau_class_t *this;
 
   (void)visual_gen;
+
+  this = calloc(1, sizeof(*this));
+  if (!this)
+    return NULL;
+
   this->driver_class.open_plugin     = vdpau_open_plugin;
   this->driver_class.identifier      = "vdpau";
   this->driver_class.description     = N_("xine video output plugin using VDPAU hardware acceleration");

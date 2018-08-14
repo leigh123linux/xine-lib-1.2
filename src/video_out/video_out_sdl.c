@@ -597,7 +597,9 @@ static void *init_class (xine_t *xine, const void *visual_gen) {
   }
   SDL_QuitSubSystem (SDL_INIT_VIDEO);
 
-  this = (sdl_class_t*) calloc(1, sizeof(sdl_class_t));
+  this = calloc(1, sizeof(*this));
+  if (!this)
+    return NULL;
 
   this->driver_class.open_plugin      = open_plugin;
   this->driver_class.identifier       = "SDL";

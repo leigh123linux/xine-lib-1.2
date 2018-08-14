@@ -2184,7 +2184,9 @@ static void *opengl_init_class (xine_t *xine, const void *visual_gen) {
       return NULL;
   }
 
-  this = (opengl_class_t *) calloc (1, sizeof(opengl_class_t));
+  this = calloc (1, sizeof(*this));
+  if (!this)
+    return NULL;
 
   this->driver_class.open_plugin     = opengl_open_plugin;
   this->driver_class.identifier      = "opengl";

@@ -1080,9 +1080,14 @@ error:
 
 static void *fb_init_class(xine_t *xine, const void *visual_gen)
 {
-  fb_class_t *this = calloc(1, sizeof(fb_class_t));
+  fb_class_t *this;
 
   (void)visual_gen;
+
+  this = calloc(1, sizeof(*this));
+  if (!this)
+    return NULL;
+
   this->driver_class.open_plugin     = fb_open_plugin;
   this->driver_class.identifier      = "fb";
   this->driver_class.description     = N_("Xine video output plugin using the Linux frame buffer device");
