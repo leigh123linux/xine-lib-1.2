@@ -1485,5 +1485,5 @@ const plugin_info_t xine_plugin_info[] EXPORTED = {
   /* type, API, "name", version, special_info, init_function */
   { PLUGIN_VIDEO_OUT, 22, "xshm", XINE_VERSION_CODE, &vo_info_xshm, xshm_init_class },
   { PLUGIN_VIDEO_OUT, 22, "xshm", XINE_VERSION_CODE, &vo_info_xshm_2, xshm_init_class_2 },
-  { PLUGIN_NONE, 0, "", 0, NULL, NULL }
+  { PLUGIN_NONE, 0, NULL, 0, NULL, NULL }
 };

@@ -874,5 +874,5 @@ static void *pgx32_init_class(xine_t *xine, const void *visual_gen)
 
 const plugin_info_t xine_plugin_info[] EXPORTED = {
   {PLUGIN_VIDEO_OUT, 22, "pgx32", XINE_VERSION_CODE, &vo_info_pgx32, pgx32_init_class},
-  {PLUGIN_NONE, 0, "", 0, NULL, NULL}
+  {PLUGIN_NONE, 0, NULL, 0, NULL, NULL}
 };

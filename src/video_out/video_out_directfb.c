@@ -2189,6 +2189,6 @@ const plugin_info_t xine_plugin_info[] EXPORTED = {
   { PLUGIN_VIDEO_OUT, VIDEO_OUT_DRIVER_IFACE_VERSION, "XDirectFB",
     XINE_VERSION_CODE, &vo_info_directfb_x11_2, init_class_x11_2 },
 #endif
-  { PLUGIN_NONE, 0, "", 0, NULL, NULL }
+  { PLUGIN_NONE, 0, NULL, 0, NULL, NULL }
 };
 

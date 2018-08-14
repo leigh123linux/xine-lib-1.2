@@ -1332,5 +1332,5 @@ const plugin_info_t xine_plugin_info[] EXPORTED = {
 #ifdef HAVE_FB
   { PLUGIN_VIDEO_OUT, 22, "vidixfb", XINE_VERSION_CODE, &vo_info_vidixfb, vidixfb_init_class },
 #endif
-  { PLUGIN_NONE, 0, "", 0, NULL, NULL }
+  { PLUGIN_NONE, 0, NULL, 0, NULL, NULL }
 };
