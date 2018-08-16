@@ -1975,7 +1975,7 @@ const plugin_info_t xine_plugin_info[] EXPORTED = {
   /* type, API, "name", version, special_info, init_function */
   { PLUGIN_INPUT | PLUGIN_MUST_PRELOAD, 18, "v4l_radio", XINE_VERSION_CODE, NULL, init_radio_class },
   { PLUGIN_INPUT | PLUGIN_MUST_PRELOAD, 18, "v4l_tv", XINE_VERSION_CODE, NULL, init_video_class },
-  { PLUGIN_NONE, 0, "", 0, NULL, NULL }
+  { PLUGIN_NONE, 0, NULL, 0, NULL, NULL }
 };
 
 /*

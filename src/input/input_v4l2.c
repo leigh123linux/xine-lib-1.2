@@ -461,5 +461,5 @@ const input_info_t input_info_v4l2 = {
 const plugin_info_t xine_plugin_info[] EXPORTED = {
     /* type, API, "name", version, special_info, init_function */
     { PLUGIN_INPUT, 18, "v4l2", XINE_VERSION_CODE, &input_info_v4l2, v4l2_init_class },
-    { PLUGIN_NONE, 0, "", 0, NULL, NULL }
+    { PLUGIN_NONE, 0, NULL, 0, NULL, NULL }
 };

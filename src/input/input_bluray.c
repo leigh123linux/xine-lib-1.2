@@ -2021,5 +2021,5 @@ const plugin_info_t xine_plugin_info[] EXPORTED = {
   /* type, API, "name", version, special_info, init_function */
   { PLUGIN_INPUT, 18, "BLURAY", XINE_VERSION_CODE, NULL, bluray_init_plugin },
   { PLUGIN_INPUT, 18, "BD",     XINE_VERSION_CODE, NULL, bd_init_plugin },
-  { PLUGIN_NONE, 0, "", 0, NULL, NULL }
+  { PLUGIN_NONE, 0, NULL, 0, NULL, NULL }
 };

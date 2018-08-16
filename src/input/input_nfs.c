@@ -582,5 +582,5 @@ const input_info_t input_info_nfs = {
 const plugin_info_t xine_plugin_info[] EXPORTED = {
   /* type, API, "name", version, special_info, init_function */
   { PLUGIN_INPUT, 18, "NFS", XINE_VERSION_CODE, &input_info_nfs, nfs_init_class },
-  { PLUGIN_NONE, 0, "", 0, NULL, NULL }
+  { PLUGIN_NONE, 0, NULL, 0, NULL, NULL }
 };

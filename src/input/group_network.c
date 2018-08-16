@@ -45,6 +45,6 @@ const plugin_info_t xine_plugin_info[] EXPORTED = {
 #ifdef HAVE_TLS
   { PLUGIN_INPUT,                       18, "ftpes", XINE_VERSION_CODE, NULL, input_ftpes_init_class },
 #endif
-  { PLUGIN_NONE, 0, "", 0, NULL, NULL }
+  { PLUGIN_NONE, 0, NULL, 0, NULL, NULL }
 };
 

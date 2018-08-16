@@ -770,6 +770,6 @@ static void *init_class (xine_t *xine, const void *data) {
 const plugin_info_t xine_plugin_info[] EXPORTED = {
   /* type, API, "name", version, special_info, init_function */
   { PLUGIN_INPUT, 18, "rtp", XINE_VERSION_CODE, NULL, init_class },
-  { PLUGIN_NONE, 0, "", 0, NULL, NULL }
+  { PLUGIN_NONE, 0, NULL, 0, NULL, NULL }
 };
 

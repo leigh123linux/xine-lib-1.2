@@ -380,7 +380,7 @@ static void *stdin_plugin_init_class (xine_t *xine, const void *data) {
 const plugin_info_t xine_plugin_info[] EXPORTED = {
   /* type, API, "name", version, special_info, init_function */
   INPUT_STDIN_CATALOG,
-  { PLUGIN_NONE, 0, "", 0, NULL, NULL }
+  { PLUGIN_NONE, 0, NULL, 0, NULL, NULL }
 };
 #endif
 
