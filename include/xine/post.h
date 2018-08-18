@@ -435,7 +435,6 @@ int _x_post_audio_port_unref (xine_audio_port_t *port_gen);
 
 #define START_PARAM_DESCR( param_t ) \
 typedef param_t temp_t; \
-static param_t temp_s; \
 static xine_post_api_parameter_t temp_p[] = {
 
 #ifndef offsetof
@@ -443,14 +442,14 @@ static xine_post_api_parameter_t temp_p[] = {
 #endif
 
 #define PARAM_ITEM( param_type, var, enumv, min, max, readonly, descr ) \
-{ param_type, #var, sizeof(temp_s.var), \
+{ param_type, #var, sizeof(((temp_t*)0)->var),                        \
   offsetof(temp_t, var), enumv, min, max, readonly, descr },
 
 #define END_PARAM_DESCR( name ) \
   { POST_PARAM_TYPE_LAST, NULL, 0, 0, NULL, 0, 0, 1, NULL } \
 }; \
 static xine_post_api_descr_t name = { \
-  sizeof( temp_s ), \
+  sizeof( temp_t ), \
   temp_p \
 };
 
