@@ -837,7 +837,7 @@ static int ao_alsa_write(ao_driver_t *this_gen, int16_t *data, uint32_t count) {
   }
 
   while( number_of_frames > 0) {
-    if ( (state == SND_PCM_STATE_RUNNING) ) {
+    if ( state == SND_PCM_STATE_RUNNING ) {
 #ifdef LOG_DEBUG
       printf("audio_alsa_out:write:loop:waiting for Godot\n");
 #endif
