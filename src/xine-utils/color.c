@@ -288,12 +288,14 @@ static void yuv444_to_yuy2_mmx(const yuv_planes_t *yuv_planes, unsigned char *yu
   int width_mod_8 = yuv_planes->row_width % 8;
   unsigned char *source_plane;
   unsigned char *dest_plane;
-  static const mmx_t filter = {ub: {
-    0x01, 0x00,
-    0x03, 0x00,
-    0x03, 0x00,
-    0x01, 0x00
-  }};
+  static const mmx_t filter = {
+    .ub = {
+      0x01, 0x00,
+      0x03, 0x00,
+      0x03, 0x00,
+      0x01, 0x00,
+    }
+  };
   unsigned char shifter[] = {0, 0, 0, 0, 0, 0, 0, 0};
   unsigned char vector[8];
   int block_loops = yuv_planes->row_width / 6;
@@ -1277,7 +1279,7 @@ static void yv12_to_yuy2_sse2
     const int i_source_v_margin = v_src_pitch - width/2;
     const int i_dest_margin = yuy2_pitch - width*2;
 
-    static const sse_t qw_byte_one = { uq: { 0x0101010101010101ll, 0x0101010101010101ll } };
+    static const sse_t qw_byte_one = { .uq = { 0x0101010101010101ll, 0x0101010101010101ll } };
     __asm__ __volatile__(
      "movdqa %0, %%xmm7 \n\t"
      :
