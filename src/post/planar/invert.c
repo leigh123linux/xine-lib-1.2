@@ -28,48 +28,6 @@
 #include <xine/post.h>
 
 
-/* plugin instance functions */
-static void           invert_dispose(post_plugin_t *this_gen);
-
-/* frame intercept check */
-static int            invert_intercept_frame(post_video_port_t *port, vo_frame_t *frame);
-
-/* replaced vo_frame functions */
-static int            invert_draw(vo_frame_t *frame, xine_stream_t *stream);
-
-
-static post_plugin_t *invert_open_plugin(post_class_t *class_gen, int inputs,
-					 xine_audio_port_t **audio_target,
-					 xine_video_port_t **video_target)
-{
-  post_plugin_t *this   = calloc(1, sizeof(post_plugin_t));
-  post_in_t     *input;
-  post_out_t    *output;
-  post_video_port_t *port;
-
-  if (!this || !video_target || !video_target[0]) {
-    free(this);
-    return NULL;
-  }
-
-  (void)class_gen;
-  (void)inputs;
-  (void)audio_target;
-
-  _x_post_init(this, 0, 1);
-
-  port = _x_post_intercept_video_port(this, video_target[0], &input, &output);
-  port->intercept_frame = invert_intercept_frame;
-  port->new_frame->draw = invert_draw;
-  input->xine_in.name   = "video";
-  output->xine_out.name = "inverted video";
-  this->xine_post.video_input[0] = &port->new_port;
-
-  this->dispose = invert_dispose;
-
-  return this;
-}
-
 static void invert_dispose(post_plugin_t *this)
 {
   if (_x_post_dispose(this))
@@ -127,6 +85,38 @@ static int invert_draw(vo_frame_t *frame, xine_stream_t *stream)
   inverted_frame->free(inverted_frame);
 
   return skip;
+}
+
+static post_plugin_t *invert_open_plugin(post_class_t *class_gen, int inputs,
+                                         xine_audio_port_t **audio_target,
+                                         xine_video_port_t **video_target)
+{
+  post_plugin_t *this   = calloc(1, sizeof(post_plugin_t));
+  post_in_t     *input;
+  post_out_t    *output;
+  post_video_port_t *port;
+
+  if (!this || !video_target || !video_target[0]) {
+    free(this);
+    return NULL;
+  }
+
+  (void)class_gen;
+  (void)inputs;
+  (void)audio_target;
+
+  _x_post_init(this, 0, 1);
+
+  port = _x_post_intercept_video_port(this, video_target[0], &input, &output);
+  port->intercept_frame = invert_intercept_frame;
+  port->new_frame->draw = invert_draw;
+  input->xine_in.name   = "video";
+  output->xine_out.name = "inverted video";
+  this->xine_post.video_input[0] = &port->new_port;
+
+  this->dispose = invert_dispose;
+
+  return this;
 }
 
 void *invert_init_plugin(xine_t *xine, const void *data)

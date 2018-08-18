@@ -225,74 +225,6 @@ static xine_post_api_t post_api = {
 };
 
 
-/* plugin instance functions */
-static void           eq_dispose(post_plugin_t *this_gen);
-
-/* replaced video_port functions */
-static int            eq_get_property(xine_video_port_t *port_gen, int property);
-static int            eq_set_property(xine_video_port_t *port_gen, int property, int value);
-
-/* frame intercept check */
-static int            eq_intercept_frame(post_video_port_t *port, vo_frame_t *frame);
-
-/* replaced vo_frame functions */
-static int            eq_draw(vo_frame_t *frame, xine_stream_t *stream);
-
-
-static post_plugin_t *eq_open_plugin(post_class_t *class_gen, int inputs,
-					 xine_audio_port_t **audio_target,
-					 xine_video_port_t **video_target)
-{
-  post_plugin_eq_t  *this = calloc(1, sizeof(post_plugin_eq_t));
-  post_in_t         *input;
-  xine_post_in_t    *input_api;
-  post_out_t        *output;
-  post_video_port_t *port;
-
-  if (!this || !video_target || !video_target[0]) {
-    free(this);
-    return NULL;
-  }
-
-  (void)class_gen;
-  (void)inputs;
-  (void)audio_target;
-
-  process = process_C;
-#if defined(ARCH_X86)
-  if( xine_mm_accel() & MM_ACCEL_X86_MMX )
-    process = process_MMX;
-#endif
-
-  _x_post_init(&this->post, 0, 1);
-
-  this->params.brightness = 0;
-  this->params.contrast = 0;
-
-  pthread_mutex_init (&this->lock, NULL);
-
-  port = _x_post_intercept_video_port(&this->post, video_target[0], &input, &output);
-  port->new_port.get_property = eq_get_property;
-  port->new_port.set_property = eq_set_property;
-  port->intercept_frame       = eq_intercept_frame;
-  port->new_frame->draw       = eq_draw;
-
-  input_api       = &this->params_input;
-  input_api->name = "parameters";
-  input_api->type = XINE_POST_DATA_PARAMETERS;
-  input_api->data = &post_api;
-  xine_list_push_back(this->post.input, input_api);
-
-  input->xine_in.name     = "video";
-  output->xine_out.name   = "eqd video";
-
-  this->post.xine_post.video_input[0] = &port->new_port;
-
-  this->post.dispose = eq_dispose;
-
-  return &this->post;
-}
-
 static void eq_dispose(post_plugin_t *this_gen)
 {
   post_plugin_eq_t *this = (post_plugin_eq_t *)this_gen;
@@ -403,6 +335,60 @@ static int eq_draw(vo_frame_t *frame, xine_stream_t *stream)
   }
 
   return skip;
+}
+
+static post_plugin_t *eq_open_plugin(post_class_t *class_gen, int inputs,
+                                     xine_audio_port_t **audio_target,
+                                     xine_video_port_t **video_target)
+{
+  post_plugin_eq_t  *this = calloc(1, sizeof(post_plugin_eq_t));
+  post_in_t         *input;
+  xine_post_in_t    *input_api;
+  post_out_t        *output;
+  post_video_port_t *port;
+
+  if (!this || !video_target || !video_target[0]) {
+    free(this);
+    return NULL;
+  }
+
+  (void)class_gen;
+  (void)inputs;
+  (void)audio_target;
+
+  process = process_C;
+#if defined(ARCH_X86)
+  if( xine_mm_accel() & MM_ACCEL_X86_MMX )
+    process = process_MMX;
+#endif
+
+  _x_post_init(&this->post, 0, 1);
+
+  this->params.brightness = 0;
+  this->params.contrast = 0;
+
+  pthread_mutex_init (&this->lock, NULL);
+
+  port = _x_post_intercept_video_port(&this->post, video_target[0], &input, &output);
+  port->new_port.get_property = eq_get_property;
+  port->new_port.set_property = eq_set_property;
+  port->intercept_frame       = eq_intercept_frame;
+  port->new_frame->draw       = eq_draw;
+
+  input_api       = &this->params_input;
+  input_api->name = "parameters";
+  input_api->type = XINE_POST_DATA_PARAMETERS;
+  input_api->data = &post_api;
+  xine_list_push_back(this->post.input, input_api);
+
+  input->xine_in.name     = "video";
+  output->xine_out.name   = "eqd video";
+
+  this->post.xine_post.video_input[0] = &port->new_port;
+
+  this->post.dispose = eq_dispose;
+
+  return &this->post;
 }
 
 void *eq_init_plugin(xine_t *xine, const void *data)

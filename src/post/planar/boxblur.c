@@ -119,64 +119,6 @@ static xine_post_api_t post_api = {
 };
 
 
-/* plugin instance functions */
-static void           boxblur_dispose(post_plugin_t *this_gen);
-
-/* frame intercept check */
-static int            boxblur_intercept_frame(post_video_port_t *port, vo_frame_t *frame);
-
-/* replaced vo_frame functions */
-static int            boxblur_draw(vo_frame_t *frame, xine_stream_t *stream);
-
-
-static post_plugin_t *boxblur_open_plugin(post_class_t *class_gen, int inputs,
-					 xine_audio_port_t **audio_target,
-					 xine_video_port_t **video_target)
-{
-  post_plugin_boxblur_t *this = calloc(1, sizeof(post_plugin_boxblur_t));
-  post_in_t             *input;
-  xine_post_in_t        *input_api;
-  post_out_t            *output;
-  post_video_port_t     *port;
-
-  if (!this || !video_target || !video_target[0]) {
-    free(this);
-    return NULL;
-  }
-
-  (void)class_gen;
-  (void)inputs;
-  (void)audio_target;
-
-  _x_post_init(&this->post, 0, 1);
-
-  this->params.luma_radius = 2;
-  this->params.luma_power = 1;
-  this->params.chroma_radius = -1;
-  this->params.chroma_power = -1;
-
-  pthread_mutex_init(&this->lock, NULL);
-
-  port = _x_post_intercept_video_port(&this->post, video_target[0], &input, &output);
-  port->intercept_frame = boxblur_intercept_frame;
-  port->new_frame->draw = boxblur_draw;
-
-  input_api       = &this->params_input;
-  input_api->name = "parameters";
-  input_api->type = XINE_POST_DATA_PARAMETERS;
-  input_api->data = &post_api;
-  xine_list_push_back(this->post.input, input_api);
-
-  input->xine_in.name     = "video";
-  output->xine_out.name   = "boxblured video";
-
-  this->post.xine_post.video_input[0] = &port->new_port;
-
-  this->post.dispose = boxblur_dispose;
-
-  return &this->post;
-}
-
 static void boxblur_dispose(post_plugin_t *this_gen)
 {
   post_plugin_boxblur_t *this = (post_plugin_boxblur_t *)this_gen;
@@ -347,6 +289,54 @@ static int boxblur_draw(vo_frame_t *frame, xine_stream_t *stream)
   }
 
   return skip;
+}
+
+static post_plugin_t *boxblur_open_plugin(post_class_t *class_gen, int inputs,
+                                          xine_audio_port_t **audio_target,
+                                          xine_video_port_t **video_target)
+{
+  post_plugin_boxblur_t *this = calloc(1, sizeof(post_plugin_boxblur_t));
+  post_in_t             *input;
+  xine_post_in_t        *input_api;
+  post_out_t            *output;
+  post_video_port_t     *port;
+
+  if (!this || !video_target || !video_target[0]) {
+    free(this);
+    return NULL;
+  }
+
+  (void)class_gen;
+  (void)inputs;
+  (void)audio_target;
+
+  _x_post_init(&this->post, 0, 1);
+
+  this->params.luma_radius = 2;
+  this->params.luma_power = 1;
+  this->params.chroma_radius = -1;
+  this->params.chroma_power = -1;
+
+  pthread_mutex_init(&this->lock, NULL);
+
+  port = _x_post_intercept_video_port(&this->post, video_target[0], &input, &output);
+  port->intercept_frame = boxblur_intercept_frame;
+  port->new_frame->draw = boxblur_draw;
+
+  input_api       = &this->params_input;
+  input_api->name = "parameters";
+  input_api->type = XINE_POST_DATA_PARAMETERS;
+  input_api->data = &post_api;
+  xine_list_push_back(this->post.input, input_api);
+
+  input->xine_in.name     = "video";
+  output->xine_out.name   = "boxblured video";
+
+  this->post.xine_post.video_input[0] = &port->new_port;
+
+  this->post.dispose = boxblur_dispose;
+
+  return &this->post;
 }
 
 void *boxblur_init_plugin(xine_t *xine, const void *data)
