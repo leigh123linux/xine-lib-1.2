@@ -839,6 +839,8 @@ static void init_codec_dvbsub(demux_matroska_t *this, matroska_track_t *track) {
   buf_element_t *buf;
   spu_dvb_descriptor_t *desc;
 
+  (void)this;
+
   if (!track->codec_private || track->codec_private_len < 4)
     return;
 
@@ -1282,6 +1284,8 @@ static void handle_dvbsub (demux_plugin_t *this_gen, matroska_track_t *track,
   demux_matroska_t *this = (demux_matroska_t *) this_gen;
   uint8_t *new_data = NULL;
   size_t new_data_len = 0;
+
+  (void)data_duration;
 
   if (track->compress_algo == MATROSKA_COMPRESS_ZLIB) {
     uncompress_zlib(this, data, data_len, &new_data, &new_data_len);
