@@ -43,7 +43,7 @@ int main (int argc, char *argv[])
       { "mime-types", no_argument, NULL, 'm' },
       { "extensions", no_argument, NULL, 'e' },
       { "all", no_argument, NULL, 'a' },
-      { NULL }
+      { NULL, no_argument, NULL, 0 }
     };
     int index = 0;
     int opt = getopt_long (argc, argv, OPTS, longopts, &index);
