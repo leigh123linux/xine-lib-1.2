@@ -39,12 +39,14 @@ typedef struct {
 void _x_alphablend_init(alphablend_t *extra_data, xine_t *xine) XINE_PROTECTED;
 void _x_alphablend_free(alphablend_t *extra_data) XINE_PROTECTED;
 
-typedef struct {         /* CLUT == Color LookUp Table */
+typedef struct clut_s clut_t;
+
+struct clut_s {         /* CLUT == Color LookUp Table */
   uint8_t cb;
   uint8_t cr;
   uint8_t y;
   uint8_t foo;
-} XINE_PACKED clut_t;
+} XINE_PACKED;
 
 void _x_clut_yuv2rgb(uint32_t *clut, int num_items, int color_matrix) XINE_PROTECTED;
 

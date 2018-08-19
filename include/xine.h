@@ -459,8 +459,9 @@ int  xine_get_current_frame_alloc (xine_stream_t *stream,
 			     int *ratio_code, int *format,
 			     uint8_t **img, int *img_size) XINE_PROTECTED;
 
-typedef struct {
+typedef struct xine_current_frame_data_s xine_current_frame_data_t;
 
+struct xine_current_frame_data_s {
   int      width;
   int      height;
   int      crop_left;
@@ -472,7 +473,7 @@ typedef struct {
   int      format;
   int      img_size;
   uint8_t *img;
-} xine_current_frame_data_t;
+};
 
 #define XINE_FRAME_DATA_ALLOCATE_IMG (1<<0)
 
@@ -1092,13 +1093,15 @@ const char *xine_get_meta_info   (xine_stream_t *stream, int info) XINE_PROTECTE
  *       and should never be free()d.
  */
 
-typedef struct {
+typedef struct xine_mrl_s xine_mrl_t;
+
+struct xine_mrl_s {
   char      *origin; /* file plugin: path */
   char      *mrl;    /* <type>://<location> */
   char      *link;
   off_t      size;   /* size of this source, may be 0 */
   uint32_t   type;   /* see below */
-} xine_mrl_t;
+};
 
 /* mrl types */
 #define XINE_MRL_TYPE_unknown        (0 << 0)

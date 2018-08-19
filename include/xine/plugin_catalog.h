@@ -41,7 +41,7 @@ typedef struct {
   int              no_unload;    /* set if the file can't be unloaded */
 } plugin_file_t ;
 
-typedef struct {
+typedef struct plugin_node_s {
   plugin_file_t   *file;
   plugin_info_t   *info;
   void            *plugin_class;
