@@ -85,6 +85,12 @@
 # define XINE_DEPRECATED
 #endif
 
+#if defined(SUPPORT_ATTRIBUTE_DEPRECATED) && (!defined(XINE_LIBRARY_COMPILE))
+# define XINE_PRIVATE_FIELD __attribute__((__deprecated__(("this is xine-engine private field"))))
+#else
+# define XINE_PRIVATE_FIELD
+#endif
+
 #ifdef SUPPORT_ATTRIBUTE_WEAK
 # define XINE_WEAK __attribute__((weak))
 #else
