@@ -120,6 +120,16 @@ static void        dxr3_update_swap_fields(void *data, xine_cfg_entry_t *entry);
 static void        dxr3_update_enhanced_mode(void *this_gen, xine_cfg_entry_t *entry);
 
 
+int dxr3_present(xine_stream_t *stream)
+{
+  int present = 0;
+
+  if (stream->video_driver)
+    present = stream->video_driver->dispose == dxr3_dispose;
+  llprintf(LOG_VID, "dxr3 %s\n", present ? "present" : "not present");
+  return present;
+}
+
 static dxr3_driver_class_t *dxr3_vo_init_plugin(xine_t *xine, const void *visual_gen)
 {
   dxr3_driver_class_t *this;

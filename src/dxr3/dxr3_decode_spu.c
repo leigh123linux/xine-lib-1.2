@@ -124,7 +124,6 @@ typedef struct dxr3_spudec_s {
 } dxr3_spudec_t;
 
 /* helper functions */
-static inline int  dxr3_present(xine_stream_t *stream);
 /* the NAV functions must be called with the pci_lock held */
 static inline void dxr3_spudec_clear_nav_list(dxr3_spudec_t *this);
 static inline void dxr3_spudec_update_nav(dxr3_spudec_t *this);
