@@ -49,8 +49,7 @@
 #include <xine/buffer.h>
 #include "video_out_dxr3.h"
 #include "dxr3.h"
-
-#include "compat.c"
+#include "group_dxr3.h"
 
 /* once activated, we wait for this amount of missing pan&scan info
  * before disabling it again */
@@ -154,7 +153,7 @@ static inline int dxr3_mvcommand(int fd_control, int command)
 }
 
 
-static void *dxr3_init_plugin(xine_t *xine, const void *data)
+void *dxr3_video_init_plugin(xine_t *xine, const void *data)
 {
   dxr3_decoder_class_t *this;
 
@@ -794,21 +793,3 @@ static void dxr3_update_correct_durations(void *this_gen, xine_cfg_entry_t *entr
 {
   ((dxr3_decoder_t *)this_gen)->correct_durations = entry->num_value;
 }
-
-/* plugin catalog information */
-
-static const uint32_t supported_types[] = {
-  BUF_VIDEO_MPEG,
-  0
-};
-
-static const decoder_info_t dxr3_video_decoder_info = {
-  .supported_types = supported_types,
-  .priority        = 10,
-};
-
-const plugin_info_t xine_plugin_info[] EXPORTED = {
-  /* type, API, "name", version, special_info, init_function */
-  { PLUGIN_VIDEO_DECODER, 19, "dxr3-mpeg2", XINE_VERSION_CODE, &dxr3_video_decoder_info, &dxr3_init_plugin },
-  { PLUGIN_NONE, 0, NULL, 0, NULL, NULL }
-};

@@ -65,8 +65,7 @@
 #endif
 #include "video_out_dxr3.h"
 #include "dxr3.h"
-
-#include "compat.c"
+#include "group_dxr3.h"
 
 #define MAX_SPU_STREAMS 32
 
@@ -165,7 +164,7 @@ static inline void dxr3_swab_clut(int *clut)
 }
 
 
-static void *dxr3_spudec_init_plugin(xine_t *xine, const void* data)
+void *dxr3_spudec_init_plugin(xine_t *xine, const void* data)
 {
   dxr3_spudec_class_t *this;
 
@@ -703,20 +702,3 @@ static int dxr3_spudec_copy_nav_to_btn(dxr3_spudec_t *this, int32_t mode, em8300
   return -1;
 }
 
-/* plugin catalog information */
-
-static const uint32_t supported_types[] = {
-  BUF_SPU_DVD,
-  0,
-};
-
-static const decoder_info_t dxr3_spudec_info = {
-  .supported_types = supported_types,
-  .priority        = 10,
-};
-
-const plugin_info_t xine_plugin_info[] EXPORTED = {
-  /* type, API, "name", version, special_info, init_function */
-  { PLUGIN_SPU_DECODER, 17, "dxr3-spudec", XINE_VERSION_CODE, &dxr3_spudec_info, &dxr3_spudec_init_plugin },
-  { PLUGIN_NONE, 0, NULL, 0, NULL, NULL }
-};

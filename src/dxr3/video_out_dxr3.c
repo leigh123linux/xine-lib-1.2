@@ -66,14 +66,13 @@
 #include <xine/video_out.h>
 #include "dxr3.h"
 #include "video_out_dxr3.h"
+#include "group_dxr3.h"
 
 #ifdef HAVE_FFMPEG_AVUTIL_H
 #  include <mem.h>
 #else
 #  include <libavutil/mem.h>
 #endif
-
-#include "compat.c"
 
 /* the amount of extra time we give the card for decoding */
 #define DECODE_PIPE_PREBUFFER 10000
@@ -145,7 +144,7 @@ static dxr3_driver_class_t *dxr3_vo_init_plugin(xine_t *xine, const void *visual
 }
 
 #ifdef HAVE_X11
-static void *dxr3_x11_init_plugin(xine_t *xine, const void *visual_gen)
+void *dxr3_x11_init_plugin(xine_t *xine, const void *visual_gen)
 {
   dxr3_driver_class_t *this = dxr3_vo_init_plugin(xine, visual_gen);
 
@@ -155,7 +154,7 @@ static void *dxr3_x11_init_plugin(xine_t *xine, const void *visual_gen)
 }
 #endif
 
-static void *dxr3_aa_init_plugin(xine_t *xine, const void *visual_gen)
+void *dxr3_aa_init_plugin(xine_t *xine, const void *visual_gen)
 {
   dxr3_driver_class_t *this = dxr3_vo_init_plugin(xine, visual_gen);
 
@@ -1553,26 +1552,3 @@ static void dxr3_update_enhanced_mode(void *data, xine_cfg_entry_t *entry)
   xprintf(this->class->xine, XINE_VERBOSITY_DEBUG,
 	  "video_out_dxr3: setting enhanced encoding playback to %s\n", (this->enhanced_mode ? "on" : "off"));
 }
-
-/* plugin catalog information */
-
-#ifdef HAVE_X11
-static const vo_info_t   vo_info_dxr3_x11 = {
-  .priority    = 10,
-  .visual_type = XINE_VISUAL_TYPE_X11,
-};
-#endif
-
-static const vo_info_t   vo_info_dxr3_aa = {
-  .priority    = 10,
-  .visual_type = XINE_VISUAL_TYPE_AA,
-};
-
-const plugin_info_t      xine_plugin_info[] EXPORTED = {
-  /* type, API, "name", version, special_info, init_function */
-#ifdef HAVE_X11
-  { PLUGIN_VIDEO_OUT, 22, "dxr3", XINE_VERSION_CODE, &vo_info_dxr3_x11, &dxr3_x11_init_plugin },
-#endif
-  { PLUGIN_VIDEO_OUT, 22, "aadxr3", XINE_VERSION_CODE, &vo_info_dxr3_aa, &dxr3_aa_init_plugin },
-  { PLUGIN_NONE, 0, NULL, 0, NULL, NULL }
-};

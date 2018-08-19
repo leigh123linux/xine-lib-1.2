@@ -17,43 +17,41 @@ if HAVE_LIBRTE
 link_rte = -lrte
 endif
 
-EXTRA_DIST = compat.c
-
-noinst_HEADERS = em8300.h dxr3.h dxr3_scr.h video_out_dxr3.h
-
 if ENABLE_DXR3
 if ENABLE_FFMPEG
-xineplug_LTLIBRARIES =	xineplug_decode_dxr3_video.la \
-			xineplug_decode_dxr3_spu.la \
-			xineplug_vo_out_dxr3.la
+xineplug_LTLIBRARIES = xineplug_dxr3.la
 endif
 endif
-
-xineplug_decode_dxr3_video_la_SOURCES = dxr3_decode_video.c
-xineplug_decode_dxr3_video_la_LIBADD = $(XINE_LIB) $(LTLIBINTL)
 
 # foo_C[PP]FLAGS supersedes AM_C[PP]FLAGS when it is set somewhere.
 # This happens without respect to conditionals.
 # So make sure both alternatives use the same set of vars.
 # Otherwise, inherited flags may get lost in some cases.
 if WITH_EXTERNAL_DVDNAV
-xineplug_decode_dxr3_spu_la_SOURCES = dxr3_decode_spu.c
-xineplug_decode_dxr3_spu_la_LIBADD = $(XINE_LIB) $(LTLIBINTL) $(DVDNAV_LIBS) $(DVDREAD_LIBS)
-xineplug_decode_dxr3_spu_la_CPPFLAGS = $(AM_CPPFLAGS)
-xineplug_decode_dxr3_spu_la_CFLAGS = $(AM_CFLAGS) $(DVDNAV_CFLAGS) $(DVDREAD_CFLAGS)
+link_dvdnav = $(DVDNAV_LIBS) $(DVDREAD_LIBS)
+AM_CFLAGS += $(DVDNAV_CFLAGS) $(DVDREAD_CFLAGS)
 else
-xineplug_decode_dxr3_spu_la_SOURCES = dxr3_decode_spu.c nav_read.c
-xineplug_decode_dxr3_spu_la_LIBADD = $(XINE_LIB) $(LTLIBINTL)
-xineplug_decode_dxr3_spu_la_CPPFLAGS = $(AM_CPPFLAGS) -I$(top_srcdir)/src/input/libdvdnav
-xineplug_decode_dxr3_spu_la_CFLAGS = $(AM_CFLAGS)
+sources_dvdnav = nav_read.c
+AM_CPPFLAGS += -I$(top_srcdir)/src/input/libdvdnav
 endif
 
-xineplug_vo_out_dxr3_la_SOURCES = \
-	dxr3_mpeg_encoders.c \
+xineplug_dxr3_la_SOURCES = \
+	$(sources_dvdnav) \
+	compat.c \
 	ffmpeg_encoder.c \
-	dxr3_spu_encoder.c \
+	group_dxr3.c \
+	group_dxr3.h \
+	dxr3.h \
+	dxr3_decode_spu.c \
+	dxr3_decode_video.c \
+	dxr3_mpeg_encoders.c \
 	dxr3_scr.c \
-	video_out_dxr3.c
+	dxr3_scr.h \
+	dxr3_spu_encoder.c \
+	em8300.h \
+	video_out_dxr3.c \
+	video_out_dxr3.h
 
-xineplug_vo_out_dxr3_la_CFLAGS = $(AM_CFLAGS) $(AVUTIL_CFLAGS) $(FFMPEG_CFLAGS)
-xineplug_vo_out_dxr3_la_LIBADD = $(XINE_LIB) $(link_fame) $(link_rte) $(link_x_libs) $(LTLIBINTL) $(AVUTIL_LIBS) $(FFMPEG_LIBS) -lm
+xineplug_dxr3_la_CFLAGS = $(AM_CFLAGS) $(AVUTIL_CFLAGS) $(FFMPEG_CFLAGS)
+xineplug_dxr3_la_LIBADD = $(XINE_LIB) $(link_fame) $(link_rte) $(link_x_libs) $(link_dvdnav) $(LTLIBINTL) $(AVUTIL_LIBS) $(FFMPEG_LIBS) -lm
+xineplug_dxr3_la_CPPFLAGS = $(AM_CPPFLAGS)
