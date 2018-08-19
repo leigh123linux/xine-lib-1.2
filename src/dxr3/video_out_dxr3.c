@@ -80,7 +80,6 @@
 
 /* plugin class functions */
 static vo_driver_t *dxr3_vo_open_plugin(video_driver_class_t *class_gen, const void *visual);
-static void         dxr3_vo_class_dispose(video_driver_class_t *class_gen);
 
 /* plugin instance functions */
 static uint32_t    dxr3_get_capabilities(vo_driver_t *this_gen);
@@ -136,13 +135,11 @@ static dxr3_driver_class_t *dxr3_vo_init_plugin(xine_t *xine, const void *visual
   this->video_driver_class.open_plugin     = dxr3_vo_open_plugin;
   this->video_driver_class.identifier      = DXR3_VO_ID;
   this->video_driver_class.description     = N_("video output plugin displaying images through your DXR3 decoder card");
-  this->video_driver_class.dispose         = dxr3_vo_class_dispose;
+  this->video_driver_class.dispose         = default_video_driver_class_dispose;
 
   this->xine                               = xine;
 
   this->instance                           = 0;
-
-  this->scr                                = dxr3_scr_init(xine);
 
   return this;
 }
@@ -166,16 +163,6 @@ static void *dxr3_aa_init_plugin(xine_t *xine, const void *visual_gen)
   this->visual_type = XINE_VISUAL_TYPE_AA;
   return &this->video_driver_class;
 }
-
-static void dxr3_vo_class_dispose(video_driver_class_t *class_gen)
-{
-  dxr3_driver_class_t *class = (dxr3_driver_class_t *)class_gen;
-
-  if(class->scr)
-    class->scr->scr_plugin.exit(&class->scr->scr_plugin);
-  free(class_gen);
-}
-
 
 static vo_driver_t *dxr3_vo_open_plugin(video_driver_class_t *class_gen, const void *visual_gen)
 {
@@ -231,6 +218,8 @@ static vo_driver_t *dxr3_vo_open_plugin(video_driver_class_t *class_gen, const v
   this->vo_driver.get_property_min_max = dxr3_get_property_min_max;
   this->vo_driver.gui_data_exchange    = dxr3_gui_data_exchange;
   this->vo_driver.dispose              = dxr3_dispose;
+
+  this->scr                            = dxr3_scr_init(class->xine);
 
   pthread_mutex_init(&this->video_device_lock, NULL);
   pthread_mutex_init(&this->spu_device_lock, NULL);
@@ -576,7 +565,7 @@ static void dxr3_update_frame_format(vo_driver_t *this_gen, vo_frame_t *frame_ge
     if (this->fd_video >= 0) {
       metronom_clock_t *clock = this->class->xine->clock;
 
-      clock->unregister_scr(clock, &this->class->scr->scr_plugin);
+      clock->unregister_scr(clock, &this->scr->scr_plugin);
       close(this->fd_video);
       this->fd_video = -1;
       /* inform the encoder on next frame's arrival */
@@ -629,8 +618,8 @@ static void dxr3_update_frame_format(vo_driver_t *this_gen, vo_frame_t *frame_ge
 
     /* start the scr plugin */
     time = clock->get_current_time(clock);
-    this->class->scr->scr_plugin.start(&this->class->scr->scr_plugin, time);
-    clock->register_scr(clock, &this->class->scr->scr_plugin);
+    this->scr->scr_plugin.start(&this->scr->scr_plugin, time);
+    clock->register_scr(clock, &this->scr->scr_plugin);
 
     this->scale.force_redraw = 1;
   }
@@ -954,9 +943,9 @@ static void dxr3_display_frame(vo_driver_t *this_gen, vo_frame_t *frame_gen)
 	    reg.reg = 0;
 	    reg.val = MVCOMMAND_SYNC;
 	    ioctl(this->fd_control, EM8300_IOCTL_WRITEREG, &reg);
-	    pthread_mutex_lock(&this->class->scr->mutex);
-	    this->class->scr->sync = 1;
-	    pthread_mutex_unlock(&this->class->scr->mutex);
+            pthread_mutex_lock(&this->scr->mutex);
+            this->scr->sync = 1;
+            pthread_mutex_unlock(&this->scr->mutex);
 	  }
 	}
 	this->need_update = 0;
@@ -1232,6 +1221,9 @@ static void dxr3_dispose(vo_driver_t *this_gen)
   pthread_mutex_destroy(&this->spu_device_lock);
 
   _x_alphablend_free(&this->alphablend_extra_data);
+
+  if (this->scr)
+    this->scr->scr_plugin.exit(&this->scr->scr_plugin);
 
   free(this);
 }

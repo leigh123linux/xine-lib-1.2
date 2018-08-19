@@ -503,7 +503,7 @@ static void dxr3_decode_data(video_decoder_t *this_gen, buf_element_t *buf)
      * driver bug and gets fixed somewhen. FIXME: We might then
      * want to do this entirely in the video out.
      */
-    this->scr = ((dxr3_driver_t *)this->stream->video_driver)->class->scr;
+    this->scr = ((dxr3_driver_t *)this->stream->video_driver)->scr;
     time = clock->get_current_time(clock);
     this->scr->scr_plugin.start(&this->scr->scr_plugin, time);
     clock->register_scr(clock, &this->scr->scr_plugin);

@@ -75,13 +75,12 @@ typedef struct dxr3_driver_class_s {
   int                   instance;           /* we allow only one instance of this plugin */
 
   int                   devnum;
-
-  dxr3_scr_t           *scr;                /* to provide dxr3 clocking */
 } dxr3_driver_class_t;
 
 typedef struct dxr3_driver_s {
   vo_driver_t          vo_driver;
   dxr3_driver_class_t *class;
+  dxr3_scr_t           *scr;                /* to provide dxr3 clocking */
 
   int                  fd_control;
   pthread_mutex_t      video_device_lock;
