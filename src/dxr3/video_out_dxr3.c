@@ -78,36 +78,6 @@
 /* the amount of extra time we give the card for decoding */
 #define DECODE_PIPE_PREBUFFER 10000
 
-
-/* plugin class initialization functions */
-static void                *dxr3_x11_init_plugin(xine_t *xine, const void *visual_gen);
-static void                *dxr3_aa_init_plugin(xine_t *xine, const void *visual_gen);
-static dxr3_driver_class_t *dxr3_vo_init_plugin(xine_t *xine, const void *visual_gen);
-
-
-/* plugin catalog information */
-#ifdef HAVE_X11
-static const vo_info_t   vo_info_dxr3_x11 = {
-  10,                  /* priority        */
-  XINE_VISUAL_TYPE_X11 /* visual type     */
-};
-#endif
-
-static const vo_info_t   vo_info_dxr3_aa = {
-  10,                  /* priority        */
-  XINE_VISUAL_TYPE_AA  /* visual type     */
-};
-
-const plugin_info_t      xine_plugin_info[] EXPORTED = {
-  /* type, API, "name", version, special_info, init_function */
-#ifdef HAVE_X11
-  { PLUGIN_VIDEO_OUT, 22, "dxr3", XINE_VERSION_CODE, &vo_info_dxr3_x11, &dxr3_x11_init_plugin },
-#endif
-  { PLUGIN_VIDEO_OUT, 22, "aadxr3", XINE_VERSION_CODE, &vo_info_dxr3_aa, &dxr3_aa_init_plugin },
-  { PLUGIN_NONE, 0, "", 0, NULL, NULL }
-};
-
-
 /* plugin class functions */
 static vo_driver_t *dxr3_vo_open_plugin(video_driver_class_t *class_gen, const void *visual);
 static void         dxr3_vo_class_dispose(video_driver_class_t *class_gen);
@@ -152,26 +122,6 @@ static void        dxr3_update_swap_fields(void *data, xine_cfg_entry_t *entry);
 static void        dxr3_update_enhanced_mode(void *this_gen, xine_cfg_entry_t *entry);
 
 
-#ifdef HAVE_X11
-static void *dxr3_x11_init_plugin(xine_t *xine, const void *visual_gen)
-{
-  dxr3_driver_class_t *this = dxr3_vo_init_plugin(xine, visual_gen);
-
-  if (!this) return NULL;
-  this->visual_type = XINE_VISUAL_TYPE_X11;
-  return &this->video_driver_class;
-}
-#endif
-
-static void *dxr3_aa_init_plugin(xine_t *xine, const void *visual_gen)
-{
-  dxr3_driver_class_t *this = dxr3_vo_init_plugin(xine, visual_gen);
-
-  if (!this) return NULL;
-  this->visual_type = XINE_VISUAL_TYPE_AA;
-  return &this->video_driver_class;
-}
-
 static dxr3_driver_class_t *dxr3_vo_init_plugin(xine_t *xine, const void *visual_gen)
 {
   dxr3_driver_class_t *this;
@@ -195,6 +145,26 @@ static dxr3_driver_class_t *dxr3_vo_init_plugin(xine_t *xine, const void *visual
   this->scr                                = dxr3_scr_init(xine);
 
   return this;
+}
+
+#ifdef HAVE_X11
+static void *dxr3_x11_init_plugin(xine_t *xine, const void *visual_gen)
+{
+  dxr3_driver_class_t *this = dxr3_vo_init_plugin(xine, visual_gen);
+
+  if (!this) return NULL;
+  this->visual_type = XINE_VISUAL_TYPE_X11;
+  return &this->video_driver_class;
+}
+#endif
+
+static void *dxr3_aa_init_plugin(xine_t *xine, const void *visual_gen)
+{
+  dxr3_driver_class_t *this = dxr3_vo_init_plugin(xine, visual_gen);
+
+  if (!this) return NULL;
+  this->visual_type = XINE_VISUAL_TYPE_AA;
+  return &this->video_driver_class;
 }
 
 static void dxr3_vo_class_dispose(video_driver_class_t *class_gen)
@@ -1591,3 +1561,26 @@ static void dxr3_update_enhanced_mode(void *data, xine_cfg_entry_t *entry)
   xprintf(this->class->xine, XINE_VERBOSITY_DEBUG,
 	  "video_out_dxr3: setting enhanced encoding playback to %s\n", (this->enhanced_mode ? "on" : "off"));
 }
+
+/* plugin catalog information */
+
+#ifdef HAVE_X11
+static const vo_info_t   vo_info_dxr3_x11 = {
+  .priority    = 10,
+  .visual_type = XINE_VISUAL_TYPE_X11,
+};
+#endif
+
+static const vo_info_t   vo_info_dxr3_aa = {
+  .priority    = 10,
+  .visual_type = XINE_VISUAL_TYPE_AA,
+};
+
+const plugin_info_t      xine_plugin_info[] EXPORTED = {
+  /* type, API, "name", version, special_info, init_function */
+#ifdef HAVE_X11
+  { PLUGIN_VIDEO_OUT, 22, "dxr3", XINE_VERSION_CODE, &vo_info_dxr3_x11, &dxr3_x11_init_plugin },
+#endif
+  { PLUGIN_VIDEO_OUT, 22, "aadxr3", XINE_VERSION_CODE, &vo_info_dxr3_aa, &dxr3_aa_init_plugin },
+  { PLUGIN_NONE, 0, NULL, 0, NULL, NULL }
+};

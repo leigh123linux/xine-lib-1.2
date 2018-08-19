@@ -66,26 +66,6 @@
 /* the number of frames to pass before we stop duration correction */
 #define FORCE_DURATION_WINDOW_SIZE 100
 
-
-/* plugin class initialization function */
-static void     *dxr3_init_plugin(xine_t *xine, const void *);
-
-
-/* plugin catalog information */
-static const uint32_t supported_types[] = { BUF_VIDEO_MPEG, 0 };
-
-static const decoder_info_t dxr3_video_decoder_info = {
-  supported_types,     /* supported types */
-  10                   /* priority        */
-};
-
-const plugin_info_t xine_plugin_info[] EXPORTED = {
-  /* type, API, "name", version, special_info, init_function */
-  { PLUGIN_VIDEO_DECODER, 19, "dxr3-mpeg2", XINE_VERSION_CODE, &dxr3_video_decoder_info, &dxr3_init_plugin },
-  { PLUGIN_NONE, 0, "", 0, NULL, NULL }
-};
-
-
 /* plugin class functions */
 static video_decoder_t *dxr3_open_plugin(video_decoder_class_t *class_gen, xine_stream_t *stream);
 
@@ -814,3 +794,21 @@ static void dxr3_update_correct_durations(void *this_gen, xine_cfg_entry_t *entr
 {
   ((dxr3_decoder_t *)this_gen)->correct_durations = entry->num_value;
 }
+
+/* plugin catalog information */
+
+static const uint32_t supported_types[] = {
+  BUF_VIDEO_MPEG,
+  0
+};
+
+static const decoder_info_t dxr3_video_decoder_info = {
+  .supported_types = supported_types,
+  .priority        = 10,
+};
+
+const plugin_info_t xine_plugin_info[] EXPORTED = {
+  /* type, API, "name", version, special_info, init_function */
+  { PLUGIN_VIDEO_DECODER, 19, "dxr3-mpeg2", XINE_VERSION_CODE, &dxr3_video_decoder_info, &dxr3_init_plugin },
+  { PLUGIN_NONE, 0, NULL, 0, NULL, NULL }
+};
