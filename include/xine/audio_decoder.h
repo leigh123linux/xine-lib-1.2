@@ -24,7 +24,6 @@
 #define HAVE_AUDIO_DECODER_H
 
 #include <xine/attributes.h>
-#include <xine/os_types.h>
 #include <xine/buffer.h>
 
 struct plugin_node_s;

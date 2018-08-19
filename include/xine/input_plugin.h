@@ -21,13 +21,12 @@
 #ifndef HAVE_INPUT_PLUGIN_H
 #define HAVE_INPUT_PLUGIN_H
 
-#include <sys/types.h>
+#include <sys/types.h>  /* off_t */
 
 #include <xine/attributes.h>
 #include <xine/os_types.h>
 #include <xine/xineutils.h>
 #include <xine/buffer.h>
-#include <xine/configfile.h>
 
 struct plugin_node_s;
 

@@ -35,10 +35,8 @@
 extern "C" {
 #endif
 
-#include <string.h>
-#include <stdio.h>
-#include <pthread.h>
-#include <sys/types.h>
+#include <string.h>    /* memcmp */
+#include <sys/types.h> /* pthread_* */
 
 #include <xine/os_types.h>
 #include <xine/attributes.h>

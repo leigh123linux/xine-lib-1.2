@@ -26,9 +26,8 @@ extern "C" {
 
 #include <xine/attributes.h>
 #include <xine/os_types.h>
-#include <xine/metronom.h>
-#include <xine/configfile.h>
 #include <xine/xineutils.h>
+#include <xine/buffer.h>
 
 struct plugin_node_s;
 
