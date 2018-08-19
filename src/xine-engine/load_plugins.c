@@ -2689,7 +2689,7 @@ static void _unload_unref_plugin(xine_t *xine, plugin_node_t *node) {
       if (dlclose(file->lib_handle)) {
         const char *error = dlerror();
 
-        xine_log (this, XINE_LOG_PLUGIN,
+        xine_log (xine, XINE_LOG_PLUGIN,
                   _("load_plugins: cannot unload plugin lib %s:\n%s\n"), file->filename, error);
       }
       file->lib_handle = NULL;
@@ -2697,7 +2697,7 @@ static void _unload_unref_plugin(xine_t *xine, plugin_node_t *node) {
   }
 }
 
-static void _unload_unref_plugins(xine_t *this, xine_sarray_t *list) {
+static void _unload_unref_plugins(xine_t *xine, xine_sarray_t *list) {
 
   plugin_node_t *node;
   int            list_id, list_size;
