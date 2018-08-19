@@ -2675,6 +2675,28 @@ static void _display_file_plugin_list (xine_list_t *list, plugin_file_t *file) {
 }
 #endif
 
+static void _unload_unref_plugin(xine_t *xine, plugin_node_t *node) {
+  if (node->ref == 0) {
+    plugin_file_t *file = node->file;
+
+    /* no plugin of this class is instancied */
+    _dispose_plugin_class(node);
+
+    /* check file references */
+    if (file && !file->ref && file->lib_handle && !file->no_unload) {
+      /* unload this file */
+      lprintf("unloading plugin %s\n", file->filename);
+      if (dlclose(file->lib_handle)) {
+        const char *error = dlerror();
+
+        xine_log (this, XINE_LOG_PLUGIN,
+                  _("load_plugins: cannot unload plugin lib %s:\n%s\n"), file->filename, error);
+      }
+      file->lib_handle = NULL;
+    }
+  }
+}
+
 static void _unload_unref_plugins(xine_t *this, xine_sarray_t *list) {
 
   plugin_node_t *node;
@@ -2685,25 +2707,7 @@ static void _unload_unref_plugins(xine_t *this, xine_sarray_t *list) {
 
     node = xine_sarray_get (list, list_id);
 
-    if (node->ref == 0) {
-      plugin_file_t *file = node->file;
-
-      /* no plugin of this class is instancied */
-      _dispose_plugin_class(node);
-
-      /* check file references */
-      if (file && !file->ref && file->lib_handle && !file->no_unload) {
-	/* unload this file */
-	lprintf("unloading plugin %s\n", file->filename);
-	if (dlclose(file->lib_handle)) {
-	   const char *error = dlerror();
-
-	   xine_log (this, XINE_LOG_PLUGIN,
-		_("load_plugins: cannot unload plugin lib %s:\n%s\n"), file->filename, error);
-	}
-	file->lib_handle = NULL;
-      }
-    }
+    _unload_unref_plugin(xine, node);
   }
 }
 
