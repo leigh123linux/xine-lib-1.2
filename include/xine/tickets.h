@@ -25,8 +25,6 @@
 extern "C" {
 #endif
 
-#include <xine.h>
-
 /*
  * xine thread tickets.
  * This is similar to a rw lock in "prefer writers" mode.
