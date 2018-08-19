@@ -24,12 +24,11 @@
 #ifndef HAVE_SPU_API_H
 #define HAVE_SPU_API_H
 
+#include <xine/attributes.h>
 #include <xine/os_types.h>
 #include <xine/buffer.h>
 
-#ifdef XINE_COMPILE
-#  include <xine/plugin_catalog.h>
-#endif
+struct plugin_node_s;
 
 #define SPU_DECODER_IFACE_VERSION 17
 
@@ -123,11 +122,7 @@ struct spu_decoder_s {
    * Used by the plugins loader. It's an opaque type when using the
    * structure outside of xine's build.
    */
-#ifdef XINE_COMPILE
-  plugin_node_t *node;
-#else
-  void *node;
-#endif
+  struct plugin_node_s *node XINE_PRIVATE_FIELD;
 };
 
 

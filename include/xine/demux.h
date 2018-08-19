@@ -21,13 +21,12 @@
 #ifndef HAVE_DEMUX_H
 #define HAVE_DEMUX_H
 
+#include <xine/attributes.h>
 #include <xine/input_plugin.h>
 #include <xine/buffer.h>
 #include <xine/xine_internal.h>
 
-#ifdef XINE_COMPILE
-#  include <xine/plugin_catalog.h>
-#endif
+struct plugin_node_s;
 
 #define DEMUXER_PLUGIN_IFACE_VERSION    27
 
@@ -179,12 +178,8 @@ struct demux_plugin_s {
    * Used by the plugins loader. It's an opaque type when using the
    * structure outside of xine's build.
    */
-#ifdef XINE_COMPILE
-  plugin_node_t *node;
-#else
-  void *node;
-#endif
-} ;
+  struct plugin_node_s *node XINE_PRIVATE_FIELD;
+};
 
 #define default_demux_plugin_dispose (void (*) (demux_plugin_t *this_gen))free
 

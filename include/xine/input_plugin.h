@@ -23,14 +23,13 @@
 
 #include <sys/types.h>
 
+#include <xine/attributes.h>
 #include <xine/os_types.h>
 #include <xine/xineutils.h>
 #include <xine/buffer.h>
 #include <xine/configfile.h>
 
-#ifdef XINE_COMPILE
-#  include <xine/plugin_catalog.h>
-#endif
+struct plugin_node_s;
 
 #define INPUT_PLUGIN_IFACE_VERSION   18
 
@@ -231,12 +230,7 @@ struct input_plugin_s {
    * Used by the plugins loader. It's an opaque type when using the
    * structure outside of xine's build.
    */
-#ifdef XINE_COMPILE
-  plugin_node_t *node;
-#else
-  void *node;
-#endif
-
+  struct plugin_node_s *node XINE_PRIVATE_FIELD;
 };
 
 /*

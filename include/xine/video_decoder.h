@@ -23,12 +23,11 @@
 #ifndef HAVE_VIDEO_DECODER_H
 #define HAVE_VIDEO_DECODER_H
 
+#include <xine/attributes.h>
 #include <xine/os_types.h>
 #include <xine/buffer.h>
 
-#ifdef XINE_COMPILE
-#  include <xine/plugin_catalog.h>
-#endif
+struct plugin_node_s;
 
 #define VIDEO_DECODER_IFACE_VERSION 19
 
@@ -108,11 +107,7 @@ struct video_decoder_s {
    * Used by the plugins loader. It's an opaque type when using the
    * structure outside of xine's build.
    */
-#ifdef XINE_COMPILE
-  plugin_node_t *node;
-#else
-  void *node;
-#endif
+  struct plugin_node_s *node XINE_PRIVATE_FIELD;
 };
 
 #endif

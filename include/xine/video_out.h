@@ -39,11 +39,10 @@ extern "C" {
 #include <pthread.h>
 
 #include <xine.h>
+#include <xine/attributes.h>
 #include <xine/buffer.h>
 
-#ifdef XINE_COMPILE
-#  include <xine/plugin_catalog.h>
-#endif
+struct plugin_node_s;
 
 typedef struct vo_frame_s vo_frame_t;
 typedef struct vo_driver_s vo_driver_t;
@@ -421,11 +420,7 @@ struct vo_driver_s {
    * Used by the plugins loader. It's an opaque type when using the
    * structure outside of xine's build.
    */
-#ifdef XINE_COMPILE
-  plugin_node_t *node;
-#else
-  void *node;
-#endif
+  struct plugin_node_s *node XINE_PRIVATE_FIELD;
 };
 
 struct video_driver_class_s {

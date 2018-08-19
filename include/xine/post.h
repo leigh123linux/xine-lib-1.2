@@ -26,14 +26,13 @@
 #include <pthread.h>
 
 #include <xine.h>
+#include <xine/attributes.h>
 #include <xine/video_out.h>
 #include <xine/audio_out.h>
 #include <xine/xine_internal.h>
 #include <xine/xineutils.h>
 
-#ifdef XINE_COMPILE
-#  include <xine/plugin_catalog.h>
-#endif
+struct plugin_node_s;
 
 #define POST_PLUGIN_IFACE_VERSION 10
 
@@ -123,11 +122,7 @@ struct post_plugin_s {
    * Used by the plugins loader. It's an opaque type when using the
    * structure outside of xine's build.
    */
-#ifdef XINE_COMPILE
-  plugin_node_t *node;
-#else
-  void *node;
-#endif
+  struct plugin_node_s *node XINE_PRIVATE_FIELD;
 
   /* has dispose been called */
   int                 dispose_pending;
