@@ -101,8 +101,6 @@ typedef struct dxr3_decoder_class_s {
   video_decoder_class_t  video_decoder_class;
 
   int                    instance;             /* we allow only one instance of this plugin */
-
-  metronom_clock_t      *clock;                /* used for syncing */
 } dxr3_decoder_class_t;
 
 typedef struct dxr3_decoder_s {
@@ -110,6 +108,8 @@ typedef struct dxr3_decoder_s {
   dxr3_decoder_class_t  *class;
   xine_stream_t         *stream;
   dxr3_scr_t            *scr;                  /* shortcut to the scr plugin in the dxr3 video out */
+
+  metronom_clock_t      *clock;                /* used for syncing */
 
   int                    devnum;
   int                    fd_control;
@@ -190,8 +190,6 @@ static void *dxr3_init_plugin(xine_t *xine, const void *data)
 
   this->instance                            = 0;
 
-  this->clock                               = xine->clock;
-
   return &this->video_decoder_class;
 }
 
@@ -221,6 +219,7 @@ static video_decoder_t *dxr3_open_plugin(video_decoder_class_t *class_gen, xine_
   this->class                       = class;
   this->stream                      = stream;
   this->scr                         = NULL;
+  this->clock                       = stream->xine->clock;
 
   this->devnum = cfg->register_num(cfg, CONF_KEY, 0, CONF_NAME, CONF_HELP, 10, NULL, NULL);
 
@@ -255,7 +254,7 @@ static video_decoder_t *dxr3_open_plugin(video_decoder_class_t *class_gen, xine_
   this->dts_offset[2]         = 21600;
 
   this->force_duration_window = -FORCE_DURATION_WINDOW_SIZE;
-  this->last_vpts             = this->class->clock->get_current_time(this->class->clock);
+  this->last_vpts             = this->clock->get_current_time(this->clock);
 
   this->sync_every_frame      = cfg->register_bool(cfg,
     "dxr3.playback.sync_every_frame", 0, _("try to sync video every frame"),
@@ -505,7 +504,7 @@ static void dxr3_decode_data(video_decoder_t *this_gen, buf_element_t *buf)
    * also ensure the scr is running
    */
   if (this->fd_video < 0) {
-    metronom_clock_t *clock = this->class->clock;
+    metronom_clock_t *clock = this->clock;
     char tmpstr[128];
     int64_t time;
 
@@ -550,8 +549,7 @@ static void dxr3_decode_data(video_decoder_t *this_gen, buf_element_t *buf)
     }
     vpts -= this->dts_offset[2];
 
-    delay = vpts - this->class->clock->get_current_time(
-      this->class->clock);
+    delay = vpts - this->clock->get_current_time(this->clock);
     llprintf(LOG_PTS, "SETPTS got %" PRId64 "\n", vpts);
     /* SETPTS only if less then one second in the future and
      * either buffer has pts or sync_every_frame is set */
@@ -629,7 +627,7 @@ static void dxr3_flush(video_decoder_t *this_gen)
 static void dxr3_dispose(video_decoder_t *this_gen)
 {
   dxr3_decoder_t *this = (dxr3_decoder_t *)this_gen;
-  metronom_clock_t *clock = this->class->clock;
+  metronom_clock_t *clock = this->clock;
 
   if (this->scr)
     clock->unregister_scr(clock, &this->scr->scr_plugin);
