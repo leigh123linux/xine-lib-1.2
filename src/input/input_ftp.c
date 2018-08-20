@@ -694,11 +694,8 @@ static input_plugin_t *_get_instance (input_class_t *cls_gen, xine_stream_t *str
   ftp_input_class_t *class = (ftp_input_class_t *)cls_gen;
   ftp_input_plugin_t *this;
 
-  if (strncasecmp (mrl, "ftp://", 6)
-#ifdef HAVE_TLS
-      && strncasecmp (mrl, "ftpes://", 8)
-#endif
-      ) {
+  if (strncasecmp (mrl, "ftp://", 6) &&
+      strncasecmp (mrl, "ftpes://", 8)) {
     return NULL;
   }
 
@@ -867,7 +864,6 @@ static xine_mrl_t **_get_dir (input_class_t *this_gen, const char *filename, int
   return _get_dir_common(this_gen, filename, nFiles);
 }
 
-#ifdef HAVE_TLS
 static xine_mrl_t **_get_dir_es (input_class_t *this_gen, const char *filename, int *nFiles)
 {
   ftp_input_class_t *this = (ftp_input_class_t *) this_gen;
@@ -882,7 +878,6 @@ static xine_mrl_t **_get_dir_es (input_class_t *this_gen, const char *filename, 
 
   return _get_dir_common(this_gen, filename, nFiles);
 }
-#endif
 
 static void _dispose_class (input_class_t *this_gen)
 {
@@ -918,7 +913,6 @@ void *input_ftp_init_class(xine_t *xine, const void *data)
   return this;
 }
 
-#ifdef HAVE_TLS
 void *input_ftpes_init_class(xine_t *xine, const void *data)
 {
   ftp_input_class_t *this;
@@ -930,8 +924,5 @@ void *input_ftpes_init_class(xine_t *xine, const void *data)
     this->input_class.get_dir           = _get_dir_es;
   }
 
-  _x_tls_register_config_keys(xine->config);
-
   return this;
 }
-#endif

@@ -35,16 +35,12 @@
 const plugin_info_t xine_plugin_info[] EXPORTED = {
   /* type, API, "name", version, special_info, init_function */
   { PLUGIN_INPUT,                       18, "tcp",  XINE_VERSION_CODE, NULL, input_net_init_class },
-#ifdef HAVE_TLS
   { PLUGIN_INPUT,                       18, "tls",  XINE_VERSION_CODE, NULL, input_tls_init_class },
-#endif
   { PLUGIN_INPUT | PLUGIN_MUST_PRELOAD, 18, "http", XINE_VERSION_CODE, NULL, input_http_init_class },
   { PLUGIN_INPUT,                       18, "rtsp", XINE_VERSION_CODE, NULL, input_rtsp_init_class },
   { PLUGIN_INPUT,                       18, "pnm",  XINE_VERSION_CODE, NULL, input_pnm_init_class },
   { PLUGIN_INPUT,                       18, "ftp",  XINE_VERSION_CODE, NULL, input_ftp_init_class },
-#ifdef HAVE_TLS
   { PLUGIN_INPUT,                       18, "ftpes", XINE_VERSION_CODE, NULL, input_ftpes_init_class },
-#endif
   { PLUGIN_NONE, 0, NULL, 0, NULL, NULL }
 };
 

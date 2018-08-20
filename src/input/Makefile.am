@@ -40,9 +40,9 @@ media_helper_la_LIBADD = $(XINE_LIB) $(LTLIBINTL)
 net_buf_ctrl_la_SOURCES = net_buf_ctrl.c net_buf_ctrl.h
 net_buf_ctrl_la_LIBADD = $(XINE_LIB) $(LTLIBINTL) $(PTHREAD_LIBS)
 
-xine_tls_la_SOURCES = tls/xine_tls.c tls/xine_tls.h
-xine_tls_la_CFLAGS = $(AM_CFLAGS) $(GNUTLS_CFLAGS)
-xine_tls_la_LIBADD = $(XINE_LIB) $(LTLIBINTL) $(GNUTLS_LIBS)
+xine_tls_la_SOURCES = tls/xine_tls.c tls/xine_tls.h tls/xine_tls_plugin.h
+xine_tls_la_CFLAGS = $(AM_CFLAGS)
+xine_tls_la_LIBADD = $(XINE_LIB) $(LTLIBINTL)
 
 #
 #
@@ -151,8 +151,13 @@ if ENABLE_BLURAY
 in_bluray = xineplug_inp_bluray.la
 endif
 
+if ENABLE_GNUTLS
+in_tls_gnutls = xineplug_tls_gnutls.la
+endif
+
 xineplug_LTLIBRARIES = \
 	$(in_builtins) \
+	$(in_tls_gnutls) \
 	$(in_dvd) \
 	$(in_vcd) \
 	$(in_vcdo) \
@@ -250,3 +255,9 @@ xineplug_inp_nfs_la_CFLAGS = $(AM_CFLAGS) $(LIBNFS_CFLAGS)
 xineplug_inp_ssh_la_SOURCES = input_ssh.c
 xineplug_inp_ssh_la_LIBADD = $(XINE_LIB) $(LIBSSH2_LIBS) $(LTLIBINTL) http_helper.la input_helper.la net_buf_ctrl.la
 xineplug_inp_ssh_la_CFLAGS = $(AM_CFLAGS) $(LIBSSH2_CFLAGS)
+
+# TLS provider plugins
+
+xineplug_tls_gnutls_la_SOURCES = tls/tls_gnutls.c tls/xine_tls_plugin.h
+xineplug_tls_gnutls_la_CFLAGS = $(AM_CFLAGS) $(GNUTLS_CFLAGS)
+xineplug_tls_gnutls_la_LIBADD = $(XINE_LIB) $(LTLIBINTL) $(GNUTLS_LIBS)

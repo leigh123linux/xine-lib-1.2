@@ -233,11 +233,8 @@ static input_plugin_t *net_class_get_instance (input_class_t *cls_gen, xine_stre
   nbc_t *nbc = NULL;
   const char *filename;
 
-  if (!strncasecmp (mrl, "tcp://", 6)
-#ifdef HAVE_TLS
-      || !strncasecmp (mrl, "tls://", 6)
-#endif
-      ) {
+  if (!strncasecmp (mrl, "tcp://", 6) ||
+      !strncasecmp (mrl, "tls://", 6)) {
 
     filename = &mrl[6];
 
@@ -313,7 +310,6 @@ void *input_net_init_class (xine_t *xine, const void *data) {
   return (void *)&input_net_class;
 }
 
-#ifdef HAVE_TLS
 void *input_tls_init_class (xine_t *xine, const void *data) {
 
   static const input_class_t input_tls_class = {
@@ -326,9 +322,8 @@ void *input_tls_init_class (xine_t *xine, const void *data) {
     .eject_media       = NULL,
   };
 
+  (void)xine;
   (void)data;
-  _x_tls_register_config_keys(xine->config);
 
   return (void *)&input_tls_class;
 }
-#endif

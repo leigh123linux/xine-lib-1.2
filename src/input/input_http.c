@@ -1088,17 +1088,23 @@ static input_plugin_t *http_class_get_instance (input_class_t *cls_gen, xine_str
   http_input_class_t  *cls = (http_input_class_t *)cls_gen;
   http_input_plugin_t *this;
 
+  if (!strncasecmp (mrl, "https://", 8)) {
+    /* check for tls plugin here to allow trying another https plugin (avio) */
+    if (!_x_tls_available(stream->xine)) {
+      xine_log (stream->xine, XINE_LOG_MSG, "input_http: TLS plugin not found\n");
+      return NULL;
+    }
+  } else
   if (strncasecmp (mrl, "http://", 7) &&
-#ifdef HAVE_TLS
-      /* do not accept https:// unless TLS support was built in */
-      strncasecmp (mrl, "https://", 8) &&
-#endif
       strncasecmp (mrl, "unsv://", 7) &&
       strncasecmp (mrl, "peercast://pls/", 15) &&
       !_x_url_user_agent (mrl) /* user agent hacks */) {
     return NULL;
   }
+
   this = calloc(1, sizeof(http_input_plugin_t));
+  if (!this)
+    return NULL;
 
   if (!strncasecmp (mrl, "peercast://pls/", 15)) {
     this->mrl = _x_asprintf ("http://127.0.0.1:7144/stream/%s", mrl+15);
@@ -1213,10 +1219,6 @@ void *input_http_init_class (xine_t *xine, const void *data) {
 					      "media.network.http_no_proxy", "", _("Domains for which to ignore the HTTP proxy"),
 					      _("A comma-separated list of domain names for which the proxy is to be ignored.\nIf a domain name is prefixed with '=' then it is treated as a host name only (full match required)."), 10,
 					      no_proxy_list_change_cb, (void *) this);
-
-#ifdef HAVE_TLS
-  _x_tls_register_config_keys(config);
-#endif
 
   return this;
 }

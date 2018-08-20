@@ -40,6 +40,8 @@ typedef struct xine_tls xine_tls_t;
  * TCP connection
  */
 
+int _x_tls_available(xine_t *xine);
+
 xine_tls_t *_x_tls_connect(xine_t *xine, xine_stream_t *stream, const char *host, int port);
 xine_tls_t *_x_tls_init(xine_t *xine, xine_stream_t *stream, int fd);
 void        _x_tls_close(xine_tls_t **);  /* note: associated socket is also closed */
@@ -72,7 +74,6 @@ void _x_tls_shutdown(xine_tls_t *);
  * config helpers
  */
 
-void _x_tls_register_config_keys(config_values_t *);
-int  _x_tls_get_verify_tls_cert(config_values_t *);
+int _x_tls_get_verify_tls_cert(config_values_t *);
 
 #endif /* XINE_INPUT_TLS_H */

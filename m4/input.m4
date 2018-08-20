@@ -257,12 +257,8 @@ AC_DEFUN([XINE_INPUT_PLUGINS], [
         if test x"$hard_enable_tls" = x"yes" && test x"$have_gnutls" != x"yes"; then
             AC_MSG_ERROR([TLS support requested, but gnutls not found])
         fi
-        AC_SUBST(GNUTLS_CFLAGS)
-        AC_SUBST(GNUTLS_LIBS)
     fi
-    if test x"$have_gnutls" = x"yes"; then
-      AC_DEFINE([HAVE_GNUTLS], 1, [Define this if you have gnutls installed])
-      dnl prepare for other TLS implementations ...
-      AC_DEFINE([HAVE_TLS], 1, [Define this if you have tls support compiled in])
-    fi
+    AC_SUBST(GNUTLS_CFLAGS)
+    AC_SUBST(GNUTLS_LIBS)
+    AM_CONDITIONAL([ENABLE_GNUTLS], [test x"$have_gnutls" = x"yes"])
 ])
