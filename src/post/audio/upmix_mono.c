@@ -73,9 +73,9 @@ struct post_plugin_upmix_mono_s {
 /**************************************************************************
  * upmix_mono parameters functions
  *************************************************************************/
-static int set_parameters (xine_post_t *this_gen, void *param_gen) {
+static int set_parameters (xine_post_t *this_gen, const void *param_gen) {
   post_plugin_upmix_mono_t *this = (post_plugin_upmix_mono_t *)this_gen;
-  upmix_mono_parameters_t *param = (upmix_mono_parameters_t *)param_gen;
+  const upmix_mono_parameters_t *param = (const upmix_mono_parameters_t *)param_gen;
 
   pthread_mutex_lock (&this->lock);
   memcpy( &this->params, param, sizeof(upmix_mono_parameters_t) );
@@ -295,7 +295,9 @@ static post_plugin_t *upmix_mono_open_plugin(post_class_t *class_gen, int inputs
   post_out_t               *output;
   xine_post_in_t       *input_api;
   post_audio_port_t        *port;
-  upmix_mono_parameters_t  init_params;
+  static const upmix_mono_parameters_t init_params = {
+    .channel = -1,
+  };
 
   if (!this || !audio_target || !audio_target[0]) {
     free(this);
@@ -307,8 +309,6 @@ static post_plugin_t *upmix_mono_open_plugin(post_class_t *class_gen, int inputs
   (void)video_target;
 
   _x_post_init(&this->post, 1, 0);
-
-  init_params.channel = -1;
 
   pthread_mutex_init (&this->lock, NULL);
 

@@ -89,10 +89,10 @@ struct post_plugin_pp_s {
 };
 
 
-static int set_parameters (xine_post_t *this_gen, void *param_gen) {
+static int set_parameters (xine_post_t *this_gen, const void *param_gen) {
 #ifdef PP_PARAMETERS_T
   post_plugin_pp_t *this = (post_plugin_pp_t *)this_gen;
-  pp_parameters_t *param = (pp_parameters_t *)param_gen;
+  const pp_parameters_t *param = (const pp_parameters_t *)param_gen;
 
   pthread_mutex_lock (&this->lock);
 

@@ -110,10 +110,10 @@ static xine_post_api_descr_t *expand_get_param_descr(void)
   return &expand_param_descr;
 }
 
-static int expand_set_parameters(xine_post_t *this_gen, void *param_gen)
+static int expand_set_parameters(xine_post_t *this_gen, const void *param_gen)
 {
   post_expand_t *this = (post_expand_t *)this_gen;
-  expand_parameters_t *param = (expand_parameters_t *)param_gen;
+  const expand_parameters_t *param = (const expand_parameters_t *)param_gen;
 
   this->enable_automatic_shift = param->enable_automatic_shift;
   this->overlay_y_offset       = param->overlay_y_offset;

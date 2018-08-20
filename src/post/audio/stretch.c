@@ -233,9 +233,9 @@ struct post_plugin_stretch_s {
 /**************************************************************************
  * stretch parameters functions
  *************************************************************************/
-static int set_parameters (xine_post_t *this_gen, void *param_gen) {
+static int set_parameters (xine_post_t *this_gen, const void *param_gen) {
   post_plugin_stretch_t *this = (post_plugin_stretch_t *)this_gen;
-  stretch_parameters_t *param = (stretch_parameters_t *)param_gen;
+  const stretch_parameters_t *param = (const stretch_parameters_t *)param_gen;
 
   pthread_mutex_lock (&this->lock);
   memcpy( &this->params, param, sizeof(stretch_parameters_t) );
@@ -616,7 +616,11 @@ static post_plugin_t *stretch_open_plugin(post_class_t *class_gen, int inputs,
   post_out_t           *output;
   xine_post_in_t       *input_api;
   post_audio_port_t    *port;
-  stretch_parameters_t  init_params;
+
+  static const stretch_parameters_t init_params = {
+    .preserve_pitch = 1,
+    .factor = 0.80,
+  };
 
   (void)class_gen;
   (void)inputs;
@@ -628,9 +632,6 @@ static post_plugin_t *stretch_open_plugin(post_class_t *class_gen, int inputs,
   }
 
   _x_post_init(&this->post, 1, 0);
-
-  init_params.preserve_pitch = 1;
-  init_params.factor = 0.80;
 
   pthread_mutex_init (&this->lock, NULL);
 

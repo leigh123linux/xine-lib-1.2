@@ -88,10 +88,10 @@ static xine_post_api_descr_t *mosaico_get_param_descr(void)
   return &mosaico_param_descr;
 }
 
-static int mosaico_set_parameters(xine_post_t *this_gen, void *param_gen)
+static int mosaico_set_parameters(xine_post_t *this_gen, const void *param_gen)
 {
   post_mosaico_t *this = (post_mosaico_t *)this_gen;
-  mosaico_parameters_t *param = (mosaico_parameters_t *)param_gen;
+  const mosaico_parameters_t *param = (const mosaico_parameters_t *)param_gen;
 
   if (param->pip_num > this->pip_count) return 0;
   this->pip[param->pip_num - 1].x = param->x;

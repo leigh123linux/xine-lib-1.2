@@ -97,9 +97,9 @@ static void ATTR_NO_FAST_VECTOR_MATH PrecalcCoefs(int *Ct, double Dist25)
     }
 }
 
-static int set_parameters (xine_post_t *this_gen, void *param_gen) {
+static int set_parameters (xine_post_t *this_gen, const void *param_gen) {
   post_plugin_denoise3d_t *this = (post_plugin_denoise3d_t *)this_gen;
-  denoise3d_parameters_t *param = (denoise3d_parameters_t *)param_gen;
+  const denoise3d_parameters_t *param = (const denoise3d_parameters_t *)param_gen;
   double ChromTmp;
 
   pthread_mutex_lock (&this->lock);

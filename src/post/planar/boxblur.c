@@ -73,9 +73,9 @@ struct post_plugin_boxblur_s {
 };
 
 
-static int set_parameters (xine_post_t *this_gen, void *param_gen) {
+static int set_parameters (xine_post_t *this_gen, const void *param_gen) {
   post_plugin_boxblur_t *this = (post_plugin_boxblur_t *)this_gen;
-  boxblur_parameters_t *param = (boxblur_parameters_t *)param_gen;
+  const boxblur_parameters_t *param = (const boxblur_parameters_t *)param_gen;
 
   pthread_mutex_lock (&this->lock);
 

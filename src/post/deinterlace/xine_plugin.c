@@ -147,7 +147,9 @@ static void _flush_frames(post_plugin_deinterlace_t *this)
   this->tvtime_changed++;
 }
 
-static int _set_parameters (post_plugin_deinterlace_t *this, const deinterlace_parameters_t *param) {
+static int set_parameters (xine_post_t *this_gen, const void *param_gen) {
+  post_plugin_deinterlace_t *this = (post_plugin_deinterlace_t *)this_gen;
+  const deinterlace_parameters_t *param = (const deinterlace_parameters_t *)param_gen;
 
   pthread_mutex_lock (&this->lock);
 
@@ -172,13 +174,6 @@ static int _set_parameters (post_plugin_deinterlace_t *this, const deinterlace_p
   pthread_mutex_unlock (&this->lock);
 
   return 1;
-}
-
-static int set_parameters (xine_post_t *this_gen, void *param_gen) {
-  post_plugin_deinterlace_t *this = (post_plugin_deinterlace_t *)this_gen;
-  const deinterlace_parameters_t *param = (const deinterlace_parameters_t *)param_gen;
-
-  return _set_parameters(this, param);
 }
 
 static int get_parameters (xine_post_t *this_gen, void *param_gen) {
@@ -399,7 +394,7 @@ static post_plugin_t *deinterlace_open_plugin(post_class_t *class_gen, int input
 
   pthread_mutex_init (&this->lock, NULL);
 
-  _set_parameters (this, &init_param);
+  set_parameters (&this->post.xine_post, &init_param);
 
   port = _x_post_intercept_video_port(&this->post, video_target[0], &input, &output);
   /* replace with our own get_frame function */

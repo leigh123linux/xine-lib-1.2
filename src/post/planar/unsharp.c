@@ -168,9 +168,9 @@ struct post_plugin_unsharp_s {
 };
 
 
-static int set_parameters (xine_post_t *this_gen, void *param_gen) {
+static int set_parameters (xine_post_t *this_gen, const void *param_gen) {
   post_plugin_unsharp_t *this = (post_plugin_unsharp_t *)this_gen;
-  unsharp_parameters_t *param = (unsharp_parameters_t *)param_gen;
+  const unsharp_parameters_t *param = (const unsharp_parameters_t *)param_gen;
   FilterParam *fp;
 
   pthread_mutex_lock (&this->lock);

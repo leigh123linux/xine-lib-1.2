@@ -109,10 +109,10 @@ struct post_plugin_volnorm_s {
 /**************************************************************************
  * volnorm parameters functions
  *************************************************************************/
-static int set_parameters (xine_post_t *this_gen, void *param_gen)
+static int set_parameters (xine_post_t *this_gen, const void *param_gen)
 {
     post_plugin_volnorm_t *this = (post_plugin_volnorm_t *)this_gen;
-    volnorm_parameters_t *param = (volnorm_parameters_t *)param_gen;
+    const volnorm_parameters_t *param = (const volnorm_parameters_t *)param_gen;
 
     pthread_mutex_lock (&this->lock);
     this->method = param->method;

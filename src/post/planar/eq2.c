@@ -336,9 +336,9 @@ struct post_plugin_eq2_s {
 };
 
 
-static int set_parameters (xine_post_t *this_gen, void *param_gen) {
+static int set_parameters (xine_post_t *this_gen, const void *param_gen) {
   post_plugin_eq2_t *this = (post_plugin_eq2_t *)this_gen;
-  eq2_parameters_t *param = (eq2_parameters_t *)param_gen;
+  const eq2_parameters_t *param = (const eq2_parameters_t *)param_gen;
   vf_eq2_t *eq2 = &this->eq2;
 
   pthread_mutex_lock (&this->lock);

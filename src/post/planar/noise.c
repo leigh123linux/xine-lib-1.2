@@ -245,10 +245,10 @@ struct post_plugin_noise_s {
 };
 
 
-static int set_parameters (xine_post_t *this_gen, void *param_gen)
+static int set_parameters (xine_post_t *this_gen, const void *param_gen)
 {
     post_plugin_noise_t *this = (post_plugin_noise_t *)this_gen;
-    noise_parameters_t *param = (noise_parameters_t *)param_gen;
+    const noise_parameters_t *param = (const noise_parameters_t *)param_gen;
     int i;
 
     pthread_mutex_lock (&this->lock);
@@ -405,7 +405,13 @@ static post_plugin_t *noise_open_plugin(post_class_t *class_gen, int inputs,
     xine_post_in_t    *input_api;
     post_out_t        *output;
     post_video_port_t *port;
-    noise_parameters_t params;
+
+    static const noise_parameters_t init_params = {
+      .luma_strength = 8,
+      .chroma_strength = 5,
+      .type = 1,
+      .quality = 2,
+    };
 
     if (!this || !video_target || !video_target[0]) {
       free(this);
@@ -417,12 +423,6 @@ static post_plugin_t *noise_open_plugin(post_class_t *class_gen, int inputs,
     (void)audio_target;
 
     _x_post_init(&this->post, 0, 1);
-
-    memset(&params, 0, sizeof(noise_parameters_t));
-    params.luma_strength = 8;
-    params.chroma_strength = 5;
-    params.type = 1;
-    params.quality = 2;
 
     pthread_mutex_init(&this->lock, NULL);
 
@@ -443,7 +443,7 @@ static post_plugin_t *noise_open_plugin(post_class_t *class_gen, int inputs,
 
     this->post.dispose = noise_dispose;
 
-    set_parameters ((xine_post_t *)this, &params);
+    set_parameters ((xine_post_t *)this, &init_params);
 
     /* */
 

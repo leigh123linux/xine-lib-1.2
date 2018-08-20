@@ -865,7 +865,7 @@ typedef struct {
    * method to set all the read/write parameters.
    * params is a struct * defined by xine_post_api_descr_t
    */
-  int (*set_parameters) (xine_post_t *self, void *params);
+  int (*set_parameters) (xine_post_t *self, const void *params);
 
   /*
    * method to get all parameters.

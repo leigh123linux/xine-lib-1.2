@@ -102,9 +102,9 @@ struct post_plugin_upmix_s {
 /**************************************************************************
  * upmix parameters functions
  *************************************************************************/
-static int set_parameters (xine_post_t *this_gen, void *param_gen) {
+static int set_parameters (xine_post_t *this_gen, const void *param_gen) {
   post_plugin_upmix_t *this = (post_plugin_upmix_t *)this_gen;
-  upmix_parameters_t *param = (upmix_parameters_t *)param_gen;
+  const upmix_parameters_t *param = (const upmix_parameters_t *)param_gen;
 
   pthread_mutex_lock (&this->lock);
   memcpy( &this->params, param, sizeof(upmix_parameters_t) );

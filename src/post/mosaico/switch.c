@@ -69,10 +69,10 @@ static xine_post_api_descr_t *switch_get_param_descr(void)
   return &switch_param_descr;
 }
 
-static int switch_set_parameters(xine_post_t *this_gen, void *param_gen)
+static int switch_set_parameters(xine_post_t *this_gen, const void *param_gen)
 {
   post_switch_t *this = (post_switch_t *)this_gen;
-  switch_parameter_t *param = (switch_parameter_t *)param_gen;
+  const switch_parameter_t *param = (const switch_parameter_t *)param_gen;
 
   if (param->select > this->source_count) return 0;
   pthread_mutex_lock(&this->mutex);
