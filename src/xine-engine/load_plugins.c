@@ -402,8 +402,6 @@ static int _insert_node (xine_t *this, plugin_file_t *file, fat_node_t *node_cac
   const char  *what;
 
   /* sanity test */
-  if (!info)
-    return 1;
   left = PLUGIN_MAX - this->plugin_catalog->plugin_count;
   do {
     unsigned int flag;
