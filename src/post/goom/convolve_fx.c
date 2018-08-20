@@ -359,10 +359,10 @@ static void convolve_apply(VisualFX *_this, Pixel *src, Pixel *dest, PluginInfo 
 
 VisualFX convolve_create(void) {
   VisualFX vfx = {
-      init: convolve_init,
-      free: convolve_free,
-      apply: convolve_apply,
-      fx_data: 0
+      .init    = convolve_init,
+      .free    = convolve_free,
+      .apply   = convolve_apply,
+      .fx_data = 0
   };
   return vfx;
 }

@@ -89,9 +89,9 @@
 #if defined(ARCH_X86)
 #if !defined(MASKS_DEFINED)
 #define MASKS_DEFINED
-static const mmx_t Mask = { uq: 0x7f7f7f7f7f7f7f7fll };
+static const mmx_t Mask = { .uq = 0x7f7f7f7f7f7f7f7fll };
 #define TP GREEDYTWOFRAMETHRESHOLD, GREEDYTWOFRAMETHRESHOLD2
-static const mmx_t GreedyTwoFrameThreshold = { ub: {TP, TP, TP, TP} };
+static const mmx_t GreedyTwoFrameThreshold = { .ub = {TP, TP, TP, TP} };
 #undef TP
 #endif
 #endif

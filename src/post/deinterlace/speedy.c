@@ -347,8 +347,8 @@ static unsigned int diff_factor_packed422_scanline_mmx( uint8_t *cur, uint8_t *o
 
 #if defined(ARCH_X86)
 
-static const sse_t dqwYMask = { uq: { 0x00ff00ff00ff00ffULL, 0x00ff00ff00ff00ffULL }};
-static const sse_t dqwCMask = { uq: { 0xff00ff00ff00ff00ULL, 0xff00ff00ff00ff00ULL }};
+static const sse_t dqwYMask = { .uq = { 0x00ff00ff00ff00ffULL, 0x00ff00ff00ff00ffULL }};
+static const sse_t dqwCMask = { .uq = { 0xff00ff00ff00ff00ULL, 0xff00ff00ff00ff00ULL }};
 
 static unsigned int diff_factor_packed422_scanline_sse2_aligned( uint8_t *cur, uint8_t *old, int width )
 {

@@ -188,7 +188,7 @@ static void deinterlace_scanline_linear_blend_mmxext( uint8_t *output,
     uint8_t *b0 = data->b0;
     uint8_t *m1 = data->m1;
     int i;
-    static mmx_t high_mask = {ub:{0xff,0xff,0xff,0xff,0,0,0,0}};
+    static mmx_t high_mask = { .ub = {0xff,0xff,0xff,0xff,0,0,0,0}};
 
     READ_PREFETCH_2048( t0 );
     READ_PREFETCH_2048( b0 );
