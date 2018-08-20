@@ -850,8 +850,8 @@ static inline int _plugin_info_equal(const plugin_info_t *a,
         return (((const vo_info_t*)a->special_info)->visual_type ==
                 ((const vo_info_t*)b->special_info)->visual_type);
       }
-      break;
-
+      /* if special info is missing, plugin file is broken ... */
+      return 0; /* skip it */
     default:
       break;
   }
