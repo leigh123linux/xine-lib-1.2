@@ -1736,7 +1736,7 @@ static void composite_alphamask_to_packed4444_scanline_c( uint8_t *output,
 
         if( a == 0xff ) {
             *((uint32_t *) output) = opaque;
-        } else if( (input[ 0 ] == 0x00) ) {
+        } else if( input[ 0 ] == 0x00 ) {
             *((uint32_t *) output) = (multiply_alpha( a, textcr ) << 24)
                                        | (multiply_alpha( a, textcb ) << 16)
                                        | (multiply_alpha( a, textluma ) << 8) | a;
@@ -1787,7 +1787,7 @@ static void composite_alphamask_to_packed4444_scanline_mmxext( uint8_t *output,
 
         if( a == 0xff ) {
             *((uint32_t *) output) = opaque;
-        } else if( (input[ 0 ] == 0x00) ) {
+        } else if( input[ 0 ] == 0x00 ) {
             /* We just need to multiply our colour by the alpha value. */
 
             /* mm2 = [ a ][ a ][ a ][ a ] */
