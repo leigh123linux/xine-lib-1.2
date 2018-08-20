@@ -616,7 +616,7 @@ static plugin_catalog_t *_new_catalog(void){
         xine_sarray_delete (catalog->cache_list);
       }
     }
-    for (; i >= 0; i--)
+    for (--i; i >= 0; i--)
       xine_sarray_delete (catalog->plugin_lists[i]);
     free (catalog);
   }
