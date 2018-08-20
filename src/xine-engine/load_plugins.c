@@ -1873,13 +1873,14 @@ demux_plugin_t *_x_find_demux_plugin_by_name(xine_stream_t *stream, const char *
 
     if (strcasecmp(node->info->id, name) == 0) {
       if (node->plugin_class || _load_plugin_class(stream->xine, node, NULL)) {
-
+#if 0
+        /* never triggered (method is set to EXPLICIT few lines earlier) */
 	if ( stream->content_detection_method == METHOD_BY_MRL &&
 	     ! _x_demux_check_extension(input->get_mrl(input),
 					 ((demux_class_t *)node->plugin_class)->extensions)
 	     )
 	  continue;
-
+#endif
         if ((plugin = ((demux_class_t *)node->plugin_class)->open_plugin(node->plugin_class, stream, input))) {
 	  inc_node_ref(node);
 	  plugin->node = node;
