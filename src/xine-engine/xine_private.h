@@ -96,13 +96,10 @@ void _x_free_audio_driver (xine_t *xine, ao_driver_t **driver) INTERNAL;
  * @brief find and instantiate input and demux plugins
  */
 input_plugin_t *_x_find_input_plugin (xine_stream_t *stream, const char *mrl) INTERNAL;
-demux_plugin_t *_x_find_demux_plugin (xine_stream_t *stream, input_plugin_t *input) INTERNAL;
-demux_plugin_t *_x_find_demux_plugin_by_name (xine_stream_t *stream, const char *name, input_plugin_t *input) INTERNAL;
 demux_plugin_t *_x_find_demux_plugin_last_probe(xine_stream_t *stream, const char *last_demux_name, input_plugin_t *input) INTERNAL;
 input_plugin_t *_x_rip_plugin_get_instance (xine_stream_t *stream, const char *filename) INTERNAL;
 input_plugin_t *_x_cache_plugin_get_instance (xine_stream_t *stream) INTERNAL;
 void _x_free_input_plugin (xine_stream_t *stream, input_plugin_t *input) INTERNAL;
-void _x_free_demux_plugin (xine_stream_t *stream, demux_plugin_t *demux) INTERNAL;
 ///@}
 
 ///@{

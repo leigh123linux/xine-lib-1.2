@@ -449,6 +449,11 @@ void             _x_free_spu_decoder   (xine_stream_t *stream, spu_decoder_t *de
 /* check for decoder availability - but don't try to initialize it */
 int              _x_decoder_available  (xine_t *xine, uint32_t buftype) XINE_PROTECTED;
 
+/* on-demand loading of demux plugins */
+demux_plugin_t *_x_find_demux_plugin (xine_stream_t *stream, input_plugin_t *input) XINE_PROTECTED;
+demux_plugin_t *_x_find_demux_plugin_by_name (xine_stream_t *stream, const char *name, input_plugin_t *input) XINE_PROTECTED;
+void _x_free_demux_plugin (xine_stream_t *stream, demux_plugin_t **demux) XINE_PROTECTED;
+
 /*
  * load_video_output_plugin
  *

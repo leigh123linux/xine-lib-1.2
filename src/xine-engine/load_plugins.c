@@ -1984,9 +1984,12 @@ demux_plugin_t *_x_find_demux_plugin_last_probe(xine_stream_t *stream, const cha
 }
 
 
-void _x_free_demux_plugin (xine_stream_t *stream, demux_plugin_t *demux) {
+void _x_free_demux_plugin (xine_stream_t *stream, demux_plugin_t **pdemux) {
+  demux_plugin_t   *demux = *pdemux;
   plugin_catalog_t *catalog = stream->xine->plugin_catalog;
   plugin_node_t    *node = demux->node;
+
+  *pdemux = NULL;
 
   demux->dispose(demux);
 

@@ -772,10 +772,8 @@ static void close_internal (xine_stream_t *stream) {
     stream->ignore_speed_change = 0;
   }
 
-  if (stream->demux_plugin) {
-    _x_free_demux_plugin(stream, stream->demux_plugin);
-    stream->demux_plugin = NULL;
-  }
+  if (stream->demux_plugin)
+    _x_free_demux_plugin(stream, &stream->demux_plugin);
 
   /*
    * close input plugin
@@ -1615,8 +1613,7 @@ static int open_internal (xine_stream_t *stream, const char *mrl) {
       xine_log (stream->xine, XINE_LOG_MSG, _("xine: demuxer failed to start\n"));
     }
 
-    _x_free_demux_plugin(stream, stream->demux_plugin);
-    stream->demux_plugin = NULL;
+    _x_free_demux_plugin(stream, &stream->demux_plugin);
 
     xprintf (stream->xine, XINE_VERBOSITY_DEBUG, "demux disposed\n");
 
