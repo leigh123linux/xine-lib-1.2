@@ -63,6 +63,7 @@
 #include <xine/input_plugin.h>
 #include <xine/video_out.h>
 #include <xine/post.h>
+#include <xine/xine_module.h>
 #include <xine/metronom.h>
 #include <xine/configfile.h>
 #include <xine/xineutils.h>
@@ -108,7 +109,8 @@ static void remove_segv_handler(void){
 #define CACHE_CATALOG_VERSION 4
 #define CACHE_CATALOG_VERSION_STR "4"
 
-static const uint8_t plugin_iface_versions[PLUGIN_TYPE_MAX + 1] = {
+#define __Max(a,b) ((a) > (b) ? (a) : (b))
+static const uint8_t plugin_iface_versions[__Max(PLUGIN_TYPE_MAX, PLUGIN_XINE_MODULE) + 1] = {
   [PLUGIN_INPUT]         = INPUT_PLUGIN_IFACE_VERSION,
   [PLUGIN_DEMUX]         = DEMUXER_PLUGIN_IFACE_VERSION,
   [PLUGIN_AUDIO_DECODER] = AUDIO_DECODER_IFACE_VERSION,
@@ -117,6 +119,7 @@ static const uint8_t plugin_iface_versions[PLUGIN_TYPE_MAX + 1] = {
   [PLUGIN_AUDIO_OUT]     = AUDIO_OUT_IFACE_VERSION,
   [PLUGIN_VIDEO_OUT]     = VIDEO_OUT_DRIVER_IFACE_VERSION,
   [PLUGIN_POST]          = POST_PLUGIN_IFACE_VERSION,
+  [PLUGIN_XINE_MODULE]   = XINE_MODULE_IFACE_VERSION,
 };
 
 typedef union {
@@ -126,6 +129,7 @@ typedef union {
   input_info_t   input_info;
   decoder_info_t decoder_info;
   post_info_t    post_info;
+  xine_module_info_t module_info;
 } all_info_t;
 
 typedef struct fat_node_st {
@@ -403,7 +407,7 @@ static int _insert_node (xine_t *this, plugin_file_t *file, fat_node_t *node_cac
   left = PLUGIN_MAX - this->plugin_catalog->plugin_count;
   do {
     unsigned int flag;
-    if ((plugin_type <= 0) || (plugin_type > PLUGIN_TYPE_MAX)) {
+    if ((plugin_type <= 0) || ((plugin_type > PLUGIN_TYPE_MAX) && plugin_type != PLUGIN_XINE_MODULE)) {
       if (file)
         xine_log (this, XINE_LOG_PLUGIN,
           _("load_plugins: unknown plugin type %d in %s\n"), plugin_type, file->filename);
@@ -428,8 +432,9 @@ static int _insert_node (xine_t *this, plugin_file_t *file, fat_node_t *node_cac
     }
     ainfo = info->special_info;
     flag = 1u << plugin_type;
-    if (flag & ((1u >> PLUGIN_VIDEO_OUT) | (1u << PLUGIN_AUDIO_OUT) | (1u << PLUGIN_POST) |
-                (1u << PLUGIN_AUDIO_DECODER) | (1u << PLUGIN_VIDEO_DECODER) | (1u << PLUGIN_SPU_DECODER))) {
+    if (flag & ((1u << PLUGIN_VIDEO_OUT) | (1u << PLUGIN_AUDIO_OUT) | (1u << PLUGIN_POST) |
+                (1u << PLUGIN_AUDIO_DECODER) | (1u << PLUGIN_VIDEO_DECODER) |
+                (1u << PLUGIN_SPU_DECODER) | (1u << PLUGIN_XINE_MODULE))) {
       if (!ainfo) {
         what = "special_info";
         break;
@@ -555,6 +560,10 @@ static int _insert_node (xine_t *this, plugin_file_t *file, fat_node_t *node_cac
       entry->node.priority = entry->ainfo.input_info.priority = 0;
     }
     break;
+  case PLUGIN_XINE_MODULE:
+    entry->node.priority = ainfo->module_info.priority;
+    entry->ainfo.module_info = ainfo->module_info;
+    break;
   }
   entry->info[0].special_info = &entry->ainfo;
 
@@ -562,7 +571,10 @@ static int _insert_node (xine_t *this, plugin_file_t *file, fat_node_t *node_cac
     file->no_unload = 1;
   }
 
-  xine_sarray_add (this->plugin_catalog->plugin_lists[plugin_type - 1], &entry->node);
+  if (plugin_type == PLUGIN_XINE_MODULE)
+    xine_sarray_add (this->plugin_catalog->modules_list, &entry->node);
+  else
+    xine_sarray_add (this->plugin_catalog->plugin_lists[plugin_type - 1], &entry->node);
   this->plugin_catalog->plugin_count++;
   return 0;
 }
@@ -592,12 +604,16 @@ static plugin_catalog_t *_new_catalog(void){
         xine_sarray_set_mode (catalog->cache_list, XINE_SARRAY_MODE_UNIQUE);
         catalog->file_list = xine_list_new ();
         if (catalog->file_list) {
+          catalog->modules_list = xine_sarray_new (0, _plugin_node_comparator);
+          if (catalog->modules_list) {
           pthread_mutexattr_t attr;
           pthread_mutexattr_init (&attr);
           pthread_mutexattr_settype (&attr, PTHREAD_MUTEX_RECURSIVE);
           pthread_mutex_init (&catalog->lock, &attr);
           pthread_mutexattr_destroy (&attr);
           return catalog;
+          }
+          xine_list_delete (catalog->file_list);
         }
         xine_sarray_delete (catalog->cache_list);
       }
@@ -852,6 +868,12 @@ static inline int _plugin_info_equal(const plugin_info_t *a,
       }
       /* if special info is missing, plugin file is broken ... */
       return 0; /* skip it */
+    case PLUGIN_XINE_MODULE:
+      if (a->special_info && b->special_info) {
+        return !strcmp(((const xine_module_info_t*)a->special_info)->type,
+                       ((const xine_module_info_t*)b->special_info)->type);
+      }
+      return !(!a->special_info - !b->special_info);
     default:
       break;
   }
@@ -1008,6 +1030,10 @@ static void _dispose_plugin_class(plugin_node_t *node) {
       if (((post_class_t *)cls)->dispose)
         ((post_class_t *)cls)->dispose ((post_class_t *)cls);
       break;
+    case PLUGIN_XINE_MODULE:
+      if (((xine_module_class_t *)cls)->dispose)
+        ((xine_module_class_t *)cls)->dispose (cls);
+      break;
     }
     node->plugin_class = NULL;
     if (node->file)
@@ -1158,6 +1184,17 @@ static void save_plugin_list(xine_t *this, FILE *fp, xine_sarray_t *list) {
         xine_uint32_2str (&q, post_info->type);
         *q++ = '\n';
         break;
+      }
+      case PLUGIN_XINE_MODULE: {
+        const xine_module_info_t *module_info = node->info->special_info;
+        size_t type_len = strlen(module_info->type);
+        memcpy (q, "module_type=", 12); q += 12;
+        memcpy (q, module_info->type, type_len); q += type_len;
+        memcpy (q, "\nmodule_sub_type=", 17); q += 16;
+        xine_int32_2str (&q, module_info->sub_type);
+        memcpy (q, "\nmodule_priority=", 17); q += 17;
+        pri = module_info->priority;
+        goto write_pri;
       }
       write_pri:
         xine_int32_2str (&q, pri);
@@ -1370,6 +1407,9 @@ static void load_plugin_list (xine_t *this, FILE *fp, xine_sarray_t *plugins) {
           "\x0d""demuxer_priority",
           "\x06""id",
           "\x0e""input_priority",
+          "\x11""module_priority",
+          "\x12""module_sub_type",
+          "\x13""module_type",
           "\x03""mtime",
           "\x0f""post_type",
           "\x02""size",
@@ -1409,9 +1449,9 @@ static void load_plugin_list (xine_t *this, FILE *fp, xine_sarray_t *plugins) {
           int i;
         } v = {0};
         unsigned int mask = 1u << index;
-        if (0x07d30 & mask) /* 14,13,12,11,10,8,5,4 */
+        if (0x027d30 & mask) /* 17,14,13,12,11,10,8,5,4 */
           v.i = xine_str2int32 (&val);
-        else if (0x08080 & mask) /* 15,7 */
+        else if (0x048080 & mask) /* 18,15,7 */
           v.u = xine_str2uint32 (&val);
         else if (0x0000c & mask) /* 3,2 */
           v.llu = xine_str2uint64 (&val);
@@ -1470,6 +1510,14 @@ static void load_plugin_list (xine_t *this, FILE *fp, xine_sarray_t *plugins) {
             if (numcfgs < 255)
               cfgentries[numcfgs++] = value;
             break;
+          case 17: /* "module_priority" */
+            node.ainfo.module_info.priority = v.i;
+            break;
+          case 18: /* "module_sub_type" */
+            node.ainfo.module_info.sub_type = v.u;
+            break;
+          case 19: /* "module_type" */
+            strlcpy(node.ainfo.module_info.type, value, sizeof(node.ainfo.module_info.type));
           default: ;
         }
       }
@@ -1691,6 +1739,64 @@ int _x_scan_plugins (xine_t *this) {
   map_decoders (this);
 
   return 0;
+}
+
+/*
+ * generic module loading
+ */
+xine_module_t *_x_find_module(xine_t *xine, const char *type, const char *id,
+                              unsigned sub_type, void *params) {
+
+  plugin_catalog_t *catalog = xine->plugin_catalog;
+  plugin_node_t    *node;
+  xine_module_t    *plugin = NULL;
+  int               list_id, list_size;
+  const xine_module_info_t *info;
+
+  pthread_mutex_lock (&catalog->lock);
+
+  list_size = xine_sarray_size(catalog->modules_list);
+  for (list_id = 0; list_id < list_size; list_id++) {
+    node = xine_sarray_get (catalog->modules_list, list_id);
+
+    if (id && strcmp (node->info->id, id))
+      continue;
+
+    info = node->info->special_info;
+    if (sub_type != info->sub_type)
+      continue;
+    if (type && strcmp (info->type, type))
+      continue;
+
+    if (node->plugin_class || _load_plugin_class(xine, node, params)) {
+      if ((plugin = ((xine_module_class_t *)node->plugin_class)->get_instance(node->plugin_class, params))) {
+        inc_node_ref(node);
+        plugin->node = node;
+        break;
+      }
+    }
+  }
+
+  pthread_mutex_unlock (&catalog->lock);
+
+  return plugin;
+}
+
+void _x_free_module(xine_t *xine, xine_module_t **pmodule) {
+
+  xine_module_t    *module = *pmodule;
+  plugin_catalog_t *catalog = xine->plugin_catalog;
+  plugin_node_t    *node = module->node;
+
+  *pmodule = NULL;
+
+  module->dispose(module);
+
+  if (node) {
+    pthread_mutex_lock(&catalog->lock);
+    dec_node_ref(node);
+    pthread_mutex_unlock(&catalog->lock);
+  }
 }
 
 /*
@@ -3255,6 +3361,7 @@ void _x_dispose_plugins (xine_t *this) {
     for (i = 0; i < PLUGIN_TYPE_MAX; i++) {
       dispose_plugin_list (this->plugin_catalog->plugin_lists[i], 0);
     }
+    dispose_plugin_list (this->plugin_catalog->modules_list, 0);
 
     i = dispose_plugin_list (this->plugin_catalog->cache_list, 1);
     if (i)

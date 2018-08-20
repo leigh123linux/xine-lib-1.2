@@ -69,6 +69,8 @@ struct plugin_catalog_s {
 
   int              plugin_count;
   int              decoder_count;
+
+  xine_sarray_t   *modules_list;
 };
 typedef struct plugin_catalog_s plugin_catalog_t;
 

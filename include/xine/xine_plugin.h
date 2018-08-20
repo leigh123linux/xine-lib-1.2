@@ -38,6 +38,8 @@
 
 #define PLUGIN_TYPE_MAX       PLUGIN_POST
 
+#define PLUGIN_XINE_MODULE    0x10
+
 /* this flag may be or'ed with type in order to force preloading the plugin.
  * very useful to register config items on xine initialization.
  */
@@ -91,6 +93,18 @@ typedef struct {
 typedef struct {
   int                      priority;
 } input_info_t;
+
+
+/* special info for generic loadable module
+ * examples:
+ *   { .type = "tls_v1" },
+ *   { .type = "gl_v1", .sub_type = XINE_VISUAL_TYPE_X11 },
+ */
+typedef struct {
+  int                      priority;
+  char                     type[16];     /* plugin type (and version) */
+  unsigned int             sub_type;
+} xine_module_info_t;
 
 
 /* register a list of statically linked plugins
