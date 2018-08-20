@@ -254,11 +254,17 @@ AC_DEFUN([XINE_INPUT_PLUGINS], [
     XINE_ARG_ENABLE([tls], [Enable TLS support using gnutls (enables secure http (https) and ftp (ftps)])
     if test "x$enable_tls" != "xno"; then
         PKG_CHECK_MODULES([GNUTLS], [gnutls >= 3.3.0], [have_gnutls=yes], [have_gnutls=no])
-        if test x"$hard_enable_tls" = x"yes" && test x"$have_gnutls" != x"yes"; then
+        PKG_CHECK_MODULES([OPENSSL], [openssl >= 1.0.2], [have_openssl=yes], [have_openssl=no])
+        if test x"$have_gnutls" = x"yes" || test x"$have_openssl" = x"yes"; then
+            have_tls=yes
+        elif test x"$hard_enable_tls" = x"yes"; then
             AC_MSG_ERROR([TLS support requested, but gnutls not found])
         fi
     fi
+    AC_SUBST(OPENSSL_CFLAGS)
+    AC_SUBST(OPENSSL_LIBS)
     AC_SUBST(GNUTLS_CFLAGS)
     AC_SUBST(GNUTLS_LIBS)
     AM_CONDITIONAL([ENABLE_GNUTLS], [test x"$have_gnutls" = x"yes"])
+    AM_CONDITIONAL([ENABLE_OPENSSL], [test x"$have_openssl" = x"yes"])
 ])

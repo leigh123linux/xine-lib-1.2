@@ -155,9 +155,14 @@ if ENABLE_GNUTLS
 in_tls_gnutls = xineplug_tls_gnutls.la
 endif
 
+if ENABLE_OPENSSL
+in_tls_openssl = xineplug_tls_openssl.la
+endif
+
 xineplug_LTLIBRARIES = \
 	$(in_builtins) \
 	$(in_tls_gnutls) \
+	$(in_tls_openssl) \
 	$(in_dvd) \
 	$(in_vcd) \
 	$(in_vcdo) \
@@ -261,3 +266,7 @@ xineplug_inp_ssh_la_CFLAGS = $(AM_CFLAGS) $(LIBSSH2_CFLAGS)
 xineplug_tls_gnutls_la_SOURCES = tls/tls_gnutls.c tls/xine_tls_plugin.h
 xineplug_tls_gnutls_la_CFLAGS = $(AM_CFLAGS) $(GNUTLS_CFLAGS)
 xineplug_tls_gnutls_la_LIBADD = $(XINE_LIB) $(LTLIBINTL) $(GNUTLS_LIBS)
+
+xineplug_tls_openssl_la_SOURCES = tls/tls_openssl.c tls/xine_tls_plugin.h
+xineplug_tls_openssl_la_CFLAGS = $(AM_CFLAGS) $(OPENSSL_CFLAGS)
+xineplug_tls_openssl_la_LIBADD = $(XINE_LIB) $(LTLIBINTL) $(OPENSSL_LIBS)
