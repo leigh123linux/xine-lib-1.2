@@ -44,6 +44,9 @@
 */
 /* #define DEBUG_CONFIG_FIND */
 
+/* XXX: does this break some strange applictions?? */
+#define SINGLE_CHUNK_ENUMS
+
 #include <xine/xineutils.h>
 #include <xine/xine_internal.h>
 #include "xine_private.h"
@@ -534,6 +537,72 @@ static cfg_entry_t *config_lookup_entry_int (config_values_t *this, const char *
   return entry;
 }
 
+static char **str_array_dup (const char **from, uint32_t *n) {
+#ifdef SINGLE_CHUNK_ENUMS
+  uint32_t sizes[257], *sitem, all;
+  const char **fitem;
+  char **to, **titem, *q;
+
+  *n = 0;
+  if (!from)
+    return NULL;
+
+  fitem = from;
+  sitem = sizes;
+  all = sizeof (char *);
+  while (*fitem && (sitem < sizes + 256))
+    all += (*sitem++ = strlen (*fitem++) + 1) + sizeof (char *);
+  *sitem = 0;
+  to = malloc (all);
+  if (!to)
+    return NULL;
+
+  *n = sitem - sizes;
+  q = (char *)to + (*n + 1) * sizeof (char *);
+  fitem = from;
+  sitem = sizes;
+  titem = to;
+  while (*sitem) {
+    *titem++ = q;
+    memcpy (q, *fitem++, *sitem);
+    q += *sitem++;
+  }
+  *titem = NULL;
+  return to;
+#else
+  const char **fitem;
+  char **to, **titem;
+
+  *n = 0;
+  if (!from)
+    return NULL;
+
+  for (fitem = from; *fitem; fitem++) ;
+  to = malloc ((fitem - from + 1) * sizeof (char *));
+  if (!to)
+    return NULL;
+
+  *n = fitem - from;
+  fitem = from;
+  titem = to;
+  while (*fitem)
+    *titem++ = strdup (*fitem++);
+  *titem = NULL;
+  return to;
+#endif
+}
+
+static void str_array_free (char **a) {
+  char **i;
+  if (!a)
+    return;
+  for (i = a; *i; i++) ;
+  if (a[0] != (char *)(i + 1)) {
+    for (i = a; *i; i++)
+      free (*i);
+  }
+  free (a);
+}
 
 /*
  * external interface
@@ -564,16 +633,8 @@ static void config_reset_value(cfg_entry_t *entry) {
   _x_freep (&entry->description);
   _x_freep (&entry->help);
 
-  if (entry->enum_values) {
-    char **value;
-
-    value = entry->enum_values;
-    while (*value) {
-      _x_freep (value);
-      value++;
-    }
-    _x_freep (&entry->enum_values);
-  }
+  str_array_free (entry->enum_values);
+  entry->enum_values = NULL;
   entry->num_value = 0;
 }
 
@@ -888,9 +949,7 @@ static int config_register_enum (config_values_t *this,
 				 void *cb_data) {
 
   cfg_entry_t *entry;
-  const char **value_src;
-  char **value_dest;
-  int value_count;
+  uint32_t value_count;
 
 
   _x_assert(this);
@@ -923,21 +982,7 @@ static int config_register_enum (config_values_t *this,
   entry->num_default = def_value;
 
   /* allocate and copy the enum values */
-  value_src = (const char **)values;
-  value_count = 0;
-  while (*value_src) {
-    value_src++;
-    value_count++;
-  }
-  entry->enum_values = malloc (sizeof(char*) * (value_count + 1));
-  value_src = (const char **)values;
-  value_dest = entry->enum_values;
-  while (*value_src) {
-    *value_dest = strdup(*value_src);
-    value_src++;
-    value_dest++;
-  }
-  *value_dest = NULL;
+  entry->enum_values = str_array_dup ((const char **)values, &value_count);
 
   entry->description   = (description) ? strdup(description) : NULL;
   entry->help          = (help) ? strdup(help) : NULL;
@@ -947,7 +992,7 @@ static int config_register_enum (config_values_t *this,
 
   if (entry->num_value < 0)
     entry->num_value = 0;
-  if (entry->num_value >= value_count)
+  if (entry->num_value >= (int)value_count)
     entry->num_value = value_count;
 
   pthread_mutex_unlock(&this->config_lock);
@@ -1559,27 +1604,26 @@ static void config_unset_new_entry_callback (config_values_t *this) {
   pthread_mutex_unlock(&this->config_lock);
 }
 
-static int put_int(uint8_t *buffer, int pos, int value) {
+static void put_int (uint8_t **dest, int value) {
   int32_t value_int32 = (int32_t)value;
 #if (defined(__GNUC__) && (__GNUC__ >= 4)) || defined(__clang__)
 #  ifdef WORDS_BIGENDIAN
   value_int32 = __builtin_bswap32 (value_int32);
 #  endif
-  __builtin_memcpy (buffer + pos, &value_int32, 4);
+  __builtin_memcpy (*dest, &value_int32, 4);
 #else
-  buffer[pos] = value_int32 & 0xFF;
-  buffer[pos + 1] = (value_int32 >> 8) & 0xFF;
-  buffer[pos + 2] = (value_int32 >> 16) & 0xFF;
-  buffer[pos + 3] = (value_int32 >> 24) & 0xFF;
+  dest[0] = value_int32 & 0xFF;
+  dest[1] = (value_int32 >> 8) & 0xFF;
+  dest[2] = (value_int32 >> 16) & 0xFF;
+  dest[3] = (value_int32 >> 24) & 0xFF;
 #endif
-  return 4;
+  *dest += 4;
 }
 
-static int put_string(uint8_t *buffer, int pos, const char *value, int value_len) {
-  pos += put_int(buffer, pos, value_len);
-  memcpy(&buffer[pos], value, value_len);
-
-  return 4 + value_len;
+static void put_string (uint8_t **dest, const char *value, uint32_t value_len) {
+  put_int (dest, value_len);
+  memcpy (*dest, value, value_len);
+  *dest += value_len;
 }
 
 static char* config_get_serialized_entry (config_values_t *this, const char *key) {
@@ -1617,54 +1661,28 @@ static char* config_get_serialized_entry (config_values_t *this, const char *key
           char           **enum_values;
     */
 
-    int key_len = 0;
-    int str_default_len = 0;
-    int description_len = 0;
-    int help_len = 0;
-    unsigned long total_len, buf_len;
-    int value_count;
-    int value_len[10];
-    int pos = 0;
-    int i;
-    char **cur_value;
-    uint8_t *buf1, *buf2;
+    uint8_t *buf1, *buf2, *q;
 
-    if (entry->key)
-      key_len = strlen(entry->key);
-    if (entry->str_default)
-      str_default_len = strlen(entry->str_default);
-    if (entry->description)
-      description_len = strlen(entry->description);
-    if (entry->help)
-      help_len = strlen(entry->help);
+    uint32_t total_len, buf_len;
+    uint32_t key_len         = entry->key         ? strlen (entry->key) : 0;
+    uint32_t str_default_len = entry->str_default ? strlen (entry->str_default) : 0;
+    uint32_t description_len = entry->description ? strlen (entry->description) : 0;
+    uint32_t help_len        = entry->help        ? strlen (entry->help) : 0;
+    uint32_t value_len[256];
+    uint32_t value_count, i;
+    char   **cur_value;
 
-    /* integers */
-    /* value: 4 bytes */
-    total_len = 6 * sizeof(int32_t);
+    /* 6 integers: value (4 bytes)
+     * 4 strings:  len (4 bytes) + string (len bytes)
+     *   enums:    count (4 bytes) + count * (len (4 bytes) + string (len bytes)) */
+    total_len = 11 * 4 + key_len + str_default_len + description_len + help_len;
 
-    /* strings (size + char buffer)
-     * length: 4 bytes
-     * buffer: length bytes
-     */
-    total_len += sizeof(int32_t) + key_len;
-    total_len += sizeof(int32_t) + str_default_len;
-    total_len += sizeof(int32_t) + description_len;
-    total_len += sizeof(int32_t) + help_len;
-
-    /* enum values...
-     * value count: 4 bytes
-     * for each value:
-     *   length: 4 bytes
-     *   buffer: length bytes
-     */
     value_count = 0;
-    total_len += sizeof(int32_t);  /* value count */
-
     cur_value = entry->enum_values;
     if (cur_value) {
-      while (*cur_value && ((size_t)value_count < (sizeof(value_len) / sizeof(int) ))) {
-        value_len[value_count] = strlen(*cur_value);
-        total_len += sizeof(int32_t) + value_len[value_count];
+      while (*cur_value && (value_count < (sizeof (value_len) / sizeof (value_len[0])))) {
+        value_len[value_count] = strlen (*cur_value);
+        total_len += 4 + value_len[value_count];
         value_count++;
         cur_value++;
       }
@@ -1680,27 +1698,27 @@ static char* config_get_serialized_entry (config_values_t *this, const char *key
     buf1 = buf2 + (buf_len - total_len - 4);
 
     /* Let's go */
+    q = buf1;
 
     /* the integers */
-    pos += put_int (buf1, pos, entry->type);
-    pos += put_int (buf1, pos, entry->range_min);
-    pos += put_int (buf1, pos, entry->range_max);
-    pos += put_int (buf1, pos, entry->exp_level);
-    pos += put_int (buf1, pos, entry->num_default);
-    pos += put_int (buf1, pos, entry->num_value);
+    put_int (&q, entry->type);
+    put_int (&q, entry->range_min);
+    put_int (&q, entry->range_max);
+    put_int (&q, entry->exp_level);
+    put_int (&q, entry->num_default);
+    put_int (&q, entry->num_value);
 
     /* the strings */
-    pos += put_string (buf1, pos, entry->key, key_len);
-    pos += put_string (buf1, pos, entry->str_default, str_default_len);
-    pos += put_string (buf1, pos, entry->description, description_len);
-    pos += put_string (buf1, pos, entry->help, help_len);
+    put_string (&q, entry->key, key_len);
+    put_string (&q, entry->str_default, str_default_len);
+    put_string (&q, entry->description, description_len);
+    put_string (&q, entry->help, help_len);
 
     /* the enum stuff */
-    pos += put_int (buf1, pos, value_count);
+    put_int (&q, value_count);
     cur_value = entry->enum_values;
-
     for (i = 0; i < value_count; i++) {
-      pos += put_string (buf1, pos, *cur_value, value_len[i]);
+      put_string (&q, *cur_value, value_len[i]);
       cur_value++;
     }
     pthread_mutex_unlock (&this->config_lock);
@@ -1727,151 +1745,118 @@ static char* config_register_serialized_entry (config_values_t *this, const char
           char            *help;
           char           **enum_values;
   */
-  char  *enum_values[257];
-  int    type;
-  int    range_min;
-  int    range_max;
-  int    exp_level;
-  int    num_default;
-  int    num_value;
-  char  *key = NULL;
-  char  *str_default = NULL;
-  char  *description = NULL;
-  char  *help = NULL;
 
-  int    value_count = 0;
-  int    i;
+  uint8_t *output;
 
-  uint8_t *output, *p;
-  int    left;
-  int32_t  i32;
-
-  output = malloc ((strlen (value) * 3 + 3) / 4 + 1);
-  if (!output)
+  if (!value)
     return NULL;
-  left = xine_base64_decode (value, output);
-  p = output;
-  p[left] = 0;
+  output = malloc ((strlen (value) * 3 + 3) / 4 + 1);
 
-  /* we need at least 7 ints and 4 string lengths */
-  left -= 11 * 4;
-  if (left < 0)
-    goto exit;
+  if (output) do {
+    char    *enum_values[257];
+    int      type, range_min, range_max, exp_level, num_default, num_value;
+    char    *key, *str_default, *description, *help;
+    uint8_t *p;
+    uint32_t left, value_count, i;
 
-  i32 = _X_LE_32 (p); p += 4; type        = i32;
-  i32 = _X_LE_32 (p); p += 4; range_min   = i32;
-  i32 = _X_LE_32 (p); p += 4; range_max   = i32;
-  i32 = _X_LE_32 (p); p += 4; exp_level   = i32;
-  i32 = _X_LE_32 (p); p += 4; num_default = i32;
-  i32 = _X_LE_32 (p); p += 4; num_value   = i32;
+    left = xine_base64_decode (value, output);
+    /* we need at least 7 ints and 4 string lengths */
+    if (left < 11 * 4)
+      break;
+    left -= 11 * 4;
 
-  i32 = _X_LE_32 (p); p += 4;
-  if ((i32 < 0) || (i32 > (64 << 10)))
-    goto exit;
-  left -= i32;
-  if (left < 0)
-    goto exit;
-  key = (char *)p; p += i32;
+    p = output;
+    type        = (int32_t)_X_LE_32 (p); p += 4;
+    range_min   = (int32_t)_X_LE_32 (p); p += 4;
+    range_max   = (int32_t)_X_LE_32 (p); p += 4;
+    exp_level   = (int32_t)_X_LE_32 (p); p += 4;
+    num_default = (int32_t)_X_LE_32 (p); p += 4;
+    num_value   = (int32_t)_X_LE_32 (p); p += 4;
 
-  i32 = _X_LE_32 (p); p[0] = 0; p += 4;
-  if ((i32 < 0) || (i32 > (64 << 10)))
-    goto exit;
-  left -= i32;
-  if (left < 0)
-    goto exit;
-  str_default = (char *)p; p += i32;
+#define get_string(s) { \
+  uint32_t len = _X_LE_32 (p); p[0] = 0; p += 4; \
+  if (len > left) \
+    break; \
+  left -= len; \
+  s = (char *)p; p += len; \
+}
 
-  i32 = _X_LE_32 (p); p[0] = 0; p += 4;
-  if ((i32 < 0) || (i32 > (64 << 10)))
-    goto exit;
-  left -= i32;
-  if (left < 0)
-    goto exit;
-  description = (char *)p; p += i32;
+    get_string (key);
+    get_string (str_default);
+    get_string (description);
+    get_string (help);
 
-  i32 = _X_LE_32 (p); p[0] = 0; p += 4;
-  if ((i32 < 0) || (i32 > (64 << 10)))
-    goto exit;
-  left -= i32;
-  if (left < 0)
-    goto exit;
-  help = (char *)p; p += i32;
+    value_count = _X_LE_32 (p); p[0] = 0; p += 4;
+    if (value_count > 256)
+      break;
+    if (left < value_count * 4)
+      break;
+    left -= value_count * 4;
+    for (i = 0; i < value_count; i++) {
+      get_string (enum_values[i]);
+    }
+    if (i < value_count)
+      break;
+    /* yes we have that byte. */
+    p[0] = 0;
+    enum_values[value_count] = NULL;
 
-  i32 = _X_LE_32 (p); p[0] = 0; p += 4; value_count = i32;
-  if ((value_count < 0) || (value_count > 256))
-    goto exit;
-  left -= value_count * 4;
-  if (left < 0)
-    goto exit;
-  for (i = 0; i < value_count; i++) {
-    i32 = _X_LE_32 (p); p[0] = 0; p += 4;
-    if ((i32 < 0) || (i32 > (64 << 10)))
-      goto exit;
-    left -= i32;
-    if (left < 0)
-      goto exit;
-    enum_values[i] = (char *)p; p += i32;
-  }
-  /* yes we have that byte. */
-  p[0] = 0;
-  enum_values[value_count] = NULL;
+#undef get_string
 
-  if (exp_level == FIND_ONLY)
-    exp_level = 0;
+    if (exp_level == FIND_ONLY)
+      exp_level = 0;
 #ifdef LOG
-  printf("config entry deserialization:\n");
-  printf("  key        : %s\n", key);
-  printf("  type       : %d\n", type);
-  printf("  exp_level  : %d\n", exp_level);
-  printf("  num_default: %d\n", num_default);
-  printf("  num_value  : %d\n", num_value);
-  printf("  str_default: %s\n", str_default);
-  printf("  range_min  : %d\n", range_min);
-  printf("  range_max  : %d\n", range_max);
-  printf("  description: %s\n", description);
-  printf("  help       : %s\n", help);
-  printf("  enum       : %d values\n", value_count);
-
-  for (i = 0; i < value_count; i++) {
-    printf("    enum[%2d]: %s\n", i, enum_values[i]);
-  }
-  printf("\n");
+    printf ("config entry deserialization:\n");
+    printf ("  key        : %s\n", key);
+    printf ("  type       : %d\n", type);
+    printf ("  exp_level  : %d\n", exp_level);
+    printf ("  num_default: %d\n", num_default);
+    printf ("  num_value  : %d\n", num_value);
+    printf ("  str_default: %s\n", str_default);
+    printf ("  range_min  : %d\n", range_min);
+    printf ("  range_max  : %d\n", range_max);
+    printf ("  description: %s\n", description);
+    printf ("  help       : %s\n", help);
+    printf ("  enum       : %d values\n", value_count);
+    for (i = 0; i < value_count; i++)
+      printf ("    enum[%2d]: %s\n", i, enum_values[i]);
+    printf ("\n");
 #endif
 
-  switch (type) {
-  case XINE_CONFIG_TYPE_STRING:
-    switch (num_value) {
-      case 0:
-        this->register_string(this, key, str_default, description, help, exp_level, NULL, NULL);
-		break;
-      default:
-        this->register_filename(this, key, str_default, num_value, description, help, exp_level, NULL, NULL);
-		break;
+    switch (type) {
+      case XINE_CONFIG_TYPE_STRING:
+        switch (num_value) {
+          case 0:
+            this->register_string (this, key, str_default, description, help, exp_level, NULL, NULL);
+            break;
+          default:
+            this->register_filename (this, key, str_default, num_value, description, help, exp_level, NULL, NULL);
+            break;
+        }
+        break;
+      case XINE_CONFIG_TYPE_RANGE:
+        this->register_range (this, key, num_default, range_min, range_max, description, help, exp_level, NULL, NULL);
+        break;
+      case XINE_CONFIG_TYPE_ENUM:
+        this->register_enum (this, key, num_default, enum_values, description, help, exp_level, NULL, NULL);
+        break;
+      case XINE_CONFIG_TYPE_NUM:
+        this->register_num (this, key, num_default, description, help, exp_level, NULL, NULL);
+        break;
+      case XINE_CONFIG_TYPE_BOOL:
+        this->register_bool (this, key, num_default, description, help, exp_level, NULL, NULL);
+        break;
+      default: ;
     }
-    break;
-  case XINE_CONFIG_TYPE_RANGE:
-    this->register_range(this, key, num_default, range_min, range_max, description, help, exp_level, NULL, NULL);
-    break;
-  case XINE_CONFIG_TYPE_ENUM:
-    this->register_enum(this, key, num_default, enum_values, description, help, exp_level, NULL, NULL);
-    break;
-  case XINE_CONFIG_TYPE_NUM:
-    this->register_num(this, key, num_default, description, help, exp_level, NULL, NULL);
-    break;
-  case XINE_CONFIG_TYPE_BOOL:
-    this->register_bool(this, key, num_default, description, help, exp_level, NULL, NULL);
-    break;
-  case XINE_CONFIG_TYPE_UNKNOWN:
-    break;
-  }
 
-exit:
-  if (key)
     key = strdup (key);
-  /* cleanup */
-  free(output);
+    free (output);
+    return key;
+  } while (0);
 
-  return key;
+  /* cleanup */
+  free (output);
+  return NULL;
 }
 
 config_values_t *_x_config_init (void) {
