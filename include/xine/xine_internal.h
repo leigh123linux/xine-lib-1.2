@@ -86,7 +86,7 @@ struct xine_s {
   int                        verbosity;
 
   int                        demux_strategy;
-  char                      *save_path;
+  const char                *save_path;
 
   /* log output that may be presented to the user */
   scratch_buffer_t          *log_buffers[XINE_LOG_NUM];
