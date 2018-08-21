@@ -41,6 +41,7 @@ nobase_include_HEADERS = xine.h \
 	xine/vo_scale.h		\
 	xine/xine_buffer.h	\
 	xine/xine_internal.h	\
+	xine/xine_module.h	\
 	xine/xine_plugin.h	\
 	xine/xineintl.h		\
 	xine/xineutils.h	\
