@@ -327,6 +327,8 @@ static void *_openssl_init_class(xine_t *xine, const void *data)
 {
   openssl_class_t *this;
 
+  (void)data;
+
   this = calloc(1, sizeof(*this));
   if (!this)
     return NULL;

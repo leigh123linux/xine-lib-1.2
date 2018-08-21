@@ -236,6 +236,8 @@ static xine_module_t *gnutls_get_instance(xine_module_class_t *cls_gen, const vo
   tls_gnutls_t *this;
   int ret;
 
+  (void)cls_gen;
+
   ret = gnutls_global_init();
   if (ret) {
     xprintf(p->xine, XINE_VERBOSITY_LOG, LOG_MODULE ": "
@@ -272,6 +274,9 @@ static void *gnutls_init_class(xine_t *xine, const void *data)
     .identifier        = "gnutls",
     .dispose           = NULL,
   };
+
+  (void)xine;
+  (void)data;
 
   tls_register_config_keys(xine->config);
 
