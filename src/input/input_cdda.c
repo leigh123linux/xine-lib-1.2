@@ -275,7 +275,7 @@ typedef struct {
 
   struct  {
     int                enabled;
-    char              *server;
+    const char        *server;
     int                port;
 
     char              *cdiscid;
@@ -323,7 +323,7 @@ typedef struct {
   xine_t              *xine;
   config_values_t     *config;
 
-  char                *cdda_device;
+  const char          *cdda_device;
   int                  cddb_error;
 
   cdda_input_plugin_t *ip;
@@ -2389,7 +2389,7 @@ static int cdda_plugin_open (input_plugin_t *this_gen ) {
   cdda_input_class_t  *class = (cdda_input_class_t *) this_gen->input_class;
   cdrom_toc            *toc;
   int                  fd  = -1;
-  char                *cdda_device;
+  const char          *cdda_device;
   int                  err = -1;
 
   lprintf("cdda_plugin_open\n");

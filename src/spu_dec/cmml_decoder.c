@@ -47,7 +47,7 @@ typedef enum {
 
 typedef struct spucmml_class_s {
   spu_decoder_class_t class;
-  char              *src_encoding;  /* encoding of subtitle file */
+  const char        *src_encoding;  /* encoding of subtitle file */
   xine_t            *xine;
 
 } spucmml_class_t;
@@ -78,7 +78,7 @@ typedef struct spucmml_decoder_s {
   int                master_started;
   int                slave_started;
 
-  char              *font;          /* subtitle font */
+  const char        *font;          /* subtitle font */
   subtitle_size      subtitle_size; /* size of subtitles */
   int                vertical_offset;
 
