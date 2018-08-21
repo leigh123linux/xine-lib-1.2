@@ -205,17 +205,13 @@ typedef struct {
   input_class_t       input_class;
 
   xine_t             *xine;
-  config_values_t    *config;
 
-  char               *dvd_device;    /* default DVD device */
+  const char         *dvd_device;    /* default DVD device */
   char               *eject_device;  /* the device last opened is remembered for eject */
 
   dvd_input_plugin_t *ip;
 
-  int32_t             read_ahead_flag;
   int32_t             seek_mode;
-  int32_t             language;
-  int32_t             region;
   int32_t             play_single_chapter;
 
 } dvd_input_class_t;
@@ -252,8 +248,6 @@ static void read_ahead_cb(void *this_gen, xine_cfg_entry_t *entry) {
   if(!class)
    return;
 
-  class->read_ahead_flag = entry->num_value;
-
   if(class->ip) {
     dvd_input_plugin_t *this = class->ip;
 
@@ -282,8 +276,6 @@ static void region_changed_cb (void *this_gen, xine_cfg_entry_t *entry) {
   if(!class)
    return;
 
-  class->region = entry->num_value;
-
   if(class->ip && ((entry->num_value >= 1) && (entry->num_value <= 8))) {
     dvd_input_plugin_t *this = class->ip;
 
@@ -297,14 +289,13 @@ static void language_changed_cb(void *this_gen, xine_cfg_entry_t *entry) {
   if(!class)
    return;
 
-  class->language = entry->str_value[0] << 8 | entry->str_value[1];
-
   if(class->ip) {
+    char lang[3] = { entry->str_value[0], entry->str_value[1], 0 };
     dvd_input_plugin_t *this = class->ip;
 
-    dvdnav_menu_language_select(this->dvdnav, entry->str_value);
-    dvdnav_audio_language_select(this->dvdnav, entry->str_value);
-    dvdnav_spu_language_select(this->dvdnav, entry->str_value);
+    dvdnav_menu_language_select(this->dvdnav, lang);
+    dvdnav_audio_language_select(this->dvdnav, lang);
+    dvdnav_spu_language_select(this->dvdnav, lang);
   }
 }
 
@@ -965,7 +956,7 @@ static void xine_dvd_send_button_update(dvd_input_plugin_t *this, int mode) {
 static void dvd_handle_events(dvd_input_plugin_t *this) {
 
   dvd_input_class_t  *class = (dvd_input_class_t*)this->input_plugin.input_class;
-  config_values_t  *config = class->config;       /* Pointer to XineRC config file   */
+  config_values_t  *config = class->xine->config;       /* Pointer to XineRC config file   */
   xine_event_t *event;
 
   while ((event = xine_event_get(this->event_queue))) {
@@ -1790,7 +1781,6 @@ static void *init_class (xine_t *xine, const void *data) {
   this->input_class.dispose            = dvd_class_dispose;
   this->input_class.eject_media        = dvd_class_eject_media;
 
-  this->config                         = config;
   this->xine                           = xine;
 
 
