@@ -916,6 +916,9 @@ static void parse_hrd_parameters(struct buf_reader *buf, struct hrd_parameters *
   hrd->bit_rate_scale = read_bits(buf, 4);
   hrd->cpb_size_scale = read_bits(buf, 4);
 
+  if (hrd->cpb_cnt_minus1 > 31)
+    hrd->cpb_cnt_minus1 = 31;
+
   unsigned int i;
   for (i = 0; i <= hrd->cpb_cnt_minus1; i++) {
     hrd->bit_rate_value_minus1[i] = read_exp_golomb(buf);
