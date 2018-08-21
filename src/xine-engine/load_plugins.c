@@ -1188,7 +1188,7 @@ static void save_plugin_list(xine_t *this, FILE *fp, xine_sarray_t *list) {
         size_t type_len = strlen(module_info->type);
         memcpy (q, "module_type=", 12); q += 12;
         memcpy (q, module_info->type, type_len); q += type_len;
-        memcpy (q, "\nmodule_sub_type=", 17); q += 16;
+        memcpy (q, "\nmodule_sub_type=", 17); q += 17;
         xine_int32_2str (&q, module_info->sub_type);
         memcpy (q, "\nmodule_priority=", 17); q += 17;
         pri = module_info->priority;
@@ -1600,6 +1600,7 @@ static void save_catalog (xine_t *this) {
     for (i = 0; i < PLUGIN_TYPE_MAX; i++) {
       save_plugin_list (this, fp, this->plugin_catalog->plugin_lists[i]);
     }
+    save_plugin_list (this, fp, this->plugin_catalog->modules_list);
     if (fclose(fp))
     {
       const char *err = strerror (errno);
