@@ -168,7 +168,6 @@ struct post_plugin_eq_s {
 
   /* private data */
   eq_parameters_t    params;
-  xine_post_in_t     params_input;
 
   pthread_mutex_t    lock;
 };
@@ -216,13 +215,6 @@ static char * get_help (void) {
            "* mplayer's eq (C) Richard Felker\n"
            );
 }
-
-static xine_post_api_t post_api = {
-  set_parameters,
-  get_parameters,
-  get_param_descr,
-  get_help,
-};
 
 
 static void eq_dispose(post_plugin_t *this_gen)
@@ -343,9 +335,20 @@ static post_plugin_t *eq_open_plugin(post_class_t *class_gen, int inputs,
 {
   post_plugin_eq_t  *this = calloc(1, sizeof(post_plugin_eq_t));
   post_in_t         *input;
-  xine_post_in_t    *input_api;
   post_out_t        *output;
   post_video_port_t *port;
+
+  static const xine_post_api_t post_api = {
+    .set_parameters  = set_parameters,
+    .get_parameters  = get_parameters,
+    .get_param_descr = get_param_descr,
+    .get_help        = get_help,
+  };
+  static const xine_post_in_t params_input = {
+    .name = "parameters",
+    .type = XINE_POST_DATA_PARAMETERS,
+    .data  = (void *)&post_api,
+  };
 
   if (!this || !video_target || !video_target[0]) {
     free(this);
@@ -375,11 +378,7 @@ static post_plugin_t *eq_open_plugin(post_class_t *class_gen, int inputs,
   port->intercept_frame       = eq_intercept_frame;
   port->new_frame->draw       = eq_draw;
 
-  input_api       = &this->params_input;
-  input_api->name = "parameters";
-  input_api->type = XINE_POST_DATA_PARAMETERS;
-  input_api->data = &post_api;
-  xine_list_push_back(this->post.input, input_api);
+  xine_list_push_back(this->post.input, (void *)&params_input);
 
   input->xine_in.name     = "video";
   output->xine_out.name   = "eqd video";

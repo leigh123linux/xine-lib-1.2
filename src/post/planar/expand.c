@@ -85,8 +85,6 @@ END_PARAM_DESCR(expand_param_descr)
 typedef struct post_expand_s {
   post_plugin_t            post;
 
-  xine_post_in_t           parameter_input;
-
   int                      enable_automatic_shift;
   int                      overlay_y_offset;
   double                   aspect;
@@ -349,11 +347,20 @@ static post_plugin_t *expand_open_plugin(post_class_t *class_gen, int inputs,
 {
   post_expand_t     *this        = calloc(1, sizeof(post_expand_t));
   post_in_t         *input;
-  xine_post_in_t    *input_param;
   post_out_t        *output;
   post_video_port_t *port;
-  static xine_post_api_t post_api =
-    { expand_set_parameters, expand_get_parameters, expand_get_param_descr, expand_get_help };
+
+  static const xine_post_api_t post_api = {
+    .set_parameters  = expand_set_parameters,
+    .get_parameters  = expand_get_parameters,
+    .get_param_descr = expand_get_param_descr,
+    .get_help        = expand_get_help,
+  };
+  static const xine_post_in_t params_input = {
+    .name = "parameters",
+    .type = XINE_POST_DATA_PARAMETERS,
+    .data  = (void *)&post_api,
+  };
 
   if (!this || !video_target || !video_target[0]) {
     free(this);
@@ -378,11 +385,7 @@ static post_plugin_t *expand_open_plugin(post_class_t *class_gen, int inputs,
   port->intercept_ovl          = expand_intercept_ovl;
   port->new_manager->add_event = expand_overlay_add_event;
 
-  input_param       = &this->parameter_input;
-  input_param->name = "parameters";
-  input_param->type = XINE_POST_DATA_PARAMETERS;
-  input_param->data = &post_api;
-  xine_list_push_back(this->post.input, input_param);
+  xine_list_push_back(this->post.input, (void *)&params_input);
 
   input->xine_in.name   = "video";
   output->xine_out.name = "expanded video";

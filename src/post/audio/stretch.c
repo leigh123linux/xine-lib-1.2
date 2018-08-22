@@ -210,7 +210,6 @@ struct post_plugin_stretch_s {
 
   /* private data */
   stretch_parameters_t params;
-  xine_post_in_t       params_input;
   int                  params_changed;
 
   int                  channels;
@@ -266,15 +265,6 @@ static char * get_help (void) {
            "watch a movie in less time than it was originally shot.\n"
            );
 }
-
-static xine_post_api_t post_api = {
-  set_parameters,
-  get_parameters,
-  get_param_descr,
-  get_help,
-};
-
-
 
 /**************************************************************************
  * xine audio post plugin functions
@@ -614,9 +604,19 @@ static post_plugin_t *stretch_open_plugin(post_class_t *class_gen, int inputs,
   post_plugin_stretch_t *this  = calloc(1, sizeof(post_plugin_stretch_t));
   post_in_t            *input;
   post_out_t           *output;
-  xine_post_in_t       *input_api;
   post_audio_port_t    *port;
 
+  static const xine_post_api_t post_api = {
+    .set_parameters  = set_parameters,
+    .get_parameters  = get_parameters,
+    .get_param_descr = get_param_descr,
+    .get_help        = get_help,
+  };
+  static const xine_post_in_t params_input = {
+    .name = "parameters",
+    .type = XINE_POST_DATA_PARAMETERS,
+    .data = (void *)&post_api,
+  };
   static const stretch_parameters_t init_params = {
     .preserve_pitch = 1,
     .factor = 0.80,
@@ -642,11 +642,7 @@ static post_plugin_t *stretch_open_plugin(post_class_t *class_gen, int inputs,
   port->new_port.close      = stretch_port_close;
   port->new_port.put_buffer = stretch_port_put_buffer;
 
-  input_api       = &this->params_input;
-  input_api->name = "parameters";
-  input_api->type = XINE_POST_DATA_PARAMETERS;
-  input_api->data = &post_api;
-  xine_list_push_back(this->post.input, input_api);
+  xine_list_push_back(this->post.input, (void*)&params_input);
 
   this->post.xine_post.audio_input[0] = &port->new_port;
 

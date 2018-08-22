@@ -239,7 +239,6 @@ struct post_plugin_noise_s {
 
   /* private data */
   noise_param_t params[2]; // luma and chroma
-  xine_post_in_t     params_input;
 
   pthread_mutex_t    lock;
 };
@@ -311,13 +310,6 @@ static char *get_help (void) {
            "* mplayer's noise (C) Michael Niedermayer\n"
            );
 }
-
-static xine_post_api_t post_api = {
-    set_parameters,
-    get_parameters,
-    get_param_descr,
-    get_help,
-};
 
 
 static void noise_dispose(post_plugin_t *this_gen)
@@ -402,10 +394,20 @@ static post_plugin_t *noise_open_plugin(post_class_t *class_gen, int inputs,
 {
     post_plugin_noise_t *this = calloc(1, sizeof(post_plugin_noise_t));
     post_in_t         *input;
-    xine_post_in_t    *input_api;
     post_out_t        *output;
     post_video_port_t *port;
 
+    static const xine_post_api_t post_api = {
+      .set_parameters  = set_parameters,
+      .get_parameters  = get_parameters,
+      .get_param_descr = get_param_descr,
+      .get_help        = get_help,
+    };
+    static const xine_post_in_t params_input = {
+      .name = "parameters",
+      .type = XINE_POST_DATA_PARAMETERS,
+      .data = (void *)&post_api,
+    };
     static const noise_parameters_t init_params = {
       .luma_strength = 8,
       .chroma_strength = 5,
@@ -430,11 +432,7 @@ static post_plugin_t *noise_open_plugin(post_class_t *class_gen, int inputs,
     port->intercept_frame       = noise_intercept_frame;
     port->new_frame->draw       = noise_draw;
 
-    input_api       = &this->params_input;
-    input_api->name = "parameters";
-    input_api->type = XINE_POST_DATA_PARAMETERS;
-    input_api->data = &post_api;
-    xine_list_push_back(this->post.input, input_api);
+    xine_list_push_back(this->post.input, (void *)&params_input);
 
     input->xine_in.name     = "video";
     output->xine_out.name   = "filtered video";

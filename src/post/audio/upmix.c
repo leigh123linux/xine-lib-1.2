@@ -91,7 +91,6 @@ struct post_plugin_upmix_s {
 
   /* private data */
   pthread_mutex_t    lock;
-  xine_post_in_t params_input;
   upmix_parameters_t params;
   audio_buffer_t *buf;   /* dummy buffer just to hold a copy of audio data */
   af_sub_t       *sub;
@@ -138,14 +137,6 @@ static char * get_help (void) {
            "\n"
            );
 }
-
-static xine_post_api_t post_api = {
-  set_parameters,
-  get_parameters,
-  get_param_descr,
-  get_help,
-};
-
 
 /**************************************************************************
  * xine audio post plugin functions
@@ -378,8 +369,19 @@ static post_plugin_t *upmix_open_plugin(post_class_t *class_gen, int inputs,
   post_plugin_upmix_t *this  = calloc(1, sizeof(post_plugin_upmix_t));
   post_in_t            *input;
   post_out_t           *output;
-  xine_post_in_t       *input_api;
   post_audio_port_t    *port;
+
+  static const xine_post_api_t post_api = {
+    .set_parameters  = set_parameters,
+    .get_parameters  = get_parameters,
+    .get_param_descr = get_param_descr,
+    .get_help        = get_help,
+  };
+  static const xine_post_in_t input_api = {
+    .name = "parameters",
+    .type = XINE_POST_DATA_PARAMETERS,
+    .data = (void *)&post_api,
+  };
 
   (void)class_gen;
   (void)inputs;
@@ -403,11 +405,7 @@ static post_plugin_t *upmix_open_plugin(post_class_t *class_gen, int inputs,
 #endif
   port->new_port.put_buffer = upmix_port_put_buffer;
 
-  input_api       = &this->params_input;
-  input_api->name = "parameters";
-  input_api->type = XINE_POST_DATA_PARAMETERS;
-  input_api->data = &post_api;
-  xine_list_push_back(this->post.input, input_api);
+  xine_list_push_back(this->post.input, (void *)&input_api);
 
   this->post.xine_post.audio_input[0] = &port->new_port;
 

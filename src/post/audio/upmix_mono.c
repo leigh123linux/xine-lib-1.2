@@ -63,7 +63,6 @@ struct post_plugin_upmix_mono_s {
   int            channels;
 
   upmix_mono_parameters_t params;
-  xine_post_in_t       params_input;
   int                  params_changed;
 
   pthread_mutex_t      lock;
@@ -105,13 +104,6 @@ static char * get_help (void) {
            "plugin to listen just one channel of a given stream.\n"
            );
 }
-
-static xine_post_api_t post_api = {
-  set_parameters,
-  get_parameters,
-  get_param_descr,
-  get_help,
-};
 
 
 /**************************************************************************
@@ -293,8 +285,19 @@ static post_plugin_t *upmix_mono_open_plugin(post_class_t *class_gen, int inputs
   post_plugin_upmix_mono_t *this = calloc(1, sizeof(post_plugin_upmix_mono_t));
   post_in_t                *input;
   post_out_t               *output;
-  xine_post_in_t       *input_api;
   post_audio_port_t        *port;
+
+  static const xine_post_api_t post_api = {
+    .set_parameters  = set_parameters,
+    .get_parameters  = get_parameters,
+    .get_param_descr = get_param_descr,
+    .get_help        = get_help,
+  };
+  static const xine_post_in_t params_input = {
+    .name = "parameters",
+    .type = XINE_POST_DATA_PARAMETERS,
+    .data = (void *)&post_api,
+  };
   static const upmix_mono_parameters_t init_params = {
     .channel = -1,
   };
@@ -318,11 +321,7 @@ static post_plugin_t *upmix_mono_open_plugin(post_class_t *class_gen, int inputs
   port->new_port.open       = upmix_mono_port_open;
   port->new_port.put_buffer = upmix_mono_port_put_buffer;
 
-  input_api       = &this->params_input;
-  input_api->name = "parameters";
-  input_api->type = XINE_POST_DATA_PARAMETERS;
-  input_api->data = &post_api;
-  xine_list_push_back(this->post.input, input_api);
+  xine_list_push_back(this->post.input, (void *)&params_input);
 
   this->post.xine_post.audio_input[0] = &port->new_port;
   this->post.dispose = upmix_mono_dispose;

@@ -90,7 +90,6 @@ struct post_plugin_volnorm_s {
 
     /* private data */
     pthread_mutex_t    lock;
-    xine_post_in_t params_input;
 
     // From mplayer af_volnorm
     int method;
@@ -135,7 +134,7 @@ static int get_parameters (xine_post_t *this_gen, void *param_gen)
 
 static xine_post_api_descr_t * get_param_descr (void)
 {
-    return &param_descr;
+  return (void *)&param_descr;
 }
 
 static char * get_help (void)
@@ -150,13 +149,6 @@ static char * get_help (void)
              "weighted mean over past samples.\n"
              );
 }
-
-static xine_post_api_t post_api = {
-    set_parameters,
-    get_parameters,
-    get_param_descr,
-    get_help,
-};
 
 
 /**************************************************************************
@@ -406,8 +398,19 @@ static post_plugin_t *volnorm_open_plugin(post_class_t *class_gen, int inputs,
     post_plugin_volnorm_t *this  = calloc(1, sizeof(post_plugin_volnorm_t));
     post_in_t             *input;
     post_out_t            *output;
-    xine_post_in_t        *input_api;
     post_audio_port_t     *port;
+
+    static const xine_post_api_t post_api = {
+        .set_parameters  = set_parameters,
+        .get_parameters  = get_parameters,
+        .get_param_descr = get_param_descr,
+        .get_help        = get_help,
+    };
+    static const xine_post_in_t params_input = {
+        .name = "parameters",
+        .type = XINE_POST_DATA_PARAMETERS,
+        .data = (void *)&post_api,
+    };
 
     if (!this || !audio_target || !audio_target[0] ) {
         free(this);
@@ -432,11 +435,7 @@ static post_plugin_t *volnorm_open_plugin(post_class_t *class_gen, int inputs,
     port->new_port.close      = volnorm_port_close;
     port->new_port.put_buffer = volnorm_port_put_buffer;
 
-    input_api       = &this->params_input;
-    input_api->name = "parameters";
-    input_api->type = XINE_POST_DATA_PARAMETERS;
-    input_api->data = &post_api;
-    xine_list_push_back(this->post.input, input_api);
+    xine_list_push_back(this->post.input, (void *)&params_input);
 
     this->post.xine_post.audio_input[0] = &port->new_port;
 
