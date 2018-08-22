@@ -1542,6 +1542,9 @@ static char *catalog_filename(xine_t *this, int createdir) {
   const char *const xdg_cache_home = xdgCacheHome(&this->basedir_handle);
   char *cachefile;
 
+  if (!xdg_cache_home)
+    return NULL;
+
   cachefile = malloc( strlen(xdg_cache_home) + sizeof("/"PACKAGE"/plugins.cache") );
   if (!cachefile)
     return NULL;
