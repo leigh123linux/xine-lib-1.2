@@ -1540,7 +1540,7 @@ static void load_plugin_list (xine_t *this, FILE *fp, xine_sarray_t *plugins) {
  */
 static char *catalog_filename(xine_t *this, int createdir) {
   const char *const xdg_cache_home = xdgCacheHome(&this->basedir_handle);
-  char *cachefile = NULL;
+  char *cachefile;
 
   cachefile = malloc( strlen(xdg_cache_home) + sizeof("/"PACKAGE"/plugins.cache") );
   if (!cachefile)
