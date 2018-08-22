@@ -1632,7 +1632,7 @@ static char* config_get_serialized_entry (config_values_t *this, const char *key
   /* thread safe extension, private to _x_scan_plugins ()
    * (.cur is otherwise unused). */
   pthread_mutex_lock (&this->config_lock);
-  if (!key && this->cur) {
+  if (!key) {
     entry = this->cur;
     this->cur = NULL;
   } else if (this->lookup_entry == config_lookup_entry) {
