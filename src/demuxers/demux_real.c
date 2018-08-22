@@ -2042,8 +2042,6 @@ static int demux_real_seek (demux_plugin_t *this_gen,
       } else {
         index = this->audio_stream->index;
         entries = this->audio_stream->index_entries;
-        if (have & 2)
-          other_index = this->video_stream->index;
       }
       if (start_pos)
         i = demux_real_find_offs (index, entries, start_pos);
