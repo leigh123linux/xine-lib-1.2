@@ -1998,6 +1998,8 @@ static int demux_real_seek (demux_plugin_t *this_gen,
 
     have = ((this->audio_stream && this->audio_stream->index) ? 1 : 0)
          | ((this->video_stream && this->video_stream->index) ? 2 : 0);
+    if (!have)
+      return this->status;
 
     if (this->in2) {
       uint32_t pos1, pos2;
