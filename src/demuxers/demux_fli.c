@@ -372,5 +372,5 @@ static const demuxer_info_t demux_info_fli = {
 const plugin_info_t xine_plugin_info[] EXPORTED = {
   /* type, API, "name", version, special_info, init_function */
   { PLUGIN_DEMUX, 27, "fli", XINE_VERSION_CODE, &demux_info_fli, init_plugin },
-  { PLUGIN_NONE, 0, "", 0, NULL, NULL }
+  { PLUGIN_NONE, 0, NULL, 0, NULL, NULL }
 };

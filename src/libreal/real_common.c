@@ -194,5 +194,5 @@ const plugin_info_t xine_plugin_info[] EXPORTED = {
   /* type, API, "name", version, special_info, init_function */
   { PLUGIN_VIDEO_DECODER | PLUGIN_MUST_PRELOAD, 19, "realvdec", XINE_VERSION_CODE, &dec_info_realvideo, init_realvdec },
   { PLUGIN_AUDIO_DECODER | PLUGIN_MUST_PRELOAD, 16, "realadec", XINE_VERSION_CODE, &dec_info_realaudio, init_realadec },
-  { PLUGIN_NONE, 0, "", 0, NULL, NULL }
+  { PLUGIN_NONE, 0, NULL, 0, NULL, NULL }
 };

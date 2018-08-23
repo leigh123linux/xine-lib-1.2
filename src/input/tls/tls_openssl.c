@@ -357,5 +357,5 @@ static const xine_module_info_t module_info_openssl = {
 const plugin_info_t xine_plugin_info[] EXPORTED = {
   /* type, API, "name", version, special_info, init_function */
   { PLUGIN_XINE_MODULE, 1, "openssl", XINE_VERSION_CODE, &module_info_openssl, _openssl_init_class },
-  { PLUGIN_NONE, 0, "", 0, NULL, NULL }
+  { PLUGIN_NONE, 0, NULL, 0, NULL, NULL }
 };

@@ -2278,5 +2278,5 @@ const plugin_info_t xine_plugin_info[] EXPORTED = {
 #ifdef HAVE_THEORA
   { PLUGIN_VIDEO_DECODER, 19, "theora", XINE_VERSION_CODE, &dec_info_theora, theora_init_plugin },
 #endif
-  { PLUGIN_NONE, 0, "", 0, NULL, NULL }
+  { PLUGIN_NONE, 0, NULL, 0, NULL, NULL }
 };

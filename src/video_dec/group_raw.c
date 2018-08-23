@@ -49,5 +49,5 @@ const plugin_info_t xine_plugin_info[] EXPORTED = {
   { PLUGIN_VIDEO_DECODER, 19, "rgb",      XINE_VERSION_CODE, &rgb_info,      decode_rgb_init_class },
   { PLUGIN_VIDEO_DECODER, 19, "yuv",      XINE_VERSION_CODE, &yuv_info,      decode_yuv_init_class },
   { PLUGIN_VIDEO_DECODER, 19, "bitplane", XINE_VERSION_CODE, &bitplane_info, decode_bitplane_init_class },
-  { PLUGIN_NONE, 0, "", 0, NULL, NULL }
+  { PLUGIN_NONE, 0, NULL, 0, NULL, NULL }
 };

@@ -39,6 +39,6 @@ const plugin_info_t xine_plugin_info[] EXPORTED =
   { PLUGIN_POST ,  10, "vdr"      , XINE_VERSION_CODE, &vdr_video_special_info, &vdr_video_init_plugin },
   { PLUGIN_POST ,  10, "vdr_video", XINE_VERSION_CODE, &vdr_video_special_info, &vdr_video_init_plugin },
   { PLUGIN_POST ,  10, "vdr_audio", XINE_VERSION_CODE, &vdr_audio_special_info, &vdr_audio_init_plugin },
-  { PLUGIN_NONE ,   0, ""         , 0                , NULL                   , NULL }
+  { PLUGIN_NONE ,   0, NULL       , 0                , NULL                   , NULL }
 };
 

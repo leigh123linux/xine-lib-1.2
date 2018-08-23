@@ -1175,6 +1175,6 @@ const plugin_info_t xine_plugin_info[] EXPORTED = {
   /* type, API, "name", version, special_info, init_function */
   { PLUGIN_AUDIO_DECODER, 16, "faad", XINE_VERSION_CODE, &dec_info_audio, faad_init_class },
   { PLUGIN_AUDIO_DECODER, 16, "faad-latm", XINE_VERSION_CODE, &dec_info_latm_audio, latm_init_class },
-  { PLUGIN_NONE, 0, "", 0, NULL, NULL }
+  { PLUGIN_NONE, 0, NULL, 0, NULL, NULL }
 };
 

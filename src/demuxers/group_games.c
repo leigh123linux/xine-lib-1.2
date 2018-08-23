@@ -90,5 +90,5 @@ const plugin_info_t xine_plugin_info[] EXPORTED = {
   { PLUGIN_DEMUX, 27, "smjpeg",   XINE_VERSION_CODE, &demux_info_smjpeg,   demux_smjpeg_init_plugin },
   { PLUGIN_DEMUX, 27, "fourxm",   XINE_VERSION_CODE, &demux_info_fourxm,   demux_fourxm_init_plugin },
   { PLUGIN_DEMUX, 27, "vmd",      XINE_VERSION_CODE, &demux_info_vmd,      demux_vmd_init_plugin },
-  { PLUGIN_NONE, 0, "", 0, NULL, NULL }
+  { PLUGIN_NONE, 0, NULL, 0, NULL, NULL }
 };

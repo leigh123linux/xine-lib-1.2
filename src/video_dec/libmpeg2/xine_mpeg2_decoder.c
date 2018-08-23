@@ -167,5 +167,5 @@ static const decoder_info_t dec_info_mpeg2 = {
 const plugin_info_t xine_plugin_info[] EXPORTED = {
   /* type, API, "name", version, special_info, init_function */
   { PLUGIN_VIDEO_DECODER, 19, "mpeg2", XINE_VERSION_CODE, &dec_info_mpeg2, init_plugin },
-  { PLUGIN_NONE, 0, "", 0, NULL, NULL }
+  { PLUGIN_NONE, 0, NULL, 0, NULL, NULL }
 };

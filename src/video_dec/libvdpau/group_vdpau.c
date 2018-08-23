@@ -67,6 +67,6 @@ const plugin_info_t xine_plugin_info[] EXPORTED = {
     19, "vdpau_mpeg12",     XINE_VERSION_CODE, &dec_info_video_mpeg12,    mpeg12_init_plugin },
   { PLUGIN_VIDEO_DECODER,
     19, "vdpau_mpeg4",      XINE_VERSION_CODE, &dec_info_video_mpeg4,     mpeg4_init_plugin },
-  { PLUGIN_NONE, 0, "", 0, NULL, NULL }
+  { PLUGIN_NONE, 0, NULL, 0, NULL, NULL }
 };
 

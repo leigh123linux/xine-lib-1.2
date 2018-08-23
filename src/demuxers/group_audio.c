@@ -115,5 +115,5 @@ const plugin_info_t xine_plugin_info[] EXPORTED = {
   { PLUGIN_DEMUX, 27, "voc",       XINE_VERSION_CODE, &demux_info_voc,       demux_voc_init_plugin },
   { PLUGIN_DEMUX, 27, "vox",       XINE_VERSION_CODE, &demux_info_vox,       demux_vox_init_plugin },
   { PLUGIN_DEMUX, 27, "wav",       XINE_VERSION_CODE, &demux_info_wav,       demux_wav_init_plugin },
-  { PLUGIN_NONE, 0, "", 0, NULL, NULL }
+  { PLUGIN_NONE, 0, NULL, 0, NULL, NULL }
 };

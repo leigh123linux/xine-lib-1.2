@@ -66,6 +66,6 @@ const plugin_info_t xine_plugin_info[] EXPORTED = {
   { PLUGIN_DEMUX, 27, "vc1es",      XINE_VERSION_CODE, &demux_info_vc1es,      demux_vc1es_init_class },
   { PLUGIN_DEMUX, 27, "yuv_frames", XINE_VERSION_CODE, &demux_info_yuv_frames, demux_yuv_frames_init_class },
   { PLUGIN_DEMUX, 27, "yuv4mpeg2",  XINE_VERSION_CODE, &demux_info_yuv4mpeg2,  demux_yuv4mpeg2_init_class },
-  { PLUGIN_NONE, 0, "", 0, NULL, NULL }
+  { PLUGIN_NONE, 0, NULL, 0, NULL, NULL }
 };
 
