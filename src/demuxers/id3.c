@@ -726,7 +726,8 @@ static int id3v24_parse_ext_header(input_plugin_t *input,
 
   lprintf("ext header: size: %zu, flags: %X, crc: %d, restrictions: %8X\n",
           frame_ext_header->size, frame_ext_header->flags,
-          frame_ext_header->crc, frame_ext_header->restrictions);
+          (frame_ext_header->flags & ID3V24_EXT_CRC_FLAG) ? frame_ext_header->crc : 0,
+          (frame_ext_header->flags & ID3V24_EXT_RESTRICTIONS_FLAG) ? frame_ext_header->restrictions : 0);
   return 1;
 }
 

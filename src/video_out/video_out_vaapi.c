@@ -2580,7 +2580,8 @@ static void vaapi_overlay_end (vo_driver_t *this_gen, vo_frame_t *frame_gen) {
   uint32_t unscaled_width = 0, unscaled_height = 0;
   vo_overlay_t *first_scaled = NULL, *first_unscaled = NULL;
   /* calm down compiler */
-  vaapi_rect_t dirty_rect, unscaled_dirty_rect = {0, 0, 0, 0};
+  vaapi_rect_t dirty_rect = { 0, 0, 0, 0};
+  vaapi_rect_t unscaled_dirty_rect = {0, 0, 0, 0};
   int has_rle = 0;
 
   int i;
