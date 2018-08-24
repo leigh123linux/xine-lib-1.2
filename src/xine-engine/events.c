@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2000-2017 the xine project
+ * Copyright (C) 2000-2018 the xine project
  *
  * This file is part of xine, a free video player.
  *
@@ -81,17 +81,18 @@ void xine_event_free (xine_event_t *event) {
 void xine_event_send (xine_stream_t *stream, const xine_event_t *event) {
 
   xine_list_iterator_t ite;
+  xine_event_queue_t *queue;
 
   pthread_mutex_lock (&stream->event_queues_lock);
 
-  ite = xine_list_front (stream->event_queues);
-
-  while (ite) {
-    xine_event_queue_t *queue;
+  ite = NULL;
+  while ((queue = xine_list_next_value (stream->event_queues, &ite))) {
     xine_event_t *cevent;
 
-    queue = xine_list_get_value(stream->event_queues, ite);
     cevent = malloc (sizeof (xine_event_t));
+    if (!cevent)
+      continue;
+
     cevent->type        = event->type;
     cevent->stream      = stream;
     cevent->data_length = event->data_length;
@@ -107,8 +108,6 @@ void xine_event_send (xine_stream_t *stream, const xine_event_t *event) {
     xine_list_push_back (queue->events, cevent);
     pthread_cond_signal (&queue->new_event);
     pthread_mutex_unlock (&queue->lock);
-
-    ite = xine_list_next (stream->event_queues, ite);
   }
 
   pthread_mutex_unlock (&stream->event_queues_lock);
@@ -148,16 +147,11 @@ void xine_event_dispose_queue (xine_event_queue_t *queue) {
 
   pthread_mutex_lock (&stream->event_queues_lock);
 
-  ite = xine_list_front (stream->event_queues);
-
   q = NULL;
-  if ( ite ) {
-    do {
-      q = xine_list_get_value (stream->event_queues, ite);
-
-      if ( q == queue )
-	break;
-    } while( (ite = xine_list_next (stream->event_queues, ite)) );
+  ite = NULL;
+  while ((q = xine_list_next_value (stream->event_queues, &ite))) {
+    if (q == queue)
+      break;
   }
 
   if (q != queue) {
