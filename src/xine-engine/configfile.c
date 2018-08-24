@@ -1612,10 +1612,10 @@ static void put_int (uint8_t **dest, int value) {
 #  endif
   __builtin_memcpy (*dest, &value_int32, 4);
 #else
-  dest[0] = value_int32 & 0xFF;
-  dest[1] = (value_int32 >> 8) & 0xFF;
-  dest[2] = (value_int32 >> 16) & 0xFF;
-  dest[3] = (value_int32 >> 24) & 0xFF;
+  (*dest)[0] = value_int32 & 0xFF;
+  (*dest)[1] = (value_int32 >> 8) & 0xFF;
+  (*dest)[2] = (value_int32 >> 16) & 0xFF;
+  (*dest)[3] = (value_int32 >> 24) & 0xFF;
 #endif
   *dest += 4;
 }
