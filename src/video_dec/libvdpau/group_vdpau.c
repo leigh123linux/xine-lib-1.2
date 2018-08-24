@@ -33,7 +33,6 @@
  * list of valid buffer types (and add a new one if the one you need does
  * not exist). Terminate the list with a 0.
  */
-static const uint32_t video_types_alterh264[] = { BUF_VIDEO_H264, 0 };
 static const uint32_t video_types_h264[]      = { BUF_VIDEO_H264, 0 };
 static const uint32_t video_types_vc1[]       = { BUF_VIDEO_VC1, BUF_VIDEO_WMV9, 0 };
 static const uint32_t video_types_mpeg12[]    = { BUF_VIDEO_MPEG, 0 };
@@ -45,11 +44,11 @@ static const uint32_t video_types_mpeg4[]     = { BUF_VIDEO_MPEG4, BUF_VIDEO_XVI
  * plugins that handle the same buffer type. A plugin with priority (n+1)
  * will be used instead of a plugin with priority (n).
  */
-static const decoder_info_t dec_info_video_alterh264 = { video_types_alterh264, 9 };
-static const decoder_info_t dec_info_video_h264      = { video_types_h264,      7 };
-static const decoder_info_t dec_info_video_vc1       = { video_types_vc1,       8 };
-static const decoder_info_t dec_info_video_mpeg12    = { video_types_mpeg12,    8 };
-static const decoder_info_t dec_info_video_mpeg4     = { video_types_mpeg4,     8 };
+static const decoder_info_t dec_info_video_alterh264 = { .supported_types = video_types_h264,   .priority = 9 };
+static const decoder_info_t dec_info_video_h264      = { .supported_types = video_types_h264,   .priority = 7 };
+static const decoder_info_t dec_info_video_vc1       = { .supported_types = video_types_vc1,    .priority = 8 };
+static const decoder_info_t dec_info_video_mpeg12    = { .supported_types = video_types_mpeg12, .priority = 8 };
+static const decoder_info_t dec_info_video_mpeg4     = { .supported_types = video_types_mpeg4,  .priority = 8 };
 
 /*
  * The plugin catalog entry. This is the only information that a plugin
