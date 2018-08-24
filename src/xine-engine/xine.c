@@ -1161,13 +1161,13 @@ char *_x_mrl_remove_auth(const char *mrl_in)
 void _x_flush_events_queues (xine_stream_t *stream) {
 
   xine_list_iterator_t ite;
+  xine_event_queue_t  *queue;
 
   pthread_mutex_lock (&stream->event_queues_lock);
 
   /* No events queue? */
-  for (ite = xine_list_front (stream->event_queues);
-       ite; ite = xine_list_next (stream->event_queues, ite)) {
-    xine_event_queue_t *queue = xine_list_get_value(stream->event_queues, ite);
+  ite = NULL;
+  while ((queue = xine_list_next_value (stream->event_queues, &ite))) {
     pthread_mutex_lock (&queue->lock);
     pthread_mutex_unlock (&stream->event_queues_lock);
 
@@ -1925,15 +1925,14 @@ void xine_exit (xine_t *this) {
     /* XXX: streams kill themselves via their refcounter hook. */
     while (n--) {
       xine_stream_t *stream = NULL;
-      xine_list_iterator_t *ite;
+      xine_list_iterator_t ite;
 
       pthread_mutex_lock (&this->streams_lock);
-      ite = xine_list_front (this->streams);
-      while (ite) {
-        stream = xine_list_get_value (this->streams, ite);
-        if (stream && (stream != XINE_ANON_STREAM))
+      ite = NULL;
+      while (1) {
+        stream = xine_list_next_value (this->streams, &ite);
+        if (!ite || (stream && (stream != XINE_ANON_STREAM)))
           break;
-        ite = xine_list_next (this->streams, ite);
       }
       if (!ite) {
         pthread_mutex_unlock (&this->streams_lock);
