@@ -193,7 +193,6 @@ static int open_flac_file(demux_flac_t *flac) {
       lprintf ("VORBIS_COMMENT metadata\n");
       {
         char *comments;
-        char *ptr;
         uint32_t length, user_comment_list_length, cn;
         char *comment;
         char c;
@@ -201,11 +200,12 @@ static int open_flac_file(demux_flac_t *flac) {
         if (block_length < 8)
           break;
 
-        comments = ptr = malloc(block_length + 1); /* last byte for NUL termination */
+        comments = malloc(block_length + 1); /* last byte for NUL termination */
         if (!comments)
           break;
 
         if (flac->input->read(flac->input, comments, block_length) == block_length) {
+          char *ptr = comments;
           int tracknumber = -1;
           int tracktotal = -1;
 
