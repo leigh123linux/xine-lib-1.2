@@ -897,28 +897,24 @@ const char *const *xine_post_list_outputs(xine_post_t *this_gen) {
 
 xine_post_in_t *xine_post_input(xine_post_t *this_gen, const char *name) {
   post_plugin_t  *this = (post_plugin_t *)this_gen;
-  xine_list_iterator_t ite;
+  xine_list_iterator_t ite = NULL;
+  xine_post_in_t *input;
 
-  ite = xine_list_front(this->input);
-  while (ite) {
-    xine_post_in_t *input = xine_list_get_value(this->input, ite);
+  while ((input = xine_list_next_value (this->input, &ite))) {
     if (strcmp(input->name, name) == 0)
       return input;
-    ite = xine_list_next(this->input, ite);
   }
   return NULL;
 }
 
 xine_post_out_t *xine_post_output(xine_post_t *this_gen, const char *name) {
   post_plugin_t   *this = (post_plugin_t *)this_gen;
-  xine_list_iterator_t ite;
+  xine_list_iterator_t ite = NULL;
+  xine_post_out_t *output;
 
-  ite = xine_list_front(this->output);
-  while (ite) {
-    xine_post_out_t *output = xine_list_get_value(this->output, ite);
+  while ((output = xine_list_next_value (this->output, &ite))) {
     if (strcmp(output->name, name) == 0)
       return output;
-    ite = xine_list_next(this->output, ite);
   }
   return NULL;
 }
