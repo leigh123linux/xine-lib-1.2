@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2000-2017 the xine project
+ * Copyright (C) 2000-2018 the xine project
  *
  * This file is part of xine, a free video player.
  *
@@ -91,11 +91,15 @@ xine_list_iterator_t xine_list_back(xine_list_t *list) XINE_PROTECTED;
    references this value or NULL if not found */
 xine_list_iterator_t xine_list_find(xine_list_t *list, void *value) XINE_PROTECTED;
 
-/* Increments the iterator's value, so it specifies the next element in the list
-   or NULL at the end of the list */
+/* If iterator == NULL: same as xine_list_front ().
+   Otherwise, increments the iterator's value, so it specifies the next element in the list,
+   or NULL at the end of the list. */
 xine_list_iterator_t xine_list_next(xine_list_t *list, xine_list_iterator_t ite) XINE_PROTECTED;
 
-/* Increments the iterator's value, so it specifies the previous element in the list
+/* Like xine_list_next () but returns the user value or NULL. */
+void *xine_list_next_value (xine_list_t *list, xine_list_iterator_t *ite) XINE_PROTECTED;
+
+/* Decrements the iterator's value, so it specifies the previous element in the list
    or NULL at the beginning of the list */
 xine_list_iterator_t xine_list_prev(xine_list_t *list, xine_list_iterator_t ite) XINE_PROTECTED;
 

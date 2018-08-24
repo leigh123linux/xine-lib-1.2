@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2000-2017 the xine project
+ * Copyright (C) 2000-2018 the xine project
  *
  * This file is part of xine, a free video player.
  *
@@ -25,320 +25,244 @@
 #include <stdlib.h>
 #include <xine/attributes.h>
 #include <xine/list.h>
+#include <xine/xineutils.h> /* dlist_*, dnode_* */
 
 #define MIN_CHUNK_SIZE    32
 #define MAX_CHUNK_SIZE 65536
 
-/* list element struct */
-typedef struct xine_list_elem_s xine_list_elem_t;
-struct xine_list_elem_s {
-  xine_list_elem_t *prev;
-  xine_list_elem_t *next;
-  void            *value;
+typedef struct _xine_list_elem_s _xine_list_elem_t;
+typedef struct _xine_list_chunk_s _xine_list_chunk_t;
+/* typedef struct xine_list_s xine_list_t; */
+
+struct _xine_list_elem_s {
+  dnode_t             node;
+/*_xine_list_chunk_t *chunk;*/
+  void               *value;
+};
+  
+struct _xine_list_chunk_s {
+  _xine_list_chunk_t *next;
+/*_xine_list_t *list;*/
+  uint32_t max_elems;
+  uint32_t first_unused;
+  _xine_list_elem_t elems[1];
 };
 
-/* chunk of list elements */
-typedef struct xine_list_chunk_s xine_list_chunk_t;
-struct xine_list_chunk_s {
-  xine_list_chunk_t *next_chunk;            /* singly linked list of chunks */
-
-  xine_list_elem_t *elem_array;             /* the allocated elements */
-  int chunk_size;                          /* element count in the chunk */
-  int current_elem_id;                     /* next free elem in the chunk */
-};
-
-/* list struct */
 struct xine_list_s {
-  /* list of chunks */
-  xine_list_chunk_t *chunk_list;
-  size_t            chunk_list_size;
-  xine_list_chunk_t *last_chunk;
-
-  /* list elements */
-  xine_list_elem_t  *elem_list_front;
-  xine_list_elem_t  *elem_list_back;
-  size_t            elem_list_size;
-
-  /* list of free elements */
-  xine_list_elem_t  *free_elem_list;
-  size_t            free_elem_list_size;
+  dlist_t used;
+  dlist_t free;
+  _xine_list_chunk_t *chunks;
+  uint32_t size;
+  _xine_list_chunk_t first_chunk;
 };
 
-/* Allocates a new chunk of n elements
- * One malloc call is used to allocate the struct and the elements.
- */
-static xine_list_chunk_t *XINE_MALLOC xine_list_alloc_chunk(size_t size) {
-  xine_list_chunk_t *new_chunk;
-  size_t chunk_mem_size;
-
-  chunk_mem_size  = sizeof(xine_list_chunk_t);
-  chunk_mem_size += sizeof(xine_list_elem_t) * size;
-
-  new_chunk = (xine_list_chunk_t *)malloc(chunk_mem_size);
-  if (!new_chunk) {
+static _xine_list_chunk_t *XINE_MALLOC _xine_list_chunk_new (xine_list_t *list, uint32_t size) {
+  _xine_list_chunk_t *chunk;
+  chunk = malloc (sizeof (*chunk) + (size - 1) * sizeof (_xine_list_elem_t));
+  if (!chunk)
     return NULL;
-  }
-
-  new_chunk->elem_array = (xine_list_elem_t*)(new_chunk + 1);
-  new_chunk->next_chunk = NULL;
-  new_chunk->current_elem_id = 0;
-  new_chunk->chunk_size = size;
-
-  return new_chunk;
+/*chunk->list = list;*/
+  chunk->max_elems = size;
+  chunk->first_unused = 0;
+  chunk->next = list->chunks;
+  list->chunks = chunk;
+  return chunk;
 }
 
-/* Delete a chunk */
-static void xine_list_delete_chunk(xine_list_chunk_t *chunk) {
-  free(chunk);
-}
-
-/* Get a new element either from the free list either from the current chunk.
-   Allocate a new chunk if needed */
-static xine_list_elem_t *xine_list_alloc_elem(xine_list_t *list) {
-  xine_list_elem_t *new_elem;
-
-  /* check the free list */
-  if (list->free_elem_list_size > 0) {
-    new_elem = list->free_elem_list;
-    list->free_elem_list = list->free_elem_list->next;
-    list->free_elem_list_size--;
-  } else {
-    /* check current chunk */
-    if (list->last_chunk->current_elem_id < list->last_chunk->chunk_size) {
-      /* take the next elem in the chunk */
-      new_elem = &list->last_chunk->elem_array[list->last_chunk->current_elem_id];
-      list->last_chunk->current_elem_id++;
-    } else {
-      /* a new chunk is needed */
-      xine_list_chunk_t *new_chunk;
-      int chunk_size;
-
-      chunk_size = list->last_chunk->chunk_size * 2;
-      if (chunk_size > MAX_CHUNK_SIZE)
-        chunk_size = MAX_CHUNK_SIZE;
-
-      new_chunk = xine_list_alloc_chunk(chunk_size);
-      if (!new_chunk) {
-        return NULL;
-      }
-
-      list->last_chunk->next_chunk = new_chunk;
-      list->last_chunk = new_chunk;
-      list->chunk_list_size++;
-
-      new_elem = &new_chunk->elem_array[0];
-      new_chunk->current_elem_id++;
-    }
-  }
-  return new_elem;
-}
-
-/* Push the elem into the free list */
-static void xine_list_recycle_elem(xine_list_t *list,  xine_list_elem_t *elem) {
-  elem->next = list->free_elem_list;
-  elem->prev = NULL;
-
-  list->free_elem_list = elem;
-  list->free_elem_list_size++;
-}
-
-/* List constructor */
-xine_list_t *xine_list_new(void) {
-  xine_list_t *new_list;
-
-  new_list = (xine_list_t*)malloc(sizeof(xine_list_t));
-  if (!new_list) {
+xine_list_t *XINE_MALLOC xine_list_new (void) {
+  xine_list_t *list;
+  list = malloc (sizeof (*list) + (MIN_CHUNK_SIZE - 1) * sizeof (_xine_list_elem_t));
+  if (!list)
     return NULL;
+  DLIST_INIT (&list->used);
+  DLIST_INIT (&list->free);
+  list->size = 0;
+/*list->first_chunk.list = list;*/
+  list->first_chunk.max_elems = MIN_CHUNK_SIZE;
+  list->first_chunk.first_unused = 0;
+  list->first_chunk.next = NULL;
+  list->chunks = &list->first_chunk;
+  return list;
+}
+
+static void _xine_list_reset (xine_list_t *list) {
+  _xine_list_chunk_t *chunk;
+  chunk = list->chunks;
+  while (chunk != &list->first_chunk) {
+    _xine_list_chunk_t *next = chunk->next;
+    free (chunk);
+    chunk = next;
+  }
+  list->size = 0;
+  list->first_chunk.first_unused = 0;
+  DLIST_INIT (&list->used);
+  DLIST_INIT (&list->free);
+  list->chunks = &list->first_chunk;
+}
+
+void xine_list_clear (xine_list_t *list) {
+  if (list)
+    _xine_list_reset (list);
+}
+
+void xine_list_delete (xine_list_t *list) {
+  if (list) {
+    _xine_list_reset (list);
+    free (list);
+  }
+}
+
+static _xine_list_elem_t *_xine_list_elem_new (xine_list_t *list) {
+  _xine_list_elem_t *elem;
+  _xine_list_chunk_t *chunk;
+  uint32_t n;
+
+  if (!DLIST_IS_EMPTY (&list->free)) {
+    elem = (_xine_list_elem_t *)list->free.head;
+    DLIST_REMOVE (&elem->node);
+    return elem;
   }
 
-  new_list->chunk_list = xine_list_alloc_chunk(MIN_CHUNK_SIZE);
-  if (!new_list->chunk_list) {
-    free(new_list);
+  chunk = list->chunks;
+  if (chunk->first_unused < chunk->max_elems) {
+    elem = &chunk->elems[0] + chunk->first_unused;
+    chunk->first_unused++;
+  /*elem->chunk = chunk;*/
+    return elem;
+  }
+
+  n = chunk->max_elems * 2;
+  if (n > MAX_CHUNK_SIZE)
+    n = MAX_CHUNK_SIZE;
+  chunk = _xine_list_chunk_new (list, n);
+  if (!chunk)
     return NULL;
-  }
-
-  new_list->chunk_list_size = 1;
-  new_list->last_chunk = new_list->chunk_list;
-  new_list->free_elem_list = NULL;
-  new_list->free_elem_list_size = 0;
-  new_list->elem_list_front = NULL;
-  new_list->elem_list_back = NULL;
-  new_list->elem_list_size = 0;
-
-  return new_list;
+  elem = &chunk->elems[0];
+  chunk->first_unused = 1;
+/* elem->chunk = new_chunk;*/
+  return elem;
 }
 
-void xine_list_delete(xine_list_t *list) {
-  /* Delete each chunk */
-  xine_list_chunk_t *current_chunk = list->chunk_list;
-
-  while (current_chunk) {
-    xine_list_chunk_t *next_chunk = current_chunk->next_chunk;
-
-    xine_list_delete_chunk(current_chunk);
-    current_chunk = next_chunk;
-  }
-  free(list);
+unsigned int xine_list_size (xine_list_t *list) {
+  return list ? list->size : 0;
 }
 
-unsigned int xine_list_size(xine_list_t *list) {
-  return list->elem_list_size;
+unsigned int xine_list_empty (xine_list_t *list) {
+  return list ? (list->size == 0) : 1;
 }
 
-unsigned int xine_list_empty(xine_list_t *list) {
-  return (list->elem_list_size == 0);
-}
-
-xine_list_iterator_t xine_list_front(xine_list_t *list) {
-  return list->elem_list_front;
+xine_list_iterator_t xine_list_front (xine_list_t *list) {
+  return list && list->size ? list->used.head : NULL;
 }
 
 xine_list_iterator_t xine_list_back(xine_list_t *list) {
-  return list->elem_list_back;
+  return list && list->size ? list->used.tail : NULL;
 }
 
 void xine_list_push_back(xine_list_t *list, void *value) {
-  xine_list_elem_t *new_elem;
+  _xine_list_elem_t *new_elem;
 
-  new_elem = xine_list_alloc_elem(list);
+  if (!list)
+    return;
+  new_elem = _xine_list_elem_new (list);
+  if (!new_elem)
+    return;
+
   new_elem->value = value;
-
-  if (list->elem_list_back) {
-    new_elem->next = NULL;
-    new_elem->prev = list->elem_list_back;
-    list->elem_list_back->next = new_elem;
-    list->elem_list_back = new_elem;
-  } else {
-    /* first elem in the list */
-    list->elem_list_front = list->elem_list_back = new_elem;
-    new_elem->next = NULL;
-    new_elem->prev = NULL;
-  }
-  list->elem_list_size++;
+  DLIST_ADD_TAIL (&new_elem->node, &list->used);
+  list->size++;
 }
 
 void xine_list_push_front(xine_list_t *list, void *value) {
-  xine_list_elem_t *new_elem;
+  _xine_list_elem_t *new_elem;
 
-  new_elem = xine_list_alloc_elem(list);
+  if (!list)
+    return;
+  new_elem = _xine_list_elem_new (list);
+  if (!new_elem)
+    return;
+
   new_elem->value = value;
+  DLIST_ADD_HEAD (&new_elem->node, &list->used);
+  list->size++;
+}
 
-  if (list->elem_list_front) {
-    new_elem->next = list->elem_list_front;
-    new_elem->prev = NULL;
-    list->elem_list_front->prev = new_elem;
-    list->elem_list_front = new_elem;
+xine_list_iterator_t xine_list_next (xine_list_t *list, xine_list_iterator_t ite) {
+  _xine_list_elem_t *elem = ite;
+
+  elem = elem ? (_xine_list_elem_t *)elem->node.next : (_xine_list_elem_t *)list->used.head;
+  return elem->node.next ? elem : NULL;
+}
+
+void *xine_list_next_value (xine_list_t *list, xine_list_iterator_t *ite) {
+  _xine_list_elem_t *elem = *ite;
+  if (elem) {
+    elem = (_xine_list_elem_t *)elem->node.next;
+  } else if (list) {
+    elem = (_xine_list_elem_t *)list->used.head;
   } else {
-    /* first elem in the list */
-    list->elem_list_front = list->elem_list_back = new_elem;
-    new_elem->next = NULL;
-    new_elem->prev = NULL;
+    *ite = NULL;
+    return NULL;
   }
-  list->elem_list_size++;
-}
-
-void xine_list_clear(xine_list_t *list) {
-  xine_list_elem_t *elem = list->elem_list_front;
-  while (elem) {
-    xine_list_elem_t *elem_next = elem->next;
-    xine_list_recycle_elem(list, elem);
-    elem = elem_next;
+  if (!elem->node.next) {
+    *ite = NULL;
+    return NULL;
   }
-
-  list->elem_list_front = NULL;
-  list->elem_list_back = NULL;
-  list->elem_list_size = 0;
-}
-
-xine_list_iterator_t xine_list_next(xine_list_t *list, xine_list_iterator_t ite) {
-  xine_list_elem_t *elem = (xine_list_elem_t*)ite;
-
-  if (ite == NULL)
-    return list->elem_list_front;
-  else
-    return (xine_list_iterator_t)elem->next;
-}
-
-xine_list_iterator_t xine_list_prev(xine_list_t *list, xine_list_iterator_t ite) {
-  xine_list_elem_t *elem = (xine_list_elem_t*)ite;
-
-  if (ite == NULL)
-    return list->elem_list_back;
-  else
-    return (xine_list_iterator_t)elem->prev;
-}
-
-void *xine_list_get_value(xine_list_t *list, xine_list_iterator_t ite) {
-  xine_list_elem_t *elem = (xine_list_elem_t*)ite;
-  (void)list;
+  *ite = elem;
   return elem->value;
 }
 
-void xine_list_remove(xine_list_t *list, xine_list_iterator_t position) {
-  xine_list_elem_t *elem = (xine_list_elem_t*)position;
+xine_list_iterator_t xine_list_prev (xine_list_t *list, xine_list_iterator_t ite) {
+  _xine_list_elem_t *elem = ite;
 
-  if (elem) {
-    xine_list_elem_t *prev = elem->prev;
-    xine_list_elem_t *next = elem->next;
+  elem = elem ? (_xine_list_elem_t *)elem->node.prev : (_xine_list_elem_t *)list->used.tail;
+  return elem->node.prev ? elem : NULL;
+}
 
-    if (prev)
-      prev->next = next;
-    else
-      list->elem_list_front = next;
+void *xine_list_get_value (xine_list_t *list, xine_list_iterator_t ite) {
+  _xine_list_elem_t *elem = ite;
+  (void)list;
+  return elem ? elem->value : NULL;
+}
 
-    if (next)
-      next->prev = prev;
-    else
-      list->elem_list_back = prev;
+void xine_list_remove (xine_list_t *list, xine_list_iterator_t position) {
+  _xine_list_elem_t *elem = position;
 
-    xine_list_recycle_elem(list, elem);
-    list->elem_list_size--;
+  if (list && elem) {
+    DLIST_REMOVE (&elem->node);
+    DLIST_ADD_TAIL (&elem->node, &list->free);
+    list->size--;
   }
 }
 
-xine_list_iterator_t xine_list_insert(xine_list_t *list,
-                                    xine_list_iterator_t position,
-                                    void *value) {
-  xine_list_elem_t *elem = (xine_list_elem_t*)position;
-  xine_list_iterator_t new_position = NULL;
+xine_list_iterator_t xine_list_insert (xine_list_t *list, xine_list_iterator_t position, void *value) {
+  _xine_list_elem_t *new_elem, *elem = position;
 
-  if (elem == NULL) {
-    /* insert at the end */
-    xine_list_push_back(list, value);
-    new_position = list->elem_list_back;
+  if (!list)
+    return NULL;
+  new_elem = _xine_list_elem_new (list);
+  if (!new_elem)
+    return NULL;
+
+  new_elem->value = value;
+  if (!elem) {
+    DLIST_ADD_TAIL (&new_elem->node, &list->used);
   } else {
-    if (elem->prev == NULL) {
-      /* insert at the beginning */
-      xine_list_push_front(list, value);
-      new_position = list->elem_list_front;
-    } else {
-      xine_list_elem_t *new_elem = xine_list_alloc_elem(list);
-      if (!new_elem) {
-        return NULL;
-      }
-
-      xine_list_elem_t *prev = elem->prev;
-
-      new_elem->next = elem;
-      new_elem->prev = prev;
-      new_elem->value = value;
-
-      elem->prev = new_elem;
-      prev->next = new_elem;
-
-      new_position = (xine_list_iterator_t)elem;
-    }
+    DLIST_INSERT (&new_elem->node, &elem->node);
   }
-  return new_position;
+  list->size++;
+  return new_elem;
 }
 
-xine_list_iterator_t xine_list_find(xine_list_t *list, void *value) {
+xine_list_iterator_t xine_list_find (xine_list_t *list, void *value) {
+  _xine_list_elem_t *elem;
 
-  xine_list_elem_t *elem;
-
-  for (elem = list->elem_list_front; elem; elem = elem->next) {
+  if (!list)
+    return NULL;
+  for (elem = (_xine_list_elem_t *)list->used.head; elem->node.next; elem = (_xine_list_elem_t *)elem->node.next) {
     if (elem->value == value)
-      break;
+      return elem;
   }
-  return elem;
+  return NULL;
 }
+
