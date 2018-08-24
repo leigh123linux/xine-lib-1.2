@@ -352,20 +352,20 @@ static ff_saved_frame_t *ffsf_new (ff_video_decoder_t *this) {
     ffsf = calloc (1, sizeof (*ffsf));
     if (ffsf) {
       ffsf->this = this;
-      DLIST_ADD_TAIL (ffsf, &this->ffsf_used);
+      DLIST_ADD_TAIL (&ffsf->node, &this->ffsf_used);
       this->ffsf_num++;
       this->ffsf_total++;
     }
   } else {
     ffsf = (ff_saved_frame_t *)this->ffsf_free.head;
-    DLIST_REMOVE (ffsf);
+    DLIST_REMOVE (&ffsf->node);
     ffsf->refs = 0;
     ffsf->this = this;
     ffsf->vo_frame = NULL;
 # ifdef ENABLE_VAAPI
     ffsf->va_surface = NULL;
 # endif
-    DLIST_ADD_TAIL (ffsf, &this->ffsf_used);
+    DLIST_ADD_TAIL (&ffsf->node, &this->ffsf_used);
     this->ffsf_num++;
   }
   pthread_mutex_unlock (&this->ffsf_mutex);
@@ -377,8 +377,8 @@ static void ffsf_delete (ff_saved_frame_t *ffsf) {
     return;
 
   pthread_mutex_lock (&ffsf->this->ffsf_mutex);
-  DLIST_REMOVE (ffsf);
-  DLIST_ADD_TAIL (ffsf, &ffsf->this->ffsf_free);
+  DLIST_REMOVE (&ffsf->node);
+  DLIST_ADD_TAIL (&ffsf->node, &ffsf->this->ffsf_free);
   ffsf->this->ffsf_num--;
   pthread_mutex_unlock (&ffsf->this->ffsf_mutex);
 }
@@ -2664,8 +2664,8 @@ static void ff_free_dr1_frames (ff_video_decoder_t *this, int all) {
       ffsf->vo_frame->free (ffsf->vo_frame);
       frames++;
     }
-    DLIST_REMOVE (ffsf);
-    DLIST_ADD_TAIL (ffsf, &this->ffsf_free);
+    DLIST_REMOVE (&ffsf->node);
+    DLIST_ADD_TAIL (&ffsf->node, &this->ffsf_free);
     this->ffsf_num--;
   }
   pthread_mutex_unlock (&this->ffsf_mutex);
@@ -2808,7 +2808,7 @@ static void ff_dispose (video_decoder_t *this_gen) {
 #ifdef ENABLE_DIRECT_RENDERING
   while (!DLIST_IS_EMPTY (&this->ffsf_free)) {
     ff_saved_frame_t *ffsf = (ff_saved_frame_t *)this->ffsf_free.head;
-    DLIST_REMOVE (ffsf);
+    DLIST_REMOVE (&ffsf->node);
     free (ffsf);
   }
   if (this->ffsf_total)
