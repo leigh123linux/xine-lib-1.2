@@ -1061,9 +1061,8 @@ int _x_post_dispose(post_plugin_t *this) {
     _x_freep(&this->input_ids);
     _x_freep(&this->output_ids);
 
-    for (ite = xine_list_front(this->input); ite;
-         ite = xine_list_next(this->input, ite)) {
-      input = xine_list_get_value(this->input, ite);
+    ite = NULL;
+    while ((input = xine_list_next_value (this->input, &ite))) {
       switch (input->type) {
       case XINE_POST_DATA_VIDEO:
 	{
@@ -1112,9 +1111,8 @@ int _x_post_dispose(post_plugin_t *this) {
 	break;
       }
     }
-    for (ite = xine_list_front(this->output); ite;
-         ite = xine_list_next(this->output, ite)) {
-      output = xine_list_get_value(this->output, ite);
+    ite = NULL;
+    while ((output = xine_list_next_value (this->output, &ite))) {
       switch (output->type) {
       case XINE_POST_DATA_VIDEO:
 	if (output->rewire == post_video_rewire) {
