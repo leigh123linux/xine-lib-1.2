@@ -246,12 +246,10 @@ static void _free_string_list(xine_list_t **plist) {
   xine_list_t *list = *plist;
 
   if (list) {
-    xine_list_iterator_t ite = xine_list_front (list);
-    while (ite) {
-      char *key = xine_list_get_value (list, ite);
+    char *key;
+    xine_list_iterator_t ite = NULL;
+    while ((key = xine_list_next_value (list, &ite)))
       free (key);
-      ite = xine_list_next (list, ite);
-    }
     xine_list_delete(list);
     *plist = NULL;
   }
@@ -346,14 +344,7 @@ static void _decoder_priority_cb (void *data, xine_cfg_entry_t *cfg) {
 
   type = node->info->type & PLUGIN_TYPE_MASK;
   list = node->xine->plugin_catalog->plugin_lists[type - 1];
-  {
-    unsigned int index, size = xine_sarray_size (list);
-    for (index = 0; index < size; index++) {
-      if (xine_sarray_get (list, index) == (void *)node)
-        break;
-    }
-    xine_sarray_remove (list, index);
-  }
+  xine_sarray_remove_ptr (list, node);
   {
     int user_prio = cfg->num_value;
     /* user given priorities should definitely override defaults, so multiply them */
@@ -1202,33 +1193,35 @@ static void save_plugin_list(xine_t *this, FILE *fp, xine_sarray_t *list) {
 
     /* config entries */
     if (node->config_entry_list) {
-      xine_list_iterator_t ite = xine_list_front(node->config_entry_list);
-      while (ite) {
+      xine_list_iterator_t ite = NULL;
 #ifdef FAST_SCAN_PLUGINS
-        cfg_entry_t *entry = xine_list_get_value (node->config_entry_list, ite);
+      cfg_entry_t *entry;
+#else
+      const char *entry;
+#endif
+      while ((entry = xine_list_next_value (node->config_entry_list, &ite))) {
         char *key_value;
+#ifdef FAST_SCAN_PLUGINS
         pthread_mutex_lock (&this->config->config_lock);
         this->config->cur = entry;
         key_value = this->config->get_serialized_entry (this->config, NULL);
         pthread_mutex_unlock (&this->config->config_lock);
 #else
-        const char *key = xine_list_get_value(node->config_entry_list, ite);
         /* now serialize the config key */
-        char *key_value = this->config->get_serialized_entry(this->config, key);
+        key_value = this->config->get_serialized_entry (this->config, entry);
 #endif
         if (key_value) {
           size_t slen = strlen (key_value);
 #ifdef FAST_SCAN_PLUGINS
           lprintf ("  config key: %s, serialization: %zu bytes\n", entry->key, slen);
 #else
-          lprintf ("  config key: %s, serialization: %zu bytes\n", key, slen);
+          lprintf ("  config key: %s, serialization: %zu bytes\n", entry, slen);
 #endif
           fwrite ("config_key=", 1, 11, fp);
           key_value[slen] = '\n';
           fwrite (key_value, 1, slen + 1, fp);
           free (key_value);
         }
-        ite = xine_list_next(node->config_entry_list, ite);
       }
     }
 
@@ -1353,7 +1346,7 @@ static void load_plugin_list (xine_t *this, FILE *fp, xine_sarray_t *plugins) {
 #ifdef FAST_SCAN_PLUGINS
               free (cfg_key);
 #else
-              _attach_entry_to_node (&new->node, cfg_key);
+              _attach_entry_to_node (&n->node, cfg_key);
 #endif
             } else {
               lprintf("failed to deserialize config entry key\n");
@@ -2771,17 +2764,13 @@ int _x_decoder_available (xine_t *xine, uint32_t buftype)
 
 #ifdef LOG
 static void _display_file_plugin_list (xine_list_t *list, plugin_file_t *file) {
-  xine_list_iterator_t ite = xine_list_front(list);
-
-  while (ite) {
-    plugin_node_t *node = xine_list_get_value(list, ite);
-
+  xine_list_iterator_t ite = NULL;
+  plugin_node_t *node;
+  while ((node = xine_list_next_value (list, &ite))) {
     if ((node->file == file) && (node->ref)) {
       printf("    plugin: %s, class: %p , %d instance(s)\n",
 	     node->info->id, node->plugin_class, node->ref);
     }
-
-    ite = xine_list_next(list, ite);
   }
 }
 #endif
@@ -3067,49 +3056,30 @@ xine_post_t *xine_post_init(xine_t *xine, const char *name, int inputs,
         inputs, audio_target, video_target);
 
       if (post) {
-        xine_post_in_t  *input;
-	xine_post_out_t *output;
-	xine_list_iterator_t ite;
-	int i;
-
 	post->running_ticket = xine->port_ticket;
 	post->xine = xine;
 	post->node = node;
 	inc_node_ref(node);
 
 	/* init the lists of announced connections */
-	i = 0;
-	ite = xine_list_front(post->input);
-	while (ite) {
-	  i++;
-	  ite = xine_list_next (post->input, ite);
-	}
-	post->input_ids = malloc(sizeof(char *) * (i + 1));
-	i = 0;
-	ite = xine_list_front (post->input);
-	while (ite)  {
-	  input = xine_list_get_value (post->input, ite);
-	  post->input_ids[i++] = input->name;
-	  ite = xine_list_next (post->input, ite);
-	}
-	post->input_ids[i] = NULL;
-
-	i = 0;
-	ite = xine_list_front (post->output);
-	while (ite) {
-	  i++;
-	  ite = xine_list_next (post->output, ite);
-	}
-	post->output_ids = malloc(sizeof(char *) * (i + 1));
-	i = 0;
-	ite = xine_list_front (post->output);
-	while (ite)  {
-	  output = xine_list_get_value (post->output, ite);
-	  post->output_ids[i++] = output->name;
-	  ite = xine_list_next (post->output, ite);
-	}
-	post->output_ids[i] = NULL;
-
+        post->input_ids = malloc (sizeof (char *) * (xine_list_size (post->input) + 1));
+        if (post->input_ids) {
+          int i = 0;
+          xine_list_iterator_t ite = NULL;
+          xine_post_in_t *input;
+          while ((input = xine_list_next_value (post->input, &ite)))
+            post->input_ids[i++] = input->name;
+          post->input_ids[i] = NULL;
+        }
+        post->output_ids = malloc (sizeof (char *) * (xine_list_size (post->output) + 1));
+        if (post->output_ids) {
+          int i = 0;
+          xine_list_iterator_t ite = NULL;
+          xine_post_out_t *output;
+          while ((output = xine_list_next_value (post->output, &ite)))
+            post->output_ids[i++] = output->name;
+          post->output_ids[i] = NULL;
+        }
 	/* copy the post plugin type to the public part */
 	post->xine_post.type = ((const post_info_t *)node->info->special_info)->type;
 
@@ -3330,18 +3300,13 @@ static int dispose_plugin_list (xine_sarray_t *list, int is_cache) {
 
 static void dispose_plugin_file_list (xine_list_t *list) {
   plugin_file_t        *file;
-  xine_list_iterator_t  ite;
+  xine_list_iterator_t  ite = NULL;
 
-  ite = xine_list_front (list);
-  while (ite) {
-    file = xine_list_get_value (list, ite);
-
+  while ((file = xine_list_next_value (list, &ite))) {
     if ((char *)file + sizeof (*file) != file->filename) {
       _x_freep (&file->filename);
     }
     free (file);
-
-    ite = xine_list_next (list, ite);
   }
   xine_list_delete (list);
 }
