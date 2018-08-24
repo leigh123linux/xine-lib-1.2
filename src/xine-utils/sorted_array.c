@@ -102,6 +102,29 @@ void xine_sarray_remove (xine_sarray_t *sarray, unsigned int position) {
   }
 }
 
+int xine_sarray_remove_ptr (xine_sarray_t *sarray, void *ptr) {
+  if (sarray) {
+    int ret;
+    void **here = sarray->chunk, **end = here + sarray->size;
+    while (here < end) {
+      if (*here == ptr)
+        break;
+      here++;
+    }
+    if (here >= end)
+      return ~0;
+    ret = here - sarray->chunk;
+    end--;
+    while (here < end) {
+      here[0] = here[1];
+      here++;
+    }
+    sarray->size--;
+    return ret;
+  }
+  return ~0;
+}
+
 static void _xine_sarray_insert (xine_sarray_t *sarray, unsigned int pos, void *value) {
   if (sarray->size + 1 > sarray->chunk_size) {
     size_t new_size;

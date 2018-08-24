@@ -95,6 +95,10 @@ int xine_sarray_add(xine_sarray_t *sarray, void *value) XINE_PROTECTED;
 /* Removes one element from an array at the position specified */
 void xine_sarray_remove(xine_sarray_t *sarray, unsigned int position) XINE_PROTECTED;
 
+/* Removes one element from an array by user pointer.
+ * Return the index it was found at, or ~0. */
+int xine_sarray_remove_ptr (xine_sarray_t *sarray, void *ptr) XINE_PROTECTED;
+
 /* Get the element at the position specified */
 void *xine_sarray_get(xine_sarray_t *sarray, unsigned int position) XINE_PROTECTED;
 
