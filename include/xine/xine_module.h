@@ -24,7 +24,9 @@
 #define XINE_MODULE_IFACE_VERSION  1
 
 typedef struct xine_module_class_s xine_module_class_t;
+#ifndef HAVE_XINE_INTERNAL_H
 typedef struct xine_module_s xine_module_t;
+#endif
 
 struct xine_module_class_s {
 
