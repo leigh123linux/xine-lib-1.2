@@ -439,9 +439,9 @@ char *_x_mrl_remove_auth(const char *mrl) XINE_PROTECTED;
  */
 
 /* on-demand loading of generic modules / sub-plugins */
-typedef struct xine_module_s xine_module_t; /* xine_module.h */
-xine_module_t *_x_find_module(xine_t *xine, const char *type, const char *id, unsigned sub_type, void *params) XINE_PROTECTED;
-void _x_free_module(xine_t *xine, xine_module_t **pmodule) XINE_PROTECTED;
+struct xine_module_s; /* xine_module.h */
+struct xine_module_s *_x_find_module(xine_t *xine, const char *type, const char *id, unsigned sub_type, void *params) XINE_PROTECTED;
+void _x_free_module(xine_t *xine, struct xine_module_s **pmodule) XINE_PROTECTED;
 
 /* on-demand loading of audio/video/spu decoder plugins */
 
