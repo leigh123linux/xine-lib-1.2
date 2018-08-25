@@ -114,7 +114,7 @@ typedef struct {
   GLuint             overlayPBO;
   GLuint             fbo;
   GLuint             videoTex, videoTex2;
-  GLXSWAPINTERVALSGI mglXSwapInterval;
+  //GLXSWAPINTERVALSGI mglXSwapInterval;
 
   int                ovl_changed;
   int                ovl_vid_scale;
@@ -1836,7 +1836,7 @@ static vo_driver_t *opengl2_open_plugin( video_driver_class_t *class_gen, const 
     goto fail;
   }
 
-  this->mglXSwapInterval = (GLXSWAPINTERVALSGI)glXGetProcAddressARB( (const GLubyte*)"glXSwapIntervalSGI" );
+  //this->mglXSwapInterval = (GLXSWAPINTERVALSGI)glXGetProcAddressARB( (const GLubyte*)"glXSwapIntervalSGI" );
 
   this->gl->release_current(this->gl);
 
