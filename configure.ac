@@ -902,6 +902,31 @@ AC_SUBST(PASS2_CFLAGS)
 test x"$DEFAULT_OCFLAGS" = x"" && DEFAULT_OCFLAGS="O3_CFLAGS"
 
 
+dnl xineutils.h:dlist_*
+AC_MSG_CHECKING([for nameless struct within union support])
+nameless_struct_in_union="no"
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
+#include <stdio.h>
+typedef struct dnode_st {
+  struct dnode_st *next, *prev;
+} dnode_t;
+typedef union {
+  struct { dnode_t *head, *null, *tail; };
+  struct { dnode_t h; dnode_t *dummy1;  };
+  struct { dnode_t *dummy2; dnode_t t;  };
+} dlist_t;
+]],[[
+  dlist_t list;
+  list.head = &list.t;
+  list.null = NULL;
+  list.tail = &list.h;
+  printf ("head = %p, tail = %p\n", (void *)list.head, (void *)list.tail);
+]])], [nameless_struct_in_union="yes"])
+AC_MSG_RESULT([$nameless_struct_in_union])
+test x"$nameless_struct_in_union" = x"yes" && AC_DEFINE([HAVE_NAMELESS_STRUCT_IN_UNION], [],
+    [Define this if compiler supports nameless structs within unions.])
+
+
 dnl -ffast-math fails in broken build environments due to missing stuff like _foo_pow_finite ().
 dnl We dont want to kill that feature generally either because stuff like faad will benefit a
 dnl lot from inlined fsin/fcos instructions. -Ox affects that code as well, so test it this late

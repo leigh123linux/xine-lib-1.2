@@ -57,13 +57,32 @@ extern "C" {
 
 
 /* Amiga style doubly linked lists, taken from TJtools.
- * Why does this work with aliasing?
- * TJ. I found an answer that I dont like:
- * because we did enough stuff (eg free ()) between list modification
- * by node and direct list access (eg DLIST_IS_EMPTY ()).
- * That "volatile" below seems to fix it. */
+ * Most compilers will support the straightforward aliasing safe version.
+ * For others, try that "volatile" hack. */
 
-#define DLIST_IS_EMPTY(l) ((void *)((l)->head) == (void *)(&(l)->null))
+typedef struct dnode_st {
+  struct dnode_st *next, *prev;
+} dnode_t;
+
+#ifdef HAVE_NAMELESS_STRUCT_IN_UNION
+#  define DLIST_H(l) (&(l)->h)
+#  define DLIST_T(l) (&(l)->t)
+typedef union {
+  struct { dnode_t *head, *null, *tail; };
+  struct { dnode_t h; dnode_t *dummy1;  };
+  struct { dnode_t *dummy2; dnode_t t;  };
+} dlist_t;
+#else
+#  define DLIST_H(l) ((void *)(&(l)->head))
+#  define DLIST_T(l) ((void *)(&(l)->null))
+typedef struct {
+  dnode_t * volatile head;
+  dnode_t *null;
+  dnode_t * volatile tail;
+} dlist_t;
+#endif
+
+#define DLIST_IS_EMPTY(l) ((l)->head == DLIST_T(l))
 
 #define DLIST_REMOVE(n) { \
   dnode_t *dl_rm_this = n; \
@@ -78,7 +97,7 @@ extern "C" {
   dnode_t *dl_ah_node = n; \
   dnode_t *dl_ah_head = dl_ah_list->head; \
   dl_ah_node->next = dl_ah_head; \
-  dl_ah_node->prev = (void *)dl_ah_list; \
+  dl_ah_node->prev = DLIST_H(dl_ah_list); \
   dl_ah_list->head = dl_ah_node; \
   dl_ah_head->prev = dl_ah_node; \
 }
@@ -87,37 +106,27 @@ extern "C" {
   dlist_t *dl_at_list = l; \
   dnode_t *dl_at_node = n; \
   dnode_t *dl_at_tail = dl_at_list->tail; \
-  dl_at_node->next = (void *)(&dl_at_list->null); \
+  dl_at_node->next = DLIST_T(dl_at_list); \
   dl_at_node->prev = dl_at_tail; \
   dl_at_tail->next = dl_at_node; \
   dl_at_list->tail = dl_at_node; \
 }
 
 #define DLIST_INSERT(n,h) { \
-  dnode_t *dl_in_node = n; \
-  dnode_t *dl_in_here = h; \
-  dnode_t *dl_in_prev = dl_in_here->prev; \
-  dl_in_prev->next = dl_in_node; \
-  dl_in_here->prev = dl_in_node; \
-  dl_in_node->next = dl_in_here; \
-  dl_in_node->prev = dl_in_prev; \
+  dnode_t *dl_i_node = n; \
+  dnode_t *dl_i_here = h; \
+  dnode_t *dl_i_prev = dl_i_here->prev; \
+  dl_i_prev->next = dl_i_node; \
+  dl_i_here->prev = dl_i_node; \
+  dl_i_node->next = dl_i_here; \
+  dl_i_node->prev = dl_i_prev; \
 }
 
 #define DLIST_INIT(l) { \
   dlist_t *dl_in_list = l; \
-  dl_in_list->head = (void *)(&dl_in_list->null); \
+  dl_in_list->head = DLIST_T(dl_in_list); \
   dl_in_list->null = NULL; \
-  dl_in_list->tail = (void *)(&dl_in_list->head); }
-
-typedef struct dnode_st {
-  struct dnode_st *next, *prev;
-} dnode_t;
-
-typedef struct {
-  dnode_t * volatile head;
-  dnode_t *null;
-  dnode_t * volatile tail;
-} dlist_t;
+  dl_in_list->tail = DLIST_H(dl_in_list); }
 
 
   /*
