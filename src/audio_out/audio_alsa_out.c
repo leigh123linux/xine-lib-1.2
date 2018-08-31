@@ -246,9 +246,8 @@ static void *ao_alsa_handle_event_thread(void *data) {
 	event.data_length = sizeof(data);
 
 	pthread_mutex_lock(&this->class->xine->streams_lock);
-	for(ite = xine_list_front(this->class->xine->streams);
-	    ite; ite = xine_list_next(this->class->xine->streams, ite)) {
-	  stream = xine_list_get_value(this->class->xine->streams, ite);
+        ite = NULL;
+        while ((stream = xine_list_next_value (this->class->xine->streams, &ite))) {
 	  event.stream = stream;
 	  xine_event_send(stream, &event);
 	}
