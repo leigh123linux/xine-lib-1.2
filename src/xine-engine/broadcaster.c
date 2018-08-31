@@ -172,22 +172,21 @@ sock_string_write(xine_t *xine, int socket, const char *msg, ...) {
  */
 static void broadcaster_data_write(broadcaster_t *this, const void *buf, int len) {
   xine_list_iterator_t ite;
+  int ssock;
 
-  ite = xine_list_front (this->connections);
+  ite = NULL;
+  ssock = (intptr_t)xine_list_next_value (this->connections, &ite);
   while (ite) {
-
-    int *psock = xine_list_get_value(this->connections, ite);
-
-    ite = xine_list_next(this->connections, ite);
-
     /* in case of failure remove from list */
-    if( sock_data_write(this->stream->xine, *psock, buf, len) < 0 ) {
-
-      xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG, "broadcaster: closing socket %d\n", *psock);
-      close(*psock);
-      free(psock);
-
-      xine_list_remove (this->connections, xine_list_prev(this->connections, ite));
+    if (sock_data_write (this->stream->xine, ssock, buf, len) < 0) {
+      xine_list_iterator_t failed;
+      xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG, "broadcaster: closing socket %d\n", ssock);
+      close (ssock);
+      failed = ite;
+      ssock = (intptr_t)xine_list_next_value (this->connections, &ite);
+      xine_list_remove (this->connections, failed);
+    } else {
+      ssock = (intptr_t)xine_list_next_value (this->connections, &ite);
     }
   }
 }
@@ -243,12 +242,9 @@ static void *manager_loop (void *this_gen) {
 
           /* identification string, helps demuxer probing */
           if( sock_string_write(this->stream->xine, ssock,"master xine v1") > 0 ) {
-            int *psock = malloc(sizeof(int));
-            *psock = ssock;
-
-            xprintf(this->stream->xine, XINE_VERBOSITY_DEBUG,
-		    "broadcaster: new connection socket %d\n", *psock);
-            xine_list_push_back(this->connections, psock);
+            xprintf (this->stream->xine, XINE_VERBOSITY_DEBUG,
+              "broadcaster: new connection socket %d\n", ssock);
+            xine_list_push_back (this->connections, (void *)(intptr_t)ssock);
           }
         }
       }
@@ -397,14 +393,14 @@ void _x_close_broadcaster(broadcaster_t *this_gen)
   if(this_gen->stream->audio_fifo)
     this_gen->stream->audio_fifo->unregister_put_cb(this_gen->stream->audio_fifo, audio_put_cb);
 
-  xine_list_iterator_t ite;
+  xine_list_iterator_t ite = NULL;
 
-  while ( (ite = xine_list_front(this_gen->connections)) ) {
-    int *psock = xine_list_get_value(this_gen->connections, ite);
-    xprintf(this_gen->stream->xine, XINE_VERBOSITY_DEBUG, "broadcaster: closing socket %d\n", *psock);
-    close(*psock);
-    free(psock);
-    xine_list_remove (this_gen->connections, ite);
+  while (1) {
+    int ssock = (intptr_t)xine_list_next_value (this_gen->connections, &ite);
+    if (!ite)
+      break;
+    xprintf (this_gen->stream->xine, XINE_VERBOSITY_DEBUG, "broadcaster: closing socket %d\n", ssock);
+    close (ssock);
   }
   xine_list_delete(this_gen->connections);
 
@@ -417,3 +413,4 @@ int _x_get_broadcaster_port(broadcaster_t *this_gen)
 {
   return this_gen->port;
 }
+
