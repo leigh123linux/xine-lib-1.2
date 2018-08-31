@@ -31,16 +31,15 @@
 
 xine_event_t *xine_event_get  (xine_event_queue_t *queue) {
 
-  xine_event_t  *event = NULL;
+  xine_event_t *event;
   xine_list_iterator_t ite;
 
   pthread_mutex_lock (&queue->lock);
-  ite = xine_list_front (queue->events);
-  if (ite) {
-    event = xine_list_get_value (queue->events, ite);
-    if (event)
-      xine_list_remove (queue->events, ite);
-  }
+  ite = NULL;
+  event = xine_list_next_value (queue->events, &ite);
+  /* XXX: Do NULL events really intend to plug the queue ?? */
+  if (event)
+    xine_list_remove (queue->events, ite);
   pthread_mutex_unlock (&queue->lock);
 
   return event;
