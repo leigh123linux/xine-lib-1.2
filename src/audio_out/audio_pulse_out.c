@@ -250,9 +250,8 @@ static void __xine_pa_sink_info_callback(pa_context *c, const pa_sink_input_info
   event.data_length = sizeof(data);
 
   pthread_mutex_lock(&this->xine->streams_lock);
-  for(ite = xine_list_front(this->xine->streams); ite; ite =
-    xine_list_next(this->xine->streams, ite)) {
-    stream = xine_list_get_value(this->xine->streams, ite);
+  ite = NULL;
+  while ((stream = xine_list_next_value (this->xine->streams, &ite))) {
     event.stream = stream;
     xine_event_send(stream, &event);
   }
