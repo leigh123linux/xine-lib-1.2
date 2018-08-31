@@ -321,22 +321,25 @@ static void config_make_sort_key (char *dest, const char *key, int exp_level) {
 }
 
 /* Ugly: rebuild index every time. Maybe we could cache it somewhere? */
-static cfg_entry_t **config_array (config_values_t *this, int *n) {
-  cfg_entry_t **tab, *e;
-  int m = 256, i;
-  tab = malloc (m * sizeof (*tab));
-  if (!tab) {
-    *n = 0;
-    return NULL;
-  }
+static cfg_entry_t **config_array (config_values_t *this, cfg_entry_t **tab, int *n) {
+  cfg_entry_t *e;
+  int m = *n, i;
   for (i = 0, e = this->first; e; e = e->next) {
     tab[i++] = e;
     if (i >= m) {
       cfg_entry_t **t2;
-      m += 256;
-      t2 = realloc (tab, m * sizeof (*tab));
-      if (!t2)
-        break;
+      if (m == *n) {
+        m += 512;
+        t2 = malloc (m * sizeof (*tab));
+        if (!t2)
+          break;
+        memcpy (t2, tab, (m - 512) * sizeof (*tab));
+      } else {
+        m += 512;
+        t2 = realloc (tab, m * sizeof (*tab));
+        if (!t2)
+          break;
+      }
       tab = t2;
     }
   }
@@ -350,136 +353,133 @@ static cfg_entry_t *config_insert (config_values_t *this, const char *key, int e
   char cur_sortkey[MAX_SORT_KEY];
   cfg_entry_t *entry;
 
-  if (!this->first || !this->last) {
-    if (exp_level == FIND_ONLY)
-      return NULL;
-    entry = calloc (1, sizeof (cfg_entry_t));
-    if (!entry)
-      return NULL;
-    this->first          = entry;
-    this->last           = entry;
-#ifndef HAVE_ZERO_SAFE_MEM
-    entry->next          = NULL;
-    entry->unknown_value = NULL;
-    entry->str_value     = NULL;
-    entry->str_default   = NULL;
-    entry->help          = NULL;
-    entry->description   = NULL;
-#endif
-    entry->config        = this;
-    entry->key           = strdup(key);
-    entry->type          = XINE_CONFIG_TYPE_UNKNOWN;
-    entry->exp_level     = exp_level;
-#ifdef DEBUG_CONFIG_FIND
-    printf ("config_insert (\"%s\", %d) = new (0).\n", key, exp_level);
-#endif
-    return entry;
-  }
-
-  config_make_sort_key (new_sortkey, key, exp_level);
-
-  /* Most frequent case is loading a config file entry.
-   * Unless edited by user, these come in already sorted.
-   * Thus try last pos first.
-   */
-  if (exp_level != FIND_ONLY) {
-    config_make_sort_key (cur_sortkey, this->last->key, this->last->exp_level);
-    if (strcmp (new_sortkey, cur_sortkey) > 0) {
+  do {
+    if (!this->first || !this->last) {
+      if (exp_level == FIND_ONLY)
+        return NULL;
       entry = calloc (1, sizeof (cfg_entry_t));
       if (!entry)
         return NULL;
-      this->last->next     = entry;
-      this->last           = entry;
-#ifndef HAVE_ZERO_SAFE_MEM
-      entry->next          = NULL;
-      entry->unknown_value = NULL;
-      entry->str_value     = NULL;
-      entry->str_default   = NULL;
-      entry->help          = NULL;
-      entry->description   = NULL;
-#endif
-      entry->config        = this;
-      entry->key           = strdup(key);
-      entry->type          = XINE_CONFIG_TYPE_UNKNOWN;
-      entry->exp_level     = exp_level;
 #ifdef DEBUG_CONFIG_FIND
-      printf ("config_insert (\"%s\", %d) = new (last).\n", key, exp_level);
+      printf ("config_insert (\"%s\", %d) = new (0).\n", key, exp_level);
 #endif
-      return entry;
-    }
-  }
-
-  {
-    cfg_entry_t **entries;
-    int n, b, m, e, d;
-    entries = config_array (this, &n);
-    if (!entries)
-      return NULL;
-
-    b = 0; e = n; m = n >> 1;
-    do {
-      config_make_sort_key (cur_sortkey, entries[m]->key, entries[m]->exp_level);
-      d = strcmp (new_sortkey, cur_sortkey);
-      if (d == 0)
-        break;
-      if (d < 0)
-        e = m;
-      else
-        b = m + 1;
-      m = (b + e) >> 1;
-    } while (b != e);
-
-    if (d == 0) {
-      entry = entries[m];
-      free (entries);
-#ifdef DEBUG_CONFIG_FIND
-      printf ("config_insert (\"%s\", %d) = found (%d/%d).\n", key, exp_level, m, n);
-#endif
-      return entry;
-    }
-
-    if (exp_level == FIND_ONLY) {
-      free (entries);
-#ifdef DEBUG_CONFIG_FIND
-      printf ("config_insert (\"%s\", %d) = not found.\n", key, exp_level);
-#endif
-      return NULL;
-    }
-
-    entry = calloc (1, sizeof (cfg_entry_t));
-    if (!entry) {
-      free (entries);
-      return NULL;
-    }
-    if (m == 0) {
-      entry->next = this->first;
       this->first = entry;
-    } else {
-      entries[m - 1]->next = entry;
-      if (m < n) {
-        entry->next = entries[m];
-      } else {
-        entry->next = NULL;
-        this->last = entry;
+      this->last  = entry;
+#ifndef HAVE_ZERO_SAFE_MEM
+      entry->next = NULL;
+#endif
+      break;
+    }
+
+    config_make_sort_key (new_sortkey, key, exp_level);
+
+    /* Most frequent case is loading a config file entry.
+     * Unless edited by user, these come in already sorted.
+     * Thus try last pos first.
+     */
+    if (exp_level != FIND_ONLY) {
+      config_make_sort_key (cur_sortkey, this->last->key, this->last->exp_level);
+      if (strcmp (new_sortkey, cur_sortkey) > 0) {
+        entry = calloc (1, sizeof (cfg_entry_t));
+        if (!entry)
+          return NULL;
+#ifdef DEBUG_CONFIG_FIND
+        printf ("config_insert (\"%s\", %d) = new (last).\n", key, exp_level);
+#endif
+        this->last->next = entry;
+        this->last       = entry;
+#ifndef HAVE_ZERO_SAFE_MEM
+        entry->next      = NULL;
+#endif
+        break;
       }
     }
-    free (entries);
-    entry->config        = this;
-    entry->key           = strdup(key);
-    entry->type          = XINE_CONFIG_TYPE_UNKNOWN;
-#ifndef HAVE_ZERO_SAFE_MEM
-    entry->unknown_value = NULL;
-    entry->str_value     = NULL;
-    entry->str_default   = NULL;
-    entry->help          = NULL;
-    entry->description   = NULL;
-#endif
-    entry->exp_level     = exp_level;
+
+    {
+      cfg_entry_t *aentr[1024], **entries;
+      int n, b, m, e, d;
+      n = 1024;
+      entries = config_array (this, aentr, &n);
+      if (!entries)
+        return NULL;
+
+      b = 0; e = n; m = n >> 1;
+      do {
+        config_make_sort_key (cur_sortkey, entries[m]->key, entries[m]->exp_level);
+        d = strcmp (new_sortkey, cur_sortkey);
+        if (d == 0)
+          break;
+        if (d < 0)
+          e = m;
+        else
+          b = m + 1;
+        m = (b + e) >> 1;
+      } while (b != e);
+
+      if (d == 0) {
+        entry = entries[m];
+        if (entries != aentr)
+          free (entries);
 #ifdef DEBUG_CONFIG_FIND
-    printf ("config_insert (\"%s\", %d) = new (%d/%d).\n", key, exp_level, m, n);
+        printf ("config_insert (\"%s\", %d) = found (%d/%d).\n", key, exp_level, m, n);
 #endif
-    return entry;
-  }
+        return entry;
+      }
+
+      if (exp_level == FIND_ONLY) {
+        if (entries != aentr)
+          free (entries);
+#ifdef DEBUG_CONFIG_FIND
+        printf ("config_insert (\"%s\", %d) = not found.\n", key, exp_level);
+#endif
+        return NULL;
+      }
+
+      entry = calloc (1, sizeof (cfg_entry_t));
+      if (!entry) {
+        if (entries != aentr)
+          free (entries);
+        return NULL;
+      }
+      if (m == 0) {
+        entry->next = this->first;
+        this->first = entry;
+      } else {
+        entries[m - 1]->next = entry;
+        if (m < n) {
+          entry->next = entries[m];
+        } else {
+          entry->next = NULL;
+          this->last = entry;
+        }
+      }
+      if (entries != aentr)
+        free (entries);
+#ifdef DEBUG_CONFIG_FIND
+      printf ("config_insert (\"%s\", %d) = new (%d/%d).\n", key, exp_level, m, n);
+#endif
+    }
+  } while (0);
+
+#ifndef HAVE_ZERO_SAFE_MEM
+  entry->num_value     = 0;
+  entry->num_default   = 0;
+  entry->range_min     = 0;
+  entry->range_max     = 0;
+  entry->enum_values   = NULL;
+  entry->unknown_value = NULL;
+  entry->str_value     = NULL;
+  entry->str_default   = NULL;
+  entry->help          = NULL;
+  entry->description   = NULL;
+  entry->callback      = NULL;
+  entry->callback_data = NULL;
+#endif
+  entry->config        = this;
+  entry->key           = strdup(key);
+  entry->type          = XINE_CONFIG_TYPE_UNKNOWN;
+  entry->exp_level     = exp_level;
+  return entry;
 }
 
 static const char *config_xlate_internal (const char *key, const xine_config_entry_translation_t *trans)
@@ -647,10 +647,9 @@ static cfg_entry_t *config_register_key (config_values_t *this,
 					 void *cb_data) {
   cfg_entry_t *entry;
 
-  _x_assert(this);
-  _x_assert(key);
-
   lprintf ("registering %s\n", key);
+
+  pthread_mutex_lock (&this->config_lock);
 
   entry = config_insert (this, key, exp_level);
   if (!entry)
@@ -682,48 +681,38 @@ static cfg_entry_t *config_register_key (config_values_t *this,
   return entry;
 }
 
-static cfg_entry_t *config_register_string_internal (config_values_t *this,
-						     const char *key,
-						     const char *def_value,
-						     int num_value,
-						     const char *description,
-						     const char *help,
-						     int exp_level,
-						     xine_config_cb_t changed_cb,
-						     void *cb_data) {
+static char *config_register_string (config_values_t *this,
+  const char *key, const char *def_value, const char *description, const char *help,
+  int exp_level, xine_config_cb_t changed_cb, void *cb_data) {
+
   cfg_entry_t *entry;
 
-  _x_assert(this);
-  _x_assert(key);
-  _x_assert(def_value);
+  if (!this || !key || !def_value) {
+    printf ("config_register_string: error: config=%p, key=%s, def_value=%s.\n",
+    (void *)this, key ? key : "NULL", def_value ? def_value : "NULL");
+    return NULL;
+  }
 
-  pthread_mutex_lock(&this->config_lock);
-
-  entry = config_register_key(this, key, exp_level, changed_cb, cb_data);
+  entry = config_register_key (this, key, exp_level, changed_cb, cb_data);
   if (!entry) {
     pthread_mutex_unlock (&this->config_lock);
     return NULL;
   }
-
   if (entry->type != XINE_CONFIG_TYPE_UNKNOWN) {
     lprintf("config entry already registered: %s\n", key);
-    pthread_mutex_unlock(&this->config_lock);
-    return entry;
+    pthread_mutex_unlock (&this->config_lock);
+    return entry->str_value;
   }
-
-  config_reset_value(entry);
 
   /* set string */
   entry->type = XINE_CONFIG_TYPE_STRING;
-
   if (entry->unknown_value) {
     entry->str_value = entry->unknown_value;
     entry->unknown_value = NULL;
   } else {
     entry->str_value = strdup(def_value);
   }
-
-  entry->num_value = num_value;
+  entry->num_value = 0;
 
   /* fill out rest of struct */
   entry->str_default    = strdup(def_value);
@@ -731,32 +720,50 @@ static cfg_entry_t *config_register_string_internal (config_values_t *this,
   entry->help           = (help) ? strdup(help) : NULL;
 
   pthread_mutex_unlock(&this->config_lock);
-  return entry;
-}
-
-static char *config_register_string (config_values_t *this,
-				     const char *key,
-				     const char *def_value,
-				     const char *description,
-				     const char *help,
-				     int exp_level,
-				     xine_config_cb_t changed_cb,
-				     void *cb_data) {
-  return config_register_string_internal (this, key, def_value, 0, description,
-					  help, exp_level, changed_cb, cb_data)->str_value;
+  return entry->str_value;
 }
 
 static char *config_register_filename (config_values_t *this,
-				       const char *key,
-				       const char *def_value,
-				       int req_type,
-				       const char *description,
-				       const char *help,
-				       int exp_level,
-				       xine_config_cb_t changed_cb,
-				       void *cb_data) {
-  return config_register_string_internal (this, key, def_value, req_type, description,
-					  help, exp_level, changed_cb, cb_data)->str_value;
+  const char *key, const char *def_value, int req_type,
+  const char *description, const char *help, int exp_level,
+  xine_config_cb_t changed_cb, void *cb_data) {
+
+  cfg_entry_t *entry;
+
+  if (!this || !key || !def_value) {
+    printf ("config_register_filename: error: config=%p, key=%s, def_value=%s.\n",
+    (void *)this, key ? key : "NULL", def_value ? def_value : "NULL");
+    return NULL;
+  }
+
+  entry = config_register_key (this, key, exp_level, changed_cb, cb_data);
+  if (!entry) {
+    pthread_mutex_unlock (&this->config_lock);
+    return NULL;
+  }
+  if (entry->type != XINE_CONFIG_TYPE_UNKNOWN) {
+    lprintf("config entry already registered: %s\n", key);
+    pthread_mutex_unlock (&this->config_lock);
+    return entry->str_value;
+  }
+
+  /* set string */
+  entry->type = XINE_CONFIG_TYPE_STRING;
+  if (entry->unknown_value) {
+    entry->str_value = entry->unknown_value;
+    entry->unknown_value = NULL;
+  } else {
+    entry->str_value = strdup(def_value);
+  }
+  entry->num_value = req_type;
+
+  /* fill out rest of struct */
+  entry->str_default    = strdup(def_value);
+  entry->description    = (description) ? strdup(description) : NULL;
+  entry->help           = (help) ? strdup(help) : NULL;
+
+  pthread_mutex_unlock(&this->config_lock);
+  return entry->str_value;
 }
 
 static int config_register_num (config_values_t *this,
@@ -769,10 +776,12 @@ static int config_register_num (config_values_t *this,
 				void *cb_data) {
 
   cfg_entry_t *entry;
-  _x_assert(this);
-  _x_assert(key);
 
-  pthread_mutex_lock(&this->config_lock);
+  if (!this || !key) {
+    printf ("config_register_num: error: config=%p, key=%s.\n",
+    (void *)this, key ? key : "NULL");
+    return 0;
+  }
 
   entry = config_register_key(this, key, exp_level, changed_cb, cb_data);
   if (!entry) {
@@ -814,10 +823,12 @@ static int config_register_bool (config_values_t *this,
 				 void *cb_data) {
 
   cfg_entry_t *entry;
-  _x_assert(this);
-  _x_assert(key);
 
-  pthread_mutex_lock(&this->config_lock);
+  if (!this || !key) {
+    printf ("config_register_bool: error: config=%p, key=%s.\n",
+    (void *)this, key ? key : "NULL");
+    return 0;
+  }
 
   entry = config_register_key(this, key, exp_level, changed_cb, cb_data);
   if (!entry) {
@@ -860,10 +871,12 @@ static int config_register_range (config_values_t *this,
 				  void *cb_data) {
 
   cfg_entry_t *entry;
-  _x_assert(this);
-  _x_assert(key);
 
-  pthread_mutex_lock(&this->config_lock);
+  if (!this || !key) {
+    printf ("config_register_range: error: config=%p, key=%s.\n",
+    (void *)this, key ? key : "NULL");
+    return 0;
+  }
 
   entry = config_register_key(this, key, exp_level, changed_cb, cb_data);
   if (!entry) {
@@ -951,12 +964,11 @@ static int config_register_enum (config_values_t *this,
   cfg_entry_t *entry;
   uint32_t value_count;
 
-
-  _x_assert(this);
-  _x_assert(key);
-  _x_assert(values);
-
-  pthread_mutex_lock(&this->config_lock);
+  if (!this || !key || !values) {
+    printf ("config_register_enum: error: config=%p, key=%s, values=%p.\n",
+    (void *)this, key ? key : "NULL", (void *)values);
+    return 0;
+  }
 
   entry = config_register_key(this, key, exp_level, changed_cb, cb_data);
   if (!entry) {
