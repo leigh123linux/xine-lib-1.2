@@ -2116,8 +2116,8 @@ static void config_save_cb (void *this_gen, xine_cfg_entry_t *entry) {
 	     _("xine: The specified save_dir \"%s\" might be a security risk.\n"), entry->str_value);
 
     pthread_mutex_lock(&this->streams_lock);
-    if ( (ite = xine_list_front(this->streams)) ) {
-      stream = xine_list_get_value(this->streams, ite);
+    ite = NULL;
+    if ((stream = xine_list_next_value (this->streams, &ite))) {
       _x_message(stream, XINE_MSG_SECURITY, _("The specified save_dir might be a security risk."), NULL);
     }
     pthread_mutex_unlock(&this->streams_lock);
