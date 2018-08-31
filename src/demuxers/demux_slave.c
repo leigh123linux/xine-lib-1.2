@@ -308,11 +308,9 @@ static void demux_slave_dispose (demux_plugin_t *this_gen) {
   xine_list_iterator_t ite;
 
   /* free all decoder information */
-  while ((ite = xine_list_front(this->dec_infos)) != NULL) {
-    data = xine_list_get_value(this->dec_infos, ite);
+  ite = NULL;
+  while ((data = xine_list_next_value (this->dec_infos, &ite)))
     free(data);
-    xine_list_remove (this->dec_infos, ite);
-  }
   xine_list_delete(this->dec_infos);
 
   free (this);
