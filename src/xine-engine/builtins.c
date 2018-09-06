@@ -59,7 +59,7 @@ const plugin_info_t xine_builtin_plugin_info[] = {
   VO_NONE_CATALOG,
   AO_NONE_CATALOG,
   AO_FILE_CATALOG,
-  { PLUGIN_NONE, 0, "", 0, NULL, NULL }
+  { PLUGIN_NONE, 0, NULL, 0, NULL, NULL }
 };
 
 #endif
