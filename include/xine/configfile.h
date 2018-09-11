@@ -221,6 +221,14 @@ struct config_values_s {
    * current config file's version number
    */
   int current_version;
+
+  /**
+   * unregister multiple entry callback functions.
+   * all 3 values need to match unless they are NULL.
+   * returns the count of unregistered functions.
+   */
+  int (*unregister_callbacks) (config_values_t *self,
+    const char *key, xine_config_cb_t changed_cb, void *cb_data);
 };
 
 /**

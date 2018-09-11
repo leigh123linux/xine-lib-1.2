@@ -54,6 +54,212 @@
 /* FIXME: static data, no expiry ?! */
 static const xine_config_entry_translation_t *config_entry_translation_user = NULL;
 
+typedef struct {
+  xine_config_cb_t callback;
+  void            *data;
+} _cfg_cb_info_t;
+
+typedef struct {
+  uint32_t size;
+  uint32_t used;
+  _cfg_cb_info_t items[1];
+} _cfg_cb_relay_t;
+
+static void _cfg_relay (void *data, xine_cfg_entry_t *e) {
+  _cfg_cb_info_t *i, *s;
+  _cfg_cb_relay_t *relay = data;
+
+  if (!relay)
+    return;
+
+  for (i = &relay->items[0], s = i + relay->used; i < s; i++)
+    i->callback (i->data, e);
+}
+
+static int _cfg_cb_clear (cfg_entry_t *entry) {
+  int n = 0;
+  for (; entry; entry = entry->next) {
+    if (entry->callback == _cfg_relay) {
+      _cfg_cb_relay_t *relay = entry->callback_data;
+      if (relay) {
+        n += relay->used;
+        free (relay);
+      }
+    } else {
+      n += entry->callback ? 1 : 0;
+    }
+    entry->callback_data = NULL;
+    entry->callback = NULL;
+  }
+  return n;
+}
+
+static int _cfg_cb_d_rem (cfg_entry_t *entry, xine_config_cb_t callback, void *data) {
+  int n = 0;
+  for (; entry; entry = entry->next) {
+    if (entry->callback == _cfg_relay) {
+      _cfg_cb_info_t *r, *e;
+      _cfg_cb_relay_t *relay = entry->callback_data;
+      if (!relay) {
+        entry->callback = NULL;
+        continue;
+      }
+      r = &relay->items[0];
+      e = r + relay->used;
+      while (r < e) {
+        if ((callback == r->callback) && (data == r->data)) *r = *(--e); else r++;
+      }
+      n += relay->used;
+      relay->used = r - &relay->items[0];
+      n -= relay->used;
+      if (relay->used <= 1) {
+        r->callback = NULL;
+        r->data = NULL;
+        entry->callback = relay->items[0].callback;
+        entry->callback_data = relay->items[0].data;
+        free (relay);
+      }
+    } else {
+      if ((callback == entry->callback) && (data == entry->callback_data)) {
+        n++;
+        entry->callback_data = NULL;
+        entry->callback = NULL;
+      }
+    }
+  }
+  return n;
+}
+
+static int _cfg_cb_rem (cfg_entry_t *entry, xine_config_cb_t callback) {
+  int n = 0;
+  for (; entry; entry = entry->next) {
+    if (entry->callback == _cfg_relay) {
+      _cfg_cb_info_t *r, *e;
+      _cfg_cb_relay_t *relay = entry->callback_data;
+      if (!relay) {
+        entry->callback = NULL;
+        continue;
+      }
+      r = &relay->items[0];
+      e = r + relay->used;
+      while (r < e) {
+        if (callback == r->callback) *r = *(--e); else r++;
+      }
+      n += relay->used;
+      relay->used = r - &relay->items[0];
+      n -= relay->used;
+      if (relay->used <= 1) {
+        r->callback = NULL;
+        r->data = NULL;
+        entry->callback = relay->items[0].callback;
+        entry->callback_data = relay->items[0].data;
+        free (relay);
+      }
+    } else {
+      if (callback == entry->callback) {
+        n++;
+        entry->callback_data = NULL;
+        entry->callback = NULL;
+      }
+    }
+  }
+  return n;
+}
+
+static int _cfg_d_rem (cfg_entry_t *entry, void *data) {
+  int n = 0;
+  for (; entry; entry = entry->next) {
+    if (entry->callback == _cfg_relay) {
+      _cfg_cb_info_t *r, *e;
+      _cfg_cb_relay_t *relay = entry->callback_data;
+      if (!relay) {
+        entry->callback = NULL;
+        continue;
+      }
+      r = &relay->items[0];
+      e = r + relay->used;
+      while (r < e) {
+        if (data == r->data) *r = *(--e); else r++;
+      }
+      n += relay->used;
+      relay->used = r - &relay->items[0];
+      n -= relay->used;
+      if (relay->used <= 1) {
+        r->callback = NULL;
+        r->data = NULL;
+        entry->callback = relay->items[0].callback;
+        entry->callback_data = relay->items[0].data;
+        free (relay);
+      }
+    } else {
+      if (data == entry->callback_data) {
+        n++;
+        entry->callback_data = NULL;
+        entry->callback = NULL;
+      }
+    }
+  }
+  return n;
+}
+
+static int _cfg_any_rem (cfg_entry_t *entry, xine_config_cb_t callback, void *data) {
+  if (callback) {
+    if (data)
+      return _cfg_cb_d_rem (entry, callback, data);
+    else
+      return _cfg_cb_rem (entry, callback);
+  } else {
+    if (data)
+      return _cfg_d_rem (entry, data);
+    else
+      return _cfg_cb_clear (entry);
+  }
+}
+
+static void _cfg_cb_add (cfg_entry_t *entry, xine_config_cb_t callback, void *data) {
+  _cfg_cb_relay_t *relay;
+  _cfg_cb_info_t *info;
+
+  if (!callback)
+    return;
+
+  if (!entry->callback) {
+    entry->callback = callback;
+    entry->callback_data = data;
+    return;
+  }
+
+  if (entry->callback == _cfg_relay) {
+    relay = entry->callback_data;
+    if (!relay)
+      return;
+  } else {
+    relay = malloc (sizeof (*relay) + 8 * sizeof (relay->items[0]));
+    if (!relay)
+      return;
+    relay->size = 8;
+    relay->used = 1;
+    relay->items[0].callback = entry->callback;
+    relay->items[0].data = entry->callback_data;
+    entry->callback = _cfg_relay;
+    entry->callback_data = relay;
+  }
+
+  if (relay->used + 1 > relay->size) {
+    uint32_t size = relay->size + 8;
+    _cfg_cb_relay_t *r2 = realloc (relay, sizeof (*relay) + size * sizeof (relay->items[0]));
+    if (!r2)
+      return;
+    r2->size = size;
+    entry->callback_data = relay = r2;
+  }
+
+  info = &relay->items[0] + relay->used;
+  info->callback = callback;
+  info->data = data;
+  relay->used++;
+}
+
 static const char *config_xlate_old (const char *s) {
   static const char * const tab[] = {
   /*"audio.a52_pass_through",			NULL,*/
@@ -658,14 +864,8 @@ static cfg_entry_t *config_register_key (config_values_t *this,
   /* new entry */
   entry->exp_level = exp_level != FIND_ONLY ? exp_level : 0;
 
-  /* override callback */
-  if (changed_cb) {
-    if (entry->callback && (entry->callback != changed_cb)) {
-      lprintf("overriding callback\n");
-    }
-    entry->callback = changed_cb;
-    entry->callback_data = cb_data;
-  }
+  /* add callback */
+  _cfg_cb_add (entry, changed_cb, cb_data);
 
   /* we created a new entry, call the callback */
   if (this->new_entry_cb) {
@@ -1520,16 +1720,20 @@ void xine_config_save (xine_t *xine, const char *filename) {
 
 static void config_dispose (config_values_t *this) {
   cfg_entry_t *entry, *last;
+  int n;
 
   pthread_mutex_lock (&this->config_lock);
   entry = this->first;
 
   lprintf ("dispose\n");
 
+  n = 0;
   while (entry) {
     last = entry;
     entry = entry->next;
 
+    last->next = NULL;
+    n += _cfg_cb_clear (last);
     _x_freep (&last->key);
     _x_freep (&last->unknown_value);
 
@@ -1539,6 +1743,10 @@ static void config_dispose (config_values_t *this) {
   }
 
   pthread_mutex_unlock (&this->config_lock);
+
+  if (n) {
+    printf ("config: unregistered %d orphaned change callbacks.\n", n);
+  }
 
   pthread_mutex_destroy (&this->config_lock);
   free (this);
@@ -1554,51 +1762,55 @@ static void config_unregister_cb (config_values_t *this, const char *key) {
 
   entry = config_lookup_entry_safe (this, key);
   if (entry) {
-    entry->callback = NULL;
-    entry->callback_data = NULL;
+    cfg_entry_t *next = entry->next;
+    entry->next = NULL;
+    _cfg_cb_clear (entry);
+    entry->next = next;
   }
   pthread_mutex_unlock (&this->config_lock);
 }
 
-void _x_config_unregister_cb_class_d (config_values_t *this, void *callback_data) {
+static int config_unregister_callbacks (config_values_t *this,
+  const char *key, xine_config_cb_t changed_cb, void *cb_data) {
+  int n;
+  cfg_entry_t *entry, *next;
+  if (!this)
+    return 0;
+  next = NULL;
+  if (key) {
+    entry = config_lookup_entry_safe (this, key);
+    if (entry) {
+      next = entry->next;
+      entry->next = NULL;
+    }
+  } else {
+    pthread_mutex_lock (&this->config_lock);
+    entry = this->first;
+  }
+  n = _cfg_any_rem (entry, changed_cb, cb_data);
+  if (next)
+    entry->next = next;
+  pthread_mutex_unlock (&this->config_lock);
+  return n;
+}
 
-  cfg_entry_t *entry;
+void _x_config_unregister_cb_class_d (config_values_t *this, void *callback_data) {
 
   _x_assert(this);
   _x_assert(callback_data);
 
   pthread_mutex_lock(&this->config_lock);
-
-  entry = this->first;
-  while (entry) {
-    if (entry->callback && entry->callback_data == callback_data) {
-      entry->callback = NULL;
-      entry->callback_data = NULL;
-    }
-    entry = entry->next;
-  }
-
+  _cfg_d_rem (this->first, callback_data);
   pthread_mutex_unlock(&this->config_lock);
 }
 
 void _x_config_unregister_cb_class_p (config_values_t *this, xine_config_cb_t callback) {
 
-  cfg_entry_t *entry;
-
   _x_assert(this);
   _x_assert(callback);
 
   pthread_mutex_lock (&this->config_lock);
-
-  entry = this->first;
-  while (entry) {
-    if (entry->callback && entry->callback == callback) {
-      entry->callback = NULL;
-      entry->callback_data = NULL;
-    }
-    entry = entry->next;
-  }
-
+  _cfg_cb_rem (this->first, callback);
   pthread_mutex_unlock (&this->config_lock);
 }
 
@@ -1915,6 +2127,7 @@ config_values_t *_x_config_init (void) {
   this->set_new_entry_callback    = config_set_new_entry_callback;
   this->unset_new_entry_callback  = config_unset_new_entry_callback;
   this->get_serialized_entry      = config_get_serialized_entry;
+  this->unregister_callbacks      = config_unregister_callbacks;
 
   return this;
 }
