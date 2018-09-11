@@ -3322,7 +3322,10 @@ void _x_dispose_plugins (xine_t *this) {
     int i;
 
     if (this->config) {
-      _x_config_unregister_cb_class_p (this->config, _decoder_priority_cb);
+      i = this->config->unregister_callbacks (this->config, NULL, _decoder_priority_cb, NULL);
+      if (i)
+        xprintf (this, XINE_VERBOSITY_DEBUG,
+          "load_plugins: unregistered %d decoder priority callbacks.\n", i);
     }
 
     for (i = 0; i < PLUGIN_TYPE_MAX; i++) {
