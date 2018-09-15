@@ -52,6 +52,7 @@ src/input/input_dvb.c
 src/input/input_dvd.c
 src/input/input_file.c
 src/input/input_gnome_vfs.c
+src/input/input_helper.c
 src/input/input_http.c
 src/input/input_mms.c
 src/input/input_net.c
