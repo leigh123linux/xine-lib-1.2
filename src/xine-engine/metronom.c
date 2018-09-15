@@ -345,6 +345,8 @@ typedef struct {
   int64_t         video_drift;
   int64_t         video_drift_step;
 
+  int             base_av_offset;
+
   int             audio_samples;
   int64_t         audio_drift_step;
 
@@ -682,7 +684,7 @@ static void metronom_got_video_frame (metronom_t *this_gen, vo_frame_t *img) {
     }
   }
 
-  img->vpts = this->video_vpts + this->av_offset;
+  img->vpts = this->video_vpts + this->av_offset + this->base_av_offset;
 
   /* We need to update this->video_vpts is both modes.
    * this->video_vpts is used as the next frame vpts if next frame pts=0
@@ -1197,6 +1199,8 @@ static void metronom_exit (metronom_t *this_gen) {
 
   metronom_impl_t *this = (metronom_impl_t *)this_gen;
 
+  this->xine->config->unregister_callback (this->xine->config, "video.output.base_delay");
+
   pthread_mutex_destroy (&this->lock);
   pthread_cond_destroy (&this->video_discontinuity_reached);
   pthread_cond_destroy (&this->audio_discontinuity_reached);
@@ -1221,6 +1225,11 @@ static void metronom_clock_exit (metronom_clock_t *this) {
   free (this_priv);
 }
 
+
+static void metronom_base_av_offs_hook (void *this_gen, xine_cfg_entry_t *entry) {
+  metronom_impl_t *this = (metronom_impl_t *)this_gen;
+  this->base_av_offset = entry->num_value;
+}
 
 metronom_t * _x_metronom_init (int have_video, int have_audio, xine_t *xine) {
 
@@ -1275,6 +1284,15 @@ metronom_t * _x_metronom_init (int have_video, int have_audio, xine_t *xine) {
   this->have_audio = have_audio;
   this->audio_vpts = this->prebuffer;
   pthread_cond_init (&this->audio_discontinuity_reached, NULL);
+
+  this->base_av_offset = xine->config->register_num (xine->config, "video.output.base_delay", 0,
+    _("basic video to audio delay in pts"),
+    _("Getting in sync picture and sound is a complex story.\n"
+      "Xine will compensate for any delays it knows about.\n"
+      "However, external hardware like flatscreens, sound systems, or simply\n"
+      "the distance between you and the speakers may add in more.\n"
+      "Here you can adjust video timing in steps of 1/90000 seconds manually."),
+    10, metronom_base_av_offs_hook, this);
 
   return &this->metronom;
 }
