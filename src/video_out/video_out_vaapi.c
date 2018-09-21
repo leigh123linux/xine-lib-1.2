@@ -3918,12 +3918,7 @@ static void vaapi_dispose_locked (vo_driver_t *this_gen) {
   ff_vaapi_context_t  *va_context = this->va_context;
   config_values_t     *config = this->xine->config;
 
-  config->unregister_callback(config, "video.output.vaapi_csc_mode");
-  config->unregister_callback(config, "video.output.vaapi_deinterlace");
-  config->unregister_callback(config, "video.output.vaapi_scaling_level");
-  config->unregister_callback(config, "video.output.vaapi_swap_uv_planes");
-  config->unregister_callback(config, "video.output.vaapi_vdr_osd_height");
-  config->unregister_callback(config, "video.output.vaapi_vdr_osd_width");
+  config->unregister_callbacks (config, NULL, NULL, this, sizeof (*this));
 
   _x_vo_scale_cleanup (&this->sc, config);
 

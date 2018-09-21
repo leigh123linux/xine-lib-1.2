@@ -1675,6 +1675,8 @@ static void opengl2_dispose( vo_driver_t *this_gen )
 
   opengl2_exit_unregister( this );
 
+  this->xine->config->unregister_callbacks (this->xine->config, "video.output.opengl2_bicubic_scaling", NULL, this, sizeof (*this));
+
   cm_close (this);
   _x_vo_scale_cleanup (&this->sc, this->xine->config);
 

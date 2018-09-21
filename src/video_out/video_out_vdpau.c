@@ -2436,6 +2436,8 @@ static void vdpau_dispose (vo_driver_t *this_gen)
   vdpau_driver_t *this = (vdpau_driver_t *) this_gen;
   int i;
 
+  this->xine->config->unregister_callbacks (this->xine->config, NULL, NULL, this, sizeof (*this));
+
   cm_close (this);
   _x_vo_scale_cleanup (&this->sc, this->xine->config);
 
