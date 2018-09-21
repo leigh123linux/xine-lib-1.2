@@ -106,28 +106,34 @@ typedef struct {
 } xv_prop_list_t;
 
 static const xv_prop_list_t xv_props_list[] = {
-  { "XV_HUE",                VO_PROP_HUE,                 VO_CAP_HUE                },
-  { "XV_SATURATION",         VO_PROP_SATURATION,          VO_CAP_SATURATION         },
-  { "XV_BRIGHTNESS",         VO_PROP_BRIGHTNESS,          VO_CAP_BRIGHTNESS         },
-  { "XV_CONTRAST",           VO_PROP_CONTRAST,            VO_CAP_CONTRAST           },
-  { "XV_GAMMA",              VO_PROP_GAMMA,               VO_CAP_GAMMA              },
-  { "XV_ITURBT_709",         XV_PROP_ITURBT_709,          VO_CAP_COLOR_MATRIX       },
-  { "XV_COLORSPACE",         XV_PROP_COLORSPACE,          VO_CAP_COLOR_MATRIX       },
-  { "XV_COLORKEY",           XV_PROP_COLORKEY,            VO_CAP_COLORKEY           },
   { "XV_AUTOPAINT_COLORKEY", XV_PROP_AUTOPAINT_COLORKEY,  VO_CAP_AUTOPAINT_COLORKEY },
-  { "XV_FILTER",             XV_PROP_FILTER,              0                         },
+  { "XV_BICUBIC",            XV_PROP_BICUBIC,             0                         },
+  { "XV_BRIGHTNESS",         VO_PROP_BRIGHTNESS,          VO_CAP_BRIGHTNESS         },
+  { "XV_COLORKEY",           XV_PROP_COLORKEY,            VO_CAP_COLORKEY           },
+  { "XV_COLORSPACE",         XV_PROP_COLORSPACE,          VO_CAP_COLOR_MATRIX       },
+  { "XV_CONTRAST",           VO_PROP_CONTRAST,            VO_CAP_CONTRAST           },
   { "XV_DOUBLE_BUFFER",      XV_PROP_DOUBLE_BUFFER,       0                         },
+  { "XV_FILTER",             XV_PROP_FILTER,              0                         },
+  { "XV_GAMMA",              VO_PROP_GAMMA,               VO_CAP_GAMMA              },
+  { "XV_HUE",                VO_PROP_HUE,                 VO_CAP_HUE                },
+  { "XV_ITURBT_709",         XV_PROP_ITURBT_709,          VO_CAP_COLOR_MATRIX       },
+  { "XV_SATURATION",         VO_PROP_SATURATION,          VO_CAP_SATURATION         },
   { "XV_SYNC_TO_VBLANK",     XV_PROP_SYNC_TO_VBLANK,      0                         },
-  { "XV_VSYNC",              XV_PROP_SYNC_TO_VBLANK,      0                         },
-  { "XV_BICUBIC",            XV_PROP_BICUBIC,             0                         }
+  { "XV_VSYNC",              XV_PROP_SYNC_TO_VBLANK,      0                         }
 };
 
 static const xv_prop_list_t *xv_find_prop (const char *name) {
-  unsigned int i;
-  for (i = 0; i < sizeof (xv_props_list) / sizeof (xv_prop_list_t); i++) {
-    if (!strcmp (name, xv_props_list[i].name))
-      return &xv_props_list[i];
-  }
+  unsigned int b = 0, e = sizeof (xv_props_list) / sizeof (xv_prop_list_t), m = e >> 1;
+  do {
+    int d = strcmp (name, xv_props_list[m].name);
+    if (d == 0)
+      return &xv_props_list[m];
+    if (d < 0)
+      e = m;
+    else
+      b = m + 1;
+    m = (b + e) >> 1;
+  } while (b != e);
   return NULL;
 }
 

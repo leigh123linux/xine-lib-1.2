@@ -1220,6 +1220,8 @@ static void xv_dispose (vo_driver_t *this_gen) {
 
   cm_close (this);
 
+  this->xine->config->unregister_callbacks (this->xine->config, NULL, NULL, this, sizeof (*this));
+
   free (this);
 }
 
@@ -1250,16 +1252,19 @@ static void xv_prop_init (xv_driver_t *this, const xv_prop_list_t *l, const XvAt
     LOG_MODULE ": port attribute %s (%d) value is %d\n", l->name, l->index, prop->value);
 }
 
-static void xv_prop_update (void *prop_gen, xine_cfg_entry_t *entry) {
-  xv_property_t *prop = (xv_property_t *)prop_gen;
+static void xv_prop_update_int (xv_property_t *prop, int value) {
   xv_driver_t   *this = prop->this;
 
   LOCK_DISPLAY (this);
-  XvSetPortAttribute (this->display, this->xv_port, prop->atom, entry->num_value);
+  XvSetPortAttribute (this->display, this->xv_port, prop->atom, value);
   UNLOCK_DISPLAY (this);
-  prop->value = entry->num_value;
+  prop->value = value;
 
-  xprintf (this->xine, XINE_VERBOSITY_DEBUG, LOG_MODULE ": %s = %d\n", prop->name, entry->num_value);
+  xprintf (this->xine, XINE_VERBOSITY_DEBUG, LOG_MODULE ": %s = %d\n", prop->name, value);
+}
+
+static void xv_prop_update (void *prop_gen, xine_cfg_entry_t *entry) {
+  xv_prop_update_int ((xv_property_t *)prop_gen, entry->num_value);
 }
 
 static void xv_prop_conf (xv_driver_t *this, int property,
@@ -1278,10 +1283,8 @@ static void xv_prop_conf (xv_driver_t *this, int property,
 
   entry = config->lookup_entry (config, config_name);
 
-  if ((entry->num_value < prop->min) || (entry->num_value > prop->max)) {
-    config->update_num (config, config_name, ((prop->min + prop->max) >> 1));
-    entry = config->lookup_entry (config, config_name);
-  }
+  if ((entry->num_value < prop->min) || (entry->num_value > prop->max))
+    xv_prop_update_int (prop, (prop->min + prop->max) >> 1);
 
   prop->entry = entry;
 
@@ -1419,6 +1422,7 @@ static vo_driver_t *open_plugin_2 (video_driver_class_t *class_gen, const void *
   if (!this)
     return NULL;
 
+#ifndef HAVE_ZERO_SAFE_MEM
   /* 0/NULL inits, for optimizing away. */
   this->x11_old_error_handler = NULL;
   this->xoverlay              = NULL;
@@ -1436,6 +1440,7 @@ static vo_driver_t *open_plugin_2 (video_driver_class_t *class_gen, const void *
     this->props[i].name  = NULL;
     this->props[i].entry = NULL;
   }
+#endif
 
   this->use_shm               = 1;
   this->xine                  = class->xine;
@@ -1596,52 +1601,55 @@ static vo_driver_t *open_plugin_2 (video_driver_class_t *class_gen, const void *
           }
           xv_prop_init (this, l, attr[k]);
 
-          if (l->index == XV_PROP_ITURBT_709) { /* nvidia */
-            this->cm_active = this->props[XV_PROP_ITURBT_709].value ? 2 : 10;
-
-          } else if (l->index == XV_PROP_COLORSPACE) { /* radeonhd */
-            this->cm_active = this->props[XV_PROP_COLORSPACE].value == 2 ? 2 : (this->props[XV_PROP_COLORSPACE].value == 1 ? 10 : 0);
-
-          } else if (l->index == VO_PROP_COLORKEY) {
-            xv_prop_conf (this, VO_PROP_COLORKEY, "video.device.xv_colorkey", VIDEO_DEVICE_XV_COLORKEY_HELP);
-
-          } else if (l->index == VO_PROP_AUTOPAINT_COLORKEY) {
-            /* disable autopaint colorkey by default, might be overridden using config entry */
-            this->props[VO_PROP_AUTOPAINT_COLORKEY].value = 0;
-            xv_prop_conf (this, VO_PROP_AUTOPAINT_COLORKEY,
-              "video.device.xv_autopaint_colorkey", VIDEO_DEVICE_XV_AUTOPAINT_COLORKEY_HELP);
-
-          } else if (l->index == XV_PROP_FILTER) {
-            int xv_filter;
-            /* This setting is specific to Permedia 2/3 cards. */
-            xv_filter = config->register_range (config, "video.device.xv_filter", 0,
-              attr[k].min_value, attr[k].max_value, VIDEO_DEVICE_XV_FILTER_HELP,
-              20, xv_prop_update, &this->props[XV_PROP_FILTER]);
-            config->update_num (config,"video.device.xv_filter",xv_filter);
-
-          } else if (l->index == XV_PROP_DOUBLE_BUFFER) {
-            int xv_double_buffer;
-            xv_double_buffer = config->register_bool (config, "video.device.xv_double_buffer", 1,
-              VIDEO_DEVICE_XV_DOUBLE_BUFFER_HELP, 20, xv_prop_update, &this->props[XV_PROP_DOUBLE_BUFFER]);
-            config->update_num (config,"video.device.xv_double_buffer", xv_double_buffer);
-
-          } else if (l->index == XV_PROP_SYNC_TO_VBLANK) {
-            int xv_sync_to_vblank;
-            xv_sync_to_vblank = config->register_bool (config, "video.device.xv_sync_to_vblank", 1,
-              _("enable vblank sync"),
-              _("This option will synchronize the update of the video image to the "
-                "repainting of the entire screen (\"vertical retrace\"). This eliminates "
-                "flickering and tearing artifacts. On nvidia cards one may also "
-                "need to run \"nvidia-settings\" and choose which display device to "
-                "sync to under the XVideo Settings tab"),
-              20, xv_prop_update, &this->props[XV_PROP_SYNC_TO_VBLANK]);
-            config->update_num(config,"video.device.xv_sync_to_vblank", xv_sync_to_vblank);
-
-          } else if (l->index == XV_PROP_BICUBIC) {
-            int xv_bicubic;
-            xv_bicubic = config->register_enum (config, "video.device.xv_bicubic", 2,
-              (char **)bicubic_types, VIDEO_DEVICE_XV_BICUBIC_HELP, 20, xv_prop_update, &this->props[XV_PROP_BICUBIC]);
-            config->update_num(config,"video.device.xv_bicubic",xv_bicubic);
+          switch (l->index) {
+            case XV_PROP_ITURBT_709: /* nvidia */
+              this->cm_active = this->props[XV_PROP_ITURBT_709].value ? 2 : 10;
+              break;
+            case XV_PROP_COLORSPACE: /* radeonhd */
+              this->cm_active = this->props[XV_PROP_COLORSPACE].value == 2 ? 2
+                              : (this->props[XV_PROP_COLORSPACE].value == 1 ? 10 : 0);
+              break;
+            case VO_PROP_COLORKEY:
+              xv_prop_conf (this, VO_PROP_COLORKEY, "video.device.xv_colorkey", VIDEO_DEVICE_XV_COLORKEY_HELP);
+              break;
+            case VO_PROP_AUTOPAINT_COLORKEY:
+              /* disable autopaint colorkey by default, might be overridden using config entry */
+              this->props[VO_PROP_AUTOPAINT_COLORKEY].value = 0;
+              xv_prop_conf (this, VO_PROP_AUTOPAINT_COLORKEY,
+                "video.device.xv_autopaint_colorkey", VIDEO_DEVICE_XV_AUTOPAINT_COLORKEY_HELP);
+              break;
+            case XV_PROP_FILTER: {
+              /* This setting is specific to Permedia 2/3 cards. */
+              int xv_filter = config->register_range (config, "video.device.xv_filter", 0,
+                attr[k].min_value, attr[k].max_value, VIDEO_DEVICE_XV_FILTER_HELP,
+                20, xv_prop_update, &this->props[XV_PROP_FILTER]);
+              xv_prop_update_int (&this->props[XV_PROP_FILTER], xv_filter);
+              break;
+            }
+            case XV_PROP_DOUBLE_BUFFER: {
+              int xv_double_buffer = config->register_bool (config, "video.device.xv_double_buffer", 1,
+                VIDEO_DEVICE_XV_DOUBLE_BUFFER_HELP, 20, xv_prop_update, &this->props[XV_PROP_DOUBLE_BUFFER]);
+              xv_prop_update_int (&this->props[XV_PROP_DOUBLE_BUFFER], xv_double_buffer);
+              break;
+            }
+            case XV_PROP_SYNC_TO_VBLANK: {
+              int xv_sync_to_vblank = config->register_bool (config, "video.device.xv_sync_to_vblank", 1,
+                _("enable vblank sync"),
+                _("This option will synchronize the update of the video image to the "
+                  "repainting of the entire screen (\"vertical retrace\"). This eliminates "
+                  "flickering and tearing artifacts. On nvidia cards one may also "
+                  "need to run \"nvidia-settings\" and choose which display device to "
+                  "sync to under the XVideo Settings tab"),
+                20, xv_prop_update, &this->props[XV_PROP_SYNC_TO_VBLANK]);
+              xv_prop_update_int (&this->props[XV_PROP_SYNC_TO_VBLANK], xv_sync_to_vblank);
+              break;
+            }
+            case XV_PROP_BICUBIC: {
+              int xv_bicubic = config->register_enum (config, "video.device.xv_bicubic", 2,
+                (char **)bicubic_types, VIDEO_DEVICE_XV_BICUBIC_HELP, 20, xv_prop_update, &this->props[XV_PROP_BICUBIC]);
+              xv_prop_update_int (&this->props[XV_PROP_BICUBIC], xv_bicubic);
+              break;
+            }
           }
         }
       }
