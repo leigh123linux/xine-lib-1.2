@@ -811,6 +811,11 @@ static void close_internal (xine_stream_t *stream) {
 }
 
 void xine_close (xine_stream_t *stream) {
+  /* phonon bug */
+  if (!stream) {
+    printf ("xine_close: BUG: stream = NULL.\n");
+    return;
+  }
 
   pthread_mutex_lock (&stream->frontend_lock);
   pthread_cleanup_push (mutex_cleanup, (void *) &stream->frontend_lock);
@@ -1964,6 +1969,9 @@ void xine_exit (xine_t *this) {
     pthread_mutex_destroy (&this->streams_lock);
   }
 
+  if (this->config)
+    this->config->unregister_callbacks (this->config, NULL, NULL, this, sizeof (*this));
+
   xprintf (this, XINE_VERBOSITY_DEBUG, "xine_exit: bye!\n");
 
   _x_dispose_plugins (this);
@@ -2323,6 +2331,11 @@ void _x_get_current_info (xine_stream_t *stream, extra_info_t *extra_info, int s
 
 
 int xine_get_status (xine_stream_t *stream) {
+  /* phonon bug */
+  if (!stream) {
+    printf ("xine_get_status: BUG: stream = NULL.\n");
+    return XINE_STATUS_QUIT;
+  }
   return stream->status;
 }
 

@@ -1990,7 +1990,7 @@ static void ao_exit(xine_audio_port_t *this_gen) {
       "audio_out: waited %d of %d external driver requests.\n", this->dreqs_wait, this->dreqs_all);
 
   /* We are about to free "this". No callback shall refer to it anymore, even if not our own. */
-  this->xine->config->unregister_callbacks (this->xine->config, NULL, NULL, this);
+  this->xine->config->unregister_callbacks (this->xine->config, NULL, NULL, this, sizeof (*this));
 
   pthread_mutex_destroy(&this->driver_lock);
   pthread_cond_destroy(&this->driver_action_cond);

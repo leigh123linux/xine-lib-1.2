@@ -94,7 +94,29 @@ static int _cfg_cb_clear (cfg_entry_t *entry) {
   return n;
 }
 
-static int _cfg_cb_d_rem (cfg_entry_t *entry, xine_config_cb_t callback, void *data) {
+static int _cfg_cb_clear_report (xine_t *xine, cfg_entry_t *entry) {
+  int n = 0;
+  for (; entry; entry = entry->next) {
+    int have = n;
+    if (entry->callback == _cfg_relay) {
+      _cfg_cb_relay_t *relay = entry->callback_data;
+      if (relay) {
+        n += relay->used;
+        free (relay);
+      }
+    } else {
+      n += entry->callback ? 1 : 0;
+    }
+    entry->callback_data = NULL;
+    entry->callback = NULL;
+    if ((n > have) && xine)
+      xprintf (xine, XINE_VERBOSITY_DEBUG, "configfile: %d orphaned callbacks for %s.\n", n - have, entry->key);
+  }
+  return n;
+}
+
+static int _cfg_cb_d_rem (cfg_entry_t *entry, xine_config_cb_t callback, void *data, size_t data_size) {
+  void *dend = (uint8_t *)data + (data_size ? data_size - 1 : 0);
   int n = 0;
   for (; entry; entry = entry->next) {
     if (entry->callback == _cfg_relay) {
@@ -107,7 +129,7 @@ static int _cfg_cb_d_rem (cfg_entry_t *entry, xine_config_cb_t callback, void *d
       r = &relay->items[0];
       e = r + relay->used;
       while (r < e) {
-        if ((callback == r->callback) && (data == r->data)) *r = *(--e); else r++;
+        if ((callback == r->callback) && (r->data >= data) && (r->data <= dend)) *r = *(--e); else r++;
       }
       n += relay->used;
       relay->used = r - &relay->items[0];
@@ -120,7 +142,7 @@ static int _cfg_cb_d_rem (cfg_entry_t *entry, xine_config_cb_t callback, void *d
         free (relay);
       }
     } else {
-      if ((callback == entry->callback) && (data == entry->callback_data)) {
+      if ((callback == entry->callback) && (entry->callback_data >= data) && (entry->callback_data <= dend)) {
         n++;
         entry->callback_data = NULL;
         entry->callback = NULL;
@@ -166,7 +188,8 @@ static int _cfg_cb_rem (cfg_entry_t *entry, xine_config_cb_t callback) {
   return n;
 }
 
-static int _cfg_d_rem (cfg_entry_t *entry, void *data) {
+static int _cfg_d_rem (cfg_entry_t *entry, void *data, size_t data_size) {
+  void *dend = (uint8_t *)data + (data_size ? data_size - 1 : 0);
   int n = 0;
   for (; entry; entry = entry->next) {
     if (entry->callback == _cfg_relay) {
@@ -179,7 +202,7 @@ static int _cfg_d_rem (cfg_entry_t *entry, void *data) {
       r = &relay->items[0];
       e = r + relay->used;
       while (r < e) {
-        if (data == r->data) *r = *(--e); else r++;
+        if ((r->data >= data) && (r->data <= dend)) *r = *(--e); else r++;
       }
       n += relay->used;
       relay->used = r - &relay->items[0];
@@ -192,7 +215,7 @@ static int _cfg_d_rem (cfg_entry_t *entry, void *data) {
         free (relay);
       }
     } else {
-      if (data == entry->callback_data) {
+      if ((entry->callback_data >= data) && (entry->callback_data <= dend)) {
         n++;
         entry->callback_data = NULL;
         entry->callback = NULL;
@@ -202,15 +225,15 @@ static int _cfg_d_rem (cfg_entry_t *entry, void *data) {
   return n;
 }
 
-static int _cfg_any_rem (cfg_entry_t *entry, xine_config_cb_t callback, void *data) {
+static int _cfg_any_rem (cfg_entry_t *entry, xine_config_cb_t callback, void *data, size_t data_size) {
   if (callback) {
     if (data)
-      return _cfg_cb_d_rem (entry, callback, data);
+      return _cfg_cb_d_rem (entry, callback, data, data_size);
     else
       return _cfg_cb_rem (entry, callback);
   } else {
     if (data)
-      return _cfg_d_rem (entry, data);
+      return _cfg_d_rem (entry, data, data_size);
     else
       return _cfg_cb_clear (entry);
   }
@@ -1102,13 +1125,15 @@ static int config_register_range (config_values_t *this,
   /* Allow default to be out of range. xine-ui uses this for brightness etc. */
   if (entry->num_value != def_value) {
     if (entry->num_value > max) {
-      printf ("configfile: WARNING: value %d for %s is larger than max (%d)\n",
-        entry->num_value, key, max);
+      if (this->xine)
+        xprintf (this->xine, XINE_VERBOSITY_DEBUG,
+          "configfile: WARNING: value %d for %s is larger than max (%d)\n", entry->num_value, key, max);
       entry->num_value = max;
     }
     if (entry->num_value < min) {
-      printf ("configfile: WARNING: value %d for %s is smaller than min (%d)\n",
-        entry->num_value, key, min);
+      if (this->xine)
+        xprintf (this->xine, XINE_VERBOSITY_DEBUG, 
+          "configfile: WARNING: value %d for %s is smaller than min (%d)\n", entry->num_value, key, min);
       entry->num_value = min;
     }
   }
@@ -1389,6 +1414,7 @@ void xine_config_set_translation_user (const xine_config_entry_translation_t *xl
 void xine_config_load (xine_t *xine, const char *filename) {
 
   config_values_t *this = xine->config;
+  this->xine = xine;
 
   lprintf ("reading from file '%s'\n", filename);
 
@@ -1733,7 +1759,7 @@ static void config_dispose (config_values_t *this) {
     entry = entry->next;
 
     last->next = NULL;
-    n += _cfg_cb_clear (last);
+    n += _cfg_cb_clear_report (this->xine, last);
     _x_freep (&last->key);
     _x_freep (&last->unknown_value);
 
@@ -1744,8 +1770,8 @@ static void config_dispose (config_values_t *this) {
 
   pthread_mutex_unlock (&this->config_lock);
 
-  if (n) {
-    printf ("config: unregistered %d orphaned change callbacks.\n", n);
+  if (n && this->xine) {
+    xprintf (this->xine, XINE_VERBOSITY_DEBUG, "configfile: unregistered %d orphaned change callbacks.\n", n);
   }
 
   pthread_mutex_destroy (&this->config_lock);
@@ -1771,7 +1797,7 @@ static void config_unregister_cb (config_values_t *this, const char *key) {
 }
 
 static int config_unregister_callbacks (config_values_t *this,
-  const char *key, xine_config_cb_t changed_cb, void *cb_data) {
+  const char *key, xine_config_cb_t changed_cb, void *cb_data, size_t cb_data_size) {
   int n;
   cfg_entry_t *entry, *next;
   if (!this)
@@ -1787,7 +1813,7 @@ static int config_unregister_callbacks (config_values_t *this,
     pthread_mutex_lock (&this->config_lock);
     entry = this->first;
   }
-  n = _cfg_any_rem (entry, changed_cb, cb_data);
+  n = _cfg_any_rem (entry, changed_cb, cb_data, cb_data_size);
   if (next)
     entry->next = next;
   pthread_mutex_unlock (&this->config_lock);
@@ -1800,7 +1826,7 @@ void _x_config_unregister_cb_class_d (config_values_t *this, void *callback_data
   _x_assert(callback_data);
 
   pthread_mutex_lock(&this->config_lock);
-  _cfg_d_rem (this->first, callback_data);
+  _cfg_d_rem (this->first, callback_data, 0);
   pthread_mutex_unlock(&this->config_lock);
 }
 
@@ -2101,6 +2127,7 @@ config_values_t *_x_config_init (void) {
   this->first           = NULL;
   this->last            = NULL;
   this->current_version = 0;
+  this->xine            = NULL;
 #endif
 
   /* warning: config_lock is a recursive mutex. it must NOT be
@@ -2167,7 +2194,8 @@ int _x_config_change_opt(config_values_t *config, const char *opt) {
   entry = config_lookup_entry_safe (config, key);
   if (entry) {
     if (entry->exp_level >= XINE_CONFIG_SECURITY) {
-      printf (_("configfile: entry '%s' mustn't be modified from MRL\n"), key);
+      if (config->xine)
+        xprintf (config->xine, XINE_VERBOSITY_LOG, _("configfile: entry '%s' mustn't be modified from MRL\n"), key);
     } else {
       switch (entry->type) {
         case XINE_CONFIG_TYPE_STRING:

@@ -225,10 +225,17 @@ struct config_values_s {
   /**
    * unregister multiple entry callback functions.
    * all 3 values need to match unless they are NULL.
+   * if cb_data_size is not zero, data pointers within the range
+   * (cb_data <= ptr < cb_data + cb_data_size) will match.
    * returns the count of unregistered functions.
    */
   int (*unregister_callbacks) (config_values_t *self,
-    const char *key, xine_config_cb_t changed_cb, void *cb_data);
+    const char *key, xine_config_cb_t changed_cb, void *cb_data, size_t cb_data_size);
+
+  /**
+   * Set this manually to enable logging.
+   */
+  xine_t *xine;
 };
 
 /**
