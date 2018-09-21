@@ -935,6 +935,9 @@ static uint32_t ao_alsa_get_capabilities (ao_driver_t *this_gen) {
 static void ao_alsa_exit(ao_driver_t *this_gen) {
   alsa_driver_t *this = (alsa_driver_t *) this_gen;
 
+  this->class->xine->config->unregister_callbacks (this->class->xine->config,
+    "audio.output.speaker_arrangement", NULL, this, sizeof (*this));
+
   /*
    * Destroy the mixer thread and cleanup the mixer, so that
    * any child processes (such as xscreensaver) cannot inherit

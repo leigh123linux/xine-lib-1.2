@@ -631,6 +631,8 @@ static void ao_jack_exit (ao_driver_t *this_gen)
 {
   jack_driver_t *this = (jack_driver_t *) this_gen;
 
+  this->xine->config->unregister_callbacks (this->xine->config, "audio.output.speaker_arrangement", NULL, this, sizeof (*this));
+
   ao_jack_close (this_gen);
   if (this->buffer)
     free (this->buffer);

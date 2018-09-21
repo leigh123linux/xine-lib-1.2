@@ -507,6 +507,8 @@ static void ao_oss_exit(ao_driver_t *this_gen) {
 
   oss_driver_t    *this   = (oss_driver_t *) this_gen;
 
+  this->xine->config->unregister_callbacks (this->xine->config, "audio.output.speaker_arrangement", NULL, this, sizeof (*this));
+
   if (this->mixer.fd != -1)
     close(this->mixer.fd);
   if (this->audio_fd != -1)
