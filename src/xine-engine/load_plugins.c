@@ -344,7 +344,10 @@ static void _decoder_priority_cb (void *data, xine_cfg_entry_t *cfg) {
 
   type = node->info->type & PLUGIN_TYPE_MASK;
   list = node->xine->plugin_catalog->plugin_lists[type - 1];
-  xine_sarray_remove_ptr (list, node);
+
+  if (xine_sarray_remove_ptr (list, node) == ~0)
+    /* callback was triggered before the entry was added to plugin list */
+    return;
   {
     int user_prio = cfg->num_value;
     /* user given priorities should definitely override defaults, so multiply them */
