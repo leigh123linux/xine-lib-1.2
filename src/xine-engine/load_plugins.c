@@ -2529,6 +2529,8 @@ const char * const *xine_get_autoplay_mrls (xine_t *this, const char *plugin_id,
 
   catalog = this->plugin_catalog;
 
+  pthread_mutex_lock (&catalog->lock);
+
   list_size = xine_sarray_size (catalog->plugin_lists[PLUGIN_INPUT - 1]);
   for (list_id = 0; list_id < list_size; list_id++) {
 
@@ -2538,16 +2540,20 @@ const char * const *xine_get_autoplay_mrls (xine_t *this, const char *plugin_id,
       input_class_t *ic;
 
       if (node->plugin_class || _load_plugin_class (this, node, NULL)) {
+        const char * const *mrls = NULL;
 
 	ic = (input_class_t *) node->plugin_class;
 
-	if (!ic->get_autoplay_list)
-	  return NULL;
+        if (ic->get_autoplay_list)
+          mrls = ic->get_autoplay_list (ic, num_mrls);
 
-	return ic->get_autoplay_list (ic, num_mrls);
+        pthread_mutex_unlock (&catalog->lock);
+        return mrls;
       }
     }
   }
+
+  pthread_mutex_unlock (&catalog->lock);
   return NULL;
 }
 
@@ -2563,6 +2569,8 @@ xine_mrl_t **xine_get_browse_mrls (xine_t *this, const char *plugin_id,
 
   catalog = this->plugin_catalog;
 
+  pthread_mutex_lock (&catalog->lock);
+
   list_size = xine_sarray_size (catalog->plugin_lists[PLUGIN_INPUT - 1]);
   for (list_id = 0; list_id < list_size; list_id++) {
 
@@ -2572,16 +2580,19 @@ xine_mrl_t **xine_get_browse_mrls (xine_t *this, const char *plugin_id,
       input_class_t *ic;
 
       if (node->plugin_class || _load_plugin_class (this, node, NULL)) {
-
+        xine_mrl_t **mrls = NULL;
 	ic = (input_class_t *) node->plugin_class;
 
-	if (!ic->get_dir)
-	  return NULL;
+        if (ic->get_dir)
+          mrls = ic->get_dir (ic, start_mrl, num_mrls);
 
-	return ic->get_dir (ic, start_mrl, num_mrls);
+        pthread_mutex_unlock (&catalog->lock);
+        return mrls;
       }
     }
   }
+
+  pthread_mutex_unlock (&catalog->lock);
   return NULL;
 }
 
@@ -3000,20 +3011,24 @@ const char *const *xine_list_post_plugins_typed(xine_t *xine, uint32_t type) {
     plugin_catalog_t *catalog = this->plugin_catalog;					   \
     plugin_node_t    *node;                                                                \
     int               list_id, list_size;                                                  \
+    pthread_mutex_lock (&catalog->lock);                                                   \
     list_size = xine_sarray_size (catalog->plugin_lists[CATITEM - 1]);                     \
     for (list_id = 0; list_id < list_size; list_id++) {                                    \
       node = xine_sarray_get (catalog->plugin_lists[CATITEM - 1], list_id);                \
       if (!strcasecmp (node->info->id, plugin_id)) {					   \
 	TYPE##_class_t *ic = (TYPE##_class_t *) node->plugin_class;			   \
+        const char *ret = NULL;                                                            \
 	if (!ic) {									   \
 	  if (_load_plugin_class (this, node, NULL))					   \
 	    ic = node->plugin_class;							   \
-	  else										   \
-	    return NULL;								   \
 	}										   \
-        return dgettext(ic->text_domain ? ic->text_domain : XINE_TEXTDOMAIN, ic->description); \
-      }											   \
-    }											   \
+        if (ic)                                                                            \
+          ret = dgettext(ic->text_domain ? ic->text_domain : XINE_TEXTDOMAIN, ic->description); \
+        pthread_mutex_unlock (&catalog->lock);                                             \
+        return ret;                                                                        \
+      }                                                                                    \
+    }                                                                                      \
+    pthread_mutex_unlock (&catalog->lock);                                                 \
     return NULL;									   \
   }
 
