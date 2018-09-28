@@ -2523,8 +2523,7 @@ void xine_close_video_driver (xine_t *this, xine_video_port_t  *vo_port) {
  * get autoplay mrl list from input plugin
  */
 
-const char * const *xine_get_autoplay_mrls (xine_t *this, const char *plugin_id,
-					    int *num_mrls) {
+static input_class_t *_get_input_class (xine_t *this, const char *plugin_id) {
 
   plugin_catalog_t     *catalog;
   plugin_node_t        *node;
@@ -2532,71 +2531,61 @@ const char * const *xine_get_autoplay_mrls (xine_t *this, const char *plugin_id,
 
   catalog = this->plugin_catalog;
 
-  pthread_mutex_lock (&catalog->lock);
-
   list_size = xine_sarray_size (catalog->plugin_lists[PLUGIN_INPUT - 1]);
   for (list_id = 0; list_id < list_size; list_id++) {
 
     node = xine_sarray_get (catalog->plugin_lists[PLUGIN_INPUT - 1], list_id);
 
     if (!strcasecmp (node->info->id, plugin_id)) {
-      input_class_t *ic;
-
       if (node->plugin_class || _load_plugin_class (this, node, NULL)) {
-        const char * const *mrls = NULL;
-
-	ic = (input_class_t *) node->plugin_class;
-
-        if (ic->get_autoplay_list)
-          mrls = ic->get_autoplay_list (ic, num_mrls);
-
-        pthread_mutex_unlock (&catalog->lock);
-        return mrls;
+        return node->plugin_class;
       }
     }
   }
-
-  pthread_mutex_unlock (&catalog->lock);
   return NULL;
 }
 
-/*
- * input plugin mrl browser support
- */
-xine_mrl_t **xine_get_browse_mrls (xine_t *this, const char *plugin_id,
-				   const char *start_mrl, int *num_mrls) {
+const char * const *xine_get_autoplay_mrls (xine_t *this, const char *plugin_id,
+					    int *num_mrls) {
 
-  plugin_catalog_t   *catalog;
-  plugin_node_t      *node;
-  int                 list_id, list_size;
+  plugin_catalog_t     *catalog;
+  input_class_t        *ic;
+  const char * const   *mrls = NULL;
 
   catalog = this->plugin_catalog;
 
   pthread_mutex_lock (&catalog->lock);
 
-  list_size = xine_sarray_size (catalog->plugin_lists[PLUGIN_INPUT - 1]);
-  for (list_id = 0; list_id < list_size; list_id++) {
-
-    node = xine_sarray_get (catalog->plugin_lists[PLUGIN_INPUT - 1], list_id);
-
-    if (!strcasecmp (node->info->id, plugin_id)) {
-      input_class_t *ic;
-
-      if (node->plugin_class || _load_plugin_class (this, node, NULL)) {
-        xine_mrl_t **mrls = NULL;
-	ic = (input_class_t *) node->plugin_class;
-
-        if (ic->get_dir)
-          mrls = ic->get_dir (ic, start_mrl, num_mrls);
-
-        pthread_mutex_unlock (&catalog->lock);
-        return mrls;
-      }
-    }
-  }
+  ic = _get_input_class(this, plugin_id);
+  if (ic && ic->get_autoplay_list)
+    mrls = ic->get_autoplay_list (ic, num_mrls);
 
   pthread_mutex_unlock (&catalog->lock);
-  return NULL;
+
+  return mrls;
+}
+
+/*
+ * input plugin mrl browser support
+ */
+
+xine_mrl_t **xine_get_browse_mrls (xine_t *this, const char *plugin_id,
+                                   const char *start_mrl, int *num_mrls) {
+  plugin_catalog_t   *catalog;
+  input_class_t      *ic;
+  xine_mrl_t        **mrls = NULL;
+
+  catalog = this->plugin_catalog;
+
+  pthread_mutex_lock (&catalog->lock);
+
+  ic = _get_input_class (this, plugin_id);
+  if (ic && ic->get_dir)
+    mrls = ic->get_dir (ic, start_mrl, num_mrls);
+
+  pthread_mutex_unlock (&catalog->lock);
+
+  return mrls;
 }
 
 video_decoder_t *_x_get_video_decoder (xine_stream_t *stream, uint8_t stream_type) {
