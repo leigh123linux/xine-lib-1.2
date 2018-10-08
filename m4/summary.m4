@@ -164,7 +164,7 @@ AC_DEFUN([XINE_LIB_SUMMARY], [
     echo "   - boxblur         - denoise3d"
     echo "   - unsharp         - tvtime"
     test x"$enable_postproc" != x"no" && echo "   - postproc"
-    test x"$have_dvb" = x"yes"        && echo "   - vdr"
+    test x"$enable_vdr" != x"no"      && echo "   - vdr"
     echo "  * SFX:"
     echo "   - goom            - oscope"
     echo "   - fftscope        - mosaico"
