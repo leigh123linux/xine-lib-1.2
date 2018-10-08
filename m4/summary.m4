@@ -169,6 +169,9 @@ AC_DEFUN([XINE_LIB_SUMMARY], [
     echo "   - goom            - oscope"
     echo "   - fftscope        - mosaico"
     echo "   - tdaudioanalyzer"
+    echo "  * Audio:"
+    echo "   - upmix           - upmix_mono"
+    echo "   - volnorm         - scretch"
     echo ""
 
     dnl Video plugins
